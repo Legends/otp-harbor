@@ -69,7 +69,7 @@ $reviewedAssets = [ordered]@{
     "TOTP.UI.Avalonia.Desktop/Assets/flags/de.png"       = "2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a"
     "TOTP.UI.Avalonia.Desktop/Assets/flags/fr.png"       = "b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340"
     "TOTP.UI.Avalonia.Desktop/Assets/flags/es.png"       = "d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd"
-    "docs/images/readme/app.png"                         = "2b784669224c991eb4524eb0ab03b13ae3011605d308d3a2ef6bb8795771eeda"
+    "docs/images/readme/app.png"                         = "3730253e1d8579bae7fb49d173ad83b91ad7a2f90f5f5a759a29f048abe1e657"
     "docs/images/social/otp-harbor-social-preview.jpg"   = "2ca1ebc4d4dabbb5f8061013432c4d3dc5708efa03ab746b20e4e83686de6725"
 }
 foreach ($entry in $reviewedAssets.GetEnumerator()) {

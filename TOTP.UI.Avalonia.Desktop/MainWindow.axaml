@@ -279,10 +279,26 @@
                                                         </ItemsPanelTemplate>
                                                     </ListBox.ItemsPanel>
                                                     <ListBox.ContextMenu>
-                                                        <ContextMenu>
-                                                            <MenuItem Command="{Binding BeginContextEditCommand}" Header="{DynamicResource EditAccount}" />
-                                                            <MenuItem Command="{Binding GenerateContextQrCommand}" Header="{DynamicResource ShowQrCode}" />
-                                                            <MenuItem Command="{Binding DeleteContextAccountCommand}" Header="{DynamicResource DeleteAccount}" />
+                                                        <ContextMenu Classes="account-context-menu">
+                                                            <MenuItem Command="{Binding BeginContextEditCommand}" Header="{DynamicResource EditAccount}">
+                                                                <MenuItem.Icon>
+                                                                    <shared:SymbolIcon IconSize="15" Kind="Edit" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Command="{Binding GenerateContextQrCommand}" Header="{DynamicResource ShowQrCode}">
+                                                                <MenuItem.Icon>
+                                                                    <shared:SymbolIcon IconSize="15" Kind="QrCode" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <Separator Margin="6,4" />
+                                                            <MenuItem
+                                                                Classes="danger-context-item"
+                                                                Command="{Binding DeleteContextAccountCommand}"
+                                                                Header="{DynamicResource DeleteAccount}">
+                                                                <MenuItem.Icon>
+                                                                    <shared:SymbolIcon IconSize="15" Kind="Delete" />
+                                                                </MenuItem.Icon>
+                                                            </MenuItem>
                                                         </ContextMenu>
                                                     </ListBox.ContextMenu>
                                                     <ListBox.ItemTemplate>
