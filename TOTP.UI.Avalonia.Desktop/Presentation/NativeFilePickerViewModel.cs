@@ -108,9 +108,11 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             await _cameraScanner.OpenImageAsync();
             if (!string.IsNullOrWhiteSpace(_cameraScanner.Message))
             {
-                SetMessage(
-                    _cameraScanner.Message,
-                    _cameraScanner.LastImageNotificationSeverity);
+                var severity = _cameraScanner.LastImageNotificationSeverity;
+                if (severity == NotificationSeverity.Error)
+                    SetMessage(_cameraScanner.Message, severity);
+                else
+                    ShowTransientMessage(_cameraScanner.Message, severity);
             }
         }
         catch (Exception)
