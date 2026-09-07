@@ -23,7 +23,7 @@ The generated image was visually reviewed for prohibited text, third-party brand
 
 ## README screenshot
 
-`docs/images/readme/app.png` is based on a maintainer-provided screenshot of the application populated only with synthetic sample accounts. On 2026-09-01, OpenAI's built-in image-editing tool replaced the former window title with the exact text `OTP Harbor` for the public rebrand. The edit prompt required every other UI element, sample value, color, and layout relationship to remain unchanged. The resulting image was visually reviewed before inclusion.
+`docs/images/readme/app.png` is a maintainer-provided screenshot of the application populated only with synthetic `example.invalid` sample accounts. It was replaced on 2026-09-08 to document the current compact account layout with inline one-time passwords and countdown progress bars. The screenshot was visually reviewed for private account data and third-party secrets before inclusion.
 
 ## Social preview
 
@@ -44,7 +44,7 @@ Final generation prompt:
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/de.png` | `2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a` |
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/fr.png` | `b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340` |
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/es.png` | `d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd` |
-| `docs/images/readme/app.png` | `2b784669224c991eb4524eb0ab03b13ae3011605d308d3a2ef6bb8795771eeda` |
+| `docs/images/readme/app.png` | `3730253e1d8579bae7fb49d173ad83b91ad7a2f90f5f5a759a29f048abe1e657` |
 | `docs/images/social/otp-harbor-social-preview.jpg` | `2ca1ebc4d4dabbb5f8061013432c4d3dc5708efa03ab746b20e4e83686de6725` |
 
 Any replacement requires a new provenance record, license review, updated hashes, and visual/build validation.

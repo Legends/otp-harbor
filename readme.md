@@ -14,7 +14,7 @@
 > **Release status:** `v2.0.0` is in release-candidate testing. The first stable Windows release is being prepared for Microsoft Store certification. Current GitHub Windows/Linux RC packages remain unsigned platform previews, but direct packages can discover authenticated updates through the Ed25519-signed RC appcast. Android is source-only until its production signing and upgrade path are established. Use synthetic accounts and keep a tested encrypted backup.
 
 <p align="center">
-  <img src="docs/images/readme/app.png" alt="OTP Harbor showing a selected account and its current one-time password" width="460" />
+  <img src="docs/images/readme/app.png" alt="OTP Harbor showing inline one-time passwords and a countdown progress bar for every account" width="460" />
 </p>
 
 ## Features
@@ -31,9 +31,11 @@
 
 Accounts currently use the common TOTP profile: SHA-1, six digits, and a 30-second period.
 
+On desktop, right-click any existing account to open its contextual actions: **Edit account**, **Show QR code**, or **Delete account**. Deletion still requires confirmation.
+
 ### Import from Google Authenticator
 
-OTP Harbor recognizes both normal `otpauth://` account QR codes and Google Authenticator transfer QR codes. In Google Authenticator, start **Transfer accounts** / **Export accounts**, select the accounts, then scan every generated QR code with OTP Harbor's camera action. OTP Harbor shows the number of detected accounts and asks for confirmation before changing the vault; multi-part exports prompt you to scan the next QR code.
+OTP Harbor recognizes both normal `otpauth://` account QR codes and Google Authenticator transfer QR codes. For a desktop migration, start **Transfer accounts** / **Export accounts** in Google Authenticator, capture each generated QR code as a crisp screenshot, and choose each saved image in **Settings > Import / Export > Import from Google Authenticator**. OTP Harbor shows the number of detected accounts and asks for confirmation before changing the vault; multi-part exports prompt you to choose the next QR image. Android can scan the transfer QR codes directly with its camera workflow.
 
 Treat migration QR codes as secrets: anyone who captures one can recreate the exported accounts. After importing, verify several generated codes and create a fresh encrypted OTP Harbor backup.
 
@@ -84,7 +86,7 @@ The QR screenshot is intentionally sanitized and contains only a published synth
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
 | Android 9 or newer | Development source only; a public APK requires production signing and supported Android CI |
 
-After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or scan each QR code from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
+After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
 
 Maintainers can follow the [Microsoft Store release guide](docs/release/MICROSOFT_STORE.md). The unsigned MSIX produced by the repository is exclusively a Partner Center submission input and must never be sideloaded or attached to a GitHub Release.
 

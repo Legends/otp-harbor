@@ -193,9 +193,9 @@
 
         <img
           src="assets/app.png"
-          alt="OTP Harbor open-source TOTP and 2FA authenticator desktop application showing one-time passwords"
-          width="1105"
-          height="1423"
+          alt="OTP Harbor desktop authenticator showing inline one-time passwords and countdown progress bars"
+          width="950"
+          height="1224"
           fetchpriority="high"
           decoding="async">
 
@@ -325,8 +325,8 @@
 
         <p>
           Import accounts from Google Authenticator transfer QR
-          codes, including multi-part exports containing multiple
-          authenticator accounts.
+          code images, including multi-part exports containing
+          multiple authenticator accounts.
         </p>
 
       </article>
@@ -353,6 +353,18 @@
           Create portable encrypted backups and restore them on
           supported OTP Harbor platforms instead of depending
           exclusively on a single device.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <h2>Fast account actions</h2>
+
+        <p>
+          Right-click an existing desktop account to edit it,
+          show its QR code or delete it after confirmation.
         </p>
 
       </article>
@@ -551,9 +563,12 @@
 
         <p>
           To migrate multiple accounts, start the account export
-          in Google Authenticator and scan the generated transfer
-          QR codes with OTP Harbor. Multi-part exports can be
-          scanned in sequence.
+          in Google Authenticator, save a crisp screenshot of each
+          generated transfer QR code, then choose each image under
+          <strong>Settings &gt; Import / Export</strong>. Importing
+          the original pixels avoids unreliable desktop-camera
+          focus and resolution. Multi-part exports are selected in
+          sequence.
         </p>
 
         <p>
@@ -624,8 +639,8 @@
 
           <p>
             Yes. OTP Harbor supports normal TOTP QR codes and
-            Google Authenticator transfer QR codes used for
-            bulk account migration.
+            saved Google Authenticator transfer QR code images used
+            for bulk account migration.
           </p>
 
         </article>

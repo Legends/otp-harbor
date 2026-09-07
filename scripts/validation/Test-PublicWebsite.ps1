@@ -41,11 +41,18 @@ foreach ($requiredText in @(
     'Microsoft Store is the planned primary Windows channel',
     'GitHub previews are clearly labeled and use a signed application update feed.',
     'Can you test OTP Harbor on a MacBook?',
-    'Test only with synthetic accounts'
+    'Test only with synthetic accounts',
+    'Right-click an existing desktop account to edit it, show its QR code or delete it after confirmation.',
+    'Settings &gt; Import / Export'
 )) {
     if (-not $compactIndex.Contains($requiredText, [StringComparison]::Ordinal)) {
         throw "The public website is missing required content: $requiredText"
     }
+}
+
+$mainScreenshotPath = Join-Path $repositoryRoot 'docs/images/readme/app.png'
+if ((Get-Item -LiteralPath $mainScreenshotPath).Length -ge 1MB) {
+    throw 'The main application screenshot must remain smaller than 1 MB.'
 }
 
 if ($index -match 'aggregateRating|reviewCount|downloadCount|google-analytics|googletagmanager') {

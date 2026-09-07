@@ -401,6 +401,32 @@
             </Animation>
         </Style.Animations>
     </Style>
+    <Style Selector="ContextMenu.account-context-menu">
+        <Setter Property="MinWidth" Value="190" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusMedium}" />
+    </Style>
+    <Style Selector="ContextMenu.account-context-menu MenuItem">
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
+    </Style>
+    <Style Selector="ContextMenu.account-context-menu MenuItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+    </Style>
+    <Style Selector="ContextMenu.account-context-menu MenuItem:pressed">
+        <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+    </Style>
+    <Style Selector="ContextMenu.account-context-menu MenuItem.danger-context-item">
+        <Setter Property="Foreground" Value="{DynamicResource BrushDanger}" />
+    </Style>
     <Style Selector="NumericUpDown">
         <Setter Property="MinHeight" Value="{DynamicResource ControlMinimumHeight}" />
         <Setter Property="Background" Value="{DynamicResource BrushSurface}" />

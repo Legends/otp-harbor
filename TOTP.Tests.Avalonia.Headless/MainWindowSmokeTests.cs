@@ -225,6 +225,61 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void AccountContextMenu_UsesProductSurfaceAndDangerTreatment()
+    {
+        var edit = new MenuItem
+        {
+            Header = "Edit",
+            Icon = new SymbolIcon { Kind = SymbolIconKind.Edit, IconSize = 15 }
+        };
+        var showQr = new MenuItem
+        {
+            Header = "Show QR code",
+            Icon = new SymbolIcon { Kind = SymbolIconKind.QrCode, IconSize = 15 }
+        };
+        var delete = new MenuItem
+        {
+            Header = "Delete",
+            Icon = new SymbolIcon { Kind = SymbolIconKind.Delete, IconSize = 15 }
+        };
+        delete.Classes.Add("danger-context-item");
+        var menu = new ContextMenu
+        {
+            ItemsSource = new Control[] { edit, showQr, new Separator(), delete }
+        };
+        menu.Classes.Add("account-context-menu");
+        var host = new Button { Width = 120, Height = 40, ContextMenu = menu };
+        var window = new Window { Content = host };
+
+        try
+        {
+            window.Show();
+            menu.Open(host);
+            window.UpdateLayout();
+
+            Assert.Equal(190, menu.MinWidth);
+            Assert.Equal(new Thickness(6), menu.Padding);
+            Assert.Equal(new CornerRadius(6), menu.CornerRadius);
+            Assert.Equal(new Thickness(1), menu.BorderThickness);
+            Assert.Equal(34, edit.MinHeight);
+            Assert.Equal(new Thickness(10, 6), edit.Padding);
+            var normalForeground = Assert.IsType<SolidColorBrush>(edit.Foreground);
+            var dangerForeground = Assert.IsType<SolidColorBrush>(delete.Foreground);
+            Assert.NotEqual(normalForeground.Color, dangerForeground.Color);
+            Assert.Collection(
+                new[] { edit, showQr, delete },
+                item => Assert.Equal(SymbolIconKind.Edit, Assert.IsType<SymbolIcon>(item.Icon).Kind),
+                item => Assert.Equal(SymbolIconKind.QrCode, Assert.IsType<SymbolIcon>(item.Icon).Kind),
+                item => Assert.Equal(SymbolIconKind.Delete, Assert.IsType<SymbolIcon>(item.Icon).Kind));
+        }
+        finally
+        {
+            menu.Close();
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task AccountList_ProgrammaticSelectionScrollsImportedRowIntoView()
     {
         var accounts = Enumerable.Range(0, 50)
