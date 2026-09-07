@@ -127,4 +127,16 @@
   <data name="BiometricRecoveryRequired" xml:space="preserve"><value>Utilisez votre mot de passe principal pour déverrouiller le coffre et rétablir l’accès biométrique.</value></data>
   <data name="BiometricRetriesExhausted" xml:space="preserve"><value>L’accès biométrique est temporairement verrouillé. Utilisez votre mot de passe principal ou réessayez plus tard.</value></data>
   <data name="BiometricDisabledByPolicy" xml:space="preserve"><value>L’accès biométrique est indisponible en raison de la politique de sécurité de l’appareil.</value></data>
+  <data name="AppLockTitle" xml:space="preserve"><value>Verrouillage de l’application</value></data>
+  <data name="AppLockEnabledDescription" xml:space="preserve"><value>Exiger une authentification à l’ouverture d’OTP Harbor ou après 30 secondes en arrière-plan.</value></data>
+  <data name="AppLockDisabledDescription" xml:space="preserve"><value>L’authentification est désactivée. Toute personne utilisant cet appareil déverrouillé peut voir vos codes.</value></data>
+  <data name="DisableAppLock" xml:space="preserve"><value>Désactiver le verrouillage</value></data>
+  <data name="EnableAppLock" xml:space="preserve"><value>Activer le verrouillage</value></data>
+  <data name="DisableAppLockWarning" xml:space="preserve"><value>Sans verrouillage, OTP Harbor peut s’ouvrir sans vérification de l’utilisateur. Votre mot de passe principal reste le moyen de récupération. Saisissez-le pour confirmer.</value></data>
+  <data name="AppLockDisabled" xml:space="preserve"><value>Verrouillage désactivé. Toute personne utilisant cet appareil déverrouillé peut voir les codes.</value></data>
+  <data name="AppLockEnabled" xml:space="preserve"><value>Verrouillage activé. Le mot de passe principal sera requis après le prochain verrouillage.</value></data>
+  <data name="AppLockChangeFailed" xml:space="preserve"><value>Le réglage du verrouillage n’a pas pu être modifié de manière sûre.</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Importation / Exportation</value></data>
+  <data name="ImportGoogleQr" xml:space="preserve"><value>Importer depuis Google Authenticator</value></data>
+  <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Scannez un code QR de transfert Google Authenticator. Les exports de plusieurs comptes ou pages sont pris en charge un code QR à la fois.</value></data>
 </root>

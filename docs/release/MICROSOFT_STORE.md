@@ -1,7 +1,9 @@
 # Microsoft Store release
 
 Microsoft Store is the primary Windows distribution channel for OTP Harbor. GitHub remains the
-source repository and provides explicitly marked manual preview archives for advanced testing.
+source repository and provides explicitly marked preview archives for advanced testing. Direct
+GitHub builds discover updates through the project's Ed25519-signed appcast; Store builds leave
+update discovery and installation to Microsoft Store.
 
 The Store path uses MSIX. Microsoft signs an MSIX/AppX package after it passes Store certification,
 so the Partner Center submission does not require a CA-trusted project certificate. This does not

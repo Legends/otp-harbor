@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using TOTP.Core.Common;
 using TOTP.Core.Security;
@@ -20,6 +21,8 @@ public static class DependencyInjection
         IPlatformApplicationPaths applicationPaths,
         IPlatformFileSecurity fileSecurity)
     {
+        services.TryAddSingleton<IPlatformUnattendedUnlock,
+            UnavailablePlatformUnattendedUnlock>();
         ArgumentNullException.ThrowIfNull(fileSecurity);
         services.AddSingleton(fileSecurity);
 
@@ -92,6 +95,8 @@ public static class DependencyInjection
         // 3. Authorization Logic (The bridge)
         services.AddSingleton<IAuthorizationService, PortableAuthorizationService>();
         services.AddSingleton<IPlatformQuickUnlockEnrollment, PlatformQuickUnlockEnrollment>();
+        services.AddSingleton<IPlatformUnattendedUnlockEnrollment,
+            PlatformUnattendedUnlockEnrollment>();
         services.AddSingleton<AuthorizationState>();
         services.AddSingleton<IAccountManager, AccountManager>();
 

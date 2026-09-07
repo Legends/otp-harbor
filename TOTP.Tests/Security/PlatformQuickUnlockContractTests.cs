@@ -100,6 +100,28 @@ public sealed class PlatformQuickUnlockContractTests
         Assert.True(PlatformQuickUnlockContract.IsSupported(wrapper));
     }
 
+    [Fact]
+    public void IsSupported_WithReviewedAndroidUnattendedWrapper_ReturnsTrue()
+    {
+        var wrapper = CreateAndroidUnattendedWrapper();
+
+        Assert.True(PlatformQuickUnlockContract.IsSupported(wrapper));
+        Assert.True(
+            PlatformQuickUnlockContract.IsSupportedAndroidUnattendedWrapper(wrapper));
+    }
+
+    [Fact]
+    public void IsSupportedAndroidUnattendedWrapper_WithBiometricPolicy_ReturnsFalse()
+    {
+        var wrapper = CreateAndroidUnattendedWrapper() with
+        {
+            AuthenticationPolicy = PlatformQuickUnlockContract.UserVerificationRequired
+        };
+
+        Assert.False(
+            PlatformQuickUnlockContract.IsSupportedAndroidUnattendedWrapper(wrapper));
+    }
+
     [Theory]
     [InlineData(11, 48)]
     [InlineData(12, 47)]
@@ -127,6 +149,20 @@ public sealed class PlatformQuickUnlockContractTests
             Algorithm = PlatformQuickUnlockContract.AndroidAes256GcmAlgorithm,
             Nonce = new byte[nonceLength],
             Ciphertext = new byte[ciphertextLength]
+        }
+    };
+
+    private static PlatformQuickUnlockWrapperV2 CreateAndroidUnattendedWrapper() => new()
+    {
+        Provider = PlatformQuickUnlockContract.AndroidKeystoreUnattendedProvider,
+        ProviderVersion = PlatformQuickUnlockContract.AndroidKeystoreUnattendedProviderVersion,
+        AuthenticationPolicy = PlatformQuickUnlockContract.UserVerificationNotRequired,
+        KeyReference = "TOTP_ANDROID_UNATTENDED_0123456789abcdef0123456789abcdef",
+        WrappedKey = new PlatformWrappedKeyV2
+        {
+            Algorithm = PlatformQuickUnlockContract.AndroidAes256GcmAlgorithm,
+            Nonce = new byte[12],
+            Ciphertext = new byte[48]
         }
     };
 }

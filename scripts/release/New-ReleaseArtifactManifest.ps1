@@ -11,7 +11,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$OutputPath,
 
-    [ValidateSet("signed", "unsigned-preview")]
+    [ValidateSet("signed", "unsigned-platform-preview", "unsigned-preview")]
     [string]$ReleaseProfile = "signed"
 )
 

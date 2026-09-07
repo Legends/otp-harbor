@@ -127,4 +127,16 @@
   <data name="BiometricRecoveryRequired" xml:space="preserve"><value>Entsperren Sie mit Ihrem Masterpasswort, um den biometrischen Zugriff wiederherzustellen.</value></data>
   <data name="BiometricRetriesExhausted" xml:space="preserve"><value>Der biometrische Zugriff ist vorübergehend gesperrt. Verwenden Sie Ihr Masterpasswort oder versuchen Sie es später erneut.</value></data>
   <data name="BiometricDisabledByPolicy" xml:space="preserve"><value>Der biometrische Zugriff ist aufgrund der Gerätesicherheitsrichtlinie nicht verfügbar.</value></data>
+  <data name="AppLockTitle" xml:space="preserve"><value>App-Sperre</value></data>
+  <data name="AppLockEnabledDescription" xml:space="preserve"><value>Beim Öffnen von OTP Harbor oder nach 30 Sekunden im Hintergrund ist eine Authentifizierung erforderlich.</value></data>
+  <data name="AppLockDisabledDescription" xml:space="preserve"><value>Die Authentifizierung ist deaktiviert. Jeder mit Zugriff auf dieses entsperrte Gerät kann deine Codes sehen.</value></data>
+  <data name="DisableAppLock" xml:space="preserve"><value>App-Sperre deaktivieren</value></data>
+  <data name="EnableAppLock" xml:space="preserve"><value>App-Sperre aktivieren</value></data>
+  <data name="DisableAppLockWarning" xml:space="preserve"><value>Ohne App-Sperre kann OTP Harbor ohne Benutzerprüfung geöffnet werden. Dein Master-Passwort bleibt der Wiederherstellungsweg. Gib es zur Bestätigung ein.</value></data>
+  <data name="AppLockDisabled" xml:space="preserve"><value>App-Sperre deaktiviert. Jeder Benutzer dieses entsperrten Geräts kann die Codes sehen.</value></data>
+  <data name="AppLockEnabled" xml:space="preserve"><value>App-Sperre aktiviert. Nach der nächsten Sperre ist das Master-Passwort erforderlich.</value></data>
+  <data name="AppLockChangeFailed" xml:space="preserve"><value>Die App-Sperre konnte nicht sicher geändert werden.</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Import / Export</value></data>
+  <data name="ImportGoogleQr" xml:space="preserve"><value>Aus Google Authenticator importieren</value></data>
+  <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Scanne einen Übertragungs-QR-Code von Google Authenticator. Exporte mit mehreren Konten oder Seiten werden QR-Code für QR-Code unterstützt.</value></data>
 </root>

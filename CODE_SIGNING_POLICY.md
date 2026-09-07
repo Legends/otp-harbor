@@ -5,7 +5,7 @@
 This policy covers the two distinct Windows distribution paths. They must never be presented as interchangeable:
 
 - **Microsoft Store (primary):** CI creates an unsigned MSIX solely for Partner Center. Microsoft signs it after successful certification and the Store manages updates.
-- **GitHub (secondary):** source code and explicitly labeled manual previews. Current Windows RC archives are unsigned and disable automatic updates. A future stable direct-download channel remains blocked unless an independent Authenticode trust path is approved and verified.
+- **GitHub (secondary):** source code and explicitly labeled previews. Direct Windows and portable Linux packages use an Ed25519-signed appcast; current Windows RC executables remain unsigned at the operating-system level. A future stable Windows direct-download channel remains blocked unless an independent Authenticode trust path is approved and verified.
 
 An unsigned Store submission MSIX is not a sideloading artifact. It must not be attached to a GitHub Release, linked as an installer, or described as trusted before Store certification.
 
@@ -22,6 +22,8 @@ Changes from contributors who do not have commit access require maintainer revie
 - Release versions use the documented `v<major>.<minor>.<patch>` format. Microsoft Store package versions use four components and reserve the fourth component as `0`.
 - The Store package is built from this public repository with the exact case-sensitive identity supplied by Partner Center. Placeholder CI identities are smoke-test inputs only.
 - Store packages set `DistributionMode` to `store`, disable application-owned updates, and exclude the standalone updater.
+- GitHub direct packages set `DistributionMode` to `direct`. Stable packages use the stable GitHub Release appcast; RC packages use the signed public RC feed and may advance to a newer RC or stable release.
+- The public RC endpoint mirrors only the highest versioned published release whose appcast signature verifies against the client-embedded Ed25519 key. It never signs or modifies release metadata.
 - The generated unsigned MSIX and its SHA-256 metadata are retained only for the controlled Partner Center handoff.
 - The Store package is published only after certification plus physical acceptance of install, launch, Windows Hello, QR scanning, encrypted backup/restore, lock behavior, and Store-managed updates.
 - Any future direct-download signing integration must bind the artifact to its GitHub workflow run and source commit, expose no certificate private key to the repository, sign only reviewed first-party binaries, and verify product metadata plus Authenticode status before publication.
@@ -31,7 +33,7 @@ Release engineering files are owned through [CODEOWNERS](.github/CODEOWNERS). Ch
 
 ## Privacy
 
-See the [privacy policy](PRIVACY.md). OTP Harbor does not transfer vault or usage information to project-operated systems. Store packages use Store-managed updates and disable the application-owned GitHub update client. Current GitHub previews also disable automatic updates.
+See the [privacy policy](PRIVACY.md). OTP Harbor does not transfer vault or usage information to project-operated systems. Store packages use Store-managed updates and disable the application-owned GitHub update client. GitHub direct packages contact only the configured signed update feed and artifact URLs during an update check.
 
 ## Verification and incident response
 

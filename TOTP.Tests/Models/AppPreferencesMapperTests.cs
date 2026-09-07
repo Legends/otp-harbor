@@ -15,6 +15,7 @@ public sealed class AppPreferencesMapperTests
         Assert.Equal("de-DE", preferences.CultureName);
         Assert.Equal(AppLogLevel.Warning, preferences.MinimumLogLevel);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, preferences.PreferredUnlockMethod);
+        Assert.False(preferences.AppLockEnabled);
         Assert.Equal(7, preferences.IdleTimeoutMinutes);
         Assert.False(preferences.LockOnSessionLock);
         Assert.False(preferences.LockOnMinimize);
@@ -41,6 +42,7 @@ public sealed class AppPreferencesMapperTests
         Assert.Equal("de-DE", settings.CultureName);
         Assert.Equal(AppLogLevel.Warning, settings.MinimumLogLevel);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, settings.PreferredUnlockMethod);
+        Assert.False(settings.AppLockEnabled);
         Assert.Equal(TimeSpan.FromMinutes(7), settings.IdleTimeout);
         Assert.False(settings.LockOnSessionLock);
         Assert.False(settings.LockOnMinimize);
@@ -98,6 +100,7 @@ public sealed class AppPreferencesMapperTests
         CultureName = "de-DE",
         MinimumLogLevel = AppLogLevel.Warning,
         PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock,
+        AppLockEnabled = false,
         IdleTimeout = TimeSpan.FromMinutes(7),
         LockOnSessionLock = false,
         LockOnMinimize = false,

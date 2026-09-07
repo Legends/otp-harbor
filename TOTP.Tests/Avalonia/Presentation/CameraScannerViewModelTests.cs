@@ -181,6 +181,107 @@ public sealed class CameraScannerViewModelTests
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Theory]
+    [InlineData("otpauth://totp/Example:alice?secret=JBSWY3DPEHPK3PXP", QrPayloadKind.StandardAccount, 1)]
+    [InlineData("otpauth-migration://offline?data=synthetic", QrPayloadKind.GoogleAuthenticatorMigration, 3)]
+    public async Task OpenImageAsync_WhenQrImageIsValid_UsesTheSharedImportWorkflow(
+        string payload,
+        QrPayloadKind kind,
+        int accountCount)
+    {
+        var selected = new Mock<INativeStorageFile>();
+        selected.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MemoryStream([1, 2, 3]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickQrImageAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(selected.Object);
+        var decoder = new Mock<IQrImageDecoder>();
+        decoder.Setup(value => value.DecodeAsync(
+                It.IsAny<Stream>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(QrImageDecodeResult.Decoded(payload));
+        var validator = new Mock<IQrPayloadValidator>();
+        validator.Setup(value => value.Validate(payload))
+            .Returns(new QrPayloadValidationResult(
+                true,
+                "Example",
+                "alice",
+                kind,
+                accountCount));
+        var import = new Mock<IQrAccountImportService>();
+        import.Setup(value => value.ImportAsync(
+                payload,
+                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
+                kind == QrPayloadKind.GoogleAuthenticatorMigration
+                    ? QrAccountImportStatus.BulkImported
+                    : QrAccountImportStatus.Added,
+                Guid.NewGuid(),
+                "Example",
+                "alice",
+                TotalCount: accountCount,
+                AddedCount: accountCount)));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        using var sut = CreateSut(
+            Mock.Of<IQrScannerRunner>(),
+            validator.Object,
+            importService: import.Object,
+            dialogs: dialogs.Object,
+            imageDecoder: decoder.Object,
+            filePicker: picker.Object);
+
+        await sut.OpenImageAsync();
+
+        Assert.Equal(NotificationSeverity.Success, sut.LastImageNotificationSeverity);
+        import.Verify(value => value.ImportAsync(
+            payload,
+            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+        dialogs.Verify(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(),
+                It.IsAny<CancellationToken>()),
+            kind == QrPayloadKind.GoogleAuthenticatorMigration ? Times.Once() : Times.Never());
+    }
+
+    [Fact]
+    public async Task OpenImageAsync_WhenImageContainsNoQrCode_DoesNotValidateOrImport()
+    {
+        var selected = new Mock<INativeStorageFile>();
+        selected.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MemoryStream([1, 2, 3]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickQrImageAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(selected.Object);
+        var decoder = new Mock<IQrImageDecoder>();
+        decoder.Setup(value => value.DecodeAsync(
+                It.IsAny<Stream>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(QrImageDecodeResult.Rejected(QrImageDecodeStatus.NoQrCode));
+        var validator = new Mock<IQrPayloadValidator>();
+        var import = new Mock<IQrAccountImportService>();
+        using var sut = CreateSut(
+            Mock.Of<IQrScannerRunner>(),
+            validator.Object,
+            importService: import.Object,
+            imageDecoder: decoder.Object,
+            filePicker: picker.Object);
+
+        await sut.OpenImageAsync();
+
+        Assert.Contains("No readable QR code", sut.Message, StringComparison.Ordinal);
+        Assert.Equal(NotificationSeverity.Error, sut.LastImageNotificationSeverity);
+        validator.Verify(value => value.Validate(It.IsAny<string>()), Times.Never);
+        import.Verify(value => value.ImportAsync(
+            It.IsAny<string>(),
+            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     [Fact]
     public async Task CancelAsync_WhenScannerIsIdle_RequestsDialogClose()
     {
@@ -413,9 +514,13 @@ public sealed class CameraScannerViewModelTests
         IQrAccountImportService? importService = null,
         TimeSpan? reconnectDelay = null,
         IAvaloniaLocalizationService? localization = null,
-        IAvaloniaDialogService? dialogs = null) =>
+        IAvaloniaDialogService? dialogs = null,
+        IQrImageDecoder? imageDecoder = null,
+        IAvaloniaFilePicker? filePicker = null) =>
         new(
             runner,
+            imageDecoder ?? Mock.Of<IQrImageDecoder>(),
+            filePicker ?? Mock.Of<IAvaloniaFilePicker>(),
             validator ?? Mock.Of<IQrPayloadValidator>(),
             imageFactory ?? Mock.Of<IAvaloniaQrImageFactory>(),
             new ImmediateUiScheduler(),
@@ -448,6 +553,8 @@ public sealed class CameraScannerViewModelTests
                 AvaloniaStringKeys.CameraNotFound => "No available camera was found.",
                 AvaloniaStringKeys.CameraStartFailed =>
                     "The camera scanner could not start safely.",
+                AvaloniaStringKeys.QrImageNoCode =>
+                    "No readable QR code was found in the selected image.",
                 _ => key
             });
         return localization.Object;

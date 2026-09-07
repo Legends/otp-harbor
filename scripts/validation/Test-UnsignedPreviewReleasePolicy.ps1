@@ -24,13 +24,14 @@ try {
         -PackageDirectory $packageRoot `
         -DistributionMode direct `
         -Channel rc `
-        -DisableUpdates
+        -AppcastUrl "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
 
     $configured = Get-Content (Join-Path $packageRoot "appsettings.json") -Raw | ConvertFrom-Json
-    if ($configured.AutoUpdate.Enabled -ne $false -or
+    if ($configured.AutoUpdate.Enabled -ne $true -or
         $configured.AutoUpdate.Channel -ne "rc" -or
+        $configured.AutoUpdate.AppcastUrl -cne "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml" -or
         $configured.AutoUpdate.DistributionMode -ne "direct") {
-        throw "Unsigned preview package policy did not disable automatic updates."
+        throw "Direct preview package policy did not enable the signed RC feed."
     }
 
     & (Join-Path $PSScriptRoot "../release/Set-PackageUpdatePolicy.ps1") `
@@ -43,6 +44,16 @@ try {
         $configured.AutoUpdate.Channel -ne "stable" -or
         $configured.AutoUpdate.DistributionMode -ne "direct") {
         throw "Stable direct package policy did not enable automatic updates."
+    }
+
+    & (Join-Path $PSScriptRoot "../release/Set-PackageUpdatePolicy.ps1") `
+        -PackageDirectory $packageRoot `
+        -DistributionMode store `
+        -Channel stable
+    $configured = Get-Content (Join-Path $packageRoot "appsettings.json") -Raw | ConvertFrom-Json
+    if ($configured.AutoUpdate.Enabled -ne $false -or
+        $configured.AutoUpdate.DistributionMode -ne "store") {
+        throw "Externally managed Store policy did not disable application-owned updates."
     }
 
     $artifactNames = @(
@@ -62,19 +73,76 @@ try {
         -SourceCommit ("a" * 40) `
         -ArtifactPath $artifactPaths `
         -OutputPath $manifestPath `
-        -ReleaseProfile unsigned-preview | Out-Null
+        -ReleaseProfile unsigned-platform-preview | Out-Null
     & (Join-Path $PSScriptRoot "../release/Test-ReleaseArtifactManifest.ps1") `
         -ManifestPath $manifestPath `
         -ArtifactDirectory $artifactRoot | Out-Null
 
     $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
-    if ($manifest.releaseProfile -ne "unsigned-preview" -or
+    if ($manifest.releaseProfile -ne "unsigned-platform-preview" -or
         @($manifest.artifacts).Count -ne 4 -or
         @($manifest.artifacts | Where-Object { $_.fileName -match '~' }).Count -ne 0 -or
-        @($manifest.artifacts | Where-Object {
-            $_.updatePolicy -ne "unsigned-preview-manual-download"
-        }).Count -ne 0) {
-        throw "Unsigned preview manifest contains an unsafe update policy."
+        @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "signed-appcast" }).Count -ne 1 -or
+        @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "manual-signed-release" }).Count -ne 1 -or
+        @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "package-manager" }).Count -ne 1 -or
+        @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "manual-download" }).Count -ne 1) {
+        throw "Unsigned-platform preview manifest contains an unsafe update policy."
+    }
+
+    $publishedReleasesPath = Join-Path $testRoot "published-releases.json"
+    $publishedReleases = @(
+        @{
+            tag_name = "v2.0.0"
+            draft = $false
+            assets = @(@{ name = "appcast-v2.xml" }, @{ name = "appcast-v2.xml.signature" })
+        },
+        @{
+            tag_name = "v2.1.0-rc2"
+            draft = $false
+            assets = @(@{ name = "appcast-v2.xml" }, @{ name = "appcast-v2.xml.signature" })
+        },
+        @{
+            tag_name = "v9.0.0"
+            draft = $true
+            assets = @(@{ name = "appcast-v2.xml" }, @{ name = "appcast-v2.xml.signature" })
+        },
+        @{
+            tag_name = "v3.0.0-rc1"
+            draft = $false
+            assets = @(@{ name = "appcast-v2.xml" })
+        }
+    ) | ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText(
+        $publishedReleasesPath,
+        $publishedReleases,
+        [Text.UTF8Encoding]::new($false))
+    $selectedFeed = & (Join-Path $PSScriptRoot "../release/Select-PublishedUpdateFeed.ps1") `
+        -ReleasesJsonPath $publishedReleasesPath
+    if ($selectedFeed -cne "v2.1.0-rc2") {
+        throw "The public RC endpoint did not select the highest signed published feed."
+    }
+
+    $sameBaseReleasesPath = Join-Path $testRoot "same-base-releases.json"
+    $sameBaseReleases = @(
+        @{
+            tag_name = "v2.1.0-rc12"
+            draft = $false
+            assets = @(@{ name = "appcast-v2.xml" }, @{ name = "appcast-v2.xml.signature" })
+        },
+        @{
+            tag_name = "v2.1.0"
+            draft = $false
+            assets = @(@{ name = "appcast-v2.xml" }, @{ name = "appcast-v2.xml.signature" })
+        }
+    ) | ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText(
+        $sameBaseReleasesPath,
+        $sameBaseReleases,
+        [Text.UTF8Encoding]::new($false))
+    $selectedStableFeed = & (Join-Path $PSScriptRoot "../release/Select-PublishedUpdateFeed.ps1") `
+        -ReleasesJsonPath $sameBaseReleasesPath
+    if ($selectedStableFeed -cne "v2.1.0") {
+        throw "A stable release did not supersede RCs of the same base version."
     }
 
     $legacyArtifactRoot = Join-Path $testRoot "legacy-artifacts"
@@ -98,7 +166,7 @@ try {
         -ManifestPath $legacyManifestPath `
         -ArtifactDirectory $legacyArtifactRoot | Out-Null
 
-    Write-Output "Package update and unsigned preview release policies are valid."
+    Write-Output "Package ownership and signed preview update policies are valid."
 }
 finally {
     if (Test-Path -LiteralPath $testRoot) {

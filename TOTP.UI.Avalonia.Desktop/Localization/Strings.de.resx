@@ -120,6 +120,8 @@
   <data name="ExportEncryptedBackup" xml:space="preserve"><value>Verschlüsselte Sicherung exportieren…</value></data>
   <data name="ImportConflictHandling" xml:space="preserve"><value>Behandlung von Importkonflikten</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Konten importieren</value></data>
+  <data name="ImportOtpHarborBackup" xml:space="preserve"><value>OTP-Harbor-Sicherung importieren</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importiere eine verschlüsselte OTP-Harbor-.totp-Sicherung oder eine kompatible Kontendatei.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Konten exportieren</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Erstellen Sie eine portable, passwortgeschützte Sicherung aller Konten.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Support-Diagnose</value></data>
@@ -130,6 +132,16 @@
   <data name="VerifyAppcast" xml:space="preserve"><value>Nach Updates suchen</value></data>
   <data name="SoftwareUpdates" xml:space="preserve"><value>Softwareupdates</value></data>
   <data name="ScanQrCamera" xml:space="preserve"><value>QR-Code mit Kamera scannen</value></data>
+  <data name="ImportQrCode" xml:space="preserve"><value>QR-Code importieren</value></data>
+  <data name="OpenQrImage" xml:space="preserve"><value>QR-Bild öffnen</value></data>
+  <data name="SelectQrImage" xml:space="preserve"><value>QR-Code-Bild auswählen</value></data>
+  <data name="QrImageFiles" xml:space="preserve"><value>QR-Code-Bilder</value></data>
+  <data name="QrImageReading" xml:space="preserve"><value>QR-Code-Bild wird gelesen…</value></data>
+  <data name="QrImageNoCode" xml:space="preserve"><value>Im ausgewählten Bild wurde kein lesbarer QR-Code gefunden.</value></data>
+  <data name="QrImageInvalid" xml:space="preserve"><value>Die ausgewählte Datei ist kein unterstütztes QR-Code-Bild.</value></data>
+  <data name="QrImageTooLarge" xml:space="preserve"><value>Das ausgewählte QR-Code-Bild überschreitet die sichere Größenbegrenzung.</value></data>
+  <data name="QrImageReadFailedSafely" xml:space="preserve"><value>Das QR-Code-Bild konnte nicht sicher gelesen werden. Es wurden keine Kontodaten geändert.</value></data>
+  <data name="QrImageSelectionCancelled" xml:space="preserve"><value>Es wurde kein QR-Code-Bild ausgewählt.</value></data>
   <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Scannen Sie einen Konto-QR-Code oder einen Export-QR-Code aus Google Authenticator.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Aus Google Authenticator importieren</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Google-Authenticator-Export erkannt. Gefundene Konten: {0}. Jetzt importieren?</value></data>
@@ -206,6 +218,7 @@
   <data name="UpdateDisabled" xml:space="preserve"><value>Automatische Updates sind deaktiviert oder für dieses Paket nicht konfiguriert.</value></data>
   <data name="UpdateNoneAvailable" xml:space="preserve"><value>Es ist kein passendes signiertes Update verfügbar.</value></data>
   <data name="UpdateAvailable" xml:space="preserve"><value>Das signierte Update {0} ist verfügbar. Der Download startet erst, wenn Sie „Herunterladen“ auswählen.</value></data>
+  <data name="UpdateAvailableOnStartup" xml:space="preserve"><value>Das signierte Update {0} ist verfügbar. Öffnen Sie Einstellungen → Über, um es zu prüfen.</value></data>
   <data name="UpdateResponseIncomplete" xml:space="preserve"><value>Die Update-Antwort war unvollständig. Es wurde kein Download gestartet.</value></data>
   <data name="UpdateCheckCancelled" xml:space="preserve"><value>Die Update-Prüfung wurde abgebrochen.</value></data>
   <data name="UpdateCheckFailed" xml:space="preserve"><value>Die Update-Prüfung ist sicher fehlgeschlagen. Es wurde kein Download gestartet.</value></data>
@@ -295,4 +308,7 @@
   <data name="CapabilityPermissionDenied" xml:space="preserve"><value>Berechtigung verweigert</value></data>
   <data name="CapabilityFailed" xml:space="preserve"><value>fehlgeschlagen</value></data>
   <data name="Unknown" xml:space="preserve"><value>unbekannt</value></data>
+  <data name="ImportGoogleAuthenticator" xml:space="preserve"><value>Aus Google Authenticator importieren</value></data>
+  <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Wähle einen scharfen Screenshot oder ein gespeichertes Bild eines Google-Authenticator-Übertragungs-QR-Codes. Exporte mit mehreren Konten oder Seiten werden Bild für Bild importiert.</value></data>
+  <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Google-Authenticator-QR-Bild auswählen…</value></data>
 </root>

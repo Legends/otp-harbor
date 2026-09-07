@@ -4,6 +4,8 @@ OTP Harbor's direct Avalonia packages use an Ed25519-signed, target-qualified `a
 
 Linux DEB and Microsoft Store builds are stamped as externally managed and do not use application-owned updates. Microsoft Store is the primary Windows distribution channel; Store certification supplies the package signature and the Store owns update delivery.
 
+After the authorized desktop shell opens, a GitHub direct package performs one best-effort signed-feed check. An available update is announced in the main notification area and can be reviewed under Settings → About. Feed failures do not disturb vault use, and no package is downloaded without a separate user action. Store and package-manager builds return `Disabled` before any application-owned network request.
+
 ## Brand migration compatibility
 
 The OTP Harbor rebrand changes the GitHub repository URL, product metadata, package display names, and future release-asset names. It does not change the Ed25519 public key, appcast schema, channel policy, verification order, or update-installation trust boundaries. The release-manifest generator accepts both current `OTP-Harbor` and legacy `TOTP-Manager` asset names so previously published artifacts remain verifiable. Existing installations may follow GitHub's repository redirect to the renamed repository, while newly built packages use the canonical `Legends/otp-harbor` feed URL.
@@ -14,7 +16,8 @@ The OTP Harbor rebrand changes the GitHub repository URL, product metadata, pack
 - Every direct payload, the release manifest, and the appcast are signed with the configured NetSparkle Ed25519 key.
 - Microsoft Store Windows packages require successful Store certification and a Store signature. Any future stable direct-download Windows executable requires independently verified Authenticode signing.
 - Stable macOS artifacts require Developer ID signing and notarization.
-- Unsigned RC packages disable automatic updates and are distributed only as explicit manual-download previews.
+- RC Windows executables remain unsigned at the operating-system level, but direct Windows and portable Linux RC packages use the same Ed25519 payload/appcast trust boundary as other GitHub direct packages. The first RC download remains an explicitly labeled preview and must be verified independently.
+- RC clients read `https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml`. The Pages workflow mirrors only the highest published signed feed after verifying its Ed25519 signature; RC clients accept a newer RC or stable entry.
 
 ## Generate Ed25519 keys
 
@@ -78,18 +81,20 @@ The private key path is supplied to tooling; private key contents must never app
 - `NETSPARKLE_PRIVATE_KEY`
 - macOS Developer ID/notarization secrets documented by the release workflow
 
-The active Store packaging workflow requires no certificate secret and produces an unsigned Partner Center input that must never be directly distributed. The optional direct-download workflow retains dormant SignPath controls documented in [SIGNPATH_FOUNDATION_ONBOARDING.md](SIGNPATH_FOUNDATION_ONBOARDING.md), but there is no Foundation certificate or active SignPath production configuration. That path fails closed without an approved provider configuration. RC tags publish only explicitly labeled unsigned Windows/Linux previews with automatic updates disabled.
+The active Store packaging workflow requires no certificate secret and produces an unsigned Partner Center input that must never be directly distributed. The optional stable direct-download workflow retains dormant SignPath controls documented in [SIGNPATH_FOUNDATION_ONBOARDING.md](SIGNPATH_FOUNDATION_ONBOARDING.md), but there is no Foundation certificate or active SignPath production configuration. That path fails closed without an approved provider configuration. RC tags publish explicitly labeled Windows/Linux previews; their Windows executables are not Authenticode-signed, while eligible direct artifacts and update metadata require the configured NetSparkle Ed25519 credentials.
 
 ## Release behavior
 
-For a future signed direct-download stable tag, CI:
+For a GitHub direct release, CI:
 
 1. Builds and tests all supported projects.
 2. Produces target-qualified Avalonia packages.
-3. Applies platform signatures where required.
+3. Applies platform signatures where required; RC Windows previews remain explicitly unsigned at this layer.
 4. Signs every direct payload and the aggregate release manifest.
 5. Generates and verifies `appcast-v2.xml`.
 6. Uploads the complete asset set to a draft and publishes it only after validation succeeds.
+
+After publishing either an RC or stable GitHub release, CI requests a website deployment. That deployment selects the highest versioned published release containing both appcast files, verifies the appcast against the public key embedded in the client, and publishes it at the stable RC endpoint. Release assets remain immutable; the public endpoint is only a signed-feed pointer.
 
 ## Verified installation handoff
 

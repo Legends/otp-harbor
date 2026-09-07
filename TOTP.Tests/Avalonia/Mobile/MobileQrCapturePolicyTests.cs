@@ -63,6 +63,44 @@ public sealed class MobileQrCapturePolicyTests
             MobileQrCapturePolicy.MaximumDecodedPixels);
     }
 
+    [Theory]
+    [InlineData(0, 1080)]
+    [InlineData(1920, 0)]
+    [InlineData(4097, 500)]
+    [InlineData(3000, 2000)]
+    public void CreateDecodeSizes_WhenDecodedBitmapIsInvalid_ReturnsNoPasses(
+        int width,
+        int height)
+    {
+        var result = MobileQrCapturePolicy.CreateDecodeSizes(width, height);
+
+        Assert.Empty(result);
+    }
+
+    [Theory]
+    [InlineData(2000, 1500, 2000, 1500, 1000, 750, 500, 375)]
+    [InlineData(1001, 751, 1001, 751, 500, 375, 250, 187)]
+    public void CreateDecodeSizes_WhenDecodedBitmapIsSupported_ReturnsProgressivePasses(
+        int width,
+        int height,
+        int originalWidth,
+        int originalHeight,
+        int halfWidth,
+        int halfHeight,
+        int quarterWidth,
+        int quarterHeight)
+    {
+        var result = MobileQrCapturePolicy.CreateDecodeSizes(width, height);
+
+        Assert.Equal(
+            [
+                new MobileQrDecodeSize(originalWidth, originalHeight),
+                new MobileQrDecodeSize(halfWidth, halfHeight),
+                new MobileQrDecodeSize(quarterWidth, quarterHeight)
+            ],
+            result);
+    }
+
     private static int CeilingDivide(int value, int divisor) =>
         (value + divisor - 1) / divisor;
 }

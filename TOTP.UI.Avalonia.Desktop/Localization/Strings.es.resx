@@ -121,6 +121,8 @@ La entrada cifrada de la cuenta se eliminará permanentemente. Esta acción no s
   <data name="ExportEncryptedBackup" xml:space="preserve"><value>Exportar copia de seguridad cifrada…</value></data>
   <data name="ImportConflictHandling" xml:space="preserve"><value>Gestión de conflictos de importación</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Importar cuentas</value></data>
+  <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Importar copia de OTP Harbor</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importa una copia cifrada .totp de OTP Harbor o un archivo de cuentas compatible.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exportar cuentas</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Crea una copia de seguridad portátil de todas las cuentas protegida por contraseña.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Diagnóstico de soporte</value></data>
@@ -131,6 +133,16 @@ La entrada cifrada de la cuenta se eliminará permanentemente. Esta acción no s
   <data name="VerifyAppcast" xml:space="preserve"><value>Buscar actualizaciones</value></data>
   <data name="SoftwareUpdates" xml:space="preserve"><value>Actualizaciones de software</value></data>
   <data name="ScanQrCamera" xml:space="preserve"><value>Escanear QR con la cámara</value></data>
+  <data name="ImportQrCode" xml:space="preserve"><value>Importar código QR</value></data>
+  <data name="OpenQrImage" xml:space="preserve"><value>Abrir imagen QR</value></data>
+  <data name="SelectQrImage" xml:space="preserve"><value>Seleccionar una imagen de código QR</value></data>
+  <data name="QrImageFiles" xml:space="preserve"><value>Imágenes de códigos QR</value></data>
+  <data name="QrImageReading" xml:space="preserve"><value>Leyendo la imagen del código QR…</value></data>
+  <data name="QrImageNoCode" xml:space="preserve"><value>No se encontró ningún código QR legible en la imagen seleccionada.</value></data>
+  <data name="QrImageInvalid" xml:space="preserve"><value>El archivo seleccionado no es una imagen de código QR compatible.</value></data>
+  <data name="QrImageTooLarge" xml:space="preserve"><value>La imagen de código QR seleccionada supera el límite de tamaño seguro.</value></data>
+  <data name="QrImageReadFailedSafely" xml:space="preserve"><value>La imagen del código QR no se pudo leer de forma segura. No se modificaron datos de cuentas.</value></data>
+  <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No se seleccionó ninguna imagen de código QR.</value></data>
   <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Escanee el QR de una cuenta o un QR de exportación de Google Authenticator.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Se ha detectado una exportación de Google Authenticator. Cuentas encontradas: {0}. ¿Importarlas?</value></data>
@@ -207,6 +219,7 @@ La entrada cifrada de la cuenta se eliminará permanentemente. Esta acción no s
   <data name="UpdateDisabled" xml:space="preserve"><value>Las actualizaciones automáticas están desactivadas o no están configuradas para este paquete.</value></data>
   <data name="UpdateNoneAvailable" xml:space="preserve"><value>No hay ninguna actualización firmada aplicable disponible.</value></data>
   <data name="UpdateAvailable" xml:space="preserve"><value>La actualización firmada {0} está disponible. La descarga solo comienza cuando eliges Descargar.</value></data>
+  <data name="UpdateAvailableOnStartup" xml:space="preserve"><value>La actualización firmada {0} está disponible. Abre Configuración → Acerca de para revisarla.</value></data>
   <data name="UpdateResponseIncomplete" xml:space="preserve"><value>La respuesta de actualización estaba incompleta. No se inició ninguna descarga.</value></data>
   <data name="UpdateCheckCancelled" xml:space="preserve"><value>Comprobación de actualizaciones cancelada.</value></data>
   <data name="UpdateCheckFailed" xml:space="preserve"><value>La comprobación de actualizaciones falló de forma segura. No se inició ninguna descarga.</value></data>
@@ -296,4 +309,7 @@ La entrada cifrada de la cuenta se eliminará permanentemente. Esta acción no s
   <data name="CapabilityPermissionDenied" xml:space="preserve"><value>permiso denegado</value></data>
   <data name="CapabilityFailed" xml:space="preserve"><value>fallo</value></data>
   <data name="Unknown" xml:space="preserve"><value>desconocido</value></data>
+  <data name="ImportGoogleAuthenticator" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
+  <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Elige una captura nítida o una imagen guardada de un código QR de transferencia de Google Authenticator. Las exportaciones de varias cuentas o páginas se importan una imagen QR a la vez.</value></data>
+  <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Elegir imagen QR de Google Authenticator…</value></data>
 </root>

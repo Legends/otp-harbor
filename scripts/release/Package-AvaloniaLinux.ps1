@@ -8,6 +8,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ReleaseVersion,
 
+    [string]$AppcastUrl,
+
     [switch]$FrameworkDependent,
 
     [switch]$DisableUpdates
@@ -54,6 +56,7 @@ Copy-Item -Path (Join-Path $resolvedPublish "*") -Destination $portableRoot -Rec
     -PackageDirectory $portableRoot `
     -DistributionMode direct `
     -Channel $releaseChannel `
+    -AppcastUrl $AppcastUrl `
     -DisableUpdates:$DisableUpdates
 $portableExecutable = Join-Path $portableRoot "TOTP.UI.Avalonia.Desktop"
 & chmod "+x" $portableExecutable
@@ -75,7 +78,7 @@ Copy-Item -Path (Join-Path $resolvedPublish "*") -Destination $debApp -Recurse
     -PackageDirectory $debApp `
     -DistributionMode package-manager `
     -Channel $releaseChannel `
-    -DisableUpdates:$DisableUpdates
+    -DisableUpdates
 & chmod "+x" (Join-Path $debApp "TOTP.UI.Avalonia.Desktop")
 if ($LASTEXITCODE -ne 0) { throw "Could not mark the packaged Linux host executable." }
 

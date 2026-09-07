@@ -36,7 +36,7 @@
                     automation:AutomationProperties.Name="{Binding LockText}"
                     Classes="icon-action"
                     Command="{Binding LockCommand}"
-                    IsVisible="{Binding IsAccountsVisible}"
+                    IsVisible="{Binding IsManualLockVisible}"
                     ToolTip.Tip="{Binding LockText}">
                     <controls:SymbolIcon IconSize="24" Kind="Lock" />
                 </Button>
@@ -461,6 +461,58 @@
                                 <TextBlock
                                     FontSize="17"
                                     FontWeight="SemiBold"
+                                    Text="{Binding AppLockTitleText}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    IsVisible="{Binding IsAppLockEnabled}"
+                                    Text="{Binding AppLockEnabledDescriptionText}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushWarning}"
+                                    IsVisible="{Binding IsAppLockDisabled}"
+                                    Text="{Binding AppLockDisabledDescriptionText}"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    Classes="wide secondary"
+                                    Command="{Binding BeginDisableAppLockCommand}"
+                                    Content="{Binding DisableAppLockText}"
+                                    IsVisible="{Binding IsAppLockEnabled}" />
+                                <Button
+                                    Classes="wide primary"
+                                    Command="{Binding EnableAppLockCommand}"
+                                    Content="{Binding EnableAppLockText}"
+                                    IsVisible="{Binding IsAppLockDisabled}" />
+                                <Border
+                                    Background="{DynamicResource BrushSurfaceAlternate}"
+                                    CornerRadius="8"
+                                    IsVisible="{Binding IsDisableAppLockConfirmationVisible}"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock
+                                            Text="{Binding DisableAppLockWarningText}"
+                                            TextWrapping="Wrap" />
+                                        <TextBox
+                                            automation:AutomationProperties.Name="{Binding MasterPasswordText}"
+                                            PasswordChar="●"
+                                            PlaceholderText="{Binding MasterPasswordText}"
+                                            Text="{Binding AppLockRecoveryPassword, Mode=TwoWay}" />
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                            <Button
+                                                Grid.Column="0"
+                                                Classes="wide secondary"
+                                                Command="{Binding CancelDisableAppLockCommand}"
+                                                Content="{Binding CancelText}" />
+                                            <Button
+                                                Grid.Column="1"
+                                                Classes="wide danger"
+                                                Command="{Binding ConfirmDisableAppLockCommand}"
+                                                Content="{Binding DisableAppLockText}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
                                     Text="{Binding BiometricSetupTitle}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
@@ -508,6 +560,37 @@
                             <StackPanel Spacing="12">
                                 <TextBlock
                                     FontSize="18"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding ImportExportText}" />
+                                <TextBlock
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding ImportGoogleQrText}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding ImportGoogleQrDescriptionText}"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    Classes="wide primary"
+                                    Command="{Binding ImportGoogleQrCommand}"
+                                    Content="{Binding ImportGoogleQrText}" />
+                                <Border
+                                    Background="{DynamicResource BrushSurfaceAlternate}"
+                                    CornerRadius="8"
+                                    IsVisible="{Binding IsQrConflictVisible}"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{Binding QrConflictTitle}" />
+                                        <TextBlock Text="{Binding QrConflictPrompt}" TextWrapping="Wrap" />
+                                        <Button Classes="wide primary" Command="{Binding UpdateQrConflictCommand}" Content="{Binding UpdateExistingText}" />
+                                        <Button Classes="wide secondary" Command="{Binding KeepBothQrConflictCommand}" Content="{Binding KeepBothText}" />
+                                        <Button Classes="wide secondary" Command="{Binding CancelQrConflictCommand}" Content="{Binding CancelText}" />
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock
+                                    FontSize="17"
                                     FontWeight="SemiBold"
                                     Text="{Binding BackupTitle}" />
                                 <TextBlock

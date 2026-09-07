@@ -1,9 +1,12 @@
 namespace TOTP.Avalonia.Mobile.Platform;
 
 public readonly record struct MobileQrCapturePlan(bool IsAccepted, int SampleSize);
+public readonly record struct MobileQrDecodeSize(int Width, int Height);
 
 public static class MobileQrCapturePolicy
 {
+    private static readonly int[] DecodeDivisors = [1, 2, 4];
+
     public const long MaximumEncodedBytes = 32L * 1024 * 1024;
     public const int MaximumSourceDimension = 32_768;
     public const int MaximumDecodedDimension = 4_096;
@@ -32,6 +35,25 @@ public static class MobileQrCapturePolicy
         }
 
         return new MobileQrCapturePlan(true, sampleSize);
+    }
+
+    public static IReadOnlyList<MobileQrDecodeSize> CreateDecodeSizes(
+        int width,
+        int height)
+    {
+        if (width <= 0 || height <= 0 ||
+            width > MaximumDecodedDimension || height > MaximumDecodedDimension ||
+            (long)width * height > MaximumDecodedPixels)
+        {
+            return [];
+        }
+
+        return DecodeDivisors
+            .Select(divisor => new MobileQrDecodeSize(
+                Math.Max(1, width / divisor),
+                Math.Max(1, height / divisor)))
+            .Distinct()
+            .ToArray();
     }
 
     private static int DecodedWidth(int value, int sampleSize) =>

@@ -14,7 +14,7 @@ $manifest = Get-Content -LiteralPath $resolvedManifest -Raw | ConvertFrom-Json
 $invalidMetadata = $manifest.schemaVersion -ne 1 -or
     $manifest.releaseVersion -notmatch '^\d+\.\d+\.\d+(?:-rc\d+)?$' -or
     $manifest.sourceCommit -notmatch '^[0-9a-f]{40}$' -or
-    $manifest.releaseProfile -notin @("signed", "unsigned-preview") -or
+    $manifest.releaseProfile -notin @("signed", "unsigned-platform-preview", "unsigned-preview") -or
     @($manifest.artifacts).Count -eq 0
 if ($invalidMetadata) {
     throw "Release artifact manifest metadata is invalid."

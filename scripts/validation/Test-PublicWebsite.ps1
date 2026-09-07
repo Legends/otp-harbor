@@ -14,6 +14,7 @@ function Read-RequiredFile {
 }
 
 $index = Read-RequiredFile 'site/index.html'
+$compactIndex = [Text.RegularExpressions.Regex]::Replace($index, '\s+', ' ')
 $styles = Read-RequiredFile 'site/styles.css'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
@@ -29,19 +30,20 @@ if ((Get-Item -LiteralPath $socialPreviewPath).Length -ge 1MB) {
 }
 
 foreach ($requiredText in @(
-    '<title>OTP Harbor — Local-first TOTP authenticator</title>',
+    '<title>OTP Harbor — Open-Source TOTP & 2FA Authenticator</title>',
     '<meta name="google-site-verification" content="I36j8PWZYmhKsRKKNVM-fmcGW7wXbJ10fmbOe_4Az0U">',
     '<meta name="msvalidate.01" content="EAC868BC10B59CB9E6BFF0CE79DEEBAC">',
     '<link rel="canonical" href="https://legends.github.io/otp-harbor/">',
     '<meta property="og:image" content="https://legends.github.io/otp-harbor/assets/social-preview.jpg">',
     'type="application/ld+json"',
     '"@type": "SoftwareApplication"',
+    '"@type": "Offer"',
     'Microsoft Store is the planned primary Windows channel',
-    'Current GitHub packages are explicitly labeled manual previews',
+    'GitHub previews are clearly labeled and use a signed application update feed.',
     'Can you test OTP Harbor on a MacBook?',
     'Test only with synthetic accounts'
 )) {
-    if (-not $index.Contains($requiredText, [StringComparison]::Ordinal)) {
+    if (-not $compactIndex.Contains($requiredText, [StringComparison]::Ordinal)) {
         throw "The public website is missing required content: $requiredText"
     }
 }

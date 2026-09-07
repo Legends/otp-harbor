@@ -51,6 +51,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _isSettingsVisible;
     private bool _isSearchVisible;
     private bool _accountsChangedWhileSettingsOpen;
+    private bool _automaticUpdateCheckStarted;
     private bool _shutdownPrepared;
     private bool _disposed;
 
@@ -355,7 +356,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 or AvaloniaStartupOutcome.ReadyForPasswordFallback;
             IsPasswordSetupVisible = outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup;
             if (outcome == AvaloniaStartupOutcome.ReadyUnlocked)
+            {
                 EnterAuthorizedShell();
+                StartAutomaticUpdateCheck();
+            }
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
@@ -427,6 +431,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         EnterAuthorizedShell();
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultUnlocked);
         StatusSeverity = NotificationSeverity.Success;
+        StartAutomaticUpdateCheck();
     }
 
     private void OnConfigured(object? sender, EventArgs e)
@@ -437,6 +442,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         EnterAuthorizedShell();
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultConfigured);
         StatusSeverity = NotificationSeverity.Success;
+        StartAutomaticUpdateCheck();
     }
 
     private async void OnAccountImported(object? sender, AccountImportedEventArgs e)
@@ -504,6 +510,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 EnterAuthorizedShell();
                 StatusText = _localization.GetString(AvaloniaStringKeys.VaultUnlocked);
                 StatusSeverity = NotificationSeverity.Success;
+                StartAutomaticUpdateCheck();
                 return;
             }
 
@@ -641,6 +648,41 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         IsShellVisible = true;
         SetActivePage(ShellPage.Accounts);
         AccountList.LoadCommand.Execute(null);
+    }
+
+    private void StartAutomaticUpdateCheck()
+    {
+        if (_disposed) return;
+        if (_automaticUpdateCheckStarted)
+        {
+            ShowAvailableUpdateNotification();
+            return;
+        }
+        _automaticUpdateCheckStarted = true;
+        _ = CheckForAvailableUpdateAsync();
+    }
+
+    private async Task CheckForAvailableUpdateAsync()
+    {
+        try
+        {
+            await UpdateCheck.CheckAsync();
+            ShowAvailableUpdateNotification();
+        }
+        catch (Exception)
+        {
+            // UpdateCheckAsync is best-effort and must never disturb vault use or expose transport details.
+        }
+    }
+
+    private void ShowAvailableUpdateNotification()
+    {
+        if (_disposed || !IsShellVisible || !UpdateCheck.HasOffer) return;
+
+        StatusText = string.Format(
+            _localization.GetString(AvaloniaStringKeys.UpdateAvailableOnStartup),
+            UpdateCheck.Version);
+        StatusSeverity = NotificationSeverity.Success;
     }
 
     private void NotifyShellCommands()

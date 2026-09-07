@@ -23,6 +23,8 @@ public static class AvaloniaStringKeys
     public const string ExportEncryptedBackup = nameof(ExportEncryptedBackup);
     public const string ImportConflictHandling = nameof(ImportConflictHandling);
     public const string ImportAccounts = nameof(ImportAccounts);
+    public const string ImportOtpHarborBackup = nameof(ImportOtpHarborBackup);
+    public const string OtpHarborImportHelp = nameof(OtpHarborImportHelp);
     public const string EncryptedBackup = nameof(EncryptedBackup);
     public const string EncryptedBackupHelp = nameof(EncryptedBackupHelp);
     public const string SupportDiagnostics = nameof(SupportDiagnostics);
@@ -33,6 +35,19 @@ public static class AvaloniaStringKeys
     public const string VerifyAppcast = nameof(VerifyAppcast);
     public const string SoftwareUpdates = nameof(SoftwareUpdates);
     public const string ScanQrCamera = nameof(ScanQrCamera);
+    public const string ImportQrCode = nameof(ImportQrCode);
+    public const string ImportGoogleAuthenticator = nameof(ImportGoogleAuthenticator);
+    public const string GoogleAuthenticatorImportHelp = nameof(GoogleAuthenticatorImportHelp);
+    public const string ChooseGoogleAuthenticatorQrImage = nameof(ChooseGoogleAuthenticatorQrImage);
+    public const string OpenQrImage = nameof(OpenQrImage);
+    public const string SelectQrImage = nameof(SelectQrImage);
+    public const string QrImageFiles = nameof(QrImageFiles);
+    public const string QrImageReading = nameof(QrImageReading);
+    public const string QrImageNoCode = nameof(QrImageNoCode);
+    public const string QrImageInvalid = nameof(QrImageInvalid);
+    public const string QrImageTooLarge = nameof(QrImageTooLarge);
+    public const string QrImageReadFailedSafely = nameof(QrImageReadFailedSafely);
+    public const string QrImageSelectionCancelled = nameof(QrImageSelectionCancelled);
     public const string QrScannerSupportedFormats = nameof(QrScannerSupportedFormats);
     public const string QrMigrationConfirmationTitle = nameof(QrMigrationConfirmationTitle);
     public const string QrMigrationConfirmationMessage = nameof(QrMigrationConfirmationMessage);
@@ -274,6 +289,7 @@ public static class AvaloniaStringKeys
     public const string UpdateDisabled = nameof(UpdateDisabled);
     public const string UpdateNoneAvailable = nameof(UpdateNoneAvailable);
     public const string UpdateAvailable = nameof(UpdateAvailable);
+    public const string UpdateAvailableOnStartup = nameof(UpdateAvailableOnStartup);
     public const string UpdateResponseIncomplete = nameof(UpdateResponseIncomplete);
     public const string UpdateCheckCancelled = nameof(UpdateCheckCancelled);
     public const string UpdateCheckFailed = nameof(UpdateCheckFailed);
@@ -300,10 +316,15 @@ public static class AvaloniaStringKeys
         StartupEnterMasterPassword, StartupPreferencesUnavailable, StartupFailedSafely,
         StartupCancelled, ClosingSafely, Retry, MasterPassword, MasterPasswordHelp,
         Unlock, Lock, Accounts, Tools, Settings, ChooseImportFile, ExportEncryptedBackup,
-        ImportConflictHandling, ImportAccounts, EncryptedBackup, EncryptedBackupHelp,
+        ImportConflictHandling, ImportAccounts, ImportOtpHarborBackup, OtpHarborImportHelp,
+        EncryptedBackup, EncryptedBackupHelp,
         SupportDiagnostics, RefreshSupportInformation,
         DownloadUpdate, InstallUpdate, ReleaseNotes, VerifyAppcast, SoftwareUpdates,
-        ScanQrCamera, QrScannerSupportedFormats,
+        ScanQrCamera, ImportQrCode, ImportGoogleAuthenticator,
+        GoogleAuthenticatorImportHelp, ChooseGoogleAuthenticatorQrImage,
+        OpenQrImage, SelectQrImage, QrImageFiles,
+        QrImageReading, QrImageNoCode, QrImageInvalid, QrImageTooLarge,
+        QrImageReadFailedSafely, QrImageSelectionCancelled, QrScannerSupportedFormats,
         QrMigrationConfirmationTitle, QrMigrationConfirmationMessage,
         CancelScan, CameraReconnectHint, CameraReadyToStart, CameraSearching,
         CameraInitializing, CameraActive, CameraScanCancelled,
@@ -371,7 +392,8 @@ public static class AvaloniaStringKeys
         CapabilityTemporarilyUnavailable, CapabilityMisconfigured,
         CapabilityPermissionDenied, CapabilityFailed, Unknown,
         UpdateReadyToCheck, UpdateChecking, UpdateFeedVerificationFailed, UpdateDisabled,
-        UpdateNoneAvailable, UpdateAvailable, UpdateResponseIncomplete, UpdateCheckCancelled,
+        UpdateNoneAvailable, UpdateAvailable, UpdateAvailableOnStartup,
+        UpdateResponseIncomplete, UpdateCheckCancelled,
         UpdateCheckFailed, UpdateDownloading, UpdatePackageVerificationFailed,
         UpdateReadyToInstall, UpdateInstallerUnsupported, UpdateDownloadCancelled,
         UpdateDownloadFailed, UpdateInstallerStartFailed, UpdateInstallerStarted,

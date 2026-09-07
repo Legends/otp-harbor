@@ -26,7 +26,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private readonly IPlatformFolderLauncher _folderLauncher;
     private readonly IAvaloniaLocalizationService _localization;
     private readonly AsyncCommand _importCommand;
+    private readonly AsyncCommand _importGoogleQrCommand;
     private readonly AsyncCommand _exportCommand;
+    private readonly CameraScannerViewModel? _cameraScanner;
     private bool _isBusy;
     private bool _disposed;
     private ImportConflictStrategy _conflictStrategy = ImportConflictStrategy.SkipExisting;
@@ -43,7 +45,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         ISettingsService settings,
         IPlatformFolderLauncher folderLauncher,
         IAvaloniaLocalizationService localization,
-        TimeSpan? transientMessageDuration = null)
+        TimeSpan? transientMessageDuration = null,
+        CameraScannerViewModel? cameraScanner = null)
     {
         _filePicker = filePicker ?? throw new ArgumentNullException(nameof(filePicker));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
@@ -55,11 +58,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _folderLauncher = folderLauncher ?? throw new ArgumentNullException(nameof(folderLauncher));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+        _cameraScanner = cameraScanner;
         Notification = new NotificationState(transientMessageDuration);
         ConflictStrategies = CreateConflictStrategies();
         _selectedConflictStrategyOption = ConflictStrategies[0];
         _localization.CultureChanged += LocalizationCultureChanged;
         _importCommand = new AsyncCommand(ImportAsync, () => !_isBusy);
+        _importGoogleQrCommand = new AsyncCommand(
+            ImportGoogleQrAsync,
+            () => !_isBusy && _cameraScanner is not null);
         _exportCommand = new AsyncCommand(ExportEncryptedAsync, () => !_isBusy);
     }
 
@@ -89,7 +96,34 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     public NotificationSeverity MessageSeverity => Notification.Severity;
 
     public ICommand ImportCommand => _importCommand;
+    public ICommand ImportGoogleQrCommand => _importGoogleQrCommand;
     public ICommand ExportCommand => _exportCommand;
+
+    public async Task ImportGoogleQrAsync()
+    {
+        if (_cameraScanner is null || !BeginOperation()) return;
+
+        try
+        {
+            await _cameraScanner.OpenImageAsync();
+            if (!string.IsNullOrWhiteSpace(_cameraScanner.Message))
+            {
+                SetMessage(
+                    _cameraScanner.Message,
+                    _cameraScanner.LastImageNotificationSeverity);
+            }
+        }
+        catch (Exception)
+        {
+            SetMessage(
+                Localized(AvaloniaStringKeys.QrImageReadFailedSafely),
+                NotificationSeverity.Error);
+        }
+        finally
+        {
+            EndOperation();
+        }
+    }
 
     public async Task ImportAsync()
     {
@@ -352,6 +386,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _isBusy = true;
         Notification.Clear();
         _importCommand.NotifyCanExecuteChanged();
+        _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
         return true;
     }
@@ -360,6 +395,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     {
         _isBusy = false;
         _importCommand.NotifyCanExecuteChanged();
+        _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
     }
 

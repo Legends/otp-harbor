@@ -15,6 +15,8 @@ namespace TOTP.Avalonia.Desktop.Presentation;
 public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IQrScannerRunner _runner;
+    private readonly IQrImageDecoder _imageDecoder;
+    private readonly IAvaloniaFilePicker _filePicker;
     private readonly IQrPayloadValidator _payloadValidator;
     private readonly IAvaloniaQrImageFactory _imageFactory;
     private readonly IUiScheduler _uiScheduler;
@@ -24,17 +26,22 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
     private readonly IAvaloniaLocalizationService _localization;
     private readonly TimeSpan _reconnectDelay;
     private readonly AsyncCommand _startCommand;
+    private readonly AsyncCommand _openImageCommand;
     private readonly AsyncCommand _cancelCommand;
     private CancellationTokenSource? _captureLifetime;
     private AvaloniaQrImageHandle? _preview;
     private string _message;
     private string _statusMessage = string.Empty;
     private bool _isScanning;
+    private bool _isOpeningImage;
+    private NotificationSeverity _lastImageNotificationSeverity = NotificationSeverity.Information;
     private bool _disposed;
     private long _generation;
 
     public CameraScannerViewModel(
         IQrScannerRunner runner,
+        IQrImageDecoder imageDecoder,
+        IAvaloniaFilePicker filePicker,
         IQrPayloadValidator payloadValidator,
         IAvaloniaQrImageFactory imageFactory,
         IUiScheduler uiScheduler,
@@ -45,6 +52,8 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         TimeSpan? reconnectDelay = null)
     {
         _runner = runner ?? throw new ArgumentNullException(nameof(runner));
+        _imageDecoder = imageDecoder ?? throw new ArgumentNullException(nameof(imageDecoder));
+        _filePicker = filePicker ?? throw new ArgumentNullException(nameof(filePicker));
         _payloadValidator = payloadValidator ?? throw new ArgumentNullException(nameof(payloadValidator));
         _imageFactory = imageFactory ?? throw new ArgumentNullException(nameof(imageFactory));
         _uiScheduler = uiScheduler ?? throw new ArgumentNullException(nameof(uiScheduler));
@@ -56,7 +65,12 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         _reconnectDelay = reconnectDelay ?? TimeSpan.FromMilliseconds(750);
         if (_reconnectDelay <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(reconnectDelay));
-        _startCommand = new AsyncCommand(StartAsync, () => !_disposed && !IsScanning);
+        _startCommand = new AsyncCommand(
+            StartAsync,
+            () => !_disposed && !IsScanning && !IsOpeningImage);
+        _openImageCommand = new AsyncCommand(
+            OpenImageAsync,
+            () => !_disposed && !IsOpeningImage);
         _cancelCommand = new AsyncCommand(CancelAsync, () => !_disposed);
     }
 
@@ -65,6 +79,8 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
     public event EventHandler? CloseRequested;
 
     public ICommand StartCommand => _startCommand;
+
+    public ICommand OpenImageCommand => _openImageCommand;
 
     public ICommand CancelCommand => _cancelCommand;
 
@@ -92,6 +108,24 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public bool IsOpeningImage
+    {
+        get => _isOpeningImage;
+        private set
+        {
+            if (!SetField(ref _isOpeningImage, value)) return;
+            _startCommand.NotifyCanExecuteChanged();
+            _openImageCommand.NotifyCanExecuteChanged();
+            _cancelCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public NotificationSeverity LastImageNotificationSeverity
+    {
+        get => _lastImageNotificationSeverity;
+        private set => SetField(ref _lastImageNotificationSeverity, value);
+    }
+
     public IImage? PreviewImage => _preview?.Image;
 
     public bool HasPreview => PreviewImage is not null;
@@ -100,7 +134,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task StartAsync()
     {
-        if (_disposed || IsScanning) return;
+        if (_disposed || IsScanning || IsOpeningImage) return;
 
         ClearPreview();
         var generation = Interlocked.Increment(ref _generation);
@@ -190,6 +224,82 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public async Task OpenImageAsync()
+    {
+        if (_disposed || IsOpeningImage) return;
+
+        var generation = Interlocked.Increment(ref _generation);
+        _captureLifetime?.Cancel();
+        _captureLifetime?.Dispose();
+        _captureLifetime = new CancellationTokenSource();
+        var token = _captureLifetime.Token;
+        IsScanning = false;
+        IsOpeningImage = true;
+        StatusMessage = string.Empty;
+        Message = string.Empty;
+        LastImageNotificationSeverity = NotificationSeverity.Information;
+        ClearPreview();
+
+        try
+        {
+            await using var selected = await _filePicker.PickQrImageAsync(token);
+            if (selected is null)
+            {
+                Message = _localization.GetString(AvaloniaStringKeys.QrImageSelectionCancelled);
+                return;
+            }
+
+            StatusMessage = _localization.GetString(AvaloniaStringKeys.QrImageReading);
+            await using var stream = await selected.OpenReadAsync(token);
+            var decoded = await _imageDecoder.DecodeAsync(stream, token);
+            if (_disposed || generation != Volatile.Read(ref _generation)) return;
+
+            if (!decoded.IsDecoded)
+            {
+                Message = ImageDecodeFailureMessage(decoded.Status);
+                LastImageNotificationSeverity = NotificationSeverity.Error;
+                StatusMessage = string.Empty;
+                return;
+            }
+
+            var validation = _payloadValidator.Validate(decoded.Payload!);
+            if (!validation.IsValid)
+            {
+                Message = _localization.GetString(AvaloniaStringKeys.QrInvalid);
+                LastImageNotificationSeverity = NotificationSeverity.Error;
+                StatusMessage = string.Empty;
+                return;
+            }
+
+            LastImageNotificationSeverity = await ImportDecodedAsync(decoded.Payload!, validation, token);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            if (!_disposed && generation == Volatile.Read(ref _generation))
+            {
+                StatusMessage = string.Empty;
+                Message = _localization.GetString(AvaloniaStringKeys.QrImageSelectionCancelled);
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                "QR image import failed at the platform boundary with exception type {ExceptionType}.",
+                exception.GetType().FullName);
+            if (!_disposed && generation == Volatile.Read(ref _generation))
+            {
+                StatusMessage = string.Empty;
+                Message = _localization.GetString(AvaloniaStringKeys.QrImageReadFailedSafely);
+                LastImageNotificationSeverity = NotificationSeverity.Error;
+            }
+        }
+        finally
+        {
+            if (!_disposed && generation == Volatile.Read(ref _generation))
+                IsOpeningImage = false;
+        }
+    }
+
     public Task CancelAsync()
     {
         _captureLifetime?.Cancel();
@@ -210,6 +320,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         _captureLifetime?.Dispose();
         _captureLifetime = null;
         IsScanning = false;
+        IsOpeningImage = false;
         StatusMessage = string.Empty;
         Message = _localization.GetString(AvaloniaStringKeys.CameraReadyToStart);
         ClearPreview();
@@ -221,6 +332,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         Clear();
         _disposed = true;
         _startCommand.NotifyCanExecuteChanged();
+        _openImageCommand.NotifyCanExecuteChanged();
         _cancelCommand.NotifyCanExecuteChanged();
     }
 
@@ -285,7 +397,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         preview?.Dispose();
     }
 
-    private async Task ImportDecodedAsync(
+    private async Task<NotificationSeverity> ImportDecodedAsync(
         string payload,
         QrPayloadValidationResult validation,
         CancellationToken cancellationToken)
@@ -305,7 +417,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
             {
                 Message = _localization.GetString(AvaloniaStringKeys.QrImportCancelled);
                 CloseRequested?.Invoke(this, EventArgs.Empty);
-                return;
+                return NotificationSeverity.Information;
             }
         }
 
@@ -313,7 +425,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         if (imported.IsFailed)
         {
             Message = _localization.GetString(AvaloniaStringKeys.QrImportFailed);
-            return;
+            return NotificationSeverity.Error;
         }
 
         Message = imported.Value.Status == QrAccountImportStatus.BulkImported
@@ -337,6 +449,14 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
                 Message));
         }
         CloseRequested?.Invoke(this, EventArgs.Empty);
+        return imported.Value.Status switch
+        {
+            QrAccountImportStatus.Added
+                or QrAccountImportStatus.Updated
+                or QrAccountImportStatus.KeptBoth
+                or QrAccountImportStatus.BulkImported => NotificationSeverity.Success,
+            _ => NotificationSeverity.Information
+        };
 
         async Task<QrAccountConflictDecision> ResolveConflictAsync(
             QrAccountConflict conflict,
@@ -397,6 +517,15 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         };
         return _localization.GetString(key);
     }
+
+    private string ImageDecodeFailureMessage(QrImageDecodeStatus status) =>
+        _localization.GetString(status switch
+        {
+            QrImageDecodeStatus.NoQrCode => AvaloniaStringKeys.QrImageNoCode,
+            QrImageDecodeStatus.InvalidImage => AvaloniaStringKeys.QrImageInvalid,
+            QrImageDecodeStatus.TooLarge => AvaloniaStringKeys.QrImageTooLarge,
+            _ => AvaloniaStringKeys.QrImageReadFailedSafely
+        });
 
     private static bool ShouldReconnect(QrScannerFailureKind failure) => failure is
         QrScannerFailureKind.NoCamera

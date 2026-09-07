@@ -127,4 +127,16 @@
   <data name="BiometricRecoveryRequired" xml:space="preserve"><value>Use your master password to unlock and restore biometric access.</value></data>
   <data name="BiometricRetriesExhausted" xml:space="preserve"><value>Biometric access is temporarily locked. Use your master password or try again later.</value></data>
   <data name="BiometricDisabledByPolicy" xml:space="preserve"><value>Biometric access is unavailable because of the device security policy.</value></data>
+  <data name="AppLockTitle" xml:space="preserve"><value>App lock</value></data>
+  <data name="AppLockEnabledDescription" xml:space="preserve"><value>Require authentication when opening OTP Harbor or returning after 30 seconds.</value></data>
+  <data name="AppLockDisabledDescription" xml:space="preserve"><value>Authentication is off. Anyone with access to this unlocked device can view your codes.</value></data>
+  <data name="DisableAppLock" xml:space="preserve"><value>Disable app lock</value></data>
+  <data name="EnableAppLock" xml:space="preserve"><value>Enable app lock</value></data>
+  <data name="DisableAppLockWarning" xml:space="preserve"><value>Disabling app lock lets OTP Harbor open without user verification. Your master password remains the recovery method. Enter it to confirm.</value></data>
+  <data name="AppLockDisabled" xml:space="preserve"><value>App lock disabled. Codes are available to anyone using this unlocked device.</value></data>
+  <data name="AppLockEnabled" xml:space="preserve"><value>App lock enabled. A master password is required the next time the app locks.</value></data>
+  <data name="AppLockChangeFailed" xml:space="preserve"><value>The app-lock setting could not be changed safely.</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Import / Export</value></data>
+  <data name="ImportGoogleQr" xml:space="preserve"><value>Import from Google Authenticator</value></data>
+  <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Scan a Google Authenticator transfer QR code. Multi-account and multi-page exports are supported one QR code at a time.</value></data>
 </root>

@@ -44,7 +44,7 @@ jobs:
       - name: Build solution
         run: dotnet build TOTP.sln --configuration Release --no-restore --nologo --verbosity minimal
 
-      - name: Validate package update and unsigned preview policies
+      - name: Validate package update and preview signing policies
         shell: pwsh
         run: ./scripts/validation/Test-UnsignedPreviewReleasePolicy.ps1
 
@@ -698,17 +698,22 @@ jobs:
           New-Item -ItemType Directory -Path release-assets | Out-Null
           switch ("${{ matrix.rid }}") {
             "win-x64" {
-              $disableUpdates = "${{ steps.versioning.outputs.channel }}" -eq "rc"
+              $appcastUrl = if ("${{ steps.versioning.outputs.channel }}" -eq "rc") {
+                "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
+              }
+              else {
+                "https://github.com/Legends/otp-harbor/releases/latest/download/appcast-v2.xml"
+              }
               ./scripts/release/Set-PackageUpdatePolicy.ps1 `
                 -PackageDirectory release-publish `
                 -DistributionMode direct `
                 -Channel "${{ steps.versioning.outputs.channel }}" `
-                -DisableUpdates:$disableUpdates
+                -AppcastUrl $appcastUrl
               ./scripts/release/Set-PackageUpdatePolicy.ps1 `
                 -PackageDirectory release-fast `
                 -DistributionMode direct `
                 -Channel "${{ steps.versioning.outputs.channel }}" `
-                -DisableUpdates:$disableUpdates
+                -AppcastUrl $appcastUrl
               Compress-Archive `
                 -Path release-publish/* `
                 -DestinationPath "release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
@@ -717,12 +722,17 @@ jobs:
                 -DestinationPath "release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip"
             }
             "linux-x64" {
-              $disableUpdates = "${{ steps.versioning.outputs.channel }}" -eq "rc"
+              $appcastUrl = if ("${{ steps.versioning.outputs.channel }}" -eq "rc") {
+                "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
+              }
+              else {
+                "https://github.com/Legends/otp-harbor/releases/latest/download/appcast-v2.xml"
+              }
               ./scripts/release/Package-AvaloniaLinux.ps1 `
                 -PublishDirectory release-publish `
                 -OutputDirectory linux-distribution `
                 -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
-                -DisableUpdates:$disableUpdates
+                -AppcastUrl $appcastUrl
               Copy-Item linux-distribution/*.tar.gz release-assets/
               Copy-Item linux-distribution/*.deb release-assets/
             }
@@ -767,16 +777,26 @@ jobs:
           if-no-files-found: error
 
   publish-unsigned-preview:
-    name: Publish unsigned Windows and Linux preview
+    name: Publish update-enabled Windows and Linux preview
     needs: [package-avalonia-release]
     if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
+      actions: write
       contents: write
+
+    env:
+      NETSPARKLE_PUBLIC_KEY: ${{ secrets.NETSPARKLE_PUBLIC_KEY }}
+      NETSPARKLE_PRIVATE_KEY: ${{ secrets.NETSPARKLE_PRIVATE_KEY }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Setup .NET SDK for signed preview metadata
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
 
       - name: Download retained preview artifacts
         uses: actions/download-artifact@v6
@@ -810,10 +830,10 @@ jobs:
             -ReleaseVersion $releaseVersion `
             -SourceCommit "${{ github.sha }}" `
             -ArtifactPath $artifactPaths `
-            -OutputPath preview-assets/release-artifacts-unsigned-preview.json `
-            -ReleaseProfile unsigned-preview
+            -OutputPath preview-assets/release-artifacts-v2.json `
+            -ReleaseProfile unsigned-platform-preview
           ./scripts/release/Test-ReleaseArtifactManifest.ps1 `
-            -ManifestPath preview-assets/release-artifacts-unsigned-preview.json `
+            -ManifestPath preview-assets/release-artifacts-v2.json `
             -ArtifactDirectory preview-assets
 
           $checksumLines = foreach ($path in ($artifactPaths | Sort-Object)) {
@@ -825,6 +845,61 @@ jobs:
             (Join-Path $PWD "preview-assets/SHA256SUMS"),
             (($checksumLines -join "`n") + "`n"),
             [Text.UTF8Encoding]::new($false))
+
+      - name: Install pinned NetSparkle signing tool
+        run: dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator --version 2.9.0
+
+      - name: Generate and verify signed preview feed
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:NETSPARKLE_PUBLIC_KEY) -or
+              [string]::IsNullOrWhiteSpace($env:NETSPARKLE_PRIVATE_KEY)) {
+            throw "Ed25519 release signing credentials are required for preview updates."
+          }
+          $clientSettings = Get-Content TOTP.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
+          $expectedPublicKey = $clientSettings.AutoUpdate.PublicKey
+          if ($expectedPublicKey -cne $env:NETSPARKLE_PUBLIC_KEY.Trim()) {
+            throw "The CI public key does not match the key embedded in the Avalonia client."
+          }
+
+          $keyDirectory = Join-Path $env:RUNNER_TEMP "netsparkle-keys"
+          New-Item -ItemType Directory -Path $keyDirectory | Out-Null
+          $publicKeyPath = Join-Path $keyDirectory "NetSparkle_Ed25519.pub"
+          $privateKeyPath = Join-Path $keyDirectory "NetSparkle_Ed25519.priv"
+          [IO.File]::WriteAllText($publicKeyPath, $env:NETSPARKLE_PUBLIC_KEY.Trim(), [Text.Encoding]::ASCII)
+          [IO.File]::WriteAllText($privateKeyPath, $env:NETSPARKLE_PRIVATE_KEY.Trim(), [Text.Encoding]::ASCII)
+          & chmod 600 $privateKeyPath
+
+          $baseUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/"
+          ./scripts/release/Generate-AvaloniaAppcast.ps1 `
+            -ManifestPath preview-assets/release-artifacts-v2.json `
+            -ArtifactDirectory preview-assets `
+            -BaseDownloadUrl $baseUrl `
+            -PrivateKeyPath $privateKeyPath `
+            -PublicKeyPath $publicKeyPath `
+            -ExpectedPublicKey $expectedPublicKey `
+            -OutputDirectory preview-feed
+          ./scripts/release/Test-AvaloniaAppcast.ps1 `
+            -AppcastPath preview-feed/appcast-v2.xml `
+            -ManifestPath preview-assets/release-artifacts-v2.json `
+            -BaseDownloadUrl $baseUrl
+
+          $feedSignature = (Get-Content preview-feed/appcast-v2.xml.signature -Raw).Trim()
+          netsparkle-generate-appcast `
+            --verify preview-feed/appcast-v2.xml `
+            --signature $feedSignature `
+            --key-path $keyDirectory
+          if ($LASTEXITCODE -ne 0) { throw "Preview appcast signature verification failed." }
+
+          $manifestSignature = (Get-Content preview-assets/release-artifacts-v2.json.signature -Raw).Trim()
+          netsparkle-generate-appcast `
+            --verify preview-assets/release-artifacts-v2.json `
+            --signature $manifestSignature `
+            --key-path $keyDirectory
+          if ($LASTEXITCODE -ne 0) { throw "Preview manifest signature verification failed." }
+
+          Copy-Item preview-feed/appcast-v2.xml preview-assets/
+          Copy-Item preview-feed/appcast-v2.xml.signature preview-assets/
 
       - name: Upload unsigned preview to a draft
         uses: softprops/action-gh-release@v3.0.1
@@ -840,12 +915,12 @@ jobs:
             This prerelease is provided for manual testing because the project does not yet have platform code-signing credentials.
 
             - The Windows executables are **not Authenticode-signed** and may trigger Microsoft Defender SmartScreen warnings.
-            - Automatic updates are disabled inside these preview packages.
-            - No appcast or other automatic-update metadata is published.
+            - Direct Windows and portable Linux builds check an Ed25519-signed preview appcast and require explicit confirmation before installation.
+            - The first preview download remains outside operating-system publisher trust; verify its checksums before running it.
             - macOS is not included because Developer ID signing and notarization are unavailable.
             - Do not use this preview with a production vault; test with synthetic accounts only.
 
-            Verify the downloaded file against `SHA256SUMS` and the source commit recorded in `release-artifacts-unsigned-preview.json`.
+            Verify the downloaded file against `SHA256SUMS` and the source commit recorded in `release-artifacts-v2.json`.
 
             ## Code signing policy
 
@@ -855,7 +930,10 @@ jobs:
             preview-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             preview-assets/otp-harbor_*_amd64.deb
-            preview-assets/release-artifacts-unsigned-preview.json
+            preview-assets/release-artifacts-v2.json
+            preview-assets/release-artifacts-v2.json.signature
+            preview-assets/appcast-v2.xml
+            preview-assets/appcast-v2.xml.signature
             preview-assets/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -880,12 +958,19 @@ jobs:
             -F prerelease=true `
             -f make_latest=false | Out-Null
 
+      - name: Refresh the public RC appcast endpoint
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "${{ github.repository }}"
+
   publish-avalonia-release:
     name: Publish complete signed release
     needs: [package-avalonia-release]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
+      actions: write
       contents: write
 
     env:
@@ -1071,3 +1156,9 @@ jobs:
             -F draft=false `
             -F prerelease=${{ steps.versioning.outputs.prerelease }} `
             -f make_latest=${{ steps.latest_release.outputs.make_latest }} | Out-Null
+
+      - name: Refresh the public RC appcast endpoint
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "${{ github.repository }}"

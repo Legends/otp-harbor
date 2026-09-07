@@ -15,6 +15,7 @@ using TOTP.Platform.Windows;
 using TOTP.Platform.Windows.Security;
 using AppLifetime = TOTP.Core.Services.Interfaces.IApplicationLifetime;
 using TOTP.Avalonia.Desktop.Localization;
+using TOTP.Camera.OpenCv;
 
 namespace TOTP.Tests.Avalonia.Startup;
 
@@ -72,6 +73,8 @@ public sealed class AvaloniaCompositionRootTests
             services.GetRequiredService<IAvaloniaQrImageFactory>());
         Assert.IsType<AvaloniaFilePicker>(
             services.GetRequiredService<IAvaloniaFilePicker>());
+        Assert.IsType<OpenCvQrImageDecoder>(
+            services.GetRequiredService<IQrImageDecoder>());
         Assert.IsType<AvaloniaPlatformFolderLauncher>(
             services.GetRequiredService<IPlatformFolderLauncher>());
         Assert.IsType<AvaloniaDialogService>(

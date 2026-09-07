@@ -29,6 +29,8 @@ Distribution ownership is also closed:
 
 The Linux DEB is stamped `package-manager`; direct tar and DMG packages are stamped `direct`. RC packages are stamped `rc`. `TOTP_`-prefixed environment variables may override packaged configuration for controlled testing, using the standard double-underscore separator for nested keys.
 
+GitHub stable direct packages use the latest stable release appcast. RC direct packages use the signed public RC endpoint on GitHub Pages. That endpoint selects the highest versioned published release containing an appcast, verifies the appcast signature against the client key, and mirrors the unchanged appcast/signature pair. Because RC clients also accept stable entries, the endpoint provides both RC-to-RC and RC-to-stable discovery without treating a prerelease as GitHub's latest stable release.
+
 ## Security review
 
 - Threat impact: wrong-platform, wrong-channel, substituted, truncated, and package-manager-bypassing updates are rejected before installation. Known vulnerable NuGet graphs fail CI.
@@ -59,7 +61,7 @@ Physical clean-machine installation, Microsoft Store certification/signature che
 
 The direct-publication implementation remains fail-closed but is not the active Windows stable channel. The previous SignPath Foundation application was not approved, so Windows direct stable archives cannot currently pass their Authenticode gate. Microsoft Store packaging is handled separately and becomes distributable only after Store certification and signing. macOS release artifacts still cannot be retained without a Developer ID certificate and a complete App Store Connect notarization API-key triplet. Linux direct and DEB artifacts are assembled on Ubuntu 24.04.
 
-The native packaging matrix retains signed outputs without writing to GitHub Releases. The final publication job runs only after every native package succeeds, downloads the complete retained set, rebuilds and validates one aggregate manifest, and uses pinned NetSparkle AppCast Generator 2.9.0 to sign each direct payload, `appcast-v2.xml`, and the manifest. The Avalonia client's embedded public key must match the CI public key. The signing tool receives only a protected key-directory path; private key contents are not placed in process arguments. The complete asset set is first uploaded to a draft; only a successful upload makes the release visible. Release-candidate tags are explicitly prereleases and never become the latest stable release.
+The native packaging matrix retains outputs without writing to GitHub Releases. Each publishing job runs only after every required package succeeds, downloads the complete retained set, rebuilds and validates one aggregate manifest, and uses pinned NetSparkle AppCast Generator 2.9.0 to sign each eligible direct payload, `appcast-v2.xml`, and the manifest. The Avalonia client's embedded public key must match the CI public key. The signing tool receives only a protected key-directory path; private key contents are not placed in process arguments. The complete asset set is first uploaded to a draft; only a successful upload makes the release visible. Release-candidate tags are explicitly prereleases and never become GitHub's latest stable release.
 
 Release payload preparation removes only debug-symbol files below the resolved generated publish directory and rejects stale updater build/RID subtrees. This keeps direct artifacts within the existing 128 MiB client limit without increasing the download memory/denial-of-service boundary.
 

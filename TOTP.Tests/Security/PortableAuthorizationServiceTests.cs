@@ -100,6 +100,61 @@ public sealed class PortableAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task TryUnlockOnStartupAsync_WithDisabledAppLock_UsesUnattendedWrapper()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                HasUnattendedUnlock: true)
+        };
+        dependencies.Settings.AppLockEnabled = false;
+        dependencies.Settings.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+        dependencies.Session.Setup(value => value.TryUnlockWithPlatformAsync(cancellationToken))
+            .ReturnsAsync(Result.Ok(AuthorizationResult.Success));
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.TryUnlockOnStartupAsync(cancellationToken);
+
+        Assert.Equal(AuthorizationResult.Success, result);
+        Assert.True(sut.State.IsUnlocked);
+        dependencies.UnattendedEnrollment.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task TryUnlockOnStartupAsync_WhenUnattendedKeyIsMissing_FailsClosedToAppLock()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                HasUnattendedUnlock: true)
+        };
+        dependencies.Settings.AppLockEnabled = false;
+        dependencies.Settings.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+        dependencies.Session.Setup(value => value.TryUnlockWithPlatformAsync(cancellationToken))
+            .ReturnsAsync(Result.Ok(AuthorizationResult.PasswordRequired));
+        dependencies.UnattendedEnrollment.Setup(value => value.DisableAsync(CancellationToken.None))
+            .ReturnsAsync(Result.Ok());
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.TryUnlockOnStartupAsync(cancellationToken);
+
+        Assert.Equal(AuthorizationResult.PasswordRequired, result);
+        Assert.True(dependencies.Settings.AppLockEnabled);
+        Assert.Equal(PreferredUnlockMethod.Password, dependencies.Settings.PreferredUnlockMethod);
+        dependencies.SettingsService.Verify(value => value.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
     public async Task TryUnlockWithHelloAsync_WhenPlatformRequiresRecovery_ProjectsPasswordGate()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
@@ -371,6 +426,7 @@ public sealed class PortableAuthorizationServiceTests
         public Mock<IAuthorizationEnvelopeSession> Session { get; } = new();
         public Mock<IAuthorizationEnvelopePasswordLifecycle> PasswordLifecycle { get; } = new();
         public Mock<IPlatformQuickUnlockEnrollment> Enrollment { get; } = new();
+        public Mock<IPlatformUnattendedUnlockEnrollment> UnattendedEnrollment { get; } = new();
         public Mock<IPlatformQuickUnlock> Platform { get; } = new();
         public Mock<IPasswordValidationService> Validation { get; } = new();
         public Mock<ISecurityContext> Security { get; } = new();
@@ -405,6 +461,7 @@ public sealed class PortableAuthorizationServiceTests
             Validation.Object,
             Security.Object,
             State,
-            NullLogger<PortableAuthorizationService>.Instance);
+            NullLogger<PortableAuthorizationService>.Instance,
+            UnattendedEnrollment.Object);
     }
 }

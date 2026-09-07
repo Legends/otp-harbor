@@ -3,32 +3,102 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OTP Harbor — Local-first TOTP authenticator</title>
-  <meta name="description" content="OTP Harbor is an open-source, local-first TOTP and 2FA authenticator with an encrypted vault for Windows, macOS, Linux, and an Android development preview.">
-  <meta name="google-site-verification" content="I36j8PWZYmhKsRKKNVM-fmcGW7wXbJ10fmbOe_4Az0U">
-  <meta name="msvalidate.01" content="EAC868BC10B59CB9E6BFF0CE79DEEBAC">
-  <link rel="canonical" href="https://legends.github.io/otp-harbor/">
+
+  <title>OTP Harbor — Open-Source TOTP & 2FA Authenticator</title>
+
+  <meta
+    name="description"
+    content="OTP Harbor is an open-source TOTP and 2FA authenticator for Windows, macOS and Linux with encrypted local storage, QR import and encrypted backups.">
+
+  <meta
+    name="robots"
+    content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+  <meta
+    name="google-site-verification"
+    content="I36j8PWZYmhKsRKKNVM-fmcGW7wXbJ10fmbOe_4Az0U">
+
+  <meta
+    name="msvalidate.01"
+    content="EAC868BC10B59CB9E6BFF0CE79DEEBAC">
+
+  <link
+    rel="canonical"
+    href="https://legends.github.io/otp-harbor/">
+
   <meta name="theme-color" content="#0c1c33">
+
+  <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="OTP Harbor — Local-first TOTP authenticator">
-  <meta property="og:description" content="Encrypted local storage, QR workflows, quick unlock, and portable encrypted backups—without a cloud account.">
-  <meta property="og:url" content="https://legends.github.io/otp-harbor/">
-  <meta property="og:image" content="https://legends.github.io/otp-harbor/assets/social-preview.jpg">
+  <meta property="og:site_name" content="OTP Harbor">
+  <meta property="og:locale" content="en_US">
+  <meta
+    property="og:title"
+    content="OTP Harbor — Open-Source TOTP & 2FA Authenticator">
+  <meta
+    property="og:description"
+    content="A local-first TOTP authenticator with encrypted storage, QR import, quick unlock and encrypted backups—without requiring a cloud account.">
+  <meta
+    property="og:url"
+    content="https://legends.github.io/otp-harbor/">
+  <meta
+    property="og:image"
+    content="https://legends.github.io/otp-harbor/assets/social-preview.jpg">
+  <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1774">
   <meta property="og:image:height" content="887">
+  <meta
+    property="og:image:alt"
+    content="OTP Harbor open-source TOTP authenticator">
+
+  <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta
+    name="twitter:title"
+    content="OTP Harbor — Open-Source TOTP & 2FA Authenticator">
+  <meta
+    name="twitter:description"
+    content="Local-first TOTP authenticator with encrypted storage, QR import and encrypted backups.">
+  <meta
+    name="twitter:image"
+    content="https://legends.github.io/otp-harbor/assets/social-preview.jpg">
+  <meta
+    name="twitter:image:alt"
+    content="OTP Harbor open-source TOTP authenticator">
+
   <link rel="icon" href="assets/app-icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Structured application data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
+    "@id": "https://legends.github.io/otp-harbor/#software",
     "name": "OTP Harbor",
+    "alternateName": "OTP Harbor Authenticator",
     "applicationCategory": "SecurityApplication",
-    "operatingSystem": "Windows 10, Windows 11, macOS, Linux, Android",
-    "description": "Open-source, local-first TOTP and 2FA authenticator with an encrypted local vault.",
+    "operatingSystem": [
+      "Windows 10",
+      "Windows 11",
+      "macOS",
+      "Linux"
+    ],
+    "description": "Open-source, local-first TOTP and 2FA authenticator with encrypted local storage, QR import, quick unlock, and encrypted backup and restore.",
     "url": "https://legends.github.io/otp-harbor/",
-    "codeRepository": "https://github.com/Legends/otp-harbor",
+    "downloadUrl": "https://github.com/Legends/otp-harbor/releases",
+    "sameAs": [
+      "https://github.com/Legends/otp-harbor"
+    ],
+    "image": "https://legends.github.io/otp-harbor/assets/social-preview.jpg",
+    "screenshot": "https://legends.github.io/otp-harbor/assets/app.png",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": 0,
+      "priceCurrency": "USD"
+    },
     "license": "https://opensource.org/license/mit",
     "author": {
       "@type": "Person",
@@ -38,87 +108,703 @@
   }
   </script>
 </head>
+
 <body>
   <header class="site-header">
-    <a class="brand" href="#top" aria-label="OTP Harbor home">
-      <img src="assets/app-icon.png" alt="" width="40" height="40">
+
+    <a class="brand" href="#top" aria-label="OTP Harbor authenticator home">
+      <img
+        src="assets/app-icon.png"
+        alt=""
+        width="40"
+        height="40">
       <span>OTP Harbor</span>
     </a>
+
     <nav aria-label="Primary navigation">
+      <a href="#features">Features</a>
       <a href="#security">Security</a>
       <a href="#platforms">Platforms</a>
-      <a href="#contribute">Contribute</a>
-      <a href="https://github.com/Legends/otp-harbor">GitHub</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/Legends/otp-harbor">
+        GitHub source
+      </a>
     </nav>
+
   </header>
 
   <main id="top">
+
+    <!-- =========================================================
+         HERO
+         ========================================================= -->
+
     <section class="hero">
+
       <div class="hero-copy">
-        <p class="eyebrow">Open source · Local first · No cloud account</p>
-        <h1>Your authentication codes stay yours.</h1>
-        <p class="lede">OTP Harbor is a native TOTP and 2FA authenticator with an encrypted local vault, quick unlock, QR workflows, and portable encrypted backups.</p>
+
+        <p class="eyebrow">
+          Open source · Local first · No cloud account
+        </p>
+
+        <h1>
+          OTP Harbor — Open-Source TOTP &amp; 2FA Authenticator
+        </h1>
+
+        <p class="lede">
+          OTP Harbor is a local-first TOTP authenticator for
+          Windows, macOS and Linux that keeps your two-factor
+          authentication secrets in an encrypted local vault.
+          Scan QR codes, generate one-time passwords, use quick
+          unlock and create portable encrypted backups without
+          requiring a cloud account.
+        </p>
+
         <div class="actions">
-          <span class="button primary" aria-label="Microsoft Store release is in preparation">Microsoft Store — coming soon</span>
-          <a class="button secondary" href="https://github.com/Legends/otp-harbor">View source on GitHub</a>
+
+          <span
+            class="button primary"
+            aria-label="Microsoft Store release is in preparation">
+            Microsoft Store — coming soon
+          </span>
+
+          <a
+            class="button secondary"
+            href="https://github.com/Legends/otp-harbor/releases">
+            GitHub Releases
+          </a>
+
+          <a
+            class="button secondary"
+            href="https://github.com/Legends/otp-harbor">
+            View source
+          </a>
+
         </div>
-        <p class="release-note">The Microsoft Store is the planned primary Windows channel. Current GitHub packages are explicitly labeled manual previews.</p>
+
+        <p class="release-note">
+          The Microsoft Store is the planned primary Windows channel.
+          GitHub previews are clearly labeled and use a signed application update feed.
+        </p>
+
       </div>
+
       <figure class="product-shot">
-        <img src="assets/app.png" alt="OTP Harbor desktop app showing synthetic sample accounts and a one-time password">
+
+        <img
+          src="assets/app.png"
+          alt="OTP Harbor open-source TOTP and 2FA authenticator desktop application showing one-time passwords"
+          width="1105"
+          height="1423"
+          fetchpriority="high"
+          decoding="async">
+
       </figure>
+
     </section>
 
-    <section class="feature-grid" aria-label="Key features">
-      <article><h2>Encrypted locally</h2><p>OTP seeds are protected in a local AES-256-GCM vault derived from your master password with Argon2id.</p></article>
-      <article><h2>Fast daily use</h2><p>Scan QR codes, search accounts, copy current codes, and use platform quick unlock with password recovery.</p></article>
-      <article><h2>Portable recovery</h2><p>Create encrypted backups that can be restored across supported OTP Harbor platforms.</p></article>
+
+    <!-- =========================================================
+         WHAT IS OTP HARBOR?
+         ========================================================= -->
+
+    <section id="features" class="split-section">
+
+      <div>
+
+        <p class="eyebrow">
+          Private TOTP authenticator
+        </p>
+
+        <h2>
+          Generate 2FA codes locally, without a cloud account.
+        </h2>
+
+      </div>
+
+      <div>
+
+        <p>
+          OTP Harbor is an open-source authenticator application
+          for time-based one-time passwords (TOTP). TOTP is the
+          standard commonly used by websites and services when
+          they ask you to scan a QR code while enabling
+          two-factor authentication or multi-factor authentication.
+        </p>
+
+        <p>
+          Instead of storing your authentication secrets in an
+          OTP Harbor cloud service, the application keeps them
+          locally in an encrypted vault. TOTP codes are generated
+          on your device from the stored secret.
+        </p>
+
+        <p>
+          OTP Harbor supports standard
+          <code>otpauth://</code> QR codes as well as Google
+          Authenticator transfer QR codes for bulk migration.
+        </p>
+
+        <ul class="link-list">
+
+          <li>
+            <a href="https://www.rfc-editor.org/rfc/rfc6238">
+              TOTP standard — RFC 6238
+            </a>
+          </li>
+
+          <li>
+            <a href="https://github.com/Legends/otp-harbor">
+              OTP Harbor source code
+            </a>
+          </li>
+
+          <li>
+            <a href="https://github.com/Legends/otp-harbor/releases">
+              OTP Harbor releases
+            </a>
+          </li>
+
+        </ul>
+
+      </div>
+
     </section>
+
+
+    <!-- =========================================================
+         FEATURES
+         ========================================================= -->
+
+    <section
+      class="feature-grid"
+      aria-label="OTP Harbor authenticator features">
+
+      <article>
+
+        <h2>Encrypted local vault</h2>
+
+        <p>
+          TOTP seeds are protected locally using AES-256-GCM
+          encryption with a key derived from your master password
+          using Argon2id.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <h2>Offline TOTP generation</h2>
+
+        <p>
+          Generate your two-factor authentication codes locally
+          without requiring an OTP Harbor cloud account or
+          cloud-based vault.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <h2>QR code import</h2>
+
+        <p>
+          Add authenticator accounts by scanning standard
+          TOTP QR codes instead of manually entering long
+          Base32 secrets.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <h2>Google Authenticator import</h2>
+
+        <p>
+          Import accounts from Google Authenticator transfer QR
+          codes, including multi-part exports containing multiple
+          authenticator accounts.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <h2>Quick unlock</h2>
+
+        <p>
+          Use platform-specific quick unlock while retaining the
+          master password as the portable recovery path for your
+          encrypted vault.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <h2>Encrypted backup &amp; restore</h2>
+
+        <p>
+          Create portable encrypted backups and restore them on
+          supported OTP Harbor platforms instead of depending
+          exclusively on a single device.
+        </p>
+
+      </article>
+
+    </section>
+
+
+    <!-- =========================================================
+         SECURITY
+         ========================================================= -->
 
     <section id="security" class="split-section">
+
       <div>
-        <p class="eyebrow">Trust through evidence</p>
-        <h2>Security is part of the release process.</h2>
+
+        <p class="eyebrow">
+          Security and privacy
+        </p>
+
+        <h2>
+          An open-source authenticator you can inspect.
+        </h2>
+
       </div>
+
       <div>
-        <p>The repository publishes its threat model, recovery guidance, security verification evidence, release controls, and private vulnerability-reporting path.</p>
+
+        <p>
+          OTP Harbor is MIT-licensed open-source software.
+          Its source code, security model and release process
+          are publicly available for inspection.
+        </p>
+
+        <p>
+          The repository publishes its threat model, recovery
+          guidance, security verification evidence, release
+          controls and private vulnerability-reporting path.
+        </p>
+
         <ul class="link-list">
-          <li><a href="https://github.com/Legends/otp-harbor/blob/master/docs/security/THREAT_MODEL.md">Threat model</a></li>
-          <li><a href="https://github.com/Legends/otp-harbor/blob/master/docs/security/SECURITY_VERIFICATION.md">Verification evidence</a></li>
-          <li><a href="https://github.com/Legends/otp-harbor/security/policy">Report a vulnerability privately</a></li>
-          <li><a href="https://github.com/Legends/otp-harbor/blob/master/PRIVACY.md">Privacy policy</a></li>
+
+          <li>
+            <a href="https://github.com/Legends/otp-harbor/blob/master/docs/security/THREAT_MODEL.md">
+              OTP Harbor threat model
+            </a>
+          </li>
+
+          <li>
+            <a href="https://github.com/Legends/otp-harbor/blob/master/docs/security/SECURITY_VERIFICATION.md">
+              Security verification evidence
+            </a>
+          </li>
+
+          <li>
+            <a href="https://github.com/Legends/otp-harbor/security/policy">
+              Report an OTP Harbor vulnerability privately
+            </a>
+          </li>
+
+          <li>
+            <a href="https://github.com/Legends/otp-harbor/blob/master/PRIVACY.md">
+              OTP Harbor privacy policy
+            </a>
+          </li>
+
         </ul>
+
       </div>
+
     </section>
+
+
+    <!-- =========================================================
+         PLATFORMS / DOWNLOAD
+         ========================================================= -->
 
     <section id="platforms">
-      <p class="eyebrow">Platform status</p>
-      <h2>One project, explicit release stages.</h2>
+
+      <p class="eyebrow">
+        Downloads and platform support
+      </p>
+
+      <h2>
+        OTP Harbor for Windows, macOS, Linux and Android.
+      </h2>
+
+      <p class="lede">
+        OTP Harbor is developed as a cross-platform authenticator.
+        Release stages differ by operating system while the first
+        stable Windows Store release is being prepared.
+      </p>
+
       <div class="platform-grid">
-        <article><strong>Windows 10/11</strong><p>Microsoft Store submission and certification are in preparation.</p></article>
-        <article><strong>macOS ARM64</strong><p>Implemented and exercised in CI; physical MacBook acceptance is still needed.</p></article>
-        <article><strong>Linux x64</strong><p>Ubuntu/Debian package and portable build are available as manual previews.</p></article>
-        <article><strong>Android 9+</strong><p>Source development preview with biometric unlock, QR scan, swipe actions, and encrypted backup compatibility.</p></article>
+
+        <article>
+
+          <strong>Windows 10 / Windows 11</strong>
+
+          <p>
+            Native desktop TOTP authenticator. Microsoft Store
+            submission and certification are in preparation.
+            GitHub release packages are currently previews with signed update metadata.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>macOS ARM64</strong>
+
+          <p>
+            The macOS authenticator implementation is built and
+            exercised in CI. Physical MacBook acceptance,
+            production signing and notarization are still required.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>Linux x64</strong>
+
+          <p>
+            Ubuntu/Debian packages and portable Linux builds are available as
+            previews. DEB updates remain package-manager-owned; portable builds
+            use the signed GitHub update feed.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>Android 9+</strong>
+
+          <p>
+            Android is currently a development preview with
+            biometric quick unlock, camera-based QR scanning,
+            swipe actions and compatible encrypted backups.
+          </p>
+
+        </article>
+
       </div>
-      <p class="language-note">Interface languages: English, German, French, and Spanish.</p>
+
+      <div class="actions">
+
+        <a
+          class="button secondary"
+          href="https://github.com/Legends/otp-harbor/releases">
+          View OTP Harbor releases
+        </a>
+
+        <a
+          class="button secondary"
+          href="https://github.com/Legends/otp-harbor/blob/master/readme.md">
+          Installation and project information
+        </a>
+
+      </div>
+
+      <p class="language-note">
+        Interface languages: English, German, French and Spanish.
+      </p>
+
     </section>
+
+
+    <!-- =========================================================
+         GOOGLE AUTHENTICATOR MIGRATION
+         ========================================================= -->
+
+    <section class="split-section">
+
+      <div>
+
+        <p class="eyebrow">
+          Authenticator migration
+        </p>
+
+        <h2>
+          Import accounts from Google Authenticator.
+        </h2>
+
+      </div>
+
+      <div>
+
+        <p>
+          OTP Harbor recognizes both normal
+          <code>otpauth://</code> TOTP QR codes and Google
+          Authenticator migration QR codes.
+        </p>
+
+        <p>
+          To migrate multiple accounts, start the account export
+          in Google Authenticator and scan the generated transfer
+          QR codes with OTP Harbor. Multi-part exports can be
+          scanned in sequence.
+        </p>
+
+        <p>
+          Migration QR codes contain authentication secrets and
+          must therefore be treated as sensitive information.
+          After migration, verify several generated codes and
+          create a fresh encrypted backup.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         FAQ
+         ========================================================= -->
+
+    <section id="faq">
+
+      <p class="eyebrow">
+        Frequently asked questions
+      </p>
+
+      <h2>
+        OTP Harbor authenticator FAQ
+      </h2>
+
+      <div class="platform-grid">
+
+
+        <article>
+
+          <strong>
+            What is OTP Harbor?
+          </strong>
+
+          <p>
+            OTP Harbor is an open-source TOTP and two-factor
+            authentication application that stores authenticator
+            secrets in an encrypted local vault and generates
+            one-time passwords on your device.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>
+            Does OTP Harbor work offline?
+          </strong>
+
+          <p>
+            Core TOTP generation and access to the local encrypted
+            vault do not require an OTP Harbor cloud account.
+            Authentication codes are generated locally.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>
+            Can OTP Harbor import Google Authenticator accounts?
+          </strong>
+
+          <p>
+            Yes. OTP Harbor supports normal TOTP QR codes and
+            Google Authenticator transfer QR codes used for
+            bulk account migration.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>
+            How are TOTP secrets protected?
+          </strong>
+
+          <p>
+            OTP Harbor stores OTP seeds in an AES-256-GCM
+            encrypted local vault and derives the vault key
+            from the master password using Argon2id.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>
+            Which TOTP algorithm does OTP Harbor use?
+          </strong>
+
+          <p>
+            OTP Harbor currently uses the common TOTP profile:
+            SHA-1, six-digit codes and a 30-second period,
+            following the widely used TOTP standard defined
+            by RFC 6238.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>
+            Is OTP Harbor open source?
+          </strong>
+
+          <p>
+            Yes. OTP Harbor is published on GitHub under the
+            MIT license, allowing its implementation and
+            security-related code to be independently inspected.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>
+            Which operating systems does OTP Harbor support?
+          </strong>
+
+          <p>
+            The desktop project targets Windows, macOS and Linux.
+            An Android 9+ development preview is also under active
+            development.
+          </p>
+
+        </article>
+
+
+        <article>
+
+          <strong>
+            Can OTP Harbor back up authenticator accounts?
+          </strong>
+
+          <p>
+            Yes. OTP Harbor supports encrypted backup and restore
+            so the vault can be recovered or transferred between
+            supported platforms.
+          </p>
+
+        </article>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         CONTRIBUTING
+         ========================================================= -->
 
     <section id="contribute" class="contribute">
+
       <div>
-        <p class="eyebrow">Help wanted</p>
-        <h2>Can you test OTP Harbor on a MacBook?</h2>
-        <p>We need physical validation of installation, Keychain quick unlock, camera and QR behavior, encrypted backup/restore, locking, and packaging. Test only with synthetic accounts—never real secrets.</p>
+
+        <p class="eyebrow">
+          Open-source project · Help wanted
+        </p>
+
+        <h2>
+          Can you test OTP Harbor on a MacBook?
+        </h2>
+
+        <p>
+          We need physical validation of installation,
+          Keychain quick unlock, camera and QR behavior,
+          encrypted backup and restore, locking and packaging.
+          Test only with synthetic accounts—never real secrets.
+        </p>
+
       </div>
+
       <div class="actions vertical">
-        <a class="button primary" href="https://github.com/Legends/otp-harbor/issues">Join platform testing</a>
-        <a class="button secondary" href="https://github.com/Legends/otp-harbor/blob/master/CONTRIBUTING.md">Contribution guide</a>
+
+        <a
+          class="button primary"
+          href="https://github.com/Legends/otp-harbor/issues">
+          Join OTP Harbor testing
+        </a>
+
+        <a
+          class="button secondary"
+          href="https://github.com/Legends/otp-harbor/blob/master/CONTRIBUTING.md">
+          Contribution guide
+        </a>
+
       </div>
+
     </section>
+
+
+    <section class="split-section">
+
+      <div>
+
+        <p class="eyebrow">
+          Independent open-source project
+        </p>
+
+        <h2>
+          Transparent by design.
+        </h2>
+
+      </div>
+
+      <div>
+
+        <p>
+          OTP Harbor is an independent open-source project.
+          References to Google Authenticator, Microsoft Windows
+          and other third-party products identify compatible
+          platforms or migration formats only.
+        </p>
+
+        <p>
+          OTP Harbor is not affiliated with or endorsed by
+          Google, Microsoft or other authentication providers.
+        </p>
+
+      </div>
+
+    </section>
+
   </main>
 
+
   <footer>
-    <span>OTP Harbor is MIT-licensed open-source software.</span>
-    <a href="https://github.com/Legends/otp-harbor/releases">Releases</a>
+
+    <span>
+      OTP Harbor is MIT-licensed open-source software.
+    </span>
+
+    <a href="https://github.com/Legends/otp-harbor/releases">
+      OTP Harbor downloads
+    </a>
+
+    <a href="https://github.com/Legends/otp-harbor">
+      Source code
+    </a>
+
   </footer>
+
 </body>
 </html>
