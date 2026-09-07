@@ -639,7 +639,7 @@ public sealed class MainWindowSmokeTests
 
             Assert.Equal(2, window.GetVisualDescendants().OfType<Image>().Count());
             Assert.Single(window.GetVisualDescendants().OfType<ProgressBar>());
-            Assert.Equal(3, window.GetVisualDescendants().OfType<Button>().Count());
+            Assert.Equal(4, window.GetVisualDescendants().OfType<Button>().Count());
             Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             Assert.Equal(560, window.Width);

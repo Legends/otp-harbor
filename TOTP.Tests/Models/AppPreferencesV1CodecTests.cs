@@ -110,6 +110,7 @@ public sealed class AppPreferencesV1CodecTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(PreferredUnlockMethod.Password, result.Value.PreferredUnlockMethod);
+        Assert.True(result.Value.AppLockEnabled);
     }
 
     internal static AppPreferencesV1 CreatePreferences() => new()
@@ -117,6 +118,7 @@ public sealed class AppPreferencesV1CodecTests
         CultureName = "de-DE",
         MinimumLogLevel = AppLogLevel.Warning,
         PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock,
+        AppLockEnabled = false,
         IdleTimeoutMinutes = 7,
         LockOnSessionLock = false,
         LockOnMinimize = false,

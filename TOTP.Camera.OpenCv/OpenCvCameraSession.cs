@@ -9,7 +9,6 @@ internal sealed class OpenCvCameraSession(
     QRCodeDetector detector) : ICameraSession
 {
     private const int MaximumEncodedFrameBytes = 4 * 1024 * 1024;
-    private const int EnhancedDecodeLongEdge = 1920;
     private readonly VideoCapture _capture = capture ?? throw new ArgumentNullException(nameof(capture));
     private readonly QRCodeDetector _detector = detector ?? throw new ArgumentNullException(nameof(detector));
     private bool _disposed;
@@ -33,7 +32,7 @@ internal sealed class OpenCvCameraSession(
         }
 
         var fingerprint = ComputeFingerprint(encoded);
-        var decoded = decodeQr ? DecodeQr(mat) : null;
+        var decoded = decodeQr ? OpenCvQrDecoder.Decode(mat, _detector) : null;
         frame = new CameraFrame(encoded, fingerprint, decoded);
         return true;
     }
@@ -60,41 +59,4 @@ internal sealed class OpenCvCameraSession(
         return BinaryPrimitives.ReadUInt64LittleEndian(digest);
     }
 
-    private string? DecodeQr(Mat frame)
-    {
-        var decoded = Detect(frame);
-        if (!string.IsNullOrWhiteSpace(decoded)) return decoded;
-
-        using var grayscale = new Mat();
-        Cv2.CvtColor(frame, grayscale, ColorConversionCodes.BGR2GRAY);
-        decoded = Detect(grayscale);
-        if (!string.IsNullOrWhiteSpace(decoded)) return decoded;
-
-        using var threshold = new Mat();
-        Cv2.Threshold(
-            grayscale,
-            threshold,
-            0,
-            255,
-            ThresholdTypes.Binary | ThresholdTypes.Otsu);
-        decoded = Detect(threshold);
-        if (!string.IsNullOrWhiteSpace(decoded)) return decoded;
-
-        var longestEdge = Math.Max(grayscale.Width, grayscale.Height);
-        if (longestEdge <= 0 || longestEdge >= EnhancedDecodeLongEdge) return null;
-
-        var scale = (double)EnhancedDecodeLongEdge / longestEdge;
-        using var enlarged = new Mat();
-        Cv2.Resize(
-            grayscale,
-            enlarged,
-            new Size(),
-            scale,
-            scale,
-            InterpolationFlags.Cubic);
-        decoded = Detect(enlarged);
-        return string.IsNullOrWhiteSpace(decoded) ? null : decoded;
-    }
-
-    private string? Detect(Mat frame) => _detector.DetectAndDecode(frame, out _);
 }

@@ -7,6 +7,7 @@ public interface IAppSettings
     string CultureName { get; set; }
     AppLogLevel MinimumLogLevel { get; set; }
     PreferredUnlockMethod PreferredUnlockMethod { get; set; }
+    bool AppLockEnabled { get; set; }
     TimeSpan IdleTimeout { get; set; }
     bool LockOnSessionLock { get; set; }
     bool LockOnMinimize { get; set; }

@@ -36,6 +36,13 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IMobileQrScanner, AndroidQrScanner>();
         services.AddSingleton<IMobileQrImageFactory, MobileQrImageFactory>();
         services.AddSingleton<IMobileDocumentService, AndroidDocumentService>();
+        services.AddSingleton<AndroidPlatformUnattendedUnlock>();
+        services.AddSingleton<IPlatformUnattendedUnlock>(provider =>
+            provider.GetRequiredService<AndroidPlatformUnattendedUnlock>());
+        services.AddSingleton<IPlatformQuickUnlock>(provider =>
+            provider.GetRequiredService<AndroidPlatformUnattendedUnlock>());
+        // Keep the interactive adapter last: single-service consumers are the
+        // biometric enrollment/settings flow, while sessions enumerate both.
         services.AddSingleton<IPlatformQuickUnlock, AndroidPlatformQuickUnlock>();
         services.AddInfrastructure(configuration, paths, fileSecurity);
         services.AddSingleton<IAsyncPlatformClipboard, AndroidPlatformClipboard>();

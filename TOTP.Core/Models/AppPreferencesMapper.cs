@@ -14,6 +14,7 @@ public static class AppPreferencesMapper
             CultureName = settings.CultureName,
             MinimumLogLevel = settings.MinimumLogLevel,
             PreferredUnlockMethod = settings.PreferredUnlockMethod,
+            AppLockEnabled = settings.AppLockEnabled,
             IdleTimeoutMinutes = ToIdleTimeoutMinutes(settings.IdleTimeout),
             LockOnSessionLock = settings.LockOnSessionLock,
             LockOnMinimize = settings.LockOnMinimize,
@@ -36,6 +37,7 @@ public static class AppPreferencesMapper
         settings.CultureName = normalized.CultureName;
         settings.MinimumLogLevel = normalized.MinimumLogLevel;
         settings.PreferredUnlockMethod = normalized.PreferredUnlockMethod;
+        settings.AppLockEnabled = normalized.AppLockEnabled;
         settings.IdleTimeout = normalized.IdleTimeoutMinutes == 0
             ? TimeSpan.Zero
             : TimeSpan.FromMinutes(normalized.IdleTimeoutMinutes);

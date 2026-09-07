@@ -1,4 +1,5 @@
 using FluentResults;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Avalonia.Controls;
 using TOTP.Avalonia.Desktop.Localization;
@@ -8,12 +9,80 @@ using TOTP.Avalonia.Desktop.Presentation.Dialogs;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Services.Models;
 using TOTP.Infrastructure.Services;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class NativeFilePickerViewModelTests
 {
+    [Fact]
+    public async Task ImportGoogleQrAsync_OpensImagePickerDirectlyWithoutStartingCamera()
+    {
+        const string payload = "otpauth-migration://offline?data=synthetic";
+        var selected = new TestStorageFile("google-transfer.png", content: [1, 2, 3]);
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickQrImageAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(selected);
+        var decoder = new Mock<IQrImageDecoder>();
+        decoder.Setup(value => value.DecodeAsync(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(QrImageDecodeResult.Decoded(payload));
+        var validator = new Mock<IQrPayloadValidator>();
+        validator.Setup(value => value.Validate(payload))
+            .Returns(new QrPayloadValidationResult(
+                true,
+                "Example",
+                "alice",
+                QrPayloadKind.GoogleAuthenticatorMigration,
+                2));
+        var qrImport = new Mock<IQrAccountImportService>();
+        qrImport.Setup(value => value.ImportAsync(
+                payload,
+                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
+                QrAccountImportStatus.BulkImported,
+                Guid.NewGuid(),
+                "Example",
+                "alice",
+                TotalCount: 2,
+                AddedCount: 2)));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        var runner = new Mock<IQrScannerRunner>();
+        using var cameraScanner = new CameraScannerViewModel(
+            runner.Object,
+            decoder.Object,
+            picker.Object,
+            validator.Object,
+            Mock.Of<IAvaloniaQrImageFactory>(),
+            Mock.Of<IUiScheduler>(),
+            NullLogger<CameraScannerViewModel>.Instance,
+            qrImport.Object,
+            dialogs.Object,
+            Localization());
+        using var sut = Create(
+            picker.Object,
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            dialogs.Object,
+            cameraScanner: cameraScanner);
+
+        await sut.ImportGoogleQrAsync();
+
+        picker.Verify(value => value.PickQrImageAsync(It.IsAny<CancellationToken>()), Times.Once);
+        runner.Verify(value => value.RunAsync(
+            It.IsAny<CancellationToken>(),
+            It.IsAny<Action<byte[]>>(),
+            It.IsAny<Action>(),
+            It.IsAny<Action>()), Times.Never);
+        Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
+        Assert.Contains("2", sut.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task ImportAsync_WhenNoFileIsSelected_ShowsOneShortInformationNotice()
     {
@@ -234,7 +303,8 @@ public sealed class NativeFilePickerViewModelTests
         IPlatformFileSecurity? security = null,
         ISettingsService? settings = null,
         IPlatformFolderLauncher? folderLauncher = null,
-        TimeSpan? transientMessageDuration = null)
+        TimeSpan? transientMessageDuration = null,
+        CameraScannerViewModel? cameraScanner = null)
     {
         var passwordValidation = new Mock<IPasswordValidationService>();
         passwordValidation.SetupGet(value => value.MinimumLength).Returns(8);
@@ -259,7 +329,8 @@ public sealed class NativeFilePickerViewModelTests
             settings,
             folderLauncher ?? Mock.Of<IPlatformFolderLauncher>(),
             Localization(),
-            transientMessageDuration);
+            transientMessageDuration,
+            cameraScanner);
     }
 
     private static IAvaloniaLocalizationService Localization()

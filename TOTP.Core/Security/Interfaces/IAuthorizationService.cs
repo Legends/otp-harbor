@@ -20,6 +20,7 @@ public interface IAuthorizationService
     Task<AuthorizationResult> ConfigureHelloAsync(string recoveryPassword);
     Task<AuthorizationResult> SetGateAsync(AuthorizationGateKind gate);
     Task<AuthorizationResult> ChangePasswordAsync(string currentPassword, string newPassword);
+    Task<AuthorizationResult> SetAppLockEnabledAsync(bool enabled, string recoveryPassword);
 
     void Logout();
     void Lock();

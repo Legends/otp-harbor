@@ -4,7 +4,7 @@ OTP Harbor is a local-first desktop application. It does not contain telemetry, 
 
 ## Network activity
 
-Stable direct-download packages may contact GitHub at startup to retrieve the signed update feed when automatic update checks are enabled. An update package is downloaded only after the user requests the download. These requests disclose ordinary connection metadata, such as the user's IP address, to GitHub and its delivery providers. They do not include vault data or a project-specific user identifier. Users can disable update checks in the application settings. GitHub describes its handling of service data in the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+GitHub direct-download packages contact the configured GitHub or GitHub Pages endpoint after the vault is unlocked to retrieve the signed update feed. An update package is downloaded only after the user requests the download. These requests disclose ordinary connection metadata, such as the user's IP address, to GitHub and its delivery providers. They do not include vault data or a project-specific user identifier. Externally managed package builds disable this application-owned check. GitHub describes its handling of service data in the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
 Packages managed by an operating-system package manager or app store use that distributor's update mechanism and privacy terms instead of the application's direct-update service.
 

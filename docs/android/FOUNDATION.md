@@ -126,14 +126,20 @@ before the first store publication because a published application ID is effecti
   displayed codes. While foregrounded, the UI holds one current short-lived OTP string per visible
   account so the primary authenticator list can show and copy codes without a second secret lookup.
   It never receives the underlying seeds. The foreground transition re-evaluates the deadline using monotonic time because
-  Android may suspend background execution. Device lock, explicit lock, and process termination do
-  not receive this grace period. Enabling quick unlock unwraps the vault key only after recovery
+  Android may suspend background execution. With the default app lock enabled, device lock,
+  explicit lock, and process termination do not receive this grace period. Enabling quick unlock unwraps the vault key only after recovery
   password verification, then encrypts it with AES-256-GCM inside the authenticated Keystore flow.
   Unlock first completes a `BIOMETRIC_STRONG` system prompt without a `CryptoObject`; the cipher is
   created and completed synchronously in the success callback, within the one-second authorization
   window. The password field remains available if the prompt is cancelled or recovery is required.
   The envelope stores only the Keystore alias, nonce, authenticated ciphertext, and reviewed
   provider metadata; it stores neither the biometric nor an exportable platform key.
+  Disabling the app lock is a separate, explicitly warned opt-out that requires the recovery
+  password. It replaces any biometric wrapper with a non-exportable Android Keystore AES key whose
+  policy permits access without user verification, while retaining the mandatory password wrapper.
+  Startup still verifies the recovered DEK against the encrypted vault before exposing codes. With
+  this opt-out active, background and device-lock transitions clear displayed code/QR state but keep
+  authorization available; anyone using the unlocked device can therefore access the codes.
   QR capture delegates still-image acquisition to the installed system camera and decodes only the
   returned in-memory preview with the embedded ZXing decoder. The release manifest requests neither
   network nor camera permission for this flow, the app does not write a captured image, accepts only
@@ -152,7 +158,9 @@ before the first store publication because a published application ID is effecti
   dependency on `NSec.Cryptography` was upgraded from 25.4.0 to 26.4.0 for current Android native
   runtime and 16 KB page-size support; the existing version-2 authorization envelope gains an
   optional, strictly validated Android provider wrapper without changing the password wrapper or
-  encrypted-vault format.
+  encrypted-vault format. The optional `appLockEnabled` preference defaults to `true` for existing
+  files. Older builds reject the unattended provider for quick unlock and fall back to the still-valid
+  password wrapper.
   Strong-biometric quick unlock currently requires Android 11 (API 30) or newer. Earlier supported
   Android versions retain password unlock rather than silently accepting a weaker biometric class.
   Desktop and Android exchange the existing encrypted `.totp` backup format; private live-vault
@@ -171,6 +179,9 @@ before the first store publication because a published application ID is effecti
   broader supported-device matrix before release. Biometric provider metadata, enrollment,
   automatic-prompt cancellation, recovery fallback, and successful unlock have regression
   coverage; enrollment-change invalidation still requires physical-device verification.
+  App-lock opt-out startup, background behavior, preference compatibility, provider-policy
+  validation, and localized warnings have regression coverage; Keystore persistence across process
+  restart remains a physical-device verification gate.
   Mobile navigation, search, unavailable-scanner fallback, localized QR-import outcomes, and
   disposal of generated QR images and sensitive PNG buffers have regression coverage.
   Encrypted-only backup export, immediate password-field clearing, explicit import confirmation,

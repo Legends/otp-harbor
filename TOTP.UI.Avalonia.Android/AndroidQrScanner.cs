@@ -147,10 +147,40 @@ internal sealed class AndroidQrScanner(
     {
         var width = bitmap.Width;
         var height = bitmap.Height;
-        var pixelCount = checked(width * height);
         if (width <= 0 || height <= 0 ||
-            pixelCount > MobileQrCapturePolicy.MaximumDecodedPixels)
+            (long)width * height > MobileQrCapturePolicy.MaximumDecodedPixels)
             return MobileQrScanResult.Failed;
+
+        foreach (var size in MobileQrCapturePolicy.CreateDecodeSizes(width, height))
+        {
+            if (size.Width == width && size.Height == height)
+            {
+                var originalResult = DecodeSingle(bitmap);
+                if (originalResult.Status == MobileQrScanStatus.Success)
+                    return originalResult;
+                continue;
+            }
+
+            using var scaled = Bitmap.CreateScaledBitmap(
+                bitmap,
+                size.Width,
+                size.Height,
+                false);
+            if (scaled is null) continue;
+
+            var scaledResult = DecodeSingle(scaled);
+            if (scaledResult.Status == MobileQrScanStatus.Success)
+                return scaledResult;
+        }
+
+        return MobileQrScanResult.Failed;
+    }
+
+    private static MobileQrScanResult DecodeSingle(Bitmap bitmap)
+    {
+        var width = bitmap.Width;
+        var height = bitmap.Height;
+        var pixelCount = checked(width * height);
 
         var pixels = new int[pixelCount];
         byte[]? rgb = null;
@@ -173,7 +203,8 @@ internal sealed class AndroidQrScanner(
                 Options = new DecodingOptions
                 {
                     PossibleFormats = [BarcodeFormat.QR_CODE],
-                    TryHarder = true
+                    TryHarder = true,
+                    TryInverted = true
                 }
             };
             var decoded = reader.Decode(

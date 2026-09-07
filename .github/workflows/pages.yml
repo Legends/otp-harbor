@@ -8,6 +8,8 @@ on:
       - 'docs/images/readme/app.png'
       - 'docs/images/social/otp-harbor-social-preview.jpg'
       - 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'
+      - 'TOTP.UI.Avalonia.Desktop/appsettings.json'
+      - 'scripts/release/Select-PublishedUpdateFeed.ps1'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -29,6 +31,11 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-PublicWebsite.ps1
 
+      - name: Setup .NET SDK for signed-feed verification
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
       - name: Assemble static website
         shell: bash
         run: |
@@ -37,6 +44,65 @@ jobs:
           cp docs/images/readme/app.png _site/assets/app.png
           cp docs/images/social/otp-harbor-social-preview.jpg _site/assets/social-preview.jpg
           cp TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
+
+      - name: Publish the newest signed GitHub feed for RC subscribers
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $releasesPath = Join-Path $env:RUNNER_TEMP 'published-releases.json'
+          $releasesJson = gh api "repos/${{ github.repository }}/releases?per_page=100"
+          [IO.File]::WriteAllText($releasesPath, $releasesJson, [Text.UTF8Encoding]::new($false))
+          $selectedTag = ./scripts/release/Select-PublishedUpdateFeed.ps1 `
+            -ReleasesJsonPath $releasesPath
+          if ([string]::IsNullOrWhiteSpace($selectedTag)) {
+            Write-Host "No published signed GitHub appcast is available yet."
+            exit 0
+          }
+
+          $feedDirectory = Join-Path $PWD '_site/updates/rc'
+          New-Item -ItemType Directory -Path $feedDirectory -Force | Out-Null
+          gh release download $selectedTag `
+            --repo "${{ github.repository }}" `
+            --pattern 'appcast-v2.xml' `
+            --pattern 'appcast-v2.xml.signature' `
+            --dir $feedDirectory
+
+          dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator --version 2.9.0
+          $settings = Get-Content TOTP.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
+          $keyDirectory = Join-Path $env:RUNNER_TEMP 'netsparkle-public-key'
+          New-Item -ItemType Directory -Path $keyDirectory | Out-Null
+          [IO.File]::WriteAllText(
+            (Join-Path $keyDirectory 'NetSparkle_Ed25519.pub'),
+            $settings.AutoUpdate.PublicKey.Trim(),
+            [Text.Encoding]::ASCII)
+          $signature = (Get-Content (Join-Path $feedDirectory 'appcast-v2.xml.signature') -Raw).Trim()
+          netsparkle-generate-appcast `
+            --verify (Join-Path $feedDirectory 'appcast-v2.xml') `
+            --signature $signature `
+            --key-path $keyDirectory
+          if ($LASTEXITCODE -ne 0) {
+            throw "The selected public update feed has an invalid Ed25519 signature."
+          }
+
+          [xml]$appcast = Get-Content (Join-Path $feedDirectory 'appcast-v2.xml') -Raw
+          $enclosures = @($appcast.SelectNodes('//enclosure'))
+          $sparkleNamespace = 'http://www.andymatuschak.org/xml-namespaces/sparkle'
+          $expectedVersion = $selectedTag.TrimStart('v')
+          $expectedChannel = if ($selectedTag -match '-rc\d+$') { 'rc' } else { 'stable' }
+          $expectedDownloadPrefix = '^https://github\.com/' `
+            + [Regex]::Escape("${{ github.repository }}") `
+            + '/releases/download/' `
+            + [Regex]::Escape($selectedTag) `
+            + '/'
+          if ($enclosures.Count -eq 0 -or @($enclosures | Where-Object {
+            $_.GetAttribute('channel', $sparkleNamespace) -cne $expectedChannel -or
+            $_.GetAttribute('shortVersionString', $sparkleNamespace) -cne $expectedVersion -or
+            $_.GetAttribute('url') -notmatch $expectedDownloadPrefix
+          }).Count -ne 0) {
+            throw "The selected public update feed does not match its immutable release tag."
+          }
+          Write-Host "Published signed feed from $selectedTag for RC subscribers."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

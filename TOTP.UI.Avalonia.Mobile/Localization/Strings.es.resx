@@ -127,4 +127,16 @@
   <data name="BiometricRecoveryRequired" xml:space="preserve"><value>Use su contraseña maestra para desbloquear y restaurar el acceso biométrico.</value></data>
   <data name="BiometricRetriesExhausted" xml:space="preserve"><value>El acceso biométrico está bloqueado temporalmente. Use su contraseña maestra o inténtelo de nuevo más tarde.</value></data>
   <data name="BiometricDisabledByPolicy" xml:space="preserve"><value>El acceso biométrico no está disponible debido a la política de seguridad del dispositivo.</value></data>
+  <data name="AppLockTitle" xml:space="preserve"><value>Bloqueo de la aplicación</value></data>
+  <data name="AppLockEnabledDescription" xml:space="preserve"><value>Solicitar autenticación al abrir OTP Harbor o al volver después de 30 segundos.</value></data>
+  <data name="AppLockDisabledDescription" xml:space="preserve"><value>La autenticación está desactivada. Cualquiera que use este dispositivo desbloqueado puede ver tus códigos.</value></data>
+  <data name="DisableAppLock" xml:space="preserve"><value>Desactivar bloqueo</value></data>
+  <data name="EnableAppLock" xml:space="preserve"><value>Activar bloqueo</value></data>
+  <data name="DisableAppLockWarning" xml:space="preserve"><value>Sin el bloqueo, OTP Harbor puede abrirse sin verificar al usuario. Tu contraseña maestra sigue siendo el método de recuperación. Introdúcela para confirmar.</value></data>
+  <data name="AppLockDisabled" xml:space="preserve"><value>Bloqueo desactivado. Cualquiera que use este dispositivo desbloqueado puede ver los códigos.</value></data>
+  <data name="AppLockEnabled" xml:space="preserve"><value>Bloqueo activado. Se solicitará la contraseña maestra después del próximo bloqueo.</value></data>
+  <data name="AppLockChangeFailed" xml:space="preserve"><value>No se pudo cambiar el bloqueo de forma segura.</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Importar / Exportar</value></data>
+  <data name="ImportGoogleQr" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
+  <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Escanea un código QR de transferencia de Google Authenticator. Se admiten exportaciones de varias cuentas o páginas, un código QR cada vez.</value></data>
 </root>

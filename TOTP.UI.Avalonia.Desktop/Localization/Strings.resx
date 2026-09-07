@@ -120,6 +120,8 @@
   <data name="ExportEncryptedBackup" xml:space="preserve"><value>Export encrypted backup…</value></data>
   <data name="ImportConflictHandling" xml:space="preserve"><value>Import conflict handling</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Import accounts</value></data>
+  <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Import OTP Harbor backup</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Import an encrypted OTP Harbor .totp backup or a compatible account file.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Export accounts</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Create a portable password-protected backup of all accounts.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Support diagnostics</value></data>
@@ -130,6 +132,16 @@
   <data name="VerifyAppcast" xml:space="preserve"><value>Check for updates</value></data>
   <data name="SoftwareUpdates" xml:space="preserve"><value>Software updates</value></data>
   <data name="ScanQrCamera" xml:space="preserve"><value>Scan QR with camera</value></data>
+  <data name="ImportQrCode" xml:space="preserve"><value>Import QR code</value></data>
+  <data name="OpenQrImage" xml:space="preserve"><value>Open QR image</value></data>
+  <data name="SelectQrImage" xml:space="preserve"><value>Select a QR code image</value></data>
+  <data name="QrImageFiles" xml:space="preserve"><value>QR code images</value></data>
+  <data name="QrImageReading" xml:space="preserve"><value>Reading QR code image…</value></data>
+  <data name="QrImageNoCode" xml:space="preserve"><value>No readable QR code was found in the selected image.</value></data>
+  <data name="QrImageInvalid" xml:space="preserve"><value>The selected file is not a supported QR code image.</value></data>
+  <data name="QrImageTooLarge" xml:space="preserve"><value>The selected QR code image exceeds the safe size limit.</value></data>
+  <data name="QrImageReadFailedSafely" xml:space="preserve"><value>The QR code image could not be read safely. No account data was changed.</value></data>
+  <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No QR code image was selected.</value></data>
   <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Scan an account QR code or a Google Authenticator export QR code.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Import from Google Authenticator</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Google Authenticator export detected. Accounts found: {0}. Import them?</value></data>
@@ -206,6 +218,7 @@
   <data name="UpdateDisabled" xml:space="preserve"><value>Automatic updates are disabled or not configured for this package.</value></data>
   <data name="UpdateNoneAvailable" xml:space="preserve"><value>No applicable signed update is available.</value></data>
   <data name="UpdateAvailable" xml:space="preserve"><value>Signed update {0} is available. Download starts only when you choose Download.</value></data>
+  <data name="UpdateAvailableOnStartup" xml:space="preserve"><value>Signed update {0} is available. Open Settings → About to review it.</value></data>
   <data name="UpdateResponseIncomplete" xml:space="preserve"><value>The update response was incomplete. No download was started.</value></data>
   <data name="UpdateCheckCancelled" xml:space="preserve"><value>Update check cancelled.</value></data>
   <data name="UpdateCheckFailed" xml:space="preserve"><value>The update check failed safely. No download was started.</value></data>
@@ -295,4 +308,7 @@
   <data name="CapabilityPermissionDenied" xml:space="preserve"><value>permission denied</value></data>
   <data name="CapabilityFailed" xml:space="preserve"><value>failed</value></data>
   <data name="Unknown" xml:space="preserve"><value>unknown</value></data>
+  <data name="ImportGoogleAuthenticator" xml:space="preserve"><value>Import from Google Authenticator</value></data>
+  <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Choose a crisp screenshot or saved image of a Google Authenticator transfer QR code. Multi-account and multi-page exports are imported one QR image at a time.</value></data>
+  <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choose Google Authenticator QR image…</value></data>
 </root>

@@ -26,6 +26,9 @@ public sealed record AppPreferencesV1
     [JsonPropertyName("preferredUnlockMethod")]
     public PreferredUnlockMethod PreferredUnlockMethod { get; init; } = PreferredUnlockMethod.Password;
 
+    [JsonPropertyName("appLockEnabled")]
+    public bool AppLockEnabled { get; init; } = true;
+
     [JsonPropertyName("idleTimeoutMinutes")]
     public int IdleTimeoutMinutes { get; init; } = 10;
 

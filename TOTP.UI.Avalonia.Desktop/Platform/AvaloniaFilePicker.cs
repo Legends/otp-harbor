@@ -57,4 +57,28 @@ public sealed class AvaloniaFilePicker(
         cancellationToken.ThrowIfCancellationRequested();
         return file is null ? null : new AvaloniaStorageFile(file);
     }
+
+    public async Task<INativeStorageFile?> PickQrImageAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var provider = windowCoordinator.GetRequiredDialogOwner().StorageProvider;
+        if (!provider.CanOpen) return null;
+
+        var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = localization.GetString(AvaloniaStringKeys.SelectQrImage),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType(localization.GetString(AvaloniaStringKeys.QrImageFiles))
+                {
+                    Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp"]
+                }
+            ]
+        });
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return files.Count == 1 ? new AvaloniaStorageFile(files[0]) : null;
+    }
 }

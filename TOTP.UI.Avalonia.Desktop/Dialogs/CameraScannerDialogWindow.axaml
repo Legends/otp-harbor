@@ -14,13 +14,13 @@
     ShowInTaskbar="False"
     WindowDecorations="None"
     WindowStartupLocation="CenterOwner"
-    Title="{DynamicResource ScanQrCamera}">
+    Title="{DynamicResource ImportQrCode}">
     <Grid RowDefinitions="Auto,*">
         <controls:ProductTitleBar Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
         <Grid Grid.Row="1" Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto">
             <TextBlock
                 Classes="page-title"
-                Text="{DynamicResource ScanQrCamera}" />
+                Text="{DynamicResource ImportQrCode}" />
             <TextBlock
                 Grid.Row="1"
                 Margin="0,4,0,0"
@@ -73,6 +73,10 @@
                     Command="{Binding StartCommand}"
                     Content="{DynamicResource Retry}"
                     IsVisible="{Binding !IsScanning}" />
+                <Button
+                    MinWidth="120"
+                    Command="{Binding OpenImageCommand}"
+                    Content="{DynamicResource OpenQrImage}" />
                 <Button
                     MinWidth="100"
                     Command="{Binding CancelCommand}"

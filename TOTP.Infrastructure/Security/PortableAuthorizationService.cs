@@ -17,6 +17,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
     private readonly IAuthorizationEnvelopeSession _session;
     private readonly IAuthorizationEnvelopePasswordLifecycle _passwordLifecycle;
     private readonly IPlatformQuickUnlockEnrollment _quickUnlockEnrollment;
+    private readonly IPlatformUnattendedUnlockEnrollment _unattendedUnlockEnrollment;
     private readonly IPlatformQuickUnlock _platformQuickUnlock;
     private readonly IPasswordValidationService _passwordValidation;
     private readonly ISecurityContext _securityContext;
@@ -31,12 +32,15 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         IPasswordValidationService passwordValidation,
         ISecurityContext securityContext,
         AuthorizationState state,
-        ILogger<PortableAuthorizationService> logger)
+        ILogger<PortableAuthorizationService> logger,
+        IPlatformUnattendedUnlockEnrollment? unattendedUnlockEnrollment = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _session = session ?? throw new ArgumentNullException(nameof(session));
         _passwordLifecycle = passwordLifecycle ?? throw new ArgumentNullException(nameof(passwordLifecycle));
         _quickUnlockEnrollment = quickUnlockEnrollment ?? throw new ArgumentNullException(nameof(quickUnlockEnrollment));
+        _unattendedUnlockEnrollment = unattendedUnlockEnrollment
+            ?? new UnavailableUnattendedUnlockEnrollment();
         _platformQuickUnlock = platformQuickUnlock ?? throw new ArgumentNullException(nameof(platformQuickUnlock));
         _passwordValidation = passwordValidation ?? throw new ArgumentNullException(nameof(passwordValidation));
         _securityContext = securityContext ?? throw new ArgumentNullException(nameof(securityContext));
@@ -69,6 +73,17 @@ public sealed class PortableAuthorizationService : IAuthorizationService
     {
         ct.ThrowIfCancellationRequested();
         if (!State.IsConfigured) return AuthorizationResult.NotConfigured;
+
+        if (!_settingsService.Current.AppLockEnabled)
+        {
+            if (!_session.State.HasUnattendedUnlock)
+                return AuthorizationResult.PasswordRequired;
+
+            var unattendedResult = await TryUnlockWithHelloAsync(ct);
+            if (unattendedResult != AuthorizationResult.Success)
+                await SetAppLockEnabledAsync(true, string.Empty);
+            return unattendedResult;
+        }
 
         return State.PreferredUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock
             && _session.State.HasQuickUnlock
@@ -198,6 +213,57 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         return AuthorizationResult.Success;
     }
 
+    public async Task<AuthorizationResult> SetAppLockEnabledAsync(
+        bool enabled,
+        string recoveryPassword)
+    {
+        if (!State.IsConfigured) return AuthorizationResult.NotConfigured;
+        if (_settingsService.Current.AppLockEnabled == enabled)
+            return AuthorizationResult.Success;
+
+        if (!enabled)
+        {
+            var enrolled = await _unattendedUnlockEnrollment.EnableAsync(recoveryPassword);
+            if (enrolled.IsFailed) return MapEnrollmentFailure(enrolled);
+
+            var previousPreference = _settingsService.Current.PreferredUnlockMethod;
+            _settingsService.Current.AppLockEnabled = false;
+            _settingsService.Current.PreferredUnlockMethod =
+                PreferredUnlockMethod.PlatformQuickUnlock;
+            var saved = await _settingsService.SaveAsync();
+            if (saved.IsFailed)
+            {
+                _settingsService.Current.AppLockEnabled = true;
+                _settingsService.Current.PreferredUnlockMethod = previousPreference;
+                await _unattendedUnlockEnrollment.DisableAsync();
+                await RefreshSessionAsync();
+                ApplySessionState();
+                return AuthorizationResult.Failed;
+            }
+
+            if (!await RefreshSessionAsync()) return AuthorizationResult.Failed;
+            ApplySessionState();
+            return AuthorizationResult.Success;
+        }
+
+        _settingsService.Current.AppLockEnabled = true;
+        _settingsService.Current.PreferredUnlockMethod = PreferredUnlockMethod.Password;
+        var preferenceSaved = await _settingsService.SaveAsync();
+        if (preferenceSaved.IsFailed)
+        {
+            // Fail closed in memory even when persistence is unavailable. The
+            // next startup will retry the unattended wrapper and fall back to
+            // the password gate if it is still unusable.
+            ApplySessionState();
+            return AuthorizationResult.Failed;
+        }
+
+        var disabled = await _unattendedUnlockEnrollment.DisableAsync();
+        if (!await RefreshSessionAsync()) return AuthorizationResult.Failed;
+        ApplySessionState();
+        return disabled.IsSuccess ? AuthorizationResult.Success : AuthorizationResult.Failed;
+    }
+
     public void Logout() => Lock();
 
     public void Lock()
@@ -239,6 +305,12 @@ public sealed class PortableAuthorizationService : IAuthorizationService
     private void ApplySessionState()
     {
         var preference = _settingsService.Current.PreferredUnlockMethod;
+        if (!_settingsService.Current.AppLockEnabled
+            && !_session.State.HasUnattendedUnlock)
+        {
+            _settingsService.Current.AppLockEnabled = true;
+            preference = PreferredUnlockMethod.Password;
+        }
         if (preference == PreferredUnlockMethod.PlatformQuickUnlock
             && !_session.State.HasQuickUnlock)
         {
@@ -314,5 +386,23 @@ public sealed class PortableAuthorizationService : IAuthorizationService
                 AuthorizationResult.TooManyAttempts,
             _ => AuthorizationResult.Failed
         };
+    }
+
+    private sealed class UnavailableUnattendedUnlockEnrollment :
+        IPlatformUnattendedUnlockEnrollment
+    {
+        public Task<FluentResults.Result> EnableAsync(
+            string recoveryPassword,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(FluentResults.Result.Fail(
+                "Unattended unlock is unavailable."));
+
+        public Task<FluentResults.Result> DisableAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(FluentResults.Result.Ok());
+
+        public void Dispose()
+        {
+        }
     }
 }

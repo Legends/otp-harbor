@@ -31,6 +31,87 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_WhenAppLockIsDisabled_UnlocksThroughDeviceWrapper()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user@example.test");
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            appLockEnabled: false,
+            preferredUnlockMethod: TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+
+        await context.Sut.InitializeAsync();
+
+        Assert.True(context.Sut.IsAccountsVisible);
+        Assert.False(context.Sut.IsManualLockVisible);
+        Assert.Single(context.Sut.Accounts);
+        context.Authorization.Verify(value => value.TryUnlockOnStartupAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnEnteredBackground_WhenAppLockIsDisabled_PreservesAuthorization()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+
+        context.Sut.OnEnteredBackground(lockImmediately: true);
+        context.Sut.OnReturnedToForeground();
+
+        context.Authorization.Verify(value => value.Lock(), Times.Never);
+        Assert.True(context.Sut.IsAccountsVisible);
+    }
+
+    [Fact]
+    public async Task ImportGoogleQrAsync_FromSettings_UsesBoundedMigrationWorkflow()
+    {
+        const string payload = "otpauth-migration://offline?data=synthetic";
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MobileQrScanResult.Successful(payload));
+        context.QrPayloadValidator.Setup(value => value.Validate(payload))
+            .Returns(new QrPayloadValidationResult(
+                true,
+                string.Empty,
+                string.Empty,
+                QrPayloadKind.GoogleAuthenticatorMigration,
+                2));
+        context.QrImport.Setup(value => value.ImportAsync(
+                payload,
+                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
+                QrAccountImportStatus.BulkImported,
+                Guid.Empty,
+                string.Empty,
+                string.Empty,
+                TotalCount: 2,
+                AddedCount: 2)));
+        await ConfigureAndBeginAddAsync(context);
+        await context.Sut.CancelEditAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        var import = context.Sut.ImportGoogleQrAsync();
+        Assert.True(context.Sut.IsImportConfirmationVisible);
+        await context.Sut.ResolveImportConfirmationAsync(true);
+        await import;
+
+        context.QrImport.Verify(value => value.ImportAsync(
+            payload,
+            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ConfigureAsync_WhenSuccessful_OpensEmptyEncryptedVault()
     {
         var context = CreateContext(isConfigured: false);
@@ -1163,7 +1244,8 @@ public sealed class MobileShellViewModelTests
         bool biometricAvailable = false,
         TOTP.Core.Enums.PreferredUnlockMethod preferredUnlockMethod =
             TOTP.Core.Enums.PreferredUnlockMethod.Password,
-        string cultureName = "en")
+        string cultureName = "en",
+        bool appLockEnabled = true)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -1202,7 +1284,12 @@ public sealed class MobileShellViewModelTests
         var exportService = new Mock<IExportService>();
         var accountImport = new Mock<IAccountImportService>();
 
-        var settingsValue = new AppSettings { CultureName = cultureName };
+        var settingsValue = new AppSettings
+        {
+            CultureName = cultureName,
+            AppLockEnabled = appLockEnabled,
+            PreferredUnlockMethod = preferredUnlockMethod
+        };
         var settings = new Mock<ISettingsService>();
         settings.SetupGet(value => value.Current).Returns(settingsValue);
         settings.Setup(value => value.LoadAsync())

@@ -31,6 +31,18 @@ public static class MobileStringKeys
     public const string SpanishLanguage = nameof(SpanishLanguage);
     public const string LanguageSaveFailed = nameof(LanguageSaveFailed);
     public const string Security = nameof(Security);
+    public const string AppLockTitle = nameof(AppLockTitle);
+    public const string AppLockEnabledDescription = nameof(AppLockEnabledDescription);
+    public const string AppLockDisabledDescription = nameof(AppLockDisabledDescription);
+    public const string DisableAppLock = nameof(DisableAppLock);
+    public const string EnableAppLock = nameof(EnableAppLock);
+    public const string DisableAppLockWarning = nameof(DisableAppLockWarning);
+    public const string AppLockDisabled = nameof(AppLockDisabled);
+    public const string AppLockEnabled = nameof(AppLockEnabled);
+    public const string AppLockChangeFailed = nameof(AppLockChangeFailed);
+    public const string ImportExport = nameof(ImportExport);
+    public const string ImportGoogleQr = nameof(ImportGoogleQr);
+    public const string ImportGoogleQrDescription = nameof(ImportGoogleQrDescription);
     public const string SearchAccounts = nameof(SearchAccounts);
     public const string NoSearchResults = nameof(NoSearchResults);
     public const string AccountSwipeHint = nameof(AccountSwipeHint);
@@ -157,6 +169,18 @@ public static class MobileStringKeys
         SpanishLanguage,
         LanguageSaveFailed,
         Security,
+        AppLockTitle,
+        AppLockEnabledDescription,
+        AppLockDisabledDescription,
+        DisableAppLock,
+        EnableAppLock,
+        DisableAppLockWarning,
+        AppLockDisabled,
+        AppLockEnabled,
+        AppLockChangeFailed,
+        ImportExport,
+        ImportGoogleQr,
+        ImportGoogleQrDescription,
         SearchAccounts,
         NoSearchResults,
         AccountSwipeHint,

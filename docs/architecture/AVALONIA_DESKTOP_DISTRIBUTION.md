@@ -4,7 +4,7 @@
 
 | Target | Initial artifact | Install/update ownership |
 | --- | --- | --- |
-| Windows x64 | Microsoft Store MSIX after certification | Microsoft Store signs the accepted package and owns update delivery; GitHub ZIPs remain explicit unsigned manual previews |
+| Windows x64 | Microsoft Store MSIX after certification | Microsoft Store signs the accepted package and owns update delivery; GitHub RC ZIPs remain explicit unsigned previews but use an Ed25519-signed application update feed |
 | macOS 14+ ARM64 | Developer ID signed and notarized DMG | User installs the app bundle; replacement must use a future signed/notarized target adapter or an explicit manual download |
 | Ubuntu 24.04 x64 | Self-contained tar.gz and DEB | Portable extraction or Debian package manager; no in-place app updater claims support |
 
@@ -12,7 +12,7 @@ macOS x64 remains outside the initial support policy because the aligned OpenCV 
 
 The initial stable Windows release is being prepared as a self-contained MSIX for Microsoft Store. Repository CI creates the unsigned Partner Center submission input with package identity values supplied by the reserved Store product. It sets `DistributionMode=store`, disables application-owned updates, and removes the standalone updater. Microsoft signs the package after successful certification. The unsigned MSIX must never be sideloaded or attached to a GitHub Release.
 
-The direct ZIP/update implementation is retained as a conditional future channel. Current GitHub ZIPs are explicitly unsigned RC previews with automatic updates disabled; they are not production packages.
+The direct ZIP/update implementation is retained for GitHub packages. Current GitHub ZIPs are explicitly unsigned RC previews and are not production packages, but their update metadata and eligible payloads are authenticated with the project Ed25519 release key.
 
 ## macOS release procedure
 
@@ -40,7 +40,7 @@ Conditional direct-download tag publication expects these GitHub Actions secrets
 
 A missing credential fails the conditional direct tag workflow. It never downgrades a production artifact to unsigned output. Store packaging uses its separate Partner Center-only workflow and no repository certificate secret.
 
-Release-candidate tags are a separate, explicitly untrusted preview channel. An `-rcN` tag publishes only the Avalonia Windows x64 ZIPs and Linux x64 tar/DEB packages. Windows executables are unsigned, automatic updates are disabled inside every preview package, no appcast is generated, and no macOS artifact is included. The GitHub prerelease title and notes identify this state, the aggregate manifest records `releaseProfile=unsigned-preview`, and every entry has `unsigned-preview-manual-download` policy. A Store-certified stable Windows package never uses this path.
+Release-candidate tags are a separate preview channel. An `-rcN` tag publishes only the Avalonia Windows x64 ZIPs and Linux x64 tar/DEB packages. Windows executables are unsigned, while direct packages point to the signed RC appcast and DEB remains package-manager-owned; no macOS artifact is included. The GitHub prerelease title and notes identify this state, and the aggregate manifest records `releaseProfile=unsigned-platform-preview` while retaining target-specific update ownership. A Store-certified stable Windows package never uses this path.
 
 The entitlements are limited to the camera capability and the current Microsoft-documented defaults required by a notarized .NET app host. Any removal or addition requires a physical launch/camera/Keychain regression on the signed bundle.
 
@@ -66,7 +66,8 @@ Package assembly stamps the DEB with `AutoUpdate:DistributionMode=package-manage
 ## Release guardrails
 
 - Unsigned CI artifacts are technical evidence unless an RC workflow publishes them as an explicitly labeled development preview. They must never be presented as production or stable releases.
-- Unsigned previews contain no appcast, have automatic updates disabled in package configuration, exclude macOS, and carry only `unsigned-preview-manual-download` manifest policies.
+- Unsigned-platform previews exclude macOS and require signed appcast/payload metadata for application-owned direct updates. Their lack of Authenticode trust must remain explicit and must never be obscured by the Ed25519 application signature.
+- Store and DEB packages disable the application-owned client; GitHub direct packages enable the stable or RC appcast appropriate to their channel.
 - Artifact filenames, appcast target OS/architecture, assembly version, bundle/debian version, and Git tag must agree.
 - macOS and Linux packages consume only matching target-qualified entries from `appcast-v2.xml`.
 - Avalonia direct packages consume `appcast-v2.xml` and require an explicit OS, architecture, and stable/RC channel match.

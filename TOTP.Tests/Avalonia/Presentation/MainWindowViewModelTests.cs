@@ -119,6 +119,49 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_WhenSignedUpdateIsAvailable_NotifiesAuthorizedUserWithoutDownloading()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var offer = new PortableUpdateOffer(
+            new Version(2, 1, 0),
+            new Uri("https://example.invalid/otp-harbor.zip"),
+            Convert.ToBase64String(new byte[64]),
+            "Synthetic release notes");
+        var updates = new Mock<IPortableUpdateService>();
+        updates.Setup(value => value.CheckAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new PortableUpdateCheckResult(
+                PortableUpdateCheckStatus.UpdateAvailable,
+                offer)));
+        var localization = new AvaloniaLocalizationService(
+            new ResourceDictionary(),
+            new AvaloniaStringCatalog());
+        localization.ApplyCulture("de");
+        using var updateCheck = new UpdateCheckViewModel(
+            updates.Object,
+            Mock.Of<IUpdateInstallerLauncher>(),
+            localization);
+        using var sut = CreateSut(
+            coordinator.Object,
+            Mock.Of<IAuthorizationService>(),
+            localization: localization,
+            updateCheck: updateCheck);
+
+        await sut.InitializeAsync();
+
+        updates.Verify(value => value.CheckAsync(It.IsAny<CancellationToken>()), Times.Once);
+        updates.Verify(value => value.DownloadAsync(
+            It.IsAny<PortableUpdateOffer>(),
+            It.IsAny<IProgress<PortableUpdateDownloadProgress>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Equal(
+            "Das signierte Update 2.1.0 ist verfügbar. Öffnen Sie Einstellungen → Über, um es zu prüfen.",
+            sut.StatusText);
+        Assert.Equal(NotificationSeverity.Success, sut.StatusSeverity);
+    }
+
+    [Fact]
     public async Task InitializeAsync_WhenCoordinatorContractThrows_RemainsRecoverable()
     {
         var coordinator = new Mock<IAvaloniaStartupCoordinator>();
@@ -533,7 +576,8 @@ public sealed class MainWindowViewModelTests
         IAccountManager? accountManager = null,
         NativeFilePickerViewModel? nativeFilePicker = null,
         IAvaloniaLocalizationService? localization = null,
-        IdleMonitoringBackgroundService? idleLockPolicy = null) =>
+        IdleMonitoringBackgroundService? idleLockPolicy = null,
+        UpdateCheckViewModel? updateCheck = null) =>
         new(
             coordinator,
             authorization,
@@ -551,7 +595,7 @@ public sealed class MainWindowViewModelTests
             CreateAuthorizationSettings(authorization),
             nativeFilePicker ?? CreateFilePicker(),
             CreateCameraScanner(),
-            CreateUpdateCheck(),
+            updateCheck ?? CreateUpdateCheck(),
             CreateDiagnostics(),
             localization ?? CreateLocalization(),
             scannerDialogs ?? Mock.Of<IAvaloniaCameraScannerDialogService>(),
@@ -629,6 +673,8 @@ public sealed class MainWindowViewModelTests
     private static CameraScannerViewModel CreateCameraScanner() =>
         new(
             Mock.Of<IQrScannerRunner>(),
+            Mock.Of<IQrImageDecoder>(),
+            Mock.Of<IAvaloniaFilePicker>(),
             Mock.Of<IQrPayloadValidator>(),
             Mock.Of<IAvaloniaQrImageFactory>(),
             Mock.Of<IUiScheduler>(),
@@ -637,11 +683,17 @@ public sealed class MainWindowViewModelTests
             Mock.Of<IAvaloniaDialogService>(),
             CreateLocalization());
 
-    private static UpdateCheckViewModel CreateUpdateCheck() =>
-        new(
-            Mock.Of<IPortableUpdateService>(),
+    private static UpdateCheckViewModel CreateUpdateCheck()
+    {
+        var updates = new Mock<IPortableUpdateService>();
+        updates.Setup(value => value.CheckAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new PortableUpdateCheckResult(
+                PortableUpdateCheckStatus.Disabled)));
+        return new UpdateCheckViewModel(
+            updates.Object,
             Mock.Of<IUpdateInstallerLauncher>(),
             CreateLocalization());
+    }
 
     private static DiagnosticsViewModel CreateDiagnostics() =>
         new(Mock.Of<ISupportDiagnosticsService>(), CreateLocalization());

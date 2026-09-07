@@ -10,6 +10,8 @@ param(
     [ValidateSet("stable", "rc")]
     [string]$Channel,
 
+    [string]$AppcastUrl,
+
     [switch]$DisableUpdates
 )
 
@@ -28,8 +30,17 @@ if ($invalidConfiguration) {
     throw "The package update configuration is incomplete."
 }
 
+if (-not [string]::IsNullOrWhiteSpace($AppcastUrl)) {
+    $parsedAppcastUri = $null
+    if (-not [Uri]::TryCreate($AppcastUrl, [UriKind]::Absolute, [ref]$parsedAppcastUri) -or
+        $parsedAppcastUri.Scheme -cne "https") {
+        throw "AppcastUrl must be an absolute HTTPS URL."
+    }
+    $settings.AutoUpdate.AppcastUrl = $parsedAppcastUri.AbsoluteUri
+}
+
 $settings.AutoUpdate.DistributionMode = $DistributionMode
 $settings.AutoUpdate.Channel = $Channel
-$settings.AutoUpdate.Enabled = -not [bool]$DisableUpdates
+$settings.AutoUpdate.Enabled = $DistributionMode -eq "direct" -and -not [bool]$DisableUpdates
 $json = $settings | ConvertTo-Json -Depth 5
 [IO.File]::WriteAllText($settingsPath, "$json`n", [Text.UTF8Encoding]::new($false))

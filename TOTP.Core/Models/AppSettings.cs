@@ -16,6 +16,8 @@ public sealed class AppSettings : IAppSettings
 
     public PreferredUnlockMethod PreferredUnlockMethod { get; set; } = PreferredUnlockMethod.Password;
 
+    public bool AppLockEnabled { get; set; } = true;
+
     public TimeSpan IdleTimeout { get; set; } = DefaultIdleTimeout;
 
     public bool LockOnSessionLock { get; set; } = true;
