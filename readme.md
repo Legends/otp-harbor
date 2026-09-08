@@ -29,7 +29,7 @@
 - Focused Android app with biometric quick unlock, camera-based QR import, swipe actions, and the
   same encrypted backup format as desktop
 
-Accounts currently use the common TOTP profile: SHA-1, six digits, and a 30-second period.
+Accounts use the common TOTP profile by default: SHA-1, six digits, and a 30-second code period. The period can be adjusted between 5 and 3600 seconds under **Advanced options** when adding or editing an account, if the provider requires a value other than 30 seconds. For example, a 10-minute period is entered as 600 seconds.
 
 On desktop, right-click any existing account to open its contextual actions: **Edit account**, **Show QR code**, or **Delete account**. Deletion still requires confirmation.
 
@@ -120,6 +120,18 @@ dotnet build TOTP.sln -c Debug
 dotnet test TOTP.sln -c Debug
 dotnet run --project .\TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj
 ```
+
+### Keep a source build current
+
+Users who intentionally run OTP Harbor from source can use the repository launcher:
+
+```powershell
+.\Start-OTP-Harbor.ps1
+```
+
+The launcher checks the official `origin/master` branch on every invocation. When a newer commit exists, it applies only a fast-forward update, restores dependencies, compiles the desktop app in Release mode, and starts it. When the source revision and the launcher's verified build are already current, it starts that build without compiling again. Git and the .NET 10 SDK are required.
+
+For safety, the launcher refuses to update a modified, ahead, or diverged checkout and never discards local files. It is a convenience for source users, not a signed binary update channel; Microsoft Store installations should use Store updates, while official direct packages use the signed appcast.
 
 The Android development preview is intentionally outside the desktop solution and release artifacts. Open the dedicated [Android solution](TOTP.Android.sln) in Visual Studio, or see the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
 

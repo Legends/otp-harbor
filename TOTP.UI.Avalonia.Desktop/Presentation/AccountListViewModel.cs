@@ -59,8 +59,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _editorIssuer = string.Empty;
     private string _editorAccountName = string.Empty;
     private string _editorSecret = string.Empty;
-    private int _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+    private int? _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
     private bool _isAdvancedOptionsExpanded;
+    private string _editorIssuerMessage = string.Empty;
+    private string _editorSecretMessage = string.Empty;
+    private string _editorPeriodMessage = string.Empty;
     private string _editorMessage = string.Empty;
     private bool _autoGenerateCodeOnSelection;
 
@@ -299,6 +302,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         set
         {
             if (!SetField(ref _editorIssuer, value ?? string.Empty)) return;
+            EditorIssuerMessage = string.Empty;
             EditorMessage = string.Empty;
         }
     }
@@ -319,8 +323,27 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         set
         {
             if (!SetField(ref _editorSecret, value ?? string.Empty)) return;
+            EditorSecretMessage = string.Empty;
             EditorMessage = string.Empty;
         }
+    }
+
+    public string EditorIssuerMessage
+    {
+        get => _editorIssuerMessage;
+        private set => SetField(ref _editorIssuerMessage, value);
+    }
+
+    public string EditorSecretMessage
+    {
+        get => _editorSecretMessage;
+        private set => SetField(ref _editorSecretMessage, value);
+    }
+
+    public string EditorPeriodMessage
+    {
+        get => _editorPeriodMessage;
+        private set => SetField(ref _editorPeriodMessage, value);
     }
 
     public string EditorMessage
@@ -442,12 +465,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         await CopyAccountCodeAsync(account);
     }
 
-    public int EditorPeriodSeconds
+    public int? EditorPeriodSeconds
     {
         get => _editorPeriodSeconds;
         set
         {
             if (!SetField(ref _editorPeriodSeconds, value)) return;
+            EditorPeriodMessage = string.Empty;
             EditorMessage = string.Empty;
         }
     }
@@ -624,18 +648,20 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorSecret = string.Empty;
         if (issuer.Length == 0)
         {
-            EditorMessage = _localization.GetString(AvaloniaStringKeys.AccountIssuerRequired);
+            EditorIssuerMessage = _localization.GetString(AvaloniaStringKeys.AccountIssuerRequired);
             return;
         }
 
         if (!SecretValidation.IsValidBase32Secret(secret))
         {
-            EditorMessage = _localization.GetString(AvaloniaStringKeys.AccountSecretInvalid);
+            EditorSecretMessage = _localization.GetString(AvaloniaStringKeys.AccountSecretInvalid);
             return;
         }
-        if (!TotpPeriodPolicy.IsSupported(EditorPeriodSeconds))
+        if (EditorPeriodSeconds is not int periodSeconds
+            || !TotpPeriodPolicy.IsSupported(periodSeconds))
         {
-            EditorMessage = _localization.GetString(AvaloniaStringKeys.TotpPeriodInvalid);
+            IsAdvancedOptionsExpanded = true;
+            EditorPeriodMessage = _localization.GetString(AvaloniaStringKeys.TotpPeriodInvalid);
             return;
         }
 
@@ -662,7 +688,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 issuer,
                 normalizedSecret,
                 accountName.Length == 0 ? null : accountName,
-                EditorPeriodSeconds);
+                periodSeconds);
             var saved = _editingAccountId.HasValue
                 ? await UpdateExistingAsync(loaded.Value, updated)
                 : await _accountManager.AddNewAsync(updated);
@@ -993,6 +1019,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorSecret = string.Empty;
         EditorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
         IsAdvancedOptionsExpanded = false;
+        EditorIssuerMessage = string.Empty;
+        EditorSecretMessage = string.Empty;
+        EditorPeriodMessage = string.Empty;
         EditorMessage = string.Empty;
         IsEditorVisible = false;
     }

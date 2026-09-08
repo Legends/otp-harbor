@@ -44,7 +44,7 @@ public sealed class QrPayloadValidatorTests
     [InlineData("SHA256", 6, 30)]
     [InlineData("SHA1", 8, 30)]
     [InlineData("SHA1", 6, 4)]
-    [InlineData("SHA1", 6, 301)]
+    [InlineData("SHA1", 6, 3601)]
     public void Validate_WhenTotpParametersCannotBePersisted_FailsClosed(
         string algorithm,
         int digits,
@@ -59,7 +59,8 @@ public sealed class QrPayloadValidatorTests
     [Theory]
     [InlineData(5)]
     [InlineData(60)]
-    [InlineData(300)]
+    [InlineData(600)]
+    [InlineData(3600)]
     public void Validate_WhenTotpPeriodIsSupported_ReturnsValidDescriptor(int period)
     {
         var result = _sut.Validate(

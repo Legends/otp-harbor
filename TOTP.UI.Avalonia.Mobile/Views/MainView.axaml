@@ -652,6 +652,7 @@
                             automation:AutomationProperties.Name="{Binding IssuerText}"
                             PlaceholderText="{Binding IssuerText}"
                             Text="{Binding EditorIssuer, Mode=TwoWay}" />
+                        <controls:ValidationMessage Severity="Error" Text="{Binding EditorIssuerMessage}" />
                         <TextBox
                             automation:AutomationProperties.Name="{Binding AccountNameText}"
                             PlaceholderText="{Binding AccountNameText}"
@@ -661,6 +662,7 @@
                             PasswordChar="●"
                             PlaceholderText="{Binding EditorSecretPlaceholder}"
                             Text="{Binding EditorSecret, Mode=TwoWay}" />
+                        <controls:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
                         <Expander
                             Header="{Binding AdvancedOptionsText}"
                             IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">
@@ -671,9 +673,10 @@
                                 <NumericUpDown
                                     automation:AutomationProperties.Name="{Binding TotpPeriodText}"
                                     Increment="1"
-                                    Maximum="300"
+                                    Maximum="3600"
                                     Minimum="5"
                                     Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
+                                <controls:ValidationMessage Severity="Error" Text="{Binding EditorPeriodMessage}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
                                     Text="{Binding TotpPeriodHelpText}"

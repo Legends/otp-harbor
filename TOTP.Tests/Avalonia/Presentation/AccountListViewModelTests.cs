@@ -719,13 +719,86 @@ public sealed class AccountListViewModelTests
         await sut.BeginAddAsync();
         sut.EditorIssuer = "Example";
         sut.EditorSecret = ValidSecret;
-        sut.EditorPeriodSeconds = 301;
+        sut.EditorPeriodSeconds = 3601;
 
         await sut.SaveAccountAsync();
 
         manager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
-        Assert.Equal("Enter a code period between 5 and 300 seconds.", sut.EditorMessage);
+        Assert.Equal("Enter a code period between 5 and 3600 seconds.", sut.EditorPeriodMessage);
+        Assert.True(sut.IsAdvancedOptionsExpanded);
         Assert.Equal(string.Empty, sut.EditorSecret);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_WithEmptyPeriod_ShowsFieldErrorWithoutWriting()
+    {
+        var manager = new Mock<IAccountManager>();
+        var sut = CreateSut(manager.Object);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = ValidSecret;
+        sut.EditorPeriodSeconds = null;
+
+        await sut.SaveAccountAsync();
+
+        manager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        Assert.Equal("Enter a code period between 5 and 3600 seconds.", sut.EditorPeriodMessage);
+        Assert.Equal(string.Empty, sut.EditorIssuerMessage);
+        Assert.Equal(string.Empty, sut.EditorSecretMessage);
+    }
+
+    [Fact]
+    public async Task AccountEditor_ValidationMessagesAreFieldSpecificAndResetWhenReopened()
+    {
+        var sut = CreateSut(Mock.Of<IAccountManager>());
+        await sut.BeginAddAsync();
+
+        await sut.SaveAccountAsync();
+        Assert.Equal("Issuer is required.", sut.EditorIssuerMessage);
+        Assert.Equal(string.Empty, sut.EditorSecretMessage);
+
+        sut.EditorIssuer = "Example";
+        await sut.SaveAccountAsync();
+        Assert.Equal(string.Empty, sut.EditorIssuerMessage);
+        Assert.Equal("Enter a valid Base32 secret.", sut.EditorSecretMessage);
+
+        sut.EditorPeriodSeconds = null;
+        await sut.CancelEditAsync();
+        await sut.BeginAddAsync();
+
+        Assert.Equal(30, sut.EditorPeriodSeconds);
+        Assert.Equal(string.Empty, sut.EditorIssuerMessage);
+        Assert.Equal(string.Empty, sut.EditorSecretMessage);
+        Assert.Equal(string.Empty, sut.EditorPeriodMessage);
+        Assert.Equal(string.Empty, sut.EditorMessage);
+    }
+
+    [Fact]
+    public async Task EditAccount_EmptyPeriodErrorIsResetWhenEditorIsReopened()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        sut.SelectedAccount = Assert.Single(sut.Accounts);
+        await sut.BeginEditAsync();
+        sut.EditorPeriodSeconds = null;
+
+        await sut.SaveAccountAsync();
+
+        manager.Verify(value => value.UpdateAsync(
+            It.IsAny<Account>(),
+            It.IsAny<Account>()), Times.Never);
+        Assert.Equal("Enter a code period between 5 and 3600 seconds.", sut.EditorPeriodMessage);
+
+        await sut.CancelEditAsync();
+        await sut.BeginEditAsync();
+
+        Assert.Equal(30, sut.EditorPeriodSeconds);
+        Assert.Equal(string.Empty, sut.EditorPeriodMessage);
+        Assert.Equal(string.Empty, sut.EditorMessage);
     }
 
     [Fact]

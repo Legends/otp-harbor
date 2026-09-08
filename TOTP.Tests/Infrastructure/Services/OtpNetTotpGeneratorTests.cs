@@ -27,7 +27,8 @@ public sealed class OtpNetTotpGeneratorTests
     [Theory]
     [InlineData(5)]
     [InlineData(60)]
-    [InlineData(300)]
+    [InlineData(600)]
+    [InlineData(3600)]
     public void Generate_WithSupportedCustomPeriod_ReturnsMatchingTiming(int periodSeconds)
     {
         var sut = new OtpNetTotpGenerator();
@@ -40,7 +41,7 @@ public sealed class OtpNetTotpGeneratorTests
 
     [Theory]
     [InlineData(4)]
-    [InlineData(301)]
+    [InlineData(3601)]
     public void Generate_WithUnsupportedPeriod_ThrowsArgumentOutOfRangeException(int periodSeconds)
     {
         var sut = new OtpNetTotpGenerator();

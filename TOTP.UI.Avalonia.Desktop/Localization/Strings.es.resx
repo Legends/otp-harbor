@@ -64,8 +64,8 @@
   <data name="Secret" xml:space="preserve"><value>Secreto Base32</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Opciones avanzadas</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Período del código en segundos</value></data>
-  <data name="TotpPeriodHelp" xml:space="preserve"><value>Mantén 30 segundos salvo que el proveedor requiera explícitamente otro período.</value></data>
-  <data name="TotpPeriodInvalid" xml:space="preserve"><value>Introduce un período entre 5 y 300 segundos.</value></data>
+  <data name="TotpPeriodHelp" xml:space="preserve"><value>Mantén 30 segundos salvo que el proveedor requiera explícitamente otro período. Los períodos más largos mantienen cada código válido durante más tiempo.</value></data>
+  <data name="TotpPeriodInvalid" xml:space="preserve"><value>Introduce un período entre 5 y 3600 segundos.</value></data>
   <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
   <data name="SaveAccount" xml:space="preserve"><value>Guardar cuenta</value></data>
   <data name="CancelEdit" xml:space="preserve"><value>Cancelar edición</value></data>

@@ -34,7 +34,7 @@ public sealed class AccountImportServiceTests
         var sut = new AccountImportService(accounts.Object);
 
         var result = await sut.ImportAsync(
-            [new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP", "user", 301)],
+            [new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP", "user", 3601)],
             ImportConflictStrategy.SkipExisting,
             (_, _) => Task.FromResult(true),
             TestContext.Current.CancellationToken);

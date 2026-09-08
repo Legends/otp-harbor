@@ -455,7 +455,7 @@
                                                     x:Name="AccountIssuerBox"
                                                     automation:AutomationProperties.Name="{DynamicResource Issuer}"
                                                     Text="{Binding EditorIssuer, Mode=TwoWay}" />
-                                                <shared:ValidationMessage Severity="Error" Text="{Binding EditorMessage}" />
+                                                <shared:ValidationMessage Severity="Error" Text="{Binding EditorIssuerMessage}" />
                                                 <TextBlock
                                                     Margin="0,10,0,6"
                                                     Classes="field-label"
@@ -465,6 +465,7 @@
                                                     HelpText="{DynamicResource AccountSecretInvalid}"
                                                     IsRequired="True"
                                                     Text="{Binding EditorSecret, Mode=TwoWay}" />
+                                                <shared:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
                                                 <TextBlock
                                                     Margin="0,10,0,6"
                                                     Classes="field-label"
@@ -483,15 +484,17 @@
                                                         <NumericUpDown
                                                             automation:AutomationProperties.Name="{DynamicResource TotpPeriod}"
                                                             Increment="1"
-                                                            Maximum="300"
+                                                            Maximum="3600"
                                                             Minimum="5"
                                                             Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
+                                                        <shared:ValidationMessage Severity="Error" Text="{Binding EditorPeriodMessage}" />
                                                         <TextBlock
                                                             Classes="secondary"
                                                             Text="{DynamicResource TotpPeriodHelp}"
                                                             TextWrapping="Wrap" />
                                                     </StackPanel>
                                                 </Expander>
+                                                <shared:ValidationMessage Severity="Error" Text="{Binding EditorMessage}" />
                                                 <StackPanel
                                                     Margin="0,16,0,0"
                                                     HorizontalAlignment="Right"

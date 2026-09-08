@@ -60,6 +60,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-PublicWebsite.ps1
 
+      - name: Validate source launcher safeguards
+        shell: pwsh
+        run: ./scripts/validation/Test-SourceLauncher.ps1
+
       - name: Validate localization resources
         shell: pwsh
         run: ./scripts/validation/Test-LocalizationResources.ps1
