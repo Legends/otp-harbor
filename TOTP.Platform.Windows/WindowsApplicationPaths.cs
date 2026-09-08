@@ -7,10 +7,13 @@ namespace TOTP.Platform.Windows;
 
 public sealed class WindowsApplicationPaths : IPlatformApplicationPaths
 {
+    public const string InstalledDistributionMarkerFileName = "otp-harbor.installed";
+
     public WindowsApplicationPaths(
         string? executableDirectory = null,
         string? roamingApplicationDataDirectory = null,
-        bool? hasPackageIdentity = null)
+        bool? hasPackageIdentity = null,
+        bool? hasInstalledDistributionMarker = null)
     {
         ExecutableDirectory = Path.GetFullPath(executableDirectory ?? ResolveExecutableDirectory());
 
@@ -31,7 +34,9 @@ public sealed class WindowsApplicationPaths : IPlatformApplicationPaths
         AuthorizationEnvelopeFilePath = Path.Combine(ApplicationDataDirectory, StringsConstants.AuthorizationEnvelopeFileName);
         PreferencesFilePath = Path.Combine(ApplicationDataDirectory, StringsConstants.PreferencesFileName);
         BackupDirectory = ApplicationDataDirectory;
-        LogDirectory = (hasPackageIdentity ?? WindowsPackageIdentity.HasCurrent())
+        var isInstalledDistribution = hasInstalledDistributionMarker
+            ?? File.Exists(Path.Combine(ExecutableDirectory, InstalledDistributionMarkerFileName));
+        LogDirectory = ((hasPackageIdentity ?? WindowsPackageIdentity.HasCurrent()) || isInstalledDistribution)
             ? Path.Combine(ApplicationDataDirectory, "Logs")
             : Path.Combine(ExecutableDirectory, "Logs");
         LogFilePath = Path.Combine(LogDirectory, "app.log");

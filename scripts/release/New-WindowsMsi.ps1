@@ -30,8 +30,26 @@ if (-not (Get-Command $WixExecutable -ErrorAction SilentlyContinue)) {
 $resolvedPublish = (Resolve-Path -LiteralPath $PublishDirectory).Path
 $resolvedOutput = [IO.Path]::GetFullPath($OutputDirectory)
 $mainExecutable = Join-Path $resolvedPublish 'TOTP.UI.Avalonia.Desktop.exe'
+$repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
+$installerResourceRoot = Join-Path $PSScriptRoot 'installer'
+$localizationPath = Join-Path $installerResourceRoot 'OTP-Harbor.en-us.wxl'
+$licensePath = Join-Path $installerResourceRoot 'License.en-us.rtf'
+$dialogBitmapPath = Join-Path $installerResourceRoot 'InstallerDialog.bmp'
+$bannerBitmapPath = Join-Path $installerResourceRoot 'InstallerBanner.bmp'
+$applicationIconPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico'
 if (-not (Test-Path -LiteralPath $mainExecutable -PathType Leaf)) {
     throw "The Windows publish payload is missing its application executable: $mainExecutable"
+}
+foreach ($resourcePath in @(
+    $localizationPath,
+    $licensePath,
+    $dialogBitmapPath,
+    $bannerBitmapPath,
+    $applicationIconPath
+)) {
+    if (-not (Test-Path -LiteralPath $resourcePath -PathType Leaf)) {
+        throw "The Windows MSI installer resource is missing: $resourcePath"
+    }
 }
 
 $payloadFiles = @(Get-ChildItem -LiteralPath $resolvedPublish -Recurse -File)
@@ -69,15 +87,21 @@ try {
         -Channel $channel `
         -DisableUpdates
 
+    [IO.File]::WriteAllText(
+        (Join-Path $payloadRoot 'otp-harbor.installed'),
+        "windows-installer`n",
+        [Text.UTF8Encoding]::new($false))
+
     $bundledUpdater = Join-Path $payloadRoot 'TOTP.Updater'
     if (Test-Path -LiteralPath $bundledUpdater) {
         Remove-Item -LiteralPath $bundledUpdater -Recurse -Force
     }
 
     $wixSource = @"
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="OTP Harbor"
-           Manufacturer="OTP Harbor contributors"
+           Manufacturer="!(loc.InstallerManufacturer)"
            Version="$ProductVersion"
            Language="1033"
            Scope="perMachine"
@@ -85,6 +109,28 @@ try {
     <MajorUpgrade AllowSameVersionUpgrades="yes"
                   DowngradeErrorMessage="A newer version of OTP Harbor is already installed." />
     <MediaTemplate EmbedCab="yes" />
+    <Icon Id="ApplicationIcon.ico" SourceFile="`$(var.ApplicationIcon)" />
+    <Property Id="ARPPRODUCTICON" Value="ApplicationIcon.ico" />
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX"
+                 Value="1"
+                 Before="CostFinalize"
+                 Sequence="ui"
+                 Condition="NOT Installed" />
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT"
+                 Value="!(loc.InstallerLaunchApplication)"
+                 Before="CostFinalize"
+                 Sequence="ui"
+                 Condition="NOT Installed" />
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALTEXT"
+                 Value="!(loc.InstallerSuccessMessage)"
+                 Before="CostFinalize"
+                 Sequence="ui"
+                 Condition="NOT Installed" />
+
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="`$(var.InstallerLicense)" />
+    <WixVariable Id="WixUIDialogBmp" Value="`$(var.InstallerDialogBitmap)" />
+    <WixVariable Id="WixUIBannerBmp" Value="`$(var.InstallerBannerBitmap)" />
 
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="OTP Harbor">
@@ -98,10 +144,18 @@ try {
                 KeyPath="yes">
             <Shortcut Id="ApplicationStartMenuShortcut"
                       Name="OTP Harbor"
-                      Description="Local-first TOTP authenticator"
+                      Description="!(loc.InstallerShortcutDescription)"
                       Directory="ApplicationProgramsFolder"
                       Advertise="yes"
-                      WorkingDirectory="INSTALLFOLDER" />
+                      WorkingDirectory="INSTALLFOLDER"
+                      Icon="ApplicationIcon.ico" />
+            <Shortcut Id="ApplicationDesktopShortcut"
+                      Name="OTP Harbor"
+                      Description="!(loc.InstallerShortcutDescription)"
+                      Directory="DesktopFolder"
+                      Advertise="yes"
+                      WorkingDirectory="INSTALLFOLDER"
+                      Icon="ApplicationIcon.ico" />
           </File>
           <RemoveFolder Id="RemoveApplicationProgramsFolder"
                         Directory="ApplicationProgramsFolder"
@@ -113,6 +167,22 @@ try {
     <StandardDirectory Id="ProgramMenuFolder">
       <Directory Id="ApplicationProgramsFolder" Name="OTP Harbor" />
     </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder" />
+
+    <CustomAction Id="LaunchApplication"
+                  FileRef="ApplicationExecutable"
+                  ExeCommand=""
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="asyncNoWait" />
+    <UI>
+      <Publish Dialog="ExitDialog"
+               Control="Finish"
+               Event="DoAction"
+               Value="LaunchApplication"
+               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
+    </UI>
   </Package>
 </Wix>
 "@
@@ -120,8 +190,15 @@ try {
 
     & $WixExecutable build `
         -arch x64 `
+        -culture en-us `
+        -ext WixToolset.UI.wixext/5.0.2 `
         -d "PayloadDirectory=$payloadRoot" `
+        -d "ApplicationIcon=$applicationIconPath" `
+        -d "InstallerLicense=$licensePath" `
+        -d "InstallerDialogBitmap=$dialogBitmapPath" `
+        -d "InstallerBannerBitmap=$bannerBitmapPath" `
         -o $outputPath `
+        $localizationPath `
         $wixSourcePath
     if ($LASTEXITCODE -ne 0) {
         throw "WiX failed to create $outputName."

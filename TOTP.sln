@@ -31,6 +31,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TOTP.Camera.OpenCv", "TOTP.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TOTP.Tests.Avalonia.Headless", "TOTP.Tests.Avalonia.Headless\TOTP.Tests.Avalonia.Headless.csproj", "{E6CC46EE-7FD2-4D73-9FEE-6AF71962811E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{C344A2F9-12E4-457E-B500-F20D53441119}"
+	ProjectSection(SolutionItems) = preProject
+		readme.md = readme.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
