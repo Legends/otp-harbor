@@ -17,14 +17,17 @@ on:
       identity_name:
         description: 'Partner Center package identity Name (case-sensitive)'
         required: true
+        default: 'Legends77.OTPHarbor'
         type: string
       publisher:
         description: 'Partner Center Publisher ID, for example CN=...'
         required: true
+        default: 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9'
         type: string
       publisher_display_name:
         description: 'Publisher display name from Partner Center'
         required: true
+        default: 'Legends77'
         type: string
       version:
         description: 'Four-part Store version; fourth component must be 0'
@@ -39,9 +42,9 @@ jobs:
   package:
     runs-on: windows-latest
     env:
-      STORE_IDENTITY_NAME: ${{ inputs.identity_name || 'io.github.Legends.OtpHarbor' }}
-      STORE_PUBLISHER: ${{ inputs.publisher || 'CN=OTP Harbor CI' }}
-      STORE_PUBLISHER_DISPLAY_NAME: ${{ inputs.publisher_display_name || 'OTP Harbor contributors' }}
+      STORE_IDENTITY_NAME: ${{ inputs.identity_name || 'Legends77.OTPHarbor' }}
+      STORE_PUBLISHER: ${{ inputs.publisher || 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9' }}
+      STORE_PUBLISHER_DISPLAY_NAME: ${{ inputs.publisher_display_name || 'Legends77' }}
       STORE_VERSION: ${{ inputs.version || '2.0.0.0' }}
     steps:
       - name: Checkout repository

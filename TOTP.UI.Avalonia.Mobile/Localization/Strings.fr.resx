@@ -59,10 +59,12 @@
   <data name="QrDisplayFailed" xml:space="preserve"><value>Le code QR du compte n’a pas pu être affiché de manière sécurisée.</value></data>
   <data name="BackupTitle" xml:space="preserve"><value>Sauvegarde chiffrée</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Exportez ou importez une sauvegarde OTP Harbor chiffrée. Les comptes existants restent inchangés lors de l’importation.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Choisissez une sauvegarde OTP Harbor chiffrée au format .totp. Les comptes existants correspondants restent inchangés.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Créez une sauvegarde portable et protégée par mot de passe de tous les comptes.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Mot de passe de sauvegarde</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirmer le mot de passe de sauvegarde</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Exporter la sauvegarde chiffrée</value></data>
-  <data name="ImportBackup" xml:space="preserve"><value>Importer la sauvegarde chiffrée</value></data>
+  <data name="ImportBackup" xml:space="preserve"><value>Importer une sauvegarde OTP Harbor</value></data>
   <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Saisissez un mot de passe de sauvegarde.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>Le mot de passe de sauvegarde doit contenir au moins {0} caractères.</value></data>
@@ -137,6 +139,8 @@
   <data name="AppLockEnabled" xml:space="preserve"><value>Verrouillage activé. Le mot de passe principal sera requis après le prochain verrouillage.</value></data>
   <data name="AppLockChangeFailed" xml:space="preserve"><value>Le réglage du verrouillage n’a pas pu être modifié de manière sûre.</value></data>
   <data name="ImportExport" xml:space="preserve"><value>Importation / Exportation</value></data>
+  <data name="ImportSection" xml:space="preserve"><value>Importation</value></data>
+  <data name="ExportSection" xml:space="preserve"><value>Exportation</value></data>
   <data name="ImportGoogleQr" xml:space="preserve"><value>Importer depuis Google Authenticator</value></data>
   <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Scannez un code QR de transfert Google Authenticator. Les exports de plusieurs comptes ou pages sont pris en charge un code QR à la fois.</value></data>
 </root>

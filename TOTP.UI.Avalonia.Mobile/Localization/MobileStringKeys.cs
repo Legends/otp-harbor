@@ -41,6 +41,8 @@ public static class MobileStringKeys
     public const string AppLockEnabled = nameof(AppLockEnabled);
     public const string AppLockChangeFailed = nameof(AppLockChangeFailed);
     public const string ImportExport = nameof(ImportExport);
+    public const string ImportSection = nameof(ImportSection);
+    public const string ExportSection = nameof(ExportSection);
     public const string ImportGoogleQr = nameof(ImportGoogleQr);
     public const string ImportGoogleQrDescription = nameof(ImportGoogleQrDescription);
     public const string SearchAccounts = nameof(SearchAccounts);
@@ -69,6 +71,8 @@ public static class MobileStringKeys
     public const string QrDisplayFailed = nameof(QrDisplayFailed);
     public const string BackupTitle = nameof(BackupTitle);
     public const string BackupDescription = nameof(BackupDescription);
+    public const string ImportBackupDescription = nameof(ImportBackupDescription);
+    public const string ExportBackupDescription = nameof(ExportBackupDescription);
     public const string BackupPassword = nameof(BackupPassword);
     public const string ConfirmBackupPassword = nameof(ConfirmBackupPassword);
     public const string ExportBackup = nameof(ExportBackup);
@@ -179,6 +183,8 @@ public static class MobileStringKeys
         AppLockEnabled,
         AppLockChangeFailed,
         ImportExport,
+        ImportSection,
+        ExportSection,
         ImportGoogleQr,
         ImportGoogleQrDescription,
         SearchAccounts,
@@ -207,6 +213,8 @@ public static class MobileStringKeys
         QrDisplayFailed,
         BackupTitle,
         BackupDescription,
+        ImportBackupDescription,
+        ExportBackupDescription,
         BackupPassword,
         ConfirmBackupPassword,
         ExportBackup,

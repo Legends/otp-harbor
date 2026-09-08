@@ -59,10 +59,12 @@
   <data name="QrDisplayFailed" xml:space="preserve"><value>No se pudo mostrar el código QR de la cuenta de forma segura.</value></data>
   <data name="BackupTitle" xml:space="preserve"><value>Copia de seguridad cifrada</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Exporte o importe una copia de seguridad cifrada de OTP Harbor. Las cuentas existentes se mantienen sin cambios durante la importación.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Elija una copia de seguridad cifrada de OTP Harbor en formato .totp. Las cuentas existentes coincidentes permanecen sin cambios.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Cree una copia de seguridad portátil y protegida con contraseña de todas las cuentas.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Contraseña de la copia de seguridad</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirmar contraseña de la copia de seguridad</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Exportar copia de seguridad cifrada</value></data>
-  <data name="ImportBackup" xml:space="preserve"><value>Importar copia de seguridad cifrada</value></data>
+  <data name="ImportBackup" xml:space="preserve"><value>Importar copia de seguridad de OTP Harbor</value></data>
   <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Introduzca una contraseña para la copia de seguridad.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>La contraseña de la copia de seguridad debe contener al menos {0} caracteres.</value></data>
@@ -137,6 +139,8 @@
   <data name="AppLockEnabled" xml:space="preserve"><value>Bloqueo activado. Se solicitará la contraseña maestra después del próximo bloqueo.</value></data>
   <data name="AppLockChangeFailed" xml:space="preserve"><value>No se pudo cambiar el bloqueo de forma segura.</value></data>
   <data name="ImportExport" xml:space="preserve"><value>Importar / Exportar</value></data>
+  <data name="ImportSection" xml:space="preserve"><value>Importar</value></data>
+  <data name="ExportSection" xml:space="preserve"><value>Exportar</value></data>
   <data name="ImportGoogleQr" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
   <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Escanea un código QR de transferencia de Google Authenticator. Se admiten exportaciones de varias cuentas o páginas, un código QR cada vez.</value></data>
 </root>

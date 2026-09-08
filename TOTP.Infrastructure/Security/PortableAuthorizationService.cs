@@ -246,22 +246,27 @@ public sealed class PortableAuthorizationService : IAuthorizationService
             return AuthorizationResult.Success;
         }
 
+        // Remove the unattended wrapper before changing the preference. If
+        // wrapper removal fails, the persisted disabled state remains usable
+        // and the user can retry instead of seeing a half-applied toggle.
+        var disabled = await _unattendedUnlockEnrollment.DisableAsync();
+        if (disabled.IsFailed) return AuthorizationResult.Failed;
+
         _settingsService.Current.AppLockEnabled = true;
         _settingsService.Current.PreferredUnlockMethod = PreferredUnlockMethod.Password;
         var preferenceSaved = await _settingsService.SaveAsync();
         if (preferenceSaved.IsFailed)
         {
             // Fail closed in memory even when persistence is unavailable. The
-            // next startup will retry the unattended wrapper and fall back to
-            // the password gate if it is still unusable.
+            // unattended wrapper is already gone, so the next startup also
+            // falls back to the password gate.
             ApplySessionState();
             return AuthorizationResult.Failed;
         }
 
-        var disabled = await _unattendedUnlockEnrollment.DisableAsync();
         if (!await RefreshSessionAsync()) return AuthorizationResult.Failed;
         ApplySessionState();
-        return disabled.IsSuccess ? AuthorizationResult.Success : AuthorizationResult.Failed;
+        return AuthorizationResult.Success;
     }
 
     public void Logout() => Lock();

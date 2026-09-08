@@ -155,6 +155,70 @@ public sealed class PortableAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task SetAppLockEnabledAsync_FromDisabled_RemovesWrapperBeforeSavingPreference()
+    {
+        var operations = new List<string>();
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                HasUnattendedUnlock: true)
+        };
+        dependencies.Settings.AppLockEnabled = false;
+        dependencies.Settings.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+        dependencies.UnattendedEnrollment.Setup(value => value.DisableAsync(CancellationToken.None))
+            .Callback(() =>
+            {
+                operations.Add("disable-wrapper");
+                dependencies.SessionState = new AuthorizationEnvelopeSessionState(true, true, true);
+            })
+            .ReturnsAsync(Result.Ok());
+        dependencies.SettingsService.Setup(value => value.SaveAsync())
+            .Callback(() => operations.Add("save-preference"))
+            .ReturnsAsync(Result.Ok());
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.SetAppLockEnabledAsync(true, string.Empty);
+
+        Assert.Equal(AuthorizationResult.Success, result);
+        Assert.Equal(["disable-wrapper", "save-preference"], operations);
+        Assert.True(dependencies.Settings.AppLockEnabled);
+        Assert.Equal(PreferredUnlockMethod.Password, dependencies.Settings.PreferredUnlockMethod);
+        Assert.Equal(AuthorizationGateKind.Password, sut.State.ConfiguredGate);
+    }
+
+    [Fact]
+    public async Task SetAppLockEnabledAsync_WhenWrapperRemovalFails_LeavesDisabledPreferenceRetryable()
+    {
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                HasUnattendedUnlock: true)
+        };
+        dependencies.Settings.AppLockEnabled = false;
+        dependencies.Settings.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+        dependencies.UnattendedEnrollment.Setup(value => value.DisableAsync(CancellationToken.None))
+            .ReturnsAsync(Result.Fail("synthetic wrapper removal failure"));
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.SetAppLockEnabledAsync(true, string.Empty);
+
+        Assert.Equal(AuthorizationResult.Failed, result);
+        Assert.False(dependencies.Settings.AppLockEnabled);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformQuickUnlock,
+            dependencies.Settings.PreferredUnlockMethod);
+        dependencies.SettingsService.Verify(value => value.SaveAsync(), Times.Never);
+    }
+
+    [Fact]
     public async Task TryUnlockWithHelloAsync_WhenPlatformRequiresRecovery_ProjectsPasswordGate()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

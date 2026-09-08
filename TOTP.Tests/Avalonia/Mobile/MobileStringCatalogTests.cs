@@ -31,6 +31,20 @@ public sealed class MobileStringCatalogTests
     }
 
     [Fact]
+    public void Get_ImportExportActions_UsesClearSeparateEnglishLabels()
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo("en"));
+
+        Assert.Equal("Import", catalog.Get(MobileStringKeys.ImportSection));
+        Assert.Equal(
+            "Import from Google Authenticator",
+            catalog.Get(MobileStringKeys.ImportGoogleQr));
+        Assert.Equal("Import OTP Harbor backup", catalog.Get(MobileStringKeys.ImportBackup));
+        Assert.Equal("Export", catalog.Get(MobileStringKeys.ExportSection));
+        Assert.Equal("Export encrypted backup", catalog.Get(MobileStringKeys.ExportBackup));
+    }
+
+    [Fact]
     public void Get_BiometricRecoveryMessage_UsesOnlyActiveGermanLocale()
     {
         var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo("de"));

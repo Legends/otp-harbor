@@ -68,6 +68,60 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task EnableAppLockAsync_FromDisabledSettings_ImmediatelyLocksAndClearsAccounts()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user@example.test");
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            appLockEnabled: false,
+            preferredUnlockMethod: TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization.Setup(value => value.SetAppLockEnabledAsync(true, string.Empty))
+            .Callback(() =>
+            {
+                context.SettingsValue.AppLockEnabled = true;
+                context.SettingsValue.PreferredUnlockMethod =
+                    TOTP.Core.Enums.PreferredUnlockMethod.Password;
+            })
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.EnableAppLockAsync();
+
+        Assert.True(context.Sut.IsAppLockEnabled);
+        Assert.True(context.Sut.IsUnlockVisible);
+        Assert.False(context.Sut.IsSettingsVisible);
+        Assert.Empty(context.Sut.Accounts);
+        Assert.False(context.Sut.EnableAppLockCommand.CanExecute(null));
+        context.Authorization.Verify(value => value.Lock(), Times.Once);
+    }
+
+    [Fact]
+    public async Task EnableAppLockAsync_WhenServiceReportsFailureAfterFailClosedState_StillLocks()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization.Setup(value => value.SetAppLockEnabledAsync(true, string.Empty))
+            .Callback(() => context.SettingsValue.AppLockEnabled = true)
+            .ReturnsAsync(AuthorizationResult.Failed);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.EnableAppLockAsync();
+
+        Assert.True(context.Sut.IsAppLockEnabled);
+        Assert.True(context.Sut.IsUnlockVisible);
+        Assert.Empty(context.Sut.NotificationText);
+        context.Authorization.Verify(value => value.Lock(), Times.Once);
+    }
+
+    [Fact]
     public async Task ImportGoogleQrAsync_FromSettings_UsesBoundedMigrationWorkflow()
     {
         const string payload = "otpauth-migration://offline?data=synthetic";
