@@ -31,6 +31,16 @@ function Get-ArtifactTarget {
     param([string]$FileName)
 
     switch -Regex ($FileName) {
+        '^(?:OTP-Harbor|TOTP-Manager)-windows-x64-(?<version>\d+\.\d+\.\d+(?:-rc\d+)?)\.msi$' {
+            return [ordered]@{
+                operatingSystem = "windows"
+                architecture = "x64"
+                format = "msi"
+                ownership = "windows-installer"
+                updatePolicy = "manual-download"
+                releaseVersion = $Matches.version
+            }
+        }
         '^(?:OTP-Harbor|TOTP-Manager)-windows-x64-fast-(?<version>\d+\.\d+\.\d+(?:-rc\d+)?)\.zip$' {
             return [ordered]@{
                 operatingSystem = "windows"

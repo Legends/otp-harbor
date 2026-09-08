@@ -47,8 +47,9 @@ public sealed class AccountPeriodTests
     [InlineData(4, false)]
     [InlineData(5, true)]
     [InlineData(30, true)]
-    [InlineData(300, true)]
-    [InlineData(301, false)]
+    [InlineData(600, true)]
+    [InlineData(3600, true)]
+    [InlineData(3601, false)]
     public void IsSupported_EnforcesBoundedPeriod(int periodSeconds, bool expected)
     {
         Assert.Equal(expected, TotpPeriodPolicy.IsSupported(periodSeconds));

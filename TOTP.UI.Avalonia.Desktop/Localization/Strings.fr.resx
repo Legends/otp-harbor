@@ -57,16 +57,15 @@
   <data name="AddAccount" xml:space="preserve"><value>Ajouter un compte</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Modifier le compte</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Supprimer le compte</value></data>
-  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})
-L’entrée de compte chiffrée sera supprimée définitivement. Cette action est irréversible.</value></data>
+  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;L’entrée de compte chiffrée sera supprimée définitivement.&#10;Cette action est irréversible.</value></data>
   <data name="Delete" xml:space="preserve"><value>Supprimer</value></data>
   <data name="Issuer" xml:space="preserve"><value>Émetteur</value></data>
   <data name="AccountName" xml:space="preserve"><value>Nom du compte</value></data>
   <data name="Secret" xml:space="preserve"><value>Secret Base32</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Options avancées</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Période du code en secondes</value></data>
-  <data name="TotpPeriodHelp" xml:space="preserve"><value>Conservez 30 secondes, sauf si le fournisseur exige explicitement une autre période.</value></data>
-  <data name="TotpPeriodInvalid" xml:space="preserve"><value>Saisissez une période comprise entre 5 et 300 secondes.</value></data>
+  <data name="TotpPeriodHelp" xml:space="preserve"><value>Conservez 30 secondes, sauf si le fournisseur exige explicitement une autre période. Les périodes plus longues prolongent la validité de chaque code.</value></data>
+  <data name="TotpPeriodInvalid" xml:space="preserve"><value>Saisissez une période comprise entre 5 et 3 600 secondes.</value></data>
   <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
   <data name="SaveAccount" xml:space="preserve"><value>Enregistrer le compte</value></data>
   <data name="CancelEdit" xml:space="preserve"><value>Annuler la modification</value></data>

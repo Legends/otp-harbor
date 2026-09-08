@@ -144,6 +144,10 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 - Security fixes must come with regression tests.
 - Prefer targeted, deterministic tests near the changed workflow.
 - Avoid tests that only mirror implementation details with no behavioral value.
+- Keep validation rules consistent between desktop and Android by default. Put shared
+  policy in a common non-UI layer and cover both presentations with matching behavioral
+  tests. Diverge only when a platform constraint or workflow makes the shared rule
+  inappropriate, and document the reason in the change.
 
 ## Architectural Intent By Layer
 

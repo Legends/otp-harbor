@@ -102,8 +102,11 @@ public sealed class MobileShellViewModel :
     private string _editorIssuer = string.Empty;
     private string _editorAccountName = string.Empty;
     private string _editorSecret = string.Empty;
-    private int _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+    private int? _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
     private bool _isAdvancedOptionsExpanded;
+    private string _editorIssuerMessage = string.Empty;
+    private string _editorSecretMessage = string.Empty;
+    private string _editorPeriodMessage = string.Empty;
     private bool _isQrConflictVisible;
     private string _qrConflictDisplayName = string.Empty;
     private TaskCompletionSource<QrAccountConflictDecision>? _qrConflictCompletion;
@@ -551,6 +554,7 @@ public sealed class MobileShellViewModel :
         set
         {
             if (!SetField(ref _editorIssuer, value ?? string.Empty)) return;
+            EditorIssuerMessage = string.Empty;
             ClearErrorNotification();
         }
     }
@@ -571,18 +575,38 @@ public sealed class MobileShellViewModel :
         set
         {
             if (!SetField(ref _editorSecret, value ?? string.Empty)) return;
+            EditorSecretMessage = string.Empty;
             ClearErrorNotification();
         }
     }
 
-    public int EditorPeriodSeconds
+    public int? EditorPeriodSeconds
     {
         get => _editorPeriodSeconds;
         set
         {
             if (!SetField(ref _editorPeriodSeconds, value)) return;
+            EditorPeriodMessage = string.Empty;
             ClearErrorNotification();
         }
+    }
+
+    public string EditorIssuerMessage
+    {
+        get => _editorIssuerMessage;
+        private set => SetField(ref _editorIssuerMessage, value);
+    }
+
+    public string EditorSecretMessage
+    {
+        get => _editorSecretMessage;
+        private set => SetField(ref _editorSecretMessage, value);
+    }
+
+    public string EditorPeriodMessage
+    {
+        get => _editorPeriodMessage;
+        private set => SetField(ref _editorPeriodMessage, value);
     }
 
     public bool IsAdvancedOptionsExpanded
@@ -1548,7 +1572,7 @@ public sealed class MobileShellViewModel :
         EditorSecret = string.Empty;
         if (issuer.Length == 0)
         {
-            SetError(MobileStringKeys.IssuerRequired);
+            EditorIssuerMessage = Get(MobileStringKeys.IssuerRequired);
             return;
         }
 
@@ -1577,18 +1601,20 @@ public sealed class MobileShellViewModel :
                 : existing?.Secret;
             if (string.IsNullOrWhiteSpace(secret))
             {
-                SetError(MobileStringKeys.SecretRequired);
+                EditorSecretMessage = Get(MobileStringKeys.SecretRequired);
                 return;
             }
 
             if (!SecretValidation.IsValidBase32Secret(secret))
             {
-                SetError(MobileStringKeys.SecretInvalid);
+                EditorSecretMessage = Get(MobileStringKeys.SecretInvalid);
                 return;
             }
-            if (!TotpPeriodPolicy.IsSupported(EditorPeriodSeconds))
+            if (EditorPeriodSeconds is not int periodSeconds
+                || !TotpPeriodPolicy.IsSupported(periodSeconds))
             {
-                SetError(MobileStringKeys.TotpPeriodInvalid);
+                IsAdvancedOptionsExpanded = true;
+                EditorPeriodMessage = Get(MobileStringKeys.TotpPeriodInvalid);
                 return;
             }
 
@@ -1609,7 +1635,7 @@ public sealed class MobileShellViewModel :
                 issuer,
                 secret,
                 accountName.Length == 0 ? null : accountName,
-                EditorPeriodSeconds);
+                periodSeconds);
             var saved = existing is null
                 ? await _accountManager.AddNewAsync(updated)
                 : await _accountManager.UpdateAsync(existing, updated);
@@ -2041,6 +2067,9 @@ public sealed class MobileShellViewModel :
         EditorSecret = string.Empty;
         EditorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
         IsAdvancedOptionsExpanded = false;
+        EditorIssuerMessage = string.Empty;
+        EditorSecretMessage = string.Empty;
+        EditorPeriodMessage = string.Empty;
         OnPropertyChanged(nameof(EditorTitle));
         OnPropertyChanged(nameof(EditorSecretPlaceholder));
     }

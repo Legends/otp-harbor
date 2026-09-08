@@ -91,8 +91,8 @@
   <data name="SecretOptionalOnEdit" xml:space="preserve"><value>New Base32 secret (leave empty to keep the current secret)</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Advanced options</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code period in seconds</value></data>
-  <data name="TotpPeriodHelp" xml:space="preserve"><value>Keep 30 seconds unless the provider explicitly requires a different period.</value></data>
-  <data name="TotpPeriodInvalid" xml:space="preserve"><value>Enter a code period between 5 and 300 seconds.</value></data>
+  <data name="TotpPeriodHelp" xml:space="preserve"><value>Keep 30 seconds unless the provider explicitly requires a different period. Longer periods keep each code valid longer.</value></data>
+  <data name="TotpPeriodInvalid" xml:space="preserve"><value>Enter a code period between 5 and 3600 seconds.</value></data>
   <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
   <data name="Save" xml:space="preserve"><value>Save</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>

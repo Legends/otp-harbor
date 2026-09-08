@@ -1212,7 +1212,8 @@ public sealed class MobileShellViewModelTests
         context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.SecretInvalid),
-            context.Sut.NotificationText);
+            context.Sut.EditorSecretMessage);
+        Assert.Empty(context.Sut.NotificationText);
         Assert.Empty(context.Sut.EditorSecret);
     }
 
@@ -1232,7 +1233,7 @@ public sealed class MobileShellViewModelTests
         context.Sut.EditorIssuer = "  Example  ";
         context.Sut.EditorAccountName = " user@example.test ";
         context.Sut.EditorSecret = "JBSW Y3DP EHPK 3PXP";
-        context.Sut.EditorPeriodSeconds = 60;
+        context.Sut.EditorPeriodSeconds = 600;
 
         await context.Sut.SaveAccountAsync();
 
@@ -1240,7 +1241,7 @@ public sealed class MobileShellViewModelTests
         Assert.Equal("Example", persisted.Issuer);
         Assert.Equal("user@example.test", persisted.AccountName);
         Assert.Equal(ValidSecret, persisted.Secret);
-        Assert.Equal(60, persisted.PeriodSeconds);
+        Assert.Equal(600, persisted.PeriodSeconds);
         Assert.Empty(context.Sut.EditorSecret);
         Assert.False(context.Sut.IsEditorVisible);
     }
@@ -1255,15 +1256,100 @@ public sealed class MobileShellViewModelTests
         await ConfigureAndBeginAddAsync(context);
         context.Sut.EditorIssuer = "Example";
         context.Sut.EditorSecret = ValidSecret;
-        context.Sut.EditorPeriodSeconds = 301;
+        context.Sut.EditorPeriodSeconds = 3601;
 
         await context.Sut.SaveAccountAsync();
 
         context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.TotpPeriodInvalid),
-            context.Sut.NotificationText);
+            context.Sut.EditorPeriodMessage);
+        Assert.True(context.Sut.IsAdvancedOptionsExpanded);
+        Assert.Empty(context.Sut.NotificationText);
         Assert.Empty(context.Sut.EditorSecret);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_WithEmptyPeriod_ShowsFieldErrorWithoutPersisting()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await ConfigureAndBeginAddAsync(context);
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = ValidSecret;
+        context.Sut.EditorPeriodSeconds = null;
+
+        await context.Sut.SaveAccountAsync();
+
+        context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.TotpPeriodInvalid),
+            context.Sut.EditorPeriodMessage);
+        Assert.Empty(context.Sut.EditorIssuerMessage);
+        Assert.Empty(context.Sut.EditorSecretMessage);
+    }
+
+    [Fact]
+    public async Task AccountEditor_FieldErrorsResetForTheNextAddForm()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await ConfigureAndBeginAddAsync(context);
+
+        await context.Sut.SaveAccountAsync();
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.IssuerRequired),
+            context.Sut.EditorIssuerMessage);
+
+        context.Sut.EditorIssuer = "Example";
+        await context.Sut.SaveAccountAsync();
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.SecretRequired),
+            context.Sut.EditorSecretMessage);
+
+        await context.Sut.CancelEditAsync();
+        await context.Sut.BeginAddAsync();
+
+        Assert.Equal(30, context.Sut.EditorPeriodSeconds);
+        Assert.Empty(context.Sut.EditorIssuerMessage);
+        Assert.Empty(context.Sut.EditorSecretMessage);
+        Assert.Empty(context.Sut.EditorPeriodMessage);
+    }
+
+    [Fact]
+    public async Task EditAccount_EmptyPeriodErrorIsResetWhenEditorIsReopened()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true, [account]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+        context.Sut.EditorPeriodSeconds = null;
+
+        await context.Sut.SaveAccountAsync();
+
+        context.AccountManager.Verify(value => value.UpdateAsync(
+            It.IsAny<Account>(),
+            It.IsAny<Account>()), Times.Never);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.TotpPeriodInvalid),
+            context.Sut.EditorPeriodMessage);
+
+        await context.Sut.CancelEditAsync();
+        await context.Sut.BeginEditAsync();
+
+        Assert.Equal(30, context.Sut.EditorPeriodSeconds);
+        Assert.Empty(context.Sut.EditorPeriodMessage);
     }
 
     [Fact]

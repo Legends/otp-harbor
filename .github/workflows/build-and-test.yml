@@ -60,6 +60,14 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-PublicWebsite.ps1
 
+      - name: Validate source launcher safeguards
+        shell: pwsh
+        run: ./scripts/validation/Test-SourceLauncher.ps1
+
+      - name: Validate Windows MSI packaging controls
+        shell: pwsh
+        run: ./scripts/validation/Test-WindowsMsiPackaging.ps1
+
       - name: Validate localization resources
         shell: pwsh
         run: ./scripts/validation/Test-LocalizationResources.ps1
@@ -610,6 +618,10 @@ jobs:
             ./scripts/release/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
           }
 
+      - name: Install pinned WiX Toolset
+        if: ${{ matrix.rid == 'win-x64' && contains(github.ref_name, '-rc') }}
+        run: dotnet tool install --global wix --version 5.0.2
+
       - name: Upload unsigned Windows payload for SignPath
         id: upload-signpath-artifact
         if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') }}
@@ -720,6 +732,14 @@ jobs:
               Compress-Archive `
                 -Path release-fast/* `
                 -DestinationPath "release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip"
+              if ("${{ steps.versioning.outputs.channel }}" -eq "rc") {
+                $productVersion = "${{ steps.versioning.outputs.release_version }}".Split('-')[0]
+                ./scripts/release/New-WindowsMsi.ps1 `
+                  -PublishDirectory release-publish `
+                  -OutputDirectory release-assets `
+                  -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
+                  -ProductVersion $productVersion
+              }
             }
             "linux-x64" {
               $appcastUrl = if ("${{ steps.versioning.outputs.channel }}" -eq "rc") {
@@ -876,10 +896,10 @@ jobs:
           "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem preview-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|tar\.gz)|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|msi|tar\.gz)|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 4) {
-            throw "The unsigned preview must contain exactly four Windows/Linux artifacts."
+          if ($artifactPaths.Count -ne 5) {
+            throw "The unsigned preview must contain exactly five Windows/Linux artifacts."
           }
           if (Get-ChildItem preview-assets -File | Where-Object { $_.Name -match '(appcast|macos|\.dmg$)' }) {
             throw "Unsigned previews cannot contain appcasts or macOS artifacts."
@@ -974,6 +994,7 @@ jobs:
             This prerelease is provided for manual testing because the project does not yet have platform code-signing credentials.
 
             - The Windows executables are **not Authenticode-signed** and may trigger Microsoft Defender SmartScreen warnings.
+            - The optional MSI is also unsigned, uses a system-wide installation that requires administrator approval, and requires manual MSI upgrades; application-owned updates are disabled inside that package.
             - Direct Windows and portable Linux builds check an Ed25519-signed preview appcast and require explicit confirmation before installation.
             - The first preview download remains outside operating-system publisher trust; verify its checksums before running it.
             - macOS is not included because Developer ID signing and notarization are unavailable.
@@ -987,6 +1008,7 @@ jobs:
           files: |
             preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
+            preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.msi
             preview-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             preview-assets/otp-harbor_*_amd64.deb
             preview-assets/release-artifacts-v2.json
