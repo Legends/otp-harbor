@@ -81,7 +81,7 @@ The QR screenshot is intentionally sanitized and contains only a published synth
 
 | Platform | Package type |
 | --- | --- |
-| Windows 10/11 x64 | Microsoft Store MSIX after certification; unsigned GitHub RC ZIPs with a signed application update feed |
+| Windows 10/11 x64 | Microsoft Store MSIX after certification; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with administrator approval and manual MSI upgrades |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
 | Android 9 or newer | Development source only; a public APK requires production signing and supported Android CI |

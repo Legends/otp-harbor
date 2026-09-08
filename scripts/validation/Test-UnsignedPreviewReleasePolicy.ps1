@@ -59,6 +59,7 @@ try {
     $artifactNames = @(
         "OTP-Harbor-windows-x64-2.0.0-rc3.zip",
         "OTP-Harbor-windows-x64-fast-2.0.0-rc3.zip",
+        "OTP-Harbor-windows-x64-2.0.0-rc3.msi",
         "OTP-Harbor-linux-x64-2.0.0-rc3.tar.gz",
         "otp-harbor_2.0.0-rc3_amd64.deb")
     $artifactPaths = foreach ($name in $artifactNames) {
@@ -80,12 +81,13 @@ try {
 
     $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
     if ($manifest.releaseProfile -ne "unsigned-platform-preview" -or
-        @($manifest.artifacts).Count -ne 4 -or
+        @($manifest.artifacts).Count -ne 5 -or
         @($manifest.artifacts | Where-Object { $_.fileName -match '~' }).Count -ne 0 -or
         @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "signed-appcast" }).Count -ne 1 -or
         @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "manual-signed-release" }).Count -ne 1 -or
         @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "package-manager" }).Count -ne 1 -or
-        @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "manual-download" }).Count -ne 1) {
+        @($manifest.artifacts | Where-Object { $_.updatePolicy -eq "manual-download" }).Count -ne 2 -or
+        @($manifest.artifacts | Where-Object { $_.format -eq "msi" -and $_.ownership -eq "windows-installer" }).Count -ne 1) {
         throw "Unsigned-platform preview manifest contains an unsafe update policy."
     }
 
