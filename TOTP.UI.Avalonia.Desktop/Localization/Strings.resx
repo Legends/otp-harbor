@@ -57,7 +57,7 @@
   <data name="AddAccount" xml:space="preserve"><value>Add account</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Edit account</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Delete account</value></data>
-  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;The encrypted account entry will be permanently removed. This cannot be undone.</value></data>
+  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;The encrypted account entry will be permanently removed.&#10;This cannot be undone.</value></data>
   <data name="Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Issuer" xml:space="preserve"><value>Issuer</value></data>
   <data name="AccountName" xml:space="preserve"><value>Account name</value></data>

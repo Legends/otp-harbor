@@ -836,9 +836,12 @@ public sealed class AccountListViewModelTests
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
         manager.Setup(value => value.DeleteAsync(account)).ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
+        ConfirmationDialogRequest? deleteConfirmation = null;
         dialogs.Setup(value => value.ConfirmAsync(
                 It.IsAny<ConfirmationDialogRequest>(),
                 It.IsAny<CancellationToken>()))
+            .Callback<ConfirmationDialogRequest, CancellationToken>(
+                (request, _) => deleteConfirmation = request)
             .ReturnsAsync(true);
         var sut = CreateSut(
             manager.Object,
@@ -851,6 +854,14 @@ public sealed class AccountListViewModelTests
 
         manager.Verify(value => value.DeleteAsync(account), Times.Once);
         Assert.Empty(sut.Accounts);
+        Assert.NotNull(deleteConfirmation);
+        Assert.Equal(
+            [
+                "GitHub (alice@example.test)",
+                "The encrypted account entry will be permanently removed.",
+                "This cannot be undone."
+            ],
+            deleteConfirmation.Message.Split('\n'));
         Assert.Equal("Account deleted.", sut.Message);
         await WaitUntilAsync(() => !sut.HasMessage);
         Assert.Empty(sut.Message);

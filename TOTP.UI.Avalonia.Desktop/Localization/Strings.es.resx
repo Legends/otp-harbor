@@ -57,8 +57,7 @@
   <data name="AddAccount" xml:space="preserve"><value>Añadir cuenta</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Editar cuenta</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Eliminar cuenta</value></data>
-  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})
-La entrada cifrada de la cuenta se eliminará permanentemente. Esta acción no se puede deshacer.</value></data>
+  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;La entrada cifrada de la cuenta se eliminará permanentemente.&#10;Esta acción no se puede deshacer.</value></data>
   <data name="Delete" xml:space="preserve"><value>Eliminar</value></data>
   <data name="Issuer" xml:space="preserve"><value>Emisor</value></data>
   <data name="AccountName" xml:space="preserve"><value>Nombre de la cuenta</value></data>

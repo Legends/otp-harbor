@@ -57,8 +57,7 @@
   <data name="AddAccount" xml:space="preserve"><value>Ajouter un compte</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Modifier le compte</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Supprimer le compte</value></data>
-  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})
-L’entrée de compte chiffrée sera supprimée définitivement. Cette action est irréversible.</value></data>
+  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;L’entrée de compte chiffrée sera supprimée définitivement.&#10;Cette action est irréversible.</value></data>
   <data name="Delete" xml:space="preserve"><value>Supprimer</value></data>
   <data name="Issuer" xml:space="preserve"><value>Émetteur</value></data>
   <data name="AccountName" xml:space="preserve"><value>Nom du compte</value></data>

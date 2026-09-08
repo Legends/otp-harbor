@@ -57,7 +57,7 @@
   <data name="AddAccount" xml:space="preserve"><value>Konto hinzufügen</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Konto bearbeiten</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Konto löschen</value></data>
-  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;Der verschlüsselte Kontoeintrag wird dauerhaft entfernt. Dies kann nicht rückgängig gemacht werden.</value></data>
+  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;Der verschlüsselte Kontoeintrag wird dauerhaft entfernt.&#10;Dies kann nicht rückgängig gemacht werden.</value></data>
   <data name="Delete" xml:space="preserve"><value>Löschen</value></data>
   <data name="Issuer" xml:space="preserve"><value>Anbieter</value></data>
   <data name="AccountName" xml:space="preserve"><value>Kontoname</value></data>
