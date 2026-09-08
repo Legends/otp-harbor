@@ -561,7 +561,7 @@
                                 <TextBlock
                                     FontSize="18"
                                     FontWeight="SemiBold"
-                                    Text="{Binding ImportExportText}" />
+                                    Text="{Binding ImportSectionText}" />
                                 <TextBlock
                                     FontSize="17"
                                     FontWeight="SemiBold"
@@ -592,10 +592,35 @@
                                 <TextBlock
                                     FontSize="17"
                                     FontWeight="SemiBold"
-                                    Text="{Binding BackupTitle}" />
+                                    Text="{Binding ImportBackupText}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding BackupDescription}"
+                                    Text="{Binding ImportBackupDescriptionText}"
+                                    TextWrapping="Wrap" />
+                                <TextBox
+                                    automation:AutomationProperties.Name="{Binding BackupPasswordText}"
+                                    PasswordChar="●"
+                                    PlaceholderText="{Binding BackupPasswordText}"
+                                    Text="{Binding ImportPassword, Mode=TwoWay}" />
+                                <Button
+                                    Classes="wide secondary"
+                                    Command="{Binding ImportBackupCommand}"
+                                    Content="{Binding ImportBackupText}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="card" Padding="16">
+                            <StackPanel Spacing="12">
+                                <TextBlock
+                                    FontSize="18"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding ExportSectionText}" />
+                                <TextBlock
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding ExportBackupText}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding ExportBackupDescriptionText}"
                                     TextWrapping="Wrap" />
                                 <TextBox
                                     automation:AutomationProperties.Name="{Binding BackupPasswordText}"
@@ -611,15 +636,6 @@
                                     Classes="wide primary"
                                     Command="{Binding ExportBackupCommand}"
                                     Content="{Binding ExportBackupText}" />
-                                <TextBox
-                                    automation:AutomationProperties.Name="{Binding BackupPasswordText}"
-                                    PasswordChar="●"
-                                    PlaceholderText="{Binding BackupPasswordText}"
-                                    Text="{Binding ImportPassword, Mode=TwoWay}" />
-                                <Button
-                                    Classes="wide secondary"
-                                    Command="{Binding ImportBackupCommand}"
-                                    Content="{Binding ImportBackupText}" />
                             </StackPanel>
                         </Border>
                     </StackPanel>

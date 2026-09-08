@@ -657,6 +657,8 @@ public sealed class MobileShellViewModel :
     public string AccountSwipeHintText => Get(MobileStringKeys.AccountSwipeHint);
     public string ScanQrText => Get(MobileStringKeys.ScanQr);
     public string ImportExportText => Get(MobileStringKeys.ImportExport);
+    public string ImportSectionText => Get(MobileStringKeys.ImportSection);
+    public string ExportSectionText => Get(MobileStringKeys.ExportSection);
     public string ImportGoogleQrText => Get(MobileStringKeys.ImportGoogleQr);
     public string ImportGoogleQrDescriptionText =>
         Get(MobileStringKeys.ImportGoogleQrDescription);
@@ -671,6 +673,10 @@ public sealed class MobileShellViewModel :
     public string QrPrivacyNoticeText => Get(MobileStringKeys.QrPrivacyNotice);
     public string BackupTitle => Get(MobileStringKeys.BackupTitle);
     public string BackupDescription => Get(MobileStringKeys.BackupDescription);
+    public string ImportBackupDescriptionText =>
+        Get(MobileStringKeys.ImportBackupDescription);
+    public string ExportBackupDescriptionText =>
+        Get(MobileStringKeys.ExportBackupDescription);
     public string BackupPasswordText => Get(MobileStringKeys.BackupPassword);
     public string ConfirmBackupPasswordText => Get(MobileStringKeys.ConfirmBackupPassword);
     public string ExportBackupText => Get(MobileStringKeys.ExportBackup);
@@ -1005,18 +1011,29 @@ public sealed class MobileShellViewModel :
         IsBusy = true;
         try
         {
-            var result = await _authorization.SetAppLockEnabledAsync(true, string.Empty);
-            if (result != AuthorizationResult.Success)
+            await _authorization.SetAppLockEnabledAsync(true, string.Empty);
+            NotifyAppLockChanged();
+            if (!IsAppLockEnabled)
             {
                 SetError(MobileStringKeys.AppLockChangeFailed);
                 return;
             }
 
-            NotifyAppLockChanged();
-            SetSuccess(MobileStringKeys.AppLockEnabled);
+            // Enforce the newly enabled policy immediately. Remaining on the
+            // authorized settings screen makes a successful toggle look
+            // ineffective and leaves codes exposed until a later lifecycle
+            // transition.
+            LockCore();
         }
         catch (Exception)
         {
+            NotifyAppLockChanged();
+            if (IsAppLockEnabled)
+            {
+                LockCore();
+                return;
+            }
+
             SetError(MobileStringKeys.AppLockChangeFailed);
         }
         finally
@@ -2412,6 +2429,8 @@ public sealed class MobileShellViewModel :
         nameof(AccountSwipeHintText),
         nameof(ScanQrText),
         nameof(ImportExportText),
+        nameof(ImportSectionText),
+        nameof(ExportSectionText),
         nameof(ImportGoogleQrText),
         nameof(ImportGoogleQrDescriptionText),
         nameof(QrConflictTitle),
@@ -2423,6 +2442,8 @@ public sealed class MobileShellViewModel :
         nameof(QrPrivacyNoticeText),
         nameof(BackupTitle),
         nameof(BackupDescription),
+        nameof(ImportBackupDescriptionText),
+        nameof(ExportBackupDescriptionText),
         nameof(BackupPasswordText),
         nameof(ConfirmBackupPasswordText),
         nameof(ExportBackupText),

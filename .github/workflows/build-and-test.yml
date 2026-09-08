@@ -776,9 +776,68 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  package-microsoft-store-msix:
+    name: Package Microsoft Store MSIX
+    needs: [package-avalonia-release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-2025
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Compute Store release metadata
+        id: versioning
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $storeVersion = ./scripts/release/Get-MicrosoftStoreVersion.ps1 -ReleaseTag $tag
+          $releaseVersion = $tag.Substring(1)
+          "store_version=$storeVersion" >> $env:GITHUB_OUTPUT
+          "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Download validated Windows release payload
+        uses: actions/download-artifact@v6
+        with:
+          name: avalonia-release-win-x64-${{ github.sha }}
+          path: windows-release
+
+      - name: Extract self-contained Windows payload
+        shell: pwsh
+        run: |
+          $archive = "windows-release/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
+          if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
+            throw "The validated self-contained Windows release archive is missing."
+          }
+          Expand-Archive -LiteralPath $archive -DestinationPath store-publish
+
+      - name: Build unsigned Partner Center MSIX
+        shell: pwsh
+        run: |
+          ./scripts/release/New-MicrosoftStoreMsix.ps1 `
+            -IdentityName 'Legends77.OTPHarbor' `
+            -Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9' `
+            -PublisherDisplayName 'Legends77' `
+            -Version '${{ steps.versioning.outputs.store_version }}' `
+            -PublishDirectory store-publish
+
+      - name: Upload Partner Center submission artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: otp-harbor-microsoft-store-${{ steps.versioning.outputs.release_version }}
+          path: |
+            artifacts/store/*.msix
+            artifacts/store/SHA256SUMS
+            artifacts/store/store-package.json
+          if-no-files-found: error
+          retention-days: 90
+
   publish-unsigned-preview:
     name: Publish update-enabled Windows and Linux preview
-    needs: [package-avalonia-release]
+    needs: [package-avalonia-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
@@ -966,7 +1025,7 @@ jobs:
 
   publish-avalonia-release:
     name: Publish complete signed release
-    needs: [package-avalonia-release]
+    needs: [package-avalonia-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
