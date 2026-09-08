@@ -438,6 +438,7 @@ jobs:
         run: >-
           dotnet restore TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
           --runtime win-x64
+          -p:PublishReadyToRun=true
           --nologo
           --verbosity minimal
           --configfile NuGet.config
@@ -454,11 +455,11 @@ jobs:
           dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj `
             --configuration Release --runtime win-x64 --self-contained true --no-restore `
             --nologo --verbosity minimal -p:PublishSingleFile=false -p:PublishTrimmed=false `
-            -p:DebugType=None -p:DebugSymbols=false @metadata --output release-publish
+            -p:PublishReadyToRun=true -p:DebugType=None -p:DebugSymbols=false @metadata --output release-publish
           dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj `
             --configuration Release --runtime win-x64 --self-contained false --no-restore `
             --nologo --verbosity minimal -p:PublishSingleFile=false -p:PublishTrimmed=false `
-            -p:DebugType=None -p:DebugSymbols=false @metadata --output release-fast
+            -p:PublishReadyToRun=true -p:DebugType=None -p:DebugSymbols=false @metadata --output release-fast
           ./scripts/release/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-publish
           ./scripts/release/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
 
@@ -565,6 +566,7 @@ jobs:
         run: >-
           dotnet restore TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
           --runtime ${{ matrix.rid }}
+          -p:PublishReadyToRun=${{ matrix.rid == 'win-x64' }}
           --nologo
           --verbosity minimal
           --configfile NuGet.config
@@ -580,6 +582,7 @@ jobs:
           --verbosity minimal
           -p:PublishSingleFile=false
           -p:PublishTrimmed=false
+          -p:PublishReadyToRun=${{ matrix.rid == 'win-x64' }}
           -p:DebugType=None
           -p:DebugSymbols=false
           -p:Version=${{ steps.versioning.outputs.release_version }}
@@ -601,6 +604,7 @@ jobs:
           --verbosity minimal
           -p:PublishSingleFile=false
           -p:PublishTrimmed=false
+          -p:PublishReadyToRun=true
           -p:DebugType=None
           -p:DebugSymbols=false
           -p:Version=${{ steps.versioning.outputs.release_version }}
@@ -620,7 +624,9 @@ jobs:
 
       - name: Install pinned WiX Toolset
         if: ${{ matrix.rid == 'win-x64' && contains(github.ref_name, '-rc') }}
-        run: dotnet tool install --global wix --version 5.0.2
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add --global WixToolset.UI.wixext/5.0.2
 
       - name: Upload unsigned Windows payload for SignPath
         id: upload-signpath-artifact

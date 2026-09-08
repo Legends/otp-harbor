@@ -81,7 +81,7 @@ The QR screenshot is intentionally sanitized and contains only a published synth
 
 | Platform | Package type |
 | --- | --- |
-| Windows 10/11 x64 | Microsoft Store MSIX after certification; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with administrator approval and manual MSI upgrades |
+| Windows 10/11 x64 | Microsoft Store MSIX after certification; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with a branded setup flow, desktop and Start-menu shortcuts, administrator approval, and manual MSI upgrades |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
 | Android 9 or newer | Development source only; a public APK requires production signing and supported Android CI |
@@ -89,6 +89,8 @@ The QR screenshot is intentionally sanitized and contains only a published synth
 After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
 
 Maintainers can follow the [Microsoft Store release guide](docs/release/MICROSOFT_STORE.md). The unsigned MSIX produced by the repository is exclusively a Partner Center submission input and must never be sideloaded or attached to a GitHub Release.
+
+The optional GitHub RC MSI shows a completion message and lets the user choose whether to launch OTP Harbor. It installs for all users and creates desktop and Start-menu shortcuts. Because this preview MSI is not Authenticode-signed, Windows can show an unknown-publisher warning and may scan the first launch; verify its published SHA-256 checksum before installation.
 
 ## Security and recovery
 

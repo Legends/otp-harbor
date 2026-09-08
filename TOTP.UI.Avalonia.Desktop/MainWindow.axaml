@@ -15,7 +15,7 @@
     MinHeight="200"
     WindowDecorations="None"
     WindowStartupLocation="CenterScreen"
-    Icon="/Assets/Icons/app.ico">
+    Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">
 
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+A" Command="{Binding BeginAddAccountCommand}" />

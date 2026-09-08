@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="es-ES" Codepage="1252">
+  <String Id="InstallerManufacturer" Value="Colaboradores de OTP Harbor" />
+  <String Id="InstallerShortcutDescription" Value="Autenticador TOTP local" />
+  <String Id="InstallerLaunchApplication" Value="Iniciar OTP Harbor" />
+  <String Id="InstallerSuccessMessage" Value="OTP Harbor se instaló correctamente." />
+</WixLocalization>
