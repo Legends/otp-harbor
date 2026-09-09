@@ -33,6 +33,25 @@ public sealed class AuthorizationSettingsViewModelTests
     }
 
     [Fact]
+    public async Task RefreshAsync_WhenQuickUnlockIsUnavailable_ProjectsStateSilently()
+    {
+        var state = ConfiguredState(PreferredUnlockMethod.Password);
+        var authorization = Authorization(state);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(false);
+        var sut = CreateSut(
+            authorization.Object,
+            Mock.Of<IAvaloniaDialogService>(),
+            TimeSpan.FromMilliseconds(20));
+
+        await sut.RefreshAsync();
+
+        Assert.False(sut.IsQuickUnlockAvailable);
+        Assert.False(sut.IsQuickUnlockEnabled);
+        Assert.Empty(sut.Message);
+        Assert.False(sut.ShowQuickUnlockRetry);
+    }
+
+    [Fact]
     public async Task RefreshAsync_WhenAvailabilityCheckThrows_OffersTargetedRetry()
     {
         var authorization = Authorization(ConfiguredState(PreferredUnlockMethod.Password));
@@ -189,7 +208,8 @@ public sealed class AuthorizationSettingsViewModelTests
     public async Task CultureChanged_RelocalizesCurrentWarningMessage()
     {
         var authorization = Authorization(ConfiguredState(PreferredUnlockMethod.Password));
-        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(false);
+        authorization.Setup(value => value.IsHelloAvailableAsync())
+            .ThrowsAsync(new InvalidOperationException("synthetic platform failure"));
         var localization = new Mock<IAvaloniaLocalizationService>();
         var german = false;
         localization.Setup(value => value.GetString(AvaloniaStringKeys.QuickUnlockUnavailable))

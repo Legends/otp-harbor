@@ -128,17 +128,8 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         {
             IsQuickUnlockEnabled = IsQuickUnlockPreferred();
             IsQuickUnlockAvailable = await _authorization.IsHelloAvailableAsync();
-            if (IsQuickUnlockAvailable)
-            {
-                _messageKey = null;
-                Notification.Clear();
-            }
-            else
-            {
-                SetMessage(
-                    AvaloniaStringKeys.QuickUnlockUnavailable,
-                    NotificationSeverity.Warning);
-            }
+            _messageKey = null;
+            Notification.Clear();
         }
         catch (Exception)
         {
