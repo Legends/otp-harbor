@@ -51,7 +51,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private object[] _codeMessageLocalizationArguments = [];
     private string? _notificationLocalizationKey;
     private object[] _notificationLocalizationArguments = [];
-    private bool _localizedNotificationIsTransient;
     private bool _isBusy;
     private bool _isGenerating;
     private int _remainingSeconds;
@@ -505,7 +504,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             }
             else
             {
-                ShowLocalizedPersistentNotification(
+                ShowLocalizedTransientNotification(
                     AvaloniaStringKeys.ClipboardCopyUnavailable,
                     NotificationSeverity.Error);
             }
@@ -541,7 +540,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             }
             else
             {
-                ShowLocalizedPersistentNotification(
+                ShowLocalizedTransientNotification(
                     AvaloniaStringKeys.ClipboardCopyUnavailable,
                     NotificationSeverity.Error);
             }
@@ -549,7 +548,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        ShowLocalizedPersistentNotification(
+        ShowLocalizedTransientNotification(
             AvaloniaStringKeys.ClipboardCopyUnavailable,
             NotificationSeverity.Error);
     }
@@ -1089,30 +1088,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private void ShowLocalizedTransientNotification(
         string key,
         NotificationSeverity severity,
-        params object[] arguments) =>
-        ShowLocalizedNotification(key, severity, isTransient: true, arguments);
-
-    private void ShowLocalizedPersistentNotification(
-        string key,
-        NotificationSeverity severity,
-        params object[] arguments) =>
-        ShowLocalizedNotification(key, severity, isTransient: false, arguments);
-
-    private void ShowLocalizedNotification(
-        string key,
-        NotificationSeverity severity,
-        bool isTransient,
         params object[] arguments)
     {
         CodeMessage = string.Empty;
         _notificationLocalizationKey = key;
         _notificationLocalizationArguments = arguments;
-        _localizedNotificationIsTransient = isTransient;
         var message = string.Format(_localization.GetString(key), arguments);
-        if (isTransient)
-            Notification.ShowTransient(message, severity);
-        else
-            Notification.ShowPersistent(message, severity);
+        Notification.ShowTransient(message, severity);
     }
 
     private void RelocalizeNotification()
@@ -1123,10 +1105,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var message = string.Format(
             _localization.GetString(key),
             _notificationLocalizationArguments);
-        if (_localizedNotificationIsTransient)
-            Notification.ShowTransient(message, Notification.Severity);
-        else
-            Notification.ShowPersistent(message, Notification.Severity);
+        Notification.ShowTransient(message, Notification.Severity);
     }
 
     private string FormatCustomPeriod(int periodSeconds) => string.Format(
@@ -1152,7 +1131,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private void ShowError(string message)
     {
         ClearNotificationLocalization();
-        Notification.ShowPersistent(message, NotificationSeverity.Error);
+        Notification.ShowTransient(message, NotificationSeverity.Error);
     }
 
     private void ClearNotification()
@@ -1165,7 +1144,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     {
         _notificationLocalizationKey = null;
         _notificationLocalizationArguments = [];
-        _localizedNotificationIsTransient = false;
     }
 
     private void NotificationPropertyChanged(object? sender, PropertyChangedEventArgs args)

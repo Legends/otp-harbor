@@ -21,6 +21,7 @@
         <KeyBinding Gesture="Escape" Command="{Binding CloseSettingsCommand}" />
     </Window.KeyBindings>
 
+    <Grid>
         <Grid
             Margin="16"
             Classes="settings-page"
@@ -56,7 +57,6 @@
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource QuickUnlock}" />
                                                 <TextBlock Classes="secondary" Text="{DynamicResource QuickUnlockRecoveryNotice}" TextWrapping="Wrap" />
-                                                <shared:NotificationBanner Severity="{Binding Notification.Severity}" Text="{Binding Notification.Text}" />
                                                 <StackPanel Spacing="6">
                                                     <RadioButton
                                                         Command="{Binding EnableQuickUnlockCommand}"
@@ -121,12 +121,6 @@
                             </ContentControl>
                             </StackPanel>
                         </ScrollViewer>
-                        <shared:NotificationBanner
-                            x:Name="SecuritySettingsNotice"
-                            Grid.Row="1"
-                            Margin="4,4,4,8"
-                            Severity="{Binding SettingsPage.SettingsNotification.Severity}"
-                            Text="{Binding SettingsPage.SettingsNotification.Text}" />
                     </Grid>
                 </TabItem>
                 <TabItem Header="{DynamicResource ImportExport}">
@@ -185,11 +179,6 @@
                                         </Border>
                                         </StackPanel>
                                     </ScrollViewer>
-                                    <shared:NotificationBanner
-                                        Grid.Row="1"
-                                        Margin="4,4,4,8"
-                                        Severity="{Binding Notification.Severity}"
-                                        Text="{Binding Notification.Text}" />
                                 </Grid>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
@@ -242,12 +231,6 @@
                                             </StackPanel>
                                         </Border>
                                     </ScrollViewer>
-                                    <shared:NotificationBanner
-                                        x:Name="MiscellaneousSettingsNotice"
-                                        Grid.Row="1"
-                                        Margin="4,4,4,8"
-                                        Severity="{Binding SettingsNotification.Severity}"
-                                        Text="{Binding SettingsNotification.Text}" />
                                 </Grid>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
@@ -264,7 +247,6 @@
                                                 <TextBlock Classes="section-title" Text="{DynamicResource About}" />
                                                 <TextBlock Text="{Binding VersionText}" />
                                                 <Button Command="{Binding OpenLogFolderCommand}" Content="{DynamicResource OpenLogFolder}" />
-                                                <shared:NotificationBanner Severity="{Binding LogFolderNotification.Severity}" Text="{Binding LogFolderNotification.Text}" />
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -276,7 +258,6 @@
                                         <Border Classes="panel">
                                             <StackPanel Spacing="10">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource SoftwareUpdates}" />
-                                                <shared:NotificationBanner Severity="{Binding Notification.Severity}" Text="{Binding Notification.Text}" />
                                                 <ProgressBar
                                                     IsIndeterminate="{Binding IsProgressIndeterminate}"
                                                     IsVisible="{Binding IsDownloadInProgress}"
@@ -310,7 +291,6 @@
                                         <Border Classes="panel">
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource SupportDiagnostics}" />
-                                                <shared:NotificationBanner Severity="{Binding Notification.Severity}" Text="{Binding Notification.Text}" />
                                                 <Button Command="{Binding RefreshCommand}" Content="{DynamicResource RefreshSupportInformation}" />
                                                 <TextBox AcceptsReturn="True" IsReadOnly="True" MinHeight="100" Text="{Binding SupportInformation}" TextWrapping="Wrap" />
                                             </StackPanel>
@@ -323,4 +303,14 @@
                 </TabItem>
             </TabControl>
         </Grid>
+        <shared:NotificationBanner
+            x:Name="SettingsNotificationToast"
+            ZIndex="50"
+            Margin="20"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Bottom"
+            IsHitTestVisible="False"
+            Severity="{Binding SettingsNotification.Severity}"
+            Text="{Binding SettingsNotification.Text}" />
+    </Grid>
 </Window>

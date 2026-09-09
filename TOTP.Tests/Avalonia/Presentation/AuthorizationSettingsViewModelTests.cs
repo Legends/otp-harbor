@@ -14,7 +14,7 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class AuthorizationSettingsViewModelTests
 {
     [Fact]
-    public async Task RefreshAsync_ProjectsPlatformAvailabilityAndCurrentPreference()
+    public async Task RefreshAsync_WhenQuickUnlockIsAvailable_ProjectsStateSilently()
     {
         var state = ConfiguredState(PreferredUnlockMethod.PlatformQuickUnlock);
         var authorization = Authorization(state);
@@ -28,10 +28,8 @@ public sealed class AuthorizationSettingsViewModelTests
 
         Assert.True(sut.IsQuickUnlockAvailable);
         Assert.True(sut.IsQuickUnlockEnabled);
-        Assert.Equal(AvaloniaStringKeys.QuickUnlockAvailable, sut.Message);
-        Assert.False(sut.ShowQuickUnlockRetry);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
         Assert.Empty(sut.Message);
+        Assert.False(sut.ShowQuickUnlockRetry);
     }
 
     [Fact]
@@ -188,14 +186,14 @@ public sealed class AuthorizationSettingsViewModelTests
     }
 
     [Fact]
-    public async Task CultureChanged_RelocalizesCurrentStatusMessage()
+    public async Task CultureChanged_RelocalizesCurrentWarningMessage()
     {
         var authorization = Authorization(ConfiguredState(PreferredUnlockMethod.Password));
-        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(false);
         var localization = new Mock<IAvaloniaLocalizationService>();
         var german = false;
-        localization.Setup(value => value.GetString(AvaloniaStringKeys.QuickUnlockAvailable))
-            .Returns(() => german ? "Schnellentsperrung ist verfügbar." : "Quick unlock is available.");
+        localization.Setup(value => value.GetString(AvaloniaStringKeys.QuickUnlockUnavailable))
+            .Returns(() => german ? "Schnellentsperrung ist nicht verfügbar." : "Quick unlock is unavailable.");
         var validation = new Mock<IPasswordValidationService>();
         validation.SetupGet(value => value.MinimumLength).Returns(8);
         var sut = new AuthorizationSettingsViewModel(
@@ -208,7 +206,7 @@ public sealed class AuthorizationSettingsViewModelTests
         german = true;
         localization.Raise(value => value.CultureChanged += null, EventArgs.Empty);
 
-        Assert.Equal("Schnellentsperrung ist verfügbar.", sut.Message);
+        Assert.Equal("Schnellentsperrung ist nicht verfügbar.", sut.Message);
     }
 
     private static AuthorizationSettingsViewModel CreateSut(

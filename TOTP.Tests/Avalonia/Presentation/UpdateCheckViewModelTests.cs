@@ -132,7 +132,7 @@ public sealed class UpdateCheckViewModelTests
         Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
         Assert.DoesNotContain("sensitive", sut.Message, StringComparison.OrdinalIgnoreCase);
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        Assert.False(string.IsNullOrWhiteSpace(sut.Message));
+        Assert.Empty(sut.Message);
     }
 
     [Fact]

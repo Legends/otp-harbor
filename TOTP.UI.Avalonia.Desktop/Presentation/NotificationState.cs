@@ -21,6 +21,7 @@ public sealed class NotificationState : INotifyPropertyChanged, IDisposable
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+    public event EventHandler<NotificationShownEventArgs>? Shown;
 
     public string Text
     {
@@ -46,15 +47,12 @@ public sealed class NotificationState : INotifyPropertyChanged, IDisposable
         CancelLifetime();
         Severity = severity;
         Text = text ?? string.Empty;
+        if (HasMessage)
+            Shown?.Invoke(this, new NotificationShownEventArgs(Text, Severity));
     }
 
     public void ShowForSeverity(string text, NotificationSeverity severity)
-    {
-        if (severity == NotificationSeverity.Error)
-            ShowPersistent(text, severity);
-        else
-            ShowTransient(text, severity);
-    }
+        => ShowTransient(text, severity);
 
     public void ShowTransient(
         string text,
@@ -131,3 +129,7 @@ public sealed class NotificationState : INotifyPropertyChanged, IDisposable
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
+
+public sealed record NotificationShownEventArgs(
+    string Text,
+    NotificationSeverity Severity);

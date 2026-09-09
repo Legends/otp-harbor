@@ -267,14 +267,14 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             }
 
             TOTP.Core.Models.AppPreferencesMapper.ApplyTo(previous, _settingsService.Current);
-            SetPersistentMessage(
+            ShowTransientMessage(
                 Localize(AvaloniaStringKeys.SettingsSaveFailed),
                 NotificationSeverity.Error);
         }
         catch (Exception)
         {
             TOTP.Core.Models.AppPreferencesMapper.ApplyTo(previous, _settingsService.Current);
-            SetPersistentMessage(
+            ShowTransientMessage(
                 Localize(AvaloniaStringKeys.SettingsSaveFailed),
                 NotificationSeverity.Error);
         }
@@ -322,14 +322,14 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             }
             else
             {
-                SetPersistentLogFolderMessage(
+                ShowTransientLogFolderMessage(
                     Localize(AvaloniaStringKeys.LogFolderOpenFailed),
                     NotificationSeverity.Error);
             }
         }
         catch (Exception)
         {
-            SetPersistentLogFolderMessage(
+            ShowTransientLogFolderMessage(
                 Localize(AvaloniaStringKeys.LogFolderOpenFailedSafely),
                 NotificationSeverity.Error);
         }
@@ -383,14 +383,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private void ShowTransientMessage(string message, NotificationSeverity severity)
         => SettingsNotification.ShowTransient(message, severity);
 
-    private void SetPersistentMessage(string message, NotificationSeverity severity)
-        => SettingsNotification.ShowPersistent(message, severity);
-
     private void ShowTransientLogFolderMessage(string message, NotificationSeverity severity)
         => LogFolderNotification.ShowTransient(message, severity);
-
-    private void SetPersistentLogFolderMessage(string message, NotificationSeverity severity)
-        => LogFolderNotification.ShowPersistent(message, severity);
 
     private string Localize(string key) =>
         _localization?.GetString(key)

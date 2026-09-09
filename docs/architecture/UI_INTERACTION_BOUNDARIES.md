@@ -13,10 +13,10 @@ The Avalonia desktop project owns dialogs, window ownership, native file pickers
 
 `NotificationState` is the presentation state for recoverable information, success, warning, and error messages. `NotificationBanner` is their common visual and accessibility surface.
 
-Messages remain in the smallest useful context:
+Messages remain owned by the smallest useful presentation context:
 
-- action or validation feedback stays inside its owning section or dialog;
-- page-level outcomes stay on the owning page;
-- application-wide failures use the shell notification surface.
+- inline validation stays beside the affected field or workflow;
+- transient action feedback is relayed to the single bottom overlay for its window;
+- instructions and failures requiring acknowledgement stay in an owned dialog or inline recovery surface.
 
-A notification state is not shared between unrelated settings tabs. Navigation or disposal clears transient context so stale errors cannot appear in another section. View models select localized, presentation-safe text and never expose exception messages or secret-bearing values.
+The Settings window aggregates notifications from all tabs without moving their business logic into code-behind. Overlay messages replace one another, dismiss after the shared 1500 ms default, and are cleared when the window opens or closes. View models select localized, presentation-safe text and never expose exception messages or secret-bearing values.

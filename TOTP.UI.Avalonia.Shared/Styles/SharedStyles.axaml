@@ -412,8 +412,8 @@
         </Style.Animations>
     </Style>
     <Style Selector="ContextMenu.account-context-menu">
-        <Setter Property="MinWidth" Value="190" />
         <Setter Property="Padding" Value="6" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
         <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />

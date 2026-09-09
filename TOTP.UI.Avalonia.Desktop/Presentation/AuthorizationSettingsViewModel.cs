@@ -128,13 +128,17 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         {
             IsQuickUnlockEnabled = IsQuickUnlockPreferred();
             IsQuickUnlockAvailable = await _authorization.IsHelloAvailableAsync();
-            SetMessage(
-                IsQuickUnlockAvailable
-                    ? AvaloniaStringKeys.QuickUnlockAvailable
-                    : AvaloniaStringKeys.QuickUnlockUnavailable,
-                IsQuickUnlockAvailable
-                    ? NotificationSeverity.Information
-                    : NotificationSeverity.Warning);
+            if (IsQuickUnlockAvailable)
+            {
+                _messageKey = null;
+                Notification.Clear();
+            }
+            else
+            {
+                SetMessage(
+                    AvaloniaStringKeys.QuickUnlockUnavailable,
+                    NotificationSeverity.Warning);
+            }
         }
         catch (Exception)
         {
@@ -244,7 +248,7 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
 
         if (newPassword.Length < _passwordValidation.MinimumLength)
         {
-            Notification.ShowPersistent(
+            Notification.ShowTransient(
                 string.Format(
                     _localization.GetString(AvaloniaStringKeys.PasswordMinimumLength),
                     _passwordValidation.MinimumLength),

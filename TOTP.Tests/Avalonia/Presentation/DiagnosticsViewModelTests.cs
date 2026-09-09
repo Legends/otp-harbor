@@ -61,7 +61,7 @@ public sealed class DiagnosticsViewModelTests
         Assert.DoesNotContain("person", sut.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        Assert.False(string.IsNullOrWhiteSpace(sut.Message));
+        Assert.Empty(sut.Message);
         dialogs.Verify(value => value.ShowMessageAsync(
             It.Is<MessageDialogRequest>(request => request.Severity == NotificationSeverity.Error),
             It.IsAny<CancellationToken>()), Times.Once);

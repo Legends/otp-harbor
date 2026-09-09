@@ -59,14 +59,34 @@ public sealed class NotificationStateTests
     }
 
     [Fact]
-    public async Task ShowForSeverity_ErrorRemainsVisible()
+    public async Task ShowForSeverity_ErrorClearsAfterConfiguredDuration()
     {
         using var sut = new NotificationState(TimeSpan.FromMilliseconds(20));
 
         sut.ShowForSeverity("Recoverable error", NotificationSeverity.Error);
         await Task.Delay(100, TestContext.Current.CancellationToken);
 
-        Assert.Equal("Recoverable error", sut.Text);
-        Assert.Equal(NotificationSeverity.Error, sut.Severity);
+        Assert.Empty(sut.Text);
+        Assert.False(sut.HasMessage);
+    }
+
+    [Fact]
+    public void Shown_IsRaisedForRepeatedMessagesSoWindowOverlaysCanRestartTheirLifetime()
+    {
+        using var sut = new NotificationState();
+        var shown = new List<NotificationShownEventArgs>();
+        sut.Shown += (_, args) => shown.Add(args);
+
+        sut.ShowPersistent("Retry failed", NotificationSeverity.Error);
+        sut.ShowPersistent("Retry failed", NotificationSeverity.Error);
+
+        Assert.Collection(
+            shown,
+            first => Assert.Equal(
+                new NotificationShownEventArgs("Retry failed", NotificationSeverity.Error),
+                first),
+            second => Assert.Equal(
+                new NotificationShownEventArgs("Retry failed", NotificationSeverity.Error),
+                second));
     }
 }

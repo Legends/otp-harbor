@@ -477,6 +477,50 @@ public sealed class MainWindowViewModelTests
         Assert.True(sut.LockCommand.CanExecute(null));
     }
 
+    [Theory]
+    [InlineData("security-authorization")]
+    [InlineData("security-and-miscellaneous-settings")]
+    [InlineData("import-export")]
+    [InlineData("about-log-folder")]
+    [InlineData("about-updates")]
+    [InlineData("about-diagnostics")]
+    public void SettingsNotifications_FromEveryTabUseTheWindowOverlay(string sourceName)
+    {
+        using var sut = CreateSut(Mock.Of<IAvaloniaStartupCoordinator>());
+        var source = sourceName switch
+        {
+            "security-authorization" => sut.AuthorizationSettings.Notification,
+            "security-and-miscellaneous-settings" => sut.SettingsPage.SettingsNotification,
+            "import-export" => sut.NativeFilePicker.Notification,
+            "about-log-folder" => sut.SettingsPage.LogFolderNotification,
+            "about-updates" => sut.UpdateCheck.Notification,
+            "about-diagnostics" => sut.Diagnostics.Notification,
+            _ => throw new ArgumentOutOfRangeException(nameof(sourceName))
+        };
+
+        source.ShowPersistent("Synthetic settings notice", NotificationSeverity.Error);
+
+        Assert.Equal("Synthetic settings notice", sut.SettingsNotification.Text);
+        Assert.Equal(NotificationSeverity.Error, sut.SettingsNotification.Severity);
+    }
+
+    [Fact]
+    public async Task SettingsWindowOverlay_AlwaysDismissesRecoverableErrors()
+    {
+        using var sut = CreateSut(
+            Mock.Of<IAvaloniaStartupCoordinator>(),
+            Mock.Of<IAuthorizationService>(),
+            settingsNotificationDuration: TimeSpan.FromMilliseconds(20));
+
+        sut.Diagnostics.Notification.ShowPersistent(
+            "Synthetic recoverable error",
+            NotificationSeverity.Error);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+
+        Assert.Empty(sut.SettingsNotification.Text);
+        Assert.False(sut.SettingsNotification.HasMessage);
+    }
+
     [Fact]
     public async Task ToolbarSearch_TogglesClearsAndReturnsToAccounts()
     {
@@ -577,7 +621,8 @@ public sealed class MainWindowViewModelTests
         NativeFilePickerViewModel? nativeFilePicker = null,
         IAvaloniaLocalizationService? localization = null,
         IdleMonitoringBackgroundService? idleLockPolicy = null,
-        UpdateCheckViewModel? updateCheck = null) =>
+        UpdateCheckViewModel? updateCheck = null,
+        TimeSpan? settingsNotificationDuration = null) =>
         new(
             coordinator,
             authorization,
@@ -599,7 +644,8 @@ public sealed class MainWindowViewModelTests
             CreateDiagnostics(),
             localization ?? CreateLocalization(),
             scannerDialogs ?? Mock.Of<IAvaloniaCameraScannerDialogService>(),
-            idleLockPolicy: idleLockPolicy);
+            idleLockPolicy: idleLockPolicy,
+            settingsNotificationDuration: settingsNotificationDuration);
 
     private sealed class TestStorageFile(string name) : INativeStorageFile
     {

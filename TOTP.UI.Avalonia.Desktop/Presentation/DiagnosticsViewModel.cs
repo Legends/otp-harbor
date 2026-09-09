@@ -102,7 +102,7 @@ public sealed class DiagnosticsViewModel : INotifyPropertyChanged
         catch (Exception)
         {
             SupportInformation = string.Empty;
-            Notification.ShowPersistent(
+            Notification.ShowTransient(
                 _localization.GetString(AvaloniaStringKeys.DiagnosticRefreshFailed),
                 NotificationSeverity.Error);
             if (_dialogs is not null)

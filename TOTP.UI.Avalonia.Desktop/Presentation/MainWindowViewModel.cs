@@ -38,6 +38,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _quickUnlockCommand;
     private readonly AsyncCommand _usePasswordFallbackCommand;
     private readonly CancellationTokenSource _lifetime = new();
+    private readonly IReadOnlyList<NotificationState> _settingsNotificationSources;
     private bool _isBusy;
     private bool _canRetry;
     private bool _isPasswordUnlockVisible;
@@ -72,12 +73,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         ISettingsService? settingsService = null,
         SessionLockPolicyBackgroundService? sessionLockPolicy = null,
         IUiScheduler? uiScheduler = null,
-        IdleMonitoringBackgroundService? idleLockPolicy = null)
+        IdleMonitoringBackgroundService? idleLockPolicy = null,
+        TimeSpan? settingsNotificationDuration = null)
     {
         _startupCoordinator = startupCoordinator ?? throw new ArgumentNullException(nameof(startupCoordinator));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         Notification = new NotificationState();
+        SettingsNotification = new NotificationState(settingsNotificationDuration);
         Notification.ShowPersistent(
             _localization.GetString(AvaloniaStringKeys.StartingSafely),
             NotificationSeverity.Information);
@@ -91,6 +94,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         CameraScanner = cameraScanner ?? throw new ArgumentNullException(nameof(cameraScanner));
         UpdateCheck = updateCheck ?? throw new ArgumentNullException(nameof(updateCheck));
         Diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+        _settingsNotificationSources =
+        [
+            SettingsPage.SettingsNotification,
+            SettingsPage.LogFolderNotification,
+            AuthorizationSettings.Notification,
+            NativeFilePicker.Notification,
+            UpdateCheck.Notification,
+            Diagnostics.Notification
+        ];
+        foreach (var source in _settingsNotificationSources.Distinct())
+            source.Shown += SettingsNotificationShown;
         _cameraScannerDialogs = cameraScannerDialogs
             ?? throw new ArgumentNullException(nameof(cameraScannerDialogs));
         _settingsService = settingsService;
@@ -151,6 +165,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public NotificationState Notification { get; }
+
+    public NotificationState SettingsNotification { get; }
 
     public string StatusText
     {
@@ -389,6 +405,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         CameraScanner.AccountImported -= OnAccountImported;
         NativeFilePicker.AccountsChanged -= OnAccountsChanged;
         SettingsPage.SettingsSaved -= OnSettingsSaved;
+        foreach (var source in _settingsNotificationSources.Distinct())
+            source.Shown -= SettingsNotificationShown;
         if (_sessionLockPolicy is not null)
             _sessionLockPolicy.ApplicationLocked -= OnAutomaticLock;
         if (_idleLockPolicy is not null)
@@ -396,6 +414,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _lifetime.Cancel();
         _lifetime.Dispose();
         Notification.Dispose();
+        SettingsNotification.Dispose();
         NativeFilePicker.Dispose();
         CameraScanner.Dispose();
         UpdateCheck.Dispose();
@@ -589,6 +608,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public async Task ShowSettingsAsync()
     {
         if (!IsShellVisible || IsSettingsVisible) return;
+        SettingsNotification.Clear();
         IsSettingsVisible = true;
         SettingsPage.Reload();
         await AuthorizationSettings.RefreshAsync();
@@ -603,8 +623,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             await AccountList.LoadAsync();
             _accountsChangedWhileSettingsOpen = false;
         }
+        SettingsNotification.Clear();
         IsSettingsVisible = false;
     }
+
+    private void SettingsNotificationShown(object? sender, NotificationShownEventArgs args) =>
+        SettingsNotification.ShowTransient(args.Text, args.Severity);
 
     public Task ToggleSearchAsync()
     {

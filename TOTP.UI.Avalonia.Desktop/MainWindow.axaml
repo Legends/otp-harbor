@@ -399,9 +399,9 @@
                                     <shared:NotificationBanner
                                         x:Name="AccountMessageToast"
                                         ZIndex="10"
-                                        Margin="10,8"
+                                        Margin="20"
                                         HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Top"
+                                        VerticalAlignment="Bottom"
                                         IsHitTestVisible="False"
                                         Severity="{Binding Notification.Severity}"
                                         Text="{Binding Notification.Text}" />

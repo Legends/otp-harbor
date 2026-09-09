@@ -257,8 +257,11 @@ public sealed class MainWindowSmokeTests
             menu.Open(host);
             window.UpdateLayout();
 
-            Assert.Equal(190, menu.MinWidth);
+            Assert.Equal(0, menu.MinWidth);
+            Assert.True(double.IsNaN(menu.Width));
             Assert.Equal(new Thickness(6), menu.Padding);
+            Assert.Equal(12, menu.FontSize);
+            Assert.Equal(12, edit.FontSize);
             Assert.Equal(new CornerRadius(6), menu.CornerRadius);
             Assert.Equal(new Thickness(1), menu.BorderThickness);
             Assert.Equal(34, edit.MinHeight);
@@ -588,13 +591,13 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void AccountNotificationBanner_UsesSharedNonInteractiveOverlay()
+    public void WindowNotificationBanner_UsesSharedBottomNonInteractiveOverlay()
     {
         var notification = new NotificationBanner
         {
             Width = 240,
             HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center,
-            VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Top,
+            VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Bottom,
             IsHitTestVisible = false,
             Severity = NotificationSeverity.Success,
             Text = "Synthetic account saved"
@@ -611,6 +614,7 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(300, content.Bounds.Height);
             Assert.True(notification.IsVisible);
             Assert.False(notification.IsHitTestVisible);
+            Assert.Equal(VerticalAlignment.Bottom, notification.VerticalAlignment);
         }
         finally
         {
@@ -1031,10 +1035,9 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void MiscellaneousSettingsNotice_IsOutsideScrollableContent()
+    public void SettingsTabs_UseOneBottomOverlayOutsideTabContent()
     {
         var window = new SettingsWindow();
-        using var settingsPage = new SettingsPageViewModel(new TestSettingsService());
 
         try
         {
@@ -1042,28 +1045,23 @@ public sealed class MainWindowSmokeTests
             var settingsTabs = Assert.Single(
                 window.GetVisualDescendants().OfType<TabControl>(),
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
-            var miscellaneousTab = settingsTabs
-                .GetVisualDescendants()
-                .OfType<TabItem>()
-                .ElementAt(2);
-            Assert.IsType<ContentControl>(miscellaneousTab.Content).Content = settingsPage;
-            settingsTabs.SelectedIndex = 2;
-            window.UpdateLayout();
+            NotificationBanner? overlay = null;
+            for (var tabIndex = 0; tabIndex < 4; tabIndex++)
+            {
+                settingsTabs.SelectedIndex = tabIndex;
+                window.UpdateLayout();
 
-            var scrollViewer = Assert.Single(
-                window.GetVisualDescendants().OfType<ScrollViewer>(),
-                control => control.Name == "MiscellaneousSettingsScroll");
-            var settingsPanel = Assert.Single(
-                window.GetVisualDescendants().OfType<Border>(),
-                control => control.Name == "MiscellaneousSettingsPanel");
-            var notice = Assert.Single(
-                window.GetVisualDescendants().OfType<NotificationBanner>(),
-                control => control.Name == "MiscellaneousSettingsNotice");
-
-            Assert.Equal(VerticalAlignment.Top, settingsPanel.VerticalAlignment);
-            Assert.True(settingsPanel.Bounds.Height < scrollViewer.Bounds.Height);
-            Assert.Same(scrollViewer.GetVisualParent(), notice.GetVisualParent());
-            Assert.DoesNotContain(notice, scrollViewer.GetVisualDescendants());
+                var currentOverlay = Assert.Single(
+                    window.GetVisualDescendants().OfType<NotificationBanner>(),
+                    control => control.Name == "SettingsNotificationToast");
+                overlay ??= currentOverlay;
+                Assert.Same(overlay, currentOverlay);
+                Assert.Equal(VerticalAlignment.Bottom, currentOverlay.VerticalAlignment);
+                Assert.False(currentOverlay.IsHitTestVisible);
+                Assert.DoesNotContain(
+                    currentOverlay,
+                    settingsTabs.GetVisualDescendants());
+            }
         }
         finally
         {
@@ -1097,13 +1095,7 @@ public sealed class MainWindowSmokeTests
             var behaviorSettings = Assert.Single(
                 window.GetVisualDescendants().OfType<Border>(),
                 control => control.Name == "SecurityBehaviorSettings");
-            var notice = Assert.Single(
-                window.GetVisualDescendants().OfType<NotificationBanner>(),
-                control => control.Name == "SecuritySettingsNotice");
-
             Assert.Contains(behaviorSettings, scrollViewer.GetVisualDescendants());
-            Assert.Same(scrollViewer.GetVisualParent(), notice.GetVisualParent());
-            Assert.DoesNotContain(notice, scrollViewer.GetVisualDescendants());
         }
         finally
         {
