@@ -33,6 +33,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TOTP.Tests.Avalonia.Headles
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{C344A2F9-12E4-457E-B500-F20D53441119}"
 	ProjectSection(SolutionItems) = preProject
+		AGENTS.md = AGENTS.md
 		readme.md = readme.md
 	EndProjectSection
 EndProject
