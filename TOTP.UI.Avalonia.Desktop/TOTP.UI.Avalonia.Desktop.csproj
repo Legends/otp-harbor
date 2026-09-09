@@ -75,6 +75,33 @@
     <ProjectReference Include="..\TOTP.Platform.Unix\TOTP.Platform.Unix.csproj" />
   </ItemGroup>
 
+  <Target Name="DeriveLocalVersionFromLatestReleaseTag"
+          BeforeTargets="GetAssemblyVersion;AddSourceRevisionToInformationalVersion;GenerateAssemblyInfo"
+          Condition="'$(Version)' == '1.0.0' AND Exists('$(MSBuildProjectDirectory)\..\.git')">
+    <Exec Command="git describe --tags --abbrev=0 --match &quot;v[0-9]*&quot;"
+          WorkingDirectory="$(MSBuildProjectDirectory)\.."
+          ConsoleToMSBuild="true"
+          IgnoreExitCode="true"
+          StandardOutputImportance="Low"
+          StandardErrorImportance="Low">
+      <Output TaskParameter="ConsoleOutput" ItemName="_LocalVersionTagOutput" />
+    </Exec>
+    <PropertyGroup>
+      <_LocalVersionTag>@(_LocalVersionTagOutput->'%(Identity)')</_LocalVersionTag>
+      <_HasLocalVersionTag>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_LocalVersionTag)', '^v\d+\.\d+\.\d+(?:-rc\d+)?$'))</_HasLocalVersionTag>
+      <_LocalProductVersion Condition="'$(_HasLocalVersionTag)' == 'True'">$([System.Text.RegularExpressions.Regex]::Replace('$(_LocalVersionTag)', '^v', ''))</_LocalProductVersion>
+      <_LocalNumericVersion Condition="'$(_HasLocalVersionTag)' == 'True'">$([System.Text.RegularExpressions.Regex]::Match('$(_LocalProductVersion)', '^\d+\.\d+\.\d+').Value).0</_LocalNumericVersion>
+      <_LocalFileRevision Condition="'$(_HasLocalVersionTag)' == 'True' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(_LocalProductVersion)', '-rc\d+$'))">$([System.Text.RegularExpressions.Regex]::Match('$(_LocalProductVersion)', '-rc(?&lt;revision&gt;\d+)$').Groups['revision'].Value)</_LocalFileRevision>
+      <_LocalFileRevision Condition="'$(_HasLocalVersionTag)' == 'True' AND '$(_LocalFileRevision)' == ''">65535</_LocalFileRevision>
+      <_LocalFileVersion Condition="'$(_HasLocalVersionTag)' == 'True'">$([System.Text.RegularExpressions.Regex]::Match('$(_LocalProductVersion)', '^\d+\.\d+\.\d+').Value).$(_LocalFileRevision)</_LocalFileVersion>
+      <Version Condition="'$(_HasLocalVersionTag)' == 'True'">$(_LocalProductVersion)</Version>
+      <AssemblyVersion Condition="'$(_HasLocalVersionTag)' == 'True'">$(_LocalNumericVersion)</AssemblyVersion>
+      <FileVersion Condition="'$(_HasLocalVersionTag)' == 'True'">$(_LocalFileVersion)</FileVersion>
+      <InformationalVersion Condition="'$(_HasLocalVersionTag)' == 'True'">$(_LocalProductVersion)+local</InformationalVersion>
+      <IncludeSourceRevisionInInformationalVersion Condition="'$(_HasLocalVersionTag)' == 'True'">false</IncludeSourceRevisionInInformationalVersion>
+    </PropertyGroup>
+  </Target>
+
   <Target Name="CopyWindowsUpdaterBundleToOutput"
           AfterTargets="Build"
           Condition="$([MSBuild]::IsOSPlatform('Windows'))">

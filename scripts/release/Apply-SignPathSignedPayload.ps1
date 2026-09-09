@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Applies a SignPath result to prepared Windows release directories.
+
+.DESCRIPTION
+Copies signed files into the named targets and then fails closed unless every first-party PE file has a valid Authenticode signature and the expected OTP Harbor product/version metadata.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$SignedRoot,

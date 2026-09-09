@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Builds and installs the OTP Harbor Android development APK on a connected device.
+
+.DESCRIPTION
+Locates adb, optionally builds the signed Debug APK, requires exactly one usable Android device, installs the package with replacement enabled, and launches its main activity for device testing.
+#>
 [CmdletBinding()]
 param(
     [switch]$SkipBuild

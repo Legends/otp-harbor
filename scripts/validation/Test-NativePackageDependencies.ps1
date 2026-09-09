@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates native runtime contents for a platform package.
+
+.DESCRIPTION
+Requires the correct app host and OpenCV native library, rejects foreign-platform binaries, and on Unix verifies dynamic-library resolution so missing native dependencies fail the release.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$PackageDirectory,

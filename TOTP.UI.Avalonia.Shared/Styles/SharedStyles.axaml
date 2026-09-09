@@ -121,6 +121,8 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
+            <SolidColorBrush x:Key="BrushProgressIndicator" Color="#0078D4" />
+
             <x:Double x:Key="Space1">4</x:Double>
             <x:Double x:Key="Space2">8</x:Double>
             <x:Double x:Key="Space3">12</x:Double>
@@ -438,6 +440,9 @@
         <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+    </Style>
+    <Style Selector="ProgressBar">
+        <Setter Property="Foreground" Value="{StaticResource BrushProgressIndicator}" />
     </Style>
     <Style Selector="Button:focus-visible">
         <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />

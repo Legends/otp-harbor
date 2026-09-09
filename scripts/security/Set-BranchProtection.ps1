@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Applies the reviewed GitHub branch-protection policy.
+
+.DESCRIPTION
+Obtains a GitHub token from the parameter, SecretStore, or the current user's DPAPI-protected fallback and updates the selected remote branch to require the repository's review and status-check rules.
+#>
 param(
     [Parameter(Mandatory = $false)]
     [string]$Owner = "Legends",

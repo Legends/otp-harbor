@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Builds the custom WiX Windows MSI installer for OTP Harbor.
+
+.DESCRIPTION
+Validates the published Windows payload and installer resources, stages package-manager update policy, generates the WiX source with desktop and Start-menu integration plus optional post-install launch, builds the MSI, and runs MSI validation.
+#>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]

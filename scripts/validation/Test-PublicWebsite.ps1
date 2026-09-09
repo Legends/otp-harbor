@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates the public website, SEO metadata, and deployment assets.
+
+.DESCRIPTION
+Checks the canonical page, verification tags, structured data, social metadata, release messaging, robots and sitemap files, required screenshots/icons, and social-preview size so incomplete website changes fail CI.
+#>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 

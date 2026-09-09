@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Measures the M3 desktop performance and package-size targets.
+
+.DESCRIPTION
+Runs repeated technical startup probes against a packaged executable, calculates percentile startup and working-set measurements, exercises account filtering workloads, measures package/native bytes, and writes the resulting JSON report.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$PackageDirectory,

@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Regression-tests the source launcher update and build decision rules.
+
+.DESCRIPTION
+Dot-sources Start-OTP-Harbor.ps1 without executing it, verifies plans for current, behind, ahead, diverged, dirty, and stale-build states, and checks that required safe Git/update guards remain present.
+#>
 [CmdletBinding()]
 param()
 

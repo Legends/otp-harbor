@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Updates, builds, and runs the latest safe OTP Harbor source checkout.
+
+.DESCRIPTION
+Clones the official repository when needed or fetches the configured branch, refuses dirty, ahead, or diverged states, fast-forwards only when safe, rebuilds when sources are newer than the local output, and starts the desktop app. When dot-sourced, it exposes its planning helpers without launching.
+#>
 [CmdletBinding()]
 param(
     [ValidateSet('Debug', 'Release')]

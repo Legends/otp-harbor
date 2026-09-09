@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Removes GitHub branch protection from a selected repository branch.
+
+.DESCRIPTION
+Obtains a GitHub token from the parameter, SecretStore, or the current user's DPAPI-protected fallback and calls the GitHub API to delete branch protection. This intentionally changes remote repository security settings.
+#>
 param(
     [Parameter(Mandatory = $false)]
     [string]$Owner = "Legends",

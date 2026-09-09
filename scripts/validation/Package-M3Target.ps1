@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Stages a platform-specific package for M3 performance measurement.
+
+.DESCRIPTION
+Copies an existing publish into an empty measurement directory, creating a minimal macOS .app layout when required, and preserves the native payload shape used by the automated M3 measurements.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$PublishDirectory,

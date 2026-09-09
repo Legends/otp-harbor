@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates a generated Avalonia appcast against its release manifest.
+
+.DESCRIPTION
+Checks item count, HTTPS artifact URLs, Ed25519 signatures, platform and architecture metadata, channel/version encoding, byte sizes, and correspondence with every directly distributed artifact.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$AppcastPath,

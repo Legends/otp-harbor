@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Publishes and starts a local Windows Avalonia build of OTP Harbor.
+
+.DESCRIPTION
+Publishes the desktop project for the selected Windows runtime into artifacts/dev by default, optionally stops an existing instance, validates the produced executable, and launches it from the publish directory.
+#>
 [CmdletBinding()]
 param(
     [ValidateSet("Debug", "Release")]

@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Sets the auto-update policy embedded in a packaged OTP Harbor application.
+
+.DESCRIPTION
+Validates appsettings update configuration and optional HTTPS appcast URL, then records distribution mode and channel. Direct packages may enable signed appcast updates; Store and package-manager builds keep in-app updates disabled.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$PackageDirectory,

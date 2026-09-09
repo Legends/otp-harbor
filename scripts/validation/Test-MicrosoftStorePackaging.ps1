@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates Microsoft Store packaging files and workflow integration.
+
+.DESCRIPTION
+Statically checks the Store manifest template, packager, workflows, version mapping, documentation, and listing for required identity placeholders, capabilities, languages, update policy, and release automation controls.
+#>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 

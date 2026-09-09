@@ -3,6 +3,9 @@
 Synchronizes the Windows working tree into an Ubuntu VM-local directory, restores it,
 and starts the Avalonia desktop application in the VM's active desktop session.
 
+.DESCRIPTION
+Packages the current working tree without build outputs or Git metadata, transfers it by SSH, synchronizes a guarded VM-local source directory, restores the desktop project, imports the active GNOME/Xwayland or XFCE session environment, and runs a locally versioned Release or Debug build. A configured identity file makes transfer and execution non-interactive.
+
 .EXAMPLE
 .\scripts\testing\Sync-Restore-Run-AvaloniaLinuxVm.ps1
 
@@ -11,13 +14,17 @@ and starts the Avalonia desktop application in the VM's active desktop session.
 
 .EXAMPLE
 .\scripts\testing\Sync-Restore-Run-AvaloniaLinuxVm.ps1 -MountedRepository /mnt/otp-harbor
+
+.EXAMPLE
+.\scripts\testing\Sync-Restore-Run-AvaloniaLinuxVm.ps1 -SshIdentityFile $env:USERPROFILE\.ssh\id_ed25519
 #>
 [CmdletBinding()]
 param(
-    [string]$VmHost,
+    [string]$VmHost = "192.168.250.10",
     [string]$VmName = "Ubuntu 26.04",
     [string]$VmUser = "bushido",
     [string]$PreferredNetworkAdapter = "Stable RDP",
+    [string]$SshIdentityFile,
     [string]$LocalRepository,
     [string]$MountedRepository,
     [string]$VmRepository = "~/source/otp-harbor",
@@ -31,6 +38,29 @@ Set-StrictMode -Version Latest
 if (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
     throw "OpenSSH client (ssh.exe) is required on the Windows host."
 }
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    throw "Git is required to derive the local VM build version from the latest release tag."
+}
+
+if ([string]::IsNullOrWhiteSpace($SshIdentityFile)) {
+    $defaultIdentityFile = Join-Path (
+        [Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)) ".ssh\legends"
+    if (Test-Path -LiteralPath $defaultIdentityFile -PathType Leaf) {
+        $SshIdentityFile = $defaultIdentityFile
+    }
+}
+elseif (-not (Test-Path -LiteralPath $SshIdentityFile -PathType Leaf)) {
+    throw "The SSH identity file '$SshIdentityFile' was not found."
+}
+
+$sshConnectionOptions = @("-o", "ConnectTimeout=10")
+if (-not [string]::IsNullOrWhiteSpace($SshIdentityFile)) {
+    $SshIdentityFile = (Resolve-Path -LiteralPath $SshIdentityFile).Path
+    $sshConnectionOptions += @(
+        "-i", $SshIdentityFile,
+        "-o", "IdentitiesOnly=yes",
+        "-o", "BatchMode=yes")
+}
 
 if (-not [string]::IsNullOrWhiteSpace($MountedRepository) -and
     -not [string]::IsNullOrWhiteSpace($LocalRepository)) {
@@ -40,11 +70,11 @@ if (-not [string]::IsNullOrWhiteSpace($MountedRepository) -and
 $usesMountedRepository = -not [string]::IsNullOrWhiteSpace($MountedRepository)
 $localArchive = $null
 $remoteArchive = $null
+$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
 
 if (-not $usesMountedRepository) {
     if ([string]::IsNullOrWhiteSpace($LocalRepository)) {
-        $LocalRepository = [IO.Path]::GetFullPath(
-            (Join-Path $PSScriptRoot "..\.."))
+        $LocalRepository = $repositoryRoot
     }
     else {
         $LocalRepository = (Resolve-Path -LiteralPath $LocalRepository).Path
@@ -62,6 +92,13 @@ if (-not $usesMountedRepository) {
         throw "A tar executable is required on the Windows host."
     }
 }
+
+$versionTag = & git -C $repositoryRoot describe --tags --abbrev=0 --match "v[0-9]*" 2>$null
+if ($LASTEXITCODE -ne 0 -or $versionTag -notmatch '^v(?<version>\d+\.\d+\.\d+(?:-rc\d+)?)$') {
+    throw "A semantic release tag is required to version the VM test build."
+}
+$productVersion = $Matches.version
+$informationalVersion = "$productVersion+local"
 
 if ([string]::IsNullOrWhiteSpace($VmHost)) {
     if (-not (Get-Command Get-VMNetworkAdapter -ErrorAction SilentlyContinue)) {
@@ -120,6 +157,8 @@ source_root="$(printf '%s' "$1" | base64 --decode)"
 source_mode="$(printf '%s' "$2" | base64 --decode)"
 target_input="$(printf '%s' "$3" | base64 --decode)"
 configuration="$(printf '%s' "$4" | base64 --decode)"
+product_version="$(printf '%s' "$5" | base64 --decode)"
+informational_version="$(printf '%s' "$6" | base64 --decode)"
 
 case "$target_input" in
     "~") target_root="$HOME" ;;
@@ -206,10 +245,13 @@ dotnet restore \
     --configfile NuGet.config
 
 user_id="$(id -u)"
-desktop_session_pid="$(pgrep -u "$user_id" -o xfce4-session || true)"
-if [[ -z "$desktop_session_pid" ]]; then
-    desktop_session_pid="$(pgrep -u "$user_id" -o xfce4-panel || true)"
-fi
+desktop_session_pid=''
+for desktop_process in Xwayland gnome-shell xfce4-session xfce4-panel; do
+    desktop_session_pid="$(pgrep -u "$user_id" -o -x "$desktop_process" || true)"
+    if [[ -n "$desktop_session_pid" ]]; then
+        break
+    fi
+done
 if [[ -n "$desktop_session_pid" && -r "/proc/$desktop_session_pid/environ" ]]; then
     while IFS= read -r -d '' session_entry; do
         case "$session_entry" in
@@ -231,12 +273,29 @@ if [[ -z "${XAUTHORITY:-}" && -f "$HOME/.Xauthority" ]]; then
     export XAUTHORITY="$HOME/.Xauthority"
 fi
 
+if [[ -z "${XAUTHORITY:-}" || ! -r "$XAUTHORITY" ]]; then
+    xwayland_authority="$(
+        find "$XDG_RUNTIME_DIR" -maxdepth 1 -type f \
+            -name '.mutter-Xwaylandauth.*' -user "$user_id" \
+            -printf '%T@ %p\n' 2>/dev/null |
+            sort -nr |
+            head -n 1 |
+            cut -d ' ' -f 2-
+    )"
+    if [[ -n "$xwayland_authority" ]]; then
+        export XAUTHORITY="$xwayland_authority"
+    fi
+fi
+
 printf 'Starting OTP Harbor (%s) on display %s...\n' "$configuration" "$DISPLAY"
 set +e
 dotnet run \
     --project TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj \
     --configuration "$configuration" \
-    --no-restore
+    --no-restore \
+    -p:Version="$product_version" \
+    -p:InformationalVersion="$informational_version" \
+    -p:IncludeSourceRevisionInInformationalVersion=false
 app_exit_code=$?
 set -e
 
@@ -260,6 +319,10 @@ $encodedVmRepository = [Convert]::ToBase64String(
     [Text.Encoding]::UTF8.GetBytes($VmRepository))
 $encodedConfiguration = [Convert]::ToBase64String(
     [Text.Encoding]::UTF8.GetBytes($Configuration))
+$encodedProductVersion = [Convert]::ToBase64String(
+    [Text.Encoding]::UTF8.GetBytes($productVersion))
+$encodedInformationalVersion = [Convert]::ToBase64String(
+    [Text.Encoding]::UTF8.GetBytes($informationalVersion))
 $remoteCommand = "printf '%s' '$encodedScript' | base64 --decode | bash -s --"
 $destination = "${VmUser}@${VmHost}"
 
@@ -293,7 +356,7 @@ try {
         }
 
         Write-Host "Uploading the working tree to $destination..."
-        & scp -o ConnectTimeout=10 $localArchive "${destination}:$remoteArchive"
+        & scp @sshConnectionOptions $localArchive "${destination}:$remoteArchive"
         if ($LASTEXITCODE -ne 0) {
             throw "Uploading the repository synchronization archive failed with exit code $LASTEXITCODE."
         }
@@ -306,8 +369,9 @@ try {
         [Text.Encoding]::UTF8.GetBytes($sourceMode))
 
     Write-Host "Connecting to $destination..."
-    & ssh -t -o ConnectTimeout=10 $destination $remoteCommand `
-        $encodedSourceInput $encodedSourceMode $encodedVmRepository $encodedConfiguration
+    & ssh @sshConnectionOptions -t $destination $remoteCommand `
+        $encodedSourceInput $encodedSourceMode $encodedVmRepository $encodedConfiguration `
+        $encodedProductVersion $encodedInformationalVersion
     if ($LASTEXITCODE -ne 0) {
         if ($LASTEXITCODE -eq 255) {
             throw "SSH could not connect to $destination. In the VM, install and start OpenSSH with: sudo apt install openssh-server rsync && sudo systemctl enable --now ssh"

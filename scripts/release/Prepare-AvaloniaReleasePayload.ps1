@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Sanitizes an Avalonia publish directory before release packaging.
+
+.DESCRIPTION
+Verifies the application host and settings file, rejects stale updater publish subtrees, safely removes debug-symbol files contained by the publish root, and confirms no PDB files remain.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$PublishDirectory

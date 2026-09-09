@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Builds an unsigned Microsoft Store submission MSIX for OTP Harbor.
+
+.DESCRIPTION
+Publishes the Windows application, renders the reviewed Appx manifest and visual assets with Partner Center identity data, disables direct-app updating for Store distribution, validates package boundaries, and creates the MSIX below artifacts.
+#>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]

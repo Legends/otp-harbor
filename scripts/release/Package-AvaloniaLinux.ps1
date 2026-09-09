@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Packages an Avalonia Linux publish as OTP Harbor release artifacts.
+
+.DESCRIPTION
+Validates the Linux publish and release version, applies the requested update policy, creates launcher and desktop-integration metadata, and produces the portable tarball and Debian package variants in an empty output directory.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$PublishDirectory,

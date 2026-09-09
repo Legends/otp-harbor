@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Generates the additional desktop language-flag PNG assets.
+
+.DESCRIPTION
+Draws the reviewed French, German, and Spanish flag bitmaps with System.Drawing and writes them only to the desktop flag asset directory. Refuses output paths outside that directory.
+#>
 [CmdletBinding()]
 param(
     [string]$OutputDirectory = 'TOTP.UI.Avalonia.Desktop/Assets/flags'
