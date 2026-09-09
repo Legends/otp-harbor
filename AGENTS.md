@@ -44,6 +44,8 @@ Expected posture:
 
 This is a native Avalonia desktop app, not a web wrapper. UX should feel stable, native, responsive, and respectful of user attention on Windows, macOS, and Linux.
 
+All platform-specific applications must present one coherent OTP Harbor design. Keep semantic colors, typography, spacing, iconography, control states, and interaction feedback consistent across Windows, macOS, Linux, and Android. Introduce a platform-specific visual difference only when an established platform convention or technical constraint makes the shared design inappropriate; document the reason and add cross-platform regression coverage where practical.
+
 Priorities:
 
 - fast startup

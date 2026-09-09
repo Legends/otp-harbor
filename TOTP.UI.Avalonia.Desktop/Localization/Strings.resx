@@ -294,6 +294,7 @@
   <data name="DiagnosticUnavailableTitle" xml:space="preserve"><value>Support diagnostics unavailable</value></data>
   <data name="DiagnosticUnavailableMessage" xml:space="preserve"><value>Support information could not be collected. You can close this message and continue using the application.</value></data>
   <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Minimize" xml:space="preserve"><value>Minimize</value></data>
   <data name="CapabilitySessionLock" xml:space="preserve"><value>Session lock detection</value></data>
   <data name="CapabilityClipboardWrite" xml:space="preserve"><value>Clipboard write</value></data>
   <data name="CapabilityConditionalClipboardClear" xml:space="preserve"><value>Conditional clipboard clear</value></data>

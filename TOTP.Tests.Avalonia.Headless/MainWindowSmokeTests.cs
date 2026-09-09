@@ -694,8 +694,11 @@ public sealed class MainWindowSmokeTests
 
             Assert.Equal(2, window.GetVisualDescendants().OfType<Image>().Count());
             Assert.Single(window.GetVisualDescendants().OfType<ProgressBar>());
-            Assert.Equal(4, window.GetVisualDescendants().OfType<Button>().Count());
-            Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
+            Assert.Equal(
+                4,
+                window.GetVisualDescendants().OfType<Button>().Count(button => button.IsVisible));
+            var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
+            Assert.False(titleBar.ShowMinimizeButton);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             Assert.Equal(560, window.Width);
             Assert.Equal(420, window.Height);
@@ -854,6 +857,32 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void ProductTitleBar_MinimizeButtonMinimizesOwningWindow()
+    {
+        var titleBar = new ProductTitleBar { ShowMinimizeButton = true };
+        var window = new Window { Content = titleBar };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var minimizeButton = Assert.Single(
+                titleBar.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("titlebar-minimize"));
+
+            Assert.True(minimizeButton.IsVisible);
+            minimizeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(WindowState.Minimized, window.WindowState);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void QrPreviewDialog_EscapeClosesWindow()
     {
         var window = new QrPreviewDialogWindow();
@@ -881,6 +910,7 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
             Assert.Equal(window.Title, titleBar.Title);
+            Assert.True(titleBar.ShowMinimizeButton);
             Assert.Single(window.GetVisualDescendants().OfType<BusyOverlay>());
             Assert.True(window.GetVisualDescendants().OfType<Button>().Count() >= 5);
             Assert.True(window.GetVisualDescendants().OfType<Border>().Count() >= 5);

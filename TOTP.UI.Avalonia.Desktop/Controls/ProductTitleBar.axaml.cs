@@ -13,6 +13,9 @@ public partial class ProductTitleBar : UserControl
     public static readonly StyledProperty<bool> ShowIconProperty =
         AvaloniaProperty.Register<ProductTitleBar, bool>(nameof(ShowIcon), true);
 
+    public static readonly StyledProperty<bool> ShowMinimizeButtonProperty =
+        AvaloniaProperty.Register<ProductTitleBar, bool>(nameof(ShowMinimizeButton));
+
     public static readonly StyledProperty<Thickness> TitlePaddingProperty =
         AvaloniaProperty.Register<ProductTitleBar, Thickness>(nameof(TitlePadding));
 
@@ -31,6 +34,12 @@ public partial class ProductTitleBar : UserControl
     {
         get => GetValue(ShowIconProperty);
         set => SetValue(ShowIconProperty, value);
+    }
+
+    public bool ShowMinimizeButton
+    {
+        get => GetValue(ShowMinimizeButtonProperty);
+        set => SetValue(ShowMinimizeButtonProperty, value);
     }
 
     public Thickness TitlePadding
@@ -64,5 +73,11 @@ public partial class ProductTitleBar : UserControl
     {
         if (TopLevel.GetTopLevel(this) is Window window)
             window.Close();
+    }
+
+    private void MinimizeWindow(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is Window window)
+            window.WindowState = WindowState.Minimized;
     }
 }

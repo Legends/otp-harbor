@@ -294,6 +294,7 @@
   <data name="DiagnosticUnavailableTitle" xml:space="preserve"><value>Supportdiagnose nicht verfügbar</value></data>
   <data name="DiagnosticUnavailableMessage" xml:space="preserve"><value>Supportinformationen konnten nicht erfasst werden. Sie können diese Meldung schließen und die Anwendung weiter verwenden.</value></data>
   <data name="Close" xml:space="preserve"><value>Schließen</value></data>
+  <data name="Minimize" xml:space="preserve"><value>Minimieren</value></data>
   <data name="CapabilitySessionLock" xml:space="preserve"><value>Sitzungssperre erkennen</value></data>
   <data name="CapabilityClipboardWrite" xml:space="preserve"><value>In Zwischenablage schreiben</value></data>
   <data name="CapabilityConditionalClipboardClear" xml:space="preserve"><value>Zwischenablage bedingt löschen</value></data>

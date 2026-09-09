@@ -294,6 +294,7 @@
   <data name="DiagnosticUnavailableTitle" xml:space="preserve"><value>Diagnostics d’assistance indisponibles</value></data>
   <data name="DiagnosticUnavailableMessage" xml:space="preserve"><value>Les informations d’assistance n’ont pas pu être collectées. Vous pouvez fermer ce message et continuer à utiliser l’application.</value></data>
   <data name="Close" xml:space="preserve"><value>Fermer</value></data>
+  <data name="Minimize" xml:space="preserve"><value>Réduire</value></data>
   <data name="CapabilitySessionLock" xml:space="preserve"><value>Détection du verrouillage de session</value></data>
   <data name="CapabilityClipboardWrite" xml:space="preserve"><value>Écriture dans le presse-papiers</value></data>
   <data name="CapabilityConditionalClipboardClear" xml:space="preserve"><value>Effacement conditionnel du presse-papiers</value></data>
