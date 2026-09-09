@@ -233,7 +233,10 @@
   <data name="UpdateInstallCancelled" xml:space="preserve"><value>Instalación de actualización cancelada.</value></data>
   <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>El instalador de la plataforma no pudo iniciarse de forma segura.</value></data>
   <data name="ImportWorkflowFailed" xml:space="preserve"><value>El proceso de importación falló de forma segura. No se expusieron datos secretos.</value></data>
-  <data name="ImportConfirmationMessage" xml:space="preserve"><value>¿Importar {0} cuenta(s), incluidos {1} conflicto(s), usando «{2}»? Primero se creará una copia de recuperación.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Cuentas que se importarán: {0}. Conflictos: {1}. Gestión de conflictos: «{2}». Primero se creará una copia de recuperación.</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Cuentas existentes omitidas: {0}. Cuentas nuevas que se importarán: {1}. Primero se creará una copia de recuperación.</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Cuentas nuevas que se importarán: {0}. Primero se creará una copia de recuperación.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Cuentas recibidas: {0}. Cuentas existentes omitidas: {0}. No hay nada que importar.</value></data>
   <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>No se pudieron cargar las cuentas para exportarlas.</value></data>
   <data name="EncryptedExportTitle" xml:space="preserve"><value>Exportación cifrada</value></data>
   <data name="ExportPasswordHelp" xml:space="preserve"><value>Crea y confirma una contraseña para esta copia de seguridad cifrada portátil. Esta contraseña no se puede recuperar.</value></data>
@@ -262,6 +265,7 @@
   <data name="ImportExistingAccountsUnavailable" xml:space="preserve"><value>No se pudieron cargar las cuentas existentes. No se modificaron datos.</value></data>
   <data name="ImportRecoveryBackupFailed" xml:space="preserve"><value>No se pudo crear una copia de recuperación. La importación se detuvo antes de modificar los datos.</value></data>
   <data name="ImportOutcomeFailed" xml:space="preserve"><value>El proceso de importación no se pudo completar de forma segura.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="AccountsLoadFailed" xml:space="preserve"><value>No se pudieron cargar las cuentas. Tus datos cifrados no se modificaron.</value></data>
   <data name="AccountsLoadFailedSafely" xml:space="preserve"><value>No se pudieron cargar las cuentas de forma segura. Reinténtalo.</value></data>
   <data name="CodeGenerationFailed" xml:space="preserve"><value>No se pudo generar un código para esta cuenta.</value></data>

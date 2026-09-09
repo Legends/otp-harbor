@@ -233,7 +233,10 @@
   <data name="UpdateInstallCancelled" xml:space="preserve"><value>Die Update-Installation wurde abgebrochen.</value></data>
   <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>Der Plattform-Installer konnte nicht sicher gestartet werden.</value></data>
   <data name="ImportWorkflowFailed" xml:space="preserve"><value>Der Import ist sicher fehlgeschlagen. Es wurden keine geheimen Details offengelegt.</value></data>
-  <data name="ImportConfirmationMessage" xml:space="preserve"><value>{0} Konto/Konten importieren, darunter {1} Konflikt(e), mit der Strategie „{2}“? Zuerst wird eine Wiederherstellungssicherung erstellt.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Zu importierende Konten: {0}. Konflikte: {1}. Konfliktbehandlung: „{2}“. Zuerst wird eine Wiederherstellungssicherung erstellt.</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Vorhandene Konten übersprungen: {0}. Neue zu importierende Konten: {1}. Zuerst wird eine Wiederherstellungssicherung erstellt.</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Neue zu importierende Konten: {0}. Zuerst wird eine Wiederherstellungssicherung erstellt.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Empfangene Konten: {0}. Vorhandene Konten übersprungen: {0}. Es gibt nichts zu importieren.</value></data>
   <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>Die Konten konnten für den Export nicht geladen werden.</value></data>
   <data name="EncryptedExportTitle" xml:space="preserve"><value>Verschlüsselter Export</value></data>
   <data name="ExportPasswordHelp" xml:space="preserve"><value>Erstellen und bestätigen Sie ein Passwort für diese portable verschlüsselte Sicherung. Dieses Passwort kann nicht wiederhergestellt werden.</value></data>
@@ -262,6 +265,7 @@
   <data name="ImportExistingAccountsUnavailable" xml:space="preserve"><value>Vorhandene Konten konnten nicht geladen werden. Es wurden keine Daten geändert.</value></data>
   <data name="ImportRecoveryBackupFailed" xml:space="preserve"><value>Eine Wiederherstellungssicherung konnte nicht erstellt werden. Der Import wurde vor jeder Datenänderung beendet.</value></data>
   <data name="ImportOutcomeFailed" xml:space="preserve"><value>Der Import konnte nicht sicher abgeschlossen werden.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="AccountsLoadFailed" xml:space="preserve"><value>Die Konten konnten nicht geladen werden. Ihre verschlüsselten Daten wurden nicht geändert.</value></data>
   <data name="AccountsLoadFailedSafely" xml:space="preserve"><value>Die Konten konnten nicht sicher geladen werden. Versuchen Sie es erneut.</value></data>
   <data name="CodeGenerationFailed" xml:space="preserve"><value>Für dieses Konto konnte kein Code erzeugt werden.</value></data>

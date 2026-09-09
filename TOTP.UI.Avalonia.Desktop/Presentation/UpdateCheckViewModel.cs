@@ -32,13 +32,14 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
     public UpdateCheckViewModel(
         IPortableUpdateService updates,
         IUpdateInstallerLauncher installer,
-        IAvaloniaLocalizationService localization)
+        IAvaloniaLocalizationService localization,
+        TimeSpan? transientMessageDuration = null)
     {
         _updates = updates ?? throw new ArgumentNullException(nameof(updates));
         _installer = installer ?? throw new ArgumentNullException(nameof(installer));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
-        Notification = new NotificationState();
-        Notification.ShowPersistent(LocalizeMessage(), NotificationSeverity.Information);
+        Notification = new NotificationState(transientMessageDuration);
+        Notification.ShowForSeverity(LocalizeMessage(), NotificationSeverity.Information);
         _localization.CultureChanged += LocalizationCultureChanged;
         _checkCommand = new AsyncCommand(CheckAsync, () => !_disposed && !IsBusy);
         _downloadCommand = new AsyncCommand(
@@ -307,7 +308,7 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
     {
         _messageKey = key;
         _messageArguments = arguments;
-        Notification.ShowPersistent(LocalizeMessage(), severity);
+        Notification.ShowForSeverity(LocalizeMessage(), severity);
     }
 
     private string LocalizeMessage()
@@ -318,8 +319,11 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
             : string.Format(template, _messageArguments);
     }
 
-    private void LocalizationCultureChanged(object? sender, EventArgs e) =>
-        Notification.ShowPersistent(LocalizeMessage(), Notification.Severity);
+    private void LocalizationCultureChanged(object? sender, EventArgs e)
+    {
+        if (Notification.HasMessage)
+            Notification.ShowForSeverity(LocalizeMessage(), Notification.Severity);
+    }
 
     private void NotifyCommands()
     {

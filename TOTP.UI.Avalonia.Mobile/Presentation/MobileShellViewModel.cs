@@ -49,6 +49,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _beginBiometricEnrollmentCommand;
     private readonly MobileAsyncCommand _enableBiometricCommand;
     private readonly MobileAsyncCommand _cancelBiometricEnrollmentCommand;
+    private readonly MobileAsyncCommand _toggleAppLockCommand;
     private readonly MobileAsyncCommand _beginDisableAppLockCommand;
     private readonly MobileAsyncCommand _confirmDisableAppLockCommand;
     private readonly MobileAsyncCommand _cancelDisableAppLockCommand;
@@ -183,9 +184,12 @@ public sealed class MobileShellViewModel :
         _cancelBiometricEnrollmentCommand = new MobileAsyncCommand(
             CancelBiometricEnrollmentAsync,
             () => IsBiometricEnrollmentVisible && !IsBusy);
+        _toggleAppLockCommand = new MobileAsyncCommand(
+            ToggleAppLockAsync,
+            () => IsSettingsVisible && !IsBusy);
         _beginDisableAppLockCommand = new MobileAsyncCommand(
             BeginDisableAppLockAsync,
-            () => IsSettingsVisible && IsAppLockEnabled && !IsBusy);
+            () => !IsBusy);
         _confirmDisableAppLockCommand = new MobileAsyncCommand(
             ConfirmDisableAppLockAsync,
             () => IsDisableAppLockConfirmationVisible
@@ -272,6 +276,7 @@ public sealed class MobileShellViewModel :
     public ICommand BeginBiometricEnrollmentCommand => _beginBiometricEnrollmentCommand;
     public ICommand EnableBiometricCommand => _enableBiometricCommand;
     public ICommand CancelBiometricEnrollmentCommand => _cancelBiometricEnrollmentCommand;
+    public ICommand ToggleAppLockCommand => _toggleAppLockCommand;
     public ICommand BeginDisableAppLockCommand => _beginDisableAppLockCommand;
     public ICommand ConfirmDisableAppLockCommand => _confirmDisableAppLockCommand;
     public ICommand CancelDisableAppLockCommand => _cancelDisableAppLockCommand;
@@ -304,6 +309,7 @@ public sealed class MobileShellViewModel :
     public bool IsUnlockVisible => _screen == MobileScreen.Unlock;
     public bool IsAccountsVisible => _screen == MobileScreen.Accounts;
     public bool IsAccountListVisible => IsAccountsVisible && !IsSettingsVisible && !IsEditorVisible;
+    public bool IsScreenCaptureProtectionRequired => IsAccountListVisible;
     public bool IsSettingsVisible => IsAccountsVisible && _isSettingsVisible;
     public bool HasAccounts => Accounts.Count > 0;
     public bool HasNoAccounts => _allAccounts.Count == 0;
@@ -526,6 +532,7 @@ public sealed class MobileShellViewModel :
         {
             if (!SetField(ref _isEditorVisible, value)) return;
             OnPropertyChanged(nameof(IsAccountListVisible));
+            OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             OnPropertyChanged(nameof(EditorTitle));
             OnPropertyChanged(nameof(EditorSecretPlaceholder));
             NotifyCommands();
@@ -675,6 +682,9 @@ public sealed class MobileShellViewModel :
         Get(MobileStringKeys.AppLockDisabledDescription);
     public string DisableAppLockText => Get(MobileStringKeys.DisableAppLock);
     public string EnableAppLockText => Get(MobileStringKeys.EnableAppLock);
+    public string AppLockActionText => IsAppLockEnabled
+        ? DisableAppLockText
+        : EnableAppLockText;
     public string DisableAppLockWarningText => Get(MobileStringKeys.DisableAppLockWarning);
     public string SearchAccountsText => Get(MobileStringKeys.SearchAccounts);
     public string NoSearchResultsText => Get(MobileStringKeys.NoSearchResults);
@@ -730,6 +740,9 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
+            // ISettingsService keeps a stable mutable Current instance. Notify bindings after
+            // LoadAsync applies persisted values so the UI cannot retain constructor defaults.
+            NotifyAppLockChanged();
             _strings.ApplyCulture(_settings.Current.CultureName);
             NotifyLocalizedTextChanged();
             SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
@@ -974,6 +987,16 @@ public sealed class MobileShellViewModel :
         IsDisableAppLockConfirmationVisible = true;
         ClearNotification();
         return Task.CompletedTask;
+    }
+
+    public async Task ToggleAppLockAsync()
+    {
+        if (!IsSettingsVisible || IsBusy) return;
+
+        if (IsAppLockEnabled)
+            await BeginDisableAppLockAsync();
+        else
+            await EnableAppLockAsync();
     }
 
     public async Task ConfirmDisableAppLockAsync()
@@ -2219,6 +2242,7 @@ public sealed class MobileShellViewModel :
     private void NotifyUnlockedSectionChanged()
     {
         OnPropertyChanged(nameof(IsAccountListVisible));
+        OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
         OnPropertyChanged(nameof(IsSettingsVisible));
         OnPropertyChanged(nameof(IsBiometricSetupAvailable));
         OnPropertyChanged(nameof(IsBiometricEnrollmentStartVisible));
@@ -2230,6 +2254,7 @@ public sealed class MobileShellViewModel :
     {
         OnPropertyChanged(nameof(IsAppLockEnabled));
         OnPropertyChanged(nameof(IsAppLockDisabled));
+        OnPropertyChanged(nameof(AppLockActionText));
         OnPropertyChanged(nameof(IsManualLockVisible));
         OnPropertyChanged(nameof(IsBiometricSetupAvailable));
         OnPropertyChanged(nameof(IsBiometricEnrollmentStartVisible));
@@ -2361,6 +2386,7 @@ public sealed class MobileShellViewModel :
         _beginBiometricEnrollmentCommand.NotifyCanExecuteChanged();
         _enableBiometricCommand.NotifyCanExecuteChanged();
         _cancelBiometricEnrollmentCommand.NotifyCanExecuteChanged();
+        _toggleAppLockCommand.NotifyCanExecuteChanged();
         _beginDisableAppLockCommand.NotifyCanExecuteChanged();
         _confirmDisableAppLockCommand.NotifyCanExecuteChanged();
         _cancelDisableAppLockCommand.NotifyCanExecuteChanged();
@@ -2452,6 +2478,7 @@ public sealed class MobileShellViewModel :
         nameof(AppLockDisabledDescriptionText),
         nameof(DisableAppLockText),
         nameof(EnableAppLockText),
+        nameof(AppLockActionText),
         nameof(DisableAppLockWarningText),
         nameof(SearchAccountsText),
         nameof(NoSearchResultsText),

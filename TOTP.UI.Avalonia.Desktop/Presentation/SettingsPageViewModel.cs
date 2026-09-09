@@ -252,7 +252,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             {
                 if (previous.InterfaceScalePercent != SelectedInterfaceScale.Percent)
                 {
-                    SetPersistentMessage(
+                    ShowTransientMessage(
                         Localize(AvaloniaStringKeys.InterfaceScaleRestartRequired),
                         NotificationSeverity.Information);
                 }

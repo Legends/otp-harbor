@@ -19,7 +19,10 @@ public sealed class AuthorizationSettingsViewModelTests
         var state = ConfiguredState(PreferredUnlockMethod.PlatformQuickUnlock);
         var authorization = Authorization(state);
         authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
-        var sut = CreateSut(authorization.Object, Mock.Of<IAvaloniaDialogService>());
+        var sut = CreateSut(
+            authorization.Object,
+            Mock.Of<IAvaloniaDialogService>(),
+            TimeSpan.FromMilliseconds(20));
 
         await sut.RefreshAsync();
 
@@ -27,6 +30,8 @@ public sealed class AuthorizationSettingsViewModelTests
         Assert.True(sut.IsQuickUnlockEnabled);
         Assert.Equal(AvaloniaStringKeys.QuickUnlockAvailable, sut.Message);
         Assert.False(sut.ShowQuickUnlockRetry);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]
@@ -35,13 +40,18 @@ public sealed class AuthorizationSettingsViewModelTests
         var authorization = Authorization(ConfiguredState(PreferredUnlockMethod.Password));
         authorization.Setup(value => value.IsHelloAvailableAsync())
             .ThrowsAsync(new InvalidOperationException("synthetic platform failure"));
-        var sut = CreateSut(authorization.Object, Mock.Of<IAvaloniaDialogService>());
+        var sut = CreateSut(
+            authorization.Object,
+            Mock.Of<IAvaloniaDialogService>(),
+            TimeSpan.FromMilliseconds(20));
 
         await sut.RefreshAsync();
 
         Assert.False(sut.IsQuickUnlockAvailable);
         Assert.True(sut.ShowQuickUnlockRetry);
         Assert.Equal(AvaloniaStringKeys.QuickUnlockUnavailable, sut.Message);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]
@@ -59,7 +69,10 @@ public sealed class AuthorizationSettingsViewModelTests
                 It.IsAny<PasswordDialogRequest>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("recovery-password");
-        var sut = CreateSut(authorization.Object, dialogs.Object);
+        var sut = CreateSut(
+            authorization.Object,
+            dialogs.Object,
+            TimeSpan.FromMilliseconds(20));
         await sut.RefreshAsync();
 
         await sut.EnableQuickUnlockAsync();
@@ -67,6 +80,8 @@ public sealed class AuthorizationSettingsViewModelTests
         authorization.Verify(value => value.ConfigureHelloAsync("recovery-password"), Times.Once);
         Assert.True(sut.IsQuickUnlockEnabled);
         Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]
@@ -198,7 +213,8 @@ public sealed class AuthorizationSettingsViewModelTests
 
     private static AuthorizationSettingsViewModel CreateSut(
         IAuthorizationService authorization,
-        IAvaloniaDialogService dialogs)
+        IAvaloniaDialogService dialogs,
+        TimeSpan? transientMessageDuration = null)
     {
         var validation = new Mock<IPasswordValidationService>();
         validation.SetupGet(value => value.MinimumLength).Returns(8);
@@ -206,7 +222,8 @@ public sealed class AuthorizationSettingsViewModelTests
             authorization,
             dialogs,
             Localization(),
-            validation.Object);
+            validation.Object,
+            transientMessageDuration);
     }
 
     private static Mock<IAuthorizationService> Authorization(AuthorizationState state)

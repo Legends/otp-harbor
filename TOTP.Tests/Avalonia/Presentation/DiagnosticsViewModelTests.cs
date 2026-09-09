@@ -22,7 +22,10 @@ public sealed class DiagnosticsViewModelTests
             ".NET 10.0",
             true,
             [new StartupDiagnosticRecord(StartupDiagnosticStage.Preferences, 12, true)]));
-        var sut = new DiagnosticsViewModel(service.Object, CreateLocalization("en"));
+        var sut = new DiagnosticsViewModel(
+            service.Object,
+            CreateLocalization("en"),
+            transientMessageDuration: TimeSpan.FromMilliseconds(20));
 
         await sut.RefreshAsync();
 
@@ -32,6 +35,8 @@ public sealed class DiagnosticsViewModelTests
         Assert.DoesNotContain("\\Users\\", sut.SupportInformation, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("secret", sut.SupportInformation, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]
@@ -47,13 +52,16 @@ public sealed class DiagnosticsViewModelTests
         var sut = new DiagnosticsViewModel(
             service.Object,
             CreateLocalization("en"),
-            dialogs.Object);
+            dialogs.Object,
+            transientMessageDuration: TimeSpan.FromMilliseconds(20));
 
         await sut.RefreshAsync();
 
         Assert.Empty(sut.SupportInformation);
         Assert.DoesNotContain("person", sut.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.False(string.IsNullOrWhiteSpace(sut.Message));
         dialogs.Verify(value => value.ShowMessageAsync(
             It.Is<MessageDialogRequest>(request => request.Severity == NotificationSeverity.Error),
             It.IsAny<CancellationToken>()), Times.Once);

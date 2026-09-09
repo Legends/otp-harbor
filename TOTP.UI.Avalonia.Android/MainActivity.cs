@@ -4,6 +4,8 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Avalonia.Android;
+using System.ComponentModel;
+using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Android;
 
@@ -19,11 +21,12 @@ namespace TOTP.Avalonia.Android;
         | ConfigChanges.KeyboardHidden)]
 public class MainActivity : AvaloniaMainActivity
 {
+    private MobileShellViewModel? _screenCapturePolicy;
+
     internal event Action<int, Result, Intent?>? ActivityResultReceived;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
-        Window?.SetFlags(WindowManagerFlags.Secure, WindowManagerFlags.Secure);
         base.OnCreate(savedInstanceState);
         if (Application is OtpHarborApplication host) host.AttachActivity(this);
     }
@@ -48,6 +51,28 @@ public class MainActivity : AvaloniaMainActivity
         base.OnDestroy();
     }
 
+    internal void AttachScreenCapturePolicy(MobileShellViewModel viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        if (ReferenceEquals(_screenCapturePolicy, viewModel))
+        {
+            ApplyScreenCapturePolicy();
+            return;
+        }
+
+        DetachScreenCapturePolicy();
+        _screenCapturePolicy = viewModel;
+        _screenCapturePolicy.PropertyChanged += ScreenCapturePolicyChanged;
+        ApplyScreenCapturePolicy();
+    }
+
+    internal void DetachScreenCapturePolicy()
+    {
+        if (_screenCapturePolicy is not null)
+            _screenCapturePolicy.PropertyChanged -= ScreenCapturePolicyChanged;
+        _screenCapturePolicy = null;
+    }
+
     protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
     {
         base.OnActivityResult(requestCode, resultCode, data);
@@ -59,5 +84,22 @@ public class MainActivity : AvaloniaMainActivity
         var keyguard = GetSystemService(Context.KeyguardService) as KeyguardManager;
         var power = GetSystemService(Context.PowerService) as PowerManager;
         return keyguard?.IsDeviceLocked == true || power?.IsInteractive == false;
+    }
+
+    private void ScreenCapturePolicyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName == nameof(MobileShellViewModel.IsScreenCaptureProtectionRequired))
+            ApplyScreenCapturePolicy();
+    }
+
+    private void ApplyScreenCapturePolicy()
+    {
+        var window = Window;
+        if (window is null) return;
+
+        if (_screenCapturePolicy?.IsScreenCaptureProtectionRequired == true)
+            window.AddFlags(WindowManagerFlags.Secure);
+        else
+            window.ClearFlags(WindowManagerFlags.Secure);
     }
 }

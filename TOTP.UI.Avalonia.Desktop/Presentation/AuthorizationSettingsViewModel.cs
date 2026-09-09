@@ -32,12 +32,13 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         IAuthorizationService authorization,
         IAvaloniaDialogService dialogs,
         IAvaloniaLocalizationService localization,
-        IPasswordValidationService passwordValidation)
+        IPasswordValidationService passwordValidation,
+        TimeSpan? transientMessageDuration = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
-        Notification = new NotificationState();
+        Notification = new NotificationState(transientMessageDuration);
         _localization.CultureChanged += LocalizationCultureChanged;
         _passwordValidation = passwordValidation ?? throw new ArgumentNullException(nameof(passwordValidation));
         _refreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
@@ -332,13 +333,13 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
     private void SetMessage(string key, NotificationSeverity severity)
     {
         _messageKey = key;
-        Notification.ShowPersistent(_localization.GetString(key), severity);
+        Notification.ShowForSeverity(_localization.GetString(key), severity);
     }
 
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
-        if (_messageKey is not null)
-            Notification.ShowPersistent(_localization.GetString(_messageKey), Notification.Severity);
+        if (_messageKey is not null && Notification.HasMessage)
+            Notification.ShowForSeverity(_localization.GetString(_messageKey), Notification.Severity);
     }
 
     private void NotifyCommands()

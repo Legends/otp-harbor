@@ -90,4 +90,39 @@ public sealed class AccountImportServiceTests
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
         accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
     }
+
+    [Fact]
+    public async Task ImportAsync_WhenSkipExistingMatchesEveryAccount_ReturnsWithoutConfirmationOrBackup()
+    {
+        var existing = Enumerable.Range(1, 22)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                "Issuer",
+                "JBSWY3DPEHPK3PXP",
+                $"user-{index}"))
+            .ToList();
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(existing));
+        var confirmationCount = 0;
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            existing,
+            ImportConflictStrategy.SkipExisting,
+            (_, _) =>
+            {
+                confirmationCount++;
+                return Task.FromResult(true);
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccountImportStatus.Completed, result.Value.Status);
+        Assert.Equal(22, result.Value.Skipped);
+        Assert.Equal(0, confirmationCount);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+    }
 }

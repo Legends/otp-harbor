@@ -48,6 +48,14 @@ public sealed class NotificationState : INotifyPropertyChanged, IDisposable
         Text = text ?? string.Empty;
     }
 
+    public void ShowForSeverity(string text, NotificationSeverity severity)
+    {
+        if (severity == NotificationSeverity.Error)
+            ShowPersistent(text, severity);
+        else
+            ShowTransient(text, severity);
+    }
+
     public void ShowTransient(
         string text,
         NotificationSeverity severity,

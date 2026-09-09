@@ -11,7 +11,7 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class UpdateCheckViewModelTests
 {
     [Fact]
-    public void Constructor_WhenGermanIsActive_UsesLocalizedReadyMessage()
+    public async Task Constructor_WhenGermanIsActive_UsesLocalizedTransientReadyMessage()
     {
         var localization = new AvaloniaLocalizationService(
             new ResourceDictionary(),
@@ -20,11 +20,14 @@ public sealed class UpdateCheckViewModelTests
         using var sut = new UpdateCheckViewModel(
             Mock.Of<IPortableUpdateService>(),
             Mock.Of<IUpdateInstallerLauncher>(),
-            localization);
+            localization,
+            TimeSpan.FromMilliseconds(20));
 
         Assert.Equal(
             "Prüfen Sie den konfigurierten signierten Update-Feed, wenn Sie bereit sind.",
             sut.Message);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]
@@ -39,7 +42,8 @@ public sealed class UpdateCheckViewModelTests
         using var sut = new UpdateCheckViewModel(
             updates.Object,
             Mock.Of<IUpdateInstallerLauncher>(),
-            Localization());
+            Localization(),
+            TimeSpan.FromMilliseconds(20));
 
         Assert.True(sut.ShowCheckAction);
         Assert.False(sut.ShowDownloadAction);
@@ -55,6 +59,8 @@ public sealed class UpdateCheckViewModelTests
             It.IsAny<PortableUpdateOffer>(),
             It.IsAny<IProgress<PortableUpdateDownloadProgress>>(),
             It.IsAny<CancellationToken>()), Times.Never);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]
@@ -75,7 +81,11 @@ public sealed class UpdateCheckViewModelTests
             .ReturnsAsync(Result.Ok(package));
         var installer = new Mock<IUpdateInstallerLauncher>();
         installer.SetupGet(value => value.IsSupported).Returns(true);
-        using var sut = new UpdateCheckViewModel(updates.Object, installer.Object, Localization());
+        using var sut = new UpdateCheckViewModel(
+            updates.Object,
+            installer.Object,
+            Localization(),
+            TimeSpan.FromMilliseconds(20));
         await sut.CheckAsync();
 
         await sut.DownloadAsync();
@@ -85,6 +95,8 @@ public sealed class UpdateCheckViewModelTests
         Assert.True(sut.ShowInstallAction);
         Assert.Equal(100, sut.ProgressPercentage);
         Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]
@@ -107,7 +119,11 @@ public sealed class UpdateCheckViewModelTests
         installer.SetupGet(value => value.IsSupported).Returns(true);
         installer.Setup(value => value.LaunchAsync(package, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Fail("sensitive installer detail"));
-        using var sut = new UpdateCheckViewModel(updates.Object, installer.Object, Localization());
+        using var sut = new UpdateCheckViewModel(
+            updates.Object,
+            installer.Object,
+            Localization(),
+            TimeSpan.FromMilliseconds(20));
         await sut.CheckAsync();
         await sut.DownloadAsync();
 
@@ -115,6 +131,8 @@ public sealed class UpdateCheckViewModelTests
 
         Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
         Assert.DoesNotContain("sensitive", sut.Message, StringComparison.OrdinalIgnoreCase);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.False(string.IsNullOrWhiteSpace(sut.Message));
     }
 
     [Fact]

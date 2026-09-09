@@ -44,10 +44,14 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     public void AttachActivity(MainActivity activity)
     {
         _services?.GetService<AndroidActivityProvider>()?.Attach(activity);
+        var viewModel = _services?.GetService<MobileShellViewModel>();
+        if (viewModel is not null)
+            activity.AttachScreenCapturePolicy(viewModel);
     }
 
     public void DetachActivity(MainActivity activity)
     {
+        activity.DetachScreenCapturePolicy();
         _services?.GetService<AndroidActivityProvider>()?.Detach(activity);
     }
 

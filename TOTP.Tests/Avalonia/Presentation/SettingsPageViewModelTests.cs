@@ -12,9 +12,9 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class SettingsPageViewModelTests
 {
     [Fact]
-    public void TransientNotices_UseOneSecondByDefault()
+    public void TransientNotices_UseFifteenHundredMillisecondsByDefault()
     {
-        Assert.Equal(TimeSpan.FromSeconds(1), TransientNotificationDefaults.Duration);
+        Assert.Equal(TimeSpan.FromMilliseconds(1500), TransientNotificationDefaults.Duration);
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public sealed class SettingsPageViewModelTests
         Assert.Contains("restart", sut.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(NotificationSeverity.Information, sut.MessageSeverity);
         await Task.Delay(100, TestContext.Current.CancellationToken);
-        Assert.Contains("restart", sut.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]

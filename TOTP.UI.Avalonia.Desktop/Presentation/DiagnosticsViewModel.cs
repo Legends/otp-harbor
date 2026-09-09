@@ -24,13 +24,14 @@ public sealed class DiagnosticsViewModel : INotifyPropertyChanged
         ISupportDiagnosticsService diagnostics,
         IAvaloniaLocalizationService localization,
         IAvaloniaDialogService? dialogs = null,
-        IPlatformCapabilityReport? capabilities = null)
+        IPlatformCapabilityReport? capabilities = null,
+        TimeSpan? transientMessageDuration = null)
     {
         _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _dialogs = dialogs;
         _capabilities = capabilities;
-        Notification = new NotificationState();
+        Notification = new NotificationState(transientMessageDuration);
         _refreshCommand = new AsyncCommand(RefreshAsync, () => !_isBusy);
     }
 
@@ -94,7 +95,7 @@ public sealed class DiagnosticsViewModel : INotifyPropertyChanged
             }
 
             SupportInformation = output.ToString().TrimEnd();
-            Notification.ShowPersistent(
+            Notification.ShowForSeverity(
                 _localization.GetString(AvaloniaStringKeys.DiagnosticRefreshSuccess),
                 NotificationSeverity.Success);
         }

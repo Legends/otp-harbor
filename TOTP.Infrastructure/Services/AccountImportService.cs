@@ -29,6 +29,14 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 return Result.Ok(new AccountImportOutcome(AccountImportStatus.ExistingAccountsUnavailable));
 
             var conflicts = validated.Count(account => FindMatch(account, currentResult.Value) is not null);
+            if (conflictStrategy == ImportConflictStrategy.SkipExisting
+                && conflicts == validated.Count)
+            {
+                return Result.Ok(new AccountImportOutcome(
+                    AccountImportStatus.Completed,
+                    Skipped: validated.Count));
+            }
+
             var confirmed = await confirmAsync(
                 new AccountImportPreview(validated.Count, conflicts, conflictStrategy),
                 cancellationToken);

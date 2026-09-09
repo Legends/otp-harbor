@@ -25,7 +25,8 @@ The current Android application provides:
 - English, German, French, and Spanish localization with resource-completeness and placeholder checks
 - private Android application storage with verified owner-only Unix permissions
 - disabled Android backup and cleartext network traffic
-- screenshot and recent-app preview protection through `FLAG_SECURE`
+- screenshot and recent-app preview protection through `FLAG_SECURE` while the current account list
+  and its short-lived TOTP codes are visible
 - a focused two-destination mobile shell: codes and security settings
 
 Account rows contain identifiers, display metadata, and short-lived current OTP codes. OTP seeds
@@ -110,8 +111,15 @@ before the first store publication because a published application ID is effecti
 
 ## Security review notes
 
-- **Threat impact:** the host prevents ordinary backup, screenshots, recent-app previews, and
-  cleartext network traffic. Biometric quick unlock accepts only Android's strong-biometric class;
+- **Threat impact:** the host prevents ordinary backup and cleartext network traffic. Android applies
+  `FLAG_SECURE` only while the current account list and its short-lived TOTP codes are visible,
+  including while an account-list overlay is open. Setup, unlock, account editor, settings,
+  and import/export views deliberately permit screenshots and recent-app previews. A generated
+  account QR remains part of the account-list surface and therefore stays protected while that
+  surface is visible. Unprotected views can expose revealed passwords, OTP seeds, or backup details
+  if the user or another capture-capable process records them; this is an explicit usability
+  tradeoff and not a confidentiality guarantee. Biometric quick unlock accepts only Android's
+  strong-biometric class;
   it does not accept the device PIN as a substitute. Its non-exportable AES-256 key is usable only
   for one second after successful strong-biometric authentication and is invalidated when biometric
   enrollment changes. That minimal time window is an Android-documented compatibility path for
@@ -182,6 +190,9 @@ before the first store publication because a published application ID is effecti
   App-lock opt-out startup, background behavior, preference compatibility, provider-policy
   validation, and localized warnings have regression coverage; Keystore persistence across process
   restart remains a physical-device verification gate.
+  Mobile screen-capture policy transitions between starting, unlock, account-list, settings,
+  editor, and locked states have regression coverage; Android `FLAG_SECURE` behavior and recent-app
+  previews remain a physical-device verification gate.
   Mobile navigation, search, unavailable-scanner fallback, localized QR-import outcomes, and
   disposal of generated QR images and sensitive PNG buffers have regression coverage.
   Encrypted-only backup export, immediate password-field clearing, explicit import confirmation,

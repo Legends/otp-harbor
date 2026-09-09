@@ -52,6 +52,35 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_WhenLoadedPreferenceDisablesAppLock_RefreshesToggleBindings()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Settings.Setup(value => value.LoadAsync())
+            .Callback(() =>
+            {
+                context.SettingsValue.AppLockEnabled = false;
+                context.SettingsValue.PreferredUnlockMethod =
+                    TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock;
+            })
+            .ReturnsAsync(Result.Ok<IAppSettings>(context.SettingsValue));
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        var changedProperties = new List<string?>();
+        context.Sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.False(context.Sut.IsAppLockEnabled);
+        Assert.Equal("Activate app lock", context.Sut.AppLockActionText);
+        Assert.True(context.Sut.ToggleAppLockCommand.CanExecute(null));
+        Assert.Contains(nameof(MobileShellViewModel.IsAppLockEnabled), changedProperties);
+        Assert.Contains(nameof(MobileShellViewModel.IsAppLockDisabled), changedProperties);
+        Assert.Contains(nameof(MobileShellViewModel.AppLockActionText), changedProperties);
+    }
+
+    [Fact]
     public async Task OnEnteredBackground_WhenAppLockIsDisabled_PreservesAuthorization()
     {
         var context = CreateContext(isConfigured: true, appLockEnabled: false);
@@ -90,7 +119,8 @@ public sealed class MobileShellViewModelTests
         await context.Sut.InitializeAsync();
         await context.Sut.ShowSettingsAsync();
 
-        await context.Sut.EnableAppLockAsync();
+        Assert.Equal("Activate app lock", context.Sut.AppLockActionText);
+        await context.Sut.ToggleAppLockAsync();
 
         Assert.True(context.Sut.IsAppLockEnabled);
         Assert.True(context.Sut.IsUnlockVisible);
@@ -119,6 +149,48 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsUnlockVisible);
         Assert.Empty(context.Sut.NotificationText);
         context.Authorization.Verify(value => value.Lock(), Times.Once);
+    }
+
+    [Fact]
+    public async Task DisableAppLockCommands_FromEnabledSettings_ConfirmWithRecoveryPassword()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.SetAppLockEnabledAsync(false, "recovery-password"))
+            .Callback(() => context.SettingsValue.AppLockEnabled = false)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.True(context.Sut.IsAppLockEnabled);
+        Assert.Equal("Deactivate app lock", context.Sut.AppLockActionText);
+        Assert.True(context.Sut.ToggleAppLockCommand.CanExecute(null));
+        Assert.True(context.Sut.BeginDisableAppLockCommand.CanExecute(null));
+
+        context.Sut.ToggleAppLockCommand.Execute(null);
+        await WaitUntilAsync(() => context.Sut.IsDisableAppLockConfirmationVisible);
+
+        Assert.False(context.Sut.ConfirmDisableAppLockCommand.CanExecute(null));
+        context.Sut.AppLockRecoveryPassword = "recovery-password";
+        Assert.True(context.Sut.ConfirmDisableAppLockCommand.CanExecute(null));
+
+        context.Sut.ConfirmDisableAppLockCommand.Execute(null);
+        await WaitUntilAsync(() => !context.Sut.IsAppLockEnabled);
+
+        Assert.False(context.Sut.IsDisableAppLockConfirmationVisible);
+        Assert.True(context.Sut.IsAppLockDisabled);
+        Assert.Equal("Activate app lock", context.Sut.AppLockActionText);
+        Assert.True(context.Sut.EnableAppLockCommand.CanExecute(null));
+        Assert.Empty(context.Sut.AppLockRecoveryPassword);
+        context.Authorization.Verify(value => value.SetAppLockEnabledAsync(
+            false,
+            "recovery-password"), Times.Once);
     }
 
     [Fact]
@@ -482,6 +554,58 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsBiometricSetupAvailable);
         Assert.True(context.Sut.ShowAccountsCommand.CanExecute(null));
         Assert.False(context.Sut.ShowSettingsCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task ScreenCaptureProtection_IsRequiredOnlyWhileAccountListIsVisible()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+
+        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+        var policyChanges = new List<bool>();
+        context.Sut.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(
+                    MobileShellViewModel.IsScreenCaptureProtectionRequired))
+            {
+                policyChanges.Add(context.Sut.IsScreenCaptureProtectionRequired);
+            }
+        };
+
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.True(context.Sut.IsAccountListVisible);
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
+
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.True(context.Sut.IsSettingsVisible);
+        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+
+        await context.Sut.ShowAccountsAsync();
+
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
+
+        await context.Sut.BeginAddAsync();
+
+        Assert.True(context.Sut.IsEditorVisible);
+        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+
+        await context.Sut.CancelEditAsync();
+
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
+
+        await context.Sut.LockAsync();
+
+        Assert.True(context.Sut.IsUnlockVisible);
+        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+        Assert.Equal([true, false, true, false, true, false], policyChanges);
     }
 
     [Fact]
@@ -1376,6 +1500,13 @@ public sealed class MobileShellViewModelTests
         context.Sut.SetupConfirmation = "synthetic password";
         await context.Sut.ConfigureAsync();
         await context.Sut.BeginAddAsync();
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> predicate)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        while (!predicate())
+            await Task.Delay(10, timeout.Token);
     }
 
     private static TestContext CreateContext(

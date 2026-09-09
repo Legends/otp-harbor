@@ -170,6 +170,97 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
+    public async Task ImportAsync_WhenEveryAccountExists_ShowsInformationOnlyWithoutImportConfirmation()
+    {
+        var existing = Enumerable.Range(1, 22)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                "Issuer",
+                "JBSWY3DPEHPK3PXP",
+                $"user-{index}"))
+            .ToList();
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickImportFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("backup.json"));
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(), "backup.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(existing));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(existing));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
+
+        await sut.ImportAsync();
+
+        dialogs.Verify(value => value.ShowMessageAsync(
+            It.Is<MessageDialogRequest>(request =>
+                request.Severity == NotificationSeverity.Information
+                && request.CloseText == "OK"
+                && request.Message.Contains("Accounts received: 22", StringComparison.Ordinal)
+                && request.Message.Contains("Existing accounts skipped: 22", StringComparison.Ordinal)
+                && request.Message.Contains("nothing to import", StringComparison.OrdinalIgnoreCase)),
+            It.IsAny<CancellationToken>()), Times.Once);
+        dialogs.Verify(value => value.ConfirmAsync(
+            It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        Assert.Empty(sut.Message);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WhenSkipExistingContainsExistingAndNewAccounts_ExplainsBothCounts()
+    {
+        var existing = Enumerable.Range(1, 5)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                "Issuer",
+                "JBSWY3DPEHPK3PXP",
+                $"existing-{index}"))
+            .ToList();
+        var newAccounts = Enumerable.Range(1, 12)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                "Issuer",
+                "JBSWY3DPEHPK3PXP",
+                $"new-{index}"))
+            .ToList();
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickImportFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("backup.json"));
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(), "backup.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(existing.Concat(newAccounts).ToList()));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(existing));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
+
+        await sut.ImportAsync();
+
+        dialogs.Verify(value => value.ConfirmAsync(
+            It.Is<ConfirmationDialogRequest>(request =>
+                request.Message.Contains("Existing accounts skipped: 5", StringComparison.Ordinal)
+                && request.Message.Contains("New accounts to import: 12", StringComparison.Ordinal)
+                && !request.Message.Contains("?", StringComparison.Ordinal)),
+            It.IsAny<CancellationToken>()), Times.Once);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Exactly(12));
+        Assert.Contains("12 added", sut.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("5 skipped", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ImportAsync_WhenBackupFails_DoesNotMutateAccounts()
     {
         var picker = new Mock<IAvaloniaFilePicker>();
@@ -271,7 +362,8 @@ public sealed class NativeFilePickerViewModelTests
             dialogs.Object,
             security.Object,
             settings.Object,
-            folderLauncher.Object);
+            folderLauncher.Object,
+            transientMessageDuration: TimeSpan.FromMilliseconds(20));
 
         await sut.ExportEncryptedAsync();
 
@@ -279,6 +371,8 @@ public sealed class NativeFilePickerViewModelTests
         security.Verify(value => value.RestrictFileToCurrentUser("C:\\safe\\backup.totp"), Times.Once);
         folderLauncher.Verify(value => value.OpenFolderAsync(
             "C:\\safe", It.IsAny<CancellationToken>()), Times.Once);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
     }
 
     [Fact]

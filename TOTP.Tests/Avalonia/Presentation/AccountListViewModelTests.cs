@@ -516,7 +516,8 @@ public sealed class AccountListViewModelTests
             Mock.Of<IAccountQrCodeService>(),
             Mock.Of<IAvaloniaQrImageFactory>(),
             Mock.Of<IAvaloniaDialogService>(),
-            Localization())
+            Localization(),
+            transientMessageDuration: TimeSpan.FromMilliseconds(50))
         {
             SelectedAccount = new AccountListItemViewModel(id, "Issuer", "account")
         };
@@ -530,7 +531,11 @@ public sealed class AccountListViewModelTests
             It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal(
             "Copied. Conditional clipboard clear is scheduled in 18 seconds.",
-            sut.CodeMessage);
+            sut.Notification.Text);
+        Assert.Equal(NotificationSeverity.Information, sut.Notification.Severity);
+        Assert.Empty(sut.CodeMessage);
+
+        await WaitUntilAsync(() => !sut.Notification.HasMessage);
     }
 
     [Fact]
@@ -568,7 +573,8 @@ public sealed class AccountListViewModelTests
 
         Assert.Equal(
             "Kopiert. Die Zwischenablage wird in 15 Sekunden geleert, sofern der Code unverändert ist.",
-            sut.CodeMessage);
+            sut.Notification.Text);
+        Assert.Equal(NotificationSeverity.Information, sut.Notification.Severity);
     }
 
     [Fact]
@@ -1059,7 +1065,9 @@ public sealed class AccountListViewModelTests
             It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
         clipboard.Verify(value => value.CopyAsync(
             "123456", It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal("Copied.", sut.CodeMessage);
+        Assert.Equal("Copied.", sut.Notification.Text);
+        Assert.Equal(NotificationSeverity.Information, sut.Notification.Severity);
+        Assert.Empty(sut.CodeMessage);
     }
 
     [Fact]
@@ -1098,7 +1106,8 @@ public sealed class AccountListViewModelTests
             Mock.Of<IAvaloniaQrImageFactory>(),
             Mock.Of<IAvaloniaDialogService>(),
             localization,
-            settingsService: settings.Object)
+            settingsService: settings.Object,
+            transientMessageDuration: TimeSpan.FromMilliseconds(20))
         {
             SelectedAccount = new AccountListItemViewModel(id, "Issuer", "account")
         };
@@ -1110,7 +1119,11 @@ public sealed class AccountListViewModelTests
             "123456", It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal(
             "Kopiert. Das automatische Leeren der Zwischenablage ist auf dieser Plattform nicht verfügbar.",
-            sut.CodeMessage);
+            sut.Notification.Text);
+        Assert.Equal(NotificationSeverity.Warning, sut.Notification.Severity);
+        Assert.Empty(sut.CodeMessage);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Notification.Text);
     }
 
     private static AccountListViewModel CreateSut(

@@ -209,6 +209,9 @@ public static class AvaloniaStringKeys
     public const string ExportCancelled = nameof(ExportCancelled);
     public const string ImportWorkflowFailed = nameof(ImportWorkflowFailed);
     public const string ImportConfirmationMessage = nameof(ImportConfirmationMessage);
+    public const string ImportSkipExistingConfirmation = nameof(ImportSkipExistingConfirmation);
+    public const string ImportNewAccountsConfirmation = nameof(ImportNewAccountsConfirmation);
+    public const string ImportNothingToImport = nameof(ImportNothingToImport);
     public const string ExportAccountsLoadFailed = nameof(ExportAccountsLoadFailed);
     public const string EncryptedExportTitle = nameof(EncryptedExportTitle);
     public const string ExportPasswordHelp = nameof(ExportPasswordHelp);
@@ -237,6 +240,7 @@ public static class AvaloniaStringKeys
     public const string ImportExistingAccountsUnavailable = nameof(ImportExistingAccountsUnavailable);
     public const string ImportRecoveryBackupFailed = nameof(ImportRecoveryBackupFailed);
     public const string ImportOutcomeFailed = nameof(ImportOutcomeFailed);
+    public const string Ok = nameof(Ok);
     public const string AccountsLoadFailed = nameof(AccountsLoadFailed);
     public const string AccountsLoadFailedSafely = nameof(AccountsLoadFailedSafely);
     public const string CodeGenerationFailed = nameof(CodeGenerationFailed);
@@ -368,7 +372,8 @@ public static class AvaloniaStringKeys
         RevealSecret, ConcealSecret, RevealSecretHelp, RevealSecretAutomation,
         ImportSkipExisting, ImportReplaceExisting, ImportKeepBoth, NoImportFileSelected,
         NoExportFileSelected, ImportCancelled, ExportCancelled, ImportWorkflowFailed,
-        ImportConfirmationMessage, ExportAccountsLoadFailed, EncryptedExportTitle,
+        ImportConfirmationMessage, ImportSkipExistingConfirmation, ImportNewAccountsConfirmation,
+        ImportNothingToImport, ExportAccountsLoadFailed, EncryptedExportTitle,
         ExportPasswordHelp, Continue, ExportPasswordRequired, ExportPasswordValidationFailed,
         PasswordMinimumCharacters, ExportPasswordConfirmationRequired, ExportPasswordsMismatch,
         EncryptedBackupWriteFailed, BackupPermissionsUnverified, EncryptedBackupCreated,
@@ -376,7 +381,7 @@ public static class AvaloniaStringKeys
         ImportPasswordRequired, BackupValidationFailed, BackupWrongPasswordOrModified,
         BackupInvalidOrUnavailable, ImportFileInvalid, ImportFileEmpty, ImportOutcomeComplete,
         ImportCancelledNoChanges, ImportInvalidTargets, ImportExistingAccountsUnavailable,
-        ImportRecoveryBackupFailed, ImportOutcomeFailed, AccountsLoadFailed,
+        ImportRecoveryBackupFailed, ImportOutcomeFailed, Ok, AccountsLoadFailed,
         AccountsLoadFailedSafely, CodeGenerationFailed, CodeGenerationFailedSafely,
         QrGenerationFailed, QrDisplayFailed, QrPreviewUnavailable, QrPreviewDisplayFailed,
         UnlockTooManyAttempts, UnlockRejected, UnlockFailedSafely, TotpFiles,

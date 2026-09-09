@@ -233,7 +233,10 @@
   <data name="UpdateInstallCancelled" xml:space="preserve"><value>Update installation cancelled.</value></data>
   <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>The platform installer failed to start safely.</value></data>
   <data name="ImportWorkflowFailed" xml:space="preserve"><value>The import workflow failed safely. No secret details were exposed.</value></data>
-  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Import {0} account(s), including {1} conflict(s), using '{2}'? A recovery backup will be created first.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Accounts to import: {0}. Conflicts: {1}. Conflict handling: '{2}'. A recovery backup will be created first.</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Existing accounts skipped: {0}. New accounts to import: {1}. A recovery backup will be created first.</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>New accounts to import: {0}. A recovery backup will be created first.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Accounts received: {0}. Existing accounts skipped: {0}. There is nothing to import.</value></data>
   <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>Accounts could not be loaded for export.</value></data>
   <data name="EncryptedExportTitle" xml:space="preserve"><value>Encrypted export</value></data>
   <data name="ExportPasswordHelp" xml:space="preserve"><value>Create and confirm a password for this portable encrypted backup. This password cannot be recovered.</value></data>
@@ -262,6 +265,7 @@
   <data name="ImportExistingAccountsUnavailable" xml:space="preserve"><value>Existing accounts could not be loaded. No data was changed.</value></data>
   <data name="ImportRecoveryBackupFailed" xml:space="preserve"><value>A recovery backup could not be created. Import was stopped before changing data.</value></data>
   <data name="ImportOutcomeFailed" xml:space="preserve"><value>The import workflow could not be completed safely.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="AccountsLoadFailed" xml:space="preserve"><value>Accounts could not be loaded. Your encrypted data was not changed.</value></data>
   <data name="AccountsLoadFailedSafely" xml:space="preserve"><value>Accounts could not be loaded safely. Try again.</value></data>
   <data name="CodeGenerationFailed" xml:space="preserve"><value>A code could not be generated for this account.</value></data>

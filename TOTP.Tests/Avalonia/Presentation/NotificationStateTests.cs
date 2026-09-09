@@ -41,4 +41,32 @@ public sealed class NotificationStateTests
         Assert.Equal("Failed", sut.Text);
         Assert.Equal(NotificationSeverity.Error, sut.Severity);
     }
+
+    [Theory]
+    [InlineData(NotificationSeverity.Information)]
+    [InlineData(NotificationSeverity.Success)]
+    [InlineData(NotificationSeverity.Warning)]
+    public async Task ShowForSeverity_NonErrorNoticeClearsAfterConfiguredDuration(
+        NotificationSeverity severity)
+    {
+        using var sut = new NotificationState(TimeSpan.FromMilliseconds(20));
+
+        sut.ShowForSeverity("Transient notice", severity);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+
+        Assert.Empty(sut.Text);
+        Assert.False(sut.HasMessage);
+    }
+
+    [Fact]
+    public async Task ShowForSeverity_ErrorRemainsVisible()
+    {
+        using var sut = new NotificationState(TimeSpan.FromMilliseconds(20));
+
+        sut.ShowForSeverity("Recoverable error", NotificationSeverity.Error);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+
+        Assert.Equal("Recoverable error", sut.Text);
+        Assert.Equal(NotificationSeverity.Error, sut.Severity);
+    }
 }

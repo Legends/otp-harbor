@@ -233,7 +233,10 @@
   <data name="UpdateInstallCancelled" xml:space="preserve"><value>Installation de la mise à jour annulée.</value></data>
   <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>L’installateur de la plateforme n’a pas pu démarrer de manière sécurisée.</value></data>
   <data name="ImportWorkflowFailed" xml:space="preserve"><value>Le processus d’importation a échoué de manière sécurisée. Aucun détail secret n’a été exposé.</value></data>
-  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Importer {0} compte(s), dont {1} conflit(s), avec « {2} » ? Une sauvegarde de récupération sera créée d’abord.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Comptes à importer : {0}. Conflits : {1}. Gestion des conflits : « {2} ». Une sauvegarde de récupération sera d’abord créée.</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Comptes existants ignorés : {0}. Nouveaux comptes à importer : {1}. Une sauvegarde de récupération sera d’abord créée.</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Nouveaux comptes à importer : {0}. Une sauvegarde de récupération sera d’abord créée.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Comptes reçus : {0}. Comptes existants ignorés : {0}. Il n’y a rien à importer.</value></data>
   <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>Les comptes n’ont pas pu être chargés pour l’exportation.</value></data>
   <data name="EncryptedExportTitle" xml:space="preserve"><value>Exportation chiffrée</value></data>
   <data name="ExportPasswordHelp" xml:space="preserve"><value>Créez et confirmez un mot de passe pour cette sauvegarde chiffrée portable. Ce mot de passe ne peut pas être récupéré.</value></data>
@@ -262,6 +265,7 @@
   <data name="ImportExistingAccountsUnavailable" xml:space="preserve"><value>Les comptes existants n’ont pas pu être chargés. Aucune donnée n’a été modifiée.</value></data>
   <data name="ImportRecoveryBackupFailed" xml:space="preserve"><value>Une sauvegarde de récupération n’a pas pu être créée. L’importation a été arrêtée avant toute modification des données.</value></data>
   <data name="ImportOutcomeFailed" xml:space="preserve"><value>Le processus d’importation n’a pas pu être terminé de manière sécurisée.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="AccountsLoadFailed" xml:space="preserve"><value>Les comptes n’ont pas pu être chargés. Vos données chiffrées n’ont pas été modifiées.</value></data>
   <data name="AccountsLoadFailedSafely" xml:space="preserve"><value>Les comptes n’ont pas pu être chargés de manière sécurisée. Réessayez.</value></data>
   <data name="CodeGenerationFailed" xml:space="preserve"><value>Impossible de générer un code pour ce compte.</value></data>

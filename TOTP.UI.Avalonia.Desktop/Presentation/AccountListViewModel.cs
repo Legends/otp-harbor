@@ -49,6 +49,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _codeMessage = string.Empty;
     private string? _codeMessageLocalizationKey;
     private object[] _codeMessageLocalizationArguments = [];
+    private string? _notificationLocalizationKey;
+    private object[] _notificationLocalizationArguments = [];
+    private bool _localizedNotificationIsTransient;
     private bool _isBusy;
     private bool _isGenerating;
     private int _remainingSeconds;
@@ -494,10 +497,19 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         if (_settingsService?.Current.ClearClipboardEnabled == false)
         {
             var copyResult = await _clipboardService.CopyAsync(code);
-            SetLocalizedCodeMessage(
-                copyResult.IsSuccess
-                    ? AvaloniaStringKeys.CodeCopied
-                    : AvaloniaStringKeys.ClipboardCopyUnavailable);
+            if (copyResult.IsSuccess)
+            {
+                ShowLocalizedTransientNotification(
+                    AvaloniaStringKeys.CodeCopied,
+                    NotificationSeverity.Information);
+            }
+            else
+            {
+                ShowLocalizedPersistentNotification(
+                    AvaloniaStringKeys.ClipboardCopyUnavailable,
+                    NotificationSeverity.Error);
+            }
+
             return;
         }
 
@@ -509,7 +521,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             TimeSpan.FromSeconds(clearSeconds));
         if (clearResult.IsSuccess)
         {
-            SetLocalizedCodeMessage(AvaloniaStringKeys.CodeCopiedWithClear, [clearSeconds]);
+            ShowLocalizedTransientNotification(
+                AvaloniaStringKeys.CodeCopiedWithClear,
+                NotificationSeverity.Information,
+                clearSeconds);
             return;
         }
 
@@ -518,14 +533,25 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         if ((_clipboardService.Capabilities & requiredCapabilities) == ClipboardCapabilities.WriteText)
         {
             var fallbackResult = await _clipboardService.CopyAsync(code);
-            SetLocalizedCodeMessage(
-                fallbackResult.IsSuccess
-                    ? AvaloniaStringKeys.CodeCopiedWithoutClear
-                    : AvaloniaStringKeys.ClipboardCopyUnavailable);
+            if (fallbackResult.IsSuccess)
+            {
+                ShowLocalizedTransientNotification(
+                    AvaloniaStringKeys.CodeCopiedWithoutClear,
+                    NotificationSeverity.Warning);
+            }
+            else
+            {
+                ShowLocalizedPersistentNotification(
+                    AvaloniaStringKeys.ClipboardCopyUnavailable,
+                    NotificationSeverity.Error);
+            }
+
             return;
         }
 
-        SetLocalizedCodeMessage(AvaloniaStringKeys.ClipboardCopyUnavailable);
+        ShowLocalizedPersistentNotification(
+            AvaloniaStringKeys.ClipboardCopyUnavailable,
+            NotificationSeverity.Error);
     }
 
     public Task GenerateQrAsync() => GenerateQrAsync(_selectedAccount);
@@ -1040,6 +1066,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void SetLocalizedCodeMessage(string key, params object[] arguments)
     {
+        ClearNotification();
         CodeMessage = string.Format(_localization.GetString(key), arguments);
         _codeMessageLocalizationKey = key;
         _codeMessageLocalizationArguments = arguments;
@@ -1050,10 +1077,56 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         foreach (var account in _allAccounts)
             account.UpdateCustomPeriodLabel(FormatCustomPeriod(account.ConfiguredPeriodSeconds));
 
-        if (_codeMessageLocalizationKey is not { } key) return;
+        if (_codeMessageLocalizationKey is { } key)
+        {
+            var arguments = _codeMessageLocalizationArguments;
+            SetLocalizedCodeMessage(key, arguments);
+        }
 
-        var arguments = _codeMessageLocalizationArguments;
-        SetLocalizedCodeMessage(key, arguments);
+        RelocalizeNotification();
+    }
+
+    private void ShowLocalizedTransientNotification(
+        string key,
+        NotificationSeverity severity,
+        params object[] arguments) =>
+        ShowLocalizedNotification(key, severity, isTransient: true, arguments);
+
+    private void ShowLocalizedPersistentNotification(
+        string key,
+        NotificationSeverity severity,
+        params object[] arguments) =>
+        ShowLocalizedNotification(key, severity, isTransient: false, arguments);
+
+    private void ShowLocalizedNotification(
+        string key,
+        NotificationSeverity severity,
+        bool isTransient,
+        params object[] arguments)
+    {
+        CodeMessage = string.Empty;
+        _notificationLocalizationKey = key;
+        _notificationLocalizationArguments = arguments;
+        _localizedNotificationIsTransient = isTransient;
+        var message = string.Format(_localization.GetString(key), arguments);
+        if (isTransient)
+            Notification.ShowTransient(message, severity);
+        else
+            Notification.ShowPersistent(message, severity);
+    }
+
+    private void RelocalizeNotification()
+    {
+        if (_notificationLocalizationKey is not { } key || !Notification.HasMessage)
+            return;
+
+        var message = string.Format(
+            _localization.GetString(key),
+            _notificationLocalizationArguments);
+        if (_localizedNotificationIsTransient)
+            Notification.ShowTransient(message, Notification.Severity);
+        else
+            Notification.ShowPersistent(message, Notification.Severity);
     }
 
     private string FormatCustomPeriod(int periodSeconds) => string.Format(
@@ -1071,18 +1144,36 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     }
 
     private void ShowTransientMessage(string message)
-        => Notification.ShowTransient(message, NotificationSeverity.Success);
+    {
+        ClearNotificationLocalization();
+        Notification.ShowTransient(message, NotificationSeverity.Success);
+    }
 
-    private void ShowError(string message) =>
+    private void ShowError(string message)
+    {
+        ClearNotificationLocalization();
         Notification.ShowPersistent(message, NotificationSeverity.Error);
+    }
 
     private void ClearNotification()
-        => Notification.Clear();
+    {
+        ClearNotificationLocalization();
+        Notification.Clear();
+    }
+
+    private void ClearNotificationLocalization()
+    {
+        _notificationLocalizationKey = null;
+        _notificationLocalizationArguments = [];
+        _localizedNotificationIsTransient = false;
+    }
 
     private void NotificationPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
         if (args.PropertyName is not (nameof(NotificationState.Text)
             or nameof(NotificationState.HasMessage))) return;
+        if (!Notification.HasMessage)
+            ClearNotificationLocalization();
         OnPropertyChanged(nameof(Message));
         OnPropertyChanged(nameof(HasMessage));
         OnPropertyChanged(nameof(HasNoAccounts));

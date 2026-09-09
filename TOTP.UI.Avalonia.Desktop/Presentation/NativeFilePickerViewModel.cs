@@ -156,7 +156,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             }
 
             var outcome = importResult.Value;
-            if (outcome.Status == AccountImportStatus.Cancelled)
+            if (IsNothingToImport(outcome))
+            {
+                await _dialogs.ShowMessageAsync(new MessageDialogRequest(
+                    Localized(AvaloniaStringKeys.ImportAccounts),
+                    Localized(AvaloniaStringKeys.ImportNothingToImport, outcome.Skipped),
+                    NotificationSeverity.Information,
+                    Localized(AvaloniaStringKeys.Ok)));
+            }
+            else if (outcome.Status == AccountImportStatus.Cancelled)
             {
                 ShowTransientMessage(OutcomeMessage(outcome), NotificationSeverity.Information);
             }
@@ -175,11 +183,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             Task<bool> ConfirmImportAsync(AccountImportPreview preview, CancellationToken token) =>
                 _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
                     Localized(AvaloniaStringKeys.ImportAccounts),
-                    Localized(
-                        AvaloniaStringKeys.ImportConfirmationMessage,
-                        preview.TotalCount,
-                        preview.ConflictCount,
-                        StrategyLabel(preview.ConflictStrategy)),
+                    ImportConfirmationMessage(preview),
                     NotificationSeverity.Warning,
                     Localized(AvaloniaStringKeys.ImportAccounts),
                     Localized(AvaloniaStringKeys.Cancel)), token);
@@ -404,6 +408,35 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private string StrategyLabel(ImportConflictStrategy strategy) =>
         ConflictStrategies.First(option => option.Strategy == strategy).Label;
 
+    private string ImportConfirmationMessage(AccountImportPreview preview)
+    {
+        if (preview.ConflictStrategy != ImportConflictStrategy.SkipExisting)
+        {
+            return Localized(
+                AvaloniaStringKeys.ImportConfirmationMessage,
+                preview.TotalCount,
+                preview.ConflictCount,
+                StrategyLabel(preview.ConflictStrategy));
+        }
+
+        var newAccountCount = preview.TotalCount - preview.ConflictCount;
+        return preview.ConflictCount == 0
+            ? Localized(
+                AvaloniaStringKeys.ImportNewAccountsConfirmation,
+                newAccountCount)
+            : Localized(
+                AvaloniaStringKeys.ImportSkipExistingConfirmation,
+                preview.ConflictCount,
+                newAccountCount);
+    }
+
+    private static bool IsNothingToImport(AccountImportOutcome outcome) =>
+        outcome.Status == AccountImportStatus.Completed
+        && outcome.Added == 0
+        && outcome.Replaced == 0
+        && outcome.Skipped > 0
+        && outcome.Failed == 0;
+
     private IReadOnlyList<ImportStrategyOption> CreateConflictStrategies() =>
     [
         new(ImportConflictStrategy.SkipExisting, _localization.GetString(AvaloniaStringKeys.ImportSkipExisting)),
@@ -428,7 +461,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     }
 
     private void SetMessage(string message, NotificationSeverity severity)
-        => Notification.ShowPersistent(message, severity);
+        => Notification.ShowForSeverity(message, severity);
 
     private void ShowTransientMessage(string message, NotificationSeverity severity)
         => Notification.ShowTransient(message, severity);

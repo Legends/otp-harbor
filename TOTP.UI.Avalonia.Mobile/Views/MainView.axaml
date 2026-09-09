@@ -473,15 +473,11 @@
                                     Text="{Binding AppLockDisabledDescriptionText}"
                                     TextWrapping="Wrap" />
                                 <Button
-                                    Classes="wide secondary"
-                                    Command="{Binding BeginDisableAppLockCommand}"
-                                    Content="{Binding DisableAppLockText}"
-                                    IsVisible="{Binding IsAppLockEnabled}" />
-                                <Button
-                                    Classes="wide primary"
-                                    Command="{Binding EnableAppLockCommand}"
-                                    Content="{Binding EnableAppLockText}"
-                                    IsVisible="{Binding IsAppLockDisabled}" />
+                                    Classes="wide"
+                                    Classes.primary="{Binding IsAppLockDisabled}"
+                                    Classes.secondary="{Binding IsAppLockEnabled}"
+                                    Command="{Binding ToggleAppLockCommand}"
+                                    Content="{Binding AppLockActionText}" />
                                 <Border
                                     Background="{DynamicResource BrushSurfaceAlternate}"
                                     CornerRadius="8"

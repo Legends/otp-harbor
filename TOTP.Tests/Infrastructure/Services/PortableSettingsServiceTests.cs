@@ -25,6 +25,7 @@ public sealed class PortableSettingsServiceTests
         Assert.Same(sut.Current, result.Value);
         Assert.Equal("en", result.Value.CultureName);
         Assert.Equal(PreferredUnlockMethod.Password, result.Value.PreferredUnlockMethod);
+        Assert.True(result.Value.AppLockEnabled);
     }
 
     [Fact]
