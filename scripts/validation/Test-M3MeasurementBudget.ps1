@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Enforces the automated M3 performance budgets.
+
+.DESCRIPTION
+Reads an M3 JSON measurement report and fails when startup, working set, package footprint, native dependencies, or account-filtering percentiles exceed the reviewed thresholds.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$ReportPath

@@ -42,6 +42,12 @@
 
   <ItemGroup>
     <None Update="Fixtures\LegacySettings\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Shared\Styles\SharedStyles.axaml"
+          Link="Fixtures\Avalonia\SharedStyles.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Desktop\App.axaml"
+          Link="Fixtures\Avalonia\App.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- In TOTP.Tests.csproj -->

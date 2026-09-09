@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates completeness and format safety of every localized resource set.
+
+.DESCRIPTION
+Compares German, French, and Spanish desktop, mobile, and updater resources with their invariant catalogs; rejects missing, extra, empty, or duplicate entries and mismatched composite-format placeholders.
+#>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 

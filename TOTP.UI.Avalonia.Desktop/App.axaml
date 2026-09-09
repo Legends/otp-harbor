@@ -4,7 +4,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     RequestedThemeVariant="Dark">
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Light" Accent="#0078D4" />
+                <ColorPaletteResources x:Key="Dark" Accent="#0078D4" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
         <StyleInclude Source="avares://TOTP.UI.Avalonia.Shared/Styles/SharedStyles.axaml" />
     </Application.Styles>
 </Application>

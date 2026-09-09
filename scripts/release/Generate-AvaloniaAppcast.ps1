@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Generates and signs the Avalonia update appcast for release artifacts.
+
+.DESCRIPTION
+Validates HTTPS download metadata, release-manifest entries, Ed25519 key layout and public-key identity, invokes NetSparkle appcast generation, and writes the authenticated appcast payload to the requested output directory.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$ManifestPath,

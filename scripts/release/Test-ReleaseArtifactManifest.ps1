@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates a release artifact manifest and the files it describes.
+
+.DESCRIPTION
+Rejects malformed or duplicate metadata, unsafe paths, invalid release/update-policy combinations, missing or extra files, and any byte-length or SHA-256 mismatch between the manifest and artifact directory.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$ManifestPath,

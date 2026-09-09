@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Stores a GitHub token securely for the current Windows user.
+
+.DESCRIPTION
+Prompts for the token with hidden input and stores it either through PowerShell SecretStore or as a DPAPI-protected current-user file under AppData. The plaintext token is not written to disk.
+#>
 param(
     [Parameter(Mandatory = $false)]
     [switch]$UseSecretStore

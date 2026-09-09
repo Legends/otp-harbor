@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Regression-tests update policy and manifests for unsigned preview releases.
+
+.DESCRIPTION
+Builds synthetic package and release fixtures in a temporary directory, exercises direct RC/stable and disabled-update policy combinations plus feed selection, and rejects any unsigned-preview metadata that could imply signed automatic updates.
+#>
 $ErrorActionPreference = "Stop"
 
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("totp-unsigned-preview-" + [Guid]::NewGuid().ToString("N"))

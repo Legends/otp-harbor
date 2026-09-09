@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Creates the release artifact integrity and ownership manifest.
+
+.DESCRIPTION
+Classifies supported package filenames by platform, format, ownership, and update policy; records byte length and SHA-256 for every artifact; and writes deterministic release metadata tied to a full source commit.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$ReleaseVersion,

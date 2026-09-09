@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates the Windows MSI packaging implementation and workflow.
+
+.DESCRIPTION
+Statically checks WiX source generation, installer UI/resources, per-machine installation, shortcuts, optional launch behavior, update policy, manifest classification, MSI validation, and release-workflow integration.
+#>
 [CmdletBinding()]
 param()
 

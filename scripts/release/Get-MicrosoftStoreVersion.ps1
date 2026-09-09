@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Converts an OTP Harbor release tag into a Microsoft Store package version.
+
+.DESCRIPTION
+Validates stable or RC semantic tags and encodes them into the Store's four numeric components so RC builds sort below the matching stable release while remaining within Store limits.
+#>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]

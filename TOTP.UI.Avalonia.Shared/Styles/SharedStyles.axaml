@@ -121,6 +121,8 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
+            <SolidColorBrush x:Key="BrushProgressIndicator" Color="#0078D4" />
+
             <x:Double x:Key="Space1">4</x:Double>
             <x:Double x:Key="Space2">8</x:Double>
             <x:Double x:Key="Space3">12</x:Double>
@@ -289,7 +291,7 @@
         <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
     </Style>
-    <Style Selector="Button.titlebar-close">
+    <Style Selector="Button.titlebar-control">
         <Setter Property="Width" Value="34" />
         <Setter Property="Height" Value="33" />
         <Setter Property="MinHeight" Value="33" />
@@ -302,6 +304,14 @@
         <Setter Property="FontSize" Value="20" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.titlebar-minimize:pointerover">
+        <Setter Property="Background" Value="#22FFFFFF" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.titlebar-minimize:pressed">
+        <Setter Property="Background" Value="#33FFFFFF" />
+        <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
     <Style Selector="Button.titlebar-close:pointerover">
         <Setter Property="Background" Value="{DynamicResource BrushDanger}" />
@@ -438,6 +448,9 @@
         <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+    </Style>
+    <Style Selector="ProgressBar">
+        <Setter Property="Foreground" Value="{StaticResource BrushProgressIndicator}" />
     </Style>
     <Style Selector="Button:focus-visible">
         <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />

@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Builds the Windows and PNG application-icon assets from a source image.
+
+.DESCRIPTION
+Resizes the supplied image at high quality, emits the required PNG sizes and multi-resolution ICO file, and uses a disposable temporary working directory that is cleaned after generation.
+#>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]

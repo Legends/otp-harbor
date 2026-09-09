@@ -294,6 +294,7 @@
   <data name="DiagnosticUnavailableTitle" xml:space="preserve"><value>Diagnóstico de soporte no disponible</value></data>
   <data name="DiagnosticUnavailableMessage" xml:space="preserve"><value>No se pudo recopilar la información de soporte. Puedes cerrar este mensaje y seguir usando la aplicación.</value></data>
   <data name="Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="Minimize" xml:space="preserve"><value>Minimizar</value></data>
   <data name="CapabilitySessionLock" xml:space="preserve"><value>Detección del bloqueo de sesión</value></data>
   <data name="CapabilityClipboardWrite" xml:space="preserve"><value>Escritura en el portapapeles</value></data>
   <data name="CapabilityConditionalClipboardClear" xml:space="preserve"><value>Borrado condicional del portapapeles</value></data>

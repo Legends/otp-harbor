@@ -25,7 +25,9 @@
     </Window.KeyBindings>
 
     <Grid RowDefinitions="Auto,*">
-        <controls:ProductTitleBar Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+        <controls:ProductTitleBar
+            ShowMinimizeButton="True"
+            Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
         <shared:BusyOverlay
             Grid.Row="1"
             BusyMessage="{DynamicResource StartingSafely}"

@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Audits all solution packages for known NuGet vulnerabilities.
+
+.DESCRIPTION
+Runs the dotnet transitive vulnerability report, writes the raw JSON evidence to the requested path, enumerates every advisory, and fails when any vulnerable top-level or transitive package is reported.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$SolutionPath,

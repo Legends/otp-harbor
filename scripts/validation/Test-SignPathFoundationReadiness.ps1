@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Validates the repository's SignPath and code-signing readiness controls.
+
+.DESCRIPTION
+Checks policy, privacy, README, workflow, CODEOWNERS, build metadata, signing validation, and asset provenance for the exact governance and supply-chain statements required by the SignPath foundation process.
+#>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 

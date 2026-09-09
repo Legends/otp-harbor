@@ -269,6 +269,7 @@ public static class AvaloniaStringKeys
     public const string DiagnosticUnavailableTitle = nameof(DiagnosticUnavailableTitle);
     public const string DiagnosticUnavailableMessage = nameof(DiagnosticUnavailableMessage);
     public const string Close = nameof(Close);
+    public const string Minimize = nameof(Minimize);
     public const string CapabilitySessionLock = nameof(CapabilitySessionLock);
     public const string CapabilityClipboardWrite = nameof(CapabilityClipboardWrite);
     public const string CapabilityConditionalClipboardClear = nameof(CapabilityConditionalClipboardClear);
@@ -385,7 +386,7 @@ public static class AvaloniaStringKeys
         DiagnosticStageLine, DiagnosticPlatformCapabilities, DiagnosticCapabilityLine,
         DiagnosticSucceeded, DiagnosticFailed, DiagnosticRefreshSuccess,
         DiagnosticRefreshFailed, DiagnosticUnavailableTitle, DiagnosticUnavailableMessage,
-        Close, CapabilitySessionLock, CapabilityClipboardWrite,
+        Close, Minimize, CapabilitySessionLock, CapabilityClipboardWrite,
         CapabilityConditionalClipboardClear, CapabilityUpdateInstallation,
         CapabilityQuickUnlock, CapabilityDeviceSecretStore, CapabilityCamera,
         CapabilitySupported, CapabilityPermanentlyUnavailable,

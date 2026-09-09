@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Selects the newest published release that has a complete signed appcast.
+
+.DESCRIPTION
+Reads GitHub release JSON, ignores drafts and invalid tags, requires both appcast and appcast-signature assets, orders stable and RC versions consistently, and outputs the selected tag when one exists.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$ReleasesJsonPath

@@ -1,3 +1,10 @@
+<#
+.SYNOPSIS
+Packages an Avalonia macOS publish as an OTP Harbor application bundle.
+
+.DESCRIPTION
+Builds the .app layout and release archive, applies release-channel metadata, and optionally performs Developer ID signing and Apple notarization when a complete supported credential configuration is supplied.
+#>
 param(
     [Parameter(Mandatory = $true)]
     [string]$PublishDirectory,
