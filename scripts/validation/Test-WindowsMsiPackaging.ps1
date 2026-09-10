@@ -13,11 +13,15 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $packagerPath = Join-Path $repositoryRoot 'scripts/release/New-WindowsMsi.ps1'
+$setupPackagerPath = Join-Path $repositoryRoot 'scripts/release/New-WindowsSetup.ps1'
 $workflowPath = Join-Path $repositoryRoot '.github/workflows/build-and-test.yml'
 $manifestPath = Join-Path $repositoryRoot 'scripts/release/New-ReleaseArtifactManifest.ps1'
 $installerResourceRoot = Join-Path $repositoryRoot 'scripts/release/installer'
+$customInstallerProject = Join-Path $repositoryRoot 'TOTP.Installer/TOTP.Installer.csproj'
+$customInstallerView = Join-Path $repositoryRoot 'TOTP.Installer/Views/InstallerWindow.axaml'
 
 $packager = Get-Content -LiteralPath $packagerPath -Raw
+$setupPackager = Get-Content -LiteralPath $setupPackagerPath -Raw
 $workflow = Get-Content -LiteralPath $workflowPath -Raw
 $manifest = Get-Content -LiteralPath $manifestPath -Raw
 
@@ -57,8 +61,7 @@ foreach ($control in @(
     'wix extension add --global WixToolset.UI.wixext/5.0.2',
     '-p:PublishReadyToRun=true',
     'New-WindowsMsi.ps1',
-    'OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.msi',
-    'exactly six Windows/Linux artifacts',
+    'exactly five public Windows/Linux artifacts',
     'wix extension add --global WixToolset.Util.wixext/5.0.2',
     'wix extension add --global WixToolset.BootstrapperApplications.wixext/5.0.2',
     'OTP-Harbor-windows-x64-setup-${{ steps.versioning.outputs.release_version }}.exe'
@@ -115,30 +118,81 @@ if (-not $manifest.Contains('format = "msi"', [StringComparison]::Ordinal) -or
     throw 'The release manifest does not model the MSI as a separate installer-owned artifact.'
 }
 
-[xml]$theme = Get-Content (Join-Path $installerResourceRoot 'HarborTheme.xml') -Raw
 [xml]$bundle = Get-Content (Join-Path $installerResourceRoot 'HarborSetup.wxs') -Raw
-if ($theme.Theme.Window.HexStyle -ne '90080000') {
-    throw 'The setup must use a movable popup window without a classic caption.'
-}
-foreach ($page in @('Install', 'License', 'Options', 'Progress', 'Success', 'Failure', 'Modify', 'Help')) {
-    if ($page -notin $theme.Theme.Window.Page.Name) { throw "Missing setup page: $page" }
-}
 if ($bundle.Wix.Bundle.Chain.MsiPackage.MsiProperty.Name -ne 'INSTALLFOLDER' -or
     $bundle.Wix.Bundle.Chain.MsiPackage.GetAttribute('DisplayInternalUICondition', 'http://wixtoolset.org/schemas/v4/wxs/bal') -ne '0') {
     throw 'The bundle must pass its selected folder to the MSI and suppress the internal MSI UI.'
 }
-$themeKeys = @([regex]::Matches($theme.OuterXml, '#\(loc\.([A-Za-z0-9]+)\)') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+if ($bundle.Wix.Bundle.BootstrapperApplication.SourceFile -notmatch 'TOTP\.Installer\.exe' -or
+    $bundle.OuterXml -match 'WixStandardBootstrapperApplication') {
+    throw 'The setup must use the custom Avalonia bootstrapper instead of the classic WiX standard UI.'
+}
+
+$customInstallerProjectText = Get-Content -LiteralPath $customInstallerProject -Raw
+$customInstallerViewText = Get-Content -LiteralPath $customInstallerView -Raw
+foreach ($control in @(
+    '<OutputType>WinExe</OutputType>',
+    '<EnableDynamicLoading>true</EnableDynamicLoading>',
+    'WixToolset.BootstrapperApplicationApi',
+    'Avalonia.Desktop'
+)) {
+    if (-not $customInstallerProjectText.Contains($control, [StringComparison]::Ordinal)) {
+        throw "The custom installer project is missing required control: $control"
+    }
+}
+
+foreach ($control in @(
+    '& $DotNetExecutable publish',
+    '--self-contained true',
+    '-p:PublishSingleFile=true',
+    '-p:IncludeNativeLibrariesForSelfExtract=true',
+    'TOTP.Installer/TOTP.Installer.csproj',
+    'InstallerPayloads.wxi',
+    'Remove-Item -LiteralPath $installerUiDirectory -Recurse -Force'
+)) {
+    if (-not $setupPackager.Contains($control, [StringComparison]::Ordinal)) {
+        throw "The custom setup packager is missing required control: $control"
+    }
+}
+foreach ($control in @(
+    'WindowDecorations="None"',
+    'SystemDecorations="None"',
+    'IsVisible="{Binding IsWelcome}"',
+    'IsVisible="{Binding IsLicense}"',
+    'IsVisible="{Binding IsMaintenance}"',
+    'IsVisible="{Binding IsApplying}"',
+    'IsVisible="{Binding IsSuccess}"',
+    'IsVisible="{Binding IsFailure}"'
+)) {
+    $present = $customInstallerViewText.Contains($control, [StringComparison]::Ordinal)
+    if ($control -eq 'SystemDecorations="None"') {
+        if ($present) { throw 'The custom installer must not regress to the obsolete classic-window property.' }
+    }
+    elseif (-not $present) {
+        throw "The custom installer view is missing required control: $control"
+    }
+}
+
 $expectedSetupKeys = $null
+$viewTextKeys = @([regex]::Matches($customInstallerViewText, 'Text\.([A-Za-z0-9]+)') |
+    ForEach-Object { $_.Groups[1].Value } |
+    Where-Object { $_ -ne 'LicenseBody' } |
+    Sort-Object -Unique)
 foreach ($culture in @('en-us', 'de-de', 'fr-fr', 'es-es')) {
     [xml]$setupLocale = Get-Content (Join-Path $installerResourceRoot "Setup.$culture.wxl") -Raw
     $setupKeys = @($setupLocale.WixLocalization.String.Id | Sort-Object)
     if ($null -eq $expectedSetupKeys) { $expectedSetupKeys = $setupKeys }
     if (Compare-Object $expectedSetupKeys $setupKeys) { throw "Incomplete setup locale: $culture" }
-    foreach ($key in $themeKeys) {
-        if ($key -notin $setupKeys) { throw "Missing setup string $key in $culture" }
+    foreach ($key in $viewTextKeys) {
+        if ($key -notin $setupKeys) { throw "Missing custom setup string $key in $culture" }
     }
     if ($setupLocale.WixLocalization.String | Where-Object { [string]::IsNullOrWhiteSpace($_.Value) }) {
         throw "Empty setup translation in $culture"
     }
+    $licenseTextPath = Join-Path (Split-Path $customInstallerProject) "Localization/License.$culture.txt"
+    if (-not (Test-Path -LiteralPath $licenseTextPath -PathType Leaf) -or
+        [string]::IsNullOrWhiteSpace((Get-Content -LiteralPath $licenseTextPath -Raw))) {
+        throw "Missing custom setup license text for $culture"
+    }
 }
-Write-Host 'Windows MSI and frameless setup packaging controls are present.'
+Write-Host 'Windows MSI and custom Avalonia setup packaging controls are present.'

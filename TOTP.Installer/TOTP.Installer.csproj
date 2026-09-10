@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>TOTP.Installer</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <ApplicationIcon>..\TOTP.UI.Avalonia.Desktop\Assets\Icons\app.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\TOTP.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TOTP.Tests, PublicKey=002400000480000094000000060200000024000052534131000400000100010099f4449145c5f37f4715bbfc7b3393d2fdfd569adcb13022e232f8f06c45337f89a82a346e35ed1695174781565904b34d81922c0d1fbe62febeda403133dcbe7d871c76023605d7bdd9ee6f43771b1c1e248af86424fab9f96f0aceb1d912d52e268cd125f36ff9dcf16e99c410f60a93dac22efbebc5518edf10dd160eeac7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="WixToolset.BootstrapperApplicationApi" Version="5.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\TOTP.UI.Avalonia.Desktop\Assets\Icons\app-128.png"
+                      Link="Assets\app-128.png" />
+    <AvaloniaResource Include="..\scripts\release\installer\Setup.*.wxl"
+                      Link="Localization\%(Filename)%(Extension)" />
+    <AvaloniaResource Include="Localization\License.*.txt" />
+  </ItemGroup>
+</Project>

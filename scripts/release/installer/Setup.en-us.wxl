@@ -12,6 +12,7 @@
   <String Id="Options" Value="Location" />
   <String Id="Install" Value="Install" />
   <String Id="Close" Value="Close" />
+  <String Id="Minimize" Value="Minimize" />
   <String Id="LicenseHeader" Value="Before you begin" />
   <String Id="Back" Value="Back" />
   <String Id="OptionsHeader" Value="Choose your location" />
@@ -30,7 +31,7 @@
   <String Id="Launch" Value="Open OTP Harbor" />
   <String Id="Restart" Value="Restart Windows" />
   <String Id="FailureHeader" Value="Setup needs attention" />
-  <String Id="FailureMessage" Value="The changes could not be completed. Close setup and try again. The &lt;a href=&quot;#&quot;&gt;setup log&lt;/a&gt; contains diagnostic details." />
+  <String Id="FailureMessage" Value="The changes could not be completed. Close setup and try again. The setup log contains diagnostic details." />
   <String Id="HelpHeader" Value="Setup commands" />
   <String Id="HelpText" Value="/install — install the application&#10;/repair — repair application files&#10;/uninstall — remove the application&#10;/layout — save an offline package&#10;/quiet — run without dialogs&#10;/norestart — prevent automatic restart&#10;/log file — choose a diagnostic log" />
   <String Id="ConfirmCancelMessage" Value="Cancel setup? Any changes still in progress will be rolled back." />

@@ -1,0 +1,203 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TOTP.Installer.Presentation"
+        x:Class="TOTP.Installer.Views.InstallerWindow"
+        x:DataType="vm:InstallerViewModel"
+        Width="940" Height="620"
+        MinWidth="940" MinHeight="620"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Mica, Blur"
+        Title="{Binding Text.Caption}">
+  <Window.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI" />
+      <Setter Property="Foreground" Value="#EAF2FF" />
+    </Style>
+    <Style Selector="Button.action">
+      <Setter Property="MinHeight" Value="46" />
+      <Setter Property="Padding" Value="24,10" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="Background" Value="#7357F5" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.secondary">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Padding" Value="20,9" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Background" Value="#172A49" />
+      <Setter Property="BorderBrush" Value="#345078" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Foreground" Value="#DCEAFF" />
+    </Style>
+    <Style Selector="Button.chrome">
+      <Setter Property="Width" Value="42" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="CornerRadius" Value="9" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#BCD0EE" />
+      <Setter Property="FontSize" Value="16" />
+    </Style>
+    <Style Selector="TextBox.path">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Padding" Value="14,10" />
+      <Setter Property="CornerRadius" Value="11" />
+      <Setter Property="Background" Value="#0C1A31" />
+      <Setter Property="BorderBrush" Value="#29466C" />
+      <Setter Property="Foreground" Value="#EAF2FF" />
+    </Style>
+  </Window.Styles>
+
+  <Border CornerRadius="24" BorderBrush="#345078" BorderThickness="1" ClipToBounds="True">
+    <Border.Background>
+      <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#09172E" Offset="0" />
+        <GradientStop Color="#102342" Offset="0.55" />
+        <GradientStop Color="#0B1A32" Offset="1" />
+      </LinearGradientBrush>
+    </Border.Background>
+
+    <Grid RowDefinitions="64,*">
+      <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="18,10,12,6" PointerPressed="OnTitleBarPressed">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+          <Border Width="36" Height="36" CornerRadius="11" Background="#172E52">
+            <Image Source="avares://TOTP.Installer/Assets/app-128.png" Margin="5" />
+          </Border>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="OTP Harbor" FontSize="15" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Text.Kicker}" FontSize="10" Foreground="#72D9FF" LetterSpacing="1.4" />
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <Button Classes="chrome" Content="−" Click="OnMinimizeClicked"
+                  AutomationProperties.Name="{Binding Text.Minimize}" />
+          <Button Classes="chrome" Content="×" Command="{Binding CloseCommand}"
+                  AutomationProperties.Name="{Binding Text.Close}" />
+        </StackPanel>
+      </Grid>
+
+      <Grid Grid.Row="1" ColumnDefinitions="310,*">
+        <Border Margin="18,10,0,18" CornerRadius="20" Padding="30" BorderBrush="#28476E" BorderThickness="1">
+          <Border.Background>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+              <GradientStop Color="#172E57" Offset="0" />
+              <GradientStop Color="#301E64" Offset="1" />
+            </LinearGradientBrush>
+          </Border.Background>
+          <Grid RowDefinitions="Auto,*,Auto">
+            <StackPanel Spacing="18">
+              <Border Width="92" Height="92" CornerRadius="27" Background="#17233F" HorizontalAlignment="Left">
+                <Image Source="avares://TOTP.Installer/Assets/app-128.png" Margin="12" />
+              </Border>
+              <TextBlock Text="{Binding Text.Tagline}" FontSize="30" FontWeight="SemiBold" LineHeight="38" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Row="2" Spacing="14">
+              <Border Height="1" Background="#47628A" Opacity="0.6" />
+              <TextBlock Text="{Binding Text.Principles}" FontSize="11" FontWeight="SemiBold" Foreground="#72D9FF" LineHeight="22" LetterSpacing="1.1" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="54,36,52,44">
+          <StackPanel IsVisible="{Binding IsDetecting}" VerticalAlignment="Center" Spacing="26">
+            <ProgressBar IsIndeterminate="True" Height="5" Foreground="#72D9FF" />
+            <TextBlock Text="{Binding Text.Loading}" FontSize="32" FontWeight="SemiBold" HorizontalAlignment="Center" />
+          </StackPanel>
+
+          <Grid IsVisible="{Binding IsWelcome}" RowDefinitions="Auto,Auto,*,Auto">
+            <StackPanel Spacing="12">
+              <TextBlock Text="{Binding Text.InstallHeader}" FontSize="38" FontWeight="SemiBold" LineHeight="45" />
+              <TextBlock Text="{Binding Text.InstallMessage}" FontSize="15" Foreground="#B9C9E1" TextWrapping="Wrap" LineHeight="23" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Margin="0,28,0,0" Spacing="10">
+              <TextBlock Text="{Binding Text.Location}" FontSize="12" Foreground="#91A9C9" />
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <TextBox Classes="path" Text="{Binding InstallFolder}" />
+                <Button Grid.Column="1" Classes="secondary" Content="{Binding Text.Browse}" Command="{Binding BrowseCommand}" />
+              </Grid>
+            </StackPanel>
+            <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Margin="0,22,0,22" Spacing="10">
+              <CheckBox IsChecked="{Binding LicenseAccepted}" Content="{Binding Text.AcceptLicense}" Foreground="#DCEAFF" />
+              <Button Classes="secondary" Content="{Binding Text.ReadLicense}" Command="{Binding OpenLicenseCommand}" HorizontalAlignment="Left" />
+            </StackPanel>
+            <Button Grid.Row="3" Classes="action" Content="{Binding Text.Install}" Command="{Binding InstallCommand}" HorizontalAlignment="Right" MinWidth="174" />
+          </Grid>
+
+          <Grid IsVisible="{Binding IsLicense}" RowDefinitions="Auto,*,Auto">
+            <StackPanel Spacing="10">
+              <TextBlock Text="{Binding Text.LicenseHeader}" FontSize="36" FontWeight="SemiBold" />
+              <Border Height="1" Background="#345078" />
+            </StackPanel>
+            <Border Grid.Row="1" Margin="0,20,0,20" Padding="18" CornerRadius="14"
+                    Background="#0C1A31" BorderBrush="#29466C" BorderThickness="1">
+              <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <TextBlock Text="{Binding Text.LicenseBody}" FontSize="13" Foreground="#B9C9E1"
+                           TextWrapping="Wrap" LineHeight="20" />
+              </ScrollViewer>
+            </Border>
+            <Button Grid.Row="2" Classes="secondary" Content="{Binding Text.Back}"
+                    Command="{Binding BackCommand}" HorizontalAlignment="Right" MinWidth="120" />
+          </Grid>
+
+          <Grid IsVisible="{Binding IsMaintenance}" RowDefinitions="Auto,*,Auto">
+            <StackPanel Spacing="14">
+              <TextBlock Text="{Binding Text.ModifyHeader}" FontSize="38" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Text.ModifyMessage}" FontSize="16" Foreground="#B9C9E1" TextWrapping="Wrap" LineHeight="24" />
+            </StackPanel>
+            <Grid Grid.Row="2" ColumnDefinitions="*,*,Auto" ColumnSpacing="12">
+              <Button Classes="action" Content="{Binding Text.Repair}" Command="{Binding RepairCommand}" />
+              <Button Grid.Column="1" Classes="secondary" Content="{Binding Text.Uninstall}" Command="{Binding UninstallCommand}" />
+              <Button Grid.Column="2" Classes="secondary" Content="{Binding Text.Close}" Command="{Binding CloseCommand}" />
+            </Grid>
+          </Grid>
+
+          <Grid IsVisible="{Binding IsApplying}" RowDefinitions="Auto,*,Auto">
+            <StackPanel Spacing="14">
+              <TextBlock Text="{Binding Text.ProgressHeader}" FontSize="38" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Text.ProgressMessage}" FontSize="16" Foreground="#B9C9E1" TextWrapping="Wrap" LineHeight="24" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" VerticalAlignment="Center" Spacing="18">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="OTP HARBOR" FontSize="11" Foreground="#72D9FF" LetterSpacing="1.3" />
+                <TextBlock Grid.Column="1" Text="{Binding Progress, StringFormat={}{0}%}" FontSize="13" FontWeight="SemiBold" />
+              </Grid>
+              <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" Height="8" Foreground="#7357F5" Background="#172A49" />
+            </StackPanel>
+            <Button Grid.Row="2" Classes="secondary" Content="{Binding Text.Cancel}" Command="{Binding CancelCommand}" HorizontalAlignment="Right" />
+          </Grid>
+
+          <Grid IsVisible="{Binding IsSuccess}" RowDefinitions="*,Auto">
+            <StackPanel VerticalAlignment="Center" Spacing="18">
+              <Border Width="78" Height="78" CornerRadius="39" Background="#183F49" HorizontalAlignment="Left">
+                <TextBlock Text="✓" FontSize="38" Foreground="#62E3C5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="{Binding Text.SuccessHeader}" FontSize="40" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Text.SuccessMessage}" FontSize="16" Foreground="#B9C9E1" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+              <Button Classes="secondary" Content="{Binding Text.Close}" Command="{Binding CloseCommand}" />
+              <Button Classes="action" Content="{Binding Text.Launch}" Command="{Binding LaunchCommand}"
+                      IsVisible="{Binding CanLaunch}" />
+            </StackPanel>
+          </Grid>
+
+          <Grid IsVisible="{Binding IsFailure}" RowDefinitions="*,Auto">
+            <StackPanel VerticalAlignment="Center" Spacing="18">
+              <Border Width="78" Height="78" CornerRadius="39" Background="#4A2335" HorizontalAlignment="Left">
+                <TextBlock Text="!" FontSize="36" FontWeight="Bold" Foreground="#FF83A5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="{Binding Text.FailureHeader}" FontSize="38" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Text.FailureMessage}" FontSize="16" Foreground="#B9C9E1" TextWrapping="Wrap" LineHeight="24" />
+            </StackPanel>
+            <Button Grid.Row="1" Classes="secondary" Content="{Binding Text.Close}" Command="{Binding CloseCommand}" HorizontalAlignment="Right" />
+          </Grid>
+        </Grid>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>

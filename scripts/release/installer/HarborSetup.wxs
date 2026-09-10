@@ -1,17 +1,11 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
-  <Bundle Name="OTP Harbor" Manufacturer="OTP Harbor contributors"
+    <Bundle Name="OTP Harbor" Manufacturer="OTP Harbor contributors"
           Version="$(var.ReleaseVersion)" UpgradeCode="41C0CECF-4458-4ADF-A783-48715622197F"
           IconSourceFile="$(var.ApplicationIcon)">
-    <BootstrapperApplication>
-      <bal:WixStandardBootstrapperApplication Theme="rtfLicense"
-          ThemeFile="$(var.ResourceDirectory)/HarborTheme.xml"
-          LocalizationFile="$(var.ResourceDirectory)/Setup.$(var.Culture).wxl"
-          LicenseFile="$(var.ResourceDirectory)/License.$(var.Culture).rtf"
-          LogoFile="$(var.ApplicationLogo)"
-          LaunchTarget="[InstallFolder]TOTP.UI.Avalonia.Desktop.exe"
-          LaunchWorkingFolder="[InstallFolder]" />
+    <BootstrapperApplication SourceFile="!(bindpath.InstallerUi)\TOTP.Installer.exe">
+      <?include $(var.InstallerPayloads)?>
     </BootstrapperApplication>
     <Variable Name="InstallFolder" Type="formatted" Value="[ProgramFiles64Folder]OTP Harbor\" />
     <util:RegistrySearch Id="ExistingInstallFolder" Variable="InstallFolder"

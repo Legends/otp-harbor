@@ -235,7 +235,7 @@ try {
     Write-Output $outputPath
     & (Join-Path $PSScriptRoot 'New-WindowsSetup.ps1') `
         -MsiPath $outputPath -OutputDirectory $resolvedOutput `
-        -ReleaseVersion $ReleaseVersion -Culture $Culture -WixExecutable $WixExecutable
+        -ReleaseVersion $ReleaseVersion -WixExecutable $WixExecutable
 }
 finally {
     if (Test-Path -LiteralPath $workRoot) {

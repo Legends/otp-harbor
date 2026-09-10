@@ -28,6 +28,7 @@
     <ProjectReference Include="..\TOTP.Camera.OpenCv\TOTP.Camera.OpenCv.csproj" />
     <ProjectReference Include="..\TOTP.Core\TOTP.Core.csproj" />
     <ProjectReference Include="..\TOTP.Infrastructure\TOTP.Infrastructure.csproj" />
+    <ProjectReference Include="..\TOTP.Installer\TOTP.Installer.csproj" />
     <ProjectReference Include="..\TOTP.Platform.Linux\TOTP.Platform.Linux.csproj" />
     <ProjectReference Include="..\TOTP.Platform.MacOS\TOTP.Platform.MacOS.csproj" />
     <ProjectReference Include="..\TOTP.Platform.Windows\TOTP.Platform.Windows.csproj" />

@@ -12,6 +12,7 @@
   <String Id="Options" Value="Speicherort" />
   <String Id="Install" Value="Installieren" />
   <String Id="Close" Value="Schließen" />
+  <String Id="Minimize" Value="Minimieren" />
   <String Id="LicenseHeader" Value="Bevor du beginnst" />
   <String Id="Back" Value="Zurück" />
   <String Id="OptionsHeader" Value="Speicherort auswählen" />
@@ -30,7 +31,7 @@
   <String Id="Launch" Value="OTP Harbor öffnen" />
   <String Id="Restart" Value="Windows neu starten" />
   <String Id="FailureHeader" Value="Einrichtung unterbrochen" />
-  <String Id="FailureMessage" Value="Die Änderungen konnten nicht abgeschlossen werden. Schließe die Einrichtung und versuche es erneut. Details findest du im &lt;a href=&quot;#&quot;&gt;Installationsprotokoll&lt;/a&gt;." />
+  <String Id="FailureMessage" Value="Die Änderungen konnten nicht abgeschlossen werden. Schließe die Einrichtung und versuche es erneut. Details findest du im Installationsprotokoll." />
   <String Id="HelpHeader" Value="Setup-Befehle" />
   <String Id="HelpText" Value="/install — Anwendung installieren&#10;/repair — Programmdateien reparieren&#10;/uninstall — Anwendung entfernen&#10;/layout — Offline-Paket speichern&#10;/quiet — ohne Dialoge ausführen&#10;/norestart — automatischen Neustart verhindern&#10;/log Datei — Diagnoseprotokoll auswählen" />
   <String Id="ConfirmCancelMessage" Value="Einrichtung abbrechen? Noch laufende Änderungen werden rückgängig gemacht." />

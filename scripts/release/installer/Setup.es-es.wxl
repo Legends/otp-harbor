@@ -12,6 +12,7 @@
   <String Id="Options" Value="Ubicación" />
   <String Id="Install" Value="Instalar" />
   <String Id="Close" Value="Cerrar" />
+  <String Id="Minimize" Value="Minimizar" />
   <String Id="LicenseHeader" Value="Antes de empezar" />
   <String Id="Back" Value="Volver" />
   <String Id="OptionsHeader" Value="Elige la ubicación" />
@@ -30,7 +31,7 @@
   <String Id="Launch" Value="Abrir OTP Harbor" />
   <String Id="Restart" Value="Reiniciar Windows" />
   <String Id="FailureHeader" Value="La instalación se interrumpió" />
-  <String Id="FailureMessage" Value="No se pudieron completar los cambios. Cierra la instalación e inténtalo de nuevo. Consulta el &lt;a href=&quot;#&quot;&gt;registro de instalación&lt;/a&gt; para más detalles." />
+  <String Id="FailureMessage" Value="No se pudieron completar los cambios. Cierra la instalación e inténtalo de nuevo. Consulta el registro de instalación para más detalles." />
   <String Id="HelpHeader" Value="Comandos de instalación" />
   <String Id="HelpText" Value="/install — instalar la aplicación&#10;/repair — reparar los archivos&#10;/uninstall — eliminar la aplicación&#10;/layout — guardar un paquete sin conexión&#10;/quiet — ejecutar sin diálogos&#10;/norestart — impedir el reinicio automático&#10;/log archivo — elegir el registro" />
   <String Id="ConfirmCancelMessage" Value="¿Cancelar la instalación? Se revertirán los cambios en curso." />

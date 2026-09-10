@@ -906,10 +906,10 @@ jobs:
           "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem preview-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|msi|tar\.gz)|OTP-Harbor-windows-x64-setup-.+\.exe|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|tar\.gz)|OTP-Harbor-windows-x64-setup-.+\.exe|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 6) {
-            throw "The unsigned preview must contain exactly six Windows/Linux artifacts."
+          if ($artifactPaths.Count -ne 5) {
+            throw "The unsigned preview must contain exactly five public Windows/Linux artifacts."
           }
           if (Get-ChildItem preview-assets -File | Where-Object { $_.Name -match '(appcast|macos|\.dmg$)' }) {
             throw "Unsigned previews cannot contain appcasts or macOS artifacts."
@@ -1040,7 +1040,7 @@ jobs:
             This prerelease is provided for manual testing because the project does not yet have platform code-signing credentials.
 
             - The Windows executables are **not Authenticode-signed** and may trigger Microsoft Defender SmartScreen warnings.
-            - The frameless setup EXE and standalone MSI are also unsigned. Setup installs for all users with administrator approval, then opens the application as the interactive user. Both require manual installer upgrades; application-owned updates are disabled inside these packages.
+            - The custom Avalonia setup EXE is unsigned. It installs for all users with administrator approval, then opens the application as the interactive user. It requires manual installer upgrades; application-owned updates are disabled inside this package.
             - Direct Windows and portable Linux builds check an Ed25519-signed preview appcast and require explicit confirmation before installation.
             - The first preview download remains outside operating-system publisher trust; verify its checksums before running it.
             - macOS is not included because Developer ID signing and notarization are unavailable.
@@ -1054,7 +1054,6 @@ jobs:
           files: |
             preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
-            preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.msi
             preview-assets/OTP-Harbor-windows-x64-setup-${{ steps.versioning.outputs.release_version }}.exe
             preview-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             preview-assets/otp-harbor_*_amd64.deb
