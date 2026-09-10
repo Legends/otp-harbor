@@ -25,6 +25,7 @@ param(
     [string]$VmUser = "bushido",
     [string]$PreferredNetworkAdapter = "Stable RDP",
     [string]$SshIdentityFile,
+    [string]$GitExecutable,
     [string]$LocalRepository,
     [string]$MountedRepository,
     [string]$VmRepository = "~/source/otp-harbor",
@@ -35,12 +36,57 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+function Resolve-GitExecutable {
+    param([string]$RequestedExecutable)
+
+    if (-not [string]::IsNullOrWhiteSpace($RequestedExecutable)) {
+        if (-not (Test-Path -LiteralPath $RequestedExecutable -PathType Leaf)) {
+            throw "The Git executable '$RequestedExecutable' was not found."
+        }
+
+        return (Resolve-Path -LiteralPath $RequestedExecutable).Path
+    }
+
+    $pathCommand = Get-Command git -CommandType Application -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($null -ne $pathCommand) {
+        return $pathCommand.Source
+    }
+
+    $candidates = [Collections.Generic.List[string]]::new()
+    $programFiles = [Environment]::GetFolderPath(
+        [Environment+SpecialFolder]::ProgramFiles)
+    $programFilesX86 = [Environment]::GetFolderPath(
+        [Environment+SpecialFolder]::ProgramFilesX86)
+    $localApplicationData = [Environment]::GetFolderPath(
+        [Environment+SpecialFolder]::LocalApplicationData)
+    $candidates.Add((Join-Path $programFiles "Git\cmd\git.exe"))
+    $candidates.Add((Join-Path $localApplicationData "Programs\Git\cmd\git.exe"))
+
+    $vsWhere = Join-Path $programFilesX86 "Microsoft Visual Studio\Installer\vswhere.exe"
+    if (Test-Path -LiteralPath $vsWhere -PathType Leaf) {
+        $visualStudioInstallations = @(
+            & $vsWhere -products * -all -property installationPath 2>$null)
+        foreach ($installation in $visualStudioInstallations) {
+            if ([string]::IsNullOrWhiteSpace($installation)) { continue }
+            $candidates.Add((Join-Path $installation (
+                "Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe")))
+        }
+    }
+
+    foreach ($candidate in $candidates | Select-Object -Unique) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+
+    throw "Git is required to derive the local VM build version. Install Git, add it to PATH, or supply -GitExecutable."
+}
+
 if (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
     throw "OpenSSH client (ssh.exe) is required on the Windows host."
 }
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw "Git is required to derive the local VM build version from the latest release tag."
-}
+$GitExecutable = Resolve-GitExecutable $GitExecutable
 
 if ([string]::IsNullOrWhiteSpace($SshIdentityFile)) {
     $defaultIdentityFile = Join-Path (
@@ -93,7 +139,7 @@ if (-not $usesMountedRepository) {
     }
 }
 
-$versionTag = & git -C $repositoryRoot describe --tags --abbrev=0 --match "v[0-9]*" 2>$null
+$versionTag = & $GitExecutable -C $repositoryRoot describe --tags --abbrev=0 --match "v[0-9]*" 2>$null
 if ($LASTEXITCODE -ne 0 -or $versionTag -notmatch '^v(?<version>\d+\.\d+\.\d+(?:-rc\d+)?)$') {
     throw "A semantic release tag is required to version the VM test build."
 }

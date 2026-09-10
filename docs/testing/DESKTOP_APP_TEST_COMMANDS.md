@@ -29,7 +29,9 @@ XFCE session and forwards its display, authorization, D-Bus, and runtime
 environment to the application. It derives the product version from the latest
 reachable semantic Git tag and adds `+local` to the informational version. The
 support report therefore identifies the release baseline without pretending
-that the working-tree build is a published package.
+that the working-tree build is a published package. Git is discovered from
+`PATH`, a standalone per-user or machine installation, or a Visual Studio
+installation. Use `-GitExecutable` only when Git is installed elsewhere.
 
 The default VM-local repository is `~/source/otp-harbor`. A pre-existing
 shared mount can still be used explicitly when needed:
