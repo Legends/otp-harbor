@@ -50,17 +50,25 @@ Generation prompt:
 - `store-super-hero-1920x1080.png`
 - `store-poster-art-720x1080.png`
 - `store-app-tile-300x300.png`
+- `store-logo-150x150.png`
+- `store-logo-71x71.png`
 
 The final images were visually reviewed for exact logo geometry, safe placement, absent text and third-party branding, and required dimensions.
 
 ## Microsoft Store screenshots
 
-The four screenshots under `packaging/windows-store/screenshots/en-US` were captured from the
-current Windows desktop build on 2026-09-10. Before capture, the existing synthetic-only vault was
+The four-image Store upload set under `packaging/windows-store/screenshots/en-US` was captured from
+the current Windows desktop build on 2026-09-10. Before capture, the existing synthetic-only vault was
 cleared and repopulated with eight deterministic synthetic accounts using prominent issuer labels
 and reserved `example.invalid` account names. The screenshots were visually reviewed to confirm
 that they contain no real accounts, OTP seeds, personal paths, desktop content, or OS notifications.
 One-time codes and the QR workflow, when shown, derive only from synthetic fixture material.
+
+`04-quick-unlock-2.png` is a maintainer-provided capture of the same synthetic-only build with an
+empty Windows Security PIN prompt. `04-quick-unlock-transparent.png` is a deterministic derivative
+that preserves the application and Windows Security pixels while removing only the surrounding
+desktop area into a real PNG alpha channel. No entered PIN, account secret, or personal desktop
+content is present.
 
 ## Reviewed file hashes
 
@@ -81,9 +89,13 @@ One-time codes and the QR workflow, when shown, derive only from synthetic fixtu
 | `packaging/windows-store/assets/store-super-hero-1920x1080.png` | `1df8efd083a88c7aaef390ec3b5c9774458aa8ff5db8055e188a737a30184a41` |
 | `packaging/windows-store/assets/store-poster-art-720x1080.png` | `ec5893f4574003d64376c18a720596a5a55ff3039d408e52c10665f04d93e65f` |
 | `packaging/windows-store/assets/store-app-tile-300x300.png` | `cab7d95f5b6e8d20a39d6b60af33f034dc904409783adfb9eb2eb5bca57faf30` |
+| `packaging/windows-store/assets/store-logo-150x150.png` | `796e08817f41658d05c25e1826ece092df73602b9072b31c76c00e85adb95979` |
+| `packaging/windows-store/assets/store-logo-71x71.png` | `d7716fa64f2e7aafcb85d3ee6bb98647f874a5328500a3e140dddf42bfe4ab20` |
 | `packaging/windows-store/screenshots/en-US/01-account-dashboard.png` | `f35c44c51e29e7561053cbfe7f6593465df60924feaa3a84d194f2d8b4a07ce6` |
 | `packaging/windows-store/screenshots/en-US/02-search-accounts.png` | `70eee4716ccfbc278789e92bb71b3864573e821a0888a1431f44a852c014592f` |
 | `packaging/windows-store/screenshots/en-US/03-add-account.png` | `f2a6594983eddb8955fd3275e6ddbb2063579a139d182c7c2931e9f3f2211861` |
 | `packaging/windows-store/screenshots/en-US/04-quick-unlock.png` | `c80dd15aad7c584c444784fa29ec559c1e4bf38fd32df1632bfdfbb4b6947c3c` |
+| `packaging/windows-store/screenshots/en-US/04-quick-unlock-2.png` | `13db0d0da561c511c6a94acf5213f68a31ed859c0f0e82a7310265211f0dd88c` |
+| `packaging/windows-store/screenshots/en-US/04-quick-unlock-transparent.png` | `6ff8db7a3f08c4b34d047538148071b50b6541d8cb63b2820fdc4914a9a32a41` |
 
 Any replacement requires a new provenance record, license review, updated hashes, and visual/build validation.

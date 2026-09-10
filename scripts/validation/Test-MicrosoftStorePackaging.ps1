@@ -79,6 +79,16 @@ function Assert-PngMinimumDimensions {
     }
 }
 
+function Assert-PngHasAlpha {
+    param([Parameter(Mandatory)][string]$RelativePath)
+
+    $path = Join-Path $repositoryRoot $RelativePath
+    $bytes = [IO.File]::ReadAllBytes($path)
+    if ($bytes.Length -lt 26 -or $bytes[25] -notin 4, 6) {
+        throw "Microsoft Store PNG does not contain an alpha channel: $RelativePath"
+    }
+}
+
 foreach ($placeholder in @(
     '__IDENTITY_NAME__',
     '__PUBLISHER__',
@@ -165,14 +175,18 @@ if (-not $listing.Contains('Screenshots must use synthetic accounts only.', [Str
 Assert-PngDimensions 'packaging/windows-store/assets/store-super-hero-1920x1080.png' 1920 1080
 Assert-PngDimensions 'packaging/windows-store/assets/store-poster-art-720x1080.png' 720 1080
 Assert-PngDimensions 'packaging/windows-store/assets/store-app-tile-300x300.png' 300 300
+Assert-PngDimensions 'packaging/windows-store/assets/store-logo-150x150.png' 150 150
+Assert-PngDimensions 'packaging/windows-store/assets/store-logo-71x71.png' 71 71
 
 foreach ($screenshot in @(
     'packaging/windows-store/screenshots/en-US/01-account-dashboard.png',
     'packaging/windows-store/screenshots/en-US/02-search-accounts.png',
     'packaging/windows-store/screenshots/en-US/03-add-account.png',
-    'packaging/windows-store/screenshots/en-US/04-quick-unlock.png'
+    'packaging/windows-store/screenshots/en-US/04-quick-unlock-transparent.png'
 )) {
     Assert-PngMinimumDimensions $screenshot
 }
+
+Assert-PngHasAlpha 'packaging/windows-store/screenshots/en-US/04-quick-unlock-transparent.png'
 
 Write-Output 'Microsoft Store packaging controls are present.'

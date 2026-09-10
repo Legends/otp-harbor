@@ -14,16 +14,32 @@ Website URL: `https://legends.github.io/otp-harbor/`
 
 ## Partner Center visual assets
 
-Upload the files from `packaging/windows-store/assets` without adding product-title text:
+In **Store logos / Images for Store display**, upload these files from
+`packaging/windows-store/assets` in the matching square slots:
+
+- `store-app-tile-300x300.png` — 1:1 app tile
+- `store-logo-150x150.png` — 1:1 150 x 150 Store logo
+- `store-logo-71x71.png` — 1:1 71 x 71 Store logo
+
+In **Trailers and additional assets / Windows 10 or Windows 11 and Xbox image**, upload:
 
 - `store-super-hero-1920x1080.png` — 16:9 super hero art
-- `store-poster-art-720x1080.png` — 2:3 poster art
-- `store-app-tile-300x300.png` — 1:1 app tile
 
-The reviewed English screenshots are in `packaging/windows-store/screenshots/en-US` and contain
-only deterministic synthetic accounts. Their issuer labels are `Amazon`, `Cloudflare`, `Discord`,
-`Dropbox`, `GitHub`, `Google`, `Microsoft`, and `Proton`; account names use the reserved
-`example.invalid` domain.
+Do not upload `assets/source/store-abstract-background.png`; it is only the generated source used
+to compose the final assets. The 2:3 poster art is intended for games and is not needed for OTP
+Harbor, which is categorized as an app.
+
+The reviewed English upload set is in `packaging/windows-store/screenshots/en-US`:
+
+1. `01-account-dashboard.png`
+2. `02-search-accounts.png`
+3. `03-add-account.png`
+4. `04-quick-unlock-transparent.png`
+
+The screenshots contain only deterministic synthetic accounts. Their issuer labels are `Amazon`,
+`Cloudflare`, `Discord`, `Dropbox`, `GitHub`, `Google`, `Microsoft`, and `Proton`; account names use
+the reserved `example.invalid` domain. `04-quick-unlock-2.png` is the original capture retained for
+provenance; upload its transparent derivative listed above.
 
 Suggested captions, in upload order:
 
