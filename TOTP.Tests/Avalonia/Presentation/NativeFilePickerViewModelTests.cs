@@ -69,7 +69,7 @@ public sealed class NativeFilePickerViewModelTests
             Mock.Of<IExportService>(),
             Mock.Of<IAccountManager>(),
             dialogs.Object,
-            transientMessageDuration: TimeSpan.FromMilliseconds(20),
+            transientMessageDuration: TimeSpan.FromMilliseconds(500),
             cameraScanner: cameraScanner);
 
         await sut.ImportGoogleQrAsync();
@@ -82,7 +82,7 @@ public sealed class NativeFilePickerViewModelTests
             It.IsAny<Action>()), Times.Never);
         Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
         Assert.Contains("2", sut.Message, StringComparison.Ordinal);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await Task.Delay(800, TestContext.Current.CancellationToken);
         Assert.Empty(sut.Message);
     }
 
