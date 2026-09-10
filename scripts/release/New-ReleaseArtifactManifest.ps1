@@ -147,7 +147,7 @@ $artifacts = foreach ($path in $ArtifactPath) {
         if ($null -ne $target.releaseVersion -and $target.releaseVersion -cne $ReleaseVersion) {
             throw "Artifact version does not match ReleaseVersion: $($file.Name)"
         }
-        if ($target.updatePolicy -ne "package-manager" -and $file.Length -gt $maximumDirectUpdateBytes) {
+        if ($target.updatePolicy -eq "signed-appcast" -and $file.Length -gt $maximumDirectUpdateBytes) {
             throw "Direct-update artifact exceeds the 128 MiB client safety limit: $($file.Name)"
         }
         [ordered]@{

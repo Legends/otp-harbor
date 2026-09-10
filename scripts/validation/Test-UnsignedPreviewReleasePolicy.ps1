@@ -74,6 +74,14 @@ try {
         [IO.File]::WriteAllBytes($path, [byte[]](1, 2, 3, 4))
         $path
     }
+    $largeInstallerPath = $artifactPaths | Where-Object { $_ -match '-setup-' }
+    $largeInstaller = [IO.File]::OpenWrite($largeInstallerPath)
+    try {
+        $largeInstaller.SetLength((129L * 1024 * 1024))
+    }
+    finally {
+        $largeInstaller.Dispose()
+    }
 
     $manifestPath = Join-Path $artifactRoot "release-artifacts-unsigned-preview.json"
     & (Join-Path $PSScriptRoot "../release/New-ReleaseArtifactManifest.ps1") `
