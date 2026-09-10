@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="de-de" Language="1031">
+  <String Id="Caption" Value="OTP Harbor Setup" />
+  <String Id="Tagline" Value="Deine Codes.&#10;Dein Gerät.&#10;Deine Kontrolle." />
+  <String Id="Principles" Value="LOKAL GESPEICHERT&#10;VERSCHLÜSSELTER TRESOR&#10;PASSWORT-WIEDERHERSTELLUNG" />
+  <String Id="Kicker" Value="OTP HARBOR / EINRICHTUNG" />
+  <String Id="Loading" Value="Dein Hafen wird vorbereitet" />
+  <String Id="InstallHeader" Value="Ein sicherer Ort&#10;für deine Codes." />
+  <String Id="InstallMessage" Value="Installiere OTP Harbor für alle auf diesem PC. Dein verschlüsselter Tresor bleibt in deinem Windows-Profil. Windows fragt nach der Berechtigung zur Installation." />
+  <String Id="ReadLicense" Value="Lizenz und Vorschauhinweis lesen" />
+  <String Id="AcceptLicense" Value="Ich akzeptiere die Lizenzbedingungen und den Vorschauhinweis." />
+  <String Id="Options" Value="Speicherort" />
+  <String Id="Install" Value="Installieren" />
+  <String Id="Close" Value="Schließen" />
+  <String Id="LicenseHeader" Value="Bevor du beginnst" />
+  <String Id="Back" Value="Zurück" />
+  <String Id="OptionsHeader" Value="Speicherort auswählen" />
+  <String Id="Location" Value="Installationsordner der Anwendung" />
+  <String Id="Browse" Value="Durchsuchen" />
+  <String Id="ProgressHeader" Value="Wird eingerichtet" />
+  <String Id="ProgressMessage" Value="Deine Änderungen werden angewendet. Lass dieses Fenster geöffnet, bis die Einrichtung abgeschlossen ist." />
+  <String Id="Cancel" Value="Abbrechen" />
+  <String Id="ModifyHeader" Value="Deinen Hafen verwalten" />
+  <String Id="ModifyMessage" Value="Repariere Programmdateien oder entferne OTP Harbor. Dein persönlicher Tresor und deine Wiederherstellungsdaten bleiben erhalten." />
+  <String Id="Repair" Value="Reparieren" />
+  <String Id="Uninstall" Value="Deinstallieren" />
+  <String Id="SuccessHeader" Value="Alles erledigt." />
+  <String Id="SuccessMessage" Value="Die gewünschten Änderungen sind abgeschlossen. Du kannst die Einrichtung jetzt schließen." />
+  <String Id="RestartMessage" Value="Windows muss neu gestartet werden, um die Änderungen abzuschließen. Speichere vorher deine Arbeit." />
+  <String Id="Launch" Value="OTP Harbor öffnen" />
+  <String Id="Restart" Value="Windows neu starten" />
+  <String Id="FailureHeader" Value="Einrichtung unterbrochen" />
+  <String Id="FailureMessage" Value="Die Änderungen konnten nicht abgeschlossen werden. Schließe die Einrichtung und versuche es erneut. Details findest du im &lt;a href=&quot;#&quot;&gt;Installationsprotokoll&lt;/a&gt;." />
+  <String Id="HelpHeader" Value="Setup-Befehle" />
+  <String Id="HelpText" Value="/install — Anwendung installieren&#10;/repair — Programmdateien reparieren&#10;/uninstall — Anwendung entfernen&#10;/layout — Offline-Paket speichern&#10;/quiet — ohne Dialoge ausführen&#10;/norestart — automatischen Neustart verhindern&#10;/log Datei — Diagnoseprotokoll auswählen" />
+  <String Id="ConfirmCancelMessage" Value="Einrichtung abbrechen? Noch laufende Änderungen werden rückgängig gemacht." />
+  <String Id="ExecuteUpgradeRelatedBundleMessage" Value="Vorherige Installation aktualisieren" />
+  <String Id="FilesInUseTitle" Value="Laufende Anwendungen schließen" />
+  <String Id="FilesInUseLabel" Value="Diese Anwendungen verwenden Dateien, die geändert werden müssen:" />
+  <String Id="FilesInUseCloseRadioButton" Value="Anwendungen schließen und nach Möglichkeit neu starten." />
+  <String Id="FilesInUseDontCloseRadioButton" Value="Anwendungen geöffnet lassen. Ein Windows-Neustart kann erforderlich sein." />
+  <String Id="FilesInUseRetryButton" Value="Erneut versuchen" />
+  <String Id="FilesInUseIgnoreButton" Value="Ignorieren" />
+  <String Id="FilesInUseExitButton" Value="Einrichtung beenden" />
+  <String Id="FilesInUseNetfxCloseRadioButton" Value="Anwendungen schließen." />
+</WixLocalization>

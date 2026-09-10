@@ -4,4 +4,5 @@
   <String Id="InstallerShortcutDescription" Value="Autenticador TOTP local" />
   <String Id="InstallerLaunchApplication" Value="Iniciar OTP Harbor" />
   <String Id="InstallerSuccessMessage" Value="OTP Harbor se instaló correctamente." />
+  <String Id="InstallerNewerVersionInstalled" Value="Ya hay instalada una versión más reciente de OTP Harbor." />
 </WixLocalization>

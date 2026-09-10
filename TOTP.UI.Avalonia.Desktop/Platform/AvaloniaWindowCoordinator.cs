@@ -7,6 +7,7 @@ public sealed class AvaloniaWindowCoordinator
     private readonly object _gate = new();
     private Window? _mainWindow;
     private readonly List<Window> _ownedDialogs = [];
+    private int _nativePromptCount;
 
     public Window? CurrentActivationTarget
     {
@@ -77,6 +78,7 @@ public sealed class AvaloniaWindowCoordinator
 
     public void ActivateCurrent()
     {
+        if (_nativePromptCount > 0) return;
         var target = CurrentActivationTarget;
         if (target is null) return;
 
@@ -84,6 +86,38 @@ public sealed class AvaloniaWindowCoordinator
             target.WindowState = WindowState.Normal;
         target.Show();
         target.Activate();
+    }
+
+    public IDisposable BeginNativePrompt()
+    {
+        var owner = CurrentActivationTarget;
+        if (owner is null || !owner.IsVisible)
+            throw new InvalidOperationException("A visible owner is required for a native prompt.");
+        if (_nativePromptCount != 0)
+            throw new InvalidOperationException("A native prompt is already active.");
+
+        ActivateCurrent();
+        var wasTopmost = owner.Topmost;
+        owner.Topmost = false;
+        _nativePromptCount++;
+        return new NativePromptRegistration(this, owner, wasTopmost);
+    }
+
+    private sealed class NativePromptRegistration(
+        AvaloniaWindowCoordinator coordinator, Window owner, bool wasTopmost) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            coordinator._nativePromptCount--;
+            // A cancelled shutdown must never resurrect a closed owner.
+            if (!owner.IsVisible || !ReferenceEquals(coordinator.CurrentActivationTarget, owner)) return;
+            owner.Topmost = wasTopmost;
+            coordinator.ActivateCurrent();
+        }
     }
 
     private void UnregisterOwnedDialog(Window dialog)

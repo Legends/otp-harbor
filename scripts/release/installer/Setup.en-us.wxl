@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-us" Language="1033">
+  <String Id="Caption" Value="OTP Harbor Setup" />
+  <String Id="Tagline" Value="Your codes.&#10;Your device.&#10;Your control." />
+  <String Id="Principles" Value="LOCAL FIRST&#10;ENCRYPTED STORAGE&#10;PASSWORD RECOVERY" />
+  <String Id="Kicker" Value="OTP HARBOR / SETUP" />
+  <String Id="Loading" Value="Preparing your harbor" />
+  <String Id="InstallHeader" Value="A safer home&#10;for your codes." />
+  <String Id="InstallMessage" Value="Install OTP Harbor for everyone on this PC. Your encrypted vault stays in your own Windows profile. Windows will ask for permission to install." />
+  <String Id="ReadLicense" Value="Read license and preview notice" />
+  <String Id="AcceptLicense" Value="I accept the license terms and preview notice." />
+  <String Id="Options" Value="Location" />
+  <String Id="Install" Value="Install" />
+  <String Id="Close" Value="Close" />
+  <String Id="LicenseHeader" Value="Before you begin" />
+  <String Id="Back" Value="Back" />
+  <String Id="OptionsHeader" Value="Choose your location" />
+  <String Id="Location" Value="Application installation folder" />
+  <String Id="Browse" Value="Browse" />
+  <String Id="ProgressHeader" Value="Setting things up" />
+  <String Id="ProgressMessage" Value="Applying your changes. Keep this window open until setup finishes." />
+  <String Id="Cancel" Value="Cancel" />
+  <String Id="ModifyHeader" Value="Keep your harbor ready" />
+  <String Id="ModifyMessage" Value="Repair application files or remove OTP Harbor. Your personal vault and recovery data are retained." />
+  <String Id="Repair" Value="Repair" />
+  <String Id="Uninstall" Value="Uninstall" />
+  <String Id="SuccessHeader" Value="All done." />
+  <String Id="SuccessMessage" Value="Your requested changes are complete. You can close setup now." />
+  <String Id="RestartMessage" Value="Windows needs a restart to finish applying these changes. Save your work before restarting." />
+  <String Id="Launch" Value="Open OTP Harbor" />
+  <String Id="Restart" Value="Restart Windows" />
+  <String Id="FailureHeader" Value="Setup needs attention" />
+  <String Id="FailureMessage" Value="The changes could not be completed. Close setup and try again. The &lt;a href=&quot;#&quot;&gt;setup log&lt;/a&gt; contains diagnostic details." />
+  <String Id="HelpHeader" Value="Setup commands" />
+  <String Id="HelpText" Value="/install — install the application&#10;/repair — repair application files&#10;/uninstall — remove the application&#10;/layout — save an offline package&#10;/quiet — run without dialogs&#10;/norestart — prevent automatic restart&#10;/log file — choose a diagnostic log" />
+  <String Id="ConfirmCancelMessage" Value="Cancel setup? Any changes still in progress will be rolled back." />
+  <String Id="ExecuteUpgradeRelatedBundleMessage" Value="Updating the previous installation" />
+  <String Id="FilesInUseTitle" Value="Close running applications" />
+  <String Id="FilesInUseLabel" Value="These applications are using files that setup needs to change:" />
+  <String Id="FilesInUseCloseRadioButton" Value="Close applications and restart them when possible." />
+  <String Id="FilesInUseDontCloseRadioButton" Value="Keep applications open. A Windows restart may be required." />
+  <String Id="FilesInUseRetryButton" Value="Retry" />
+  <String Id="FilesInUseIgnoreButton" Value="Ignore" />
+  <String Id="FilesInUseExitButton" Value="Exit setup" />
+  <String Id="FilesInUseNetfxCloseRadioButton" Value="Close applications." />
+</WixLocalization>

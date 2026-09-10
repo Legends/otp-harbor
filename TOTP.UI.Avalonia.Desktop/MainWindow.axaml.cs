@@ -63,7 +63,11 @@ public partial class MainWindow : Window
             if (!_initialized)
             {
                 _initialized = true;
-                viewModel.InitializeCommand.Execute(null);
+                // Finish the native Show/activation sequence before opening OS prompts.
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (IsVisible) viewModel.InitializeCommand.Execute(null);
+                }, DispatcherPriority.Background);
             }
         }
     }

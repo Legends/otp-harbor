@@ -38,6 +38,16 @@ function Get-ArtifactTarget {
     param([string]$FileName)
 
     switch -Regex ($FileName) {
+        '^OTP-Harbor-windows-x64-setup-(?<version>\d+\.\d+\.\d+(?:-rc\d+)?)\.exe$' {
+            return [ordered]@{
+                operatingSystem = "windows"
+                architecture = "x64"
+                format = "exe"
+                ownership = "windows-installer"
+                updatePolicy = "manual-download"
+                releaseVersion = $Matches.version
+            }
+        }
         '^(?:OTP-Harbor|TOTP-Manager)-windows-x64-(?<version>\d+\.\d+\.\d+(?:-rc\d+)?)\.msi$' {
             return [ordered]@{
                 operatingSystem = "windows"

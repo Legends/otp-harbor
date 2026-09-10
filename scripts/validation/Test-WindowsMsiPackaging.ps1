@@ -38,6 +38,9 @@ foreach ($control in @(
     'WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT',
     'WIXUI_EXITDIALOGOPTIONALTEXT',
     'CustomAction Id="LaunchApplication"',
+    'DllEntry="WixUnelevatedShellExec"',
+    'WixUnelevatedShellExecTarget',
+    'New-WindowsSetup.ps1',
     'Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed"',
     'otp-harbor.installed',
     '-ext WixToolset.UI.wixext/5.0.2',
@@ -55,7 +58,10 @@ foreach ($control in @(
     '-p:PublishReadyToRun=true',
     'New-WindowsMsi.ps1',
     'OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.msi',
-    'exactly five Windows/Linux artifacts'
+    'exactly six Windows/Linux artifacts',
+    'wix extension add --global WixToolset.Util.wixext/5.0.2',
+    'wix extension add --global WixToolset.BootstrapperApplications.wixext/5.0.2',
+    'OTP-Harbor-windows-x64-setup-${{ steps.versioning.outputs.release_version }}.exe'
 )) {
     if (-not $workflow.Contains($control, [StringComparison]::Ordinal)) {
         throw "The release workflow is missing MSI control: $control"
@@ -66,7 +72,8 @@ $expectedLocalizationKeys = @(
     'InstallerManufacturer',
     'InstallerShortcutDescription',
     'InstallerLaunchApplication',
-    'InstallerSuccessMessage'
+    'InstallerSuccessMessage',
+    'InstallerNewerVersionInstalled'
 )
 $localizationFiles = @(Get-ChildItem -LiteralPath $installerResourceRoot -Filter 'OTP-Harbor.*.wxl' -File)
 if ($localizationFiles.Count -ne 4) {
@@ -108,4 +115,30 @@ if (-not $manifest.Contains('format = "msi"', [StringComparison]::Ordinal) -or
     throw 'The release manifest does not model the MSI as a separate installer-owned artifact.'
 }
 
-Write-Host 'Windows MSI packaging controls are present.'
+[xml]$theme = Get-Content (Join-Path $installerResourceRoot 'HarborTheme.xml') -Raw
+[xml]$bundle = Get-Content (Join-Path $installerResourceRoot 'HarborSetup.wxs') -Raw
+if ($theme.Theme.Window.HexStyle -ne '90080000') {
+    throw 'The setup must use a movable popup window without a classic caption.'
+}
+foreach ($page in @('Install', 'License', 'Options', 'Progress', 'Success', 'Failure', 'Modify', 'Help')) {
+    if ($page -notin $theme.Theme.Window.Page.Name) { throw "Missing setup page: $page" }
+}
+if ($bundle.Wix.Bundle.Chain.MsiPackage.MsiProperty.Name -ne 'INSTALLFOLDER' -or
+    $bundle.Wix.Bundle.Chain.MsiPackage.GetAttribute('DisplayInternalUICondition', 'http://wixtoolset.org/schemas/v4/wxs/bal') -ne '0') {
+    throw 'The bundle must pass its selected folder to the MSI and suppress the internal MSI UI.'
+}
+$themeKeys = @([regex]::Matches($theme.OuterXml, '#\(loc\.([A-Za-z0-9]+)\)') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+$expectedSetupKeys = $null
+foreach ($culture in @('en-us', 'de-de', 'fr-fr', 'es-es')) {
+    [xml]$setupLocale = Get-Content (Join-Path $installerResourceRoot "Setup.$culture.wxl") -Raw
+    $setupKeys = @($setupLocale.WixLocalization.String.Id | Sort-Object)
+    if ($null -eq $expectedSetupKeys) { $expectedSetupKeys = $setupKeys }
+    if (Compare-Object $expectedSetupKeys $setupKeys) { throw "Incomplete setup locale: $culture" }
+    foreach ($key in $themeKeys) {
+        if ($key -notin $setupKeys) { throw "Missing setup string $key in $culture" }
+    }
+    if ($setupLocale.WixLocalization.String | Where-Object { [string]::IsNullOrWhiteSpace($_.Value) }) {
+        throw "Empty setup translation in $culture"
+    }
+}
+Write-Host 'Windows MSI and frameless setup packaging controls are present.'

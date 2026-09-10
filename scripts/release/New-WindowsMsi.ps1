@@ -21,7 +21,10 @@ param(
     [ValidatePattern('^\d{1,3}\.\d{1,3}\.\d{1,5}$')]
     [string]$ProductVersion,
 
-    [string]$WixExecutable = 'wix'
+    [string]$WixExecutable = 'wix',
+
+    [ValidateSet('en-us', 'de-de', 'fr-fr', 'es-es')]
+    [string]$Culture = 'en-us'
 )
 
 Set-StrictMode -Version Latest
@@ -39,8 +42,9 @@ $resolvedOutput = [IO.Path]::GetFullPath($OutputDirectory)
 $mainExecutable = Join-Path $resolvedPublish 'TOTP.UI.Avalonia.Desktop.exe'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $installerResourceRoot = Join-Path $PSScriptRoot 'installer'
-$localizationPath = Join-Path $installerResourceRoot 'OTP-Harbor.en-us.wxl'
-$licensePath = Join-Path $installerResourceRoot 'License.en-us.rtf'
+$localizationPath = Join-Path $installerResourceRoot "OTP-Harbor.$Culture.wxl"
+$licensePath = Join-Path $installerResourceRoot "License.$Culture.rtf"
+$languageId = @{ 'en-us' = 1033; 'de-de' = 1031; 'fr-fr' = 1036; 'es-es' = 3082 }[$Culture]
 $dialogBitmapPath = Join-Path $installerResourceRoot 'InstallerDialog.bmp'
 $bannerBitmapPath = Join-Path $installerResourceRoot 'InstallerBanner.bmp'
 $applicationIconPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico'
@@ -110,11 +114,11 @@ try {
   <Package Name="OTP Harbor"
            Manufacturer="!(loc.InstallerManufacturer)"
            Version="$ProductVersion"
-           Language="1033"
+           Language="$languageId"
            Scope="perMachine"
            UpgradeCode="9B04662E-C2D9-4D6C-9657-62091A4342C4">
     <MajorUpgrade AllowSameVersionUpgrades="yes"
-                  DowngradeErrorMessage="A newer version of OTP Harbor is already installed." />
+                  DowngradeErrorMessage="!(loc.InstallerNewerVersionInstalled)" />
     <MediaTemplate EmbedCab="yes" />
     <Icon Id="ApplicationIcon.ico" SourceFile="`$(var.ApplicationIcon)" />
     <Property Id="ARPPRODUCTICON" Value="ApplicationIcon.ico" />
@@ -141,6 +145,10 @@ try {
 
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="OTP Harbor">
+        <Component Id="InstallationLocation" Guid="9B070842-68BD-495E-9DA3-F4F5AE1C6084">
+          <RegistryValue Root="HKLM" Key="Software\OTP Harbor" Name="InstallFolder"
+                         Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+        </Component>
         <Files Include="`$(var.PayloadDirectory)\**">
           <Exclude Files="`$(var.PayloadDirectory)\TOTP.UI.Avalonia.Desktop.exe" />
         </Files>
@@ -177,12 +185,13 @@ try {
 
     <StandardDirectory Id="DesktopFolder" />
 
+    <Property Id="WixUnelevatedShellExecTarget" Value="[#ApplicationExecutable]" />
     <CustomAction Id="LaunchApplication"
-                  FileRef="ApplicationExecutable"
-                  ExeCommand=""
+                  BinaryRef="Wix4UtilCA_X64"
+                  DllEntry="WixUnelevatedShellExec"
                   Execute="immediate"
                   Impersonate="yes"
-                  Return="asyncNoWait" />
+                  Return="check" />
     <UI>
       <Publish Dialog="ExitDialog"
                Control="Finish"
@@ -197,8 +206,9 @@ try {
 
     & $WixExecutable build `
         -arch x64 `
-        -culture en-us `
+        -culture $Culture `
         -ext WixToolset.UI.wixext/5.0.2 `
+        -ext WixToolset.Util.wixext/5.0.2 `
         -d "PayloadDirectory=$payloadRoot" `
         -d "ApplicationIcon=$applicationIconPath" `
         -d "InstallerLicense=$licensePath" `
@@ -223,6 +233,9 @@ try {
     }
 
     Write-Output $outputPath
+    & (Join-Path $PSScriptRoot 'New-WindowsSetup.ps1') `
+        -MsiPath $outputPath -OutputDirectory $resolvedOutput `
+        -ReleaseVersion $ReleaseVersion -Culture $Culture -WixExecutable $WixExecutable
 }
 finally {
     if (Test-Path -LiteralPath $workRoot) {

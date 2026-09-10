@@ -6,7 +6,7 @@ namespace TOTP.Tests.Platform.Windows;
 public sealed class WindowsApplicationPathsTests
 {
     [Fact]
-    public void Constructor_PreservesLegacyWindowsLocations()
+    public void Constructor_WithoutInstallerMarker_PreservesVaultLocationsAndUsesUserLogs()
     {
         var executableDirectory = Path.GetFullPath(Path.Combine("test", "application"));
         var roamingDirectory = Path.GetFullPath(Path.Combine("test", "roaming"));
@@ -25,8 +25,8 @@ public sealed class WindowsApplicationPathsTests
         Assert.Equal(Path.Combine(appDataDirectory, "authorization-envelope.bin"), sut.AuthorizationEnvelopeFilePath);
         Assert.Equal(Path.Combine(appDataDirectory, "preferences.json"), sut.PreferencesFilePath);
         Assert.Equal(appDataDirectory, sut.BackupDirectory);
-        Assert.Equal(Path.Combine(executableDirectory, "Logs"), sut.LogDirectory);
-        Assert.Equal(Path.Combine(executableDirectory, "Logs", "app.log"), sut.LogFilePath);
+        Assert.Equal(Path.Combine(appDataDirectory, "Logs"), sut.LogDirectory);
+        Assert.Equal(Path.Combine(appDataDirectory, "Logs", "app.log"), sut.LogFilePath);
         Assert.Equal(Path.Combine(appDataDirectory, "autoupdate-state.json"), sut.UpdateStateFilePath);
     }
 

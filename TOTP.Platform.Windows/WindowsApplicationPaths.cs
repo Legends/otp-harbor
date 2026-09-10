@@ -34,11 +34,8 @@ public sealed class WindowsApplicationPaths : IPlatformApplicationPaths
         AuthorizationEnvelopeFilePath = Path.Combine(ApplicationDataDirectory, StringsConstants.AuthorizationEnvelopeFileName);
         PreferencesFilePath = Path.Combine(ApplicationDataDirectory, StringsConstants.PreferencesFileName);
         BackupDirectory = ApplicationDataDirectory;
-        var isInstalledDistribution = hasInstalledDistributionMarker
-            ?? File.Exists(Path.Combine(ExecutableDirectory, InstalledDistributionMarkerFileName));
-        LogDirectory = ((hasPackageIdentity ?? WindowsPackageIdentity.HasCurrent()) || isInstalledDistribution)
-            ? Path.Combine(ApplicationDataDirectory, "Logs")
-            : Path.Combine(ExecutableDirectory, "Logs");
+        // Portable copies and older installers can also reside in protected folders.
+        LogDirectory = Path.Combine(ApplicationDataDirectory, "Logs");
         LogFilePath = Path.Combine(LogDirectory, "app.log");
         UpdateStateFilePath = Path.Combine(ApplicationDataDirectory, StringsConstants.AutoUpdateStateFileName);
     }

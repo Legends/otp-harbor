@@ -45,7 +45,8 @@ public sealed class HelloGate : IHelloGate
     public async Task<AuthorizationResult> RequestVerificationAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        const string message = "Unlock OTP Harbor Vault";
+        using var prompt = _windowHandleProvider.BeginPrompt();
+        var message = _windowHandleProvider.VerificationMessage;
         var windowHandle = _windowHandleProvider.GetActiveWindowHandle();
         var result = await _verificationRequester.RequestAsync(windowHandle, message, ct);
         return result switch

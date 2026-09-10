@@ -627,6 +627,8 @@ jobs:
         run: |
           dotnet tool install --global wix --version 5.0.2
           wix extension add --global WixToolset.UI.wixext/5.0.2
+          wix extension add --global WixToolset.Util.wixext/5.0.2
+          wix extension add --global WixToolset.BootstrapperApplications.wixext/5.0.2
 
       - name: Upload unsigned Windows payload for SignPath
         id: upload-signpath-artifact
@@ -902,10 +904,10 @@ jobs:
           "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem preview-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|msi|tar\.gz)|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|msi|tar\.gz)|OTP-Harbor-windows-x64-setup-.+\.exe|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 5) {
-            throw "The unsigned preview must contain exactly five Windows/Linux artifacts."
+          if ($artifactPaths.Count -ne 6) {
+            throw "The unsigned preview must contain exactly six Windows/Linux artifacts."
           }
           if (Get-ChildItem preview-assets -File | Where-Object { $_.Name -match '(appcast|macos|\.dmg$)' }) {
             throw "Unsigned previews cannot contain appcasts or macOS artifacts."
@@ -993,6 +995,7 @@ jobs:
           draft: true
           prerelease: true
           make_latest: false
+          generate_release_notes: true
           fail_on_unmatched_files: true
           body: |
             ## Unsigned development preview
@@ -1000,7 +1003,7 @@ jobs:
             This prerelease is provided for manual testing because the project does not yet have platform code-signing credentials.
 
             - The Windows executables are **not Authenticode-signed** and may trigger Microsoft Defender SmartScreen warnings.
-            - The optional MSI is also unsigned, uses a system-wide installation that requires administrator approval, and requires manual MSI upgrades; application-owned updates are disabled inside that package.
+            - The frameless setup EXE and standalone MSI are also unsigned. Setup installs for all users with administrator approval, then opens the application as the interactive user. Both require manual installer upgrades; application-owned updates are disabled inside these packages.
             - Direct Windows and portable Linux builds check an Ed25519-signed preview appcast and require explicit confirmation before installation.
             - The first preview download remains outside operating-system publisher trust; verify its checksums before running it.
             - macOS is not included because Developer ID signing and notarization are unavailable.
@@ -1015,6 +1018,7 @@ jobs:
             preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.msi
+            preview-assets/OTP-Harbor-windows-x64-setup-${{ steps.versioning.outputs.release_version }}.exe
             preview-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             preview-assets/otp-harbor_*_amd64.deb
             preview-assets/release-artifacts-v2.json
@@ -1206,6 +1210,7 @@ jobs:
           draft: true
           prerelease: ${{ steps.versioning.outputs.prerelease }}
           make_latest: false
+          generate_release_notes: true
           fail_on_unmatched_files: true
           body: |
             ## Code signing policy
