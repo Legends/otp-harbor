@@ -1,10 +1,10 @@
 # Code signing policy
 
-**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. A future reapplication may be considered after the project has established broader public adoption and independent trust signals. Current GitHub preview builds are unsigned. Microsoft Store is the planned primary Windows channel; Microsoft signs an accepted Store package during certification.
+**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. A future reapplication may be considered after the project has established broader public adoption and independent trust signals. Current GitHub preview builds are unsigned. The public Microsoft Store package is the primary Windows channel; Microsoft signs accepted Store packages during certification.
 
 This policy covers the two distinct Windows distribution paths. They must never be presented as interchangeable:
 
-- **Microsoft Store (primary):** CI creates an unsigned MSIX solely for Partner Center. Microsoft signs it after successful certification and the Store manages updates.
+- **Microsoft Store (primary):** OTP Harbor is publicly available as Store product `9P31KH5L924P`. CI creates unsigned MSIX inputs solely for Partner Center; Microsoft signs accepted packages and the Store manages updates.
 - **GitHub (secondary):** source code and explicitly labeled previews. Direct Windows and portable Linux packages use an Ed25519-signed appcast; current Windows RC executables remain unsigned at the operating-system level. A future stable Windows direct-download channel remains blocked unless an independent Authenticode trust path is approved and verified.
 
 An unsigned Store submission MSIX is not a sideloading artifact. It must not be attached to a GitHub Release, linked as an installer, or described as trusted before Store certification.

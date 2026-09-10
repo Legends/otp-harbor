@@ -157,6 +157,8 @@ foreach ($control in @(
 foreach ($control in @(
     'WindowDecorations="None"',
     'SystemDecorations="None"',
+    '<Setter Property="HorizontalContentAlignment" Value="Center" />',
+    '<Setter Property="VerticalContentAlignment" Value="Center" />',
     'IsVisible="{Binding IsWelcome}"',
     'IsVisible="{Binding IsLicense}"',
     'IsVisible="{Binding IsMaintenance}"',

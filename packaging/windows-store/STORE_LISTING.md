@@ -1,12 +1,36 @@
 # Microsoft Store listing copy
 
-This copy is prepared for Partner Center. Re-check field limits in Partner Center before submission. Do not state that certification, signing, or public availability has completed until Microsoft confirms it. Screenshots must use synthetic accounts only.
+OTP Harbor is publicly available as Microsoft Store product `9P31KH5L924P`. Keep this reviewed copy aligned with every future Partner Center submission, and re-check field limits before editing the live listing. Screenshots must use synthetic accounts only.
+
+Store page: `https://apps.microsoft.com/detail/9P31KH5L924P`
+
+Windows Store deep link: `ms-windows-store://pdp/?productid=9P31KH5L924P`
 
 Support URL: `https://github.com/Legends/otp-harbor/issues`
 
 Privacy URL: `https://github.com/Legends/otp-harbor/blob/master/PRIVACY.md`
 
 Website URL: `https://legends.github.io/otp-harbor/`
+
+## Partner Center visual assets
+
+Upload the files from `packaging/windows-store/assets` without adding product-title text:
+
+- `store-super-hero-1920x1080.png` — 16:9 super hero art
+- `store-poster-art-720x1080.png` — 2:3 poster art
+- `store-app-tile-300x300.png` — 1:1 app tile
+
+The reviewed English screenshots are in `packaging/windows-store/screenshots/en-US` and contain
+only deterministic synthetic accounts. Their issuer labels are `Amazon`, `Cloudflare`, `Discord`,
+`Dropbox`, `GitHub`, `Google`, `Microsoft`, and `Proton`; account names use the reserved
+`example.invalid` domain.
+
+Suggested captions, in upload order:
+
+1. `Keep every TOTP account in one clear local-first view with live codes and countdowns.`
+2. `Find an issuer or account instantly with the built-in search.`
+3. `Add standard TOTP accounts manually, with advanced period controls when needed.`
+4. `Unlock quickly with Windows Hello while retaining master-password recovery.`
 
 ## English (en-US)
 

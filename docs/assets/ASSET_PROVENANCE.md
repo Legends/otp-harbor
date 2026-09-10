@@ -23,7 +23,7 @@ The generated image was visually reviewed for prohibited text, third-party brand
 
 ## README screenshot
 
-`docs/images/readme/app.png` is a maintainer-provided screenshot of the application populated only with synthetic `example.invalid` sample accounts. It was replaced on 2026-09-08 to document the current compact account layout with inline one-time passwords and countdown progress bars. The screenshot was visually reviewed for private account data and third-party secrets before inclusion.
+`docs/images/readme/app.png` is a maintainer-provided screenshot of the application populated only with synthetic `example.invalid` sample accounts. It was replaced on 2026-09-10 to document the current compact account layout with inline one-time passwords and countdown progress bars for prominent issuer labels. The screenshot was visually reviewed for private account data and third-party secrets before inclusion.
 
 ## Social preview
 
@@ -37,6 +37,31 @@ Final generation prompt:
 
 `scripts/release/installer/InstallerDialog.bmp` and `InstallerBanner.bmp` were rendered in the project workspace on 2026-09-08 from geometric shapes and the reviewed project-owned `app-1024.png`. They provide the branded WiX welcome/license and banner surfaces. No downloaded or third-party artwork is included. Both bitmaps were visually reviewed at their exact Windows Installer dimensions.
 
+## Microsoft Store promotional artwork
+
+`packaging/windows-store/assets/source/store-abstract-background.png` was generated specifically for the Microsoft Store listing on 2026-09-10 with OpenAI's built-in image-generation tool. It contains no application UI, user data, third-party branding, claims, text, or generated version of the app logo.
+
+Generation prompt:
+
+> Edit this existing 16:9 Microsoft Store promotional background. Remove the OTP Harbor emblem/logo completely and naturally continue the surrounding deep navy background and cyan/violet flowing light ribbons through that area. Preserve the premium futuristic local-security mood, layered soft glows, subtle particles, depth, and ample calm negative space. No logos, no icons, no text, no letters, no user interface, no devices, no QR codes. The result must be a clean polished abstract background suitable for later compositing with the exact official logo. Keep important visual energy centered and in the upper two-thirds; keep the bottom third quiet and dark. Landscape 16:9.
+
+[`New-WindowsStoreMarketingAssets.ps1`](../../scripts/assets/New-WindowsStoreMarketingAssets.ps1) composites the canonical project-owned `app-1024.png` without modification and exports the reviewed background at the exact Partner Center dimensions:
+
+- `store-super-hero-1920x1080.png`
+- `store-poster-art-720x1080.png`
+- `store-app-tile-300x300.png`
+
+The final images were visually reviewed for exact logo geometry, safe placement, absent text and third-party branding, and required dimensions.
+
+## Microsoft Store screenshots
+
+The four screenshots under `packaging/windows-store/screenshots/en-US` were captured from the
+current Windows desktop build on 2026-09-10. Before capture, the existing synthetic-only vault was
+cleared and repopulated with eight deterministic synthetic accounts using prominent issuer labels
+and reserved `example.invalid` account names. The screenshots were visually reviewed to confirm
+that they contain no real accounts, OTP seeds, personal paths, desktop content, or OS notifications.
+One-time codes and the QR workflow, when shown, derive only from synthetic fixture material.
+
 ## Reviewed file hashes
 
 | File | SHA-256 |
@@ -48,9 +73,17 @@ Final generation prompt:
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/de.png` | `2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a` |
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/fr.png` | `b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340` |
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/es.png` | `d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd` |
-| `docs/images/readme/app.png` | `3730253e1d8579bae7fb49d173ad83b91ad7a2f90f5f5a759a29f048abe1e657` |
+| `docs/images/readme/app.png` | `f35c44c51e29e7561053cbfe7f6593465df60924feaa3a84d194f2d8b4a07ce6` |
 | `docs/images/social/otp-harbor-social-preview.jpg` | `2ca1ebc4d4dabbb5f8061013432c4d3dc5708efa03ab746b20e4e83686de6725` |
 | `scripts/release/installer/InstallerDialog.bmp` | `be89b19fbb5e0c3abcf6e6d6df916e8f79fa9c3528a3c2cdf5881f5b419ddacc` |
 | `scripts/release/installer/InstallerBanner.bmp` | `7ba45f2c67dafb51e370d97cc31ac7555d986703ea1dcada4403b458108e8a58` |
+| `packaging/windows-store/assets/source/store-abstract-background.png` | `9a45a1d07a9b3912af600cd0156847117b2cf2f9367665cf5c439df8324eb102` |
+| `packaging/windows-store/assets/store-super-hero-1920x1080.png` | `1df8efd083a88c7aaef390ec3b5c9774458aa8ff5db8055e188a737a30184a41` |
+| `packaging/windows-store/assets/store-poster-art-720x1080.png` | `ec5893f4574003d64376c18a720596a5a55ff3039d408e52c10665f04d93e65f` |
+| `packaging/windows-store/assets/store-app-tile-300x300.png` | `cab7d95f5b6e8d20a39d6b60af33f034dc904409783adfb9eb2eb5bca57faf30` |
+| `packaging/windows-store/screenshots/en-US/01-account-dashboard.png` | `f35c44c51e29e7561053cbfe7f6593465df60924feaa3a84d194f2d8b4a07ce6` |
+| `packaging/windows-store/screenshots/en-US/02-search-accounts.png` | `70eee4716ccfbc278789e92bb71b3864573e821a0888a1431f44a852c014592f` |
+| `packaging/windows-store/screenshots/en-US/03-add-account.png` | `f2a6594983eddb8955fd3275e6ddbb2063579a139d182c7c2931e9f3f2211861` |
+| `packaging/windows-store/screenshots/en-US/04-quick-unlock.png` | `c80dd15aad7c584c444784fa29ec559c1e4bf38fd32df1632bfdfbb4b6947c3c` |
 
 Any replacement requires a new provenance record, license review, updated hashes, and visual/build validation.

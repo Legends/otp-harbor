@@ -11,7 +11,7 @@
 
 **OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, and Linux, with an Android development preview. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
-> **Release status:** `v2.0.0` is in release-candidate testing. The first stable Windows release is being prepared for Microsoft Store certification. Current GitHub Windows/Linux RC packages remain unsigned platform previews, but direct packages can discover authenticated updates through the Ed25519-signed RC appcast. Android is source-only until its production signing and upgrade path are established. Use synthetic accounts and keep a tested encrypted backup.
+> **Release status:** OTP Harbor is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages, which are unsigned platform previews and use the Ed25519-signed RC appcast. Android is source-only until its production signing and upgrade path are established. Use synthetic accounts and keep a tested encrypted backup.
 
 <p align="center">
   <img src="docs/images/readme/app.png" alt="OTP Harbor showing inline one-time passwords and a countdown progress bar for every account" width="460" />
@@ -75,13 +75,13 @@ The QR screenshot is intentionally sanitized and contains only a published synth
 
 ## Distribution
 
-**Microsoft Store is the primary Windows distribution channel.** The Store listing is not public yet; the submission package and certification checklist are being prepared. Microsoft will sign the MSIX after successful certification and manage Store updates.
+**[Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) is the primary Windows distribution channel** (Store ID `9P31KH5L924P`). Microsoft signs the published MSIX and manages Store updates.
 
 [GitHub Releases](https://github.com/Legends/otp-harbor/releases) remains the secondary channel for source-oriented users and explicit previews. GitHub direct packages use an Ed25519-signed appcast; Microsoft Store packages rely only on Store-managed updates.
 
 | Platform | Package type |
 | --- | --- |
-| Windows 10/11 x64 | Microsoft Store MSIX after certification; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with a branded setup flow, desktop and Start-menu shortcuts, administrator approval, and manual MSI upgrades |
+| Windows 10/11 x64 | Public Microsoft Store MSIX; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with a branded setup flow, desktop and Start-menu shortcuts, administrator approval, and manual MSI upgrades |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
 | Android 9 or newer | Development source only; a public APK requires production signing and supported Android CI |
@@ -106,7 +106,7 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Nev
 
 ## Code signing policy
 
-**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. A future reapplication may be considered after the project has established broader public adoption and independent trust signals. Current GitHub preview builds are unsigned. Microsoft Store is the planned primary Windows channel; Microsoft signs an accepted Store package during certification.
+**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. A future reapplication may be considered after the project has established broader public adoption and independent trust signals. Current GitHub preview builds are unsigned. The public Microsoft Store package is the primary Windows channel and is signed through the Store certification process.
 
 The Store and optional future direct-download trust models are defined in the [code signing policy](CODE_SIGNING_POLICY.md). Data handling is described in the [OTP Harbor privacy policy](PRIVACY.md).
 

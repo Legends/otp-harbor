@@ -5,6 +5,9 @@ source repository and provides explicitly marked preview archives for advanced t
 GitHub builds discover updates through the project's Ed25519-signed appcast; Store builds leave
 update discovery and installation to Microsoft Store.
 
+OTP Harbor is publicly listed as Store product [`9P31KH5L924P`](https://apps.microsoft.com/detail/9P31KH5L924P).
+The Windows client can open it directly with `ms-windows-store://pdp/?productid=9P31KH5L924P`.
+
 The Store path uses MSIX. Microsoft signs an MSIX/AppX package after it passes Store certification,
 so the Partner Center submission does not require a CA-trusted project certificate. This does not
 make an unsigned MSIX safe for sideloading: the package created by this repository is a submission

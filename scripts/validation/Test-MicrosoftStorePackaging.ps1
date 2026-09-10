@@ -27,6 +27,58 @@ $versionResolver = Join-Path $repositoryRoot 'scripts/release/Get-MicrosoftStore
 $documentation = Read-RequiredFile 'docs/release/MICROSOFT_STORE.md'
 $listing = Read-RequiredFile 'packaging/windows-store/STORE_LISTING.md'
 
+function Assert-PngDimensions {
+    param(
+        [Parameter(Mandatory)][string]$RelativePath,
+        [Parameter(Mandatory)][int]$ExpectedWidth,
+        [Parameter(Mandatory)][int]$ExpectedHeight
+    )
+
+    $path = Join-Path $repositoryRoot $RelativePath
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Required Microsoft Store image is missing: $RelativePath"
+    }
+
+    $bytes = [IO.File]::ReadAllBytes($path)
+    if ($bytes.Length -lt 24 -or
+        [Convert]::ToHexString($bytes[0..7]) -cne '89504E470D0A1A0A') {
+        throw "Microsoft Store image is not a valid PNG: $RelativePath"
+    }
+
+    $width = [BitConverter]::ToInt32([byte[]]($bytes[19], $bytes[18], $bytes[17], $bytes[16]), 0)
+    $height = [BitConverter]::ToInt32([byte[]]($bytes[23], $bytes[22], $bytes[21], $bytes[20]), 0)
+    if ($width -ne $ExpectedWidth -or $height -ne $ExpectedHeight) {
+        throw "Microsoft Store image has incorrect dimensions: $RelativePath is ${width}x${height}; expected ${ExpectedWidth}x${ExpectedHeight}."
+    }
+}
+
+function Assert-PngMinimumDimensions {
+    param(
+        [Parameter(Mandatory)][string]$RelativePath,
+        [int]$MinimumWidth = 1366,
+        [int]$MinimumHeight = 768
+    )
+
+    $path = Join-Path $repositoryRoot $RelativePath
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Required Microsoft Store screenshot is missing: $RelativePath"
+    }
+
+    $bytes = [IO.File]::ReadAllBytes($path)
+    if ($bytes.Length -lt 24 -or [Convert]::ToHexString($bytes[0..7]) -cne '89504E470D0A1A0A') {
+        throw "Microsoft Store screenshot is not a valid PNG: $RelativePath"
+    }
+
+    $width = [BitConverter]::ToInt32([byte[]]($bytes[19], $bytes[18], $bytes[17], $bytes[16]), 0)
+    $height = [BitConverter]::ToInt32([byte[]]($bytes[23], $bytes[22], $bytes[21], $bytes[20]), 0)
+    if ($width -lt $MinimumWidth -or $height -lt $MinimumHeight) {
+        throw "Microsoft Store screenshot is too small: $RelativePath is ${width}x${height}."
+    }
+    if ((Get-Item -LiteralPath $path).Length -ge 50MB) {
+        throw "Microsoft Store screenshot exceeds 50 MB: $RelativePath"
+    }
+}
+
 foreach ($placeholder in @(
     '__IDENTITY_NAME__',
     '__PUBLISHER__',
@@ -108,6 +160,19 @@ foreach ($cultureHeading in @(
 }
 if (-not $listing.Contains('Screenshots must use synthetic accounts only.', [StringComparison]::Ordinal)) {
     throw 'The Store listing draft does not enforce synthetic screenshot data.'
+}
+
+Assert-PngDimensions 'packaging/windows-store/assets/store-super-hero-1920x1080.png' 1920 1080
+Assert-PngDimensions 'packaging/windows-store/assets/store-poster-art-720x1080.png' 720 1080
+Assert-PngDimensions 'packaging/windows-store/assets/store-app-tile-300x300.png' 300 300
+
+foreach ($screenshot in @(
+    'packaging/windows-store/screenshots/en-US/01-account-dashboard.png',
+    'packaging/windows-store/screenshots/en-US/02-search-accounts.png',
+    'packaging/windows-store/screenshots/en-US/03-add-account.png',
+    'packaging/windows-store/screenshots/en-US/04-quick-unlock.png'
+)) {
+    Assert-PngMinimumDimensions $screenshot
 }
 
 Write-Output 'Microsoft Store packaging controls are present.'
