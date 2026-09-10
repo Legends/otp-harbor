@@ -879,6 +879,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET SDK for signed preview metadata
         uses: actions/setup-dotnet@v5
@@ -988,6 +990,38 @@ jobs:
           Copy-Item preview-feed/appcast-v2.xml preview-assets/
           Copy-Item preview-feed/appcast-v2.xml.signature preview-assets/
 
+      - name: Build release change summary
+        id: release_notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $currentTag = "${{ github.ref_name }}"
+          $previousTag = gh release list `
+            --repo "${{ github.repository }}" `
+            --limit 100 `
+            --exclude-drafts `
+            --json tagName,publishedAt `
+            --jq ".[] | select(.tagName != `"$currentTag`") | [.publishedAt, .tagName] | @tsv" |
+            Sort-Object -Descending |
+            Select-Object -First 1 |
+            ForEach-Object { ($_ -split "`t", 2)[1] }
+          if ([string]::IsNullOrWhiteSpace($previousTag)) {
+            throw "A previous published release is required to generate the change summary."
+          }
+
+          $changes = @(git log "$previousTag..$currentTag" --no-merges --pretty=format:'- %s (`%h`)')
+          if ($LASTEXITCODE -ne 0 -or $changes.Count -eq 0) {
+            throw "Release '$currentTag' contains no user-visible change summary after '$previousTag'."
+          }
+
+          $delimiter = [Guid]::NewGuid().ToString('N')
+          "summary<<$delimiter" >> $env:GITHUB_OUTPUT
+          $changes >> $env:GITHUB_OUTPUT
+          "" >> $env:GITHUB_OUTPUT
+          "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
+          $delimiter >> $env:GITHUB_OUTPUT
+
       - name: Upload unsigned preview to a draft
         uses: softprops/action-gh-release@v3.0.1
         with:
@@ -995,9 +1029,12 @@ jobs:
           draft: true
           prerelease: true
           make_latest: false
-          generate_release_notes: true
           fail_on_unmatched_files: true
           body: |
+            ## Changes in this release
+
+            ${{ steps.release_notes.outputs.summary }}
+
             ## Unsigned development preview
 
             This prerelease is provided for manual testing because the project does not yet have platform code-signing credentials.
@@ -1071,6 +1108,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
@@ -1204,15 +1243,50 @@ jobs:
           Copy-Item release-feed/appcast-v2.xml release-assets/
           Copy-Item release-feed/appcast-v2.xml.signature release-assets/
 
+      - name: Build release change summary
+        id: release_notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $currentTag = "${{ github.ref_name }}"
+          $previousTag = gh release list `
+            --repo "${{ github.repository }}" `
+            --limit 100 `
+            --exclude-drafts `
+            --json tagName,publishedAt `
+            --jq ".[] | select(.tagName != `"$currentTag`") | [.publishedAt, .tagName] | @tsv" |
+            Sort-Object -Descending |
+            Select-Object -First 1 |
+            ForEach-Object { ($_ -split "`t", 2)[1] }
+          if ([string]::IsNullOrWhiteSpace($previousTag)) {
+            throw "A previous published release is required to generate the change summary."
+          }
+
+          $changes = @(git log "$previousTag..$currentTag" --no-merges --pretty=format:'- %s (`%h`)')
+          if ($LASTEXITCODE -ne 0 -or $changes.Count -eq 0) {
+            throw "Release '$currentTag' contains no user-visible change summary after '$previousTag'."
+          }
+
+          $delimiter = [Guid]::NewGuid().ToString('N')
+          "summary<<$delimiter" >> $env:GITHUB_OUTPUT
+          $changes >> $env:GITHUB_OUTPUT
+          "" >> $env:GITHUB_OUTPUT
+          "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
+          $delimiter >> $env:GITHUB_OUTPUT
+
       - name: Upload complete signed release to a draft
         uses: softprops/action-gh-release@v3.0.1
         with:
           draft: true
           prerelease: ${{ steps.versioning.outputs.prerelease }}
           make_latest: false
-          generate_release_notes: true
           fail_on_unmatched_files: true
           body: |
+            ## Changes in this release
+
+            ${{ steps.release_notes.outputs.summary }}
+
             ## Code signing policy
 
             See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) and [privacy policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/PRIVACY.md). This optional direct-download path publishes Windows artifacts only after the workflow has verified their Authenticode signatures and product metadata.
