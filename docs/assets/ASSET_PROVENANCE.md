@@ -49,6 +49,7 @@ Generation prompt:
 
 - `store-super-hero-1920x1080.png`
 - `store-poster-art-720x1080.png`
+- `store-box-art-1080x1080.png`
 - `store-app-tile-300x300.png`
 - `store-logo-150x150.png`
 - `store-logo-71x71.png`
@@ -88,6 +89,7 @@ content is present.
 | `packaging/windows-store/assets/source/store-abstract-background.png` | `9a45a1d07a9b3912af600cd0156847117b2cf2f9367665cf5c439df8324eb102` |
 | `packaging/windows-store/assets/store-super-hero-1920x1080.png` | `1df8efd083a88c7aaef390ec3b5c9774458aa8ff5db8055e188a737a30184a41` |
 | `packaging/windows-store/assets/store-poster-art-720x1080.png` | `ec5893f4574003d64376c18a720596a5a55ff3039d408e52c10665f04d93e65f` |
+| `packaging/windows-store/assets/store-box-art-1080x1080.png` | `243ea8dabc8371a18582aa451fb053b8235b679b670caffa5908350c904248f0` |
 | `packaging/windows-store/assets/store-app-tile-300x300.png` | `cab7d95f5b6e8d20a39d6b60af33f034dc904409783adfb9eb2eb5bca57faf30` |
 | `packaging/windows-store/assets/store-logo-150x150.png` | `796e08817f41658d05c25e1826ece092df73602b9072b31c76c00e85adb95979` |
 | `packaging/windows-store/assets/store-logo-71x71.png` | `d7716fa64f2e7aafcb85d3ee6bb98647f874a5328500a3e140dddf42bfe4ab20` |

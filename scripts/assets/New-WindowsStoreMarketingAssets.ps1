@@ -3,9 +3,10 @@
 Builds exact-size Partner Center marketing images from the reviewed abstract background and official icon.
 
 .DESCRIPTION
-Creates the Microsoft Store 16:9 super hero, 2:3 poster art, and 300, 150, and 71 pixel square
-Store logos. The generated background is a non-secret marketing source asset; the foreground mark
-always comes from the canonical repository icon so its geometry and colors remain authentic.
+Creates the Microsoft Store 16:9 super hero, 2:3 poster art, 1:1 box art, and 300, 150, and 71
+pixel square Store logos. The generated background is a non-secret marketing source asset; the
+foreground mark always comes from the canonical repository icon so its geometry and colors remain
+authentic.
 #>
 [CmdletBinding()]
 param(
@@ -144,6 +145,14 @@ try {
         -Height 1080 `
         -IconBounds ([Drawing.Rectangle]::new(145, 245, 430, 430)) `
         -Destination (Join-Path $resolvedOutput 'store-poster-art-720x1080.png')
+
+    Save-MarketingAsset `
+        -Background $background `
+        -Icon $icon `
+        -Width 1080 `
+        -Height 1080 `
+        -IconBounds ([Drawing.Rectangle]::new(230, 230, 620, 620)) `
+        -Destination (Join-Path $resolvedOutput 'store-box-art-1080x1080.png')
 
     Save-MarketingAsset `
         -Background $background `

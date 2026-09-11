@@ -21,13 +21,18 @@ In **Store logos / Images for Store display**, upload these files from
 - `store-logo-150x150.png` — 1:1 150 x 150 Store logo
 - `store-logo-71x71.png` — 1:1 71 x 71 Store logo
 
+In the larger **Store logos** slots, upload:
+
+- `store-poster-art-720x1080.png` — 9:16 poster art
+- `store-box-art-1080x1080.png` — 1:1 box art
+
 In **Trailers and additional assets / Windows 10 or Windows 11 and Xbox image**, upload:
 
 - `store-super-hero-1920x1080.png` — 16:9 super hero art
 
 Do not upload `assets/source/store-abstract-background.png`; it is only the generated source used
-to compose the final assets. The 2:3 poster art is intended for games and is not needed for OTP
-Harbor, which is categorized as an app.
+to compose the final assets. Poster and box art are primarily used in game-oriented Store layouts,
+but Partner Center accepts them for this app listing and they keep the optional slots polished.
 
 The reviewed English upload set is in `packaging/windows-store/screenshots/en-US`:
 

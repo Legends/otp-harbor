@@ -174,6 +174,7 @@ if (-not $listing.Contains('Screenshots must use synthetic accounts only.', [Str
 
 Assert-PngDimensions 'packaging/windows-store/assets/store-super-hero-1920x1080.png' 1920 1080
 Assert-PngDimensions 'packaging/windows-store/assets/store-poster-art-720x1080.png' 720 1080
+Assert-PngDimensions 'packaging/windows-store/assets/store-box-art-1080x1080.png' 1080 1080
 Assert-PngDimensions 'packaging/windows-store/assets/store-app-tile-300x300.png' 300 300
 Assert-PngDimensions 'packaging/windows-store/assets/store-logo-150x150.png' 150 150
 Assert-PngDimensions 'packaging/windows-store/assets/store-logo-71x71.png' 71 71
