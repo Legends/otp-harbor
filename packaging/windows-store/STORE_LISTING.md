@@ -158,7 +158,7 @@ Key features:
 
 Search terms: `TOTP,2FA,autenticador,OTP,sin conexión,seguridad`
 
-## Version 2.0.0 release notes
+## Version 2.0.17 release notes
 
 English: `First Microsoft Store release of OTP Harbor with encrypted local TOTP storage, Windows Hello quick unlock, QR workflows, locking controls, encrypted backup/restore, and four interface languages.`
 

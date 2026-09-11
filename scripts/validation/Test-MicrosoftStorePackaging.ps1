@@ -26,6 +26,7 @@ $releaseWorkflow = Read-RequiredFile '.github/workflows/build-and-test.yml'
 $versionResolver = Join-Path $repositoryRoot 'scripts/release/Get-MicrosoftStoreVersion.ps1'
 $documentation = Read-RequiredFile 'docs/release/MICROSOFT_STORE.md'
 $listing = Read-RequiredFile 'packaging/windows-store/STORE_LISTING.md'
+$readme = Read-RequiredFile 'readme.md'
 
 function Assert-PngDimensions {
     param(
@@ -160,6 +161,12 @@ foreach ($cultureHeading in @(
 }
 if (-not $listing.Contains('Screenshots must use synthetic accounts only.', [StringComparison]::Ordinal)) {
     throw 'The Store listing draft does not enforce synthetic screenshot data.'
+}
+if (-not $listing.Contains('## Version 2.0.17 release notes', [StringComparison]::Ordinal) -or
+    -not $readme.Contains('Microsoft%20Store-2.0.17-', [StringComparison]::Ordinal) -or
+    -not $readme.Contains('OTP Harbor `2.0.17` is publicly available', [StringComparison]::Ordinal) -or
+    $readme.Contains('img.shields.io/github/v/release/Legends/otp-harbor', [StringComparison]::Ordinal)) {
+    throw 'The public Microsoft Store version is not reported consistently as 2.0.17.'
 }
 
 Assert-PngDimensions 'packaging/windows-store/assets/store-super-hero-1920x1080.png' 1920 1080

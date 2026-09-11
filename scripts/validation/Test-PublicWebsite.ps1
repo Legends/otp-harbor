@@ -50,7 +50,7 @@ foreach ($requiredText in @(
     '"@type": "Offer"',
     'https://apps.microsoft.com/detail/9P31KH5L924P',
     'Get it from Microsoft Store',
-    'OTP Harbor is now publicly available from Microsoft Store, the primary Windows channel.',
+    'OTP Harbor 2.0.17 is now publicly available from Microsoft Store, the primary Windows channel.',
     'GitHub previews are clearly labeled and use a signed application update feed.',
     'Can you test OTP Harbor on a MacBook?',
     'Test only with synthetic accounts',

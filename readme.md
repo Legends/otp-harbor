@@ -6,12 +6,12 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![Build](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml)
 [![Security](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml)
-[![Latest Release](https://img.shields.io/github/v/release/Legends/otp-harbor?display_name=tag)](https://github.com/Legends/otp-harbor/releases/latest)
+[![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-2.0.17-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
 [![License](https://img.shields.io/github/license/Legends/otp-harbor)](LICENSE.txt)
 
 **OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, and Linux, with an Android development preview. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
-> **Release status:** OTP Harbor is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages, which are unsigned platform previews and use the Ed25519-signed RC appcast. Android is source-only until its production signing and upgrade path are established. Use synthetic accounts and keep a tested encrypted backup.
+> **Release status:** OTP Harbor `2.0.17` is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages, which are unsigned platform previews and use the Ed25519-signed RC appcast. Android is source-only until its production signing and upgrade path are established. Use synthetic accounts and keep a tested encrypted backup.
 
 <p align="center">
   <img src="docs/images/readme/app.png" alt="OTP Harbor showing inline one-time passwords and a countdown progress bar for every account" width="460" />
