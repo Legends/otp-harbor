@@ -34,24 +34,27 @@ Do not upload `assets/source/store-abstract-background.png`; it is only the gene
 to compose the final assets. Poster and box art are primarily used in game-oriented Store layouts,
 but Partner Center accepts them for this app listing and they keep the optional slots polished.
 
-The reviewed English upload set is in `packaging/windows-store/screenshots/en-US`:
+For the German Store listing, upload the polished 1920 x 1080 campaign set from
+`packaging/windows-store/screenshots/de-DE/marketing` in this order:
 
-1. `01-account-dashboard.png`
-2. `02-search-accounts.png`
-3. `03-add-account.png`
-4. `04-quick-unlock-transparent.png`
+1. `01-lokaler-tresor.png`
+2. `02-suchen-und-kopieren.png`
+3. `03-konten-hinzufuegen.png`
+4. `04-windows-hello.png`
+5. `05-sperre-und-backup.png`
 
-The screenshots contain only deterministic synthetic accounts. Their issuer labels are `Amazon`,
-`Cloudflare`, `Discord`, `Dropbox`, `GitHub`, `Google`, `Microsoft`, and `Proton`; account names use
-the reserved `example.invalid` domain. `04-quick-unlock-2.png` is the original capture retained for
-provenance; upload its transparent derivative listed above.
+These marketing screenshots combine the reviewed campaign background with authentic app captures.
+They contain only deterministic synthetic accounts. Their issuer labels are `Amazon`, `Cloudflare`,
+`Discord`, `Dropbox`, `GitHub`, `Google`, `Microsoft`, and `Proton`; account names use the reserved
+`example.invalid` domain. The captures under `screenshots/en-US` remain the authentic source set.
 
-Suggested captions, in upload order:
+Suggested German captions, in upload order:
 
-1. `Keep every TOTP account in one clear local-first view with live codes and countdowns.`
-2. `Find an issuer or account instantly with the built-in search.`
-3. `Add standard TOTP accounts manually, with advanced period controls when needed.`
-4. `Unlock quickly with Windows Hello while retaining master-password recovery.`
+1. `Alle TOTP-Konten übersichtlich in einem lokal verschlüsselten Tresor.`
+2. `Konten sofort finden und den aktuellen Code mit einem Klick kopieren.`
+3. `TOTP-Konten manuell oder per QR-Code hinzufügen.`
+4. `Schnell mit Windows Hello entsperren; das Masterpasswort bleibt die Wiederherstellungsmethode.`
+5. `Automatische Sperre, verschlüsselte Backups und kontrollierte Wiederherstellung.`
 
 ## English (en-US)
 

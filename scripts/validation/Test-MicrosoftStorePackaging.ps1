@@ -79,16 +79,6 @@ function Assert-PngMinimumDimensions {
     }
 }
 
-function Assert-PngHasAlpha {
-    param([Parameter(Mandatory)][string]$RelativePath)
-
-    $path = Join-Path $repositoryRoot $RelativePath
-    $bytes = [IO.File]::ReadAllBytes($path)
-    if ($bytes.Length -lt 26 -or $bytes[25] -notin 4, 6) {
-        throw "Microsoft Store PNG does not contain an alpha channel: $RelativePath"
-    }
-}
-
 foreach ($placeholder in @(
     '__IDENTITY_NAME__',
     '__PUBLISHER__',
@@ -183,11 +173,19 @@ foreach ($screenshot in @(
     'packaging/windows-store/screenshots/en-US/01-account-dashboard.png',
     'packaging/windows-store/screenshots/en-US/02-search-accounts.png',
     'packaging/windows-store/screenshots/en-US/03-add-account.png',
-    'packaging/windows-store/screenshots/en-US/04-quick-unlock-transparent.png'
+    'packaging/windows-store/screenshots/en-US/04-quick-unlock.png'
 )) {
     Assert-PngMinimumDimensions $screenshot
 }
 
-Assert-PngHasAlpha 'packaging/windows-store/screenshots/en-US/04-quick-unlock-transparent.png'
+foreach ($marketingScreenshot in @(
+    'packaging/windows-store/screenshots/de-DE/marketing/01-lokaler-tresor.png',
+    'packaging/windows-store/screenshots/de-DE/marketing/02-suchen-und-kopieren.png',
+    'packaging/windows-store/screenshots/de-DE/marketing/03-konten-hinzufuegen.png',
+    'packaging/windows-store/screenshots/de-DE/marketing/04-windows-hello.png',
+    'packaging/windows-store/screenshots/de-DE/marketing/05-sperre-und-backup.png'
+)) {
+    Assert-PngDimensions $marketingScreenshot 1920 1080
+}
 
 Write-Output 'Microsoft Store packaging controls are present.'

@@ -56,6 +56,24 @@ Generation prompt:
 
 The final images were visually reviewed for exact logo geometry, safe placement, absent text and third-party branding, and required dimensions.
 
+## Microsoft Store marketing screenshot campaign
+
+`packaging/windows-store/assets/source/store-marketing-screenshot-background.png` was generated on
+2026-09-11 with OpenAI's built-in image-generation tool using only the existing project-owned
+abstract Store background as a visual reference. Competitor screenshots supplied as general layout
+inspiration were not passed to the generation tool and no third-party UI, logo, text, or artwork is
+embedded in the generated background.
+
+Final generation prompt:
+
+> Use case: ads-marketing. Asset type: reusable 16:9 Microsoft Store marketing screenshot backdrop for OTP Harbor. Preserve the reference image's deep navy, cyan, and violet visual identity, but create a new original campaign composition. Create a premium futuristic cybersecurity backdrop with a calm dark navy text zone across the left 42 percent and an illuminated dimensional product stage across the right 58 percent. Use restrained flowing cyan and violet light ribbons, subtle encrypted-data particles, soft depth, and a polished desktop-software launch aesthetic. Make the center and right suitable for compositing authentic app windows later. Keep an exact landscape 16:9 feel, clean hierarchy, generous safe margins, no critical detail at the edges, a darker upper-left for large white copy, and a brighter right-side halo behind future UI. Background only: no text, letters, numbers, logos, icons, shields, locks, fingerprints, QR codes, app UI, devices, monitors, phones, people, or watermarks.
+
+[`New-WindowsStoreMarketingScreenshots.ps1`](../../scripts/assets/New-WindowsStoreMarketingScreenshots.ps1)
+deterministically composites the canonical icon, exact German marketing copy, and authentic app
+captures onto that background. The five 1920 x 1080 outputs contain only synthetic accounts. The
+Windows Hello visual uses the reviewed empty-PIN prompt in `windows-hello-quick-unlock.png`; no
+credential or biometric data is present.
+
 ## Microsoft Store screenshots
 
 The four-image Store upload set under `packaging/windows-store/screenshots/en-US` was captured from
@@ -87,6 +105,8 @@ content is present.
 | `scripts/release/installer/InstallerDialog.bmp` | `be89b19fbb5e0c3abcf6e6d6df916e8f79fa9c3528a3c2cdf5881f5b419ddacc` |
 | `scripts/release/installer/InstallerBanner.bmp` | `7ba45f2c67dafb51e370d97cc31ac7555d986703ea1dcada4403b458108e8a58` |
 | `packaging/windows-store/assets/source/store-abstract-background.png` | `9a45a1d07a9b3912af600cd0156847117b2cf2f9367665cf5c439df8324eb102` |
+| `packaging/windows-store/assets/source/store-marketing-screenshot-background.png` | `2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4` |
+| `packaging/windows-store/assets/source/windows-hello-quick-unlock.png` | `6ff8db7a3f08c4b34d047538148071b50b6541d8cb63b2820fdc4914a9a32a41` |
 | `packaging/windows-store/assets/store-super-hero-1920x1080.png` | `1df8efd083a88c7aaef390ec3b5c9774458aa8ff5db8055e188a737a30184a41` |
 | `packaging/windows-store/assets/store-poster-art-720x1080.png` | `ec5893f4574003d64376c18a720596a5a55ff3039d408e52c10665f04d93e65f` |
 | `packaging/windows-store/assets/store-box-art-1080x1080.png` | `243ea8dabc8371a18582aa451fb053b8235b679b670caffa5908350c904248f0` |
@@ -99,5 +119,10 @@ content is present.
 | `packaging/windows-store/screenshots/en-US/04-quick-unlock.png` | `c80dd15aad7c584c444784fa29ec559c1e4bf38fd32df1632bfdfbb4b6947c3c` |
 | `packaging/windows-store/screenshots/en-US/04-quick-unlock-2.png` | `13db0d0da561c511c6a94acf5213f68a31ed859c0f0e82a7310265211f0dd88c` |
 | `packaging/windows-store/screenshots/en-US/04-quick-unlock-transparent.png` | `6ff8db7a3f08c4b34d047538148071b50b6541d8cb63b2820fdc4914a9a32a41` |
+| `packaging/windows-store/screenshots/de-DE/marketing/01-lokaler-tresor.png` | `1ef8cb148b6f18b8083d3f1e7f1483fc301debd1fbaf5b57c82dd67b2e3c3c0f` |
+| `packaging/windows-store/screenshots/de-DE/marketing/02-suchen-und-kopieren.png` | `0190328c0e3a042a1ac2b955269427f3cf597bfea9dba37b796adf0568fcc6c4` |
+| `packaging/windows-store/screenshots/de-DE/marketing/03-konten-hinzufuegen.png` | `9cae1c0573688f0bfedaa22a056b3c1560776e5c2d2523f9c9e397e4b8c85e5b` |
+| `packaging/windows-store/screenshots/de-DE/marketing/04-windows-hello.png` | `8aeb8e479adb53b618b9948465c380eb91205af2e6960ae762f3f9ebf5a39bd1` |
+| `packaging/windows-store/screenshots/de-DE/marketing/05-sperre-und-backup.png` | `9d1c3a64ce213d8a0728153bd93aac906b09f46d77a927ebeaa46a02c205667f` |
 
 Any replacement requires a new provenance record, license review, updated hashes, and visual/build validation.
