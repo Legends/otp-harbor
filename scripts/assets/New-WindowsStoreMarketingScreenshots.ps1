@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-Creates the German Microsoft Store marketing screenshot set from reviewed project assets.
+Creates localized Microsoft Store marketing screenshot sets from reviewed project assets.
 
 .DESCRIPTION
 Composites authentic OTP Harbor captures containing synthetic accounts onto the reviewed campaign
-background. Text and UI captures are rendered deterministically so generated artwork cannot alter
-product claims, account data, or interface details.
+background. Localized text and UI captures are rendered deterministically so generated artwork
+cannot alter product claims, account data, or interface details.
 #>
 [CmdletBinding()]
 param(
@@ -13,7 +13,9 @@ param(
     [string]$IconPath = 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
     [string]$ScreenshotDirectory = 'packaging/windows-store/screenshots/en-US',
     [string]$WindowsHelloPath = 'packaging/windows-store/assets/source/windows-hello-quick-unlock.png',
-    [string]$OutputDirectory = 'packaging/windows-store/screenshots/de-DE/marketing'
+    [ValidateSet('en-US', 'de-DE', 'fr-FR', 'es-ES')]
+    [string[]]$Cultures = @('en-US', 'de-DE', 'fr-FR', 'es-ES'),
+    [string]$OutputRoot = 'packaging/windows-store/screenshots'
 )
 
 Set-StrictMode -Version Latest
@@ -203,8 +205,7 @@ $resolvedBackground = Resolve-RepositoryPath $BackgroundPath
 $resolvedIcon = Resolve-RepositoryPath $IconPath
 $resolvedScreenshots = Resolve-RepositoryPath $ScreenshotDirectory
 $resolvedHello = Resolve-RepositoryPath $WindowsHelloPath
-$resolvedOutput = Resolve-RepositoryPath $OutputDirectory
-[IO.Directory]::CreateDirectory($resolvedOutput) | Out-Null
+$resolvedOutputRoot = Resolve-RepositoryPath $OutputRoot
 
 $required = @(
     $resolvedBackground,
@@ -227,39 +228,62 @@ $add = [Drawing.Image]::FromFile((Join-Path $resolvedScreenshots '03-add-account
 $locked = [Drawing.Image]::FromFile((Join-Path $resolvedScreenshots '04-quick-unlock.png'))
 $hello = [Drawing.Image]::FromFile($resolvedHello)
 try {
-    New-MarketingScreenshot -Background $background -Icon $icon -Screenshot $dashboard `
-        -Headline "Deine Codes.`nDein Gerät.`nDeine Kontrolle." `
-        -Body 'Ein lokaler, verschlüsselter TOTP-Tresor – ganz ohne Cloudkonto.' `
-        -Chips @('LOKAL GESPEICHERT', 'VERSCHLÜSSELT') `
-        -Destination (Join-Path $resolvedOutput '01-lokaler-tresor.png') -HeadlineSize 66
+    $localizedCampaigns = @{
+        'en-US' = @(
+            @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Your codes.`nYour device.`nYour control."; Body = 'A local, encrypted TOTP vault — with no cloud account.'; Chips = @('LOCAL FIRST', 'ENCRYPTED'); Size = 66 }
+            @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Find. Copy.`nKeep moving."; Body = 'Search accounts instantly and copy the current code with one click.'; Chips = @('QUICK SEARCH', 'LIVE CODES'); Size = 70 }
+            @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Add accounts`nin seconds."; Body = 'Enter details manually or import a QR code — with flexible TOTP settings.'; Chips = @('QR IMPORT', 'MANUAL ENTRY'); Size = 70 }
+            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Fast to unlock.`nSecure by design."; Body = 'Windows Hello for everyday access. Your master password remains the recovery method.'; Chips = @('WINDOWS HELLO', 'QUICK UNLOCK'); Size = 68; Transparent = $true }
+            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Protected when`nit matters."; Body = 'Automatic locking, encrypted backups, and controlled recovery.'; Chips = @('AUTO LOCK', 'BACKUP & RESTORE'); Size = 70 }
+        )
+        'de-DE' = @(
+            @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Deine Codes.`nDein Gerät.`nDeine Kontrolle."; Body = 'Ein lokaler, verschlüsselter TOTP-Tresor – ganz ohne Cloudkonto.'; Chips = @('LOKAL GESPEICHERT', 'VERSCHLÜSSELT'); Size = 66 }
+            @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Finden. Kopieren.`nWeiterarbeiten."; Body = 'Durchsuche deine Konten sofort und kopiere den aktuellen Code mit einem Klick.'; Chips = @('SCHNELLE SUCHE', 'LIVE-CODES'); Size = 70 }
+            @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Konten schnell`nhinzufügen."; Body = 'Manuell oder per QR-Code – mit flexiblen TOTP-Einstellungen.'; Chips = @('QR-IMPORT', 'MANUELLE EINGABE'); Size = 70 }
+            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Schnell entsperrt.`nSicher geschützt."; Body = 'Windows Hello für den Alltag. Das Masterpasswort bleibt deine Wiederherstellung.'; Chips = @('WINDOWS HELLO', 'QUICK UNLOCK'); Size = 68; Transparent = $true }
+            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Geschützt, wenn`nes darauf ankommt."; Body = 'Automatische Sperre, verschlüsselte Backups und kontrollierte Wiederherstellung.'; Chips = @('AUTO-LOCK', 'BACKUP & RESTORE'); Size = 70 }
+        )
+        'fr-FR' = @(
+            @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Vos codes.`nVotre appareil.`nVotre contrôle."; Body = 'Un coffre TOTP local et chiffré, sans compte cloud.'; Chips = @('STOCKAGE LOCAL', 'CHIFFRÉ'); Size = 64 }
+            @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Trouvez. Copiez.`nContinuez."; Body = 'Recherchez un compte et copiez le code actuel en un clic.'; Chips = @('RECHERCHE RAPIDE', 'CODES EN DIRECT'); Size = 68 }
+            @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Ajoutez vos comptes`nen quelques secondes."; Body = 'Saisie manuelle ou import par code QR, avec des réglages TOTP flexibles.'; Chips = @('IMPORT QR', 'SAISIE MANUELLE'); Size = 59 }
+            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Déverrouillage rapide.`nProtection renforcée."; Body = 'Windows Hello au quotidien. Le mot de passe principal reste la méthode de récupération.'; Chips = @('WINDOWS HELLO', 'DÉVERROUILLAGE RAPIDE'); Size = 58; Transparent = $true }
+            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Protégé quand`ncela compte."; Body = 'Verrouillage automatique, sauvegardes chiffrées et récupération maîtrisée.'; Chips = @('VERROUILLAGE AUTO', 'SAUVEGARDE CHIFFRÉE'); Size = 68 }
+        )
+        'es-ES' = @(
+            @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Tus códigos.`nTu dispositivo.`nTu control."; Body = 'Una bóveda TOTP local y cifrada, sin cuenta en la nube.'; Chips = @('ALMACENAMIENTO LOCAL', 'CIFRADO'); Size = 66 }
+            @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Busca. Copia.`nContinúa."; Body = 'Encuentra tus cuentas y copia el código actual con un clic.'; Chips = @('BÚSQUEDA RÁPIDA', 'CÓDIGOS EN VIVO'); Size = 70 }
+            @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Añade cuentas`nen segundos."; Body = 'Entrada manual o importación mediante QR, con ajustes TOTP flexibles.'; Chips = @('IMPORTAR QR', 'ENTRADA MANUAL'); Size = 68 }
+            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Acceso rápido.`nProtección segura."; Body = 'Windows Hello para el uso diario. La contraseña maestra sigue siendo la recuperación.'; Chips = @('WINDOWS HELLO', 'DESBLOQUEO RÁPIDO'); Size = 66; Transparent = $true }
+            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Protección cuando`nmás importa."; Body = 'Bloqueo automático, copias cifradas y recuperación controlada.'; Chips = @('BLOQUEO AUTOMÁTICO', 'COPIA CIFRADA'); Size = 66 }
+        )
+    }
 
-    New-MarketingScreenshot -Background $background -Icon $icon -Screenshot $search `
-        -Headline "Finden. Kopieren.`nWeiterarbeiten." `
-        -Body 'Durchsuche deine Konten sofort und kopiere den aktuellen Code mit einem Klick.' `
-        -Chips @('SCHNELLE SUCHE', 'LIVE-CODES') `
-        -Destination (Join-Path $resolvedOutput '02-suchen-und-kopieren.png')
+    foreach ($culture in $Cultures) {
+        $resolvedOutput = Join-Path $resolvedOutputRoot "$culture/marketing"
+        [IO.Directory]::CreateDirectory($resolvedOutput) | Out-Null
 
-    New-MarketingScreenshot -Background $background -Icon $icon -Screenshot $add `
-        -Headline "Konten schnell`nhinzufügen." `
-        -Body 'Manuell oder per QR-Code – mit flexiblen TOTP-Einstellungen.' `
-        -Chips @('QR-IMPORT', 'MANUELLE EINGABE') `
-        -Destination (Join-Path $resolvedOutput '03-konten-hinzufuegen.png')
+        foreach ($slide in $localizedCampaigns[$culture]) {
+            $arguments = @{
+                Background = $background
+                Icon = $icon
+                Screenshot = $slide.Screenshot
+                Headline = $slide.Headline
+                Body = $slide.Body
+                Chips = $slide.Chips
+                HeadlineSize = $slide.Size
+                Destination = Join-Path $resolvedOutput $slide.File
+            }
+            if ($slide.ContainsKey('Transparent') -and $slide.Transparent) {
+                $arguments.TransparentScreenshot = $true
+            }
+            New-MarketingScreenshot @arguments
+        }
 
-    New-MarketingScreenshot -Background $background -Icon $icon -Screenshot $hello `
-        -Headline "Schnell entsperrt.`nSicher geschützt." `
-        -Body 'Windows Hello für den Alltag. Das Masterpasswort bleibt deine Wiederherstellung.' `
-        -Chips @('WINDOWS HELLO', 'QUICK UNLOCK') `
-        -Destination (Join-Path $resolvedOutput '04-windows-hello.png') -TransparentScreenshot
-
-    New-MarketingScreenshot -Background $background -Icon $icon -Screenshot $locked `
-        -Headline "Geschützt, wenn`nes darauf ankommt." `
-        -Body 'Automatische Sperre, verschlüsselte Backups und kontrollierte Wiederherstellung.' `
-        -Chips @('AUTO-LOCK', 'BACKUP & RESTORE') `
-        -Destination (Join-Path $resolvedOutput '05-sperre-und-backup.png')
+        Write-Output "Store marketing screenshots created for $culture in $resolvedOutput"
+    }
 }
 finally {
     $hello.Dispose(); $locked.Dispose(); $add.Dispose(); $search.Dispose(); $dashboard.Dispose()
     $icon.Dispose(); $background.Dispose()
 }
-
-Write-Output "German Store marketing screenshots created in $resolvedOutput"

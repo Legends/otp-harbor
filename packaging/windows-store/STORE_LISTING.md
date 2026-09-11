@@ -34,14 +34,20 @@ Do not upload `assets/source/store-abstract-background.png`; it is only the gene
 to compose the final assets. Poster and box art are primarily used in game-oriented Store layouts,
 but Partner Center accepts them for this app listing and they keep the optional slots polished.
 
-For the German Store listing, upload the polished 1920 x 1080 campaign set from
-`packaging/windows-store/screenshots/de-DE/marketing` in this order:
+For each localized Store listing, upload its polished 1920 x 1080 campaign set from
+`packaging/windows-store/screenshots/<culture>/marketing` in this order:
 
-1. `01-lokaler-tresor.png`
-2. `02-suchen-und-kopieren.png`
-3. `03-konten-hinzufuegen.png`
+1. `01-local-vault.png`
+2. `02-search-and-copy.png`
+3. `03-add-and-import.png`
 4. `04-windows-hello.png`
-5. `05-sperre-und-backup.png`
+5. `05-lock-and-backup.png`
+
+Available culture folders are `en-US`, `de-DE`, `fr-FR`, and `es-ES`. The generator
+[`New-WindowsStoreMarketingScreenshots.ps1`](../../scripts/assets/New-WindowsStoreMarketingScreenshots.ps1)
+keeps the campaign layout and authentic product captures identical while rendering reviewed copy
+for each locale. Run it after changing any campaign text or source capture; Store artwork is kept
+outside the MSIX and is validated as a static release asset.
 
 These marketing screenshots combine the reviewed campaign background with authentic app captures.
 They contain only deterministic synthetic accounts. Their issuer labels are `Amazon`, `Cloudflare`,

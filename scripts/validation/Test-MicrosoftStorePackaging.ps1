@@ -178,14 +178,16 @@ foreach ($screenshot in @(
     Assert-PngMinimumDimensions $screenshot
 }
 
-foreach ($marketingScreenshot in @(
-    'packaging/windows-store/screenshots/de-DE/marketing/01-lokaler-tresor.png',
-    'packaging/windows-store/screenshots/de-DE/marketing/02-suchen-und-kopieren.png',
-    'packaging/windows-store/screenshots/de-DE/marketing/03-konten-hinzufuegen.png',
-    'packaging/windows-store/screenshots/de-DE/marketing/04-windows-hello.png',
-    'packaging/windows-store/screenshots/de-DE/marketing/05-sperre-und-backup.png'
-)) {
-    Assert-PngDimensions $marketingScreenshot 1920 1080
+foreach ($culture in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
+    foreach ($marketingScreenshot in @(
+        '01-local-vault.png',
+        '02-search-and-copy.png',
+        '03-add-and-import.png',
+        '04-windows-hello.png',
+        '05-lock-and-backup.png'
+    )) {
+        Assert-PngDimensions "packaging/windows-store/screenshots/$culture/marketing/$marketingScreenshot" 1920 1080
+    }
 }
 
 Write-Output 'Microsoft Store packaging controls are present.'
