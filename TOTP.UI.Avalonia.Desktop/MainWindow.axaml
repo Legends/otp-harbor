@@ -424,11 +424,12 @@
                                             <TranslateTransform X="380" />
                                         </Border.RenderTransform>
                                         <ScrollViewer
+                                            x:Name="AccountEditorScrollViewer"
                                             HorizontalScrollBarVisibility="Disabled"
                                             VerticalScrollBarVisibility="Auto">
                                             <StackPanel
                                                 x:Name="AccountEditorContent"
-                                                Margin="0,10,28,10"
+                                                Margin="0,10,20,10"
                                                 Spacing="0">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock
@@ -477,6 +478,7 @@
                                                     automation:AutomationProperties.Name="{DynamicResource AccountName}"
                                                     Text="{Binding EditorAccountName, Mode=TwoWay}" />
                                                 <Expander
+                                                    x:Name="AccountAdvancedOptions"
                                                     Margin="0,10,0,0"
                                                     Header="{DynamicResource AdvancedOptions}"
                                                     IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -957,10 +958,10 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void AccountEditorContent_ReservesSpaceForOverlayScrollBar()
+    public void AccountEditorContent_KeepsNarrowClearanceFromOverlayScrollBar()
     {
         var mainWindow = new MainWindow();
-        var templateHost = new Window();
+        var templateHost = new Window { Width = 380, Height = 540 };
 
         try
         {
@@ -970,12 +971,36 @@ public sealed class MainWindowSmokeTests
             Assert.NotNull(accountPage.ContentTemplate);
             templateHost.Content = accountPage.ContentTemplate.Build(null);
             templateHost.Show();
+            var flyout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "AccountEditorFlyout");
+            var advancedOptions = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Expander>(),
+                expander => expander.Name == "AccountAdvancedOptions");
+            var scrollViewer = Assert.Single(
+                templateHost.GetVisualDescendants().OfType<ScrollViewer>(),
+                viewer => viewer.Name == "AccountEditorScrollViewer");
+            flyout.IsVisible = true;
+            advancedOptions.IsExpanded = true;
+            scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
             templateHost.UpdateLayout();
 
             var accountEditorContent = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<StackPanel>(),
                 panel => panel.Name == "AccountEditorContent");
-            Assert.Equal(new Thickness(0, 10, 28, 10), accountEditorContent.Margin);
+            Assert.Equal(new Thickness(0, 10, 20, 10), accountEditorContent.Margin);
+
+            var verticalScrollBar = Assert.Single(
+                scrollViewer.GetVisualDescendants().OfType<ScrollBar>(),
+                scrollBar => scrollBar.Orientation == Orientation.Vertical && scrollBar.IsVisible);
+            var issuer = Assert.Single(
+                templateHost.GetVisualDescendants().OfType<TextBox>(),
+                textBox => textBox.Name == "AccountIssuerBox");
+            var issuerRight = issuer.TranslatePoint(new Point(issuer.Bounds.Width, 0), scrollViewer);
+            var scrollBarLeft = verticalScrollBar.TranslatePoint(new Point(0, 0), scrollViewer);
+            Assert.NotNull(issuerRight);
+            Assert.NotNull(scrollBarLeft);
+            Assert.InRange(scrollBarLeft.Value.X - issuerRight.Value.X, 4, 12);
         }
         finally
         {
