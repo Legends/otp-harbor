@@ -1,30 +1,22 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>OTP Harbor — Open-Source TOTP & 2FA Authenticator</title>
 
-  <meta
-    name="description"
+  <meta name="description"
     content="OTP Harbor is an open-source TOTP and 2FA authenticator for Windows, macOS and Linux with encrypted local storage, QR import and encrypted backups.">
 
-  <meta
-    name="robots"
-    content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
-  <meta
-    name="google-site-verification"
-    content="I36j8PWZYmhKsRKKNVM-fmcGW7wXbJ10fmbOe_4Az0U">
+  <meta name="google-site-verification" content="I36j8PWZYmhKsRKKNVM-fmcGW7wXbJ10fmbOe_4Az0U">
 
-  <meta
-    name="msvalidate.01"
-    content="EAC868BC10B59CB9E6BFF0CE79DEEBAC">
+  <meta name="msvalidate.01" content="EAC868BC10B59CB9E6BFF0CE79DEEBAC">
 
-  <link
-    rel="canonical"
-    href="https://legends.github.io/otp-harbor/">
+  <link rel="canonical" href="https://legends.github.io/otp-harbor/">
 
   <meta name="theme-color" content="#0c1c33">
 
@@ -32,80 +24,111 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="OTP Harbor">
   <meta property="og:locale" content="en_US">
-  <meta
-    property="og:title"
-    content="OTP Harbor — Open-Source TOTP & 2FA Authenticator">
-  <meta
-    property="og:description"
+  <meta property="og:title" content="OTP Harbor — Open-Source TOTP & 2FA Authenticator">
+  <meta property="og:description"
     content="A local-first TOTP authenticator with encrypted storage, QR import, quick unlock and encrypted backups—without requiring a cloud account.">
-  <meta
-    property="og:url"
-    content="https://legends.github.io/otp-harbor/">
-  <meta
-    property="og:image"
-    content="https://legends.github.io/otp-harbor/assets/social-preview.jpg">
-  <meta property="og:image:type" content="image/jpeg">
-  <meta property="og:image:width" content="1774">
-  <meta property="og:image:height" content="887">
-  <meta
-    property="og:image:alt"
-    content="OTP Harbor open-source TOTP authenticator">
+  <meta property="og:url" content="https://legends.github.io/otp-harbor/">
+  <meta property="og:image"
+    content="https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png">
+  <meta property="og:image:secure_url"
+    content="https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1080">
+  <meta property="og:image:alt"
+    content="OTP Harbor TOTP and 2FA authenticator for Windows with encrypted local storage">
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta
-    name="twitter:title"
-    content="OTP Harbor — Open-Source TOTP & 2FA Authenticator">
-  <meta
-    name="twitter:description"
+  <meta name="twitter:title" content="OTP Harbor — Open-Source TOTP & 2FA Authenticator">
+  <meta name="twitter:description"
     content="Local-first TOTP authenticator with encrypted storage, QR import and encrypted backups.">
-  <meta
-    name="twitter:image"
-    content="https://legends.github.io/otp-harbor/assets/social-preview.jpg">
-  <meta
-    name="twitter:image:alt"
-    content="OTP Harbor open-source TOTP authenticator">
+  <meta name="twitter:image"
+    content="https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png">
+  <meta name="twitter:image:alt"
+    content="OTP Harbor TOTP and 2FA authenticator for Windows with encrypted local storage">
 
   <link rel="icon" href="assets/app-icon.png" type="image/png">
   <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="preload" as="image" href="assets/otp-harbor-totp-authenticator-windows.png" type="image/png">
   <link rel="stylesheet" href="styles.css">
 
-  <!-- Structured application data -->
+  <!-- Structured data: page, preferred image and application -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "@id": "https://legends.github.io/otp-harbor/#software",
-    "name": "OTP Harbor",
-    "alternateName": "OTP Harbor Authenticator",
-    "applicationCategory": "SecurityApplication",
-    "operatingSystem": [
-      "Windows 10",
-      "Windows 11",
-      "macOS",
-      "Linux"
-    ],
-    "description": "Open-source, local-first TOTP and 2FA authenticator with encrypted local storage, QR import, quick unlock, and encrypted backup and restore.",
-    "url": "https://legends.github.io/otp-harbor/",
-    "downloadUrl": "https://apps.microsoft.com/detail/9P31KH5L924P",
-    "sameAs": [
-      "https://github.com/Legends/otp-harbor",
-      "https://apps.microsoft.com/detail/9P31KH5L924P"
-    ],
-    "image": "https://legends.github.io/otp-harbor/assets/social-preview.jpg",
-    "screenshot": "https://legends.github.io/otp-harbor/assets/app.png",
-    "isAccessibleForFree": true,
-    "offers": {
-      "@type": "Offer",
-      "price": 0,
-      "priceCurrency": "USD"
-    },
-    "license": "https://opensource.org/license/mit",
-    "author": {
-      "@type": "Person",
-      "name": "Legends",
-      "url": "https://github.com/Legends"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://legends.github.io/otp-harbor/#website",
+        "url": "https://legends.github.io/otp-harbor/",
+        "name": "OTP Harbor",
+        "alternateName": "OTP Harbor Authenticator"
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://legends.github.io/otp-harbor/#webpage",
+        "url": "https://legends.github.io/otp-harbor/",
+        "name": "OTP Harbor — Open-Source TOTP & 2FA Authenticator",
+        "description": "OTP Harbor is an open-source TOTP and 2FA authenticator for Windows, macOS and Linux with encrypted local storage, QR import and encrypted backups.",
+        "primaryImageOfPage": {
+          "@id": "https://legends.github.io/otp-harbor/#primaryimage"
+        },
+        "image": {
+          "@id": "https://legends.github.io/otp-harbor/#primaryimage"
+        },
+        "thumbnailUrl": "https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png",
+        "mainEntity": {
+          "@id": "https://legends.github.io/otp-harbor/#software"
+        }
+      },
+      {
+        "@type": "ImageObject",
+        "@id": "https://legends.github.io/otp-harbor/#primaryimage",
+        "url": "https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png",
+        "contentUrl": "https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png",
+        "width": 1920,
+        "height": 1080,
+        "caption": "OTP Harbor TOTP and 2FA authenticator for Windows",
+        "representativeOfPage": true
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://legends.github.io/otp-harbor/#software",
+        "name": "OTP Harbor",
+        "alternateName": "OTP Harbor Authenticator",
+        "applicationCategory": "SecurityApplication",
+        "operatingSystem": [
+          "Windows 10",
+          "Windows 11",
+          "macOS",
+          "Linux"
+        ],
+        "description": "Open-source, local-first TOTP and 2FA authenticator with encrypted local storage, QR import, quick unlock, and encrypted backup and restore.",
+        "url": "https://legends.github.io/otp-harbor/",
+        "downloadUrl": "https://apps.microsoft.com/detail/9P31KH5L924P",
+        "sameAs": [
+          "https://github.com/Legends/otp-harbor",
+          "https://apps.microsoft.com/detail/9P31KH5L924P"
+        ],
+        "image": {
+          "@id": "https://legends.github.io/otp-harbor/#primaryimage"
+        },
+        "screenshot": "https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": 0,
+          "priceCurrency": "USD"
+        },
+        "license": "https://opensource.org/license/mit",
+        "author": {
+          "@type": "Person",
+          "name": "Legends",
+          "url": "https://github.com/Legends"
+        }
+      }
+    ]
   }
   </script>
 </head>
@@ -114,11 +137,7 @@
   <header class="site-header">
 
     <a class="brand" href="#top" aria-label="OTP Harbor authenticator home">
-      <img
-        src="assets/app-icon.png"
-        alt=""
-        width="40"
-        height="40">
+      <img src="assets/app-icon.png" alt="" width="40" height="40">
       <span>OTP Harbor</span>
     </a>
 
@@ -163,22 +182,16 @@
 
         <div class="actions">
 
-          <a
-            class="button primary"
-            href="https://apps.microsoft.com/detail/9P31KH5L924P"
+          <a class="button primary" href="https://apps.microsoft.com/detail/9P31KH5L924P"
             aria-label="Get OTP Harbor from Microsoft Store">
             Get it from Microsoft Store
           </a>
 
-          <a
-            class="button secondary"
-            href="https://github.com/Legends/otp-harbor/releases">
+          <a class="button secondary" href="https://github.com/Legends/otp-harbor/releases">
             GitHub Releases
           </a>
 
-          <a
-            class="button secondary"
-            href="https://github.com/Legends/otp-harbor">
+          <a class="button secondary" href="https://github.com/Legends/otp-harbor">
             View source
           </a>
 
@@ -193,13 +206,9 @@
 
       <figure class="product-shot">
 
-        <img
-          src="assets/app.png"
+        <img src="assets/app.png"
           alt="OTP Harbor desktop authenticator showing synthetic GitHub, Microsoft, Google and other accounts with inline one-time passwords"
-          width="1900"
-          height="2128"
-          fetchpriority="high"
-          decoding="async">
+          width="1900" height="2128" fetchpriority="high" decoding="async">
 
       </figure>
 
@@ -278,9 +287,7 @@
          FEATURES
          ========================================================= -->
 
-    <section
-      class="feature-grid"
-      aria-label="OTP Harbor authenticator features">
+    <section class="feature-grid" aria-label="OTP Harbor authenticator features">
 
       <article>
 
@@ -459,6 +466,12 @@
         publicly available from Microsoft Store.
       </p>
 
+      <figure class="search-preview-image">
+        <img src="assets/otp-harbor-totp-authenticator-windows.png"
+          alt="OTP Harbor TOTP and 2FA authenticator for Windows with encrypted local storage" width="1920"
+          height="1080" loading="eager" decoding="async">
+      </figure>
+
       <div class="platform-grid">
 
         <article>
@@ -516,15 +529,11 @@
 
       <div class="actions">
 
-        <a
-          class="button secondary"
-          href="https://github.com/Legends/otp-harbor/releases">
+        <a class="button secondary" href="https://github.com/Legends/otp-harbor/releases">
           View OTP Harbor releases
         </a>
 
-        <a
-          class="button secondary"
-          href="https://github.com/Legends/otp-harbor/blob/master/readme.md">
+        <a class="button secondary" href="https://github.com/Legends/otp-harbor/blob/master/readme.md">
           Installation and project information
         </a>
 
@@ -755,15 +764,11 @@
 
       <div class="actions vertical">
 
-        <a
-          class="button primary"
-          href="https://github.com/Legends/otp-harbor/issues">
+        <a class="button primary" href="https://github.com/Legends/otp-harbor/issues">
           Join OTP Harbor testing
         </a>
 
-        <a
-          class="button secondary"
-          href="https://github.com/Legends/otp-harbor/blob/master/CONTRIBUTING.md">
+        <a class="button secondary" href="https://github.com/Legends/otp-harbor/blob/master/CONTRIBUTING.md">
           Contribution guide
         </a>
 
@@ -824,4 +829,5 @@
   </footer>
 
 </body>
+
 </html>

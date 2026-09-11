@@ -32,6 +32,25 @@ $indexNowVerificationFile = Read-RequiredFile "site/$indexNowVerificationValue.t
 Read-RequiredFile 'docs/images/readme/app.png' | Out-Null
 Read-RequiredFile 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png' | Out-Null
 
+$preferredImageRelativePath = 'packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png'
+$preferredImageUrl = 'https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png'
+$preferredImagePath = Join-Path $repositoryRoot $preferredImageRelativePath
+if (-not (Test-Path -LiteralPath $preferredImagePath -PathType Leaf)) {
+    throw 'The preferred search-preview image is missing.'
+}
+$preferredImageBytes = [IO.File]::ReadAllBytes($preferredImagePath)
+if ($preferredImageBytes.Length -lt 24 -or
+    [Convert]::ToHexString($preferredImageBytes[0..7]) -cne '89504E470D0A1A0A') {
+    throw 'The preferred search-preview image is not a valid PNG.'
+}
+$preferredImageWidth = [BitConverter]::ToInt32(
+    [byte[]]($preferredImageBytes[19], $preferredImageBytes[18], $preferredImageBytes[17], $preferredImageBytes[16]), 0)
+$preferredImageHeight = [BitConverter]::ToInt32(
+    [byte[]]($preferredImageBytes[23], $preferredImageBytes[22], $preferredImageBytes[21], $preferredImageBytes[20]), 0)
+if ($preferredImageWidth -ne 1920 -or $preferredImageHeight -ne 1080) {
+    throw "The preferred search-preview image must be 1920x1080; found ${preferredImageWidth}x${preferredImageHeight}."
+}
+
 $socialPreviewPath = Join-Path $repositoryRoot 'docs/images/social/otp-harbor-social-preview.jpg'
 if (-not (Test-Path -LiteralPath $socialPreviewPath -PathType Leaf)) {
     throw 'The optimized social-preview image is missing.'
@@ -45,8 +64,14 @@ foreach ($requiredText in @(
     '<meta name="google-site-verification" content="I36j8PWZYmhKsRKKNVM-fmcGW7wXbJ10fmbOe_4Az0U">',
     '<meta name="msvalidate.01" content="EAC868BC10B59CB9E6BFF0CE79DEEBAC">',
     '<link rel="canonical" href="https://legends.github.io/otp-harbor/">',
-    '<meta property="og:image" content="https://legends.github.io/otp-harbor/assets/social-preview.jpg">',
+    '<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">',
+    "<meta property=`"og:image`" content=`"$preferredImageUrl`">",
+    "<meta name=`"twitter:image`" content=`"$preferredImageUrl`">",
     'type="application/ld+json"',
+    '"@type": "WebSite"',
+    '"@type": "WebPage"',
+    '"@type": "ImageObject"',
+    '"primaryImageOfPage"',
     '"@type": "SoftwareApplication"',
     '"@type": "Offer"',
     'https://apps.microsoft.com/detail/9P31KH5L924P',
@@ -63,6 +88,22 @@ foreach ($requiredText in @(
     }
 }
 
+$structuredDataMatch = [Text.RegularExpressions.Regex]::Match(
+    $index,
+    '<script type="application/ld\+json">\s*(?<json>.*?)\s*</script>',
+    [Text.RegularExpressions.RegexOptions]::Singleline,
+    [TimeSpan]::FromSeconds(2))
+if (-not $structuredDataMatch.Success) {
+    throw 'The website does not contain parseable JSON-LD structured data.'
+}
+$structuredData = $structuredDataMatch.Groups['json'].Value | ConvertFrom-Json
+$structuredTypes = @($structuredData.'@graph' | ForEach-Object { $_.'@type' })
+foreach ($requiredType in @('WebSite', 'WebPage', 'ImageObject', 'SoftwareApplication')) {
+    if ($requiredType -notin $structuredTypes) {
+        throw "The website JSON-LD graph is missing $requiredType."
+    }
+}
+
 $mainScreenshotPath = Join-Path $repositoryRoot 'docs/images/readme/app.png'
 if ((Get-Item -LiteralPath $mainScreenshotPath).Length -ge 1MB) {
     throw 'The main application screenshot must remain smaller than 1 MB.'
@@ -75,8 +116,15 @@ if (-not $styles.Contains('prefers-reduced-motion', [StringComparison]::Ordinal)
     throw 'The website is missing its reduced-motion accessibility rule.'
 }
 if (-not $robots.Contains('Sitemap: https://legends.github.io/otp-harbor/sitemap.xml', [StringComparison]::Ordinal) -or
-    -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/</loc>', [StringComparison]::Ordinal)) {
+    -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/</loc>', [StringComparison]::Ordinal) -or
+    -not $sitemap.Contains('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"', [StringComparison]::Ordinal) -or
+    -not $sitemap.Contains("<image:loc>$preferredImageUrl</image:loc>", [StringComparison]::Ordinal)) {
     throw 'The website crawl metadata does not use the canonical Pages URL.'
+}
+
+if (-not $compactIndex.Contains("<img src=`"assets/otp-harbor-totp-authenticator-windows.png`"", [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains("cp $preferredImageRelativePath _site/assets/otp-harbor-totp-authenticator-windows.png", [StringComparison]::Ordinal)) {
+    throw 'The preferred search-preview image is not visible and deployable from the canonical page.'
 }
 
 if ($indexNowVerificationFile.Trim() -cne $indexNowVerificationValue -or

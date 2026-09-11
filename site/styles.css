@@ -39,6 +39,8 @@ a.button:hover, a.button:focus-visible { transform: translateY(-1px); filter: br
 .release-note, .language-note { color: var(--muted); font-size: .93rem; max-width: 680px; }
 .product-shot { margin: 0; padding: 13px; border: 1px solid var(--line); background: var(--panel); border-radius: 18px; box-shadow: 0 30px 70px rgba(0,0,0,.3); }
 .product-shot img { display: block; width: 100%; height: auto; border-radius: 9px; }
+.search-preview-image { margin: 24px 0 32px; }
+.search-preview-image img { display: block; width: 100%; height: auto; border-radius: 16px; }
 .feature-grid, .platform-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .feature-grid article, .platform-grid article { background: var(--panel); border: 1px solid var(--line); border-radius: 13px; padding: 28px; }
 .feature-grid h2 { font-size: 1.25rem; letter-spacing: -.015em; margin-bottom: 10px; }
