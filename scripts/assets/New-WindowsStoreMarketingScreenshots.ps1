@@ -12,7 +12,10 @@ param(
     [string]$BackgroundPath = 'packaging/windows-store/assets/source/store-marketing-screenshot-background.png',
     [string]$IconPath = 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
     [string]$ScreenshotDirectory = 'packaging/windows-store/screenshots/en-US',
-    [string]$WindowsHelloPath = 'packaging/windows-store/assets/source/windows-hello-quick-unlock.png',
+    [string]$WindowsHelloPromptPath = 'packaging/windows-store/assets/source/windows-hello-prompt.png',
+    [string]$QuickUnlockPath = 'packaging/windows-store/assets/source/quick-unlock-screen.png',
+    [string]$ImportExportPath = 'packaging/windows-store/assets/source/import-export-settings.png',
+    [string]$ImportQrPath = 'packaging/windows-store/assets/source/import-qr-camera.png',
     [ValidateSet('en-US', 'de-DE', 'fr-FR', 'es-ES')]
     [string[]]$Cultures = @('en-US', 'de-DE', 'fr-FR', 'es-ES'),
     [string]$OutputRoot = 'packaging/windows-store/screenshots'
@@ -160,11 +163,13 @@ function New-MarketingScreenshot {
         [Drawing.Image]$Background,
         [Drawing.Image]$Icon,
         [Drawing.Image]$Screenshot,
+        [Drawing.Image]$SecondaryScreenshot,
         [string]$Headline,
         [string]$Body,
         [string[]]$Chips,
         [string]$Destination,
-        [switch]$TransparentScreenshot,
+        [ValidateSet('Standard', 'HelloPair', 'ImportExportPair')]
+        [string]$Layout = 'Standard',
         [float]$HeadlineSize = 70
     )
     $bitmap = [Drawing.Bitmap]::new(1920, 1080, [Drawing.Imaging.PixelFormat]::Format24bppRgb)
@@ -188,13 +193,26 @@ function New-MarketingScreenshot {
         Draw-BrandHeader -Graphics $graphics -Icon $Icon
         Draw-Copy -Graphics $graphics -Headline $Headline -Body $Body -Chips $Chips -HeadlineSize $HeadlineSize
 
-        $screenBounds = if ($TransparentScreenshot) {
-            [Drawing.RectangleF]::new(930, 80, 930, 950)
+        switch ($Layout) {
+            'HelloPair' {
+                if ($null -eq $SecondaryScreenshot) { throw 'HelloPair requires a secondary screenshot.' }
+                Draw-ContainedImage -Graphics $graphics -Image $Screenshot `
+                    -Bounds ([Drawing.RectangleF]::new(1270, 80, 540, 920)) -Frame
+                Draw-ContainedImage -Graphics $graphics -Image $SecondaryScreenshot `
+                    -Bounds ([Drawing.RectangleF]::new(880, 250, 820, 760)) -Frame
+            }
+            'ImportExportPair' {
+                if ($null -eq $SecondaryScreenshot) { throw 'ImportExportPair requires a secondary screenshot.' }
+                Draw-ContainedImage -Graphics $graphics -Image $Screenshot `
+                    -Bounds ([Drawing.RectangleF]::new(1210, 70, 610, 900)) -Frame
+                Draw-ContainedImage -Graphics $graphics -Image $SecondaryScreenshot `
+                    -Bounds ([Drawing.RectangleF]::new(900, 350, 890, 640)) -Frame
+            }
+            default {
+                Draw-ContainedImage -Graphics $graphics -Image $Screenshot `
+                    -Bounds ([Drawing.RectangleF]::new(1030, 92, 800, 910)) -Frame
+            }
         }
-        else {
-            [Drawing.RectangleF]::new(1030, 92, 800, 910)
-        }
-        Draw-ContainedImage -Graphics $graphics -Image $Screenshot -Bounds $screenBounds -Frame:(-not $TransparentScreenshot)
 
         $bitmap.Save($Destination, [Drawing.Imaging.ImageFormat]::Png)
     }
@@ -204,7 +222,10 @@ function New-MarketingScreenshot {
 $resolvedBackground = Resolve-RepositoryPath $BackgroundPath
 $resolvedIcon = Resolve-RepositoryPath $IconPath
 $resolvedScreenshots = Resolve-RepositoryPath $ScreenshotDirectory
-$resolvedHello = Resolve-RepositoryPath $WindowsHelloPath
+$resolvedHelloPrompt = Resolve-RepositoryPath $WindowsHelloPromptPath
+$resolvedQuickUnlock = Resolve-RepositoryPath $QuickUnlockPath
+$resolvedImportExport = Resolve-RepositoryPath $ImportExportPath
+$resolvedImportQr = Resolve-RepositoryPath $ImportQrPath
 $resolvedOutputRoot = Resolve-RepositoryPath $OutputRoot
 
 $required = @(
@@ -213,8 +234,10 @@ $required = @(
     (Join-Path $resolvedScreenshots '01-account-dashboard.png'),
     (Join-Path $resolvedScreenshots '02-search-accounts.png'),
     (Join-Path $resolvedScreenshots '03-add-account.png'),
-    (Join-Path $resolvedScreenshots '04-quick-unlock.png'),
-    $resolvedHello
+    $resolvedHelloPrompt,
+    $resolvedQuickUnlock,
+    $resolvedImportExport,
+    $resolvedImportQr
 )
 foreach ($path in $required) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required marketing source is missing: $path" }
@@ -225,37 +248,39 @@ $icon = [Drawing.Image]::FromFile($resolvedIcon)
 $dashboard = [Drawing.Image]::FromFile((Join-Path $resolvedScreenshots '01-account-dashboard.png'))
 $search = [Drawing.Image]::FromFile((Join-Path $resolvedScreenshots '02-search-accounts.png'))
 $add = [Drawing.Image]::FromFile((Join-Path $resolvedScreenshots '03-add-account.png'))
-$locked = [Drawing.Image]::FromFile((Join-Path $resolvedScreenshots '04-quick-unlock.png'))
-$hello = [Drawing.Image]::FromFile($resolvedHello)
+$helloPrompt = [Drawing.Image]::FromFile($resolvedHelloPrompt)
+$quickUnlock = [Drawing.Image]::FromFile($resolvedQuickUnlock)
+$importExport = [Drawing.Image]::FromFile($resolvedImportExport)
+$importQr = [Drawing.Image]::FromFile($resolvedImportQr)
 try {
     $localizedCampaigns = @{
         'en-US' = @(
             @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Your codes.`nYour device.`nYour control."; Body = 'A local, encrypted TOTP vault — with no cloud account.'; Chips = @('LOCAL FIRST', 'ENCRYPTED'); Size = 66 }
             @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Find. Copy.`nKeep moving."; Body = 'Search accounts instantly and copy the current code with one click.'; Chips = @('QUICK SEARCH', 'LIVE CODES'); Size = 70 }
             @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Add accounts`nin seconds."; Body = 'Enter details manually or import a QR code — with flexible TOTP settings.'; Chips = @('QR IMPORT', 'MANUAL ENTRY'); Size = 70 }
-            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Fast to unlock.`nSecure by design."; Body = 'Windows Hello for everyday access. Your master password remains the recovery method.'; Chips = @('WINDOWS HELLO', 'QUICK UNLOCK'); Size = 68; Transparent = $true }
-            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Protected when`nit matters."; Body = 'Automatic locking, encrypted backups, and controlled recovery.'; Chips = @('AUTO LOCK', 'BACKUP & RESTORE'); Size = 70 }
+            @{ File = '04-windows-hello.png'; Screenshot = $quickUnlock; Secondary = $helloPrompt; Layout = 'HelloPair'; Headline = "Fast to unlock.`nSecure by design."; Body = 'Windows Hello for everyday access. Your master password remains the recovery method.'; Chips = @('WINDOWS HELLO', 'QUICK UNLOCK'); Size = 68 }
+            @{ File = '05-import-export.png'; Screenshot = $importExport; Secondary = $importQr; Layout = 'ImportExportPair'; Headline = "Import. Export.`nMove with confidence."; Body = 'Import and export encrypted backups, import Google Authenticator QR exports, or scan single-account codes with your camera.'; Chips = @('GOOGLE QR IMPORT', 'CAMERA OR FILE'); Size = 62 }
         )
         'de-DE' = @(
             @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Deine Codes.`nDein Gerät.`nDeine Kontrolle."; Body = 'Ein lokaler, verschlüsselter TOTP-Tresor – ganz ohne Cloudkonto.'; Chips = @('LOKAL GESPEICHERT', 'VERSCHLÜSSELT'); Size = 66 }
             @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Finden. Kopieren.`nWeiterarbeiten."; Body = 'Durchsuche deine Konten sofort und kopiere den aktuellen Code mit einem Klick.'; Chips = @('SCHNELLE SUCHE', 'LIVE-CODES'); Size = 70 }
             @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Konten schnell`nhinzufügen."; Body = 'Manuell oder per QR-Code – mit flexiblen TOTP-Einstellungen.'; Chips = @('QR-IMPORT', 'MANUELLE EINGABE'); Size = 70 }
-            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Schnell entsperrt.`nSicher geschützt."; Body = 'Windows Hello für den Alltag. Das Masterpasswort bleibt deine Wiederherstellung.'; Chips = @('WINDOWS HELLO', 'QUICK UNLOCK'); Size = 68; Transparent = $true }
-            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Geschützt, wenn`nes darauf ankommt."; Body = 'Automatische Sperre, verschlüsselte Backups und kontrollierte Wiederherstellung.'; Chips = @('AUTO-LOCK', 'BACKUP & RESTORE'); Size = 70 }
+            @{ File = '04-windows-hello.png'; Screenshot = $quickUnlock; Secondary = $helloPrompt; Layout = 'HelloPair'; Headline = "Schnell entsperrt.`nSicher geschützt."; Body = 'Windows Hello für den Alltag. Das Masterpasswort bleibt deine Wiederherstellung.'; Chips = @('WINDOWS HELLO', 'QUICK UNLOCK'); Size = 68 }
+            @{ File = '05-import-export.png'; Screenshot = $importExport; Secondary = $importQr; Layout = 'ImportExportPair'; Headline = "Importieren. Exportieren.`nSicher wechseln."; Body = 'Verschlüsselte Backups übertragen, Google-Authenticator-QRs importieren oder Einzelkonten per Kamera scannen.'; Chips = @('GOOGLE-QR-IMPORT', 'KAMERA ODER DATEI'); Size = 56 }
         )
         'fr-FR' = @(
             @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Vos codes.`nVotre appareil.`nVotre contrôle."; Body = 'Un coffre TOTP local et chiffré, sans compte cloud.'; Chips = @('STOCKAGE LOCAL', 'CHIFFRÉ'); Size = 64 }
             @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Trouvez. Copiez.`nContinuez."; Body = 'Recherchez un compte et copiez le code actuel en un clic.'; Chips = @('RECHERCHE RAPIDE', 'CODES EN DIRECT'); Size = 68 }
             @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Ajoutez vos comptes`nen quelques secondes."; Body = 'Saisie manuelle ou import par code QR, avec des réglages TOTP flexibles.'; Chips = @('IMPORT QR', 'SAISIE MANUELLE'); Size = 59 }
-            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Déverrouillage rapide.`nProtection renforcée."; Body = 'Windows Hello au quotidien. Le mot de passe principal reste la méthode de récupération.'; Chips = @('WINDOWS HELLO', 'DÉVERROUILLAGE RAPIDE'); Size = 58; Transparent = $true }
-            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Protégé quand`ncela compte."; Body = 'Verrouillage automatique, sauvegardes chiffrées et récupération maîtrisée.'; Chips = @('VERROUILLAGE AUTO', 'SAUVEGARDE CHIFFRÉE'); Size = 68 }
+            @{ File = '04-windows-hello.png'; Screenshot = $quickUnlock; Secondary = $helloPrompt; Layout = 'HelloPair'; Headline = "Déverrouillage rapide.`nProtection renforcée."; Body = 'Windows Hello au quotidien. Le mot de passe principal reste la méthode de récupération.'; Chips = @('WINDOWS HELLO', 'DÉVERROUILLAGE RAPIDE'); Size = 58 }
+            @{ File = '05-import-export.png'; Screenshot = $importExport; Secondary = $importQr; Layout = 'ImportExportPair'; Headline = "Importez. Exportez.`nMigrez sereinement."; Body = 'Transférez des sauvegardes chiffrées, importez les QR Google Authenticator ou scannez un compte par caméra.'; Chips = @('IMPORT QR GOOGLE', 'CAMÉRA OU FICHIER'); Size = 60 }
         )
         'es-ES' = @(
             @{ File = '01-local-vault.png'; Screenshot = $dashboard; Headline = "Tus códigos.`nTu dispositivo.`nTu control."; Body = 'Una bóveda TOTP local y cifrada, sin cuenta en la nube.'; Chips = @('ALMACENAMIENTO LOCAL', 'CIFRADO'); Size = 66 }
             @{ File = '02-search-and-copy.png'; Screenshot = $search; Headline = "Busca. Copia.`nContinúa."; Body = 'Encuentra tus cuentas y copia el código actual con un clic.'; Chips = @('BÚSQUEDA RÁPIDA', 'CÓDIGOS EN VIVO'); Size = 70 }
             @{ File = '03-add-and-import.png'; Screenshot = $add; Headline = "Añade cuentas`nen segundos."; Body = 'Entrada manual o importación mediante QR, con ajustes TOTP flexibles.'; Chips = @('IMPORTAR QR', 'ENTRADA MANUAL'); Size = 68 }
-            @{ File = '04-windows-hello.png'; Screenshot = $hello; Headline = "Acceso rápido.`nProtección segura."; Body = 'Windows Hello para el uso diario. La contraseña maestra sigue siendo la recuperación.'; Chips = @('WINDOWS HELLO', 'DESBLOQUEO RÁPIDO'); Size = 66; Transparent = $true }
-            @{ File = '05-lock-and-backup.png'; Screenshot = $locked; Headline = "Protección cuando`nmás importa."; Body = 'Bloqueo automático, copias cifradas y recuperación controlada.'; Chips = @('BLOQUEO AUTOMÁTICO', 'COPIA CIFRADA'); Size = 66 }
+            @{ File = '04-windows-hello.png'; Screenshot = $quickUnlock; Secondary = $helloPrompt; Layout = 'HelloPair'; Headline = "Acceso rápido.`nProtección segura."; Body = 'Windows Hello para el uso diario. La contraseña maestra sigue siendo la recuperación.'; Chips = @('WINDOWS HELLO', 'DESBLOQUEO RÁPIDO'); Size = 66 }
+            @{ File = '05-import-export.png'; Screenshot = $importExport; Secondary = $importQr; Layout = 'ImportExportPair'; Headline = "Importa. Exporta.`nCambia con confianza."; Body = 'Transfiere copias cifradas, importa QR de Google Authenticator o escanea una cuenta con la cámara.'; Chips = @('IMPORTAR QR DE GOOGLE', 'CÁMARA O ARCHIVO'); Size = 60 }
         )
     }
 
@@ -274,8 +299,11 @@ try {
                 HeadlineSize = $slide.Size
                 Destination = Join-Path $resolvedOutput $slide.File
             }
-            if ($slide.ContainsKey('Transparent') -and $slide.Transparent) {
-                $arguments.TransparentScreenshot = $true
+            if ($slide.ContainsKey('Secondary')) {
+                $arguments.SecondaryScreenshot = $slide.Secondary
+            }
+            if ($slide.ContainsKey('Layout')) {
+                $arguments.Layout = $slide.Layout
             }
             New-MarketingScreenshot @arguments
         }
@@ -284,6 +312,7 @@ try {
     }
 }
 finally {
-    $hello.Dispose(); $locked.Dispose(); $add.Dispose(); $search.Dispose(); $dashboard.Dispose()
+    $importQr.Dispose(); $importExport.Dispose(); $quickUnlock.Dispose(); $helloPrompt.Dispose()
+    $add.Dispose(); $search.Dispose(); $dashboard.Dispose()
     $icon.Dispose(); $background.Dispose()
 }

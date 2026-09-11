@@ -957,6 +957,34 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void AccountEditorContent_ReservesSpaceForOverlayScrollBar()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window();
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage);
+            Assert.NotNull(accountPage.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+            templateHost.UpdateLayout();
+
+            var accountEditorContent = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<StackPanel>(),
+                panel => panel.Name == "AccountEditorContent");
+            Assert.Equal(new Thickness(0, 10, 28, 10), accountEditorContent.Margin);
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void SettingsWindow_IsOwnedWindowWidthWithSingleRowTabs()
     {
         var window = new SettingsWindow();

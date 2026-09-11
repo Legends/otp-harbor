@@ -72,8 +72,11 @@ Final generation prompt:
 deterministically composites the canonical icon, reviewed localized marketing copy, and authentic
 app captures onto that background. It creates five 1920 x 1080 outputs for each supported Store
 locale (`en-US`, `de-DE`, `fr-FR`, and `es-ES`). The 20 outputs contain only synthetic accounts. The
-Windows Hello visual uses the reviewed empty-PIN prompt in `windows-hello-quick-unlock.png`; no
-credential or biometric data is present. Text remains editable in the generator and is rendered at
+Windows Hello visual combines the maintainer-provided empty-PIN prompt in
+`windows-hello-prompt.png` with the authentic locked-app capture in `quick-unlock-screen.png`.
+The import/export visual combines the authentic settings and QR camera/file workflows from
+`import-export-settings.png` and `import-qr-camera.png`. No credential, biometric data, OTP secret,
+QR code, or private account is present. Text remains editable in the generator and is rendered at
 asset-build time; the generated screenshots themselves are not shipped inside the MSIX.
 
 ## Microsoft Store screenshots
@@ -109,6 +112,10 @@ content is present.
 | `packaging/windows-store/assets/source/store-abstract-background.png` | `9a45a1d07a9b3912af600cd0156847117b2cf2f9367665cf5c439df8324eb102` |
 | `packaging/windows-store/assets/source/store-marketing-screenshot-background.png` | `2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4` |
 | `packaging/windows-store/assets/source/windows-hello-quick-unlock.png` | `6ff8db7a3f08c4b34d047538148071b50b6541d8cb63b2820fdc4914a9a32a41` |
+| `packaging/windows-store/assets/source/windows-hello-prompt.png` | `f86d932878865889c094690ad73ad55c4b14f19e0f0f0075813c1af31f946672` |
+| `packaging/windows-store/assets/source/quick-unlock-screen.png` | `75730074e7e3bc43c01c6aa86a6734eaf944f68aebaf63371d5eb23d382b985d` |
+| `packaging/windows-store/assets/source/import-export-settings.png` | `58a46d85bb904bd96c9905d2dbb804fb8067e9a370d80e7a688e43d36a4c09d0` |
+| `packaging/windows-store/assets/source/import-qr-camera.png` | `ba4e39868cc899841bd288977832fe8e23d76489642a8c2ebced91638cff1ff2` |
 | `packaging/windows-store/assets/store-super-hero-1920x1080.png` | `1df8efd083a88c7aaef390ec3b5c9774458aa8ff5db8055e188a737a30184a41` |
 | `packaging/windows-store/assets/store-poster-art-720x1080.png` | `ec5893f4574003d64376c18a720596a5a55ff3039d408e52c10665f04d93e65f` |
 | `packaging/windows-store/assets/store-box-art-1080x1080.png` | `243ea8dabc8371a18582aa451fb053b8235b679b670caffa5908350c904248f0` |
@@ -124,22 +131,22 @@ content is present.
 | `packaging/windows-store/screenshots/de-DE/marketing/01-local-vault.png` | `1ef8cb148b6f18b8083d3f1e7f1483fc301debd1fbaf5b57c82dd67b2e3c3c0f` |
 | `packaging/windows-store/screenshots/de-DE/marketing/02-search-and-copy.png` | `0190328c0e3a042a1ac2b955269427f3cf597bfea9dba37b796adf0568fcc6c4` |
 | `packaging/windows-store/screenshots/de-DE/marketing/03-add-and-import.png` | `9cae1c0573688f0bfedaa22a056b3c1560776e5c2d2523f9c9e397e4b8c85e5b` |
-| `packaging/windows-store/screenshots/de-DE/marketing/04-windows-hello.png` | `d6fd8486bf3e3d173ea9da5ca0fe712e6817c66d775172bde67afbc73e05a1dd` |
-| `packaging/windows-store/screenshots/de-DE/marketing/05-lock-and-backup.png` | `9d1c3a64ce213d8a0728153bd93aac906b09f46d77a927ebeaa46a02c205667f` |
+| `packaging/windows-store/screenshots/de-DE/marketing/04-windows-hello.png` | `d62c6518ec516da09d47591893c5b27ca80389ecd20fa82f2e04bb520cf4e898` |
+| `packaging/windows-store/screenshots/de-DE/marketing/05-import-export.png` | `8a163c3925a2547948f680d378fdef1691128778bb62a8372b77cb049e70c66c` |
 | `packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png` | `cb51058dfeb6064133558ceaac6dff559f0242c1a2f29fd25b46306d5679a778` |
 | `packaging/windows-store/screenshots/en-US/marketing/02-search-and-copy.png` | `79ccd68cbca820f11957dfa7c62ccbbe5b912508a83ea2313b95c6cd42d62040` |
 | `packaging/windows-store/screenshots/en-US/marketing/03-add-and-import.png` | `41cfcb9322386dfc8a0a3ecf4bf2f76e0bf67ad426e63850603ae43bd13fbd68` |
-| `packaging/windows-store/screenshots/en-US/marketing/04-windows-hello.png` | `93803213d59d8c9717c4d0d06763be044c710cad4fe0842af8b21622017c7dd1` |
-| `packaging/windows-store/screenshots/en-US/marketing/05-lock-and-backup.png` | `71b60b5d460a10466d34a828ab1f1ba0dea1a62e3663b6ad623f06222e716f77` |
+| `packaging/windows-store/screenshots/en-US/marketing/04-windows-hello.png` | `6ff17afe947a5e47635b65763f3237747a4fc715465ba645779cff4d0b2c687f` |
+| `packaging/windows-store/screenshots/en-US/marketing/05-import-export.png` | `d6de618621fa1fdf550d2126dbcb43b4c90293d4764cda42c5fc3bc2e8161264` |
 | `packaging/windows-store/screenshots/es-ES/marketing/01-local-vault.png` | `059092199174042a0b42f22f8197a83594585f683681d59171af0656f6d4fed6` |
 | `packaging/windows-store/screenshots/es-ES/marketing/02-search-and-copy.png` | `3e682a7f58e90d0195001d24f68d7a12dd42ac797cbf625cc7037aeb89530ecb` |
 | `packaging/windows-store/screenshots/es-ES/marketing/03-add-and-import.png` | `71cc9dd13f6ab647a21790a8a95054a789ffedc09d134106c1db19e0e133684d` |
-| `packaging/windows-store/screenshots/es-ES/marketing/04-windows-hello.png` | `2df579d95408a8f831ea4dce28c674ca46eb2c15560291f914f8711ece6130e7` |
-| `packaging/windows-store/screenshots/es-ES/marketing/05-lock-and-backup.png` | `9c4bffc99b5e54ab5ac08b017de0472b4c8ec438e4d50fc4e4931400137a458c` |
+| `packaging/windows-store/screenshots/es-ES/marketing/04-windows-hello.png` | `7b1e84462a0323910a4e12a4760898d17f8cca27b7ac69127194e60c4615875c` |
+| `packaging/windows-store/screenshots/es-ES/marketing/05-import-export.png` | `0bb82cdaa4014c268967843449acf3fc42d2b57589dedd5c0f73c9986c3f9bb1` |
 | `packaging/windows-store/screenshots/fr-FR/marketing/01-local-vault.png` | `5142ea36d83266cd9434d86563a20d776084cb64bab08d1cfa3d6f9cf852521a` |
 | `packaging/windows-store/screenshots/fr-FR/marketing/02-search-and-copy.png` | `559287d3e48e8c06bbdfc2d24bde70cf67aa1e193bd650698011a1290a87c0d0` |
 | `packaging/windows-store/screenshots/fr-FR/marketing/03-add-and-import.png` | `2a5ed9a1b1d12845b3a23fc661e2c75cbac58cbdb99faefa3e8b76dcbdfe0d52` |
-| `packaging/windows-store/screenshots/fr-FR/marketing/04-windows-hello.png` | `57d6da8a993dae0e134793415af524a34fc1cf978f62d63358ede928ff744b45` |
-| `packaging/windows-store/screenshots/fr-FR/marketing/05-lock-and-backup.png` | `9afcc51dcbc29dad2361db07dfad7b2ac0e4a7cc554d78668d10fad6768445a3` |
+| `packaging/windows-store/screenshots/fr-FR/marketing/04-windows-hello.png` | `885d9e38ff04dadc724ac055fd8f20dae754ac5101c336b68078c9ab3bafe4a5` |
+| `packaging/windows-store/screenshots/fr-FR/marketing/05-import-export.png` | `242772834189dba90a966ee59995a348241b33bc54aab6f2f801c2fe730ef82d` |
 
 Any replacement requires a new provenance record, license review, updated hashes, and visual/build validation.

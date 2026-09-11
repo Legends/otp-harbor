@@ -41,7 +41,7 @@ For each localized Store listing, upload its polished 1920 x 1080 campaign set f
 2. `02-search-and-copy.png`
 3. `03-add-and-import.png`
 4. `04-windows-hello.png`
-5. `05-lock-and-backup.png`
+5. `05-import-export.png`
 
 Available culture folders are `en-US`, `de-DE`, `fr-FR`, and `es-ES`. The generator
 [`New-WindowsStoreMarketingScreenshots.ps1`](../../scripts/assets/New-WindowsStoreMarketingScreenshots.ps1)
@@ -60,7 +60,7 @@ Suggested German captions, in upload order:
 2. `Konten sofort finden und den aktuellen Code mit einem Klick kopieren.`
 3. `TOTP-Konten manuell oder per QR-Code hinzufügen.`
 4. `Schnell mit Windows Hello entsperren; das Masterpasswort bleibt die Wiederherstellungsmethode.`
-5. `Automatische Sperre, verschlüsselte Backups und kontrollierte Wiederherstellung.`
+5. `Verschlüsselte Backups importieren und exportieren, Google-Authenticator-QR-Exporte übernehmen oder einzelne Konten per Kamera scannen.`
 
 ## English (en-US)
 

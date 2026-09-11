@@ -251,7 +251,10 @@
                 </Border>
 
                 <Grid Grid.Row="1">
-                    <ContentControl Content="{Binding AccountList}" IsVisible="{Binding IsAccountListVisible}">
+                    <ContentControl
+                        x:Name="AccountListPage"
+                        Content="{Binding AccountList}"
+                        IsVisible="{Binding IsAccountListVisible}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:AccountListViewModel">
                                 <Grid>
@@ -425,7 +428,7 @@
                                             VerticalScrollBarVisibility="Auto">
                                             <StackPanel
                                                 x:Name="AccountEditorContent"
-                                                Margin="0,10"
+                                                Margin="0,10,28,10"
                                                 Spacing="0">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock

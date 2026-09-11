@@ -168,6 +168,10 @@ Assert-PngDimensions 'packaging/windows-store/assets/store-box-art-1080x1080.png
 Assert-PngDimensions 'packaging/windows-store/assets/store-app-tile-300x300.png' 300 300
 Assert-PngDimensions 'packaging/windows-store/assets/store-logo-150x150.png' 150 150
 Assert-PngDimensions 'packaging/windows-store/assets/store-logo-71x71.png' 71 71
+Assert-PngDimensions 'packaging/windows-store/assets/source/windows-hello-prompt.png' 1140 1191
+Assert-PngDimensions 'packaging/windows-store/assets/source/quick-unlock-screen.png' 950 1224
+Assert-PngDimensions 'packaging/windows-store/assets/source/import-export-settings.png' 1300 1550
+Assert-PngDimensions 'packaging/windows-store/assets/source/import-qr-camera.png' 1400 1050
 
 foreach ($screenshot in @(
     'packaging/windows-store/screenshots/en-US/01-account-dashboard.png',
@@ -184,7 +188,7 @@ foreach ($culture in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
         '02-search-and-copy.png',
         '03-add-and-import.png',
         '04-windows-hello.png',
-        '05-lock-and-backup.png'
+        '05-import-export.png'
     )) {
         Assert-PngDimensions "packaging/windows-store/screenshots/$culture/marketing/$marketingScreenshot" 1920 1080
     }
