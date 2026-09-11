@@ -128,7 +128,7 @@ foreach ($control in @(
     "-IdentityName 'Legends77.OTPHarbor'",
     "-Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9'",
     'retention-days: 90',
-    'needs: [package-avalonia-release, package-microsoft-store-msix]'
+    'needs: [package-avalonia-release, package-android-release, package-microsoft-store-msix]'
 )) {
     if (-not $releaseWorkflow.Contains($control, [StringComparison]::Ordinal)) {
         throw "The release workflow is missing automatic Store-package control: $control"
