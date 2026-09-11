@@ -61,7 +61,7 @@ foreach ($control in @(
     'wix extension add --global WixToolset.UI.wixext/5.0.2',
     '-p:PublishReadyToRun=true',
     'New-WindowsMsi.ps1',
-    'exactly five public Windows/Linux artifacts',
+    'exactly six public Windows/Linux/Android artifacts',
     'wix extension add --global WixToolset.Util.wixext/5.0.2',
     'wix extension add --global WixToolset.BootstrapperApplications.wixext/5.0.2',
     'OTP-Harbor-windows-x64-setup-${{ steps.versioning.outputs.release_version }}.exe'

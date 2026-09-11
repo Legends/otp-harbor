@@ -10,4 +10,10 @@
       <image:loc>https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png</image:loc>
     </image:image>
   </url>
+  <url>
+    <loc>https://legends.github.io/otp-harbor/android/</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
 </urlset>

@@ -7,11 +7,14 @@
     <RootNamespace>TOTP.Avalonia.Android</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ApplicationId>io.github.legends.otpharbor</ApplicationId>
+    <!-- The production ID is permanent and reserved for GitHub/Play releases. -->
+    <AndroidProductionApplicationId>io.github.legends.otpharbor</AndroidProductionApplicationId>
+    <ApplicationId>$(AndroidProductionApplicationId)</ApplicationId>
+    <ApplicationId Condition="'$(Configuration)' == 'Debug'">$(AndroidProductionApplicationId).debug</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>0.1.0-dev</ApplicationDisplayVersion>
     <AndroidPackageFormats Condition="'$(Configuration)' == 'Debug'">apk</AndroidPackageFormats>
-    <AndroidPackageFormats Condition="'$(Configuration)' == 'Release'">aab;apk</AndroidPackageFormats>
+    <AndroidPackageFormats Condition="'$(Configuration)' == 'Release'">apk</AndroidPackageFormats>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <SignAssembly>True</SignAssembly>

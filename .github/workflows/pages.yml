@@ -40,8 +40,9 @@ jobs:
       - name: Assemble static website
         shell: bash
         run: |
-          mkdir -p _site/assets
+          mkdir -p _site/assets _site/android
           cp site/index.html site/styles.css site/robots.txt site/sitemap.xml _site/
+          cp site/android/index.html _site/android/index.html
           cp site/1b6f7ab9795743588fa8e24157ad1541.txt _site/
           cp docs/images/readme/app.png _site/assets/app.png
           cp docs/images/social/otp-harbor-social-preview.jpg _site/assets/social-preview.jpg
@@ -140,6 +141,7 @@ jobs:
         shell: pwsh
         run: |
           $siteUrl = 'https://legends.github.io/otp-harbor/'
+          $androidUrl = 'https://legends.github.io/otp-harbor/android/'
           $verificationValue = '1b6f7ab9795743588fa8e24157ad1541'
           $keyUrl = "$siteUrl$verificationValue.txt"
           $keyIsLive = $false
@@ -167,7 +169,7 @@ jobs:
             host = 'legends.github.io'
             key = $verificationValue
             keyLocation = $keyUrl
-            urlList = @($siteUrl)
+            urlList = @($siteUrl, $androidUrl)
           } | ConvertTo-Json -Compress
 
           try {

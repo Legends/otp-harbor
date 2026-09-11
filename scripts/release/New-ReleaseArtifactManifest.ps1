@@ -118,6 +118,16 @@ function Get-ArtifactTarget {
                 releaseVersion = $Matches.version.Replace("~rc", "-rc")
             }
         }
+        '^OTP-Harbor-android-universal-(?<version>\d+\.\d+\.\d+(?:-rc\d+)?)\.apk$' {
+            return [ordered]@{
+                operatingSystem = "android"
+                architecture = "universal"
+                format = "apk"
+                ownership = "android-package"
+                updatePolicy = "manual-download"
+                releaseVersion = $Matches.version
+            }
+        }
         default {
             throw "Artifact name does not match a supported release target: $FileName"
         }

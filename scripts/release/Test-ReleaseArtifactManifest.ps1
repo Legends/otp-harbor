@@ -31,8 +31,8 @@ $seenNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordina
 foreach ($artifact in $manifest.artifacts) {
     $invalidEntry = [string]::IsNullOrWhiteSpace($artifact.fileName) -or
         -not $seenNames.Add([string]$artifact.fileName) -or
-        $artifact.operatingSystem -notin @("windows", "macos", "linux") -or
-        $artifact.architecture -notin @("x64", "arm64") -or
+        $artifact.operatingSystem -notin @("windows", "macos", "linux", "android") -or
+        $artifact.architecture -notin @("x64", "arm64", "universal") -or
         $artifact.bytes -le 0 -or
         $artifact.sha256 -notmatch '^[0-9a-f]{64}$' -or
         [string]::IsNullOrWhiteSpace($artifact.ownership) -or

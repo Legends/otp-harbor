@@ -1,8 +1,9 @@
-# Android development preview
+# Android application foundation
 
-Android shares the repository and core security architecture with the desktop application, while
-remaining deliberately outside the desktop solution and release artifacts until production Android
-signing, supported CI, and the upgrade policy are ready.
+Android shares the repository and core security architecture with the desktop application. It keeps
+a dedicated solution for platform tooling and is validated by supported CI. Once the protected
+production-signing environment is configured, tagged builds package it as a separate signed APK in
+the same versioned GitHub Release as the desktop applications.
 
 ## Implemented development MVP
 
@@ -61,18 +62,17 @@ Android owns lifecycle locking and display scaling. Updates will be delivered by
 distribution channel. Developer diagnostics remain available through Android tooling rather than
 as end-user settings.
 
-This is a development build, not an Android release candidate. The following maintained mobile
-capabilities are deliberately deferred until their security and platform adapters are complete:
+The following maintained mobile capability remains deliberately deferred until its platform adapter
+is complete:
 
 - QR import from an existing image
-- production signing, Play Store packaging, upgrade policy, and supported Android CI
 
 ## Build and install
 
-The Android projects are deliberately not included in the desktop `TOTP.sln`, so existing desktop CI
-and the pending `v2.0.0` release remain unchanged. Use the dedicated `TOTP.Android.sln` to open the
-Android app, mobile UI, Android adapters, and their shared Core/Infrastructure dependencies together
-in Visual Studio.
+Use the dedicated `TOTP.Android.sln` to open the Android app, mobile UI, Android adapters, and their
+shared Core/Infrastructure dependencies together in Visual Studio. Keeping platform entry points in
+separate solution files avoids requiring the Android workload for ordinary desktop development; the
+shared release workflow still validates both graphs.
 
 Build the Android solution explicitly:
 
@@ -101,13 +101,16 @@ depend on IDE-specific Android Fast Deployment state.
 
 ## Release policy
 
-1. Do not publish development APKs as production artifacts.
-2. Keep the long-lived Android signing key outside the repository and require reviewed CI access.
-3. Add the Android projects to supported CI before publishing the first `0.1.0-beta` artifact.
-4. Document and test same-key upgrades before inviting public beta users.
+1. Never publish development APKs as production artifacts. Debug builds use the isolated
+   `io.github.legends.otpharbor.debug` ID.
+2. Keep the long-lived Android app-signing key outside the repository and require reviewed CI access.
+3. Publish the signed universal APK as a separate asset in the shared GitHub Release; do not place it
+   inside desktop packages and do not present an AAB as an end-user download.
+4. Test same-key upgrades before every public Android release.
 
-The initial Android application ID is `io.github.legends.otpharbor`. It must receive explicit review
-before the first store publication because a published application ID is effectively permanent.
+The permanent production application ID is `io.github.legends.otpharbor`. Signing, Android developer
+verification, GitHub environment setup, and the future Google Play path are documented in the
+[Android release guide](../release/ANDROID.md).
 
 ## Security review notes
 

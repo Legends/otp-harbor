@@ -1,7 +1,7 @@
 # OTP Harbor threat model
 
 ## 1. Scope
-- Product: OTP Harbor (Avalonia cross-platform desktop client)
+- Product: OTP Harbor (Avalonia cross-platform desktop and Android clients)
 - In scope:
   - Local secret handling (OTP seeds, export/import files, passwords, keys in memory)
   - Settings and security workflows

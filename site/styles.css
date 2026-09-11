@@ -52,6 +52,9 @@ a.button:hover, a.button:focus-visible { transform: translateY(-1px); filter: br
 .link-list a { display: block; padding: 12px 0; text-decoration: none; }
 .platform-grid { grid-template-columns: repeat(2, 1fr); }
 .platform-grid strong { color: var(--green); }
+.platform-link { display: inline-block; margin-top: 16px; color: #65d7ff; font-weight: 700; }
+.android-hero-mark { display: grid; place-items: center; min-height: 420px; background: radial-gradient(circle at 50% 45%, rgba(19,167,232,.25), transparent 52%), var(--panel); }
+.android-hero-mark img { width: min(62%, 280px); height: auto; filter: drop-shadow(0 24px 44px rgba(0,0,0,.38)); }
 .contribute { margin: 120px 0 80px; padding: 52px; border: 1px solid var(--violet); border-radius: 18px; display: grid; grid-template-columns: 1fr 300px; gap: 60px; align-items: center; }
 .contribute p { color: var(--muted); }
 footer { border-top: 1px solid var(--line); padding: 28px 0 42px; display: flex; justify-content: space-between; gap: 20px; color: var(--muted); }

@@ -68,6 +68,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-WindowsMsiPackaging.ps1
 
+      - name: Validate Android release packaging controls
+        shell: pwsh
+        run: ./scripts/validation/Test-AndroidReleasePackaging.ps1
+
       - name: Validate localization resources
         shell: pwsh
         run: ./scripts/validation/Test-LocalizationResources.ps1
@@ -109,6 +113,39 @@ jobs:
           name: test-diagnostics-${{ github.run_id }}
           path: TestResults
           if-no-files-found: ignore
+
+  android-build-test:
+    name: Android build
+    runs-on: windows-2025
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+          cache: true
+          cache-dependency-path: |
+            TOTP.Android.sln
+            **/*.csproj
+            NuGet.config
+
+      - name: Install Android workload
+        run: dotnet workload install android --skip-manifest-update
+
+      - name: Restore Android solution
+        run: dotnet restore TOTP.Android.sln --nologo --verbosity minimal --configfile NuGet.config
+
+      - name: Build Android development package
+        run: dotnet build TOTP.Android.sln --configuration Debug --no-restore --nologo --verbosity minimal
 
   unix-file-security:
     name: Unix file security (${{ matrix.name }})
@@ -804,6 +841,112 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  package-android-release:
+    name: Package signed Android release
+    needs: [build-test, android-build-test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-2025
+    environment: android-release
+    permissions:
+      contents: read
+
+    env:
+      ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+      ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+      ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+      ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+      ANDROID_SIGNING_CERTIFICATE_SHA256: ${{ vars.ANDROID_SIGNING_CERTIFICATE_SHA256 }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+          cache: true
+          cache-dependency-path: |
+            TOTP.Android.sln
+            **/*.csproj
+            NuGet.config
+
+      - name: Install Android workload
+        run: dotnet workload install android --skip-manifest-update
+
+      - name: Restore Android release graph
+        run: dotnet restore TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj --nologo --verbosity minimal --configfile NuGet.config
+
+      - name: Materialize protected signing inputs
+        shell: pwsh
+        run: |
+          $required = @(
+            $env:ANDROID_SIGNING_KEYSTORE_BASE64,
+            $env:ANDROID_SIGNING_KEY_ALIAS,
+            $env:ANDROID_SIGNING_STORE_PASSWORD,
+            $env:ANDROID_SIGNING_KEY_PASSWORD,
+            $env:ANDROID_SIGNING_CERTIFICATE_SHA256)
+          if ($required | Where-Object { [string]::IsNullOrWhiteSpace($_) }) {
+            throw "The protected android-release environment is incomplete."
+          }
+
+          $signingDirectory = Join-Path $env:RUNNER_TEMP "otp-harbor-android-signing"
+          New-Item -ItemType Directory -Path $signingDirectory | Out-Null
+          $keyStorePath = Join-Path $signingDirectory "otp-harbor-android-signing.jks"
+          $storePasswordPath = Join-Path $signingDirectory "store-password.txt"
+          $keyPasswordPath = Join-Path $signingDirectory "key-password.txt"
+          $keyStoreBytes = [Convert]::FromBase64String($env:ANDROID_SIGNING_KEYSTORE_BASE64)
+          try {
+            [IO.File]::WriteAllBytes($keyStorePath, $keyStoreBytes)
+          }
+          finally {
+            [Security.Cryptography.CryptographicOperations]::ZeroMemory($keyStoreBytes)
+          }
+          $utf8WithoutBom = [Text.UTF8Encoding]::new($false)
+          [IO.File]::WriteAllText($storePasswordPath, $env:ANDROID_SIGNING_STORE_PASSWORD, $utf8WithoutBom)
+          [IO.File]::WriteAllText($keyPasswordPath, $env:ANDROID_SIGNING_KEY_PASSWORD, $utf8WithoutBom)
+          "ANDROID_KEYSTORE_PATH=$keyStorePath" >> $env:GITHUB_ENV
+          "ANDROID_STORE_PASSWORD_FILE=$storePasswordPath" >> $env:GITHUB_ENV
+          "ANDROID_KEY_PASSWORD_FILE=$keyPasswordPath" >> $env:GITHUB_ENV
+          "ANDROID_SIGNING_TEMP=$signingDirectory" >> $env:GITHUB_ENV
+
+      - name: Build and verify signed Android APK
+        shell: pwsh
+        run: |
+          ./scripts/release/New-AndroidRelease.ps1 `
+            -ReleaseTag "${{ github.ref_name }}" `
+            -OutputDirectory android-release-assets `
+            -KeyStorePath $env:ANDROID_KEYSTORE_PATH `
+            -KeyAlias $env:ANDROID_SIGNING_KEY_ALIAS `
+            -StorePasswordFile $env:ANDROID_STORE_PASSWORD_FILE `
+            -KeyPasswordFile $env:ANDROID_KEY_PASSWORD_FILE `
+            -ExpectedCertificateSha256 $env:ANDROID_SIGNING_CERTIFICATE_SHA256
+
+      - name: Remove temporary signing inputs
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:ANDROID_SIGNING_TEMP) -and
+              (Test-Path -LiteralPath $env:ANDROID_SIGNING_TEMP -PathType Container)) {
+            Remove-Item -LiteralPath $env:ANDROID_SIGNING_TEMP -Recurse -Force
+          }
+
+      - name: Upload signed Android release artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: android-release-${{ github.sha }}
+          path: |
+            android-release-assets/*.apk
+            android-release-assets/android-release.json
+          retention-days: 90
+          if-no-files-found: error
+
   package-microsoft-store-msix:
     name: Package Microsoft Store MSIX
     needs: [package-avalonia-release]
@@ -864,8 +1007,8 @@ jobs:
           retention-days: 90
 
   publish-unsigned-preview:
-    name: Publish update-enabled Windows and Linux preview
-    needs: [package-avalonia-release, package-microsoft-store-msix]
+    name: Publish Windows, Linux, and Android preview
+    needs: [package-avalonia-release, package-android-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
@@ -894,6 +1037,12 @@ jobs:
           path: preview-assets
           merge-multiple: true
 
+      - name: Download retained Android preview artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: android-release-${{ github.sha }}
+          path: preview-assets
+
       - name: Validate unsigned preview payload
         id: versioning
         shell: pwsh
@@ -906,10 +1055,10 @@ jobs:
           "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem preview-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|tar\.gz)|OTP-Harbor-windows-x64-setup-.+\.exe|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|tar\.gz)|OTP-Harbor-windows-x64-setup-.+\.exe|OTP-Harbor-android-universal-.+\.apk|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 5) {
-            throw "The unsigned preview must contain exactly five public Windows/Linux artifacts."
+          if ($artifactPaths.Count -ne 6) {
+            throw "The preview must contain exactly six public Windows/Linux/Android artifacts."
           }
           if (Get-ChildItem preview-assets -File | Where-Object { $_.Name -match '(appcast|macos|\.dmg$)' }) {
             throw "Unsigned previews cannot contain appcasts or macOS artifacts."
@@ -1025,7 +1174,7 @@ jobs:
       - name: Upload unsigned preview to a draft
         uses: softprops/action-gh-release@v3.0.1
         with:
-          name: OTP Harbor ${{ steps.versioning.outputs.release_version }} — unsigned preview
+          name: OTP Harbor ${{ steps.versioning.outputs.release_version }} — prerelease
           draft: true
           prerelease: true
           make_latest: false
@@ -1035,28 +1184,31 @@ jobs:
 
             ${{ steps.release_notes.outputs.summary }}
 
-            ## Unsigned development preview
+            ## Development preview
 
-            This prerelease is provided for manual testing because the project does not yet have platform code-signing credentials.
+            This prerelease is provided for manual testing because the desktop packages do not yet have platform code-signing credentials.
 
             - The Windows executables are **not Authenticode-signed** and may trigger Microsoft Defender SmartScreen warnings.
             - The custom Avalonia setup EXE is unsigned. It installs for all users with administrator approval, then opens the application as the interactive user. It requires manual installer upgrades; application-owned updates are disabled inside this package.
             - Direct Windows and portable Linux builds check an Ed25519-signed preview appcast and require explicit confirmation before installation.
             - The first preview download remains outside operating-system publisher trust; verify its checksums before running it.
             - macOS is not included because Developer ID signing and notarization are unavailable.
+            - The Android universal APK is production-signed for in-place upgrades, but remains prerelease software and must be installed manually.
             - Do not use this preview with a production vault; test with synthetic accounts only.
 
             Verify the downloaded file against `SHA256SUMS` and the source commit recorded in `release-artifacts-v2.json`.
 
             ## Code signing policy
 
-            This preview is intentionally unsigned. See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) for the stable-release trust model.
+            The desktop artifacts are intentionally unsigned at operating-system level; the Android APK is signed with the pinned production certificate. See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) for the stable-release trust model.
           files: |
             preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-setup-${{ steps.versioning.outputs.release_version }}.exe
             preview-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             preview-assets/otp-harbor_*_amd64.deb
+            preview-assets/OTP-Harbor-android-universal-${{ steps.versioning.outputs.release_version }}.apk
+            preview-assets/android-release.json
             preview-assets/release-artifacts-v2.json
             preview-assets/release-artifacts-v2.json.signature
             preview-assets/appcast-v2.xml
@@ -1093,7 +1245,7 @@ jobs:
 
   publish-avalonia-release:
     name: Publish complete signed release
-    needs: [package-avalonia-release, package-microsoft-store-msix]
+    needs: [package-avalonia-release, package-android-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
@@ -1118,9 +1270,15 @@ jobs:
       - name: Download all retained release artifacts
         uses: actions/download-artifact@v6
         with:
-          pattern: '*-release-*${{ github.sha }}'
+          pattern: avalonia-release-*-${{ github.sha }}
           path: release-assets
           merge-multiple: true
+
+      - name: Download retained Android release artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: android-release-${{ github.sha }}
+          path: release-assets
 
       - name: Compute and validate aggregate artifact manifest
         id: versioning
@@ -1137,10 +1295,10 @@ jobs:
           "prerelease=$(if ($rcNumber) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem release-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|macos-arm64|linux-x64)-.+\.(zip|dmg|tar\.gz)|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|macos-arm64|linux-x64)-.+\.(zip|dmg|tar\.gz)|OTP-Harbor-android-universal-.+\.apk|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 5) {
-            throw "The aggregate release must contain exactly five selected artifacts."
+          if ($artifactPaths.Count -ne 6) {
+            throw "The aggregate release must contain exactly six selected artifacts."
           }
 
           ./scripts/release/New-ReleaseArtifactManifest.ps1 `
@@ -1289,12 +1447,18 @@ jobs:
             ## Code signing policy
 
             See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) and [privacy policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/PRIVACY.md). This optional direct-download path publishes Windows artifacts only after the workflow has verified their Authenticode signatures and product metadata.
+
+            ## Android
+
+            The universal APK is signed with OTP Harbor's pinned Android app-signing certificate and supports in-place upgrades on Android 9 and newer. It is a separate download and is not bundled into a desktop installer.
           files: |
             release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip
             release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
             release-assets/OTP-Harbor-macos-arm64-${{ steps.versioning.outputs.release_version }}.dmg
             release-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             release-assets/otp-harbor_*_amd64.deb
+            release-assets/OTP-Harbor-android-universal-${{ steps.versioning.outputs.release_version }}.apk
+            release-assets/android-release.json
             release-assets/release-artifacts-v2.json
             release-assets/release-artifacts-v2.json.signature
             release-assets/appcast-v2.xml

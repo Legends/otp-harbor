@@ -15,8 +15,8 @@ Set-StrictMode -Version Latest
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $projectPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj'
-$apkPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\bin\Debug\net10.0-android\io.github.legends.otpharbor-Signed.apk'
-$packageName = 'io.github.legends.otpharbor'
+$apkPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\bin\Debug\net10.0-android\io.github.legends.otpharbor.debug-Signed.apk'
+$packageName = 'io.github.legends.otpharbor.debug'
 
 $adbCommand = Get-Command adb -ErrorAction SilentlyContinue
 if ($null -eq $adbCommand) {

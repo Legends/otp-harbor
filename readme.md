@@ -1,6 +1,6 @@
 # OTP Harbor
 
-**The local-first authenticator for desktop, with an Android development preview.**
+**The local-first authenticator for desktop and Android.**
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-5C6BC0)](https://github.com/Legends/otp-harbor)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
@@ -9,9 +9,9 @@
 [![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-2.0.17-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
 [![License](https://img.shields.io/github/license/Legends/otp-harbor)](LICENSE.txt)
 
-**OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, and Linux, with an Android development preview. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
+**OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
-> **Release status:** OTP Harbor `2.0.17` is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages, which are unsigned platform previews and use the Ed25519-signed RC appcast. Android is source-only until its production signing and upgrade path are established. Use synthetic accounts and keep a tested encrypted backup.
+> **Release status:** OTP Harbor `2.0.17` is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages. Android release packaging is ready, but the first public APK remains gated on production-key registration and protected-environment setup; desktop GitHub packages remain unsigned platform previews and use the Ed25519-signed RC appcast. Use synthetic accounts and keep a tested encrypted backup while evaluating prereleases.
 
 <p align="center">
   <img src="docs/images/readme/app.png" alt="OTP Harbor showing inline one-time passwords and a countdown progress bar for every account" width="460" />
@@ -84,11 +84,11 @@ The QR screenshot is intentionally sanitized and contains only a published synth
 | Windows 10/11 x64 | Public Microsoft Store MSIX; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with a branded setup flow, desktop and Start-menu shortcuts, administrator approval, and manual MSI upgrades |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
-| Android 9 or newer | Development source only; a public APK requires production signing and supported Android CI |
+| Android 9 or newer | Planned production-signed universal APK from the matching GitHub Release; first publication is gated on signing-key registration |
 
 After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
 
-Maintainers can follow the [Microsoft Store release guide](docs/release/MICROSOFT_STORE.md). The unsigned MSIX produced by the repository is exclusively a Partner Center submission input and must never be sideloaded or attached to a GitHub Release.
+Maintainers can follow the [Microsoft Store release guide](docs/release/MICROSOFT_STORE.md) and [Android release guide](docs/release/ANDROID.md). The unsigned MSIX produced by the repository is exclusively a Partner Center submission input and must never be sideloaded or attached to a GitHub Release.
 
 The optional GitHub RC MSI shows a completion message and lets the user choose whether to launch OTP Harbor. It installs for all users and creates desktop and Start-menu shortcuts. Because this preview MSI is not Authenticode-signed, Windows can show an unknown-publisher warning and may scan the first launch; verify its published SHA-256 checksum before installation.
 
@@ -135,7 +135,7 @@ The launcher checks the official `origin/master` branch on every invocation. Whe
 
 For safety, the launcher refuses to update a modified, ahead, or diverged checkout and never discards local files. It is a convenience for source users, not a signed binary update channel; Microsoft Store installations should use Store updates, while official direct packages use the signed appcast.
 
-The Android development preview is intentionally outside the desktop solution and release artifacts. Open the dedicated [Android solution](TOTP.Android.sln) in Visual Studio, or see the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
+The Android host remains in the dedicated [Android solution](TOTP.Android.sln), so desktop-only development does not require the Android workload. Tagged releases still publish its separately signed APK alongside the desktop artifacts. See the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for engineering rules and [docs/README.md](docs/README.md) for the maintained documentation map.
 

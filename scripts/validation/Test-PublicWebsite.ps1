@@ -22,6 +22,8 @@ function Read-RequiredFile {
 
 $index = Read-RequiredFile 'site/index.html'
 $compactIndex = [Text.RegularExpressions.Regex]::Replace($index, '\s+', ' ')
+$androidIndex = Read-RequiredFile 'site/android/index.html'
+$compactAndroidIndex = [Text.RegularExpressions.Regex]::Replace($androidIndex, '\s+', ' ')
 $styles = Read-RequiredFile 'site/styles.css'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
@@ -125,6 +127,24 @@ if (-not $robots.Contains('Sitemap: https://legends.github.io/otp-harbor/sitemap
 if (-not $compactIndex.Contains("<img src=`"assets/otp-harbor-totp-authenticator-windows.png`"", [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains("cp $preferredImageRelativePath _site/assets/otp-harbor-totp-authenticator-windows.png", [StringComparison]::Ordinal)) {
     throw 'The preferred search-preview image is not visible and deployable from the canonical page.'
+}
+
+foreach ($requiredText in @(
+    '<title>OTP Harbor for Android — Local TOTP Authenticator</title>',
+    '<link rel="canonical" href="https://legends.github.io/otp-harbor/android/">',
+    '"MobileApplication"',
+    'Android 9 and newer',
+    'io.github.legends.otpharbor',
+    'Explore desktop editions')) {
+    if (-not $compactAndroidIndex.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The Android product page is missing required content: $requiredText"
+    }
+}
+if (-not $compactIndex.Contains('href="android/"', [StringComparison]::Ordinal) -or
+    -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/android/</loc>', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('cp site/android/index.html _site/android/index.html', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('urlList = @($siteUrl, $androidUrl)', [StringComparison]::Ordinal)) {
+    throw 'The Android product page is not cross-linked, deployable, and discoverable.'
 }
 
 if ($indexNowVerificationFile.Trim() -cne $indexNowVerificationValue -or
