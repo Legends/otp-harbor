@@ -25,6 +25,9 @@ $compactIndex = [Text.RegularExpressions.Regex]::Replace($index, '\s+', ' ')
 $styles = Read-RequiredFile 'site/styles.css'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
+$pagesWorkflow = Read-RequiredFile '.github/workflows/pages.yml'
+$indexNowKey = '1b6f7ab9795743588fa8e24157ad1541'
+$indexNowKeyFile = Read-RequiredFile "site/$indexNowKey.txt"
 Read-RequiredFile 'docs/images/readme/app.png' | Out-Null
 Read-RequiredFile 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png' | Out-Null
 
@@ -73,6 +76,13 @@ if (-not $styles.Contains('prefers-reduced-motion', [StringComparison]::Ordinal)
 if (-not $robots.Contains('Sitemap: https://legends.github.io/otp-harbor/sitemap.xml', [StringComparison]::Ordinal) -or
     -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/</loc>', [StringComparison]::Ordinal)) {
     throw 'The website crawl metadata does not use the canonical Pages URL.'
+}
+
+if ($indexNowKeyFile.Trim() -cne $indexNowKey -or
+    -not $pagesWorkflow.Contains("cp site/$indexNowKey.txt _site/", [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains("https://www.bing.com/indexnow", [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains("https://www.googleapis.com/webmasters/v3/sites/", [StringComparison]::Ordinal)) {
+    throw 'The website search-engine notification configuration is incomplete.'
 }
 
 Write-Output 'Public website content, trust disclosure, and crawl metadata are present.'

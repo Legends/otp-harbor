@@ -41,6 +41,7 @@ jobs:
         run: |
           mkdir -p _site/assets
           cp site/index.html site/styles.css site/robots.txt site/sitemap.xml _site/
+          cp site/1b6f7ab9795743588fa8e24157ad1541.txt _site/
           cp docs/images/readme/app.png _site/assets/app.png
           cp docs/images/social/otp-harbor-social-preview.jpg _site/assets/social-preview.jpg
           cp TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
@@ -119,9 +120,89 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
+      contents: read
       pages: write
       id-token: write
+    env:
+      GOOGLE_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
+      GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT: ${{ vars.GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      - name: Notify IndexNow about the deployed website
+        shell: pwsh
+        run: |
+          $siteUrl = 'https://legends.github.io/otp-harbor/'
+          $key = '1b6f7ab9795743588fa8e24157ad1541'
+          $keyUrl = "$siteUrl$key.txt"
+          $keyIsLive = $false
+
+          foreach ($attempt in 1..12) {
+            try {
+              $keyResponse = Invoke-WebRequest -Uri $keyUrl -TimeoutSec 15
+              if ($keyResponse.StatusCode -eq 200 -and $keyResponse.Content.Trim() -ceq $key) {
+                $keyIsLive = $true
+                break
+              }
+            }
+            catch {
+              Write-Host "Waiting for the deployed IndexNow key ($attempt/12)."
+            }
+            Start-Sleep -Seconds 5
+          }
+
+          if (-not $keyIsLive) {
+            Write-Warning 'The IndexNow key was not visible after deployment; notification was skipped.'
+            exit 0
+          }
+
+          $payload = @{
+            host = 'legends.github.io'
+            key = $key
+            keyLocation = $keyUrl
+            urlList = @($siteUrl)
+          } | ConvertTo-Json -Compress
+
+          try {
+            $response = Invoke-WebRequest `
+              -Uri 'https://www.bing.com/indexnow' `
+              -Method Post `
+              -ContentType 'application/json; charset=utf-8' `
+              -Body $payload `
+              -TimeoutSec 30
+            if ($response.StatusCode -notin 200, 202) {
+              Write-Warning "IndexNow returned unexpected HTTP status $($response.StatusCode)."
+            }
+            else {
+              Write-Host "IndexNow accepted the website URL with HTTP $($response.StatusCode)."
+            }
+          }
+          catch {
+            Write-Warning "IndexNow notification failed without affecting the deployment: $($_.Exception.Message)"
+          }
+
+      - name: Authenticate to Google for Search Console
+        id: google-auth
+        if: ${{ env.GOOGLE_WORKLOAD_IDENTITY_PROVIDER != '' && env.GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT != '' }}
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          create_credentials_file: false
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/webmasters
+          workload_identity_provider: ${{ env.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT }}
+
+      - name: Submit sitemap to Google Search Console
+        if: ${{ steps.google-auth.outputs.access_token != '' }}
+        shell: bash
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.google-auth.outputs.access_token }}
+        run: |
+          curl --fail-with-body --request PUT \
+            --header "Authorization: Bearer ${GOOGLE_ACCESS_TOKEN}" \
+            'https://www.googleapis.com/webmasters/v3/sites/https%3A%2F%2Flegends.github.io%2Fotp-harbor%2F/sitemaps/https%3A%2F%2Flegends.github.io%2Fotp-harbor%2Fsitemap.xml'
