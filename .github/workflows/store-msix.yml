@@ -132,9 +132,13 @@ jobs:
           git switch -c $branch
           git add -- readme.md site/index.html packaging/windows-store/STORE_LISTING.md packaging/windows-store/public-version.json
 
-          if (git diff --cached --quiet) {
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) {
             Write-Output "Public Store metadata already reports $displayVersion; no pull request is needed."
             exit 0
+          }
+          if ($LASTEXITCODE -ne 1) {
+            throw "Unable to determine whether Store-version metadata changed (git exit code $LASTEXITCODE)."
           }
 
           git commit -m "Report Microsoft Store $displayVersion"
