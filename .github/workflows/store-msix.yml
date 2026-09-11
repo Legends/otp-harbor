@@ -7,6 +7,7 @@ on:
       - '.github/workflows/store-msix.yml'
       - 'packaging/windows-store/**'
       - 'scripts/release/New-MicrosoftStoreMsix.ps1'
+      - 'scripts/release/Set-PublicMicrosoftStoreVersion.ps1'
       - 'scripts/validation/Test-MicrosoftStorePackaging.ps1'
       - 'TOTP.Platform.Windows/**'
       - 'TOTP.UI.Avalonia.Desktop/**'
@@ -32,14 +33,19 @@ on:
       version:
         description: 'Four-part Store version; fourth component must be 0'
         required: true
-        default: '2.0.0.0'
         type: string
+      mark_as_published:
+        description: 'After Partner Center confirms publication, open a PR that updates the public Store version instead of building'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 jobs:
   package:
+    if: ${{ github.event_name == 'pull_request' || inputs.mark_as_published != true }}
     runs-on: windows-latest
     env:
       STORE_IDENTITY_NAME: ${{ inputs.identity_name || 'Legends77.OTPHarbor' }}
@@ -84,3 +90,57 @@ jobs:
             artifacts/store/store-package.json
           if-no-files-found: error
           retention-days: 14
+
+  mark-public-version:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mark_as_published == true }}
+    runs-on: windows-latest
+    env:
+      STORE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Update confirmed public Store version
+        shell: pwsh
+        run: ./scripts/release/Set-PublicMicrosoftStoreVersion.ps1 -PackageVersion $env:STORE_VERSION
+
+      - name: Validate public release metadata
+        shell: pwsh
+        run: |
+          ./scripts/validation/Test-MicrosoftStorePackaging.ps1
+          ./scripts/validation/Test-PublicWebsite.ps1
+
+      - name: Open version update pull request
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+            throw 'The GH_PAT Actions secret is required to create the Store-version pull request.'
+          }
+
+          $metadata = Get-Content -LiteralPath packaging/windows-store/public-version.json -Raw | ConvertFrom-Json
+          $displayVersion = $metadata.displayVersion
+          $branch = "automation/store-version-$($displayVersion.Replace('.', '-'))-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          gh auth setup-git
+          git switch -c $branch
+          git add -- readme.md site/index.html packaging/windows-store/STORE_LISTING.md packaging/windows-store/public-version.json
+
+          if (git diff --cached --quiet) {
+            Write-Output "Public Store metadata already reports $displayVersion; no pull request is needed."
+            exit 0
+          }
+
+          git commit -m "Report Microsoft Store $displayVersion"
+          git push --set-upstream origin $branch
+          gh pr create `
+            --base master `
+            --head $branch `
+            --title "Report Microsoft Store $displayVersion" `
+            --body "Partner Center publication of Microsoft Store package **$($metadata.packageVersion)** was confirmed when this workflow was dispatched. This PR synchronizes the README, website, and Store listing release heading from the canonical Store version metadata."

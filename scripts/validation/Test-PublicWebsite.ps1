@@ -26,6 +26,7 @@ $styles = Read-RequiredFile 'site/styles.css'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
 $pagesWorkflow = Read-RequiredFile '.github/workflows/pages.yml'
+$publicVersion = (Read-RequiredFile 'packaging/windows-store/public-version.json') | ConvertFrom-Json
 $indexNowVerificationValue = '1b6f7ab9795743588fa8e24157ad1541'
 $indexNowVerificationFile = Read-RequiredFile "site/$indexNowVerificationValue.txt"
 Read-RequiredFile 'docs/images/readme/app.png' | Out-Null
@@ -50,7 +51,7 @@ foreach ($requiredText in @(
     '"@type": "Offer"',
     'https://apps.microsoft.com/detail/9P31KH5L924P',
     'Get it from Microsoft Store',
-    'OTP Harbor 2.0.17 is now publicly available from Microsoft Store, the primary Windows channel.',
+    "OTP Harbor $($publicVersion.displayVersion) is now publicly available from Microsoft Store, the primary Windows channel.",
     'GitHub previews are clearly labeled and use a signed application update feed.',
     'Can you test OTP Harbor on a MacBook?',
     'Test only with synthetic accounts',

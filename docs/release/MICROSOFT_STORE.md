@@ -55,7 +55,7 @@ Windows with the Windows SDK installed:
   -IdentityName '<Partner Center Identity Name>' `
   -Publisher '<Partner Center Publisher, such as CN=...>' `
   -PublisherDisplayName '<Partner Center publisher display name>' `
-  -Version '2.0.0.0'
+  -Version '<four-part Store package version>'
 ```
 
 The fourth version component is reserved by Microsoft and must remain `0`. The output under
@@ -81,6 +81,25 @@ files. Store-managed updates are the only update mechanism for this package.
    account CRUD, QR scanning, encrypted backup/restore, Windows Hello enrollment, lock behavior, and
    Store-managed update behavior.
 7. Publish only after physical acceptance succeeds.
+
+## Record the published Store version
+
+Building or submitting an MSIX does not make that version public. After Partner Center confirms
+that the exact package is publicly available, run **Build Microsoft Store MSIX** manually with its
+four-part package version and enable **mark_as_published**. This second release stage does not build
+another package. It derives the customer-facing three-part version and opens a pull request that
+updates the canonical [`public-version.json`](../../packaging/windows-store/public-version.json),
+README badge and release status, website release note, and Store listing release heading together.
+
+Review the live Store page before merging that pull request. Normal pull-request and `master`
+checks then validate the synchronized metadata and deploy the website. Never enable
+**mark_as_published** while a package is only submitted, in certification, or scheduled for later
+publication.
+
+The publication job uses the repository's `GH_PAT` Actions secret to create a branch and pull
+request because the standard `GITHUB_TOKEN` is intentionally not allowed to create pull requests.
+Keep that credential fine-grained to this repository with only Contents and Pull requests
+read/write access, rotate it normally, and never expose it to pull-request-triggered jobs.
 
 On an installed Store build, this command should report `SignatureKind` as `Store`:
 

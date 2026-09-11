@@ -24,9 +24,13 @@ $packager = Read-RequiredFile 'scripts/release/New-MicrosoftStoreMsix.ps1'
 $workflow = Read-RequiredFile '.github/workflows/store-msix.yml'
 $releaseWorkflow = Read-RequiredFile '.github/workflows/build-and-test.yml'
 $versionResolver = Join-Path $repositoryRoot 'scripts/release/Get-MicrosoftStoreVersion.ps1'
+$publicVersionUpdater = Join-Path $repositoryRoot 'scripts/release/Set-PublicMicrosoftStoreVersion.ps1'
 $documentation = Read-RequiredFile 'docs/release/MICROSOFT_STORE.md'
 $listing = Read-RequiredFile 'packaging/windows-store/STORE_LISTING.md'
 $readme = Read-RequiredFile 'readme.md'
+$website = Read-RequiredFile 'site/index.html'
+$publicVersionJson = Read-RequiredFile 'packaging/windows-store/public-version.json'
+$publicVersion = $publicVersionJson | ConvertFrom-Json
 
 function Assert-PngDimensions {
     param(
@@ -162,11 +166,28 @@ foreach ($cultureHeading in @(
 if (-not $listing.Contains('Screenshots must use synthetic accounts only.', [StringComparison]::Ordinal)) {
     throw 'The Store listing draft does not enforce synthetic screenshot data.'
 }
-if (-not $listing.Contains('## Version 2.0.17 release notes', [StringComparison]::Ordinal) -or
-    -not $readme.Contains('Microsoft%20Store-2.0.17-', [StringComparison]::Ordinal) -or
-    -not $readme.Contains('OTP Harbor `2.0.17` is publicly available', [StringComparison]::Ordinal) -or
+if ($publicVersion.displayVersion -notmatch '^\d+\.\d+\.\d+$' -or
+    $publicVersion.packageVersion -notmatch '^\d+\.\d+\.\d+\.0$' -or
+    $publicVersion.packageVersion -cne "$($publicVersion.displayVersion).0") {
+    throw 'The canonical public Microsoft Store version is invalid.'
+}
+& $publicVersionUpdater -PackageVersion $publicVersion.packageVersion -Check
+if (-not $listing.Contains("## Version $($publicVersion.displayVersion) release notes", [StringComparison]::Ordinal) -or
+    -not $readme.Contains("Microsoft%20Store-$($publicVersion.displayVersion)-", [StringComparison]::Ordinal) -or
+    -not $readme.Contains("OTP Harbor ``$($publicVersion.displayVersion)`` is publicly available", [StringComparison]::Ordinal) -or
+    -not $website.Contains("OTP Harbor $($publicVersion.displayVersion) is now publicly available from Microsoft Store", [StringComparison]::Ordinal) -or
     $readme.Contains('img.shields.io/github/v/release/Legends/otp-harbor', [StringComparison]::Ordinal)) {
-    throw 'The public Microsoft Store version is not reported consistently as 2.0.17.'
+    throw "The public Microsoft Store version is not reported consistently as $($publicVersion.displayVersion)."
+}
+foreach ($control in @(
+    'mark_as_published:',
+    'Set-PublicMicrosoftStoreVersion.ps1',
+    'mark-public-version:',
+    'gh pr create'
+)) {
+    if (-not $workflow.Contains($control, [StringComparison]::Ordinal)) {
+        throw "The Store workflow is missing the publication-version control: $control"
+    }
 }
 
 Assert-PngDimensions 'packaging/windows-store/assets/store-super-hero-1920x1080.png' 1920 1080
