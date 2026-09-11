@@ -138,14 +138,14 @@ jobs:
         shell: pwsh
         run: |
           $siteUrl = 'https://legends.github.io/otp-harbor/'
-          $key = '1b6f7ab9795743588fa8e24157ad1541'
-          $keyUrl = "$siteUrl$key.txt"
+          $verificationValue = '1b6f7ab9795743588fa8e24157ad1541'
+          $keyUrl = "$siteUrl$verificationValue.txt"
           $keyIsLive = $false
 
           foreach ($attempt in 1..12) {
             try {
               $keyResponse = Invoke-WebRequest -Uri $keyUrl -TimeoutSec 15
-              if ($keyResponse.StatusCode -eq 200 -and $keyResponse.Content.Trim() -ceq $key) {
+              if ($keyResponse.StatusCode -eq 200 -and $keyResponse.Content.Trim() -ceq $verificationValue) {
                 $keyIsLive = $true
                 break
               }
@@ -163,7 +163,7 @@ jobs:
 
           $payload = @{
             host = 'legends.github.io'
-            key = $key
+            key = $verificationValue
             keyLocation = $keyUrl
             urlList = @($siteUrl)
           } | ConvertTo-Json -Compress
