@@ -24,6 +24,16 @@ public sealed class OtpNetTotpGeneratorTests
         Assert.Throws<FormatException>(() => sut.Generate("not valid base32!"));
     }
 
+    [Fact]
+    public void Generate_WithGoogleAuthenticatorCompatibleShortSecret_ReturnsCode()
+    {
+        var sut = new OtpNetTotpGenerator();
+
+        var result = sut.Generate("ORSXG5A");
+
+        Assert.Matches("^[0-9]{6}$", result.Code);
+    }
+
     [Theory]
     [InlineData(5)]
     [InlineData(60)]

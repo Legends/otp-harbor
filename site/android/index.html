@@ -43,6 +43,7 @@
     </a>
     <nav aria-label="Primary navigation">
       <a href="../">Desktop &amp; product overview</a>
+      <a href="guide/">Android guide</a>
       <a href="https://github.com/Legends/otp-harbor/releases">Releases</a>
       <a href="https://github.com/Legends/otp-harbor">Source</a>
     </nav>
@@ -56,6 +57,7 @@
         <p class="lede">Carry your TOTP codes in an encrypted local vault. Scan account and Google Authenticator transfer QR codes with the camera, unlock biometrically and move data through portable encrypted backups.</p>
         <div class="actions">
           <a class="button primary" href="https://github.com/Legends/otp-harbor/releases">View GitHub releases</a>
+          <a class="button secondary" href="guide/">Read the Android guide</a>
           <a class="button secondary" href="../">Explore desktop editions</a>
         </div>
         <p class="release-note">The first production-signed APK is undergoing final physical-device acceptance. Until it is published, do not install APKs obtained from third parties.</p>
@@ -68,10 +70,19 @@
     <section class="feature-grid" aria-label="OTP Harbor Android features">
       <article><h2>Encrypted local vault</h2><p>OTP seeds remain protected locally and do not require an OTP Harbor cloud account.</p></article>
       <article><h2>Camera QR import</h2><p>Scan standard account QR codes and Google Authenticator transfer QR codes directly.</p></article>
-      <article><h2>Biometric quick unlock</h2><p>Use supported device biometrics while retaining the master password as the recovery path.</p></article>
+      <article><h2>Three unlock choices</h2><p>Choose strong biometrics, the Android device screen lock (PIN, pattern, or password), or the master password. The master password always remains available as recovery.</p></article>
       <article><h2>Encrypted portability</h2><p>Create password-protected backups compatible with supported OTP Harbor platforms.</p></article>
       <article><h2>Focused mobile actions</h2><p>Copy codes and manage accounts through touch-oriented actions designed for smaller screens.</p></article>
       <article><h2>Auditable releases</h2><p>GitHub APKs use the permanent package ID <code>io.github.legends.otpharbor</code> and a pinned signing certificate verified by release automation.</p></article>
+    </section>
+
+    <section class="split-section">
+      <div><p class="eyebrow">Touch-first workflow</p><h2>Know every gesture and security choice.</h2></div>
+      <div>
+        <p>Tap to copy. Swipe right for QR and edit, or left for confirmed deletion. Scan standard account and Google Authenticator transfer QR codes through the system camera, and show an account QR only when moving it to a trusted authenticator.</p>
+        <p>The complete guide also explains encrypted backup conflict resolution, biometric and device-screen-lock recovery, the 30-second background grace period, and the explicit app-lock opt-out.</p>
+        <a class="platform-link" href="guide/">Open the Android user guide →</a>
+      </div>
     </section>
 
     <section class="split-section">

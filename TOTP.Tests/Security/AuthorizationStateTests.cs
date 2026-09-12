@@ -34,6 +34,22 @@ public sealed class AuthorizationStateTests
     }
 
     [Fact]
+    public void SetConfiguration_WithDeviceCredential_ProjectsDeviceCredentialGate()
+    {
+        var sut = new AuthorizationState();
+
+        sut.SetConfiguration(
+            isConfigured: true,
+            PreferredUnlockMethod.PlatformDeviceCredential);
+
+        Assert.True(sut.IsConfigured);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            sut.PreferredUnlockMethod);
+        Assert.Equal(AuthorizationGateKind.DeviceCredential, sut.ConfiguredGate);
+    }
+
+    [Fact]
     public void SetConfiguration_WhenNotConfigured_FallsBackToPasswordAndNoGate()
     {
         var sut = new AuthorizationState();

@@ -79,6 +79,22 @@ The import/export visual combines the authentic settings and QR camera/file work
 QR code, or private account is present. Text remains editable in the generator and is rendered at
 asset-build time; the generated screenshots themselves are not shipped inside the MSIX.
 
+## Android website marketing campaign
+
+`packaging/android/marketing/source/android-marketing-background.png` was generated on 2026-09-12
+with OpenAI's built-in image-generation tool without an input image. It is a background-only source
+for authentic Android screenshots and contains no app UI, text, logo, device, QR code, user data, or
+third-party artwork.
+
+Final generation prompt:
+
+> Use case: ads-marketing. Asset type: reusable 16:9 website campaign backdrop for OTP Harbor Android. Create an original premium futuristic cybersecurity background suitable for compositing authentic Android phone screenshots and editable HTML-generated marketing copy later. Use a deep navy abstract digital space with restrained cyan and violet flowing light ribbons, subtle encrypted-data particles, and a softly illuminated dimensional stage. Keep a dark calm copy-safe area across the left 42 percent and a brighter cyan-violet halo and product stage across the right 58 percent, with generous safe margins and no important details at the edges. The mood should be a calm, high-trust security product. Background only: no text, letters, numbers, logos, brands, icons, shields, locks, fingerprints, QR codes, app UI, devices, phones, monitors, people, watermarks, or borders.
+
+The capture plan and reviewed synthetic account roster are documented in
+[`packaging/android/marketing/README.md`](../../packaging/android/marketing/README.md). Final
+composites must use authentic Android app/system captures. No generated or reconstructed UI may be
+presented as an application screenshot.
+
 ## Microsoft Store screenshots
 
 The four-image Store upload set under `packaging/windows-store/screenshots/en-US` was captured from
@@ -98,6 +114,7 @@ content is present.
 
 | File | SHA-256 |
 | --- | --- |
+| `packaging/android/marketing/source/android-marketing-background.png` | `282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png` | `66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-128.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico` | `7a71a423982499c438177e3b58126f003c3ece9a66cb2b91c07dc50a812ab81e` |

@@ -11,4 +11,9 @@ public interface IAccountImportService
         ImportConflictStrategy conflictStrategy,
         Func<AccountImportPreview, CancellationToken, Task<bool>> confirmAsync,
         CancellationToken cancellationToken = default);
+
+    Task<Result<AccountImportOutcome>> ImportWithConflictResolutionAsync(
+        IReadOnlyList<Account> importedAccounts,
+        Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolveAsync,
+        CancellationToken cancellationToken = default);
 }

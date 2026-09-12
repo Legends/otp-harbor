@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OTP Harbor Android Guide — Accounts, QR and Security</title>
+  <meta name="description" content="Learn how to use OTP Harbor for Android: copy TOTP codes, use swipe actions, scan QR codes, import Google Authenticator transfers, show account QR codes, manage app lock and create encrypted backups.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="canonical" href="https://legends.github.io/otp-harbor/android/guide/">
+  <meta name="theme-color" content="#0c1c33">
+  <link rel="icon" href="../../assets/app-icon.png" type="image/png">
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="OTP Harbor for Android">
+      <img src="../../assets/app-icon.png" alt="" width="40" height="40">
+      <span>OTP Harbor</span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="../">Android</a>
+      <a href="../../">Desktop &amp; overview</a>
+      <a href="https://github.com/Legends/otp-harbor/releases">Releases</a>
+    </nav>
+  </header>
+
+  <main class="guide-page">
+    <section class="guide-intro">
+      <p class="eyebrow">Android user guide</p>
+      <h1>Everyday codes, deliberate controls.</h1>
+      <p class="lede">This guide covers the complete Android workflow. OTP Harbor stays local first: account secrets live in the encrypted vault, while your master password remains the recovery method.</p>
+      <div class="actions">
+        <a class="button primary" href="#accounts">Use your accounts</a>
+        <a class="button secondary" href="#qr">QR workflows</a>
+        <a class="button secondary" href="#security">Security settings</a>
+      </div>
+    </section>
+
+    <nav class="guide-toc" aria-label="Android guide sections">
+      <a href="#first-run">First run</a>
+      <a href="#accounts">Accounts &amp; gestures</a>
+      <a href="#qr">QR workflows</a>
+      <a href="#backup">Backup &amp; restore</a>
+      <a href="#security">Lock &amp; unlock</a>
+    </nav>
+
+    <section id="first-run" class="guide-section">
+      <div><p class="eyebrow">01 · First run</p><h2>Create the encrypted vault.</h2></div>
+      <div>
+        <ol>
+          <li>Create and confirm a strong master password.</li>
+          <li>Keep that password somewhere safe. It remains the recovery method even when biometric quick unlock is enabled.</li>
+          <li>If strong biometrics are available, approve the Android system prompt offered immediately after setup. Cancelling it leaves the password-protected vault fully usable.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="accounts" class="guide-section">
+      <div><p class="eyebrow">02 · Accounts</p><h2>Tap, search or swipe.</h2></div>
+      <div>
+        <dl class="interaction-list">
+          <div><dt>Tap an account row</dt><dd>Copy its current six-digit code. The banner confirms the action and disappears automatically.</dd></div>
+          <div><dt>Swipe right</dt><dd>Reveal the account’s <strong>Show QR</strong> and <strong>Edit</strong> actions.</dd></div>
+          <div><dt>Swipe left</dt><dd>Open a confirmation before deleting the account.</dd></div>
+          <div><dt>Search</dt><dd>Filter the vault by issuer or account name without changing stored accounts.</dd></div>
+          <div><dt>Add or edit</dt><dd>Enter issuer, optional account name and Base32 secret. Expand advanced options only when a provider uses a non-standard TOTP period.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="qr" class="guide-section">
+      <div><p class="eyebrow">03 · QR workflows</p><h2>Scan in. Show out.</h2></div>
+      <div>
+        <h3>Import with the camera</h3>
+        <p>Use the camera action to photograph a standard <code>otpauth://</code> account QR code. OTP Harbor validates the payload before changing the vault and asks how to resolve a changed existing account.</p>
+        <h3>Move from Google Authenticator</h3>
+        <p>In Google Authenticator, choose <strong>Transfer accounts</strong> or <strong>Export accounts</strong>. Scan every generated transfer QR code in order. Multi-account and multi-page transfers are supported one QR code at a time.</p>
+        <h3>Show an account QR code</h3>
+        <p>Swipe an account right and choose <strong>Show QR</strong>. The displayed QR contains that account’s secret. Use it only with a trusted authenticator and hide it immediately afterward.</p>
+        <aside class="security-note"><strong>Saved QR images:</strong> importing an existing image file is not available in the current Android build. Use the camera flow instead. The desktop edition can import QR images from local storage.</aside>
+      </div>
+    </section>
+
+    <section id="backup" class="guide-section">
+      <div><p class="eyebrow">04 · Portability</p><h2>Encrypted backup and restore.</h2></div>
+      <div>
+        <ol>
+          <li>Open <strong>Settings → Import / Export</strong>.</li>
+          <li>For export, enter and confirm a separate backup password, then choose the destination through Android’s document picker.</li>
+          <li>For import, choose a <code>.totp</code> file and enter its backup password.</li>
+          <li>Identical accounts are left unchanged. For changed accounts, review each difference and choose whether to keep the current version or restore the backup version.</li>
+        </ol>
+        <p>Desktop and Android use the same encrypted backup format. Test a backup before relying on it for recovery.</p>
+      </div>
+    </section>
+
+    <section id="security" class="guide-section">
+      <div><p class="eyebrow">05 · Security</p><h2>Choose your unlock posture.</h2></div>
+      <div>
+        <h3>Choose the primary unlock method</h3>
+        <p>Security settings offer strong biometrics, the Android device screen lock (PIN, pattern, or password), and the master password. Biometrics are the default after first-run setup when available. OTP Harbor does not create a separate PIN; it delegates screen-lock verification to Android. The master password remains available if a platform key becomes unavailable.</p>
+        <h3>App lock</h3>
+        <p>App lock is enabled by default. A normal app switch has a 30-second grace period, while device locking removes displayed codes and locks immediately.</p>
+        <h3>Turn authentication off</h3>
+        <p>You may deactivate app lock in Security settings only after reading the warning and confirming the master password. With authentication off, anyone using the already-unlocked device can open OTP Harbor and view its codes. Re-enable app lock to restore the last selected authentication method; platform methods require the master password once to recreate their protected key.</p>
+      </div>
+    </section>
+
+    <section class="contribute">
+      <div><p class="eyebrow">Need more detail?</p><h2>Security and recovery are documented openly.</h2><p>Review the threat model for exact platform boundaries, or report a security issue privately.</p></div>
+      <div class="actions vertical">
+        <a class="button primary" href="https://github.com/Legends/otp-harbor/blob/master/docs/security/THREAT_MODEL.md">Read the threat model</a>
+        <a class="button secondary" href="https://github.com/Legends/otp-harbor/security/policy">Report securely</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>OTP Harbor · MIT licensed</span>
+    <a href="../">Back to Android overview</a>
+  </footer>
+</body>
+</html>

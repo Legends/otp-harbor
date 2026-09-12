@@ -34,6 +34,7 @@
   <data name="LanguageSaveFailed" xml:space="preserve"><value>The language preference could not be saved.</value></data>
   <data name="Security" xml:space="preserve"><value>Security</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Search accounts</value></data>
+  <data name="ClearSearch" xml:space="preserve"><value>Clear search</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No matching accounts.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Swipe right for QR and edit, or left to delete. The camera also imports Google Authenticator exports.</value></data>
   <data name="ScanQr" xml:space="preserve"><value>Scan account or Google Authenticator QR</value></data>
@@ -76,10 +77,30 @@
   <data name="BackupImportRejected" xml:space="preserve"><value>The backup password was incorrect, or the encrypted backup is invalid or damaged.</value></data>
   <data name="BackupImportFailed" xml:space="preserve"><value>The encrypted backup could not be imported safely. No existing account was overwritten.</value></data>
   <data name="BackupImportCancelled" xml:space="preserve"><value>Backup import cancelled. No account was changed.</value></data>
-  <data name="BackupImported" xml:space="preserve"><value>Backup imported: {0} added, {1} existing unchanged.</value></data>
+  <data name="BackupImported" xml:space="preserve"><value>Backup imported: {0} added, {1} overwritten, {2} existing unchanged.</value></data>
   <data name="ImportConfirmationTitle" xml:space="preserve"><value>Confirm backup import</value></data>
   <data name="ImportConfirmation" xml:space="preserve"><value>Import {0} accounts? {1} matching existing accounts will remain unchanged. A recovery backup is created before changes.</value></data>
-  <data name="ConfirmImport" xml:space="preserve"><value>Import accounts</value></data>
+  <data name="ConfirmImport" xml:space="preserve"><value>Import</value></data>
+  <data name="NoImportTitle" xml:space="preserve"><value>No import</value></data>
+  <data name="NoImportIdentical" xml:space="preserve"><value>All accounts are identical. There is nothing to import.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="BackupConflictResolutionTitle" xml:space="preserve"><value>Resolve backup differences</value></data>
+  <data name="BackupConflictResolution" xml:space="preserve"><value>{0} accounts: {1} new, {2} unchanged, {3} need review. Choose what to do with each changed account. A recovery backup will be created first.</value></data>
+  <data name="ConflictAccount" xml:space="preserve"><value>Account</value></data>
+  <data name="Skip" xml:space="preserve"><value>Keep</value></data>
+  <data name="Override" xml:space="preserve"><value>Restore</value></data>
+  <data name="SkipAll" xml:space="preserve"><value>Keep all</value></data>
+  <data name="OverrideAll" xml:space="preserve"><value>Restore all</value></data>
+  <data name="CurrentAccountFormat" xml:space="preserve"><value>Current: {0}</value></data>
+  <data name="BackupAccountFormat" xml:space="preserve"><value>Backup: {0}</value></data>
+  <data name="ChangedFieldsFormat" xml:space="preserve"><value>Changed: {0}</value></data>
+  <data name="IssuerField" xml:space="preserve"><value>issuer</value></data>
+  <data name="AccountNameField" xml:space="preserve"><value>account name</value></data>
+  <data name="SecretField" xml:space="preserve"><value>secret</value></data>
+  <data name="PeriodField" xml:space="preserve"><value>time period</value></data>
+  <data name="ApplyToAll" xml:space="preserve"><value>Apply to all</value></data>
+  <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Keep the current version of {0}</value></data>
+  <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Restore the backup version of {0}</value></data>
   <data name="NoAccounts" xml:space="preserve"><value>No accounts yet. Add one manually or scan an account or Google Authenticator export QR code.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Add account</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Edit</value></data>
@@ -143,4 +164,16 @@
   <data name="ExportSection" xml:space="preserve"><value>Export</value></data>
   <data name="ImportGoogleQr" xml:space="preserve"><value>Import from Google Authenticator</value></data>
   <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Scan a Google Authenticator transfer QR code. Multi-account and multi-page exports are supported one QR code at a time.</value></data>
+  <data name="UnlockMethodTitle" xml:space="preserve"><value>Unlock method</value></data>
+  <data name="UnlockMethodDescription" xml:space="preserve"><value>Choose the primary app-lock method. Your master password always remains available as a fallback.</value></data>
+  <data name="UnlockWithPassword" xml:space="preserve"><value>Master password</value></data>
+  <data name="UnlockWithBiometrics" xml:space="preserve"><value>Strong biometrics</value></data>
+  <data name="UnlockWithDevicePin" xml:space="preserve"><value>Device screen lock (PIN, pattern, or password)</value></data>
+  <data name="DevicePinUnavailable" xml:space="preserve"><value>A secure device screen lock (PIN, pattern, or password) is not configured.</value></data>
+  <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Enter your master password to authorize changing the unlock method.</value></data>
+  <data name="UnlockMethodChanged" xml:space="preserve"><value>Unlock method changed.</value></data>
+  <data name="UnlockMethodChangeFailed" xml:space="preserve"><value>The unlock method could not be changed safely.</value></data>
+  <data name="ApplyUnlockMethod" xml:space="preserve"><value>Apply</value></data>
+  <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>Unlock OTP Harbor</value></data>
+  <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Use your device screen lock (PIN, pattern, or password).</value></data>
 </root>

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
+using TOTP.Core.Enums;
 using TOTP.Infrastructure.Security;
 
 namespace TOTP.Tests.Security;
@@ -41,18 +42,20 @@ public sealed class PlatformQuickUnlockEnrollmentTests
     }
 
     [Fact]
-    public async Task EnableAsync_WhenQuickUnlockMetadataExists_DoesNotReplaceIt()
+    public async Task EnableAsync_WhenMatchingMetadataExists_VerifiesRecoveryAndDoesNotReplaceIt()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var envelope = CreateEnvelope() with { QuickUnlockWrapper = CreateWrapper() };
-        var dependencies = Dependencies.Loading(envelope, cancellationToken);
+        var dependencies = ReadyThroughVault(envelope, cancellationToken);
         using var sut = dependencies.CreateSut();
 
         var result = await sut.EnableAsync("recovery-password", cancellationToken);
 
-        AssertEnrollmentError(result, PlatformQuickUnlockEnrollmentErrorCode.AlreadyEnabled);
-        dependencies.Password.VerifyNoOtherCalls();
-        dependencies.Platform.VerifyNoOtherCalls();
+        Assert.True(result.IsSuccess);
+        dependencies.Platform.VerifyGet(value => value.ProviderId, Times.Once);
+        dependencies.Platform.Verify(value => value.RegisterAsync(
+            It.IsAny<ReadOnlyMemory<byte>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
         AssertEnvelopeCleared(envelope);
     }
 
@@ -127,6 +130,60 @@ public sealed class PlatformQuickUnlockEnrollmentTests
         dependencies.Platform.Verify(value => value.RemoveAsync(
             It.IsAny<PlatformQuickUnlockWrapperV2>(),
             It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EnableAsync_ForDeviceCredential_UsesMatchingAdapterAndReplacesBiometricWrapper()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var oldWrapper = CreateAndroidBiometricWrapper();
+        var envelope = CreateEnvelope() with { QuickUnlockWrapper = oldWrapper };
+        var deviceWrapper = CreateAndroidDeviceCredentialWrapper();
+        var dependencies = ReadyThroughVault(envelope, cancellationToken);
+        dependencies.Platform.SetupGet(value => value.ProviderId)
+            .Returns(PlatformQuickUnlockContract.AndroidKeystoreBiometricProvider);
+        var device = new Mock<IPlatformQuickUnlock>();
+        device.SetupGet(value => value.UnlockMethod)
+            .Returns(PreferredUnlockMethod.PlatformDeviceCredential);
+        device.SetupGet(value => value.ProviderId)
+            .Returns(PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProvider);
+        device.Setup(value => value.GetAvailabilityAsync(cancellationToken))
+            .ReturnsAsync(PlatformQuickUnlockAvailability.Available);
+        device.Setup(value => value.RegisterAsync(
+                It.IsAny<ReadOnlyMemory<byte>>(),
+                cancellationToken))
+            .ReturnsAsync(Result.Ok(deviceWrapper));
+        dependencies.Platform.Setup(value => value.RemoveAsync(
+                oldWrapper,
+                CancellationToken.None))
+            .ReturnsAsync(Result.Ok());
+        dependencies.Store.Setup(value => value.SaveAsync(
+                It.IsAny<AuthorizationEnvelopeV2>(),
+                cancellationToken))
+            .Callback<AuthorizationEnvelopeV2, CancellationToken>((saved, _) =>
+                Assert.Equal(
+                    PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProvider,
+                    saved.QuickUnlockWrapper!.Provider))
+            .ReturnsAsync(Result.Ok());
+        using var sut = new PlatformQuickUnlockEnrollment(
+            dependencies.Store.Object,
+            dependencies.Password.Object,
+            dependencies.Vault.Object,
+            [dependencies.Platform.Object, device.Object],
+            NullLogger<PlatformQuickUnlockEnrollment>.Instance);
+
+        var result = await sut.EnableAsync(
+            "recovery-password",
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            cancellationToken);
+
+        Assert.True(result.IsSuccess);
+        device.Verify(value => value.RegisterAsync(
+            It.IsAny<ReadOnlyMemory<byte>>(),
+            cancellationToken), Times.Once);
+        dependencies.Platform.Verify(value => value.RemoveAsync(
+            oldWrapper,
+            CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -356,6 +413,35 @@ public sealed class PlatformQuickUnlockEnrollmentTests
         }
     };
 
+    private static PlatformQuickUnlockWrapperV2 CreateAndroidBiometricWrapper() => new()
+    {
+        Provider = PlatformQuickUnlockContract.AndroidKeystoreBiometricProvider,
+        ProviderVersion = PlatformQuickUnlockContract.AndroidKeystoreBiometricProviderVersion,
+        AuthenticationPolicy = PlatformQuickUnlockContract.UserVerificationRequired,
+        KeyReference = "TOTP_ANDROID_BIO_0123456789abcdef0123456789abcdef",
+        WrappedKey = new PlatformWrappedKeyV2
+        {
+            Algorithm = PlatformQuickUnlockContract.AndroidAes256GcmAlgorithm,
+            Nonce = new byte[12],
+            Ciphertext = new byte[48]
+        }
+    };
+
+    private static PlatformQuickUnlockWrapperV2 CreateAndroidDeviceCredentialWrapper() => new()
+    {
+        Provider = PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProvider,
+        ProviderVersion =
+            PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProviderVersion,
+        AuthenticationPolicy = PlatformQuickUnlockContract.UserVerificationRequired,
+        KeyReference = "TOTP_ANDROID_PIN_0123456789abcdef0123456789abcdef",
+        WrappedKey = new PlatformWrappedKeyV2
+        {
+            Algorithm = PlatformQuickUnlockContract.AndroidAes256GcmAlgorithm,
+            Nonce = new byte[12],
+            Ciphertext = new byte[48]
+        }
+    };
+
     private static void AssertEnvelopeCleared(AuthorizationEnvelopeV2 envelope)
     {
         Assert.All(envelope.PasswordWrapper.Kdf.Salt, value => Assert.Equal(0, value));
@@ -386,6 +472,8 @@ public sealed class PlatformQuickUnlockEnrollmentTests
         {
             Platform.SetupGet(value => value.ProviderId)
                 .Returns(PlatformQuickUnlockContract.WindowsHelloTpmProvider);
+            Platform.SetupGet(value => value.UnlockMethod)
+                .Returns(PreferredUnlockMethod.PlatformQuickUnlock);
         }
 
         public static Dependencies Loading(

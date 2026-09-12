@@ -119,7 +119,7 @@ internal static class GoogleAuthenticatorMigrationParser
             {
                 case 1 when wireType == 2:
                     var secretBytes = ReadLengthDelimited(payload, ref offset);
-                    if (secretBytes.Length is < 10 or > MaximumSecretBytes)
+                    if (secretBytes.Length is < 1 or > MaximumSecretBytes)
                         throw new FormatException("The migration secret length is invalid.");
                     secret = EncodeBase32(secretBytes);
                     break;

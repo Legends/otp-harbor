@@ -1126,6 +1126,32 @@ public sealed class AccountListViewModelTests
         Assert.Empty(sut.Notification.Text);
     }
 
+    [Fact]
+    public async Task SaveAccountAsync_WithGoogleAuthenticatorCompatibleShortSecret_PersistsAccount()
+    {
+        var manager = new Mock<IAccountManager>();
+        Account? created = null;
+        manager.SetupSequence(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]))
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(
+                created is null ? [] : [created]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .ReturnsAsync((Account account) =>
+            {
+                created = account;
+                return Result.Ok();
+            });
+        var sut = CreateSut(manager.Object);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = "ORSXG5A";
+
+        await sut.SaveAccountAsync();
+
+        Assert.NotNull(created);
+        Assert.Equal("ORSXG5A", created.Secret);
+    }
+
     private static AccountListViewModel CreateSut(
         IAccountManager manager,
         IAvaloniaDialogService? dialogs = null,

@@ -21,6 +21,15 @@
     <AssemblyOriginatorKeyFile>..\TOTP.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(EnableMarketingCapture)' == 'true'">
+    <DefineConstants>$(DefineConstants);OTP_HARBOR_MARKETING_CAPTURE</DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="RejectReleaseMarketingCapture" BeforeTargets="CoreCompile"
+          Condition="'$(Configuration)' == 'Release' and '$(EnableMarketingCapture)' == 'true'">
+    <Error Text="EnableMarketingCapture is restricted to the isolated Debug package." />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Avalonia.Android" Version="12.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.11" />

@@ -1,4 +1,5 @@
 using FluentResults;
+using TOTP.Core.Enums;
 using TOTP.Core.Security.Models;
 
 namespace TOTP.Core.Security.Interfaces;
@@ -10,6 +11,8 @@ namespace TOTP.Core.Security.Interfaces;
 public interface IPlatformQuickUnlock
 {
     string ProviderId { get; }
+
+    PreferredUnlockMethod UnlockMethod => PreferredUnlockMethod.PlatformQuickUnlock;
 
     Task<PlatformQuickUnlockAvailability> GetAvailabilityAsync(
         CancellationToken cancellationToken = default);

@@ -6,6 +6,7 @@ using Java.Security;
 using Javax.Crypto;
 using Javax.Crypto.Spec;
 using Microsoft.Extensions.Logging;
+using TOTP.Core.Enums;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 
@@ -20,30 +21,48 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
     private const int GcmNonceSize = 12;
     private const int WrappedKeySize = 48;
     private const int StrongBiometricValiditySeconds = 1;
-    private const string KeyAliasPrefix = "TOTP_ANDROID_";
+    private const string BiometricKeyAliasPrefix = "TOTP_ANDROID_BIO_";
+    private const string DeviceCredentialKeyAliasPrefix = "TOTP_ANDROID_PIN_";
+    private const string LegacyBiometricKeyAliasPrefix = "TOTP_ANDROID_";
     private const string AndroidKeyStore = "AndroidKeyStore";
     private const string AesGcmTransformation = "AES/GCM/NoPadding";
 
     private readonly IAndroidBiometricPrompt _biometricPrompt;
     private readonly ILogger<AndroidPlatformQuickUnlock> _logger;
+    private readonly AndroidQuickUnlockMode _mode;
 
     public AndroidPlatformQuickUnlock(
         IAndroidBiometricPrompt biometricPrompt,
         ILogger<AndroidPlatformQuickUnlock> logger)
+        : this(biometricPrompt, logger, AndroidQuickUnlockMode.StrongBiometric)
+    {
+    }
+
+    public AndroidPlatformQuickUnlock(
+        IAndroidBiometricPrompt biometricPrompt,
+        ILogger<AndroidPlatformQuickUnlock> logger,
+        AndroidQuickUnlockMode mode)
     {
         _biometricPrompt = biometricPrompt
             ?? throw new ArgumentNullException(nameof(biometricPrompt));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _mode = mode;
     }
 
-    public string ProviderId => PlatformQuickUnlockContract.AndroidKeystoreBiometricProvider;
+    public string ProviderId => _mode == AndroidQuickUnlockMode.DeviceCredential
+        ? PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProvider
+        : PlatformQuickUnlockContract.AndroidKeystoreBiometricProvider;
+
+    public PreferredUnlockMethod UnlockMethod => _mode == AndroidQuickUnlockMode.DeviceCredential
+        ? PreferredUnlockMethod.PlatformDeviceCredential
+        : PreferredUnlockMethod.PlatformQuickUnlock;
 
     public async Task<PlatformQuickUnlockAvailability> GetAvailabilityAsync(
         CancellationToken cancellationToken = default)
     {
         try
         {
-            return await _biometricPrompt.GetAvailabilityAsync(cancellationToken);
+            return await _biometricPrompt.GetAvailabilityAsync(_mode, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -74,8 +93,9 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
         byte[]? ciphertext = null;
         try
         {
-            GenerateKey(keyReference);
+            GenerateKey(keyReference, _mode);
             using var authenticated = await _biometricPrompt.AuthenticateAsync(
+                _mode,
                 () =>
                 {
                     using var key = GetKey(keyReference)
@@ -119,7 +139,7 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
             var wrapper = new PlatformQuickUnlockWrapperV2
             {
                 Provider = ProviderId,
-                ProviderVersion = PlatformQuickUnlockContract.AndroidKeystoreBiometricProviderVersion,
+                ProviderVersion = ProviderVersion,
                 AuthenticationPolicy = PlatformQuickUnlockContract.UserVerificationRequired,
                 KeyReference = keyReference,
                 WrappedKey = new PlatformWrappedKeyV2
@@ -178,6 +198,7 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
             }
 
             using var authenticated = await _biometricPrompt.AuthenticateAsync(
+                _mode,
                 () =>
                 {
                     using var key = GetKey(wrapper.KeyReference)
@@ -274,7 +295,7 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
         }
     }
 
-    private static void GenerateKey(string keyReference)
+    private static void GenerateKey(string keyReference, AndroidQuickUnlockMode mode)
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(30))
         {
@@ -291,11 +312,14 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
             .SetEncryptionPaddings(KeyProperties.EncryptionPaddingNone)
             .SetKeySize(256)
             .SetRandomizedEncryptionRequired(true)
-            .SetUserAuthenticationRequired(true)
-            .SetInvalidatedByBiometricEnrollment(true);
+            .SetUserAuthenticationRequired(true);
+        if (mode == AndroidQuickUnlockMode.StrongBiometric)
+            builder.SetInvalidatedByBiometricEnrollment(true);
         builder.SetUserAuthenticationParameters(
             StrongBiometricValiditySeconds,
-            (int)KeyPropertiesAuthType.BiometricStrong);
+            mode == AndroidQuickUnlockMode.DeviceCredential
+                ? (int)KeyPropertiesAuthType.DeviceCredential
+                : (int)KeyPropertiesAuthType.BiometricStrong);
 
         using var specification = builder.Build();
         generator.Init(specification);
@@ -326,10 +350,10 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
         Cipher.GetInstance(AesGcmTransformation)
         ?? throw new CryptographicException("Android AES-GCM is unavailable.");
 
-    private static void ApplyAssociatedData(Cipher cipher, string keyReference)
+    private void ApplyAssociatedData(Cipher cipher, string keyReference)
     {
         var associatedData = Encoding.UTF8.GetBytes(
-            $"{PlatformQuickUnlockContract.AndroidAssociatedDataContext}|{keyReference}");
+            $"{AssociatedDataContext}|{keyReference}");
         try
         {
             cipher.UpdateAAD(associatedData);
@@ -352,14 +376,30 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
         }
     }
 
-    private static bool IsOwnedSupportedWrapper(PlatformQuickUnlockWrapperV2? wrapper) =>
+    private bool IsOwnedSupportedWrapper(PlatformQuickUnlockWrapperV2? wrapper) =>
         wrapper is not null
         && string.Equals(
             wrapper.Provider,
-            PlatformQuickUnlockContract.AndroidKeystoreBiometricProvider,
+            ProviderId,
             StringComparison.Ordinal)
-        && wrapper.KeyReference.StartsWith(KeyAliasPrefix, StringComparison.Ordinal)
+        && (wrapper.KeyReference.StartsWith(KeyAliasPrefix, StringComparison.Ordinal)
+            || _mode == AndroidQuickUnlockMode.StrongBiometric
+            && wrapper.KeyReference.StartsWith(
+                LegacyBiometricKeyAliasPrefix,
+                StringComparison.Ordinal))
         && PlatformQuickUnlockContract.IsSupported(wrapper);
+
+    private string KeyAliasPrefix => _mode == AndroidQuickUnlockMode.DeviceCredential
+        ? DeviceCredentialKeyAliasPrefix
+        : BiometricKeyAliasPrefix;
+
+    private int ProviderVersion => _mode == AndroidQuickUnlockMode.DeviceCredential
+        ? PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProviderVersion
+        : PlatformQuickUnlockContract.AndroidKeystoreBiometricProviderVersion;
+
+    private string AssociatedDataContext => _mode == AndroidQuickUnlockMode.DeviceCredential
+        ? PlatformQuickUnlockContract.AndroidDeviceCredentialAssociatedDataContext
+        : PlatformQuickUnlockContract.AndroidAssociatedDataContext;
 
     private static PlatformQuickUnlockErrorCode MapRegistrationError(
         PlatformQuickUnlockStatus status) => status switch

@@ -9,6 +9,13 @@
     x:Name="Root"
     x:DataType="vm:MobileShellViewModel"
     Background="{DynamicResource BrushWindowBackground}">
+    <UserControl.Styles>
+        <Style Selector="TextBox.unlock-method-attention">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+            <Setter Property="BorderThickness" Value="3" />
+        </Style>
+    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*,Auto">
         <Border
             Grid.Row="0"
@@ -176,12 +183,32 @@
                             </Button>
                         </Grid>
 
-                        <TextBox
+                        <Grid
                             Grid.Row="1"
                             Margin="0,0,0,14"
-                            automation:AutomationProperties.Name="{Binding SearchAccountsText}"
-                            PlaceholderText="{Binding SearchAccountsText}"
-                            Text="{Binding SearchText, Mode=TwoWay}" />
+                            ColumnDefinitions="*,Auto">
+                            <TextBox
+                                Grid.ColumnSpan="2"
+                                Padding="12,8,48,8"
+                                automation:AutomationProperties.Name="{Binding SearchAccountsText}"
+                                PlaceholderText="{Binding SearchAccountsText}"
+                                Text="{Binding SearchText, Mode=TwoWay}" />
+                            <Button
+                                Grid.Column="1"
+                                Width="44"
+                                Height="44"
+                                MinHeight="44"
+                                Margin="0,0,4,0"
+                                Padding="0"
+                                VerticalAlignment="Center"
+                                automation:AutomationProperties.Name="{Binding ClearSearchText}"
+                                Classes="link"
+                                Command="{Binding ClearSearchCommand}"
+                                Content="×"
+                                FontSize="26"
+                                IsVisible="{Binding HasSearchText}"
+                                ToolTip.Tip="{Binding ClearSearchText}" />
+                        </Grid>
 
                         <Border
                             Grid.Row="2"
@@ -509,30 +536,56 @@
                                 <TextBlock
                                     FontSize="17"
                                     FontWeight="SemiBold"
-                                    Text="{Binding BiometricSetupTitle}" />
+                                    Text="{Binding UnlockMethodTitleText}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding BiometricSetupDescription}"
+                                    Text="{Binding UnlockMethodDescriptionText}"
                                     TextWrapping="Wrap" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    IsVisible="{Binding IsBiometricEnabled}"
-                                    Text="{Binding BiometricEnabledText}"
-                                    TextWrapping="Wrap" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    IsVisible="{Binding IsBiometricUnavailable}"
-                                    Text="{Binding BiometricUnavailableText}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Classes="wide secondary"
-                                    Command="{Binding BeginBiometricEnrollmentCommand}"
-                                    Content="{Binding BiometricEnableText}"
-                                    IsVisible="{Binding IsBiometricEnrollmentStartVisible}" />
+                                <StackPanel
+                                    IsEnabled="{Binding IsUnlockMethodSelectionEnabled}"
+                                    Spacing="6">
+                                    <RadioButton
+                                        GroupName="UnlockMethod"
+                                        Click="HighlightUnlockMethodConfirmation"
+                                        Command="{Binding BeginBiometricEnrollmentCommand}"
+                                        Content="{Binding UnlockWithBiometricsText}"
+                                        IsChecked="{Binding IsBiometricUnlockSelected, Mode=OneWay}"
+                                        IsEnabled="{Binding IsBiometricUnlockOptionEnabled}" />
+                                    <TextBlock
+                                        Margin="28,0,0,4"
+                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                        IsVisible="{Binding IsBiometricUnavailable}"
+                                        Text="{Binding BiometricUnavailableText}"
+                                        TextWrapping="Wrap" />
+                                    <RadioButton
+                                        GroupName="UnlockMethod"
+                                        Click="HighlightUnlockMethodConfirmation"
+                                        Command="{Binding BeginDeviceCredentialEnrollmentCommand}"
+                                        Content="{Binding UnlockWithDevicePinText}"
+                                        IsChecked="{Binding IsDeviceCredentialUnlockSelected, Mode=OneWay}"
+                                        IsEnabled="{Binding IsDeviceCredentialUnlockOptionEnabled}" />
+                                    <TextBlock
+                                        Margin="28,0,0,4"
+                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                        IsVisible="{Binding IsDeviceCredentialUnavailable}"
+                                        Text="{Binding DevicePinUnavailableText}"
+                                        TextWrapping="Wrap" />
+                                    <RadioButton
+                                        GroupName="UnlockMethod"
+                                        Click="HighlightUnlockMethodConfirmation"
+                                        Command="{Binding SelectPasswordUnlockCommand}"
+                                        Content="{Binding UnlockWithPasswordText}"
+                                        IsChecked="{Binding IsPasswordUnlockSelected, Mode=OneWay}" />
+                                </StackPanel>
                                 <StackPanel
                                     IsVisible="{Binding IsBiometricEnrollmentVisible}"
                                     Spacing="10">
+                                    <TextBlock
+                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                        Text="{Binding UnlockMethodPasswordPromptText}"
+                                        TextWrapping="Wrap" />
                                     <TextBox
+                                        x:Name="UnlockMethodPasswordBox"
                                         automation:AutomationProperties.Name="{Binding MasterPasswordText}"
                                         PasswordChar="●"
                                         PlaceholderText="{Binding MasterPasswordText}"
@@ -547,7 +600,7 @@
                                             Grid.Column="1"
                                             Classes="wide primary"
                                             Command="{Binding EnableBiometricCommand}"
-                                            Content="{Binding BiometricEnableText}" />
+                                            Content="{Binding ApplyUnlockMethodText}" />
                                     </Grid>
                                 </StackPanel>
                             </StackPanel>
@@ -730,7 +783,10 @@
                     <TextBlock
                         Text="{Binding ImportConfirmationText}"
                         TextWrapping="Wrap" />
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Grid
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="10"
+                        IsVisible="{Binding IsImportConfirmationCancelVisible}">
                         <Button
                             Grid.Column="0"
                             Classes="wide secondary"
@@ -742,7 +798,160 @@
                             Command="{Binding ConfirmImportCommand}"
                             Content="{Binding ConfirmImportText}" />
                     </Grid>
+                    <Button
+                        Classes="wide primary"
+                        Command="{Binding ConfirmImportCommand}"
+                        Content="{Binding ConfirmImportText}"
+                        IsVisible="{Binding IsImportConfirmationAcknowledgementOnly}" />
                 </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid
+            Grid.RowSpan="3"
+            Panel.ZIndex="100"
+            Background="#99000000"
+            IsVisible="{Binding IsBackupConflictResolutionVisible}">
+            <Border
+                MaxWidth="560"
+                MaxHeight="720"
+                Margin="18"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                automation:AutomationProperties.Name="{Binding BackupConflictResolutionTitle}"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="18">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="12">
+                    <TextBlock
+                        Grid.Row="0"
+                        FontSize="20"
+                        FontWeight="SemiBold"
+                        Text="{Binding BackupConflictResolutionTitle}" />
+                    <TextBlock
+                        Grid.Row="1"
+                        FontSize="13"
+                        Foreground="{DynamicResource BrushTextSecondary}"
+                        Text="{Binding BackupConflictResolutionText}"
+                        TextWrapping="Wrap" />
+                    <Border
+                        Grid.Row="2"
+                        Background="{DynamicResource BrushSurfaceAlternate}"
+                        CornerRadius="8"
+                        Padding="10">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Text="{Binding ApplyToAllText}" />
+                            <RadioButton
+                                automation:AutomationProperties.Name="{Binding SkipAllText}"
+                                Command="{Binding SkipAllBackupConflictsCommand}"
+                                Content="{Binding SkipAllText}"
+                                FontSize="12"
+                                IsChecked="{Binding IsAllBackupConflictsSkipped, Mode=OneWay}" />
+                            <RadioButton
+                                automation:AutomationProperties.Name="{Binding OverrideAllText}"
+                                Command="{Binding ReplaceAllBackupConflictsCommand}"
+                                Content="{Binding OverrideAllText}"
+                                FontSize="12"
+                                IsChecked="{Binding IsAllBackupConflictsReplaced, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <Grid
+                        Grid.Row="3"
+                        ColumnDefinitions="*,84,92"
+                        Margin="4,0"
+                        ColumnSpacing="2">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Text="{Binding ConflictAccountText}" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Center"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Text="{Binding SkipText}" />
+                        <TextBlock
+                            Grid.Column="2"
+                            HorizontalAlignment="Center"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Text="{Binding OverrideText}" />
+                    </Grid>
+                    <ScrollViewer
+                        Grid.Row="4"
+                        MaxHeight="320"
+                        VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding BackupImportConflicts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:BackupImportConflictItem">
+                                    <Border
+                                        BorderBrush="{DynamicResource BrushBorder}"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid
+                                            MinHeight="88"
+                                            ColumnDefinitions="*,84,92"
+                                            ColumnSpacing="2">
+                                            <StackPanel
+                                                Margin="4,9"
+                                                VerticalAlignment="Center"
+                                                Spacing="3">
+                                                <TextBlock
+                                                    FontSize="13"
+                                                    FontWeight="SemiBold"
+                                                    MaxLines="2"
+                                                    Text="{Binding CurrentDisplayName}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="Wrap" />
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                                    MaxLines="2"
+                                                    Text="{Binding BackupDisplayName}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="Wrap" />
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    Foreground="{DynamicResource BrushAccent}"
+                                                    Text="{Binding ChangedFieldsText}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <RadioButton
+                                                Grid.Column="1"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                automation:AutomationProperties.Name="{Binding KeepAutomationName}"
+                                                IsChecked="{Binding IsSkipSelected, Mode=TwoWay}" />
+                                            <RadioButton
+                                                Grid.Column="2"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                automation:AutomationProperties.Name="{Binding RestoreAutomationName}"
+                                                IsChecked="{Binding IsReplaceSelected, Mode=TwoWay}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <Grid Grid.Row="5" ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button
+                            Grid.Column="0"
+                            Classes="wide secondary"
+                            Command="{Binding CancelBackupConflictResolutionCommand}"
+                            Content="{Binding CancelText}" />
+                        <Button
+                            Grid.Column="1"
+                            Classes="wide primary"
+                            Command="{Binding ConfirmBackupConflictResolutionCommand}"
+                            Content="{Binding ConfirmImportText}" />
+                    </Grid>
+                </Grid>
             </Border>
         </Grid>
 

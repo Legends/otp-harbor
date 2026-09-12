@@ -43,7 +43,20 @@ internal static class AndroidCompositionRoot
             provider.GetRequiredService<AndroidPlatformUnattendedUnlock>());
         // Keep the interactive adapter last: single-service consumers are the
         // biometric enrollment/settings flow, while sessions enumerate both.
-        services.AddSingleton<IPlatformQuickUnlock, AndroidPlatformQuickUnlock>();
+        services.AddSingleton<IPlatformQuickUnlock>(provider =>
+            new AndroidPlatformQuickUnlock(
+                provider.GetRequiredService<IAndroidBiometricPrompt>(),
+                provider.GetRequiredService<ILogger<AndroidPlatformQuickUnlock>>(),
+                AndroidQuickUnlockMode.DeviceCredential));
+        // Register biometrics last so legacy single-service consumers keep the
+        // secure default while the enrollment coordinator can enumerate both.
+        services.AddSingleton<AndroidPlatformQuickUnlock>(provider =>
+            new AndroidPlatformQuickUnlock(
+                provider.GetRequiredService<IAndroidBiometricPrompt>(),
+                provider.GetRequiredService<ILogger<AndroidPlatformQuickUnlock>>(),
+                AndroidQuickUnlockMode.StrongBiometric));
+        services.AddSingleton<IPlatformQuickUnlock>(provider =>
+            provider.GetRequiredService<AndroidPlatformQuickUnlock>());
         services.AddInfrastructure(configuration, paths, fileSecurity);
         services.AddSingleton<IAsyncPlatformClipboard, AndroidPlatformClipboard>();
         services.AddSingleton<AsyncClipboardService>();

@@ -67,7 +67,9 @@ public sealed class AuthorizationEnvelopeSession : IAuthorizationEnvelopeSession
                     && PlatformQuickUnlockContract.IsSupported(_envelope.QuickUnlockWrapper),
                 HasUnattendedUnlock:
                     PlatformQuickUnlockContract.IsSupportedAndroidUnattendedWrapper(
-                        _envelope?.QuickUnlockWrapper));
+                        _envelope?.QuickUnlockWrapper),
+                PlatformUnlockMethod: PlatformQuickUnlockContract.GetUnlockMethod(
+                    _envelope?.QuickUnlockWrapper));
             return Result.Ok(State);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

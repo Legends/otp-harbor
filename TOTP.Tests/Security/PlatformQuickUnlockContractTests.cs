@@ -1,5 +1,6 @@
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
+using TOTP.Core.Enums;
 
 namespace TOTP.Tests.Security;
 
@@ -101,6 +102,23 @@ public sealed class PlatformQuickUnlockContractTests
     }
 
     [Fact]
+    public void IsSupported_WithReviewedAndroidDeviceCredentialWrapper_ReturnsTrue()
+    {
+        var wrapper = CreateAndroidWrapper() with
+        {
+            Provider = PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProvider,
+            ProviderVersion =
+                PlatformQuickUnlockContract.AndroidKeystoreDeviceCredentialProviderVersion,
+            KeyReference = "TOTP_ANDROID_PIN_0123456789abcdef0123456789abcdef"
+        };
+
+        Assert.True(PlatformQuickUnlockContract.IsSupported(wrapper));
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            PlatformQuickUnlockContract.GetUnlockMethod(wrapper));
+    }
+
+    [Fact]
     public void IsSupported_WithReviewedAndroidUnattendedWrapper_ReturnsTrue()
     {
         var wrapper = CreateAndroidUnattendedWrapper();
@@ -108,6 +126,7 @@ public sealed class PlatformQuickUnlockContractTests
         Assert.True(PlatformQuickUnlockContract.IsSupported(wrapper));
         Assert.True(
             PlatformQuickUnlockContract.IsSupportedAndroidUnattendedWrapper(wrapper));
+        Assert.Null(PlatformQuickUnlockContract.GetUnlockMethod(wrapper));
     }
 
     [Fact]

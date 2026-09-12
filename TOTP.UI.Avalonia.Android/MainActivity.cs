@@ -97,9 +97,13 @@ public class MainActivity : AvaloniaMainActivity
         var window = Window;
         if (window is null) return;
 
+#if OTP_HARBOR_MARKETING_CAPTURE
+        window.ClearFlags(WindowManagerFlags.Secure);
+#else
         if (_screenCapturePolicy?.IsScreenCaptureProtectionRequired == true)
             window.AddFlags(WindowManagerFlags.Secure);
         else
             window.ClearFlags(WindowManagerFlags.Secure);
+#endif
     }
 }

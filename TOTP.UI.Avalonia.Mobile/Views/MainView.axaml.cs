@@ -9,12 +9,35 @@ namespace TOTP.Avalonia.Mobile.Views;
 
 public partial class MainView : UserControl
 {
+    private const string UnlockMethodAttentionClass = "unlock-method-attention";
     private Control? _openSwipeRow;
     private Control? _swipedRow;
 
     public MainView()
     {
         InitializeComponent();
+    }
+
+    private void HighlightUnlockMethodConfirmation(object? sender, RoutedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (DataContext is not MobileShellViewModel
+                {
+                    IsBiometricEnrollmentVisible: true
+                })
+            {
+                return;
+            }
+
+            UnlockMethodPasswordBox.Classes.Remove(UnlockMethodAttentionClass);
+            UnlockMethodPasswordBox.Classes.Add(UnlockMethodAttentionClass);
+            UnlockMethodPasswordBox.Focus();
+
+            DispatcherTimer.RunOnce(
+                () => UnlockMethodPasswordBox.Classes.Remove(UnlockMethodAttentionClass),
+                TimeSpan.FromMilliseconds(1200));
+        }, DispatcherPriority.Background);
     }
 
     private void CopyAccountCode(object? sender, TappedEventArgs e)

@@ -28,15 +28,17 @@ internal sealed class AndroidBiometricPrompt : IAndroidBiometricPrompt
     }
 
     public Task<PlatformQuickUnlockAvailability> GetAvailabilityAsync(
+        AndroidQuickUnlockMode mode,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(OperatingSystem.IsAndroidVersionAtLeast(30)
-            ? GetModernAvailability()
+            ? GetModernAvailability(mode)
             : PlatformQuickUnlockAvailability.NotSupported);
     }
 
     public async Task<AndroidBiometricPromptResult> AuthenticateAsync(
+        AndroidQuickUnlockMode mode,
         Func<byte[]> completeCryptographicOperation,
         CancellationToken cancellationToken = default)
     {
@@ -68,18 +70,25 @@ internal sealed class AndroidBiometricPrompt : IAndroidBiometricPrompt
                 callback = new PromptCallback(completion, completeCryptographicOperation);
                 negativeButton = new NegativeButtonListener(completion);
                 using var builder = new BiometricPrompt.Builder(activity);
-                builder.SetTitle(_strings.Get(MobileStringKeys.BiometricPromptTitle));
-                builder.SetSubtitle(_strings.Get(MobileStringKeys.BiometricPromptSubtitle));
-                builder.SetNegativeButton(
-                    _strings.Get(MobileStringKeys.BiometricUsePassword),
-                    executor,
-                    negativeButton);
+                builder.SetTitle(_strings.Get(mode == AndroidQuickUnlockMode.DeviceCredential
+                    ? MobileStringKeys.DeviceCredentialPromptTitle
+                    : MobileStringKeys.BiometricPromptTitle));
+                builder.SetSubtitle(_strings.Get(mode == AndroidQuickUnlockMode.DeviceCredential
+                    ? MobileStringKeys.DeviceCredentialPromptSubtitle
+                    : MobileStringKeys.BiometricPromptSubtitle));
+                if (mode == AndroidQuickUnlockMode.StrongBiometric)
+                {
+                    builder.SetNegativeButton(
+                        _strings.Get(MobileStringKeys.BiometricUsePassword),
+                        executor,
+                        negativeButton);
+                }
                 if (OperatingSystem.IsAndroidVersionAtLeast(29))
                     builder.SetConfirmationRequired(false);
                 if (OperatingSystem.IsAndroidVersionAtLeast(30))
                 {
                     builder.SetAllowedAuthenticators(
-                        (int)BiometricManagerAuthenticators.BiometricStrong);
+                        GetAuthenticators(mode));
                 }
 
                 prompt = builder.Build();
@@ -115,14 +124,14 @@ internal sealed class AndroidBiometricPrompt : IAndroidBiometricPrompt
     }
 
     [SupportedOSPlatform("android29.0")]
-    private PlatformQuickUnlockAvailability GetModernAvailability()
+    private PlatformQuickUnlockAvailability GetModernAvailability(AndroidQuickUnlockMode mode)
     {
         var manager = _context.GetSystemService(Context.BiometricService) as BiometricManager;
         if (manager is null) return PlatformQuickUnlockAvailability.NotSupported;
 
         var result = OperatingSystem.IsAndroidVersionAtLeast(30)
             ? manager.CanAuthenticate(
-                (int)BiometricManagerAuthenticators.BiometricStrong)
+                GetAuthenticators(mode))
             : manager.CanAuthenticate();
         if ((int)result == SecurityUpdateRequiredErrorCode)
             return PlatformQuickUnlockAvailability.DisabledByPolicy;
@@ -136,6 +145,12 @@ internal sealed class AndroidBiometricPrompt : IAndroidBiometricPrompt
             _ => PlatformQuickUnlockAvailability.TemporarilyUnavailable
         };
     }
+
+    [SupportedOSPlatform("android30.0")]
+    private static int GetAuthenticators(AndroidQuickUnlockMode mode) =>
+        mode == AndroidQuickUnlockMode.DeviceCredential
+            ? (int)BiometricManagerAuthenticators.DeviceCredential
+            : (int)BiometricManagerAuthenticators.BiometricStrong;
 
     private sealed class PromptCallback : BiometricPrompt.AuthenticationCallback
     {

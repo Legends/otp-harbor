@@ -85,6 +85,24 @@ public sealed class AppPreferencesV1CodecTests
         Assert.Equal(AppPreferencesErrorCode.InvalidValue, ErrorCode(result.Errors));
     }
 
+    [Fact]
+    public void SerializeThenDeserialize_DeviceCredentialPreference_RoundTrips()
+    {
+        var preferences = CreatePreferences() with
+        {
+            PreferredUnlockMethod = PreferredUnlockMethod.PlatformDeviceCredential
+        };
+
+        var encoded = AppPreferencesV1Codec.Serialize(preferences);
+        var decoded = AppPreferencesV1Codec.Deserialize(encoded.Value);
+
+        Assert.True(encoded.IsSuccess);
+        Assert.True(decoded.IsSuccess);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            decoded.Value.PreferredUnlockMethod);
+    }
+
     [Theory]
     [InlineData(-25)]
     [InlineData(25)]

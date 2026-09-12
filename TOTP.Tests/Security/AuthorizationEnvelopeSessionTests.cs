@@ -38,7 +38,13 @@ public sealed class AuthorizationEnvelopeSessionTests
         var result = await sut.InitializeAsync(cancellationToken);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(new AuthorizationEnvelopeSessionState(true, true, true), result.Value);
+        Assert.Equal(
+            new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                PlatformUnlockMethod: TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock),
+            result.Value);
     }
 
     [Fact]

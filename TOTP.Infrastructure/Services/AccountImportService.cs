@@ -19,6 +19,38 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         ArgumentNullException.ThrowIfNull(importedAccounts);
         ArgumentNullException.ThrowIfNull(confirmAsync);
 
+        return await ImportCoreAsync(
+            importedAccounts,
+            conflictStrategy,
+            confirmAsync,
+            null,
+            cancellationToken);
+    }
+
+    public async Task<Result<AccountImportOutcome>> ImportWithConflictResolutionAsync(
+        IReadOnlyList<Account> importedAccounts,
+        Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolveAsync,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(importedAccounts);
+        ArgumentNullException.ThrowIfNull(resolveAsync);
+
+        return await ImportCoreAsync(
+            importedAccounts,
+            null,
+            null,
+            resolveAsync,
+            cancellationToken);
+    }
+
+    private async Task<Result<AccountImportOutcome>> ImportCoreAsync(
+        IReadOnlyList<Account> importedAccounts,
+        ImportConflictStrategy? requestedStrategy,
+        Func<AccountImportPreview, CancellationToken, Task<bool>>? confirmAsync,
+        Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>? resolveAsync,
+        CancellationToken cancellationToken)
+    {
+
         try
         {
             if (!TryValidate(importedAccounts, out var validated))
@@ -28,8 +60,31 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             if (currentResult.IsFailed)
                 return Result.Ok(new AccountImportOutcome(AccountImportStatus.ExistingAccountsUnavailable));
 
-            var conflicts = validated.Count(account => FindMatch(account, currentResult.Value) is not null);
-            if (conflictStrategy == ImportConflictStrategy.SkipExisting
+            var matches = validated
+                .Select((account, index) => (
+                    ImportIndex: index,
+                    Incoming: account,
+                    Existing: FindMatch(account, currentResult.Value)))
+                .ToList();
+            var unchanged = matches.Count(value =>
+                value.Existing is not null && SamePayload(value.Existing, value.Incoming));
+            var changedConflicts = matches
+                .Where(value => value.Existing is not null
+                    && !SamePayload(value.Existing, value.Incoming))
+                .Select(value => new AccountImportConflict(
+                    value.ImportIndex,
+                    value.Existing!.Issuer,
+                    value.Existing.AccountName ?? string.Empty,
+                    value.Incoming.Issuer,
+                    value.Incoming.AccountName ?? string.Empty,
+                    !SameIssuer(value.Existing, value.Incoming),
+                    !SameAccountName(value.Existing, value.Incoming),
+                    !SameSecret(value.Existing, value.Incoming),
+                    value.Existing.PeriodSeconds != value.Incoming.PeriodSeconds))
+                .ToList();
+            var newCount = validated.Count - unchanged - changedConflicts.Count;
+            var conflicts = unchanged + changedConflicts.Count;
+            if (requestedStrategy == ImportConflictStrategy.SkipExisting
                 && conflicts == validated.Count)
             {
                 return Result.Ok(new AccountImportOutcome(
@@ -37,11 +92,49 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     Skipped: validated.Count));
             }
 
-            var confirmed = await confirmAsync(
-                new AccountImportPreview(validated.Count, conflicts, conflictStrategy),
-                cancellationToken);
-            if (!confirmed)
-                return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
+            var preview = new AccountImportPreview(
+                validated.Count,
+                conflicts,
+                requestedStrategy ?? ImportConflictStrategy.SkipExisting)
+            {
+                NewCount = newCount,
+                UnchangedCount = unchanged,
+                ChangedConflicts = changedConflicts
+            };
+            ImportConflictStrategy conflictStrategy;
+            IReadOnlyDictionary<int, AccountImportConflictAction>? perAccountResolution = null;
+            if (requestedStrategy.HasValue)
+            {
+                if (!IsSupportedStrategy(requestedStrategy.Value))
+                    return Result.Fail<AccountImportOutcome>("The import conflict strategy is invalid.");
+
+                var confirmed = await confirmAsync!(preview, cancellationToken);
+                if (!confirmed)
+                    return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
+
+                conflictStrategy = requestedStrategy.Value;
+            }
+            else
+            {
+                var resolution = await resolveAsync!(preview, cancellationToken);
+                if (resolution is null)
+                    return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
+                if (!TryValidateResolution(changedConflicts, resolution, out perAccountResolution))
+                    return Result.Fail<AccountImportOutcome>("The import conflict resolution is invalid.");
+
+                conflictStrategy = ImportConflictStrategy.SkipExisting;
+            }
+
+            if (conflictStrategy == ImportConflictStrategy.SkipExisting
+                && newCount == 0
+                && (perAccountResolution is null
+                    || perAccountResolution.Values.All(value =>
+                        value == AccountImportConflictAction.Skip)))
+            {
+                return Result.Ok(new AccountImportOutcome(
+                    AccountImportStatus.Completed,
+                    Skipped: validated.Count));
+            }
 
             var backup = await accountManager.BackupOtpEntriesStorageFileAsync();
             if (backup.IsFailed)
@@ -51,6 +144,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 validated,
                 currentResult.Value,
                 conflictStrategy,
+                perAccountResolution,
                 cancellationToken));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -67,6 +161,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         IReadOnlyList<Account> imported,
         IReadOnlyList<Account> existing,
         ImportConflictStrategy strategy,
+        IReadOnlyDictionary<int, AccountImportConflictAction>? perAccountResolution,
         CancellationToken cancellationToken)
     {
         var working = existing.ToList();
@@ -74,19 +169,28 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         var replacedCount = 0;
         var skippedCount = 0;
         var failedCount = 0;
-        foreach (var incoming in imported)
+        for (var importIndex = 0; importIndex < imported.Count; importIndex++)
         {
+            var incoming = imported[importIndex];
             cancellationToken.ThrowIfCancellationRequested();
             var match = FindMatch(incoming, working);
+            var resolvedAction = perAccountResolution is not null
+                && perAccountResolution.TryGetValue(importIndex, out var action)
+                    ? action
+                    : (AccountImportConflictAction?)null;
             if (match is not null && (SamePayload(match, incoming)
-                                      || strategy == ImportConflictStrategy.SkipExisting))
+                                      || resolvedAction == AccountImportConflictAction.Skip
+                                      || (resolvedAction is null
+                                          && strategy == ImportConflictStrategy.SkipExisting)))
             {
                 skippedCount++;
                 continue;
             }
 
             Result write;
-            if (match is not null && strategy == ImportConflictStrategy.ReplaceExisting)
+            if (match is not null
+                && (resolvedAction == AccountImportConflictAction.Replace
+                    || strategy == ImportConflictStrategy.ReplaceExisting))
             {
                 var replacement = new Account(
                     match.ID,
@@ -171,16 +275,61 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 StringComparison.OrdinalIgnoreCase));
 
     private static bool SamePayload(Account left, Account right) =>
-        string.Equals(left.Issuer.Trim(), right.Issuer.Trim(), StringComparison.OrdinalIgnoreCase)
-        && string.Equals(
+        SameIssuer(left, right)
+        && SameAccountName(left, right)
+        && SameSecret(left, right)
+        && left.PeriodSeconds == right.PeriodSeconds;
+
+    private static bool SameIssuer(Account left, Account right) =>
+        string.Equals(
+            left.Issuer.Trim(),
+            right.Issuer.Trim(),
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool SameAccountName(Account left, Account right) =>
+        string.Equals(
             (left.AccountName ?? string.Empty).Trim(),
             (right.AccountName ?? string.Empty).Trim(),
-            StringComparison.OrdinalIgnoreCase)
-        && string.Equals(
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool SameSecret(Account left, Account right) =>
+        string.Equals(
             SecretValidation.NormalizeBase32Secret(left.Secret),
             SecretValidation.NormalizeBase32Secret(right.Secret),
-            StringComparison.Ordinal)
-        && left.PeriodSeconds == right.PeriodSeconds;
+            StringComparison.Ordinal);
+
+    private static bool IsSupportedStrategy(ImportConflictStrategy strategy) =>
+        strategy is ImportConflictStrategy.SkipExisting
+            or ImportConflictStrategy.ReplaceExisting
+            or ImportConflictStrategy.KeepBoth;
+
+    private static bool TryValidateResolution(
+        IReadOnlyCollection<AccountImportConflict> conflicts,
+        AccountImportResolution resolution,
+        out IReadOnlyDictionary<int, AccountImportConflictAction> decisions)
+    {
+        var expectedIndexes = conflicts.Select(value => value.ImportIndex).ToHashSet();
+        var resolved = new Dictionary<int, AccountImportConflictAction>();
+        foreach (var decision in resolution.Conflicts)
+        {
+            if (!expectedIndexes.Contains(decision.ImportIndex)
+                || !Enum.IsDefined(decision.Action)
+                || !resolved.TryAdd(decision.ImportIndex, decision.Action))
+            {
+                decisions = new Dictionary<int, AccountImportConflictAction>();
+                return false;
+            }
+        }
+
+        if (resolved.Count != expectedIndexes.Count)
+        {
+            decisions = new Dictionary<int, AccountImportConflictAction>();
+            return false;
+        }
+
+        decisions = resolved;
+        return true;
+    }
 
     private static Account CreateKeepBoth(Account incoming, IReadOnlyCollection<Account> accounts)
     {

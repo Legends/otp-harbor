@@ -18,6 +18,7 @@ internal sealed class AndroidQrScanner(
 {
     private const int CaptureRequestCode = 0x4f54;
     private const string CaptureDirectoryName = "qr-captures";
+    private static readonly double[] CenterCropScales = [0.9d, 0.75d, 0.6d];
 
     public async Task<MobileQrScanResult> ScanAsync(
         CancellationToken cancellationToken = default)
@@ -151,14 +152,41 @@ internal sealed class AndroidQrScanner(
             (long)width * height > MobileQrCapturePolicy.MaximumDecodedPixels)
             return MobileQrScanResult.Failed;
 
-        foreach (var size in MobileQrCapturePolicy.CreateDecodeSizes(width, height))
+        var originalResult = DecodeSingle(bitmap);
+        if (originalResult.Status == MobileQrScanStatus.Success)
+            return originalResult;
+
+        foreach (var scale in CenterCropScales)
         {
-            if (size.Width == width && size.Height == height)
+            var cropWidth = Math.Max(1, (int)Math.Round(width * scale));
+            var cropHeight = Math.Max(1, (int)Math.Round(height * scale));
+            var left = (width - cropWidth) / 2;
+            var top = (height - cropHeight) / 2;
+            using var cropped = Bitmap.CreateBitmap(
+                bitmap,
+                left,
+                top,
+                cropWidth,
+                cropHeight);
+            if (cropped is null) continue;
+
+            var croppedResult = DecodeSingle(cropped);
+            if (croppedResult.Status == MobileQrScanStatus.Success)
+                return croppedResult;
+        }
+
+        foreach (var size in MobileQrCapturePolicy.CreateDecodeSizes(width, height).Skip(1))
+        {
+            using var filtered = Bitmap.CreateScaledBitmap(
+                bitmap,
+                size.Width,
+                size.Height,
+                true);
+            if (filtered is not null)
             {
-                var originalResult = DecodeSingle(bitmap);
-                if (originalResult.Status == MobileQrScanStatus.Success)
-                    return originalResult;
-                continue;
+                var filteredResult = DecodeSingle(filtered);
+                if (filteredResult.Status == MobileQrScanStatus.Success)
+                    return filteredResult;
             }
 
             using var scaled = Bitmap.CreateScaledBitmap(
@@ -212,14 +240,51 @@ internal sealed class AndroidQrScanner(
                 width,
                 height,
                 RGBLuminanceSource.BitmapFormat.RGB24);
-            return string.IsNullOrWhiteSpace(decoded?.Text)
+            if (!string.IsNullOrWhiteSpace(decoded?.Text))
+                return MobileQrScanResult.Successful(decoded.Text);
+
+            var luminance = new RGBLuminanceSource(
+                rgb,
+                width,
+                height,
+                RGBLuminanceSource.BitmapFormat.RGB24);
+            var globalResult = DecodeGlobalHistogram(luminance);
+            if (!string.IsNullOrWhiteSpace(globalResult))
+                return MobileQrScanResult.Successful(globalResult);
+
+            var invertedResult = DecodeGlobalHistogram(luminance.invert());
+            return string.IsNullOrWhiteSpace(invertedResult)
                 ? MobileQrScanResult.Failed
-                : MobileQrScanResult.Successful(decoded.Text);
+                : MobileQrScanResult.Successful(invertedResult);
         }
         finally
         {
             Array.Clear(pixels);
             if (rgb is not null) CryptographicOperations.ZeroMemory(rgb);
+        }
+    }
+
+    private static string? DecodeGlobalHistogram(LuminanceSource source)
+    {
+        var reader = new ZXing.QrCode.QRCodeReader();
+        try
+        {
+            var decoded = reader.decode(
+                new BinaryBitmap(new GlobalHistogramBinarizer(source)),
+                new Dictionary<DecodeHintType, object>
+                {
+                    [DecodeHintType.TRY_HARDER] = true,
+                    [DecodeHintType.CHARACTER_SET] = "UTF-8"
+                });
+            return decoded?.Text;
+        }
+        catch (ReaderException)
+        {
+            return null;
+        }
+        finally
+        {
+            reader.reset();
         }
     }
 }

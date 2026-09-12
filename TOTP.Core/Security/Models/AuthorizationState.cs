@@ -28,9 +28,13 @@ public sealed class AuthorizationState
         PreferredUnlockMethod = normalizedPreference;
         ConfiguredGate = !isConfigured
             ? AuthorizationGateKind.None
-            : normalizedPreference == PreferredUnlockMethod.PlatformQuickUnlock
-                ? AuthorizationGateKind.Hello
-                : AuthorizationGateKind.Password;
+            : normalizedPreference switch
+            {
+                PreferredUnlockMethod.PlatformQuickUnlock => AuthorizationGateKind.Hello,
+                PreferredUnlockMethod.PlatformDeviceCredential =>
+                    AuthorizationGateKind.DeviceCredential,
+                _ => AuthorizationGateKind.Password
+            };
         RaiseChanged();
     }
 

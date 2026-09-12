@@ -11,10 +11,43 @@ public enum AccountImportStatus
     RecoveryBackupFailed
 }
 
+public enum AccountImportConflictAction
+{
+    Skip,
+    Replace
+}
+
+public sealed record AccountImportConflict(
+    int ImportIndex,
+    string CurrentIssuer,
+    string CurrentAccountName,
+    string BackupIssuer,
+    string BackupAccountName,
+    bool IssuerChanged,
+    bool AccountNameChanged,
+    bool SecretChanged,
+    bool PeriodChanged);
+
+public sealed record AccountImportConflictResolution(
+    int ImportIndex,
+    AccountImportConflictAction Action);
+
+public sealed record AccountImportResolution(
+    IReadOnlyList<AccountImportConflictResolution> Conflicts);
+
 public sealed record AccountImportPreview(
     int TotalCount,
     int ConflictCount,
-    ImportConflictStrategy ConflictStrategy);
+    ImportConflictStrategy ConflictStrategy)
+{
+    public int NewCount { get; init; }
+
+    public int UnchangedCount { get; init; }
+
+    public IReadOnlyList<AccountImportConflict> ChangedConflicts { get; init; } = [];
+
+    public int ChangedConflictCount => ChangedConflicts.Count;
+}
 
 public sealed record AccountImportOutcome(
     AccountImportStatus Status,

@@ -121,11 +121,18 @@ verification, GitHub environment setup, and the future Google Play path are docu
   account QR remains part of the account-list surface and therefore stays protected while that
   surface is visible. Unprotected views can expose revealed passwords, OTP seeds, or backup details
   if the user or another capture-capable process records them; this is an explicit usability
-  tradeoff and not a confidentiality guarantee. Biometric quick unlock accepts only Android's
-  strong-biometric class;
-  it does not accept the device PIN as a substitute. Its non-exportable AES-256 key is usable only
-  for one second after successful strong-biometric authentication and is invalidated when biometric
-  enrollment changes. That minimal time window is an Android-documented compatibility path for
+  tradeoff and not a confidentiality guarantee. An explicit `EnableMarketingCapture=true` build
+  may relax the secure-window flag only for the separate Debug application ID and synthetic test
+  data; the Android project rejects that property for Release builds. The primary unlock method is
+  an explicit user choice between strong biometrics, Android's secure device credential (PIN,
+  password, or pattern as configured by the operating system), and the master password. OTP Harbor
+  never creates or stores a separate app PIN. Biometrics remain the first-run default when available,
+  while the master password always remains a recovery fallback. Biometric and device-credential
+  modes use separate provider identifiers, aliases, associated-data contexts, and Keystore policies.
+  Their non-exportable AES-256 keys are usable only for one second after the selected system
+  authentication. Biometric keys are invalidated when biometric enrollment changes; device-
+  credential keys are not coupled to biometric enrollment. That minimal time window is an
+  Android-documented compatibility path for
   devices whose KeyMint implementation rejects an authentication-per-use `CryptoObject`. Code
   executing as the app's UID during that second shares the authorization window; the app does not
   claim to resist a rooted, injected, or otherwise compromised process or device.
@@ -140,17 +147,24 @@ verification, GitHub environment setup, and the future Google Play path are docu
   Android may suspend background execution. With the default app lock enabled, device lock,
   explicit lock, and process termination do not receive this grace period. Enabling quick unlock unwraps the vault key only after recovery
   password verification, then encrypts it with AES-256-GCM inside the authenticated Keystore flow.
-  Unlock first completes a `BIOMETRIC_STRONG` system prompt without a `CryptoObject`; the cipher is
+  Unlock first completes the selected `BIOMETRIC_STRONG` or `DEVICE_CREDENTIAL` system prompt
+  without a `CryptoObject`; the cipher is
   created and completed synchronously in the success callback, within the one-second authorization
   window. The password field remains available if the prompt is cancelled or recovery is required.
   The envelope stores only the Keystore alias, nonce, authenticated ciphertext, and reviewed
   provider metadata; it stores neither the biometric nor an exportable platform key.
+  Changing the primary method verifies the master password and registers the replacement Keystore
+  wrapper before the envelope is swapped; the prior alias is removed only after persistence succeeds.
   Disabling the app lock is a separate, explicitly warned opt-out that requires the recovery
   password. It replaces any biometric wrapper with a non-exportable Android Keystore AES key whose
   policy permits access without user verification, while retaining the mandatory password wrapper.
   Startup still verifies the recovered DEK against the encrypted vault before exposing codes. With
   this opt-out active, background and device-lock transitions clear displayed code/QR state but keep
-  authorization available; anyone using the unlocked device can therefore access the codes.
+  authorization available; anyone using the unlocked device can therefore access the codes. The
+  selected interactive method remains in preferences while app lock is off. Re-enabling requires
+  the master password when that method is biometric or device credential, recreates its protected
+  wrapper, and locks immediately; failure leaves the app lock enabled and falls back safely to the
+  master password.
   QR capture delegates still-image acquisition to the installed system camera and decodes only the
   returned in-memory preview with the embedded ZXing decoder. The release manifest requests neither
   network nor camera permission for this flow, the app does not write a captured image, accepts only

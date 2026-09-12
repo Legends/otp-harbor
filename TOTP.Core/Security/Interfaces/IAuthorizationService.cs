@@ -1,4 +1,5 @@
 using System.Threading;
+using TOTP.Core.Enums;
 using TOTP.Core.Security.Models;
 
 namespace TOTP.Core.Security.Interfaces;
@@ -9,6 +10,7 @@ public interface IAuthorizationService
 
     Task InitializeAsync();
     Task<bool> IsHelloAvailableAsync();
+    Task<bool> IsUnlockMethodAvailableAsync(PreferredUnlockMethod unlockMethod);
     Task<AuthorizationResult> TryUnlockOnStartupAsync();
     Task<AuthorizationResult> TryUnlockOnStartupAsync(CancellationToken ct);
     Task<AuthorizationResult> TryUnlockWithPasswordAsync(string password);
@@ -18,6 +20,9 @@ public interface IAuthorizationService
     Task<AuthorizationResult> ConfigurePasswordAsync(string password, string confirmPassword);
     Task<AuthorizationResult> ConfigureHelloAsync();
     Task<AuthorizationResult> ConfigureHelloAsync(string recoveryPassword);
+    Task<AuthorizationResult> ConfigureUnlockMethodAsync(
+        PreferredUnlockMethod unlockMethod,
+        string recoveryPassword);
     Task<AuthorizationResult> SetGateAsync(AuthorizationGateKind gate);
     Task<AuthorizationResult> ChangePasswordAsync(string currentPassword, string newPassword);
     Task<AuthorizationResult> SetAppLockEnabledAsync(bool enabled, string recoveryPassword);

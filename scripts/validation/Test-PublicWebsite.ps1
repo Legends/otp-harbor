@@ -24,6 +24,8 @@ $index = Read-RequiredFile 'site/index.html'
 $compactIndex = [Text.RegularExpressions.Regex]::Replace($index, '\s+', ' ')
 $androidIndex = Read-RequiredFile 'site/android/index.html'
 $compactAndroidIndex = [Text.RegularExpressions.Regex]::Replace($androidIndex, '\s+', ' ')
+$androidGuide = Read-RequiredFile 'site/android/guide/index.html'
+$compactAndroidGuide = [Text.RegularExpressions.Regex]::Replace($androidGuide, '\s+', ' ')
 $styles = Read-RequiredFile 'site/styles.css'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
@@ -142,9 +144,27 @@ foreach ($requiredText in @(
 }
 if (-not $compactIndex.Contains('href="android/"', [StringComparison]::Ordinal) -or
     -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/android/</loc>', [StringComparison]::Ordinal) -or
+    -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/android/guide/</loc>', [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains('cp site/android/index.html _site/android/index.html', [StringComparison]::Ordinal) -or
-    -not $pagesWorkflow.Contains('urlList = @($siteUrl, $androidUrl)', [StringComparison]::Ordinal)) {
+    -not $pagesWorkflow.Contains('cp site/android/guide/index.html _site/android/guide/index.html', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('urlList = @($siteUrl, $androidUrl, $androidGuideUrl)', [StringComparison]::Ordinal)) {
     throw 'The Android product page is not cross-linked, deployable, and discoverable.'
+}
+
+foreach ($requiredText in @(
+    '<title>OTP Harbor Android Guide — Accounts, QR and Security</title>',
+    '<link rel="canonical" href="https://legends.github.io/otp-harbor/android/guide/">',
+    'Swipe right',
+    'Swipe left',
+    'Show QR',
+    'Google Authenticator',
+    'deactivate app lock')) {
+    if (-not $compactAndroidGuide.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The Android user guide is missing required content: $requiredText"
+    }
+}
+if (-not $compactAndroidIndex.Contains('href="guide/"', [StringComparison]::Ordinal)) {
+    throw 'The Android product page does not link to its user guide.'
 }
 
 if ($indexNowVerificationFile.Trim() -cne $indexNowVerificationValue -or

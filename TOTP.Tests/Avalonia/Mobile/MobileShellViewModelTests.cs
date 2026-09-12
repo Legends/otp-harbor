@@ -108,12 +108,15 @@ public sealed class MobileShellViewModelTests
         context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
-        context.Authorization.Setup(value => value.SetAppLockEnabledAsync(true, string.Empty))
+        context.Authorization.Setup(value => value.SetAppLockEnabledAsync(
+                true,
+                "recovery-password"))
             .Callback(() =>
             {
                 context.SettingsValue.AppLockEnabled = true;
-                context.SettingsValue.PreferredUnlockMethod =
-                    TOTP.Core.Enums.PreferredUnlockMethod.Password;
+                context.State.SetConfiguration(
+                    true,
+                    TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
             })
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
@@ -121,6 +124,9 @@ public sealed class MobileShellViewModelTests
 
         Assert.Equal("Activate app lock", context.Sut.AppLockActionText);
         await context.Sut.ToggleAppLockAsync();
+        Assert.True(context.Sut.IsBiometricEnrollmentVisible);
+        context.Sut.BiometricRecoveryPassword = "recovery-password";
+        await context.Sut.EnableBiometricAsync();
 
         Assert.True(context.Sut.IsAppLockEnabled);
         Assert.True(context.Sut.IsUnlockVisible);
@@ -252,6 +258,161 @@ public sealed class MobileShellViewModelTests
 
         Assert.True(context.Sut.IsAccountsVisible);
         Assert.True(context.Sut.HasNoAccounts);
+        Assert.Empty(context.Sut.SetupPassword);
+        Assert.Empty(context.Sut.SetupConfirmation);
+        context.Authorization.Verify(
+            value => value.ConfigureHelloAsync(It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfigureAsync_ErrorNotification_ClearsAfterTwoSeconds()
+    {
+        var context = CreateContext(isConfigured: false);
+        await context.Sut.InitializeAsync();
+
+        await context.Sut.ConfigureAsync();
+
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.PasswordRequired),
+            context.Sut.NotificationText);
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1100),
+            global::Xunit.TestContext.Current.CancellationToken);
+        Assert.NotEmpty(context.Sut.NotificationText);
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1000),
+            global::Xunit.TestContext.Current.CancellationToken);
+        Assert.Empty(context.Sut.NotificationText);
+    }
+
+    [Fact]
+    public async Task ConfigureAsync_WithAvailableBiometrics_ImmediatelyEnrollsQuickUnlock()
+    {
+        var context = CreateContext(isConfigured: false, biometricAvailable: true);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.SetupPassword = "synthetic password";
+        context.Sut.SetupConfirmation = "synthetic password";
+
+        await context.Sut.ConfigureAsync();
+
+        Assert.True(context.Sut.IsAccountsVisible);
+        Assert.True(context.Sut.IsBiometricEnabled);
+        Assert.Empty(context.Sut.SetupPassword);
+        Assert.Empty(context.Sut.SetupConfirmation);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.BiometricEnabled),
+            context.Sut.NotificationText);
+        context.Authorization.Verify(
+            value => value.ConfigureHelloAsync("synthetic password"),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ConfigureAsync_WhenBiometricsBecomeAvailableAfterSetup_ImmediatelyEnrollsQuickUnlock()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .SetupSequence(value => value.IsHelloAvailableAsync())
+            .ReturnsAsync(false)
+            .ReturnsAsync(true);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        Assert.False(context.Sut.IsBiometricAvailable);
+        context.Sut.SetupPassword = "synthetic password";
+        context.Sut.SetupConfirmation = "synthetic password";
+
+        await context.Sut.ConfigureAsync();
+
+        Assert.True(context.Sut.IsAccountsVisible);
+        Assert.True(context.Sut.IsBiometricAvailable);
+        Assert.True(context.Sut.IsBiometricEnabled);
+        context.Authorization.Verify(value => value.IsHelloAvailableAsync(), Times.Exactly(2));
+        context.Authorization.Verify(
+            value => value.ConfigureHelloAsync("synthetic password"),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ShowSettingsAsync_RefreshesBiometricAvailabilityAfterSetup()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .SetupSequence(value => value.IsHelloAvailableAsync())
+            .ReturnsAsync(false)
+            .ReturnsAsync(false)
+            .ReturnsAsync(true);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.SetupPassword = "synthetic password";
+        context.Sut.SetupConfirmation = "synthetic password";
+        await context.Sut.ConfigureAsync();
+
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.True(context.Sut.IsSettingsVisible);
+        Assert.True(context.Sut.IsBiometricAvailable);
+        Assert.True(context.Sut.BeginBiometricEnrollmentCommand.CanExecute(null));
+        context.Authorization.Verify(value => value.IsHelloAvailableAsync(), Times.Exactly(3));
+    }
+
+    [Fact]
+    public async Task ConfigureAsync_WhenInitialBiometricPromptIsCancelled_OpensVaultWithoutEnrolling()
+    {
+        var context = CreateContext(isConfigured: false, biometricAvailable: true);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Cancelled);
+        await context.Sut.InitializeAsync();
+        context.Sut.SetupPassword = "synthetic password";
+        context.Sut.SetupConfirmation = "synthetic password";
+
+        await context.Sut.ConfigureAsync();
+
+        Assert.True(context.Sut.IsAccountsVisible);
+        Assert.False(context.Sut.IsBiometricEnabled);
+        Assert.Empty(context.Sut.NotificationText);
+        Assert.Empty(context.Sut.SetupPassword);
+        Assert.Empty(context.Sut.SetupConfirmation);
+    }
+
+    [Fact]
+    public async Task ConfigureAsync_WhenInitialBiometricEnrollmentFails_KeepsConfiguredVaultUsable()
+    {
+        var context = CreateContext(isConfigured: false, biometricAvailable: true);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .ThrowsAsync(new InvalidOperationException("synthetic platform failure"));
+        await context.Sut.InitializeAsync();
+        context.Sut.SetupPassword = "synthetic password";
+        context.Sut.SetupConfirmation = "synthetic password";
+
+        await context.Sut.ConfigureAsync();
+
+        Assert.True(context.Sut.IsAccountsVisible);
+        Assert.False(context.Sut.IsBiometricEnabled);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.BiometricEnableFailed),
+            context.Sut.NotificationText);
         Assert.Empty(context.Sut.SetupPassword);
         Assert.Empty(context.Sut.SetupConfirmation);
     }
@@ -512,9 +673,14 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         context.Authorization
             .Setup(value => value.ConfigureHelloAsync("recovery-password"))
-            .Callback(() => context.State.SetConfiguration(
-                true,
-                TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock))
+            .Callback(() =>
+            {
+                context.SettingsValue.PreferredUnlockMethod =
+                    TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock;
+                context.State.SetConfiguration(
+                    true,
+                    TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+            })
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
@@ -529,7 +695,7 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.IsBiometricEnrollmentVisible);
         Assert.Empty(context.Sut.BiometricRecoveryPassword);
         Assert.Equal(
-            context.Strings.Get(MobileStringKeys.BiometricEnabled),
+            context.Strings.Get(MobileStringKeys.UnlockMethodChanged),
             context.Sut.NotificationText);
     }
 
@@ -554,6 +720,151 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsBiometricSetupAvailable);
         Assert.True(context.Sut.ShowAccountsCommand.CanExecute(null));
         Assert.False(context.Sut.ShowSettingsCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task DeviceCredentialSelection_RequiresMasterPasswordAndUpdatesPrimaryMethod()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            deviceCredentialAvailable: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.ConfigureUnlockMethodAsync(
+                TOTP.Core.Enums.PreferredUnlockMethod.PlatformDeviceCredential,
+                "recovery-password"))
+            .Callback(() =>
+            {
+                context.SettingsValue.PreferredUnlockMethod =
+                    TOTP.Core.Enums.PreferredUnlockMethod.PlatformDeviceCredential;
+                context.State.SetConfiguration(
+                    true,
+                    TOTP.Core.Enums.PreferredUnlockMethod.PlatformDeviceCredential);
+            })
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.True(context.Sut.IsPasswordUnlockSelected);
+        await context.Sut.BeginDeviceCredentialEnrollmentAsync();
+        context.Sut.BiometricRecoveryPassword = "recovery-password";
+        await context.Sut.EnableBiometricAsync();
+
+        Assert.True(context.Sut.IsDeviceCredentialUnlockSelected);
+        Assert.True(context.Sut.IsDeviceCredentialEnabled);
+        Assert.False(context.Sut.IsBiometricUnlockSelected);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.UnlockMethodChanged),
+            context.Sut.NotificationText);
+    }
+
+    [Fact]
+    public async Task UnlockMethodProjection_UsesAuthoritativeAuthorizationState()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: false,
+            deviceCredentialAvailable: false,
+            preferredUnlockMethod:
+                TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.State.SetConfiguration(
+            true,
+            TOTP.Core.Enums.PreferredUnlockMethod.PlatformDeviceCredential);
+
+        await context.Sut.InitializeAsync();
+
+        Assert.True(context.Sut.IsDeviceCredentialUnlockSelected);
+        Assert.False(context.Sut.IsBiometricUnlockSelected);
+        Assert.True(context.Sut.IsDeviceCredentialUnlockOptionEnabled);
+        Assert.False(context.Sut.IsBiometricUnlockOptionEnabled);
+    }
+
+    [Fact]
+    public async Task PasswordSelection_RemainsAvailableAsPlatformUnlockFallback()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: true,
+            preferredUnlockMethod:
+                TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.ConfigureUnlockMethodAsync(
+                TOTP.Core.Enums.PreferredUnlockMethod.Password,
+                "recovery-password"))
+            .Callback(() =>
+            {
+                context.SettingsValue.PreferredUnlockMethod =
+                    TOTP.Core.Enums.PreferredUnlockMethod.Password;
+                context.State.SetConfiguration(
+                    true,
+                    TOTP.Core.Enums.PreferredUnlockMethod.Password);
+            })
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.SelectPasswordUnlockAsync();
+        Assert.True(context.Sut.IsBiometricEnrollmentVisible);
+        Assert.True(context.Sut.IsBiometricUnlockSelected);
+        context.Sut.BiometricRecoveryPassword = "recovery-password";
+        await context.Sut.EnableBiometricAsync();
+
+        Assert.True(context.Sut.IsPasswordUnlockSelected);
+        Assert.False(context.Sut.IsBiometricEnabled);
+        Assert.False(context.Sut.IsDeviceCredentialEnabled);
+    }
+
+    [Fact]
+    public async Task LeavingSettings_DiscardsUnconfirmedUnlockMethodSelection()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: true,
+            deviceCredentialAvailable: true,
+            preferredUnlockMethod:
+                TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        await context.Sut.BeginDeviceCredentialEnrollmentAsync();
+        context.Sut.BiometricRecoveryPassword = "unconfirmed-password";
+        var changedProperties = new List<string?>();
+        context.Sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        await context.Sut.ShowAccountsAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.True(context.Sut.IsBiometricUnlockSelected);
+        Assert.False(context.Sut.IsDeviceCredentialUnlockSelected);
+        Assert.False(context.Sut.IsBiometricEnrollmentVisible);
+        Assert.Empty(context.Sut.BiometricRecoveryPassword);
+        Assert.Contains(
+            nameof(MobileShellViewModel.IsBiometricUnlockSelected),
+            changedProperties);
+        Assert.Contains(
+            nameof(MobileShellViewModel.IsDeviceCredentialUnlockSelected),
+            changedProperties);
+        context.Authorization.Verify(
+            value => value.ConfigureUnlockMethodAsync(
+                It.IsAny<TOTP.Core.Enums.PreferredUnlockMethod>(),
+                It.IsAny<string>()),
+            Times.Never);
     }
 
     [Fact]
@@ -750,6 +1061,14 @@ public sealed class MobileShellViewModelTests
         Assert.Empty(context.Sut.Accounts);
         Assert.False(context.Sut.HasNoAccounts);
         Assert.True(context.Sut.HasNoSearchResults);
+
+        Assert.True(context.Sut.HasSearchText);
+        Assert.True(context.Sut.ClearSearchCommand.CanExecute(null));
+        await context.Sut.ClearSearchAsync();
+
+        Assert.False(context.Sut.HasSearchText);
+        Assert.False(context.Sut.ClearSearchCommand.CanExecute(null));
+        Assert.Equal(2, context.Sut.Accounts.Count);
     }
 
     [Fact]
@@ -784,6 +1103,12 @@ public sealed class MobileShellViewModelTests
 
         await Task.Delay(
             TimeSpan.FromMilliseconds(1100),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(context.Sut.NotificationText);
+
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1000),
             global::Xunit.TestContext.Current.CancellationToken);
 
         Assert.Empty(context.Sut.NotificationText);
@@ -1257,7 +1582,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task ImportBackupAsync_RequiresExplicitConfirmationAndSkipsExistingAccounts()
+    public async Task ImportBackupAsync_WhenEveryAccountIsIdentical_ShowsNoImportAcknowledgement()
     {
         var importedAccount = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
         var context = CreateContext(isConfigured: true, cultureName: "de");
@@ -1273,21 +1598,22 @@ public sealed class MobileShellViewModelTests
                 It.IsAny<Stream>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new List<Account> { importedAccount }));
-        context.AccountImport.Setup(value => value.ImportAsync(
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
                 It.IsAny<IReadOnlyList<Account>>(),
-                ImportConflictStrategy.SkipExisting,
-                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<bool>>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns(async (
                 IReadOnlyList<Account> _,
-                ImportConflictStrategy _,
-                Func<AccountImportPreview, CancellationToken, Task<bool>> confirm,
+                Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve,
                 CancellationToken cancellationToken) =>
             {
-                var accepted = await confirm(
-                    new AccountImportPreview(1, 1, ImportConflictStrategy.SkipExisting),
+                var resolution = await resolve(
+                    new AccountImportPreview(1, 1, ImportConflictStrategy.SkipExisting)
+                    {
+                        UnchangedCount = 1
+                    },
                     cancellationToken);
-                return Result.Ok(accepted
+                return Result.Ok(resolution is not null
                     ? new AccountImportOutcome(AccountImportStatus.Completed, Added: 0, Skipped: 1)
                     : new AccountImportOutcome(AccountImportStatus.Cancelled));
             });
@@ -1306,17 +1632,105 @@ public sealed class MobileShellViewModelTests
         }
 
         Assert.True(context.Sut.IsImportConfirmationVisible);
-        Assert.Equal(
-            string.Format(context.Strings.Get(MobileStringKeys.ImportConfirmation), 1, 1),
+        Assert.True(context.Sut.IsImportConfirmationAcknowledgementOnly);
+        Assert.False(context.Sut.IsImportConfirmationCancelVisible);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.NoImportTitle),
+            context.Sut.ImportConfirmationTitle);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.NoImportIdentical),
             context.Sut.ImportConfirmationText);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.Ok), context.Sut.ConfirmImportText);
 
         await context.Sut.ResolveImportConfirmationAsync(true);
         await importTask;
 
         Assert.False(context.Sut.IsImportConfirmationVisible);
         Assert.Empty(context.Sut.ImportPassword);
+        Assert.Empty(context.Sut.NotificationText);
+    }
+
+    [Fact]
+    public async Task ImportBackupAsync_WithChangedAccount_OffersPerAccountRadioResolution()
+    {
+        var importedAccount = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "backup-name");
+        var context = CreateContext(isConfigured: true, cultureName: "en");
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenEncryptedBackupAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1, 2, 3])));
+        context.ExportService.Setup(value => value.ImportFromEncryptedStreamAsync(
+                "backup-password",
+                It.IsAny<Stream>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { importedAccount }));
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+                It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async (
+                IReadOnlyList<Account> _,
+                Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve,
+                CancellationToken cancellationToken) =>
+            {
+                var resolution = await resolve(
+                    new AccountImportPreview(4, 3, ImportConflictStrategy.SkipExisting)
+                    {
+                        NewCount = 1,
+                        UnchangedCount = 2,
+                        ChangedConflicts =
+                        [
+                            new AccountImportConflict(
+                                1,
+                                "Microsoft",
+                                "current-name",
+                                "Microsoft",
+                                "backup-name",
+                                IssuerChanged: false,
+                                AccountNameChanged: true,
+                                SecretChanged: false,
+                                PeriodChanged: false)
+                        ]
+                    },
+                    cancellationToken);
+                Assert.NotNull(resolution);
+                var decision = Assert.Single(resolution.Conflicts);
+                Assert.Equal(AccountImportConflictAction.Replace, decision.Action);
+                return Result.Ok(new AccountImportOutcome(
+                    AccountImportStatus.Completed,
+                    Added: 1,
+                    Replaced: 1,
+                    Skipped: 2));
+            });
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ImportPassword = "backup-password";
+
+        var importTask = context.Sut.ImportBackupAsync();
+        await WaitUntilAsync(() => context.Sut.IsBackupConflictResolutionVisible);
+
+        var conflict = Assert.Single(context.Sut.BackupImportConflicts);
+        Assert.True(conflict.IsSkipSelected);
+        Assert.False(conflict.IsReplaceSelected);
+        Assert.True(context.Sut.IsAllBackupConflictsSkipped);
+        Assert.False(context.Sut.ConfirmBackupConflictResolutionCommand.CanExecute(null));
+        Assert.Contains("1 new, 2 unchanged, 1 need review", context.Sut.BackupConflictResolutionText);
+        Assert.Equal("Changed: account name", conflict.ChangedFieldsText);
+
+        await context.Sut.SelectAllBackupConflictsAsync(AccountImportConflictAction.Replace);
+        Assert.True(conflict.IsReplaceSelected);
+        Assert.True(context.Sut.IsAllBackupConflictsReplaced);
+        Assert.True(context.Sut.ConfirmBackupConflictResolutionCommand.CanExecute(null));
+        await context.Sut.ConfirmBackupConflictResolutionAsync();
+        await importTask;
+
+        Assert.False(context.Sut.IsBackupConflictResolutionVisible);
+        Assert.Empty(context.Sut.BackupImportConflicts);
         Assert.Equal(
-            string.Format(context.Strings.Get(MobileStringKeys.BackupImported), 0, 1),
+            string.Format(context.Strings.Get(MobileStringKeys.BackupImported), 1, 1, 2),
             context.Sut.NotificationText);
     }
 
@@ -1502,6 +1916,28 @@ public sealed class MobileShellViewModelTests
         await context.Sut.BeginAddAsync();
     }
 
+    [Fact]
+    public async Task SaveAccountAsync_WithGoogleAuthenticatorCompatibleShortSecret_PersistsAccount()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        Account? persisted = null;
+        context.AccountManager
+            .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => persisted = account)
+            .ReturnsAsync(Result.Ok());
+        await ConfigureAndBeginAddAsync(context);
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = "ORSXG5A";
+
+        await context.Sut.SaveAccountAsync();
+
+        Assert.NotNull(persisted);
+        Assert.Equal("ORSXG5A", persisted.Secret);
+    }
+
     private static async Task WaitUntilAsync(Func<bool> predicate)
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
@@ -1513,6 +1949,7 @@ public sealed class MobileShellViewModelTests
         bool isConfigured,
         IReadOnlyList<Account>? accounts = null,
         bool biometricAvailable = false,
+        bool deviceCredentialAvailable = false,
         TOTP.Core.Enums.PreferredUnlockMethod preferredUnlockMethod =
             TOTP.Core.Enums.PreferredUnlockMethod.Password,
         string cultureName = "en",
@@ -1526,6 +1963,9 @@ public sealed class MobileShellViewModelTests
         authorization.Setup(value => value.InitializeAsync()).Returns(Task.CompletedTask);
         authorization.Setup(value => value.IsHelloAvailableAsync())
             .ReturnsAsync(biometricAvailable);
+        authorization.Setup(value => value.IsUnlockMethodAvailableAsync(
+                TOTP.Core.Enums.PreferredUnlockMethod.PlatformDeviceCredential))
+            .ReturnsAsync(deviceCredentialAvailable);
 
         var passwordValidation = new Mock<IPasswordValidationService>();
         passwordValidation.SetupGet(value => value.MinimumLength).Returns(8);

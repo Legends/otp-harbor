@@ -5,6 +5,7 @@ using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Infrastructure.Services;
+using TOTP.Tests.TestData;
 
 namespace TOTP.Tests.Infrastructure.Services;
 
@@ -156,7 +157,7 @@ public sealed class QrAccountImportServiceTests
         var sut = new QrAccountImportService(accounts.Object);
 
         var result = await sut.ImportAsync(
-            "otpauth://totp/Example:alice?secret=NOT-BASE32",
+            "otpauth://totp/Example:alice?secret=NOT*BASE32",
             (_, _) => Task.FromResult(QrAccountConflictDecision.Cancel),
             TestContext.Current.CancellationToken);
 
@@ -232,6 +233,33 @@ public sealed class QrAccountImportServiceTests
                 Assert.Equal("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", account.Secret);
             });
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WhenGoogleMigrationContainsTenAccountsAndShortSecrets_ImportsAll()
+    {
+        var accounts = Manager([]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        var added = new List<Account>();
+        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .ReturnsAsync((Account account) =>
+            {
+                added.Add(account);
+                return Result.Ok();
+            });
+        var sut = new QrAccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            GoogleAuthenticatorMigrationTestData.TenAccountPayload,
+            (_, _) => Task.FromResult(QrAccountConflictDecision.Cancel),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(QrAccountImportStatus.BulkImported, result.Value.Status);
+        Assert.Equal(10, result.Value.TotalCount);
+        Assert.Equal(10, result.Value.ImportedCount);
+        Assert.Equal(10, added.Count);
+        Assert.Contains(added, account => account.Issuer == "München UTF8 Test");
     }
 
     [Fact]

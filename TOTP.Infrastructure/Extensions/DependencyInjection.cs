@@ -94,7 +94,13 @@ public static class DependencyInjection
 
         // 3. Authorization Logic (The bridge)
         services.AddSingleton<IAuthorizationService, PortableAuthorizationService>();
-        services.AddSingleton<IPlatformQuickUnlockEnrollment, PlatformQuickUnlockEnrollment>();
+        services.AddSingleton<IPlatformQuickUnlockEnrollment>(sp =>
+            new PlatformQuickUnlockEnrollment(
+                sp.GetRequiredService<IAuthorizationEnvelopeStore>(),
+                sp.GetRequiredService<IMasterPasswordService>(),
+                sp.GetRequiredService<IStoredVaultKeyVerifier>(),
+                sp.GetServices<IPlatformQuickUnlock>(),
+                sp.GetRequiredService<ILogger<PlatformQuickUnlockEnrollment>>()));
         services.AddSingleton<IPlatformUnattendedUnlockEnrollment,
             PlatformUnattendedUnlockEnrollment>();
         services.AddSingleton<AuthorizationState>();

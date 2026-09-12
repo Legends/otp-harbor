@@ -1,5 +1,6 @@
 using TOTP.Infrastructure.Services;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Tests.TestData;
 
 namespace TOTP.Tests.Services;
 
@@ -22,7 +23,7 @@ public sealed class QrPayloadValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData("https://example.invalid/not-otp")]
-    [InlineData("otpauth://totp/demo?secret=not-base32")]
+    [InlineData("otpauth://totp/demo?secret=not*base32")]
     public void Validate_WhenPayloadIsUntrusted_ReturnsInvalidWithoutThrowing(string payload)
     {
         var result = _sut.Validate(payload);
@@ -81,6 +82,16 @@ public sealed class QrPayloadValidatorTests
         Assert.Equal(QrPayloadKind.GoogleAuthenticatorMigration, result.Kind);
         Assert.Equal(1, result.AccountCount);
         Assert.DoesNotContain("TestSecret", result.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_WhenGoogleAuthenticatorMigrationContainsTenAccountsAndShortSecrets_ReturnsValid()
+    {
+        var result = _sut.Validate(GoogleAuthenticatorMigrationTestData.TenAccountPayload);
+
+        Assert.True(result.IsValid);
+        Assert.Equal(QrPayloadKind.GoogleAuthenticatorMigration, result.Kind);
+        Assert.Equal(10, result.AccountCount);
     }
 
     [Theory]

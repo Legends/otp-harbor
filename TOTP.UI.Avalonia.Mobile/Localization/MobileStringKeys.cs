@@ -46,6 +46,7 @@ public static class MobileStringKeys
     public const string ImportGoogleQr = nameof(ImportGoogleQr);
     public const string ImportGoogleQrDescription = nameof(ImportGoogleQrDescription);
     public const string SearchAccounts = nameof(SearchAccounts);
+    public const string ClearSearch = nameof(ClearSearch);
     public const string NoSearchResults = nameof(NoSearchResults);
     public const string AccountSwipeHint = nameof(AccountSwipeHint);
     public const string ScanQr = nameof(ScanQr);
@@ -92,6 +93,26 @@ public static class MobileStringKeys
     public const string ImportConfirmationTitle = nameof(ImportConfirmationTitle);
     public const string ImportConfirmation = nameof(ImportConfirmation);
     public const string ConfirmImport = nameof(ConfirmImport);
+    public const string NoImportTitle = nameof(NoImportTitle);
+    public const string NoImportIdentical = nameof(NoImportIdentical);
+    public const string Ok = nameof(Ok);
+    public const string BackupConflictResolutionTitle = nameof(BackupConflictResolutionTitle);
+    public const string BackupConflictResolution = nameof(BackupConflictResolution);
+    public const string ConflictAccount = nameof(ConflictAccount);
+    public const string Skip = nameof(Skip);
+    public const string Override = nameof(Override);
+    public const string SkipAll = nameof(SkipAll);
+    public const string OverrideAll = nameof(OverrideAll);
+    public const string CurrentAccountFormat = nameof(CurrentAccountFormat);
+    public const string BackupAccountFormat = nameof(BackupAccountFormat);
+    public const string ChangedFieldsFormat = nameof(ChangedFieldsFormat);
+    public const string IssuerField = nameof(IssuerField);
+    public const string AccountNameField = nameof(AccountNameField);
+    public const string SecretField = nameof(SecretField);
+    public const string PeriodField = nameof(PeriodField);
+    public const string ApplyToAll = nameof(ApplyToAll);
+    public const string KeepAccountAutomationFormat = nameof(KeepAccountAutomationFormat);
+    public const string RestoreAccountAutomationFormat = nameof(RestoreAccountAutomationFormat);
     public const string NoAccounts = nameof(NoAccounts);
     public const string AddAccount = nameof(AddAccount);
     public const string EditAccount = nameof(EditAccount);
@@ -127,6 +148,18 @@ public static class MobileStringKeys
     public const string EditorAddTitle = nameof(EditorAddTitle);
     public const string EditorEditTitle = nameof(EditorEditTitle);
     public const string DeleteConfirmTitle = nameof(DeleteConfirmTitle);
+    public const string UnlockMethodTitle = nameof(UnlockMethodTitle);
+    public const string UnlockMethodDescription = nameof(UnlockMethodDescription);
+    public const string UnlockWithPassword = nameof(UnlockWithPassword);
+    public const string UnlockWithBiometrics = nameof(UnlockWithBiometrics);
+    public const string UnlockWithDevicePin = nameof(UnlockWithDevicePin);
+    public const string DevicePinUnavailable = nameof(DevicePinUnavailable);
+    public const string UnlockMethodPasswordPrompt = nameof(UnlockMethodPasswordPrompt);
+    public const string UnlockMethodChanged = nameof(UnlockMethodChanged);
+    public const string UnlockMethodChangeFailed = nameof(UnlockMethodChangeFailed);
+    public const string ApplyUnlockMethod = nameof(ApplyUnlockMethod);
+    public const string DeviceCredentialPromptTitle = nameof(DeviceCredentialPromptTitle);
+    public const string DeviceCredentialPromptSubtitle = nameof(DeviceCredentialPromptSubtitle);
     public const string BiometricPromptTitle = nameof(BiometricPromptTitle);
     public const string BiometricPromptSubtitle = nameof(BiometricPromptSubtitle);
     public const string BiometricUsePassword = nameof(BiometricUsePassword);
@@ -188,6 +221,7 @@ public static class MobileStringKeys
         ImportGoogleQr,
         ImportGoogleQrDescription,
         SearchAccounts,
+        ClearSearch,
         NoSearchResults,
         AccountSwipeHint,
         ScanQr,
@@ -234,6 +268,26 @@ public static class MobileStringKeys
         ImportConfirmationTitle,
         ImportConfirmation,
         ConfirmImport,
+        NoImportTitle,
+        NoImportIdentical,
+        Ok,
+        BackupConflictResolutionTitle,
+        BackupConflictResolution,
+        ConflictAccount,
+        Skip,
+        Override,
+        SkipAll,
+        OverrideAll,
+        CurrentAccountFormat,
+        BackupAccountFormat,
+        ChangedFieldsFormat,
+        IssuerField,
+        AccountNameField,
+        SecretField,
+        PeriodField,
+        ApplyToAll,
+        KeepAccountAutomationFormat,
+        RestoreAccountAutomationFormat,
         NoAccounts,
         AddAccount,
         EditAccount,
@@ -269,6 +323,18 @@ public static class MobileStringKeys
         EditorAddTitle,
         EditorEditTitle,
         DeleteConfirmTitle,
+        UnlockMethodTitle,
+        UnlockMethodDescription,
+        UnlockWithPassword,
+        UnlockWithBiometrics,
+        UnlockWithDevicePin,
+        DevicePinUnavailable,
+        UnlockMethodPasswordPrompt,
+        UnlockMethodChanged,
+        UnlockMethodChangeFailed,
+        ApplyUnlockMethod,
+        DeviceCredentialPromptTitle,
+        DeviceCredentialPromptSubtitle,
         BiometricPromptTitle,
         BiometricPromptSubtitle,
         BiometricUsePassword,

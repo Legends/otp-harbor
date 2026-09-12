@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
+using TOTP.Core.Enums;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
@@ -23,7 +24,7 @@ public sealed class MobileShellViewModel :
     IDisposable
 {
     private static readonly TimeSpan BackgroundLockGracePeriod = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan CopiedNotificationDuration = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan NotificationDuration = TimeSpan.FromSeconds(2);
 
     private readonly IAuthorizationService _authorization;
     private readonly IPasswordValidationService _passwordValidation;
@@ -47,6 +48,8 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _unlockCommand;
     private readonly MobileAsyncCommand _biometricUnlockCommand;
     private readonly MobileAsyncCommand _beginBiometricEnrollmentCommand;
+    private readonly MobileAsyncCommand _beginDeviceCredentialEnrollmentCommand;
+    private readonly MobileAsyncCommand _selectPasswordUnlockCommand;
     private readonly MobileAsyncCommand _enableBiometricCommand;
     private readonly MobileAsyncCommand _cancelBiometricEnrollmentCommand;
     private readonly MobileAsyncCommand _toggleAppLockCommand;
@@ -57,6 +60,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _lockCommand;
     private readonly MobileAsyncCommand _showAccountsCommand;
     private readonly MobileAsyncCommand _showSettingsCommand;
+    private readonly MobileAsyncCommand _clearSearchCommand;
     private readonly MobileAsyncCommand _beginAddCommand;
     private readonly MobileAsyncCommand _saveAccountCommand;
     private readonly MobileAsyncCommand _cancelEditCommand;
@@ -72,6 +76,10 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _importBackupCommand;
     private readonly MobileAsyncCommand _confirmImportCommand;
     private readonly MobileAsyncCommand _cancelImportCommand;
+    private readonly MobileAsyncCommand _skipAllBackupConflictsCommand;
+    private readonly MobileAsyncCommand _replaceAllBackupConflictsCommand;
+    private readonly MobileAsyncCommand _confirmBackupConflictResolutionCommand;
+    private readonly MobileAsyncCommand _cancelBackupConflictResolutionCommand;
     private readonly MobileAsyncCommand _selectEnglishLanguageCommand;
     private readonly MobileAsyncCommand _selectGermanLanguageCommand;
     private readonly MobileAsyncCommand _selectFrenchLanguageCommand;
@@ -86,11 +94,15 @@ public sealed class MobileShellViewModel :
     private string _setupConfirmation = string.Empty;
     private string _unlockPassword = string.Empty;
     private bool _isBiometricAvailable;
+    private bool _isDeviceCredentialAvailable;
     private bool _isBiometricEnabled;
     private bool _isBiometricEnrollmentVisible;
     private string _biometricRecoveryPassword = string.Empty;
     private string _appLockRecoveryPassword = string.Empty;
     private bool _isDisableAppLockConfirmationVisible;
+    private PreferredUnlockMethod _pendingUnlockMethod =
+        PreferredUnlockMethod.PlatformQuickUnlock;
+    private bool _isReenablingAppLock;
     private bool _isSettingsVisible;
     private string _searchText = string.Empty;
     private readonly List<MobileAccountItem> _allAccounts = [];
@@ -117,7 +129,11 @@ public sealed class MobileShellViewModel :
     private string _importPassword = string.Empty;
     private bool _isImportConfirmationVisible;
     private string _importConfirmationText = string.Empty;
+    private bool _isImportConfirmationAcknowledgementOnly;
     private TaskCompletionSource<bool>? _importConfirmationCompletion;
+    private bool _isBackupConflictResolutionVisible;
+    private string _backupConflictResolutionText = string.Empty;
+    private TaskCompletionSource<AccountImportResolution?>? _backupConflictResolutionCompletion;
     private CancellationTokenSource? _sensitiveOperationLifetime;
     private CancellationTokenSource? _codeLifetime;
     private CancellationTokenSource? _notificationLifetime;
@@ -175,7 +191,13 @@ public sealed class MobileShellViewModel :
             () => IsBiometricUnlockVisible && !IsBusy);
         _beginBiometricEnrollmentCommand = new MobileAsyncCommand(
             BeginBiometricEnrollmentAsync,
-            () => IsBiometricSetupAvailable && !IsBusy);
+            () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformQuickUnlock));
+        _beginDeviceCredentialEnrollmentCommand = new MobileAsyncCommand(
+            BeginDeviceCredentialEnrollmentAsync,
+            () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformDeviceCredential));
+        _selectPasswordUnlockCommand = new MobileAsyncCommand(
+            SelectPasswordUnlockAsync,
+            () => CanSelectUnlockMethod(PreferredUnlockMethod.Password));
         _enableBiometricCommand = new MobileAsyncCommand(
             EnableBiometricAsync,
             () => IsBiometricEnrollmentVisible
@@ -210,6 +232,9 @@ public sealed class MobileShellViewModel :
         _showSettingsCommand = new MobileAsyncCommand(
             ShowSettingsAsync,
             () => IsAccountsVisible && !IsSettingsVisible && !IsEditorVisible && !IsBusy);
+        _clearSearchCommand = new MobileAsyncCommand(
+            ClearSearchAsync,
+            () => HasSearchText && IsAccountListVisible && !IsBusy);
         _beginAddCommand = new MobileAsyncCommand(BeginAddAsync, CanEditAccounts);
         _saveAccountCommand = new MobileAsyncCommand(
             SaveAccountAsync,
@@ -251,6 +276,19 @@ public sealed class MobileShellViewModel :
         _cancelImportCommand = new MobileAsyncCommand(
             () => ResolveImportConfirmationAsync(false),
             () => IsImportConfirmationVisible);
+        _skipAllBackupConflictsCommand = new MobileAsyncCommand(
+            () => SelectAllBackupConflictsAsync(AccountImportConflictAction.Skip),
+            () => IsBackupConflictResolutionVisible);
+        _replaceAllBackupConflictsCommand = new MobileAsyncCommand(
+            () => SelectAllBackupConflictsAsync(AccountImportConflictAction.Replace),
+            () => IsBackupConflictResolutionVisible);
+        _confirmBackupConflictResolutionCommand = new MobileAsyncCommand(
+            ConfirmBackupConflictResolutionAsync,
+            () => IsBackupConflictResolutionVisible
+                && BackupImportConflicts.Any(value => value.IsReplaceSelected));
+        _cancelBackupConflictResolutionCommand = new MobileAsyncCommand(
+            CancelBackupConflictResolutionAsync,
+            () => IsBackupConflictResolutionVisible);
         _selectEnglishLanguageCommand = new MobileAsyncCommand(
             () => SelectLanguageAsync("en"),
             () => IsSettingsVisible && !IsBusy);
@@ -269,11 +307,16 @@ public sealed class MobileShellViewModel :
 
     public ObservableCollection<MobileAccountItem> Accounts { get; } = [];
 
+    public ObservableCollection<BackupImportConflictItem> BackupImportConflicts { get; } = [];
+
     public ICommand InitializeCommand => _initializeCommand;
     public ICommand ConfigureCommand => _configureCommand;
     public ICommand UnlockCommand => _unlockCommand;
     public ICommand BiometricUnlockCommand => _biometricUnlockCommand;
     public ICommand BeginBiometricEnrollmentCommand => _beginBiometricEnrollmentCommand;
+    public ICommand BeginDeviceCredentialEnrollmentCommand =>
+        _beginDeviceCredentialEnrollmentCommand;
+    public ICommand SelectPasswordUnlockCommand => _selectPasswordUnlockCommand;
     public ICommand EnableBiometricCommand => _enableBiometricCommand;
     public ICommand CancelBiometricEnrollmentCommand => _cancelBiometricEnrollmentCommand;
     public ICommand ToggleAppLockCommand => _toggleAppLockCommand;
@@ -284,6 +327,7 @@ public sealed class MobileShellViewModel :
     public ICommand LockCommand => _lockCommand;
     public ICommand ShowAccountsCommand => _showAccountsCommand;
     public ICommand ShowSettingsCommand => _showSettingsCommand;
+    public ICommand ClearSearchCommand => _clearSearchCommand;
     public ICommand BeginAddCommand => _beginAddCommand;
     public ICommand SaveAccountCommand => _saveAccountCommand;
     public ICommand CancelEditCommand => _cancelEditCommand;
@@ -299,6 +343,12 @@ public sealed class MobileShellViewModel :
     public ICommand ImportBackupCommand => _importBackupCommand;
     public ICommand ConfirmImportCommand => _confirmImportCommand;
     public ICommand CancelImportCommand => _cancelImportCommand;
+    public ICommand SkipAllBackupConflictsCommand => _skipAllBackupConflictsCommand;
+    public ICommand ReplaceAllBackupConflictsCommand => _replaceAllBackupConflictsCommand;
+    public ICommand ConfirmBackupConflictResolutionCommand =>
+        _confirmBackupConflictResolutionCommand;
+    public ICommand CancelBackupConflictResolutionCommand =>
+        _cancelBackupConflictResolutionCommand;
     public ICommand SelectEnglishLanguageCommand => _selectEnglishLanguageCommand;
     public ICommand SelectGermanLanguageCommand => _selectGermanLanguageCommand;
     public ICommand SelectFrenchLanguageCommand => _selectFrenchLanguageCommand;
@@ -314,14 +364,35 @@ public sealed class MobileShellViewModel :
     public bool HasAccounts => Accounts.Count > 0;
     public bool HasNoAccounts => _allAccounts.Count == 0;
     public bool HasNoSearchResults => _allAccounts.Count > 0 && Accounts.Count == 0;
+    public bool HasSearchText => SearchText.Length > 0;
     public IImage? QrImage => _qrImage?.Image;
     public bool HasQrImage => QrImage is not null;
     public bool CanRetry => _startupFailed && !IsBusy;
-    public bool IsBiometricUnlockVisible =>
-        IsUnlockVisible && IsBiometricEnabled && IsBiometricAvailable;
+    public bool IsBiometricUnlockVisible => IsUnlockVisible
+        && IsSelectedPlatformUnlockAvailable
+        && (IsBiometricEnabled || IsDeviceCredentialEnabled);
     public bool IsBiometricSetupAvailable =>
         IsSettingsVisible && IsAppLockEnabled && IsBiometricAvailable && !IsBiometricEnabled;
     public bool IsBiometricUnavailable => IsSettingsVisible && !IsBiometricAvailable;
+    public bool IsDeviceCredentialUnavailable =>
+        IsSettingsVisible && !IsDeviceCredentialAvailable;
+    public bool IsPasswordUnlockSelected =>
+        DisplayedUnlockMethod == PreferredUnlockMethod.Password;
+    public bool IsBiometricUnlockSelected =>
+        DisplayedUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock;
+    public bool IsDeviceCredentialUnlockSelected =>
+        DisplayedUnlockMethod == PreferredUnlockMethod.PlatformDeviceCredential;
+    public bool IsBiometricUnlockOptionEnabled =>
+        IsBiometricAvailable || IsBiometricUnlockSelected;
+    public bool IsDeviceCredentialUnlockOptionEnabled =>
+        IsDeviceCredentialAvailable || IsDeviceCredentialUnlockSelected;
+    public bool IsDeviceCredentialEnabled => IsAppLockEnabled
+        && IsDeviceCredentialUnlockSelected
+        && _authorization.State.ConfiguredGate == AuthorizationGateKind.DeviceCredential;
+    public bool IsSelectedPlatformUnlockAvailable =>
+        IsBiometricUnlockSelected && IsBiometricAvailable
+        || IsDeviceCredentialUnlockSelected && IsDeviceCredentialAvailable;
+    public bool IsUnlockMethodSelectionEnabled => IsSettingsVisible && IsAppLockEnabled;
     public bool IsQrConflictVisible
     {
         get => _isQrConflictVisible;
@@ -340,6 +411,25 @@ public sealed class MobileShellViewModel :
             NotifyCommands();
         }
     }
+    public bool IsImportConfirmationAcknowledgementOnly =>
+        _isImportConfirmationAcknowledgementOnly;
+    public bool IsImportConfirmationCancelVisible =>
+        !_isImportConfirmationAcknowledgementOnly;
+    public bool IsBackupConflictResolutionVisible
+    {
+        get => _isBackupConflictResolutionVisible;
+        private set
+        {
+            if (!SetField(ref _isBackupConflictResolutionVisible, value)) return;
+            NotifyCommands();
+        }
+    }
+    public bool IsAllBackupConflictsSkipped =>
+        BackupImportConflicts.Count > 0
+        && BackupImportConflicts.All(value => value.IsSkipSelected);
+    public bool IsAllBackupConflictsReplaced =>
+        BackupImportConflicts.Count > 0
+        && BackupImportConflicts.All(value => value.IsReplaceSelected);
     public bool IsBiometricEnrollmentStartVisible =>
         IsBiometricSetupAvailable && !IsBiometricEnrollmentVisible;
     public bool IsAppLockEnabled => _settings.Current.AppLockEnabled;
@@ -423,6 +513,7 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(IsBiometricSetupAvailable));
             OnPropertyChanged(nameof(IsBiometricEnrollmentStartVisible));
             OnPropertyChanged(nameof(IsBiometricUnavailable));
+            OnPropertyChanged(nameof(IsBiometricUnlockOptionEnabled));
             NotifyCommands();
         }
     }
@@ -479,8 +570,16 @@ public sealed class MobileShellViewModel :
         set
         {
             if (!SetField(ref _searchText, value ?? string.Empty)) return;
+            OnPropertyChanged(nameof(HasSearchText));
+            _clearSearchCommand.NotifyCanExecuteChanged();
             ApplyAccountFilter();
         }
+    }
+
+    public Task ClearSearchAsync()
+    {
+        if (HasSearchText) SearchText = string.Empty;
+        return Task.CompletedTask;
     }
 
     public string BackupPassword
@@ -661,12 +760,23 @@ public sealed class MobileShellViewModel :
     public string CopyCodeText => Get(MobileStringKeys.CopyCode);
     public string DeleteConfirmTitle => Get(MobileStringKeys.DeleteConfirmTitle);
     public string DeleteText => Get(MobileStringKeys.Delete);
-    public string BiometricUnlockText => Get(MobileStringKeys.BiometricUnlock);
+    public string BiometricUnlockText => IsDeviceCredentialUnlockSelected
+        ? Get(MobileStringKeys.UnlockWithDevicePin)
+        : Get(MobileStringKeys.BiometricUnlock);
     public string BiometricSetupTitle => Get(MobileStringKeys.BiometricSetupTitle);
     public string BiometricSetupDescription => Get(MobileStringKeys.BiometricSetupDescription);
     public string BiometricEnableText => Get(MobileStringKeys.BiometricEnable);
     public string BiometricEnabledText => Get(MobileStringKeys.BiometricEnabled);
     public string BiometricUnavailableText => Get(MobileStringKeys.BiometricUnavailable);
+    public string UnlockMethodTitleText => Get(MobileStringKeys.UnlockMethodTitle);
+    public string UnlockMethodDescriptionText => Get(MobileStringKeys.UnlockMethodDescription);
+    public string UnlockWithPasswordText => Get(MobileStringKeys.UnlockWithPassword);
+    public string UnlockWithBiometricsText => Get(MobileStringKeys.UnlockWithBiometrics);
+    public string UnlockWithDevicePinText => Get(MobileStringKeys.UnlockWithDevicePin);
+    public string DevicePinUnavailableText => Get(MobileStringKeys.DevicePinUnavailable);
+    public string UnlockMethodPasswordPromptText =>
+        Get(MobileStringKeys.UnlockMethodPasswordPrompt);
+    public string ApplyUnlockMethodText => Get(MobileStringKeys.ApplyUnlockMethod);
     public string CodesText => Get(MobileStringKeys.Codes);
     public string SettingsText => Get(MobileStringKeys.Settings);
     public string LanguageText => Get(MobileStringKeys.Language);
@@ -687,6 +797,7 @@ public sealed class MobileShellViewModel :
         : EnableAppLockText;
     public string DisableAppLockWarningText => Get(MobileStringKeys.DisableAppLockWarning);
     public string SearchAccountsText => Get(MobileStringKeys.SearchAccounts);
+    public string ClearSearchText => Get(MobileStringKeys.ClearSearch);
     public string NoSearchResultsText => Get(MobileStringKeys.NoSearchResults);
     public string AccountSwipeHintText => Get(MobileStringKeys.AccountSwipeHint);
     public string ScanQrText => Get(MobileStringKeys.ScanQr);
@@ -715,13 +826,55 @@ public sealed class MobileShellViewModel :
     public string ConfirmBackupPasswordText => Get(MobileStringKeys.ConfirmBackupPassword);
     public string ExportBackupText => Get(MobileStringKeys.ExportBackup);
     public string ImportBackupText => Get(MobileStringKeys.ImportBackup);
-    public string ImportConfirmationTitle => Get(MobileStringKeys.ImportConfirmationTitle);
+    public string ImportConfirmationTitle => Get(_isImportConfirmationAcknowledgementOnly
+        ? MobileStringKeys.NoImportTitle
+        : MobileStringKeys.ImportConfirmationTitle);
     public string ImportConfirmationText
     {
         get => _importConfirmationText;
         private set => SetField(ref _importConfirmationText, value);
     }
-    public string ConfirmImportText => Get(MobileStringKeys.ConfirmImport);
+
+    public bool IsDeviceCredentialAvailable
+    {
+        get => _isDeviceCredentialAvailable;
+        private set
+        {
+            if (!SetField(ref _isDeviceCredentialAvailable, value)) return;
+            OnPropertyChanged(nameof(IsDeviceCredentialUnavailable));
+            OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
+            OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+            OnPropertyChanged(nameof(IsDeviceCredentialUnlockOptionEnabled));
+            NotifyCommands();
+        }
+    }
+    public string ConfirmImportText => Get(_isImportConfirmationAcknowledgementOnly
+        ? MobileStringKeys.Ok
+        : MobileStringKeys.ConfirmImport);
+    public string BackupConflictResolutionTitle =>
+        Get(MobileStringKeys.BackupConflictResolutionTitle);
+    public string BackupConflictResolutionText
+    {
+        get => _backupConflictResolutionText;
+        private set => SetField(ref _backupConflictResolutionText, value);
+    }
+    public string ConflictAccountText => Get(MobileStringKeys.ConflictAccount);
+    public string SkipText => Get(MobileStringKeys.Skip);
+    public string OverrideText => Get(MobileStringKeys.Override);
+    public string SkipAllText => Get(MobileStringKeys.SkipAll);
+    public string OverrideAllText => Get(MobileStringKeys.OverrideAll);
+    public string ApplyToAllText => Get(MobileStringKeys.ApplyToAll);
+    public string CurrentAccountFormat => Get(MobileStringKeys.CurrentAccountFormat);
+    public string BackupAccountFormat => Get(MobileStringKeys.BackupAccountFormat);
+    public string ChangedFieldsFormat => Get(MobileStringKeys.ChangedFieldsFormat);
+    public string IssuerFieldText => Get(MobileStringKeys.IssuerField);
+    public string AccountNameFieldText => Get(MobileStringKeys.AccountNameField);
+    public string SecretFieldText => Get(MobileStringKeys.SecretField);
+    public string PeriodFieldText => Get(MobileStringKeys.PeriodField);
+    public string KeepAccountAutomationFormat =>
+        Get(MobileStringKeys.KeepAccountAutomationFormat);
+    public string RestoreAccountAutomationFormat =>
+        Get(MobileStringKeys.RestoreAccountAutomationFormat);
 
     public async Task InitializeAsync()
     {
@@ -748,9 +901,8 @@ public sealed class MobileShellViewModel :
             SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
 
             await _authorization.InitializeAsync();
-            IsBiometricAvailable = await _authorization.IsHelloAvailableAsync();
-            IsBiometricEnabled = _settings.Current.AppLockEnabled
-                && _authorization.State.ConfiguredGate == AuthorizationGateKind.Hello;
+            await RefreshUnlockMethodAvailabilityAsync();
+            RefreshUnlockMethodState();
             if (!_authorization.State.IsConfigured
                 && File.Exists(_paths.AuthorizationEnvelopeFilePath))
             {
@@ -829,8 +981,14 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
+            // Android can report biometric hardware as temporarily unavailable while the
+            // activity is still starting. Re-query after password setup so that a stale
+            // startup result cannot disable the secure default enrollment flow.
+            await RefreshUnlockMethodAvailabilityAsync();
+            var biometricEnrollment = await TryEnrollBiometricsAfterSetupAsync(password);
             SetScreen(MobileScreen.Accounts);
             await LoadAccountsAsync();
+            ApplyBiometricEnrollmentOutcome(biometricEnrollment);
         }
         catch (Exception)
         {
@@ -916,13 +1074,27 @@ public sealed class MobileShellViewModel :
     }
 
     public Task BeginBiometricEnrollmentAsync()
+        => BeginPlatformUnlockEnrollmentAsync(
+            PreferredUnlockMethod.PlatformQuickUnlock);
+
+    public Task BeginDeviceCredentialEnrollmentAsync()
+        => BeginPlatformUnlockEnrollmentAsync(
+            PreferredUnlockMethod.PlatformDeviceCredential);
+
+    private Task BeginPlatformUnlockEnrollmentAsync(PreferredUnlockMethod method)
     {
-        if (!IsBiometricSetupAvailable || IsBusy) return Task.CompletedTask;
+        if (!CanSelectUnlockMethod(method)) return Task.CompletedTask;
+        if (DisplayedUnlockMethod == method) return Task.CompletedTask;
+        _pendingUnlockMethod = method;
+        _isReenablingAppLock = false;
         BiometricRecoveryPassword = string.Empty;
         IsBiometricEnrollmentVisible = true;
         ClearNotification();
         return Task.CompletedTask;
     }
+
+    public Task SelectPasswordUnlockAsync() =>
+        BeginPlatformUnlockEnrollmentAsync(PreferredUnlockMethod.Password);
 
     public async Task EnableBiometricAsync()
     {
@@ -938,43 +1110,134 @@ public sealed class MobileShellViewModel :
         IsBusy = true;
         try
         {
-            var result = await _authorization.ConfigureHelloAsync(recoveryPassword);
+            var result = _isReenablingAppLock
+                ? await _authorization.SetAppLockEnabledAsync(true, recoveryPassword)
+                : _pendingUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock
+                    ? await _authorization.ConfigureHelloAsync(recoveryPassword)
+                    : await _authorization.ConfigureUnlockMethodAsync(
+                        _pendingUnlockMethod,
+                        recoveryPassword);
             if (result == AuthorizationResult.Cancelled) return;
             if (result != AuthorizationResult.Success)
             {
-                SetError(result switch
+                SetError(GetUnlockMethodErrorKey(result, _pendingUnlockMethod));
+                if (_isReenablingAppLock && IsAppLockEnabled)
                 {
-                    AuthorizationResult.InvalidCredentials => MobileStringKeys.UnlockRejected,
-                    AuthorizationResult.DisabledByPolicy =>
-                        MobileStringKeys.BiometricDisabledByPolicy,
-                    AuthorizationResult.TooManyAttempts =>
-                        MobileStringKeys.BiometricRetriesExhausted,
-                    _ => MobileStringKeys.BiometricEnableFailed
-                });
+                    RefreshUnlockMethodState();
+                    NotifyAppLockChanged();
+                    LockCore();
+                }
                 return;
             }
 
-            IsBiometricEnabled = true;
             IsBiometricEnrollmentVisible = false;
             BiometricRecoveryPassword = string.Empty;
-            SetSuccess(MobileStringKeys.BiometricEnabled);
+            RefreshUnlockMethodState();
+            NotifyAppLockChanged();
+            NotifyUnlockMethodChanged();
+            if (_isReenablingAppLock)
+                LockCore();
+            else
+                SetSuccess(MobileStringKeys.UnlockMethodChanged);
         }
         catch (Exception)
         {
-            SetError(MobileStringKeys.BiometricEnableFailed);
+            SetError(MobileStringKeys.UnlockMethodChangeFailed);
         }
         finally
         {
+            _isReenablingAppLock = false;
             recoveryPassword = string.Empty;
             IsBusy = false;
         }
     }
+
+    private async Task<AuthorizationResult?> TryEnrollBiometricsAfterSetupAsync(
+        string recoveryPassword)
+    {
+        if (!IsBiometricAvailable || !_settings.Current.AppLockEnabled)
+            return null;
+
+        try
+        {
+            var result = await _authorization.ConfigureHelloAsync(recoveryPassword);
+            if (result == AuthorizationResult.Success)
+                IsBiometricEnabled = true;
+
+            return result;
+        }
+        catch (Exception)
+        {
+            // Password setup has already succeeded. A platform enrollment failure must
+            // not strand the user outside the newly created vault.
+            return AuthorizationResult.Failed;
+        }
+    }
+
+    private async Task RefreshUnlockMethodAvailabilityAsync()
+    {
+        try
+        {
+            IsBiometricAvailable = await _authorization.IsHelloAvailableAsync();
+        }
+        catch (Exception)
+        {
+            IsBiometricAvailable = false;
+        }
+
+        try
+        {
+            IsDeviceCredentialAvailable =
+                await _authorization.IsUnlockMethodAvailableAsync(
+                    PreferredUnlockMethod.PlatformDeviceCredential);
+        }
+        catch (Exception)
+        {
+            IsDeviceCredentialAvailable = false;
+        }
+    }
+
+    private void ApplyBiometricEnrollmentOutcome(AuthorizationResult? result)
+    {
+        if (result == AuthorizationResult.Success)
+        {
+            SetSuccess(MobileStringKeys.BiometricEnabled);
+            return;
+        }
+
+        if (result.HasValue && result != AuthorizationResult.Cancelled)
+            SetError(GetBiometricEnrollmentErrorKey(result.Value));
+    }
+
+    private static string GetBiometricEnrollmentErrorKey(AuthorizationResult result) =>
+        result switch
+        {
+            AuthorizationResult.InvalidCredentials => MobileStringKeys.UnlockRejected,
+            AuthorizationResult.DisabledByPolicy => MobileStringKeys.BiometricDisabledByPolicy,
+            AuthorizationResult.TooManyAttempts => MobileStringKeys.BiometricRetriesExhausted,
+            _ => MobileStringKeys.BiometricEnableFailed
+        };
+
+    private static string GetUnlockMethodErrorKey(
+        AuthorizationResult result,
+        PreferredUnlockMethod method) => result switch
+        {
+            AuthorizationResult.InvalidCredentials => MobileStringKeys.UnlockRejected,
+            AuthorizationResult.DisabledByPolicy =>
+                method == PreferredUnlockMethod.PlatformDeviceCredential
+                    ? MobileStringKeys.DevicePinUnavailable
+                    : MobileStringKeys.BiometricDisabledByPolicy,
+            AuthorizationResult.TooManyAttempts => MobileStringKeys.BiometricRetriesExhausted,
+            _ => MobileStringKeys.UnlockMethodChangeFailed
+        };
 
     public Task CancelBiometricEnrollmentAsync()
     {
         if (IsBusy) return Task.CompletedTask;
         BiometricRecoveryPassword = string.Empty;
         IsBiometricEnrollmentVisible = false;
+        _isReenablingAppLock = false;
+        NotifyUnlockMethodChanged();
         ClearNotification();
         return Task.CompletedTask;
     }
@@ -1025,8 +1288,9 @@ public sealed class MobileShellViewModel :
             }
 
             IsDisableAppLockConfirmationVisible = false;
-            IsBiometricEnabled = false;
+            RefreshUnlockMethodState();
             NotifyAppLockChanged();
+            NotifyUnlockMethodChanged();
             SetNotification(
                 Get(MobileStringKeys.AppLockDisabled),
                 NotificationSeverity.Warning);
@@ -1055,13 +1319,31 @@ public sealed class MobileShellViewModel :
     {
         if (!IsSettingsVisible || IsAppLockEnabled || IsBusy) return;
 
+        var preferred = _settings.Current.PreferredUnlockMethod;
+        if (preferred is PreferredUnlockMethod.PlatformQuickUnlock
+            or PreferredUnlockMethod.PlatformDeviceCredential)
+        {
+            _pendingUnlockMethod = preferred;
+            _isReenablingAppLock = true;
+            BiometricRecoveryPassword = string.Empty;
+            IsBiometricEnrollmentVisible = true;
+            ClearNotification();
+            return;
+        }
+
         IsBusy = true;
         try
         {
-            await _authorization.SetAppLockEnabledAsync(true, string.Empty);
+            var result = await _authorization.SetAppLockEnabledAsync(true, string.Empty);
             NotifyAppLockChanged();
-            if (!IsAppLockEnabled)
+            NotifyUnlockMethodChanged();
+            if (result != AuthorizationResult.Success || !IsAppLockEnabled)
             {
+                if (IsAppLockEnabled)
+                {
+                    LockCore();
+                    return;
+                }
                 SetError(MobileStringKeys.AppLockChangeFailed);
                 return;
             }
@@ -1101,7 +1383,7 @@ public sealed class MobileShellViewModel :
         if (!IsSettingsVisible || IsBusy) return Task.CompletedTask;
 
         _isSettingsVisible = false;
-        IsBiometricEnrollmentVisible = false;
+        ResetPendingUnlockMethodChange();
         IsDisableAppLockConfirmationVisible = false;
         ClearPasswordInputs();
         ClearNotification();
@@ -1110,19 +1392,22 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
-    public Task ShowSettingsAsync()
+    public async Task ShowSettingsAsync()
     {
         if (!IsAccountsVisible || IsSettingsVisible || IsEditorVisible || IsBusy)
-            return Task.CompletedTask;
+            return;
 
         _isSettingsVisible = true;
+        ResetPendingUnlockMethodChange();
         IsDeleteConfirmationVisible = false;
         IsDisableAppLockConfirmationVisible = false;
         CancelCodeRefresh();
         ClearQrImage();
         ClearNotification();
+        await RefreshUnlockMethodAvailabilityAsync();
+        RefreshUnlockMethodState();
+        NotifyAppLockChanged();
         NotifyUnlockedSectionChanged();
-        return Task.CompletedTask;
     }
 
     public async Task SelectLanguageAsync(string cultureName)
@@ -1487,10 +1772,9 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            var imported = await _accountImport.ImportAsync(
+            var imported = await _accountImport.ImportWithConflictResolutionAsync(
                 decoded.Value,
-                ImportConflictStrategy.SkipExisting,
-                ConfirmImportAsync,
+                ResolveBackupImportAsync,
                 operation.Token);
             if (imported.IsFailed)
             {
@@ -1513,11 +1797,15 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
+            if (outcome.Added == 0 && outcome.Replaced == 0)
+                return;
+
             await LoadAccountsAsync();
             SetNotification(
                 string.Format(
                     Get(MobileStringKeys.BackupImported),
                     outcome.Added,
+                    outcome.Replaced,
                     outcome.Skipped),
                 NotificationSeverity.Success);
         }
@@ -1533,6 +1821,7 @@ public sealed class MobileShellViewModel :
             EndSensitiveOperation(operation);
             password = string.Empty;
             CompleteImportConfirmation(false);
+            CompleteBackupConflictResolution(null);
             IsBusy = false;
             TryStartAutomaticBiometricUnlock();
         }
@@ -1541,6 +1830,35 @@ public sealed class MobileShellViewModel :
     public Task ResolveImportConfirmationAsync(bool confirmed)
     {
         CompleteImportConfirmation(confirmed);
+        return Task.CompletedTask;
+    }
+
+    public Task SelectAllBackupConflictsAsync(AccountImportConflictAction action)
+    {
+        if (!IsBackupConflictResolutionVisible) return Task.CompletedTask;
+        foreach (var conflict in BackupImportConflicts)
+            conflict.Select(action);
+        OnPropertyChanged(nameof(IsAllBackupConflictsSkipped));
+        OnPropertyChanged(nameof(IsAllBackupConflictsReplaced));
+        _confirmBackupConflictResolutionCommand.NotifyCanExecuteChanged();
+        return Task.CompletedTask;
+    }
+
+    public Task ConfirmBackupConflictResolutionAsync()
+    {
+        if (!IsBackupConflictResolutionVisible
+            || BackupImportConflicts.All(value => value.IsSkipSelected))
+        {
+            return Task.CompletedTask;
+        }
+        CompleteBackupConflictResolution(new AccountImportResolution(
+            BackupImportConflicts.Select(value => value.ToResolution()).ToList()));
+        return Task.CompletedTask;
+    }
+
+    public Task CancelBackupConflictResolutionAsync()
+    {
+        CompleteBackupConflictResolution(null);
         return Task.CompletedTask;
     }
 
@@ -1854,6 +2172,7 @@ public sealed class MobileShellViewModel :
         _authorization.Lock();
         CompleteQrConflict(QrAccountConflictDecision.Cancel);
         CompleteImportConfirmation(false);
+        CompleteBackupConflictResolution(null);
     }
 
     private async Task LoadAccountsAsync(Guid? selectedId = null)
@@ -1929,14 +2248,14 @@ public sealed class MobileShellViewModel :
                 SetTransientNotification(
                     string.Format(Get(MobileStringKeys.CodeCopiedWithClear), seconds),
                     NotificationSeverity.Success,
-                    CopiedNotificationDuration);
+                    NotificationDuration);
             }
             else
             {
                 SetTransientNotification(
                     Get(MobileStringKeys.CodeCopied),
                     NotificationSeverity.Success,
-                    CopiedNotificationDuration);
+                    NotificationDuration);
             }
         }
         catch (Exception)
@@ -2169,6 +2488,100 @@ public sealed class MobileShellViewModel :
                 preview.ConflictCount),
             cancellationToken);
 
+    private async Task<AccountImportResolution?> ResolveBackupImportAsync(
+        AccountImportPreview preview,
+        CancellationToken cancellationToken)
+    {
+        if (preview.ChangedConflicts.Count == 0)
+        {
+            if (preview.NewCount == 0 && preview.UnchangedCount == preview.TotalCount)
+            {
+                await ShowImportConfirmationAsync(
+                    Get(MobileStringKeys.NoImportIdentical),
+                    cancellationToken,
+                    acknowledgementOnly: true);
+                return new AccountImportResolution([]);
+            }
+
+            var confirmed = await ConfirmImportAsync(preview, cancellationToken);
+            return confirmed ? new AccountImportResolution([]) : null;
+        }
+
+        var completion = new TaskCompletionSource<AccountImportResolution?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        _backupConflictResolutionCompletion = completion;
+        ClearBackupImportConflicts();
+        foreach (var conflict in preview.ChangedConflicts)
+        {
+            var item = new BackupImportConflictItem(
+                conflict,
+                CurrentAccountFormat,
+                BackupAccountFormat,
+                ChangedFieldsFormat,
+                IssuerFieldText,
+                AccountNameFieldText,
+                SecretFieldText,
+                PeriodFieldText,
+                KeepAccountAutomationFormat,
+                RestoreAccountAutomationFormat);
+            item.PropertyChanged += OnBackupConflictSelectionChanged;
+            BackupImportConflicts.Add(item);
+        }
+        OnPropertyChanged(nameof(IsAllBackupConflictsSkipped));
+        OnPropertyChanged(nameof(IsAllBackupConflictsReplaced));
+        _confirmBackupConflictResolutionCommand.NotifyCanExecuteChanged();
+        BackupConflictResolutionText = string.Format(
+            Get(MobileStringKeys.BackupConflictResolution),
+            preview.TotalCount,
+            preview.NewCount,
+            preview.UnchangedCount,
+            preview.ChangedConflictCount);
+        IsBackupConflictResolutionVisible = true;
+
+        using var cancellation = cancellationToken.Register(() =>
+            completion.TrySetCanceled(cancellationToken));
+        try
+        {
+            return await completion.Task;
+        }
+        finally
+        {
+            if (ReferenceEquals(_backupConflictResolutionCompletion, completion))
+            {
+                _backupConflictResolutionCompletion = null;
+                ClearBackupImportConflicts();
+                BackupConflictResolutionText = string.Empty;
+                IsBackupConflictResolutionVisible = false;
+            }
+        }
+    }
+
+    private void CompleteBackupConflictResolution(AccountImportResolution? resolution) =>
+        _backupConflictResolutionCompletion?.TrySetResult(resolution);
+
+    private void OnBackupConflictSelectionChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(BackupImportConflictItem.IsSkipSelected)
+            or nameof(BackupImportConflictItem.IsReplaceSelected)))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(IsAllBackupConflictsSkipped));
+        OnPropertyChanged(nameof(IsAllBackupConflictsReplaced));
+        _confirmBackupConflictResolutionCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ClearBackupImportConflicts()
+    {
+        foreach (var conflict in BackupImportConflicts)
+            conflict.PropertyChanged -= OnBackupConflictSelectionChanged;
+        BackupImportConflicts.Clear();
+        OnPropertyChanged(nameof(IsAllBackupConflictsSkipped));
+        OnPropertyChanged(nameof(IsAllBackupConflictsReplaced));
+        _confirmBackupConflictResolutionCommand.NotifyCanExecuteChanged();
+    }
+
     private Task<bool> ConfirmQrMigrationAsync(
         int accountCount,
         CancellationToken cancellationToken)
@@ -2180,11 +2593,17 @@ public sealed class MobileShellViewModel :
 
     private async Task<bool> ShowImportConfirmationAsync(
         string message,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool acknowledgementOnly = false)
     {
         var completion = new TaskCompletionSource<bool>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         _importConfirmationCompletion = completion;
+        _isImportConfirmationAcknowledgementOnly = acknowledgementOnly;
+        OnPropertyChanged(nameof(IsImportConfirmationAcknowledgementOnly));
+        OnPropertyChanged(nameof(IsImportConfirmationCancelVisible));
+        OnPropertyChanged(nameof(ImportConfirmationTitle));
+        OnPropertyChanged(nameof(ConfirmImportText));
         ImportConfirmationText = message;
         IsImportConfirmationVisible = true;
 
@@ -2199,6 +2618,11 @@ public sealed class MobileShellViewModel :
             if (ReferenceEquals(_importConfirmationCompletion, completion))
             {
                 _importConfirmationCompletion = null;
+                _isImportConfirmationAcknowledgementOnly = false;
+                OnPropertyChanged(nameof(IsImportConfirmationAcknowledgementOnly));
+                OnPropertyChanged(nameof(IsImportConfirmationCancelVisible));
+                OnPropertyChanged(nameof(ImportConfirmationTitle));
+                OnPropertyChanged(nameof(ConfirmImportText));
                 ImportConfirmationText = string.Empty;
                 IsImportConfirmationVisible = false;
             }
@@ -2247,6 +2671,8 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(IsBiometricSetupAvailable));
         OnPropertyChanged(nameof(IsBiometricEnrollmentStartVisible));
         OnPropertyChanged(nameof(IsBiometricUnavailable));
+        OnPropertyChanged(nameof(IsDeviceCredentialUnavailable));
+        OnPropertyChanged(nameof(IsUnlockMethodSelectionEnabled));
         NotifyCommands();
     }
 
@@ -2258,8 +2684,59 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(IsManualLockVisible));
         OnPropertyChanged(nameof(IsBiometricSetupAvailable));
         OnPropertyChanged(nameof(IsBiometricEnrollmentStartVisible));
+        OnPropertyChanged(nameof(IsUnlockMethodSelectionEnabled));
+        NotifyUnlockMethodChanged();
         NotifyCommands();
     }
+
+    private bool CanSelectUnlockMethod(PreferredUnlockMethod method)
+    {
+        if (!IsSettingsVisible || !IsAppLockEnabled || IsBusy) return false;
+        if (DisplayedUnlockMethod == method) return true;
+        return method switch
+        {
+            PreferredUnlockMethod.Password => true,
+            PreferredUnlockMethod.PlatformQuickUnlock => IsBiometricAvailable,
+            PreferredUnlockMethod.PlatformDeviceCredential => IsDeviceCredentialAvailable,
+            _ => false
+        };
+    }
+
+    private void RefreshUnlockMethodState()
+    {
+        IsBiometricEnabled = IsAppLockEnabled
+            && IsBiometricUnlockSelected
+            && _authorization.State.ConfiguredGate == AuthorizationGateKind.Hello;
+        NotifyUnlockMethodChanged();
+    }
+
+    private void NotifyUnlockMethodChanged()
+    {
+        OnPropertyChanged(nameof(IsPasswordUnlockSelected));
+        OnPropertyChanged(nameof(IsBiometricUnlockSelected));
+        OnPropertyChanged(nameof(IsDeviceCredentialUnlockSelected));
+        OnPropertyChanged(nameof(IsDeviceCredentialEnabled));
+        OnPropertyChanged(nameof(IsBiometricUnlockOptionEnabled));
+        OnPropertyChanged(nameof(IsDeviceCredentialUnlockOptionEnabled));
+        OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
+        OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+        OnPropertyChanged(nameof(BiometricUnlockText));
+        NotifyCommands();
+    }
+
+    private void ResetPendingUnlockMethodChange()
+    {
+        _pendingUnlockMethod = DisplayedUnlockMethod;
+        _isReenablingAppLock = false;
+        BiometricRecoveryPassword = string.Empty;
+        IsBiometricEnrollmentVisible = false;
+        NotifyUnlockMethodChanged();
+    }
+
+    private PreferredUnlockMethod DisplayedUnlockMethod =>
+        IsAppLockEnabled && _authorization.State.IsConfigured
+            ? _authorization.State.PreferredUnlockMethod
+            : _settings.Current.PreferredUnlockMethod;
 
     private void NotifyLocalizedTextChanged()
     {
@@ -2301,7 +2778,8 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(IsAccountsVisible));
         OnPropertyChanged(nameof(IsManualLockVisible));
         NotifyUnlockedSectionChanged();
-        OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+            OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+            OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
     }
 
     private void SetError(string key) =>
@@ -2310,19 +2788,17 @@ public sealed class MobileShellViewModel :
     private void SetSuccess(string key) =>
         SetNotification(Get(key), NotificationSeverity.Success);
 
-    private void SetNotification(string text, NotificationSeverity severity)
-    {
-        CancelNotificationLifetime();
-        NotificationSeverity = severity;
-        NotificationText = text;
-    }
+    private void SetNotification(string text, NotificationSeverity severity) =>
+        SetTransientNotification(text, severity, NotificationDuration);
 
     private void SetTransientNotification(
         string text,
         NotificationSeverity severity,
         TimeSpan duration)
     {
-        SetNotification(text, severity);
+        CancelNotificationLifetime();
+        NotificationSeverity = severity;
+        NotificationText = text;
         if (string.IsNullOrWhiteSpace(text)) return;
 
         var lifetime = new CancellationTokenSource();
@@ -2384,6 +2860,8 @@ public sealed class MobileShellViewModel :
         _unlockCommand.NotifyCanExecuteChanged();
         _biometricUnlockCommand.NotifyCanExecuteChanged();
         _beginBiometricEnrollmentCommand.NotifyCanExecuteChanged();
+        _beginDeviceCredentialEnrollmentCommand.NotifyCanExecuteChanged();
+        _selectPasswordUnlockCommand.NotifyCanExecuteChanged();
         _enableBiometricCommand.NotifyCanExecuteChanged();
         _cancelBiometricEnrollmentCommand.NotifyCanExecuteChanged();
         _toggleAppLockCommand.NotifyCanExecuteChanged();
@@ -2394,6 +2872,7 @@ public sealed class MobileShellViewModel :
         _lockCommand.NotifyCanExecuteChanged();
         _showAccountsCommand.NotifyCanExecuteChanged();
         _showSettingsCommand.NotifyCanExecuteChanged();
+        _clearSearchCommand.NotifyCanExecuteChanged();
         _beginAddCommand.NotifyCanExecuteChanged();
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
@@ -2409,6 +2888,10 @@ public sealed class MobileShellViewModel :
         _importBackupCommand.NotifyCanExecuteChanged();
         _confirmImportCommand.NotifyCanExecuteChanged();
         _cancelImportCommand.NotifyCanExecuteChanged();
+        _skipAllBackupConflictsCommand.NotifyCanExecuteChanged();
+        _replaceAllBackupConflictsCommand.NotifyCanExecuteChanged();
+        _confirmBackupConflictResolutionCommand.NotifyCanExecuteChanged();
+        _cancelBackupConflictResolutionCommand.NotifyCanExecuteChanged();
         _selectEnglishLanguageCommand.NotifyCanExecuteChanged();
         _selectGermanLanguageCommand.NotifyCanExecuteChanged();
         _selectFrenchLanguageCommand.NotifyCanExecuteChanged();
@@ -2465,6 +2948,14 @@ public sealed class MobileShellViewModel :
         nameof(BiometricEnableText),
         nameof(BiometricEnabledText),
         nameof(BiometricUnavailableText),
+        nameof(UnlockMethodTitleText),
+        nameof(UnlockMethodDescriptionText),
+        nameof(UnlockWithPasswordText),
+        nameof(UnlockWithBiometricsText),
+        nameof(UnlockWithDevicePinText),
+        nameof(DevicePinUnavailableText),
+        nameof(UnlockMethodPasswordPromptText),
+        nameof(ApplyUnlockMethodText),
         nameof(CodesText),
         nameof(SettingsText),
         nameof(LanguageText),
@@ -2481,6 +2972,7 @@ public sealed class MobileShellViewModel :
         nameof(AppLockActionText),
         nameof(DisableAppLockWarningText),
         nameof(SearchAccountsText),
+        nameof(ClearSearchText),
         nameof(NoSearchResultsText),
         nameof(AccountSwipeHintText),
         nameof(ScanQrText),
@@ -2506,6 +2998,22 @@ public sealed class MobileShellViewModel :
         nameof(ImportBackupText),
         nameof(ImportConfirmationTitle),
         nameof(ConfirmImportText),
+        nameof(BackupConflictResolutionTitle),
+        nameof(ConflictAccountText),
+        nameof(SkipText),
+        nameof(OverrideText),
+        nameof(SkipAllText),
+        nameof(OverrideAllText),
+        nameof(ApplyToAllText),
+        nameof(CurrentAccountFormat),
+        nameof(BackupAccountFormat),
+        nameof(ChangedFieldsFormat),
+        nameof(IssuerFieldText),
+        nameof(AccountNameFieldText),
+        nameof(SecretFieldText),
+        nameof(PeriodFieldText),
+        nameof(KeepAccountAutomationFormat),
+        nameof(RestoreAccountAutomationFormat),
         nameof(EditorTitle),
         nameof(EditorSecretPlaceholder)
     ];

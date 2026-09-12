@@ -1,3 +1,5 @@
+using TOTP.Core.Enums;
+
 namespace TOTP.Core.Security.Models;
 
 /// <summary>
@@ -24,6 +26,11 @@ public static class PlatformQuickUnlockContract
     public const string AndroidAes256GcmAlgorithm = "aes-256-gcm";
     public const string AndroidAssociatedDataContext =
         "totp-manager/authorization-envelope/v2/android-keystore-biometric";
+    public const string AndroidKeystoreDeviceCredentialProvider =
+        "android-keystore-device-credential";
+    public const int AndroidKeystoreDeviceCredentialProviderVersion = 1;
+    public const string AndroidDeviceCredentialAssociatedDataContext =
+        "totp-manager/authorization-envelope/v2/android-keystore-device-credential";
     public const string AndroidKeystoreUnattendedProvider = "android-keystore-unattended";
     public const int AndroidKeystoreUnattendedProviderVersion = 1;
     public const string UserVerificationNotRequired = "user-verification-not-required";
@@ -40,7 +47,22 @@ public static class PlatformQuickUnlockContract
         return IsSupportedWindowsWrapper(wrapper)
             || IsSupportedMacOSWrapper(wrapper)
             || IsSupportedAndroidWrapper(wrapper)
+            || IsSupportedAndroidDeviceCredentialWrapper(wrapper)
             || IsSupportedAndroidUnattendedWrapper(wrapper);
+    }
+
+    public static PreferredUnlockMethod? GetUnlockMethod(
+        PlatformQuickUnlockWrapperV2? wrapper)
+    {
+        if (!IsSupported(wrapper) || IsSupportedAndroidUnattendedWrapper(wrapper))
+            return null;
+
+        return string.Equals(
+            wrapper!.Provider,
+            AndroidKeystoreDeviceCredentialProvider,
+            StringComparison.Ordinal)
+                ? PreferredUnlockMethod.PlatformDeviceCredential
+                : PreferredUnlockMethod.PlatformQuickUnlock;
     }
 
     private static bool IsSupportedWindowsWrapper(PlatformQuickUnlockWrapperV2 wrapper) =>
@@ -72,6 +94,27 @@ public static class PlatformQuickUnlockContract
         string.Equals(wrapper.Provider, AndroidKeystoreBiometricProvider, StringComparison.Ordinal)
         && wrapper.ProviderVersion == AndroidKeystoreBiometricProviderVersion
         && string.Equals(wrapper.AuthenticationPolicy, UserVerificationRequired, StringComparison.Ordinal)
+        && !string.IsNullOrWhiteSpace(wrapper.KeyReference)
+        && wrapper.KeyReference.Length <= MaxKeyReferenceLength
+        && !wrapper.KeyReference.Any(char.IsControl)
+        && string.Equals(
+            wrapper.WrappedKey.Algorithm,
+            AndroidAes256GcmAlgorithm,
+            StringComparison.Ordinal)
+        && wrapper.WrappedKey.Nonce is { Length: AndroidAesGcmNonceSize }
+        && wrapper.WrappedKey.Ciphertext is { Length: AndroidAesGcmCiphertextSize };
+
+    private static bool IsSupportedAndroidDeviceCredentialWrapper(
+        PlatformQuickUnlockWrapperV2 wrapper) =>
+        string.Equals(
+            wrapper.Provider,
+            AndroidKeystoreDeviceCredentialProvider,
+            StringComparison.Ordinal)
+        && wrapper.ProviderVersion == AndroidKeystoreDeviceCredentialProviderVersion
+        && string.Equals(
+            wrapper.AuthenticationPolicy,
+            UserVerificationRequired,
+            StringComparison.Ordinal)
         && !string.IsNullOrWhiteSpace(wrapper.KeyReference)
         && wrapper.KeyReference.Length <= MaxKeyReferenceLength
         && !wrapper.KeyReference.Any(char.IsControl)

@@ -150,12 +150,14 @@ public sealed class PortableAuthorizationServiceTests
 
         Assert.Equal(AuthorizationResult.PasswordRequired, result);
         Assert.True(dependencies.Settings.AppLockEnabled);
-        Assert.Equal(PreferredUnlockMethod.Password, dependencies.Settings.PreferredUnlockMethod);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformQuickUnlock,
+            dependencies.Settings.PreferredUnlockMethod);
         dependencies.SettingsService.Verify(value => value.SaveAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task SetAppLockEnabledAsync_FromDisabled_RemovesWrapperBeforeSavingPreference()
+    public async Task SetAppLockEnabledAsync_FromDisabled_RestoresPreviousUnlockMethod()
     {
         var operations = new List<string>();
         var dependencies = new Dependencies
@@ -178,16 +180,24 @@ public sealed class PortableAuthorizationServiceTests
         dependencies.SettingsService.Setup(value => value.SaveAsync())
             .Callback(() => operations.Add("save-preference"))
             .ReturnsAsync(Result.Ok());
+        dependencies.Enrollment.Setup(value => value.EnableAsync(
+                "recovery-password",
+                CancellationToken.None))
+            .Callback(() => dependencies.SessionState =
+                new AuthorizationEnvelopeSessionState(true, true, true))
+            .ReturnsAsync(Result.Ok());
         var sut = dependencies.CreateSut();
         await sut.InitializeAsync();
 
-        var result = await sut.SetAppLockEnabledAsync(true, string.Empty);
+        var result = await sut.SetAppLockEnabledAsync(true, "recovery-password");
 
         Assert.Equal(AuthorizationResult.Success, result);
-        Assert.Equal(["disable-wrapper", "save-preference"], operations);
+        Assert.Equal(["disable-wrapper", "save-preference", "save-preference"], operations);
         Assert.True(dependencies.Settings.AppLockEnabled);
-        Assert.Equal(PreferredUnlockMethod.Password, dependencies.Settings.PreferredUnlockMethod);
-        Assert.Equal(AuthorizationGateKind.Password, sut.State.ConfiguredGate);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformQuickUnlock,
+            dependencies.Settings.PreferredUnlockMethod);
+        Assert.Equal(AuthorizationGateKind.Hello, sut.State.ConfiguredGate);
     }
 
     [Fact]
@@ -401,6 +411,184 @@ public sealed class PortableAuthorizationServiceTests
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, dependencies.Settings.PreferredUnlockMethod);
         Assert.Equal(AuthorizationGateKind.Hello, sut.State.ConfiguredGate);
         dependencies.SettingsService.Verify(value => value.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetAppLockEnabledAsync_WhenDisabled_PreservesDeviceCredentialPreference()
+    {
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                PlatformUnlockMethod: PreferredUnlockMethod.PlatformDeviceCredential)
+        };
+        dependencies.Settings.AppLockEnabled = true;
+        dependencies.Settings.PreferredUnlockMethod =
+            PreferredUnlockMethod.PlatformDeviceCredential;
+        dependencies.UnattendedEnrollment.Setup(value => value.EnableAsync(
+                "recovery-password",
+                CancellationToken.None))
+            .Callback(() => dependencies.SessionState =
+                new AuthorizationEnvelopeSessionState(
+                    true,
+                    true,
+                    true,
+                    HasUnattendedUnlock: true))
+            .ReturnsAsync(Result.Ok());
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.SetAppLockEnabledAsync(false, "recovery-password");
+
+        Assert.Equal(AuthorizationResult.Success, result);
+        Assert.False(dependencies.Settings.AppLockEnabled);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            dependencies.Settings.PreferredUnlockMethod);
+    }
+
+    [Fact]
+    public async Task ConfigureUnlockMethodAsync_WithDeviceCredential_PersistsDeviceGate()
+    {
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(true, true, false)
+        };
+        dependencies.Enrollment.Setup(value => value.EnableAsync(
+                "recovery-password",
+                PreferredUnlockMethod.PlatformDeviceCredential,
+                CancellationToken.None))
+            .Callback(() => dependencies.SessionState =
+                new AuthorizationEnvelopeSessionState(true, true, true))
+            .ReturnsAsync(Result.Ok());
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.ConfigureUnlockMethodAsync(
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            "recovery-password");
+
+        Assert.Equal(AuthorizationResult.Success, result);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            dependencies.Settings.PreferredUnlockMethod);
+        Assert.Equal(AuthorizationGateKind.DeviceCredential, sut.State.ConfiguredGate);
+    }
+
+    [Fact]
+    public async Task ConfigureUnlockMethodAsync_WithPassword_RequiresRecoveryPassword()
+    {
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                PlatformUnlockMethod: PreferredUnlockMethod.PlatformQuickUnlock)
+        };
+        dependencies.Settings.PreferredUnlockMethod =
+            PreferredUnlockMethod.PlatformQuickUnlock;
+        dependencies.Session.Setup(value => value.TryUnlockWithPasswordAsync(
+                "recovery-password",
+                CancellationToken.None))
+            .ReturnsAsync(Result.Ok(AuthorizationResult.Success));
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.ConfigureUnlockMethodAsync(
+            PreferredUnlockMethod.Password,
+            "recovery-password");
+
+        Assert.Equal(AuthorizationResult.Success, result);
+        Assert.Equal(PreferredUnlockMethod.Password, dependencies.Settings.PreferredUnlockMethod);
+        Assert.Equal(AuthorizationGateKind.Password, sut.State.ConfiguredGate);
+    }
+
+    [Fact]
+    public async Task ConfigureUnlockMethodAsync_WithPasswordRejectsInvalidRecoveryPassword()
+    {
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                PlatformUnlockMethod: PreferredUnlockMethod.PlatformQuickUnlock)
+        };
+        dependencies.Settings.PreferredUnlockMethod =
+            PreferredUnlockMethod.PlatformQuickUnlock;
+        dependencies.Session.Setup(value => value.TryUnlockWithPasswordAsync(
+                "wrong-password",
+                CancellationToken.None))
+            .ReturnsAsync(Result.Ok(AuthorizationResult.InvalidCredentials));
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.ConfigureUnlockMethodAsync(
+            PreferredUnlockMethod.Password,
+            "wrong-password");
+
+        Assert.Equal(AuthorizationResult.InvalidCredentials, result);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformQuickUnlock,
+            dependencies.Settings.PreferredUnlockMethod);
+        Assert.Equal(AuthorizationGateKind.Hello, sut.State.ConfiguredGate);
+        dependencies.SettingsService.Verify(value => value.SaveAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WhenPersistedPlatformPreferenceDiffersFromWrapper_UsesWrapperPolicy()
+    {
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(
+                true,
+                true,
+                true,
+                PlatformUnlockMethod: PreferredUnlockMethod.PlatformDeviceCredential)
+        };
+        dependencies.Settings.PreferredUnlockMethod =
+            PreferredUnlockMethod.PlatformQuickUnlock;
+        var sut = dependencies.CreateSut();
+
+        await sut.InitializeAsync();
+
+        Assert.Equal(AuthorizationGateKind.DeviceCredential, sut.State.ConfiguredGate);
+        Assert.Equal(
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            dependencies.Settings.PreferredUnlockMethod);
+    }
+
+    [Fact]
+    public async Task SetAppLockEnabledAsync_WhenAlreadyFailClosed_RetriesStoredDeviceMethod()
+    {
+        var dependencies = new Dependencies
+        {
+            SessionState = new AuthorizationEnvelopeSessionState(true, true, false)
+        };
+        dependencies.Settings.AppLockEnabled = true;
+        dependencies.Settings.PreferredUnlockMethod =
+            PreferredUnlockMethod.PlatformDeviceCredential;
+        dependencies.Enrollment.Setup(value => value.EnableAsync(
+                "recovery-password",
+                PreferredUnlockMethod.PlatformDeviceCredential,
+                CancellationToken.None))
+            .Callback(() => dependencies.SessionState =
+                new AuthorizationEnvelopeSessionState(true, true, true))
+            .ReturnsAsync(Result.Ok());
+        var sut = dependencies.CreateSut();
+        await sut.InitializeAsync();
+
+        var result = await sut.SetAppLockEnabledAsync(true, "recovery-password");
+
+        Assert.Equal(AuthorizationResult.Success, result);
+        Assert.Equal(AuthorizationGateKind.DeviceCredential, sut.State.ConfiguredGate);
+        dependencies.Enrollment.Verify(value => value.EnableAsync(
+            "recovery-password",
+            PreferredUnlockMethod.PlatformDeviceCredential,
+            CancellationToken.None), Times.Once);
     }
 
     [Fact]

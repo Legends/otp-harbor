@@ -55,6 +55,24 @@ a.button:hover, a.button:focus-visible { transform: translateY(-1px); filter: br
 .platform-link { display: inline-block; margin-top: 16px; color: #65d7ff; font-weight: 700; }
 .android-hero-mark { display: grid; place-items: center; min-height: 420px; background: radial-gradient(circle at 50% 45%, rgba(19,167,232,.25), transparent 52%), var(--panel); }
 .android-hero-mark img { width: min(62%, 280px); height: auto; filter: drop-shadow(0 24px 44px rgba(0,0,0,.38)); }
+.guide-page { max-width: 1040px; }
+.guide-intro { padding: 80px 0 56px; }
+.guide-intro h1 { max-width: 900px; }
+.guide-toc { position: sticky; top: 12px; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 64px; padding: 10px; background: rgba(18,39,68,.94); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(14px); }
+.guide-toc a { padding: 8px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; }
+.guide-toc a:hover, .guide-toc a:focus-visible { color: var(--text); background: var(--panel-soft); }
+.guide-section { scroll-margin-top: 96px; display: grid; grid-template-columns: minmax(220px,.72fr) minmax(0,1.28fr); gap: 70px; padding: 58px 0; border-top: 1px solid var(--line); }
+.guide-section h2 { font-size: clamp(1.8rem,3vw,2.8rem); }
+.guide-section h3 { margin: 30px 0 8px; font-size: 1.15rem; }
+.guide-section h3:first-child { margin-top: 0; }
+.guide-section p, .guide-section li, .interaction-list dd { color: var(--muted); }
+.guide-section li + li { margin-top: 12px; }
+.interaction-list { margin: 0; }
+.interaction-list div { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.interaction-list div:first-child { padding-top: 0; }
+.interaction-list dt { font-weight: 750; }
+.interaction-list dd { margin: 4px 0 0; }
+.security-note { margin-top: 28px; padding: 18px 20px; border-left: 3px solid var(--cyan); background: var(--panel); color: var(--muted); border-radius: 0 10px 10px 0; }
 .contribute { margin: 120px 0 80px; padding: 52px; border: 1px solid var(--violet); border-radius: 18px; display: grid; grid-template-columns: 1fr 300px; gap: 60px; align-items: center; }
 .contribute p { color: var(--muted); }
 footer { border-top: 1px solid var(--line); padding: 28px 0 42px; display: flex; justify-content: space-between; gap: 20px; color: var(--muted); }
@@ -63,7 +81,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 42px; display: flex;
   .site-header { align-items: flex-start; padding: 20px 0; }
   nav { justify-content: flex-end; gap: 12px; }
   .hero { grid-template-columns: 1fr; gap: 42px; padding-top: 50px; }
-  .feature-grid, .platform-grid, .split-section, .contribute { grid-template-columns: 1fr; }
+  .feature-grid, .platform-grid, .split-section, .contribute, .guide-section { grid-template-columns: 1fr; }
   .split-section, .contribute { padding: 32px; gap: 24px; }
 }
 

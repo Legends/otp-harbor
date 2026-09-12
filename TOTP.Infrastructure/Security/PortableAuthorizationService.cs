@@ -66,6 +66,17 @@ public sealed class PortableAuthorizationService : IAuthorizationService
     public async Task<bool> IsHelloAvailableAsync() =>
         await _platformQuickUnlock.GetAvailabilityAsync() == PlatformQuickUnlockAvailability.Available;
 
+    public async Task<bool> IsUnlockMethodAvailableAsync(
+        PreferredUnlockMethod unlockMethod) => unlockMethod switch
+        {
+            PreferredUnlockMethod.Password => true,
+            PreferredUnlockMethod.PlatformQuickUnlock or
+                PreferredUnlockMethod.PlatformDeviceCredential =>
+                await _quickUnlockEnrollment.GetAvailabilityAsync(unlockMethod)
+                    == PlatformQuickUnlockAvailability.Available,
+            _ => false
+        };
+
     public Task<AuthorizationResult> TryUnlockOnStartupAsync() =>
         TryUnlockOnStartupAsync(CancellationToken.None);
 
@@ -85,7 +96,8 @@ public sealed class PortableAuthorizationService : IAuthorizationService
             return unattendedResult;
         }
 
-        return State.PreferredUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock
+        return (State.PreferredUnlockMethod is PreferredUnlockMethod.PlatformQuickUnlock
+            or PreferredUnlockMethod.PlatformDeviceCredential)
             && _session.State.HasQuickUnlock
                 ? await TryUnlockWithHelloAsync(ct)
                 : AuthorizationResult.PasswordRequired;
@@ -140,15 +152,37 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         Task.FromResult(AuthorizationResult.PasswordRequired);
 
     public async Task<AuthorizationResult> ConfigureHelloAsync(string recoveryPassword)
+        => await ConfigureUnlockMethodAsync(
+            PreferredUnlockMethod.PlatformQuickUnlock,
+            recoveryPassword);
+
+    public async Task<AuthorizationResult> ConfigureUnlockMethodAsync(
+        PreferredUnlockMethod unlockMethod,
+        string recoveryPassword)
     {
-        var enrolled = await _quickUnlockEnrollment.EnableAsync(recoveryPassword);
+        if (unlockMethod == PreferredUnlockMethod.Password)
+        {
+            var verified = await TryUnlockWithPasswordAsync(recoveryPassword);
+            return verified == AuthorizationResult.Success
+                ? await SetGateAsync(AuthorizationGateKind.Password)
+                : verified;
+        }
+        if (unlockMethod is not PreferredUnlockMethod.PlatformQuickUnlock
+            and not PreferredUnlockMethod.PlatformDeviceCredential)
+        {
+            return AuthorizationResult.Failed;
+        }
+
+        var enrolled = unlockMethod == PreferredUnlockMethod.PlatformQuickUnlock
+            ? await _quickUnlockEnrollment.EnableAsync(recoveryPassword)
+            : await _quickUnlockEnrollment.EnableAsync(recoveryPassword, unlockMethod);
         if (enrolled.IsFailed)
             return MapEnrollmentFailure(enrolled);
 
         if (!await RefreshSessionAsync()) return AuthorizationResult.Failed;
 
         var previousPreference = _settingsService.Current.PreferredUnlockMethod;
-        _settingsService.Current.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+        _settingsService.Current.PreferredUnlockMethod = unlockMethod;
         var saved = await _settingsService.SaveAsync();
         if (saved.IsFailed)
         {
@@ -170,12 +204,16 @@ public sealed class PortableAuthorizationService : IAuthorizationService
             AuthorizationGateKind.Password => PreferredUnlockMethod.Password,
             AuthorizationGateKind.Hello when _session.State.HasQuickUnlock =>
                 PreferredUnlockMethod.PlatformQuickUnlock,
+            AuthorizationGateKind.DeviceCredential when _session.State.HasQuickUnlock =>
+                PreferredUnlockMethod.PlatformDeviceCredential,
             AuthorizationGateKind.Hello => (PreferredUnlockMethod?)null,
+            AuthorizationGateKind.DeviceCredential => (PreferredUnlockMethod?)null,
             _ => null
         };
         if (preference is null)
         {
-            return gate == AuthorizationGateKind.Hello
+            return gate is AuthorizationGateKind.Hello
+                or AuthorizationGateKind.DeviceCredential
                 ? AuthorizationResult.PasswordRequired
                 : AuthorizationResult.Failed;
         }
@@ -219,22 +257,29 @@ public sealed class PortableAuthorizationService : IAuthorizationService
     {
         if (!State.IsConfigured) return AuthorizationResult.NotConfigured;
         if (_settingsService.Current.AppLockEnabled == enabled)
-            return AuthorizationResult.Success;
+        {
+            if (!enabled) return AuthorizationResult.Success;
+
+            var preferred = _settingsService.Current.PreferredUnlockMethod;
+            return preferred is PreferredUnlockMethod.PlatformQuickUnlock
+                    or PreferredUnlockMethod.PlatformDeviceCredential
+                && !_session.State.HasQuickUnlock
+                ? string.IsNullOrWhiteSpace(recoveryPassword)
+                    ? AuthorizationResult.InvalidCredentials
+                    : await ConfigureUnlockMethodAsync(preferred, recoveryPassword)
+                : AuthorizationResult.Success;
+        }
 
         if (!enabled)
         {
             var enrolled = await _unattendedUnlockEnrollment.EnableAsync(recoveryPassword);
             if (enrolled.IsFailed) return MapEnrollmentFailure(enrolled);
 
-            var previousPreference = _settingsService.Current.PreferredUnlockMethod;
             _settingsService.Current.AppLockEnabled = false;
-            _settingsService.Current.PreferredUnlockMethod =
-                PreferredUnlockMethod.PlatformQuickUnlock;
             var saved = await _settingsService.SaveAsync();
             if (saved.IsFailed)
             {
                 _settingsService.Current.AppLockEnabled = true;
-                _settingsService.Current.PreferredUnlockMethod = previousPreference;
                 await _unattendedUnlockEnrollment.DisableAsync();
                 await RefreshSessionAsync();
                 ApplySessionState();
@@ -252,8 +297,8 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         var disabled = await _unattendedUnlockEnrollment.DisableAsync();
         if (disabled.IsFailed) return AuthorizationResult.Failed;
 
+        var restoredPreference = _settingsService.Current.PreferredUnlockMethod;
         _settingsService.Current.AppLockEnabled = true;
-        _settingsService.Current.PreferredUnlockMethod = PreferredUnlockMethod.Password;
         var preferenceSaved = await _settingsService.SaveAsync();
         if (preferenceSaved.IsFailed)
         {
@@ -266,6 +311,14 @@ public sealed class PortableAuthorizationService : IAuthorizationService
 
         if (!await RefreshSessionAsync()) return AuthorizationResult.Failed;
         ApplySessionState();
+        if (restoredPreference is PreferredUnlockMethod.PlatformQuickUnlock
+            or PreferredUnlockMethod.PlatformDeviceCredential)
+        {
+            return string.IsNullOrWhiteSpace(recoveryPassword)
+                ? AuthorizationResult.InvalidCredentials
+                : await ConfigureUnlockMethodAsync(restoredPreference, recoveryPassword);
+        }
+
         return AuthorizationResult.Success;
     }
 
@@ -316,10 +369,18 @@ public sealed class PortableAuthorizationService : IAuthorizationService
             _settingsService.Current.AppLockEnabled = true;
             preference = PreferredUnlockMethod.Password;
         }
-        if (preference == PreferredUnlockMethod.PlatformQuickUnlock
-            && !_session.State.HasQuickUnlock)
+        if (preference is PreferredUnlockMethod.PlatformQuickUnlock
+            or PreferredUnlockMethod.PlatformDeviceCredential)
         {
-            preference = PreferredUnlockMethod.Password;
+            preference = _session.State.PlatformUnlockMethod
+                ?? (_session.State.HasQuickUnlock && !_session.State.HasUnattendedUnlock
+                    ? preference
+                    : PreferredUnlockMethod.Password);
+            if (preference is PreferredUnlockMethod.PlatformQuickUnlock
+                or PreferredUnlockMethod.PlatformDeviceCredential)
+            {
+                _settingsService.Current.PreferredUnlockMethod = preference;
+            }
         }
 
         State.SetConfiguration(_session.State.IsConfigured, preference);

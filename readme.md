@@ -26,8 +26,11 @@
 - Encrypted `.totp` backup, restore, and conflict handling
 - English, German, French, and Spanish UI
 - Native Avalonia desktop application for Windows, macOS, and Linux
-- Focused Android app with biometric quick unlock, camera-based QR import, swipe actions, and the
+- Focused Android app with strong-biometric, device-screen-lock (PIN, pattern, or password), or master-password unlock,
+  camera-based QR import, swipe actions, and the
   same encrypted backup format as desktop
+
+The public [Android product page](https://legends.github.io/otp-harbor/android/) presents the mobile edition, while the dedicated [Android user guide](https://legends.github.io/otp-harbor/android/guide/) explains first-run setup, tap-to-copy, left/right swipe actions, camera and Google Authenticator QR workflows, per-account QR display, encrypted backup conflict handling, unlock-method recovery, and the optional app-lock setting.
 
 Accounts use the common TOTP profile by default: SHA-1, six digits, and a 30-second code period. The period can be adjusted between 5 and 3600 seconds under **Advanced options** when adding or editing an account, if the provider requires a value other than 30 seconds. For example, a 10-minute period is entered as 600 seconds.
 

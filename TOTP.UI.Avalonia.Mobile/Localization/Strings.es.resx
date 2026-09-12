@@ -34,6 +34,7 @@
   <data name="LanguageSaveFailed" xml:space="preserve"><value>No se pudo guardar la preferencia de idioma.</value></data>
   <data name="Security" xml:space="preserve"><value>Seguridad</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Buscar cuentas</value></data>
+  <data name="ClearSearch" xml:space="preserve"><value>Borrar búsqueda</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No hay cuentas coincidentes.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Deslice a la derecha para QR y editar, o a la izquierda para eliminar. La cámara también importa exportaciones de Google Authenticator.</value></data>
   <data name="ScanQr" xml:space="preserve"><value>Escanear QR de cuenta o Google Authenticator</value></data>
@@ -76,10 +77,30 @@
   <data name="BackupImportRejected" xml:space="preserve"><value>La contraseña de la copia de seguridad era incorrecta, o la copia cifrada no es válida o está dañada.</value></data>
   <data name="BackupImportFailed" xml:space="preserve"><value>No se pudo importar la copia de seguridad cifrada de forma segura. No se sobrescribió ninguna cuenta existente.</value></data>
   <data name="BackupImportCancelled" xml:space="preserve"><value>Importación de copia de seguridad cancelada. No se modificó ninguna cuenta.</value></data>
-  <data name="BackupImported" xml:space="preserve"><value>Copia de seguridad importada: {0} añadida(s), {1} existente(s) sin cambios.</value></data>
+  <data name="BackupImported" xml:space="preserve"><value>Copia de seguridad importada: {0} añadida(s), {1} sobrescrita(s), {2} existente(s) sin cambios.</value></data>
   <data name="ImportConfirmationTitle" xml:space="preserve"><value>Confirmar importación de la copia</value></data>
   <data name="ImportConfirmation" xml:space="preserve"><value>¿Importar {0} cuentas? Las {1} cuentas existentes coincidentes permanecerán sin cambios. Se crea una copia de recuperación antes de aplicar cambios.</value></data>
-  <data name="ConfirmImport" xml:space="preserve"><value>Importar cuentas</value></data>
+  <data name="ConfirmImport" xml:space="preserve"><value>Importar</value></data>
+  <data name="NoImportTitle" xml:space="preserve"><value>Sin importación</value></data>
+  <data name="NoImportIdentical" xml:space="preserve"><value>Todas las cuentas son idénticas. No hay nada que importar.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="BackupConflictResolutionTitle" xml:space="preserve"><value>Resolver diferencias de la copia</value></data>
+  <data name="BackupConflictResolution" xml:space="preserve"><value>{0} cuentas: {1} nueva(s), {2} sin cambios, {3} por revisar. Elija la acción para cada cuenta modificada. Primero se creará una copia de recuperación.</value></data>
+  <data name="ConflictAccount" xml:space="preserve"><value>Cuenta</value></data>
+  <data name="Skip" xml:space="preserve"><value>Conservar</value></data>
+  <data name="Override" xml:space="preserve"><value>Restaurar</value></data>
+  <data name="SkipAll" xml:space="preserve"><value>Conservar todas</value></data>
+  <data name="OverrideAll" xml:space="preserve"><value>Restaurar todas</value></data>
+  <data name="CurrentAccountFormat" xml:space="preserve"><value>Actual: {0}</value></data>
+  <data name="BackupAccountFormat" xml:space="preserve"><value>Copia: {0}</value></data>
+  <data name="ChangedFieldsFormat" xml:space="preserve"><value>Cambios: {0}</value></data>
+  <data name="IssuerField" xml:space="preserve"><value>emisor</value></data>
+  <data name="AccountNameField" xml:space="preserve"><value>nombre de cuenta</value></data>
+  <data name="SecretField" xml:space="preserve"><value>secreto</value></data>
+  <data name="PeriodField" xml:space="preserve"><value>período</value></data>
+  <data name="ApplyToAll" xml:space="preserve"><value>Aplicar a todas</value></data>
+  <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Conservar la versión actual de {0}</value></data>
+  <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Restaurar la versión de la copia de {0}</value></data>
   <data name="NoAccounts" xml:space="preserve"><value>Todavía no hay cuentas. Añada una manualmente o escanee el QR de una cuenta o exportación de Google Authenticator.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Añadir cuenta</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Editar</value></data>
@@ -143,4 +164,16 @@
   <data name="ExportSection" xml:space="preserve"><value>Exportar</value></data>
   <data name="ImportGoogleQr" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
   <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Escanea un código QR de transferencia de Google Authenticator. Se admiten exportaciones de varias cuentas o páginas, un código QR cada vez.</value></data>
+  <data name="UnlockMethodTitle" xml:space="preserve"><value>Método de desbloqueo</value></data>
+  <data name="UnlockMethodDescription" xml:space="preserve"><value>Elija el método principal de bloqueo. La contraseña maestra siempre seguirá disponible como alternativa.</value></data>
+  <data name="UnlockWithPassword" xml:space="preserve"><value>Contraseña maestra</value></data>
+  <data name="UnlockWithBiometrics" xml:space="preserve"><value>Biometría fuerte</value></data>
+  <data name="UnlockWithDevicePin" xml:space="preserve"><value>Bloqueo del dispositivo (PIN, patrón o contraseña)</value></data>
+  <data name="DevicePinUnavailable" xml:space="preserve"><value>No hay configurado un bloqueo seguro del dispositivo (PIN, patrón o contraseña).</value></data>
+  <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Introduzca su contraseña maestra para autorizar el cambio del método de desbloqueo.</value></data>
+  <data name="UnlockMethodChanged" xml:space="preserve"><value>Método de desbloqueo cambiado.</value></data>
+  <data name="UnlockMethodChangeFailed" xml:space="preserve"><value>No se pudo cambiar el método de desbloqueo de forma segura.</value></data>
+  <data name="ApplyUnlockMethod" xml:space="preserve"><value>Aplicar</value></data>
+  <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>Desbloquear OTP Harbor</value></data>
+  <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Use el bloqueo del dispositivo (PIN, patrón o contraseña).</value></data>
 </root>

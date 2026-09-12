@@ -22,10 +22,17 @@ $documentation = Read-RequiredFile "docs\release\ANDROID.md"
 foreach ($required in @(
     '<AndroidProductionApplicationId>io.github.legends.otpharbor</AndroidProductionApplicationId>',
     '<ApplicationId Condition="''$(Configuration)'' == ''Debug''">$(AndroidProductionApplicationId).debug</ApplicationId>',
-    '<AndroidPackageFormats Condition="''$(Configuration)'' == ''Release''">apk</AndroidPackageFormats>')) {
+    '<AndroidPackageFormats Condition="''$(Configuration)'' == ''Release''">apk</AndroidPackageFormats>',
+    "'`$(Configuration)' == 'Debug' and '`$(EnableMarketingCapture)' == 'true'",
+    "'`$(Configuration)' == 'Release' and '`$(EnableMarketingCapture)' == 'true'",
+    'EnableMarketingCapture is restricted to the isolated Debug package.')) {
     if (-not $project.Contains($required, [StringComparison]::Ordinal)) {
         throw "The Android project is missing a permanent identity or distribution control: $required"
     }
+}
+$activity = Read-RequiredFile "TOTP.UI.Avalonia.Android\MainActivity.cs"
+if (-not $activity.Contains('#if OTP_HARBOR_MARKETING_CAPTURE', [StringComparison]::Ordinal)) {
+    throw 'The isolated marketing-capture mode is not compile-time restricted.'
 }
 if (-not $manifest.Contains('android:authorities="${applicationId}.fileprovider"', [StringComparison]::Ordinal) -or
     -not $installer.Contains("`$packageName = 'io.github.legends.otpharbor.debug'", [StringComparison]::Ordinal)) {
