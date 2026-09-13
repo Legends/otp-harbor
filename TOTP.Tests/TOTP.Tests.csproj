@@ -43,6 +43,7 @@
 
   <ItemGroup>
     <None Update="Fixtures\LegacySettings\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Fixtures\Qr\**\*" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\TOTP.UI.Avalonia.Shared\Styles\SharedStyles.axaml"
           Link="Fixtures\Avalonia\SharedStyles.axaml"
           CopyToOutputDirectory="PreserveNewest" />

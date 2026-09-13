@@ -72,6 +72,31 @@ public sealed class QrImageDecoderTests
         }
     }
 
+    [Theory]
+    [InlineData("google-authenticator-10-account-export-1.png")]
+    [InlineData("google-authenticator-10-account-export-2.png")]
+    public async Task DecodeAsync_WhenImageIsSuppliedGoogleExport_DecodesTenAccounts(
+        string fixtureName)
+    {
+        var fixturePath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Qr",
+            fixtureName);
+        var sut = new OpenCvQrImageDecoder();
+        await using var stream = File.OpenRead(fixturePath);
+
+        var result = await sut.DecodeAsync(
+            stream,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsDecoded);
+        var validation = new QrPayloadValidator().Validate(result.Payload!);
+        Assert.True(validation.IsValid);
+        Assert.Equal(QrPayloadKind.GoogleAuthenticatorMigration, validation.Kind);
+        Assert.Equal(10, validation.AccountCount);
+    }
+
     [Fact]
     public async Task DecodeAsync_WhenFileIsNotAnImage_RejectsIt()
     {
