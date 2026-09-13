@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using OpenCvSharp;
 using TOTP.Camera.OpenCv;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Infrastructure.Services;
@@ -37,10 +38,20 @@ public sealed class QrImageDecoderTests
     {
         var payload = GoogleAuthenticatorMigrationTestData.TenAccountPayload;
         var png = new QrCodeService().GenerateQr(payload);
+        byte[]? resampledPng = null;
         try
         {
+            using var source = Cv2.ImDecode(png, ImreadModes.Color);
+            using var resampled = new Mat();
+            Cv2.Resize(
+                source,
+                resampled,
+                new Size(1254, 1254),
+                interpolation: InterpolationFlags.Area);
+            Cv2.ImEncode(".png", resampled, out resampledPng);
+
             var sut = new OpenCvQrImageDecoder();
-            await using var stream = new MemoryStream(png, writable: false);
+            await using var stream = new MemoryStream(resampledPng, writable: false);
 
             var result = await sut.DecodeAsync(
                 stream,
@@ -56,6 +67,8 @@ public sealed class QrImageDecoderTests
         finally
         {
             CryptographicOperations.ZeroMemory(png);
+            if (resampledPng is not null)
+                CryptographicOperations.ZeroMemory(resampledPng);
         }
     }
 

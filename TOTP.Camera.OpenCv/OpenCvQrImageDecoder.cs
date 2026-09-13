@@ -73,6 +73,9 @@ public sealed class OpenCvQrImageDecoder : IQrImageDecoder
 
         using var detector = new QRCodeDetector();
         var payload = OpenCvQrDecoder.Decode(image, detector);
+        if (string.IsNullOrWhiteSpace(payload))
+            payload = ZxingQrImageDecoder.Decode(image);
+
         return string.IsNullOrWhiteSpace(payload)
             ? QrImageDecodeResult.Rejected(QrImageDecodeStatus.NoQrCode)
             : QrImageDecodeResult.Decoded(payload);
