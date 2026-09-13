@@ -95,6 +95,15 @@ The capture plan and reviewed synthetic account roster are documented in
 composites must use authentic Android app/system captures. No generated or reconstructed UI may be
 presented as an application screenshot.
 
+On 2026-09-13, the maintainer supplied the current Android account list, swipe actions, per-account
+QR, camera scanner, settings, import/export, and lock-screen captures from the screenshot-enabled
+debug package. They were visually reviewed as synthetic-only: Amazon/Mason, Apple/Olivia,
+Discord/Lucas, Dropbox/Ava, GitHub/Ethan, and Google/Sophia. The QR and rotating codes derive only
+from the dedicated synthetic fixture. No generated UI is used. The deterministic
+[`New-AndroidMarketingImages.ps1`](../../scripts/assets/New-AndroidMarketingImages.ps1) compositor
+adds the project background, exact project icon, framing, and English campaign copy to create five
+1920×1080 website images and the separate Google Play asset set.
+
 ## Microsoft Store screenshots
 
 The four-image Store upload set under `packaging/windows-store/screenshots/en-US` was captured from
@@ -104,17 +113,34 @@ and reserved `example.invalid` account names. The screenshots were visually revi
 that they contain no real accounts, OTP seeds, personal paths, desktop content, or OS notifications.
 One-time codes and the QR workflow, when shown, derive only from synthetic fixture material.
 
-`04-quick-unlock-2.png` is a maintainer-provided capture of the same synthetic-only build with an
-empty Windows Security PIN prompt. `04-quick-unlock-transparent.png` is a deterministic derivative
-that preserves the application and Windows Security pixels while removing only the surrounding
-desktop area into a real PNG alpha channel. No entered PIN, account secret, or personal desktop
-content is present.
-
 ## Reviewed file hashes
 
 | File | SHA-256 |
 | --- | --- |
 | `packaging/android/marketing/source/android-marketing-background.png` | `282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383` |
+| `packaging/android/marketing/source/captures/01-account-list.jpg` | `dc38f2fd24fe8f7dd56bdcd7ff7bc018697e077666bc48174969b539b6cf524c` |
+| `packaging/android/marketing/source/captures/02-swipe-actions.jpg` | `1baee259f20dfd4851f74872ededc900dd6e4466fcf9c3edb5cefb446e7ce258` |
+| `packaging/android/marketing/source/captures/02-swipe-delete.mp4` | `ddc7d8862abfc89745fc39d14ab854e3b393d8c7c910748148cd127c7c49a88c` |
+| `packaging/android/marketing/source/captures/03-account-qr.jpg` | `dcecff7d7d9a5aed611d1d59ff1e3800d0d0b16baa4c86b611cb35b2a9aba0a7` |
+| `packaging/android/marketing/source/captures/04-camera-scanner.png` | `71ab01432d8adf3801f257e5a2e2222884046861cf3400004e99350da7672e22` |
+| `packaging/android/marketing/source/captures/05-language-settings.jpg` | `d44afd264ec4adf7d1a45b36a5a6cd04eb9aa966ffdbe813167fe410d4e3b866` |
+| `packaging/android/marketing/source/captures/06-security-settings.jpg` | `56feba32bdb40c87ec94768e8312087d592e6efcf0e4f4bd269774449896b18d` |
+| `packaging/android/marketing/source/captures/07-import-export-settings.jpg` | `52b9a89e1f9740165ecfedb6ea586ec3f45350b48662e50240f1ae9ad4ba6193` |
+| `packaging/android/marketing/source/captures/08-lock-screen.jpg` | `c05bd37e41d20055b42352456d1f184f4836cc4e30db195e91096332a4e65bf5` |
+| `packaging/android/marketing/source/captures/09-synthetic-qr-source.png` | `26f4e702b6883b6cef403687ad1bd2c8c5fbcc293f05e4f46e07c93194de2ebc` |
+| `packaging/android/marketing/en-US/01-encrypted-local-vault.png` | `064d08073213f597b6cd852c269c8d3692e61e0576faeaaae21bd089c8ddc97c` |
+| `packaging/android/marketing/en-US/02-camera-and-google-qr.png` | `b242f936660570e2a8b165caa0dba42385551dffca8d2b33360d5d4319feb1b8` |
+| `packaging/android/marketing/en-US/03-biometric-quick-unlock.png` | `7bb5f90aca40e00ab93c7f2c2fccd6d3ae9024201be86e81557d51f785a4ffe9` |
+| `packaging/android/marketing/en-US/04-swipe-manage-show-qr.png` | `dae3b22f5c5f73ef3b293de10cb94836593672a94e6a9308096d208f81a687d3` |
+| `packaging/android/marketing/en-US/05-backup-and-languages.png` | `60b6693ea085acab6b99b3c0aea23bf8d7a976d8d528f6d19bb00a1efc12fcd4` |
+| `packaging/android/google-play/en-US/01-local-vault-1080x1920.png` | `1ef559b481435d68502c72bbcad61d99165de4795c3f731367f772628df95c09` |
+| `packaging/android/google-play/en-US/02-swipe-and-qr-1080x1920.png` | `72453a272032dfd73608f69d095d86b997851830dc0f0b1c46639c2de83dd387` |
+| `packaging/android/google-play/en-US/03-camera-google-import-1080x1920.png` | `00ec947db6c99ee51a197ce85db3792d94bc198c5d5910e705d865479ce01c89` |
+| `packaging/android/google-play/en-US/04-unlock-methods-1080x1920.png` | `fc4ded8671007ed4b0b0bc987bc13c1b2966b7c61191dee0679c76b8ca597613` |
+| `packaging/android/google-play/en-US/05-encrypted-backup-1080x1920.png` | `876b3d210c9bc74f679b119421363d60520e11d68ae45e573197cab632620a94` |
+| `packaging/android/google-play/en-US/06-four-languages-1080x1920.png` | `27416b536b1eb7235413ec71b391f843fed1f8475137dfafb462f3375257433` |
+| `packaging/android/google-play/en-US/app-icon-512x512.png` | `de5100e5175bdd9b61d1d9ae22222997f4c41f1ce0439764ec5436ccd89145b` |
+| `packaging/android/google-play/en-US/feature-graphic-1024x500.png` | `a65a9e4164b2b166d6b4de9fc79ee5a433b44a6a795f10fd60e4390464f42117` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png` | `66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-128.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico` | `7a71a423982499c438177e3b58126f003c3ece9a66cb2b91c07dc50a812ab81e` |
@@ -143,8 +169,6 @@ content is present.
 | `packaging/windows-store/screenshots/en-US/02-search-accounts.png` | `70eee4716ccfbc278789e92bb71b3864573e821a0888a1431f44a852c014592f` |
 | `packaging/windows-store/screenshots/en-US/03-add-account.png` | `f2a6594983eddb8955fd3275e6ddbb2063579a139d182c7c2931e9f3f2211861` |
 | `packaging/windows-store/screenshots/en-US/04-quick-unlock.png` | `c80dd15aad7c584c444784fa29ec559c1e4bf38fd32df1632bfdfbb4b6947c3c` |
-| `packaging/windows-store/screenshots/en-US/04-quick-unlock-2.png` | `13db0d0da561c511c6a94acf5213f68a31ed859c0f0e82a7310265211f0dd88c` |
-| `packaging/windows-store/screenshots/en-US/04-quick-unlock-transparent.png` | `6ff8db7a3f08c4b34d047538148071b50b6541d8cb63b2820fdc4914a9a32a41` |
 | `packaging/windows-store/screenshots/de-DE/marketing/01-local-vault.png` | `1ef8cb148b6f18b8083d3f1e7f1483fc301debd1fbaf5b57c82dd67b2e3c3c0f` |
 | `packaging/windows-store/screenshots/de-DE/marketing/02-search-and-copy.png` | `0190328c0e3a042a1ac2b955269427f3cf597bfea9dba37b796adf0568fcc6c4` |
 | `packaging/windows-store/screenshots/de-DE/marketing/03-add-and-import.png` | `9cae1c0573688f0bfedaa22a056b3c1560776e5c2d2523f9c9e397e4b8c85e5b` |

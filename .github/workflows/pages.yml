@@ -8,6 +8,7 @@ on:
       - 'docs/images/readme/app.png'
       - 'docs/images/social/otp-harbor-social-preview.jpg'
       - 'packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png'
+      - 'packaging/android/marketing/en-US/**'
       - 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'
       - 'TOTP.UI.Avalonia.Desktop/appsettings.json'
       - 'scripts/release/Select-PublishedUpdateFeed.ps1'
@@ -30,7 +31,9 @@ jobs:
 
       - name: Validate website content
         shell: pwsh
-        run: ./scripts/validation/Test-PublicWebsite.ps1
+        run: |
+          ./scripts/validation/Test-PublicWebsite.ps1
+          ./scripts/validation/Test-AndroidMarketingAssets.ps1
 
       - name: Setup .NET SDK for signed-feed verification
         uses: actions/setup-dotnet@v5
@@ -40,7 +43,7 @@ jobs:
       - name: Assemble static website
         shell: bash
         run: |
-          mkdir -p _site/assets _site/android/guide
+          mkdir -p _site/assets/android _site/android/guide
           cp site/index.html site/styles.css site/robots.txt site/sitemap.xml _site/
           cp site/android/index.html _site/android/index.html
           cp site/android/guide/index.html _site/android/guide/index.html
@@ -48,6 +51,7 @@ jobs:
           cp docs/images/readme/app.png _site/assets/app.png
           cp docs/images/social/otp-harbor-social-preview.jpg _site/assets/social-preview.jpg
           cp packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png _site/assets/otp-harbor-totp-authenticator-windows.png
+          cp packaging/android/marketing/en-US/*.png _site/assets/android/
           cp TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
 
       - name: Publish the newest signed GitHub feed for RC subscribers

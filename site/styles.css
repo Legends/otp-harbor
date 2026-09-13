@@ -53,8 +53,14 @@ a.button:hover, a.button:focus-visible { transform: translateY(-1px); filter: br
 .platform-grid { grid-template-columns: repeat(2, 1fr); }
 .platform-grid strong { color: var(--green); }
 .platform-link { display: inline-block; margin-top: 16px; color: #65d7ff; font-weight: 700; }
-.android-hero-mark { display: grid; place-items: center; min-height: 420px; background: radial-gradient(circle at 50% 45%, rgba(19,167,232,.25), transparent 52%), var(--panel); }
-.android-hero-mark img { width: min(62%, 280px); height: auto; filter: drop-shadow(0 24px 44px rgba(0,0,0,.38)); }
+.android-campaign-hero { padding: 8px; }
+.android-campaign-hero img { border-radius: 12px; }
+.campaign-section { margin: 12px 0 86px; }
+.campaign-section h2 { max-width: 760px; }
+.campaign-intro { max-width: 760px; margin-bottom: 34px; color: var(--muted); font-size: 1.08rem; }
+.campaign-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.campaign-grid figure { margin: 0; padding: 7px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: 0 22px 50px rgba(0,0,0,.22); }
+.campaign-grid img { display: block; width: 100%; height: auto; border-radius: 10px; }
 .guide-page { max-width: 1040px; }
 .guide-intro { padding: 80px 0 56px; }
 .guide-intro h1 { max-width: 900px; }
@@ -81,7 +87,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 42px; display: flex;
   .site-header { align-items: flex-start; padding: 20px 0; }
   nav { justify-content: flex-end; gap: 12px; }
   .hero { grid-template-columns: 1fr; gap: 42px; padding-top: 50px; }
-  .feature-grid, .platform-grid, .split-section, .contribute, .guide-section { grid-template-columns: 1fr; }
+  .feature-grid, .platform-grid, .split-section, .contribute, .guide-section, .campaign-grid { grid-template-columns: 1fr; }
   .split-section, .contribute { padding: 32px; gap: 24px; }
 }
 

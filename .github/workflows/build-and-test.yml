@@ -60,6 +60,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-PublicWebsite.ps1
 
+      - name: Validate Android marketing assets
+        shell: pwsh
+        run: ./scripts/validation/Test-AndroidMarketingAssets.ps1
+
       - name: Validate source launcher safeguards
         shell: pwsh
         run: ./scripts/validation/Test-SourceLauncher.ps1

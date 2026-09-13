@@ -122,15 +122,13 @@ if ([string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
     $env:JAVA_HOME = [IO.Directory]::GetParent($javaExecutable.Directory.FullName).FullName
 }
 
-$verification = @(& $apkSigner.FullName verify --verbose --print-certs $signedApks[0].FullName)
+$verification = @(& $apkSigner.FullName verify --verbose --print-certs $signedApks[0].FullName 2>&1 |
+    ForEach-Object { [string]$_ })
 if ($LASTEXITCODE -ne 0) {
     throw "The Android APK signature is invalid."
 }
-$fingerprintLines = @($verification | Where-Object { $_ -match 'Signer #1 certificate SHA-256 digest:\s*(?<digest>[0-9a-fA-F]+)' })
-if ($fingerprintLines.Count -ne 1) {
-    throw "Could not read the APK signing certificate SHA-256 fingerprint."
-}
-$fingerprint = ([regex]::Match($fingerprintLines[0], '[0-9a-fA-F]{64}').Value).ToUpperInvariant()
+$fingerprint = & (Join-Path $PSScriptRoot 'Get-AndroidSigningCertificateFingerprint.ps1') `
+    -VerificationOutput $verification
 $expectedFingerprint = ($ExpectedCertificateSha256 -replace '[^0-9a-fA-F]', '').ToUpperInvariant()
 if (-not [string]::IsNullOrWhiteSpace($ExpectedCertificateSha256) -and
     $fingerprint -cne $expectedFingerprint) {

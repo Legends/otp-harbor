@@ -11,7 +11,8 @@ param(
     [string]$BackgroundPath = 'packaging/android/marketing/source/android-marketing-background.png',
     [string]$IconPath = 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
     [string]$CaptureDirectory = 'packaging/android/marketing/source/captures',
-    [string]$OutputDirectory = 'packaging/android/marketing/en-US'
+    [string]$OutputDirectory = 'packaging/android/marketing/en-US',
+    [string]$PlayStoreOutputDirectory = 'packaging/android/google-play/en-US'
 )
 
 Set-StrictMode -Version Latest
@@ -36,12 +37,17 @@ function New-RoundedPath([Drawing.RectangleF]$Bounds, [float]$Radius) {
     return $path
 }
 
-function Draw-Cover([Drawing.Graphics]$Graphics, [Drawing.Image]$Image) {
-    $scale = [Math]::Max(1920 / $Image.Width, 1080 / $Image.Height)
+function Draw-Cover(
+    [Drawing.Graphics]$Graphics,
+    [Drawing.Image]$Image,
+    [float]$CanvasWidth = 1920,
+    [float]$CanvasHeight = 1080
+) {
+    $scale = [Math]::Max($CanvasWidth / $Image.Width, $CanvasHeight / $Image.Height)
     $width = $Image.Width * $scale
     $height = $Image.Height * $scale
     $Graphics.DrawImage($Image, [Drawing.RectangleF]::new(
-        (1920 - $width) / 2, (1080 - $height) / 2, $width, $height))
+        ($CanvasWidth - $width) / 2, ($CanvasHeight - $height) / 2, $width, $height))
 }
 
 function Draw-PhoneCapture(
@@ -154,18 +160,121 @@ function New-CampaignImage(
     finally { $graphics.Dispose(); $bitmap.Dispose() }
 }
 
+function New-PlayStoreScreenshot(
+    [Drawing.Image]$Background,
+    [Drawing.Image]$Icon,
+    [Drawing.Image]$Primary,
+    [Drawing.Image]$Secondary,
+    [string]$Headline,
+    [string]$Body,
+    [string]$Destination,
+    [switch]$Pair
+) {
+    $bitmap = [Drawing.Bitmap]::new(1080, 1920, [Drawing.Imaging.PixelFormat]::Format24bppRgb)
+    $graphics = [Drawing.Graphics]::FromImage($bitmap)
+    $white = [Drawing.SolidBrush]::new([Drawing.Color]::FromArgb(255, 247, 250, 255))
+    $muted = [Drawing.SolidBrush]::new([Drawing.Color]::FromArgb(255, 190, 216, 247))
+    $brandFont = [Drawing.Font]::new('Segoe UI Semibold', 28, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Pixel)
+    $headlineFont = [Drawing.Font]::new('Segoe UI', 64, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Pixel)
+    $bodyFont = [Drawing.Font]::new('Segoe UI', 31, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Pixel)
+    try {
+        $graphics.CompositingQuality = [Drawing.Drawing2D.CompositingQuality]::HighQuality
+        $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $graphics.SmoothingMode = [Drawing.Drawing2D.SmoothingMode]::AntiAlias
+        $graphics.TextRenderingHint = [Drawing.Text.TextRenderingHint]::ClearTypeGridFit
+        Draw-Cover $graphics $Background 1080 1920
+        $overlay = [Drawing.Drawing2D.LinearGradientBrush]::new(
+            [Drawing.PointF]::new(0, 0), [Drawing.PointF]::new(0, 1500),
+            [Drawing.Color]::FromArgb(248, 3, 16, 39), [Drawing.Color]::FromArgb(65, 3, 16, 39))
+        try { $graphics.FillRectangle($overlay, 0, 0, 1080, 1920) }
+        finally { $overlay.Dispose() }
+
+        $graphics.DrawImage($Icon, [Drawing.RectangleF]::new(64, 54, 64, 64))
+        $graphics.DrawString('OTP HARBOR  /  ANDROID', $brandFont, $white, 150, 72)
+        $graphics.DrawString($Headline, $headlineFont, $white,
+            [Drawing.RectangleF]::new(64, 158, 952, 190))
+        $graphics.DrawString($Body, $bodyFont, $muted,
+            [Drawing.RectangleF]::new(68, 338, 944, 115))
+
+        if ($Pair) {
+            Draw-PhoneCapture $graphics $Secondary ([Drawing.RectangleF]::new(82, 650, 570, 1160)) 26
+            Draw-PhoneCapture $graphics $Primary ([Drawing.RectangleF]::new(430, 470, 580, 1320)) 28
+        }
+        else {
+            Draw-PhoneCapture $graphics $Primary ([Drawing.RectangleF]::new(160, 455, 760, 1390)) 30
+        }
+        $bitmap.Save($Destination, [Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally {
+        $brandFont.Dispose(); $headlineFont.Dispose(); $bodyFont.Dispose()
+        $white.Dispose(); $muted.Dispose(); $graphics.Dispose(); $bitmap.Dispose()
+    }
+}
+
+function New-PlayStoreFeatureGraphic(
+    [Drawing.Image]$Background,
+    [Drawing.Image]$Icon,
+    [Drawing.Image]$Primary,
+    [Drawing.Image]$Secondary,
+    [string]$Destination
+) {
+    $bitmap = [Drawing.Bitmap]::new(1024, 500, [Drawing.Imaging.PixelFormat]::Format24bppRgb)
+    $graphics = [Drawing.Graphics]::FromImage($bitmap)
+    $white = [Drawing.SolidBrush]::new([Drawing.Color]::FromArgb(255, 247, 250, 255))
+    $muted = [Drawing.SolidBrush]::new([Drawing.Color]::FromArgb(255, 184, 216, 248))
+    $headlineFont = [Drawing.Font]::new('Segoe UI', 61, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Pixel)
+    $bodyFont = [Drawing.Font]::new('Segoe UI', 27, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Pixel)
+    try {
+        $graphics.CompositingQuality = [Drawing.Drawing2D.CompositingQuality]::HighQuality
+        $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $graphics.SmoothingMode = [Drawing.Drawing2D.SmoothingMode]::AntiAlias
+        $graphics.TextRenderingHint = [Drawing.Text.TextRenderingHint]::ClearTypeGridFit
+        Draw-Cover $graphics $Background 1024 500
+        $overlay = [Drawing.Drawing2D.LinearGradientBrush]::new(
+            [Drawing.PointF]::new(0, 0), [Drawing.PointF]::new(820, 0),
+            [Drawing.Color]::FromArgb(252, 3, 16, 39), [Drawing.Color]::FromArgb(20, 3, 16, 39))
+        try { $graphics.FillRectangle($overlay, 0, 0, 1024, 500) }
+        finally { $overlay.Dispose() }
+        $graphics.DrawImage($Icon, [Drawing.RectangleF]::new(116, 56, 82, 82))
+        $graphics.DrawString('OTP Harbor', $headlineFont, $white, 116, 164)
+        $graphics.DrawString("Local-first TOTP.`nEncrypted on your device.", $bodyFont, $muted,
+            [Drawing.RectangleF]::new(120, 252, 450, 110))
+        Draw-PhoneCapture $graphics $Secondary ([Drawing.RectangleF]::new(610, 75, 230, 390)) 14
+        Draw-PhoneCapture $graphics $Primary ([Drawing.RectangleF]::new(742, 28, 190, 440)) 14
+        $bitmap.Save($Destination, [Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally {
+        $headlineFont.Dispose(); $bodyFont.Dispose(); $white.Dispose(); $muted.Dispose()
+        $graphics.Dispose(); $bitmap.Dispose()
+    }
+}
+
+function New-PlayStoreIcon([Drawing.Image]$Icon, [string]$Destination) {
+    $bitmap = [Drawing.Bitmap]::new(512, 512, [Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $graphics = [Drawing.Graphics]::FromImage($bitmap)
+    try {
+        $graphics.CompositingMode = [Drawing.Drawing2D.CompositingMode]::SourceCopy
+        $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $graphics.DrawImage($Icon, [Drawing.RectangleF]::new(0, 0, 512, 512))
+        $bitmap.Save($Destination, [Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally { $graphics.Dispose(); $bitmap.Dispose() }
+}
+
 $backgroundPath = Resolve-RepositoryPath $BackgroundPath
 $iconPath = Resolve-RepositoryPath $IconPath
 $capturesPath = Resolve-RepositoryPath $CaptureDirectory
 $outputPath = Resolve-RepositoryPath $OutputDirectory
+$playStoreOutputPath = Resolve-RepositoryPath $PlayStoreOutputDirectory
 $captureFiles = @{
-    Vault = Join-Path $capturesPath '01-account-list.png'
-    Google = Join-Path $capturesPath '02-google-transfer.png'
-    Scanner = Join-Path $capturesPath '02-camera-scanner.png'
-    Unlock = Join-Path $capturesPath '03-quick-unlock.png'
-    Biometric = Join-Path $capturesPath '03-biometric-prompt.png'
-    Swipe = Join-Path $capturesPath '04-swipe-actions.png'
-    Qr = Join-Path $capturesPath '04-account-qr.png'
+    Vault = Join-Path $capturesPath '01-account-list.jpg'
+    Swipe = Join-Path $capturesPath '02-swipe-actions.jpg'
+    Qr = Join-Path $capturesPath '03-account-qr.jpg'
+    Scanner = Join-Path $capturesPath '04-camera-scanner.png'
+    Language = Join-Path $capturesPath '05-language-settings.jpg'
+    Security = Join-Path $capturesPath '06-security-settings.jpg'
+    ImportExport = Join-Path $capturesPath '07-import-export-settings.jpg'
+    Unlock = Join-Path $capturesPath '08-lock-screen.jpg'
 }
 
 foreach ($path in @($backgroundPath, $iconPath) + $captureFiles.Values) {
@@ -174,6 +283,7 @@ foreach ($path in @($backgroundPath, $iconPath) + $captureFiles.Values) {
     }
 }
 [IO.Directory]::CreateDirectory($outputPath) | Out-Null
+[IO.Directory]::CreateDirectory($playStoreOutputPath) | Out-Null
 
 $background = [Drawing.Image]::FromFile($backgroundPath)
 $icon = [Drawing.Image]::FromFile($iconPath)
@@ -187,25 +297,53 @@ try {
         'A local encrypted vault for the accounts you use every day.' `
         @('LOCAL FIRST', 'ENCRYPTED VAULT') `
         (Join-Path $outputPath '01-encrypted-local-vault.png')
-    New-CampaignImage $background $icon $images.Google $images.Scanner `
+    New-CampaignImage $background $icon $images.ImportExport $images.Scanner `
         "Scan accounts.`nMove from Google." `
-        'Use the camera for standard account and Google Authenticator transfer QR codes.' `
+        'Use the camera for account and Google Authenticator transfer QR codes.' `
         @('CAMERA QR IMPORT', 'GOOGLE TRANSFER') `
         (Join-Path $outputPath '02-camera-and-google-qr.png') -Pair -HeadlineSize 62
-    New-CampaignImage $background $icon $images.Unlock $images.Biometric `
+    New-CampaignImage $background $icon $images.Unlock $images.Security `
         "Fast to unlock.`nProtected by Android." `
-        'Use strong device biometrics. Your master password remains the recovery method.' `
-        @('BIOMETRIC QUICK UNLOCK', 'PASSWORD RECOVERY') `
+        'Choose strong biometrics, Android screen lock, or your master password.' `
+        @('THREE UNLOCK CHOICES', 'PASSWORD RECOVERY') `
         (Join-Path $outputPath '03-biometric-quick-unlock.png') -Pair -HeadlineSize 60
     New-CampaignImage $background $icon $images.Swipe $images.Qr `
         "Swipe to manage.`nShow QR deliberately." `
         'Edit, delete or move one synthetic account through clear touch actions.' `
         @('TOUCH-FIRST', 'PER-ACCOUNT QR') `
         (Join-Path $outputPath '04-swipe-manage-show-qr.png') -Pair -HeadlineSize 60
+    New-CampaignImage $background $icon $images.Language $images.ImportExport `
+        "Portable backups.`nFour languages." `
+        'Export an encrypted backup and restore it across supported OTP Harbor platforms.' `
+        @('ENCRYPTED BACKUPS', 'ENGLISH + DE + FR + ES') `
+        (Join-Path $outputPath '05-backup-and-languages.png') -Pair -HeadlineSize 58
+
+    New-PlayStoreFeatureGraphic $background $icon $images.Vault $images.Security `
+        (Join-Path $playStoreOutputPath 'feature-graphic-1024x500.png')
+    New-PlayStoreIcon $icon (Join-Path $playStoreOutputPath 'app-icon-512x512.png')
+    New-PlayStoreScreenshot $background $icon $images.Vault $null `
+        'All your codes.' 'A focused encrypted vault on your Android device.' `
+        (Join-Path $playStoreOutputPath '01-local-vault-1080x1920.png')
+    New-PlayStoreScreenshot $background $icon $images.Swipe $images.Qr `
+        'Swipe to manage.' 'Edit, delete, or show an account QR through deliberate actions.' `
+        (Join-Path $playStoreOutputPath '02-swipe-and-qr-1080x1920.png') -Pair
+    New-PlayStoreScreenshot $background $icon $images.ImportExport $images.Scanner `
+        'Scan and migrate.' 'Import account and Google Authenticator transfer QR codes.' `
+        (Join-Path $playStoreOutputPath '03-camera-google-import-1080x1920.png') -Pair
+    New-PlayStoreScreenshot $background $icon $images.Unlock $images.Security `
+        'Unlock your way.' 'Strong biometrics, Android screen lock, or master password.' `
+        (Join-Path $playStoreOutputPath '04-unlock-methods-1080x1920.png') -Pair
+    New-PlayStoreScreenshot $background $icon $images.ImportExport $null `
+        'Encrypted portability.' 'Export and restore password-protected OTP Harbor backups.' `
+        (Join-Path $playStoreOutputPath '05-encrypted-backup-1080x1920.png')
+    New-PlayStoreScreenshot $background $icon $images.Language $null `
+        'Made for you.' 'Use OTP Harbor in English, German, French, or Spanish.' `
+        (Join-Path $playStoreOutputPath '06-four-languages-1080x1920.png')
 }
 finally {
     foreach ($image in $images.Values) { $image.Dispose() }
     $icon.Dispose(); $background.Dispose()
 }
 
-Write-Output "Android marketing images created in $outputPath"
+Write-Output "Android website marketing images created in $outputPath"
+Write-Output "Android Google Play assets created in $playStoreOutputPath"

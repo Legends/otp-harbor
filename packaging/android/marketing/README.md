@@ -9,32 +9,33 @@ Marketing captures must use synthetic data only. The reviewed account roster is:
 
 | Issuer | Account name |
 | --- | --- |
-| Amazon | `shopper@example.invalid` |
-| Cloudflare | `admin@example.invalid` |
-| Discord | `community@example.invalid` |
-| Dropbox | `files@example.invalid` |
-| GitHub | `octocat@example.invalid` |
-| Google | `maya@example.invalid` |
-| Microsoft | `alex.wilber@example.invalid` |
-| Proton | `privacy@example.invalid` |
+| Amazon | `Mason` |
+| Apple | `Olivia` |
+| Discord | `Lucas` |
+| Dropbox | `Ava` |
+| GitHub | `Ethan` |
+| Google | `Sophia` |
 
-Use only published synthetic Base32 test values. Never capture a real account, seed, QR code,
-one-time password, backup, password, notification, device identifier, or personal file name. The
-visible rotating codes in reviewed captures are generated exclusively from the synthetic seeds.
+Use only dedicated synthetic Base32 test values. Never capture a real account, seed, backup,
+password, notification, device identifier, or personal file name. The visible rotating codes and
+the Dropbox transfer QR in the reviewed captures are generated exclusively from the synthetic
+fixture seed. Treat even this synthetic QR as sensitive-looking material: do not reuse it outside
+the documented campaign or mistake it for a live account.
 
 ## Planned campaign set
 
-The English website set uses four 1920×1080 composites:
+The English website set uses five 1920×1080 composites:
 
 1. `01-encrypted-local-vault.png` — the account list with the reviewed synthetic roster.
 2. `02-camera-and-google-qr.png` — camera scanning and Google Authenticator transfer QR import.
 3. `03-biometric-quick-unlock.png` — OTP Harbor unlock plus its genuine biometric-security state.
 4. `04-swipe-manage-show-qr.png` — swipe actions and a per-account synthetic QR preview.
+5. `05-backup-and-languages.png` — portable encrypted backups and the four supported languages.
 
 The generated backdrop contains no product UI. Authentic app/system captures are composited later so
 the campaign never invents a security control or advertises an unavailable feature. Google
-Authenticator's documented Android transfer flow scans the export QR with the camera; neither that
-workflow nor the current OTP Harbor Android build imports an existing QR image file.
+Authenticator's documented Android transfer flow scans the export QR with the camera. The current
+OTP Harbor Android build does not import an existing QR image file.
 
 ## Isolated capture build
 
@@ -55,6 +56,12 @@ protection for the account list.
 
 - `source/android-marketing-background.png`: generated reusable background.
 - `source/captures/`: reviewed raw Android captures from the isolated synthetic-data package.
-- `en-US/`: final website composites (generated only after capture review).
+- `en-US/`: five final 1920×1080 website composites.
+- `../google-play/en-US/`: six 1080×1920 phone screenshots, the 1024×500 feature graphic, and the
+  512×512 high-resolution app icon.
+
+Run `scripts/assets/New-AndroidMarketingImages.ps1` to regenerate both final sets. The compositor
+keeps all app and Android-system UI pixel-authentic; only crop, scale, rounded clipping, framing,
+background, and campaign copy are added.
 
 The public site should reference only final files under `en-US/`, never raw device captures.

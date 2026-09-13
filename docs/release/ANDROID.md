@@ -72,7 +72,9 @@ Create the Base64 value without writing another unencrypted key copy:
 
 The release workflow reconstructs the key only in the runner's temporary directory, supplies
 passwords through temporary files rather than command-line values, verifies the APK signature, and
-rejects any certificate that differs from the pinned fingerprint.
+rejects any certificate that differs from the pinned fingerprint. Certificate parsing accepts the
+continuous and separator-formatted SHA-256 output emitted by supported `apksigner` versions, but
+fails closed unless exactly one signer fingerprint is present.
 
 ## Versioning
 
@@ -113,4 +115,5 @@ the production application.
   builds use `.debug`. Existing packages signed with another key cannot be upgraded in place.
 - **Verification evidence:** CI compiles the dedicated Android solution. Release packaging verifies
   the APK signature, application ID, visible version, version code, certificate fingerprint, file
-  hash, and inclusion in the signed aggregate release manifest.
+  hash, and inclusion in the signed aggregate release manifest. Deterministic validation covers
+  continuous and colon-separated certificate output and rejects missing or multiple signers.

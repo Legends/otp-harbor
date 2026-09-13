@@ -18,6 +18,9 @@ $manifest = Read-RequiredFile "TOTP.UI.Avalonia.Android\Properties\AndroidManife
 $installer = Read-RequiredFile "scripts\testing\Install-AndroidDevelopmentBuild.ps1"
 $workflow = Read-RequiredFile ".github\workflows\build-and-test.yml"
 $documentation = Read-RequiredFile "docs\release\ANDROID.md"
+$releasePackager = Read-RequiredFile "scripts\release\New-AndroidRelease.ps1"
+$fingerprintParserPath = Join-Path $repositoryRoot `
+    "scripts\release\Get-AndroidSigningCertificateFingerprint.ps1"
 
 foreach ($required in @(
     '<AndroidProductionApplicationId>io.github.legends.otpharbor</AndroidProductionApplicationId>',
@@ -64,6 +67,45 @@ foreach ($invalidTag in @("2.0.0", "v2.0", "v2.0.0-rc0", "v2.0.0-rc99", "v210.0.
     catch {
         if ($_.Exception.Message -eq "Android version mapping accepted invalid tag $invalidTag.") { throw }
     }
+}
+
+$expectedFingerprint = '8A0DE3250B16BE758DFA14C9AB05043F016FE0538DA331F9C74E441421559512'
+$continuousOutput = @(
+    'Verifies',
+    "Signer #1 certificate SHA-256 digest: $($expectedFingerprint.ToLowerInvariant())")
+$separatedOutput = @(
+    'Verifies',
+    "Signer #1 certificate SHA-256 digest: $(($expectedFingerprint -split '(?<=\G.{2})' | Where-Object { $_ }) -join ':')")
+foreach ($verificationOutput in @($continuousOutput, $separatedOutput)) {
+    $actualFingerprint = & $fingerprintParserPath -VerificationOutput $verificationOutput
+    if ($actualFingerprint -cne $expectedFingerprint) {
+        throw 'The Android signing-certificate fingerprint parser changed the pinned digest.'
+    }
+}
+try {
+    & $fingerprintParserPath -VerificationOutput @(
+        $continuousOutput[1],
+        'Signer #2 certificate SHA-256 digest: FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') |
+        Out-Null
+    throw 'The Android signing-certificate fingerprint parser accepted multiple signers.'
+}
+catch {
+    if ($_.Exception.Message -eq
+        'The Android signing-certificate fingerprint parser accepted multiple signers.') { throw }
+}
+try {
+    & $fingerprintParserPath -VerificationOutput @($continuousOutput[1], $continuousOutput[1]) |
+        Out-Null
+    throw 'The Android signing-certificate fingerprint parser accepted duplicate signer output.'
+}
+catch {
+    if ($_.Exception.Message -eq
+        'The Android signing-certificate fingerprint parser accepted duplicate signer output.') { throw }
+}
+if (-not $releasePackager.Contains('verify --verbose --print-certs', [StringComparison]::Ordinal) -or
+    -not $releasePackager.Contains('2>&1', [StringComparison]::Ordinal) -or
+    -not $releasePackager.Contains('Get-AndroidSigningCertificateFingerprint.ps1', [StringComparison]::Ordinal)) {
+    throw 'The Android release packager does not verify and parse apksigner certificate output.'
 }
 
 foreach ($required in @(

@@ -36,6 +36,23 @@ $indexNowVerificationFile = Read-RequiredFile "site/$indexNowVerificationValue.t
 Read-RequiredFile 'docs/images/readme/app.png' | Out-Null
 Read-RequiredFile 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png' | Out-Null
 
+$androidCampaignFiles = @(
+    '01-encrypted-local-vault.png',
+    '02-camera-and-google-qr.png',
+    '03-biometric-quick-unlock.png',
+    '04-swipe-manage-show-qr.png',
+    '05-backup-and-languages.png'
+)
+foreach ($file in $androidCampaignFiles) {
+    Read-RequiredFile "packaging/android/marketing/en-US/$file" | Out-Null
+    if (-not $compactAndroidIndex.Contains("../assets/android/$file", [StringComparison]::Ordinal)) {
+        throw "The Android product page does not reference campaign asset $file."
+    }
+}
+if (-not $pagesWorkflow.Contains('cp packaging/android/marketing/en-US/*.png _site/assets/android/', [StringComparison]::Ordinal)) {
+    throw 'The Android campaign assets are not included in the Pages artifact.'
+}
+
 $preferredImageRelativePath = 'packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png'
 $preferredImageUrl = 'https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png'
 $preferredImagePath = Join-Path $repositoryRoot $preferredImageRelativePath
@@ -137,6 +154,7 @@ foreach ($requiredText in @(
     '"MobileApplication"',
     'Android 9 and newer',
     'io.github.legends.otpharbor',
+    'Authentic Android experience',
     'Explore desktop editions')) {
     if (-not $compactAndroidIndex.Contains($requiredText, [StringComparison]::Ordinal)) {
         throw "The Android product page is missing required content: $requiredText"
