@@ -54,6 +54,33 @@ jobs:
           cp packaging/android/marketing/en-US/*.png _site/assets/android/
           cp TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
 
+      - name: Stamp latest stable release version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $release = gh api "repos/${{ github.repository }}/releases/latest" | ConvertFrom-Json
+          $releaseTag = [string]$release.tag_name
+          if ($release.draft -or $release.prerelease -or
+              $releaseTag -notmatch '^v(?<version>\d+\.\d+\.\d+)$') {
+            throw 'The latest published GitHub release is not a stable OTP Harbor version.'
+          }
+
+          $releaseVersion = $Matches.version
+          $indexPath = Join-Path $PWD '_site/index.html'
+          $index = [IO.File]::ReadAllText($indexPath)
+          $pattern = 'OTP Harbor \d+\.\d+\.\d+ is now publicly available from Microsoft Store, the primary Windows channel\.\s+' +
+            'OTP Harbor \d+\.\d+\.\d+ is the stable GitHub release for Linux, Android and source archives\.'
+          $replacement = "OTP Harbor $releaseVersion is now publicly available from Microsoft Store, the primary Windows channel.`n" +
+            "          OTP Harbor $releaseVersion is the stable GitHub release for Linux, Android and source archives."
+          $releaseNoteMatches = [Text.RegularExpressions.Regex]::Matches($index, $pattern)
+          if ($releaseNoteMatches.Count -ne 1) {
+            throw "Expected exactly one website release note, found $($releaseNoteMatches.Count)."
+          }
+          $index = [Text.RegularExpressions.Regex]::Replace($index, $pattern, $replacement)
+          [IO.File]::WriteAllText($indexPath, $index, [Text.UTF8Encoding]::new($false))
+          Write-Host "Stamped website release note with OTP Harbor $releaseVersion."
+
       - name: Publish the newest signed GitHub feed for RC subscribers
         shell: pwsh
         env:
