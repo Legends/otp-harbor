@@ -33,9 +33,8 @@ match the reserved product.
 
 ## Build the submission package
 
-Every supported release tag (`v<major>.<minor>.<patch>` and
-`v<major>.<minor>.<patch>-rc<number>`) automatically builds a Partner Center MSIX from the same
-validated self-contained Windows payload used by that release. The GitHub release is published
+Every stable release tag (`v<major>.<minor>.<patch>`) automatically builds a Partner Center MSIX
+from the same validated self-contained Windows payload used by that release. The GitHub release is published
 only after this package succeeds. Download the 90-day Actions artifact named
 `otp-harbor-microsoft-store-<release-version>` from the release workflow run. The unsigned Store
 input remains intentionally separate from the public GitHub Release assets.
@@ -47,8 +46,25 @@ release; and the fourth is `0`. For example, `v2.0.0-rc14` becomes `2.0.14.0`, `
 `2.0.65535.0`, and the next patch preview `v2.0.1-rc1` becomes `2.1.1.0`. This keeps previews below
 their matching stable release and later patch releases above it.
 
-For an ad-hoc rebuild, use the reviewed workflow **Build Microsoft Store MSIX**, or run locally on
-Windows with the Windows SDK installed:
+For a local rebuild of the current clean, tagged source on Windows with the Windows SDK installed,
+run:
+
+```powershell
+.\scripts\release\New-CurrentSourceMicrosoftStoreMsix.ps1
+```
+
+For a clean commit that has not been tagged yet, provide its intended stable tag:
+
+```powershell
+.\scripts\release\New-CurrentSourceMicrosoftStoreMsix.ps1 -ReleaseTag v2.0.1
+```
+
+The wrapper resolves the Store version, uses the reviewed Partner Center identity, builds directly
+from the current source tree, and verifies the resulting hash. For an intentional local test of
+uncommitted changes, add `-AllowDirtySource`; do not submit that package as a reproducible release
+artifact.
+
+The lower-level packager remains available when explicit identity values are required:
 
 ```powershell
 .\scripts\release\New-MicrosoftStoreMsix.ps1 `

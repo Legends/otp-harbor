@@ -21,6 +21,7 @@ function Read-RequiredFile {
 
 $manifest = Read-RequiredFile 'packaging/windows-store/AppxManifest.xml.template'
 $packager = Read-RequiredFile 'scripts/release/New-MicrosoftStoreMsix.ps1'
+$currentSourcePackager = Read-RequiredFile 'scripts/release/New-CurrentSourceMicrosoftStoreMsix.ps1'
 $workflow = Read-RequiredFile '.github/workflows/store-msix.yml'
 $releaseWorkflow = Read-RequiredFile '.github/workflows/build-and-test.yml'
 $versionResolver = Join-Path $repositoryRoot 'scripts/release/Get-MicrosoftStoreVersion.ps1'
@@ -135,6 +136,21 @@ foreach ($control in @(
 )) {
     if (-not $releaseWorkflow.Contains($control, [StringComparison]::Ordinal)) {
         throw "The release workflow is missing automatic Store-package control: $control"
+    }
+}
+
+foreach ($control in @(
+    "Where-Object { `$_ -match '^v\d+\.\d+\.\d+`$' }",
+    'The source tree has uncommitted changes.',
+    "-IdentityName 'Legends77.OTPHarbor'",
+    "-Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9'",
+    "-PublisherDisplayName 'Legends77'",
+    "-Version `$storeVersion",
+    "-OutputDirectory `$resolvedOutputDirectory",
+    'The generated MSIX does not match store-package.json.'
+)) {
+    if (-not $currentSourcePackager.Contains($control, [StringComparison]::Ordinal)) {
+        throw "The current-source Store wrapper is missing: $control"
     }
 }
 
