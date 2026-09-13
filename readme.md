@@ -11,10 +11,10 @@
 
 **OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
-> **Release status:** OTP Harbor `2.0.17` is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages. Android release packaging is ready, but the first public APK remains gated on production-key registration and protected-environment setup; desktop GitHub packages remain unsigned platform previews and use the Ed25519-signed RC appcast. Use synthetic accounts and keep a tested encrypted backup while evaluating prereleases.
+> **Release status:** OTP Harbor `2.0.17` is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages. Current [GitHub prereleases](https://github.com/Legends/otp-harbor/releases) include a production-signed Android universal APK alongside unsigned Windows and Linux previews that use the Ed25519-signed RC appcast. Use synthetic accounts and keep a tested encrypted backup while evaluating prereleases.
 
 <p align="center">
-  <img src="docs/images/readme/app.png" alt="OTP Harbor showing inline one-time passwords and a countdown progress bar for every account" width="460" />
+  <img src="packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png" alt="OTP Harbor for Windows with an encrypted local TOTP vault and synthetic sample accounts" width="960" />
 </p>
 
 ## Features
@@ -46,24 +46,24 @@ Treat migration QR codes as secrets: anyone who captures one can recreate the ex
 
 <table>
   <tr>
-    <td><img src="docs/images/readme/desktop-edit-account.png" alt="OTP Harbor edit-account panel with a masked Base32 secret" /></td>
-    <td><img src="docs/images/readme/desktop-security-settings.png" alt="OTP Harbor security settings with quick unlock and recovery options" /></td>
+    <td><img src="packaging/windows-store/screenshots/en-US/marketing/02-search-and-copy.png" alt="OTP Harbor instant account search and one-click TOTP copy workflow" /></td>
+    <td><img src="packaging/windows-store/screenshots/en-US/marketing/03-add-and-import.png" alt="OTP Harbor account creation and QR-code import workflow" /></td>
   </tr>
   <tr>
-    <td align="center"><strong>Edit accounts without exposing stored secrets</strong></td>
-    <td align="center"><strong>Configure quick unlock and recovery</strong></td>
+    <td align="center"><strong>Find and copy codes quickly</strong></td>
+    <td align="center"><strong>Add accounts or import QR codes</strong></td>
   </tr>
   <tr>
-    <td><img src="docs/images/readme/desktop-qr-preview-sanitized.png" alt="OTP Harbor account QR preview containing only a synthetic test payload" /></td>
-    <td><img src="docs/images/readme/desktop-quick-unlock.png" alt="OTP Harbor locked-vault screen offering quick unlock or master-password recovery" /></td>
+    <td><img src="packaging/windows-store/screenshots/en-US/marketing/04-windows-hello.png" alt="OTP Harbor quick unlock protected by Windows Hello with master-password recovery" /></td>
+    <td><img src="packaging/windows-store/screenshots/en-US/marketing/05-import-export.png" alt="OTP Harbor Google Authenticator import and encrypted backup export workflows" /></td>
   </tr>
   <tr>
-    <td align="center"><strong>Export an account via QR code</strong></td>
-    <td align="center"><strong>Unlock quickly with a recovery path</strong></td>
+    <td align="center"><strong>Unlock securely with Windows Hello</strong></td>
+    <td align="center"><strong>Migrate and back up your vault</strong></td>
   </tr>
 </table>
 
-The QR screenshot is intentionally sanitized and contains only a published synthetic test secret. Never use it for a real account.
+All accounts, codes, and QR payloads shown in the marketing artwork are synthetic. Never publish screenshots containing a real account secret.
 
 ### Keyboard shortcuts
 
@@ -87,7 +87,7 @@ The QR screenshot is intentionally sanitized and contains only a published synth
 | Windows 10/11 x64 | Public Microsoft Store MSIX; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with a branded setup flow, desktop and Start-menu shortcuts, administrator approval, and manual MSI upgrades |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
-| Android 9 or newer | Planned production-signed universal APK from the matching GitHub Release; first publication is gated on signing-key registration |
+| Android 9 or newer | Production-signed universal APK from the matching GitHub prerelease; manual installation with in-place upgrade support |
 
 After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
 
