@@ -116,4 +116,5 @@ the production application.
 - **Verification evidence:** CI compiles the dedicated Android solution. Release packaging verifies
   the APK signature, application ID, visible version, version code, certificate fingerprint, file
   hash, and inclusion in the signed aggregate release manifest. Deterministic validation covers
-  continuous and colon-separated certificate output and rejects missing or multiple signers.
+  the certificate emitted as PEM, derives its SHA-256 fingerprint from the certificate bytes,
+  and rejects malformed, missing, or multiple signing certificates.

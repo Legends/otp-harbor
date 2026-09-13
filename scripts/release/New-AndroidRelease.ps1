@@ -122,7 +122,7 @@ if ([string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
     $env:JAVA_HOME = [IO.Directory]::GetParent($javaExecutable.Directory.FullName).FullName
 }
 
-$verification = @(& $apkSigner.FullName verify --verbose --print-certs $signedApks[0].FullName 2>&1 |
+$verification = @(& $apkSigner.FullName verify --verbose --print-certs-pem $signedApks[0].FullName 2>&1 |
     ForEach-Object { [string]$_ })
 if ($LASTEXITCODE -ne 0) {
     throw "The Android APK signature is invalid."

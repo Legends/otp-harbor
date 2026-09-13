@@ -69,23 +69,38 @@ foreach ($invalidTag in @("2.0.0", "v2.0", "v2.0.0-rc0", "v2.0.0-rc99", "v210.0.
     }
 }
 
-$expectedFingerprint = '8A0DE3250B16BE758DFA14C9AB05043F016FE0538DA331F9C74E441421559512'
-$continuousOutput = @(
-    'Verifies',
-    "Signer #1 certificate SHA-256 digest: $($expectedFingerprint.ToLowerInvariant())")
-$separatedOutput = @(
-    'Verifies',
-    "Signer #1 certificate SHA-256 digest: $(($expectedFingerprint -split '(?<=\G.{2})' | Where-Object { $_ }) -join ':')")
-foreach ($verificationOutput in @($continuousOutput, $separatedOutput)) {
-    $actualFingerprint = & $fingerprintParserPath -VerificationOutput $verificationOutput
-    if ($actualFingerprint -cne $expectedFingerprint) {
-        throw 'The Android signing-certificate fingerprint parser changed the pinned digest.'
+$rsa = [Security.Cryptography.RSA]::Create(2048)
+try {
+    $request = [Security.Cryptography.X509Certificates.CertificateRequest]::new(
+        'CN=OTP Harbor Android release parser test',
+        $rsa,
+        [Security.Cryptography.HashAlgorithmName]::SHA256,
+        [Security.Cryptography.RSASignaturePadding]::Pkcs1)
+    $testCertificate = $request.CreateSelfSigned(
+        [DateTimeOffset]::UtcNow.AddMinutes(-1),
+        [DateTimeOffset]::UtcNow.AddMinutes(5))
+    try {
+        $expectedFingerprint = $testCertificate.GetCertHashString(
+            [Security.Cryptography.HashAlgorithmName]::SHA256).ToUpperInvariant()
+        $certificatePem = $testCertificate.ExportCertificatePem()
     }
+    finally {
+        $testCertificate.Dispose()
+    }
+}
+finally {
+    $rsa.Dispose()
+}
+
+$verificationOutput = @('Verifies', $certificatePem)
+$actualFingerprint = & $fingerprintParserPath -VerificationOutput $verificationOutput
+if ($actualFingerprint -cne $expectedFingerprint) {
+    throw 'The Android signing-certificate fingerprint parser changed the certificate digest.'
 }
 try {
     & $fingerprintParserPath -VerificationOutput @(
-        $continuousOutput[1],
-        'Signer #2 certificate SHA-256 digest: FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') |
+        $certificatePem,
+        $certificatePem) |
         Out-Null
     throw 'The Android signing-certificate fingerprint parser accepted multiple signers.'
 }
@@ -94,18 +109,20 @@ catch {
         'The Android signing-certificate fingerprint parser accepted multiple signers.') { throw }
 }
 try {
-    & $fingerprintParserPath -VerificationOutput @($continuousOutput[1], $continuousOutput[1]) |
+    & $fingerprintParserPath -VerificationOutput @(
+        'Verifies',
+        'Signer #1 certificate SHA-256 digest: FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') |
         Out-Null
-    throw 'The Android signing-certificate fingerprint parser accepted duplicate signer output.'
+    throw 'The Android signing-certificate fingerprint parser accepted digest text without a certificate.'
 }
 catch {
     if ($_.Exception.Message -eq
-        'The Android signing-certificate fingerprint parser accepted duplicate signer output.') { throw }
+        'The Android signing-certificate fingerprint parser accepted digest text without a certificate.') { throw }
 }
-if (-not $releasePackager.Contains('verify --verbose --print-certs', [StringComparison]::Ordinal) -or
+if (-not $releasePackager.Contains('verify --verbose --print-certs-pem', [StringComparison]::Ordinal) -or
     -not $releasePackager.Contains('2>&1', [StringComparison]::Ordinal) -or
     -not $releasePackager.Contains('Get-AndroidSigningCertificateFingerprint.ps1', [StringComparison]::Ordinal)) {
-    throw 'The Android release packager does not verify and parse apksigner certificate output.'
+    throw 'The Android release packager does not verify and parse the apksigner PEM certificate.'
 }
 
 foreach ($required in @(

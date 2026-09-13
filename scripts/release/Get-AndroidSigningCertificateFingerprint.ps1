@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Extracts the single APK signing-certificate SHA-256 fingerprint from apksigner output.
+Extracts the single APK signing-certificate SHA-256 fingerprint from apksigner PEM output.
 #>
 [CmdletBinding()]
 param(
@@ -10,17 +10,39 @@ param(
 )
 
 $verificationText = $VerificationOutput -join [Environment]::NewLine
-$fingerprints = @(
+$certificateMatches = @(
     [regex]::Matches(
         $verificationText,
-        '(?im)Signer\s+#\d+\s+certificate\s+SHA-?256\s+digest\s*:\s*(?<digest>(?:[0-9a-f][:\s-]?){64})') |
-        ForEach-Object {
-            ($_.Groups['digest'].Value -replace '[^0-9a-fA-F]', '').ToUpperInvariant()
-        }
+        '(?ms)-----BEGIN CERTIFICATE-----\s*(?<certificate>[A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----')
 )
 
-if ($fingerprints.Count -ne 1 -or $fingerprints[0].Length -ne 64) {
+if ($certificateMatches.Count -ne 1) {
     throw 'Could not read exactly one APK signing certificate SHA-256 fingerprint.'
 }
 
-$fingerprints[0]
+try {
+    $certificateBytes = [Convert]::FromBase64String(
+        ($certificateMatches[0].Groups['certificate'].Value -replace '\s', ''))
+    $certificate = [Security.Cryptography.X509Certificates.X509Certificate2]::new($certificateBytes)
+    try {
+        $fingerprint = $certificate.GetCertHashString(
+            [Security.Cryptography.HashAlgorithmName]::SHA256)
+    }
+    finally {
+        $certificate.Dispose()
+    }
+}
+catch {
+    throw 'Could not read exactly one APK signing certificate SHA-256 fingerprint.'
+}
+finally {
+    if ($null -ne $certificateBytes) {
+        [Array]::Clear($certificateBytes, 0, $certificateBytes.Length)
+    }
+}
+
+if ($fingerprint.Length -ne 64) {
+    throw 'Could not read exactly one APK signing certificate SHA-256 fingerprint.'
+}
+
+$fingerprint.ToUpperInvariant()
