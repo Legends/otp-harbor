@@ -79,6 +79,10 @@ The import/export visual combines the authentic settings and QR camera/file work
 QR code, or private account is present. Text remains editable in the generator and is rendered at
 asset-build time; the generated screenshots themselves are not shipped inside the MSIX.
 
+Since 2026-09-13, the repository README presents the reviewed English five-image campaign instead
+of the former small raw detail screenshots. The superseded README-only captures were removed; the
+separate authentic `docs/images/readme/app.png` capture remains in use on the public product page.
+
 ## Android website marketing campaign
 
 `packaging/android/marketing/source/android-marketing-background.png` was generated on 2026-09-12
