@@ -112,6 +112,8 @@ foreach ($control in @(
 foreach ($control in @(
     '-DistributionMode store',
     '-DisableUpdates',
+    '$packageVersion.Build -eq 65535',
+    '-p:AssemblyVersion=$assemblyVersion',
     "distribution = 'microsoft-store-only'",
     'Do not distribute this unsigned MSIX directly.'
 )) {
@@ -125,6 +127,7 @@ if (-not $workflow.Contains("if: `${{ github.event_name == 'workflow_dispatch' }
 }
 foreach ($control in @(
     'package-microsoft-store-msix:',
+    "if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')",
     "-IdentityName 'Legends77.OTPHarbor'",
     "-Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9'",
     'retention-days: 90',
@@ -133,6 +136,29 @@ foreach ($control in @(
     if (-not $releaseWorkflow.Contains($control, [StringComparison]::Ordinal)) {
         throw "The release workflow is missing automatic Store-package control: $control"
     }
+}
+
+$stablePublicationMarker = '  publish-avalonia-release:'
+$stablePublicationIndex = $releaseWorkflow.IndexOf(
+    $stablePublicationMarker,
+    [StringComparison]::Ordinal)
+if ($stablePublicationIndex -lt 0) {
+    throw 'The stable GitHub publication job is missing.'
+}
+$stablePublication = $releaseWorkflow.Substring($stablePublicationIndex)
+foreach ($control in @(
+    'name: OTP Harbor ${{ steps.versioning.outputs.release_version }}',
+    'The stable GitHub release must contain exactly the Linux and Android artifacts.',
+    'No unsigned Windows executable is attached to this stable GitHub release.'
+)) {
+    if (-not $stablePublication.Contains($control, [StringComparison]::Ordinal)) {
+        throw "The stable GitHub publication is missing: $control"
+    }
+}
+if ($stablePublication.Contains(
+    'release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip',
+    [StringComparison]::Ordinal)) {
+    throw 'The stable GitHub publication must not attach a Windows ZIP.'
 }
 
 $versionCases = @(
@@ -147,8 +173,8 @@ foreach ($case in $versionCases) {
         throw "Store version mapping failed for $($case.Tag): expected $($case.Expected), got $actual."
     }
 }
-if (-not $documentation.Contains('Microsoft Store is the primary Windows distribution channel', [StringComparison]::Ordinal)) {
-    throw 'The Store documentation does not identify the primary Windows distribution channel.'
+if (-not $documentation.Contains('Microsoft Store is the only packaged Windows distribution channel', [StringComparison]::Ordinal)) {
+    throw 'The Store documentation does not identify the only packaged Windows distribution channel.'
 }
 if (-not $documentation.Contains('must not be attached to a GitHub Release', [StringComparison]::Ordinal)) {
     throw 'The Store documentation does not prohibit direct distribution of the unsigned MSIX.'
@@ -168,10 +194,47 @@ if (-not $listing.Contains('Screenshots must use synthetic accounts only.', [Str
 }
 if ($publicVersion.displayVersion -notmatch '^\d+\.\d+\.\d+$' -or
     $publicVersion.packageVersion -notmatch '^\d+\.\d+\.\d+\.0$' -or
-    $publicVersion.packageVersion -cne "$($publicVersion.displayVersion).0") {
+    ([version]$publicVersion.displayVersion).Major -ne ([version]$publicVersion.packageVersion).Major) {
     throw 'The canonical public Microsoft Store version is invalid.'
 }
-& $publicVersionUpdater -PackageVersion $publicVersion.packageVersion -Check
+& $publicVersionUpdater `
+    -PackageVersion $publicVersion.packageVersion `
+    -DisplayVersion $publicVersion.displayVersion `
+    -Check
+
+$versionUpdateFixture = Join-Path ([IO.Path]::GetTempPath()) (
+    'otp-harbor-store-version-' + [Guid]::NewGuid().ToString('N'))
+try {
+    foreach ($relativePath in @(
+        'readme.md',
+        'site/index.html',
+        'packaging/windows-store/STORE_LISTING.md',
+        'packaging/windows-store/public-version.json'
+    )) {
+        $source = Join-Path $repositoryRoot $relativePath
+        $destination = Join-Path $versionUpdateFixture $relativePath
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+        Copy-Item -LiteralPath $source -Destination $destination
+    }
+    & $publicVersionUpdater `
+        -RepositoryRoot $versionUpdateFixture `
+        -PackageVersion '2.0.65535.0'
+    $updatedVersion = Get-Content `
+        -LiteralPath (Join-Path $versionUpdateFixture 'packaging/windows-store/public-version.json') `
+        -Raw | ConvertFrom-Json
+    $updatedReadme = [IO.File]::ReadAllText((Join-Path $versionUpdateFixture 'readme.md'))
+    if ($updatedVersion.displayVersion -cne '2.0.0' -or
+        $updatedVersion.packageVersion -cne '2.0.65535.0' -or
+        -not $updatedReadme.Contains('Microsoft%20Store-2.0.0-', [StringComparison]::Ordinal)) {
+        throw 'The Store publication updater did not infer the stable display version.'
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $versionUpdateFixture -PathType Container) {
+        Remove-Item -LiteralPath $versionUpdateFixture -Recurse -Force
+    }
+}
+
 if (-not $listing.Contains("## Version $($publicVersion.displayVersion) release notes", [StringComparison]::Ordinal) -or
     -not $readme.Contains("Microsoft%20Store-$($publicVersion.displayVersion)-", [StringComparison]::Ordinal) -or
     -not $readme.Contains("OTP Harbor ``$($publicVersion.displayVersion)`` is publicly available", [StringComparison]::Ordinal) -or
@@ -181,6 +244,7 @@ if (-not $listing.Contains("## Version $($publicVersion.displayVersion) release 
 }
 foreach ($control in @(
     'mark_as_published:',
+    'display_version:',
     'Set-PublicMicrosoftStoreVersion.ps1',
     'mark-public-version:',
     'gh pr create'

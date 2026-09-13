@@ -32,9 +32,10 @@ h2 { font-size: clamp(2rem, 4vw, 3.4rem); }
 .lede { color: var(--muted); font-size: 1.2rem; max-width: 660px; }
 .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; align-items: center; }
 .actions.vertical { flex-direction: column; align-items: stretch; margin: 0; }
-.button { display: inline-flex; justify-content: center; padding: 13px 20px; border-radius: 9px; font-weight: 700; text-decoration: none; border: 1px solid var(--line); }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 13px 20px; border-radius: 9px; font-weight: 700; text-decoration: none; border: 1px solid var(--line); }
 .button.primary { background: var(--violet); border-color: var(--violet); color: #081424; }
 .button.secondary { background: var(--panel-soft); }
+.store-symbol { width: 19px; height: 19px; flex: 0 0 auto; fill: currentColor; }
 a.button:hover, a.button:focus-visible { transform: translateY(-1px); filter: brightness(1.08); }
 .release-note, .language-note { color: var(--muted); font-size: .93rem; max-width: 680px; }
 .product-shot { margin: 0; padding: 13px; border: 1px solid var(--line); background: var(--panel); border-radius: 18px; box-shadow: 0 30px 70px rgba(0,0,0,.3); }

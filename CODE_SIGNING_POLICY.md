@@ -1,11 +1,11 @@
 # Code signing policy
 
-**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. A future reapplication may be considered after the project has established broader public adoption and independent trust signals. Current GitHub preview builds are unsigned. The public Microsoft Store package is the primary Windows channel; Microsoft signs accepted Store packages during certification.
+**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. Reapplication is deferred until the project has materially stronger public adoption signals, including GitHub stars and verified download usage. Windows is distributed only through Microsoft Store certification; stable GitHub releases do not attach unsigned Windows binaries.
 
 This policy covers the distinct platform distribution paths. They must never be presented as interchangeable:
 
 - **Microsoft Store (primary):** OTP Harbor is publicly available as Store product `9P31KH5L924P`. CI creates unsigned MSIX inputs solely for Partner Center; Microsoft signs accepted packages and the Store manages updates.
-- **GitHub (secondary):** source code and explicitly labeled previews. Direct Windows and portable Linux packages use an Ed25519-signed appcast; current Windows RC executables remain unsigned at the operating-system level. A future stable Windows direct-download channel remains blocked unless an independent Authenticode trust path is approved and verified.
+- **GitHub (secondary):** stable source archives, Linux packages, release-integrity metadata, and the production-signed Android APK. Portable Linux packages use an Ed25519-signed appcast. A future Windows direct-download channel remains blocked unless an independent Authenticode trust path is approved and verified.
 - **Android on GitHub:** a separately downloadable universal APK under the permanent
   `io.github.legends.otpharbor` ID. Every public APK must carry the pinned production Android
   app-signing certificate; development builds use the isolated `.debug` application ID.
@@ -25,8 +25,8 @@ Changes from contributors who do not have commit access require maintainer revie
 - Release versions use the documented `v<major>.<minor>.<patch>` format. Microsoft Store package versions use four components and reserve the fourth component as `0`.
 - The Store package is built from this public repository with the exact case-sensitive identity supplied by Partner Center. Placeholder CI identities are smoke-test inputs only.
 - Store packages set `DistributionMode` to `store`, disable application-owned updates, and exclude the standalone updater.
-- GitHub direct packages set `DistributionMode` to `direct`. Stable packages use the stable GitHub Release appcast; RC packages use the signed public RC feed and may advance to a newer RC or stable release.
-- The public RC endpoint mirrors only the highest versioned published release whose appcast signature verifies against the client-embedded Ed25519 key. It never signs or modifies release metadata.
+- Portable Linux packages set `DistributionMode` to `direct` and use the stable GitHub Release appcast. Microsoft Store and Linux DEB packages keep application-owned updates disabled.
+- The legacy public RC endpoint remains only to move already-installed RC clients to the stable release. It mirrors only a published release whose appcast signature verifies against the client-embedded Ed25519 key and never signs or modifies metadata.
 - The generated unsigned MSIX and its SHA-256 metadata are retained only for the controlled Partner Center handoff.
 - Android's visible version follows the shared release tag, while its deterministic integer version code increases across release candidates and stable releases.
 - The Android release job is protected by the `android-release` environment, reconstructs the signing key only in temporary runner storage, passes passwords through files, verifies the resulting APK signature and manifest identity, and rejects a certificate-fingerprint mismatch.
@@ -39,7 +39,7 @@ Release engineering files are owned through [CODEOWNERS](.github/CODEOWNERS). Ch
 
 ## Privacy
 
-See the [privacy policy](PRIVACY.md). OTP Harbor does not transfer vault or usage information to project-operated systems. Store packages use Store-managed updates and disable the application-owned GitHub update client. GitHub direct packages contact only the configured signed update feed and artifact URLs during an update check.
+See the [privacy policy](PRIVACY.md). OTP Harbor does not transfer vault or usage information to project-operated systems. Store packages use Store-managed updates and disable the application-owned GitHub update client. Portable Linux packages contact only the configured signed update feed and artifact URLs during an update check.
 
 ## Verification and incident response
 

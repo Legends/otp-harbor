@@ -83,7 +83,7 @@
   <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Copiado. El borrado automático del portapapeles no está disponible en esta plataforma.</value></data>
   <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>El código no se pudo copiar al portapapeles.</value></data>
   <data name="CodeRemainingTime" xml:space="preserve"><value>Validez restante del código</value></data>
-  <data name="QrInvalid" xml:space="preserve"><value>El código QR no corresponde a una cuenta TOTP compatible.</value></data>
+  <data name="QrInvalid" xml:space="preserve"><value>El código QR no corresponde a una cuenta TOTP compatible ni a una exportación de Google Authenticator.</value></data>
   <data name="QrImportFailed" xml:space="preserve"><value>La cuenta QR no se pudo importar de forma segura. Los datos cifrados existentes no se modificaron.</value></data>
   <data name="QrAccountAdded" xml:space="preserve"><value>Cuenta QR añadida.</value></data>
   <data name="QrAccountUpdated" xml:space="preserve"><value>Cuenta existente actualizada desde el código QR.</value></data>
@@ -142,7 +142,7 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>La imagen de código QR seleccionada supera el límite de tamaño seguro.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>La imagen del código QR no se pudo leer de forma segura. No se modificaron datos de cuentas.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No se seleccionó ninguna imagen de código QR.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Escanee el QR de una cuenta o un QR de exportación de Google Authenticator.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>La cámara puede escanear códigos QR de una sola cuenta si su resolución es suficiente. Para exportaciones de Google Authenticator con varias cuentas, use una imagen QR nítida y elija «Abrir imagen QR» abajo.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Se ha detectado una exportación de Google Authenticator. Cuentas encontradas: {0}. ¿Importarlas?</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Cancelar escaneo</value></data>

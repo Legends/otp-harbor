@@ -550,7 +550,7 @@ jobs:
   package-avalonia-release:
     name: Package Avalonia release (${{ matrix.rid }})
     needs: [build-test, unix-file-security, avalonia-ui-smoke, m3-package-probe]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: ${{ matrix.rid == 'win-x64' && 'windows-2025' || matrix.rid == 'linux-x64' && 'ubuntu-24.04' || 'macos-15' }}
     permissions:
       actions: read
@@ -558,7 +558,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        rid: ${{ fromJSON(contains(github.ref_name, '-rc') && '["win-x64","linux-x64"]' || '["win-x64","linux-x64","osx-arm64"]') }}
+        rid: [win-x64, linux-x64]
 
     env:
       MACOS_SIGNING_CERTIFICATE_BASE64: ${{ secrets.MACOS_SIGNING_CERTIFICATE_BASE64 }}
@@ -634,7 +634,7 @@ jobs:
           --output release-publish
 
       - name: Publish fast framework-dependent Windows host
-        if: ${{ matrix.rid == 'win-x64' }}
+        if: ${{ matrix.rid == 'win-x64' && (contains(github.ref_name, '-rc') || vars.SIGNPATH_PRODUCTION_ENABLED == 'true') }}
         run: >-
           dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
           --configuration Release
@@ -673,7 +673,7 @@ jobs:
 
       - name: Upload unsigned Windows payload for SignPath
         id: upload-signpath-artifact
-        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') }}
+        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' }}
         uses: actions/upload-artifact@v6
         with:
           name: signpath-unsigned-windows-${{ github.sha }}
@@ -684,7 +684,7 @@ jobs:
           if-no-files-found: error
 
       - name: Submit Windows payload to SignPath
-        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') }}
+        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' }}
         uses: signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627 # v2.3
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -699,7 +699,7 @@ jobs:
             version: ${{ toJSON(steps.versioning.outputs.release_version) }}
 
       - name: Validate and apply SignPath result
-        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') }}
+        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' }}
         shell: pwsh
         run: |
           ./scripts/release/Apply-SignPathSignedPayload.ps1 `
@@ -759,29 +759,34 @@ jobs:
           New-Item -ItemType Directory -Path release-assets | Out-Null
           switch ("${{ matrix.rid }}") {
             "win-x64" {
-              $appcastUrl = if ("${{ steps.versioning.outputs.channel }}" -eq "rc") {
-                "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
+              if ("${{ steps.versioning.outputs.channel }}" -eq "stable") {
+                ./scripts/release/Set-PackageUpdatePolicy.ps1 `
+                  -PackageDirectory release-publish `
+                  -DistributionMode store `
+                  -Channel stable `
+                  -DisableUpdates
+                Compress-Archive `
+                  -Path release-publish/* `
+                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
               }
               else {
-                "https://github.com/Legends/otp-harbor/releases/latest/download/appcast-v2.xml"
-              }
-              ./scripts/release/Set-PackageUpdatePolicy.ps1 `
-                -PackageDirectory release-publish `
-                -DistributionMode direct `
-                -Channel "${{ steps.versioning.outputs.channel }}" `
-                -AppcastUrl $appcastUrl
-              ./scripts/release/Set-PackageUpdatePolicy.ps1 `
-                -PackageDirectory release-fast `
-                -DistributionMode direct `
-                -Channel "${{ steps.versioning.outputs.channel }}" `
-                -AppcastUrl $appcastUrl
-              Compress-Archive `
-                -Path release-publish/* `
-                -DestinationPath "release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
-              Compress-Archive `
-                -Path release-fast/* `
-                -DestinationPath "release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip"
-              if ("${{ steps.versioning.outputs.channel }}" -eq "rc") {
+                $appcastUrl = "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
+                ./scripts/release/Set-PackageUpdatePolicy.ps1 `
+                  -PackageDirectory release-publish `
+                  -DistributionMode direct `
+                  -Channel rc `
+                  -AppcastUrl $appcastUrl
+                ./scripts/release/Set-PackageUpdatePolicy.ps1 `
+                  -PackageDirectory release-fast `
+                  -DistributionMode direct `
+                  -Channel rc `
+                  -AppcastUrl $appcastUrl
+                Compress-Archive `
+                  -Path release-publish/* `
+                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
+                Compress-Archive `
+                  -Path release-fast/* `
+                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip"
                 $productVersion = "${{ steps.versioning.outputs.release_version }}".Split('-')[0]
                 ./scripts/release/New-WindowsMsi.ps1 `
                   -PublishDirectory release-publish `
@@ -848,7 +853,7 @@ jobs:
   package-android-release:
     name: Package signed Android release
     needs: [build-test, android-build-test]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: windows-2025
     environment: android-release
     permissions:
@@ -954,7 +959,7 @@ jobs:
   package-microsoft-store-msix:
     name: Package Microsoft Store MSIX
     needs: [package-avalonia-release]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: windows-2025
     permissions:
       actions: read
@@ -1248,7 +1253,7 @@ jobs:
         run: gh workflow run pages.yml --repo "${{ github.repository }}"
 
   publish-avalonia-release:
-    name: Publish complete signed release
+    name: Publish OTP Harbor stable release
     needs: [package-avalonia-release, package-android-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
@@ -1271,12 +1276,11 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Download all retained release artifacts
+      - name: Download retained Linux release artifacts
         uses: actions/download-artifact@v6
         with:
-          pattern: avalonia-release-*-${{ github.sha }}
+          name: avalonia-release-linux-x64-${{ github.sha }}
           path: release-assets
-          merge-multiple: true
 
       - name: Download retained Android release artifact
         uses: actions/download-artifact@v6
@@ -1299,10 +1303,10 @@ jobs:
           "prerelease=$(if ($rcNumber) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem release-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|macos-arm64|linux-x64)-.+\.(zip|dmg|tar\.gz)|OTP-Harbor-android-universal-.+\.apk|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-linux-x64-.+\.tar\.gz|OTP-Harbor-android-universal-.+\.apk|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 6) {
-            throw "The aggregate release must contain exactly six selected artifacts."
+          if ($artifactPaths.Count -ne 3) {
+            throw "The stable GitHub release must contain exactly the Linux and Android artifacts."
           }
 
           ./scripts/release/New-ReleaseArtifactManifest.ps1 `
@@ -1436,9 +1440,10 @@ jobs:
           "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
           $delimiter >> $env:GITHUB_OUTPUT
 
-      - name: Upload complete signed release to a draft
+      - name: Upload stable GitHub release to a draft
         uses: softprops/action-gh-release@v3.0.1
         with:
+          name: OTP Harbor ${{ steps.versioning.outputs.release_version }}
           draft: true
           prerelease: ${{ steps.versioning.outputs.prerelease }}
           make_latest: false
@@ -1450,15 +1455,14 @@ jobs:
 
             ## Code signing policy
 
-            See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) and [privacy policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/PRIVACY.md). This optional direct-download path publishes Windows artifacts only after the workflow has verified their Authenticode signatures and product metadata.
+            Windows is distributed through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), which signs accepted MSIX packages and manages updates. No unsigned Windows executable is attached to this stable GitHub release. SignPath remains deferred until the project has sufficient independent adoption signals.
+
+            GitHub provides the Linux packages, the production-signed Android APK, release integrity metadata, and the source archives generated by GitHub. See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) and [privacy policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/PRIVACY.md).
 
             ## Android
 
             The universal APK is signed with OTP Harbor's pinned Android app-signing certificate and supports in-place upgrades on Android 9 and newer. It is a separate download and is not bundled into a desktop installer.
           files: |
-            release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip
-            release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
-            release-assets/OTP-Harbor-macos-arm64-${{ steps.versioning.outputs.release_version }}.dmg
             release-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             release-assets/otp-harbor_*_amd64.deb
             release-assets/OTP-Harbor-android-universal-${{ steps.versioning.outputs.release_version }}.apk
@@ -1490,7 +1494,7 @@ jobs:
             -F prerelease=${{ steps.versioning.outputs.prerelease }} `
             -f make_latest=${{ steps.latest_release.outputs.make_latest }} | Out-Null
 
-      - name: Refresh the public RC appcast endpoint
+      - name: Refresh the website and legacy RC upgrade feed
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}

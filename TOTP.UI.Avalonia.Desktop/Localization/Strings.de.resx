@@ -83,7 +83,7 @@
   <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Kopiert. Das automatische Leeren der Zwischenablage ist auf dieser Plattform nicht verfügbar.</value></data>
   <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>Der Code konnte nicht in die Zwischenablage kopiert werden.</value></data>
   <data name="CodeRemainingTime" xml:space="preserve"><value>Verbleibende Code-Gültigkeit</value></data>
-  <data name="QrInvalid" xml:space="preserve"><value>Der QR-Code ist kein gültiges unterstütztes TOTP-Konto.</value></data>
+  <data name="QrInvalid" xml:space="preserve"><value>Der QR-Code ist weder ein unterstütztes TOTP-Konto noch ein Google-Authenticator-Export.</value></data>
   <data name="QrImportFailed" xml:space="preserve"><value>Das QR-Konto konnte nicht sicher importiert werden. Vorhandene verschlüsselte Daten wurden nicht geändert.</value></data>
   <data name="QrAccountAdded" xml:space="preserve"><value>QR-Konto hinzugefügt.</value></data>
   <data name="QrAccountUpdated" xml:space="preserve"><value>Das vorhandene Konto wurde aus dem QR-Code aktualisiert.</value></data>
@@ -142,7 +142,7 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>Das ausgewählte QR-Code-Bild überschreitet die sichere Größenbegrenzung.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>Das QR-Code-Bild konnte nicht sicher gelesen werden. Es wurden keine Kontodaten geändert.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>Es wurde kein QR-Code-Bild ausgewählt.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Scannen Sie einen Konto-QR-Code oder einen Export-QR-Code aus Google Authenticator.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Das Scannen mit der Kamera unterstützt QR-Codes für einzelne Konten, wenn die Kameraauflösung ausreicht. Verwenden Sie für Google-Authenticator-Exporte mit mehreren Konten ein scharfes QR-Bild und wählen Sie unten „QR-Bild öffnen“.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Aus Google Authenticator importieren</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Google-Authenticator-Export erkannt. Gefundene Konten: {0}. Jetzt importieren?</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Scan abbrechen</value></data>

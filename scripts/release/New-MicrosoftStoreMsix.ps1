@@ -110,7 +110,9 @@ function New-StoreImage {
 
 try {
     if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
-        $productVersion = '{0}.{1}.{2}' -f $packageVersion.Major, $packageVersion.Minor, $packageVersion.Build
+        $productBuild = if ($packageVersion.Build -eq 65535) { 0 } else { $packageVersion.Build }
+        $productVersion = '{0}.{1}.{2}' -f $packageVersion.Major, $packageVersion.Minor, $productBuild
+        $assemblyVersion = "$productVersion.0"
         & dotnet publish `
             (Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj') `
             --configuration Release `
@@ -121,6 +123,7 @@ try {
             --output $packageRoot `
             -p:Version=$productVersion `
             -p:FileVersion=$Version `
+            -p:AssemblyVersion=$assemblyVersion `
             -p:InformationalVersion=$productVersion
         if ($LASTEXITCODE -ne 0) { throw 'The Windows publish step failed.' }
     }

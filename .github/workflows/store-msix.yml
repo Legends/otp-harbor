@@ -34,6 +34,10 @@ on:
         description: 'Four-part Store version; fourth component must be 0'
         required: true
         type: string
+      display_version:
+        description: 'Optional customer-facing README/site version override; stable package versions are inferred'
+        required: false
+        type: string
       mark_as_published:
         description: 'After Partner Center confirms publication, open a PR that updates the public Store version instead of building'
         required: true
@@ -96,6 +100,7 @@ jobs:
     runs-on: windows-latest
     env:
       STORE_VERSION: ${{ inputs.version }}
+      STORE_DISPLAY_VERSION: ${{ inputs.display_version }}
     steps:
       - name: Checkout master
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -105,7 +110,12 @@ jobs:
 
       - name: Update confirmed public Store version
         shell: pwsh
-        run: ./scripts/release/Set-PublicMicrosoftStoreVersion.ps1 -PackageVersion $env:STORE_VERSION
+        run: |
+          $parameters = @{ PackageVersion = $env:STORE_VERSION }
+          if (-not [string]::IsNullOrWhiteSpace($env:STORE_DISPLAY_VERSION)) {
+            $parameters.DisplayVersion = $env:STORE_DISPLAY_VERSION
+          }
+          ./scripts/release/Set-PublicMicrosoftStoreVersion.ps1 @parameters
 
       - name: Validate public release metadata
         shell: pwsh

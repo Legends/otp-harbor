@@ -3,15 +3,20 @@
 Updates or verifies the Microsoft Store version shown in public project metadata.
 
 .DESCRIPTION
-Uses a confirmed, publicly deployed four-part Microsoft Store package version as the single input.
-The fourth component must be zero. The script updates the canonical version file and every public
-location that displays the Store version. Use -Check in CI to detect drift without changing files.
+Uses a confirmed, publicly deployed four-part Microsoft Store package version and its customer-facing
+product version. The fourth package component must be zero. Stable package versions whose build is
+65535 are mapped back to their SemVer display version automatically. The script updates the canonical
+version file and every public location that displays the Store version. Use -Check in CI to detect
+drift without changing files.
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
     [ValidatePattern('^\d+\.\d+\.\d+\.0$')]
     [string]$PackageVersion,
+
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
+    [string]$DisplayVersion,
 
     [string]$RepositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path,
 
@@ -22,7 +27,18 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $resolvedRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
-$displayVersion = $PackageVersion.Substring(0, $PackageVersion.LastIndexOf('.'))
+$parsedPackageVersion = [version]$PackageVersion
+$displayVersion = if ([string]::IsNullOrWhiteSpace($DisplayVersion)) {
+    if ($parsedPackageVersion.Build -eq 65535) {
+        $semVerMinor = [Math]::Floor($parsedPackageVersion.Minor / 1000)
+        $semVerPatch = $parsedPackageVersion.Minor % 1000
+        '{0}.{1}.{2}' -f $parsedPackageVersion.Major, $semVerMinor, $semVerPatch
+    } else {
+        $PackageVersion.Substring(0, $PackageVersion.LastIndexOf('.'))
+    }
+} else {
+    $DisplayVersion
+}
 $versionPath = Join-Path $resolvedRoot 'packaging/windows-store/public-version.json'
 
 if (Test-Path -LiteralPath $versionPath -PathType Leaf) {

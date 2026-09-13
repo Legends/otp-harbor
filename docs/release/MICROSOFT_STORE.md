@@ -1,9 +1,9 @@
 # Microsoft Store release
 
-Microsoft Store is the primary Windows distribution channel for OTP Harbor. GitHub remains the
-source repository and provides explicitly marked preview archives for advanced testing. Direct
-GitHub builds discover updates through the project's Ed25519-signed appcast; Store builds leave
-update discovery and installation to Microsoft Store.
+Microsoft Store is the only packaged Windows distribution channel for OTP Harbor. GitHub remains
+the source repository and publishes stable Linux and Android packages, but stable GitHub releases
+do not attach unsigned Windows binaries. Store builds leave update discovery and installation to
+Microsoft Store.
 
 OTP Harbor is publicly listed as Store product [`9P31KH5L924P`](https://apps.microsoft.com/detail/9P31KH5L924P).
 The Windows client can open it directly with `ms-windows-store://pdp/?productid=9P31KH5L924P`.
@@ -86,10 +86,14 @@ files. Store-managed updates are the only update mechanism for this package.
 
 Building or submitting an MSIX does not make that version public. After Partner Center confirms
 that the exact package is publicly available, run **Build Microsoft Store MSIX** manually with its
-four-part package version and enable **mark_as_published**. This second release stage does not build
-another package. It derives the customer-facing three-part version and opens a pull request that
-updates the canonical [`public-version.json`](../../packaging/windows-store/public-version.json),
-README badge and release status, website release note, and Store listing release heading together.
+four-part package version and enable **mark_as_published**. Stable package versions ending in
+`.65535.0` are automatically mapped back to their customer-facing SemVer version (for example,
+`2.0.65535.0` becomes `2.0.0`); **display_version** remains available as an explicit override. This
+required second release stage does not build another package. It
+opens a pull request that updates the canonical
+[`public-version.json`](../../packaging/windows-store/public-version.json), README badge and release
+status, website release note, and Store listing release heading together. Run it after every Store
+publication so GitHub never retains an older Store badge.
 
 Review the live Store page before merging that pull request. Normal pull-request and `master`
 checks then validate the synchronized metadata and deploy the website. Never enable

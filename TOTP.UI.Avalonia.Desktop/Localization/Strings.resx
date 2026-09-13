@@ -83,7 +83,7 @@
   <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Copied. Automatic clipboard clearing is unavailable on this platform.</value></data>
   <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>The code could not be copied to the clipboard.</value></data>
   <data name="CodeRemainingTime" xml:space="preserve"><value>Code validity remaining</value></data>
-  <data name="QrInvalid" xml:space="preserve"><value>The QR code is not a valid supported TOTP account.</value></data>
+  <data name="QrInvalid" xml:space="preserve"><value>The QR code is not a supported TOTP account or Google Authenticator export.</value></data>
   <data name="QrImportFailed" xml:space="preserve"><value>The QR account could not be imported safely. Existing encrypted data was not changed.</value></data>
   <data name="QrAccountAdded" xml:space="preserve"><value>QR account added.</value></data>
   <data name="QrAccountUpdated" xml:space="preserve"><value>Existing account updated from the QR code.</value></data>
@@ -142,7 +142,7 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>The selected QR code image exceeds the safe size limit.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>The QR code image could not be read safely. No account data was changed.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No QR code image was selected.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Scan an account QR code or a Google Authenticator export QR code.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Camera scanning supports single-account QR codes when the camera resolution is sufficient. For Google Authenticator exports containing multiple accounts, use a sharp QR image and choose Open QR image below.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Import from Google Authenticator</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Google Authenticator export detected. Accounts found: {0}. Import them?</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Cancel scan</value></data>

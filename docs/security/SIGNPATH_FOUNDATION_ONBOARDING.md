@@ -4,7 +4,7 @@
 
 The initial SignPath Foundation application was not approved because OTP Harbor did not yet have sufficient independent public visibility and adoption signals. There is no Foundation certificate and no active SignPath-backed production channel. Microsoft Store is now the primary Windows distribution path.
 
-This document is retained only as a future reapplication runbook. Do not configure SignPath credentials, describe a release as SignPath-signed, or activate the direct stable-download workflow unless a later application is approved and the returned Authenticode signatures have been verified.
+This document is retained only as a future reapplication runbook. Reapplication is deferred until GitHub stars, release-download counts, and other independently verifiable active-user signals show materially broader adoption. Do not configure SignPath credentials, set `SIGNPATH_PRODUCTION_ENABLED`, describe a release as SignPath-signed, or activate the direct Windows download workflow unless a later application is approved and the returned Authenticode signatures have been verified.
 
 Repository evidence:
 

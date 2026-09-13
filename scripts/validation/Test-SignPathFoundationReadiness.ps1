@@ -34,7 +34,7 @@ $assetProvenance = Read-RepositoryFile "docs/assets/ASSET_PROVENANCE.md"
 $requiredReadmeText = @(
     "## Code signing policy",
     "The previous SignPath Foundation application was not approved at this stage.",
-    "Current GitHub preview builds are unsigned.",
+    "stable GitHub releases do not attach unsigned Windows binaries.",
     "[OTP Harbor privacy policy](PRIVACY.md)"
 )
 foreach ($requiredText in $requiredReadmeText) {
@@ -45,7 +45,7 @@ foreach ($requiredText in $requiredReadmeText) {
 
 foreach ($requiredText in @(
     "The previous SignPath Foundation application was not approved at this stage.",
-    "Current GitHub preview builds are unsigned.",
+    "stable GitHub releases do not attach unsigned Windows binaries.",
     "## Team roles",
     "## Build and signing controls",
     "## Privacy"
@@ -97,7 +97,8 @@ $requiredWorkflowText = @(
     "signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627",
     "signing-policy-slug: release-signing",
     "artifact-configuration-slug: windows-release-v1",
-    "SignPath Windows rehearsal (no release)"
+    "SignPath Windows rehearsal (no release)",
+    "vars.SIGNPATH_PRODUCTION_ENABLED == 'true'"
 )
 foreach ($requiredText in $requiredWorkflowText) {
     if (-not $workflow.Contains($requiredText, [StringComparison]::Ordinal)) {

@@ -11,7 +11,7 @@
 
 **OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
-> **Release status:** OTP Harbor `2.0.17` is publicly available from the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) for Windows. `v2.0.0` remains in release-candidate testing for direct GitHub packages. Current [GitHub prereleases](https://github.com/Legends/otp-harbor/releases) include a production-signed Android universal APK alongside unsigned Windows and Linux previews that use the Ed25519-signed RC appcast. Use synthetic accounts and keep a tested encrypted backup while evaluating prereleases.
+> **Release status:** OTP Harbor `v2.0.0` is the stable GitHub release. Windows is delivered only through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `2.0.17` is publicly available and Microsoft signs accepted MSIX packages. The matching [GitHub release](https://github.com/Legends/otp-harbor/releases/latest) provides Linux packages, a production-signed Android universal APK, integrity metadata, and source archives—without unsigned Windows binaries or prerelease labeling.
 
 <p align="center">
   <img src="packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png" alt="OTP Harbor for Windows with an encrypted local TOTP vault and synthetic sample accounts" width="960" />
@@ -80,20 +80,18 @@ All accounts, codes, and QR payloads shown in the marketing artwork are syntheti
 
 **[Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) is the primary Windows distribution channel** (Store ID `9P31KH5L924P`). Microsoft signs the published MSIX and manages Store updates.
 
-[GitHub Releases](https://github.com/Legends/otp-harbor/releases) remains the secondary channel for source-oriented users and explicit previews. GitHub direct packages use an Ed25519-signed appcast; Microsoft Store packages rely only on Store-managed updates.
+[GitHub Releases](https://github.com/Legends/otp-harbor/releases/latest) provides the stable Linux and Android downloads plus source archives. Portable Linux packages use an Ed25519-signed appcast; Microsoft Store packages rely only on Store-managed updates.
 
 | Platform | Package type |
 | --- | --- |
-| Windows 10/11 x64 | Public Microsoft Store MSIX; unsigned GitHub RC ZIPs with a signed application update feed; optional unsigned system-wide MSI with a branded setup flow, desktop and Start-menu shortcuts, administrator approval, and manual MSI upgrades |
+| Windows 10/11 x64 | Public Microsoft Store MSIX only; Microsoft signs accepted packages and manages updates |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
-| Android 9 or newer | Production-signed universal APK from the matching GitHub prerelease; manual installation with in-place upgrade support |
+| Android 9 or newer | Production-signed universal APK from the matching stable GitHub release; manual installation with in-place upgrade support |
 
 After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
 
 Maintainers can follow the [Microsoft Store release guide](docs/release/MICROSOFT_STORE.md) and [Android release guide](docs/release/ANDROID.md). The unsigned MSIX produced by the repository is exclusively a Partner Center submission input and must never be sideloaded or attached to a GitHub Release.
-
-The optional GitHub RC MSI shows a completion message and lets the user choose whether to launch OTP Harbor. It installs for all users and creates desktop and Start-menu shortcuts. Because this preview MSI is not Authenticode-signed, Windows can show an unknown-publisher warning and may scan the first launch; verify its published SHA-256 checksum before installation.
 
 ## Security and recovery
 
@@ -109,7 +107,7 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Nev
 
 ## Code signing policy
 
-**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. A future reapplication may be considered after the project has established broader public adoption and independent trust signals. Current GitHub preview builds are unsigned. The public Microsoft Store package is the primary Windows channel and is signed through the Store certification process.
+**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. Reapplication is deferred until the project has materially stronger public adoption signals, including GitHub stars and verified download usage. Windows is therefore distributed only through Microsoft Store certification; stable GitHub releases do not attach unsigned Windows binaries.
 
 The Store and optional future direct-download trust models are defined in the [code signing policy](CODE_SIGNING_POLICY.md). Data handling is described in the [OTP Harbor privacy policy](PRIVACY.md).
 
@@ -136,9 +134,9 @@ Users who intentionally run OTP Harbor from source can use the repository launch
 
 The launcher checks the official `origin/master` branch on every invocation. When a newer commit exists, it applies only a fast-forward update, restores dependencies, compiles the desktop app in Release mode, and starts it. When the source revision and the launcher's verified build are already current, it starts that build without compiling again. Git and the .NET 10 SDK are required.
 
-For safety, the launcher refuses to update a modified, ahead, or diverged checkout and never discards local files. It is a convenience for source users, not a signed binary update channel; Microsoft Store installations should use Store updates, while official direct packages use the signed appcast.
+For safety, the launcher refuses to update a modified, ahead, or diverged checkout and never discards local files. It is a convenience for source users, not a signed binary update channel; Microsoft Store installations use Store updates, while portable Linux packages use the signed appcast.
 
-The Android host remains in the dedicated [Android solution](TOTP.Android.sln), so desktop-only development does not require the Android workload. Tagged releases still publish its separately signed APK alongside the desktop artifacts. See the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
+The Android host remains in the dedicated [Android solution](TOTP.Android.sln), so desktop-only development does not require the Android workload. Stable tagged releases publish its separately signed APK alongside the Linux artifacts. See the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for engineering rules and [docs/README.md](docs/README.md) for the maintained documentation map.
 
