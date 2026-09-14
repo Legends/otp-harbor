@@ -1,7 +1,8 @@
 # Android release and signing
 
-OTP Harbor ships Android as a separate, installable artifact in the same versioned GitHub Release
-as the desktop applications. The APK is not embedded in a desktop installer or archive. A Google
+OTP Harbor ships Android through independent GitHub Releases triggered by `android-v<major>.<minor>.<patch>`
+tags. Desktop releases continue to use `v<major>.<minor>.<patch>`, so either application can ship
+without incrementing or republishing the other. The APK is not embedded in a desktop installer or archive. A Google
 Play Android App Bundle will be produced by a separate submission workflow when Play distribution
 is enabled; an AAB is not directly installable and is therefore not a GitHub download for users.
 
@@ -78,16 +79,16 @@ fails closed unless exactly one signer fingerprint is present.
 
 ## Versioning
 
-The visible Android version matches the Git tag without its `v` prefix. Android's integer
+The visible Android version matches its `android-v` tag without that prefix. Android's integer
 `versionCode` is mapped deterministically by `scripts/release/Get-AndroidReleaseVersion.ps1`:
 
 ```text
-major * 10,000,000 + minor * 100,000 + patch * 100 + qualifier
+major * 10,000,000 + minor * 100,000 + patch * 100 + 99
 ```
 
-Release candidates use qualifier `1` through `98`; stable releases use `99`. This guarantees that
-every stable build supersedes its release candidates and that later semantic versions remain newer.
-Google Play's maximum version code is enforced by the script.
+Android release tags are stable-only. Reserving the final two digits keeps the mapping compatible
+with already published APKs while ensuring later semantic versions are newer. Google Play's maximum
+version code is enforced by the script.
 
 ## First-public-release checklist
 
@@ -97,7 +98,8 @@ Google Play's maximum version code is enforced by the script.
 4. Run the Android CI build and install its signed candidate on a clean device.
 5. Verify account creation, QR import, encrypted export/import, biometric unlock, background lock,
    and an in-place upgrade from the previous signed APK.
-6. Publish the shared release tag. Download and independently verify the APK fingerprint and SHA-256.
+6. Push the independent `android-v<major>.<minor>.<patch>` tag. Download and independently verify
+   the APK fingerprint and SHA-256 from the Android-specific GitHub Release.
 
 Development builds previously installed under `io.github.legends.otpharbor` used a development key
 and cannot be upgraded to the production-signed package. Export any needed test vault first, then
@@ -112,9 +114,12 @@ the production application.
 - **Data-flow impact:** packaging processes compiled application files and signing material only; it
   does not read, migrate, upload, or alter vaults, OTP seeds, passwords, or backups.
 - **Compatibility impact:** release builds permanently use `io.github.legends.otpharbor`; debug
-  builds use `.debug`. Existing packages signed with another key cannot be upgraded in place.
-- **Verification evidence:** CI compiles the dedicated Android solution. Release packaging verifies
+  builds use `.debug`. Existing packages signed with another key cannot be upgraded in place. Tag
+  separation changes release scheduling only; package identity, certificate, vault, and backup
+  compatibility remain unchanged.
+- **Verification evidence:** CI continues to validate shared Core and Infrastructure code for both
+  applications, then compiles the dedicated Android solution for `android-v` tags. Release packaging verifies
   the APK signature, application ID, visible version, version code, certificate fingerprint, file
-  hash, and inclusion in the signed aggregate release manifest. Deterministic validation covers
+  hash, and inclusion in the Android release manifest. Deterministic validation covers
   the certificate emitted as PEM, derives its SHA-256 fingerprint from the certificate bytes,
   and rejects malformed, missing, or multiple signing certificates.

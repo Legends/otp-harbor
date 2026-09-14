@@ -132,7 +132,7 @@ foreach ($control in @(
     "-IdentityName 'Legends77.OTPHarbor'",
     "-Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9'",
     'retention-days: 90',
-    'needs: [package-avalonia-release, package-android-release, package-microsoft-store-msix]'
+    'needs: [package-avalonia-release, package-microsoft-store-msix]'
 )) {
     if (-not $releaseWorkflow.Contains($control, [StringComparison]::Ordinal)) {
         throw "The release workflow is missing automatic Store-package control: $control"
@@ -165,7 +165,7 @@ if ($stablePublicationIndex -lt 0) {
 $stablePublication = $releaseWorkflow.Substring($stablePublicationIndex)
 foreach ($control in @(
     'name: OTP Harbor ${{ steps.versioning.outputs.release_version }}',
-    'The stable GitHub release must contain exactly the Linux and Android artifacts.',
+    'The stable desktop GitHub release must contain exactly the two Linux artifacts.',
     'No unsigned Windows executable is attached to this stable GitHub release.'
 )) {
     if (-not $stablePublication.Contains($control, [StringComparison]::Ordinal)) {

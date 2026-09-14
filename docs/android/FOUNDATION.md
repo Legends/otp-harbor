@@ -3,7 +3,7 @@
 Android shares the repository and core security architecture with the desktop application. It keeps
 a dedicated solution for platform tooling and is validated by supported CI. Once the protected
 production-signing environment is configured, tagged builds package it as a separate signed APK in
-the same versioned GitHub Release as the desktop applications.
+an Android-specific GitHub Release independent from the desktop applications.
 
 ## Implemented development MVP
 
@@ -71,8 +71,8 @@ is complete:
 
 Use the dedicated `TOTP.Android.sln` to open the Android app, mobile UI, Android adapters, and their
 shared Core/Infrastructure dependencies together in Visual Studio. Keeping platform entry points in
-separate solution files avoids requiring the Android workload for ordinary desktop development; the
-shared release workflow still validates both graphs.
+separate solution files avoids requiring the Android workload for ordinary desktop development; CI
+still validates both graphs where shared Core or Infrastructure behavior can affect either app.
 
 Build the Android solution explicitly:
 
@@ -104,7 +104,7 @@ depend on IDE-specific Android Fast Deployment state.
 1. Never publish development APKs as production artifacts. Debug builds use the isolated
    `io.github.legends.otpharbor.debug` ID.
 2. Keep the long-lived Android app-signing key outside the repository and require reviewed CI access.
-3. Publish the signed universal APK as a separate asset in the shared GitHub Release; do not place it
+3. Publish the signed universal APK in an `android-v<major>.<minor>.<patch>` GitHub Release; do not place it
    inside desktop packages and do not present an AAB as an end-user download.
 4. Test same-key upgrades before every public Android release.
 

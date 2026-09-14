@@ -11,6 +11,8 @@
   <data name="SetupTitle" xml:space="preserve"><value>Proteja su autenticador</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Cree una contraseña maestra. Seguirá siendo el método de recuperación de su almacén local cifrado.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Contraseña maestra</value></data>
+  <data name="RevealPassword" xml:space="preserve"><value>Mostrar u ocultar contraseña</value></data>
+  <data name="RevealPasswordHelp" xml:space="preserve"><value>Selecciona de nuevo para ocultar la contraseña.</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Confirmar contraseña maestra</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Crear almacén cifrado</value></data>
   <data name="PasswordRequired" xml:space="preserve"><value>Introduzca su contraseña maestra.</value></data>

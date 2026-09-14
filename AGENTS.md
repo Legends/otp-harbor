@@ -303,19 +303,22 @@ Observed workflow expectations:
 - build in `Release`
 - PR test runs are filtered for speed
 - push/tag runs execute the fuller test set
-- tagged releases publish `fast` and `portable` artifacts
+- desktop and Android tags run shared validation but publish only their own platform artifacts
 - appcast generation/signing is integrated when secrets are configured
 
 ### Release tag format
 
-The workflow expects:
+The workflow expects independent stable release tags:
 
 ```text
 v<major>.<minor>.<patch>
-v<major>.<minor>.<patch>-rc<nr>
+android-v<major>.<minor>.<patch>
 ```
 
-Do not change release versioning casually. It affects published assets and appcast metadata.
+Desktop tags publish Linux/source assets and create the Partner Center MSIX input. Android tags
+publish only the signed APK and Android integrity metadata. Historical RC tags remain immutable,
+but new v2 releases are stable-only. Do not change release versioning casually; it affects package
+identity, published assets, and update metadata.
 
 ### Auto-update
 
@@ -373,10 +376,14 @@ When making these changes, document:
 ### Default posture
 
 - read before writing
+- use narrow searches, focused file slices, and bounded command output
+- avoid repeated discovery or validation when inputs have not changed
+- keep progress updates and final summaries concise unless detail is requested or a risk needs explanation
 - prefer small, reversible changes
 - keep edits aligned with current architecture
 - add tests with behavior changes
 - do not "simplify" by removing security boundaries
+- optimize tool calls and test scope without reducing security, localization, regression coverage, or release confidence
 
 ### Before editing
 

@@ -32,7 +32,7 @@ public partial class MainView : UserControl
 
             UnlockMethodPasswordBox.Classes.Remove(UnlockMethodAttentionClass);
             UnlockMethodPasswordBox.Classes.Add(UnlockMethodAttentionClass);
-            UnlockMethodPasswordBox.Focus();
+            UnlockMethodPasswordBox.FocusInput();
 
             DispatcherTimer.RunOnce(
                 () => UnlockMethodPasswordBox.Classes.Remove(UnlockMethodAttentionClass),

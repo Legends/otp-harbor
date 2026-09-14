@@ -1,8 +1,8 @@
 # Microsoft Store release
 
 Microsoft Store is the only packaged Windows distribution channel for OTP Harbor. GitHub remains
-the source repository and publishes stable Linux and Android packages, but stable GitHub releases
-do not attach unsigned Windows binaries. Store builds leave update discovery and installation to
+the source repository; desktop tags publish stable Linux packages, while independent Android tags
+publish signed APKs. Stable desktop GitHub releases do not attach unsigned Windows binaries. Store builds leave update discovery and installation to
 Microsoft Store.
 
 OTP Harbor is publicly listed as Store product [`9P31KH5L924P`](https://apps.microsoft.com/detail/9P31KH5L924P).

@@ -79,7 +79,7 @@ public sealed class MainWindowSmokeTests
     [AvaloniaFact]
     public void RevealableSecretInput_ClickTogglesPersistentDisclosure()
     {
-        var input = new RevealableSecretInput { Text = "test-secret" };
+        var input = new RevealableSecretInput { Text = "test-secret", Width = 320 };
         var window = new Window { Content = input };
 
         try
@@ -88,6 +88,12 @@ public sealed class MainWindowSmokeTests
             window.UpdateLayout();
             var textBox = Assert.Single(input.GetVisualDescendants().OfType<TextBox>());
             var revealButton = Assert.Single(input.GetVisualDescendants().OfType<Button>());
+            var revealIcon = Assert.Single(revealButton.GetVisualDescendants().OfType<SymbolIcon>());
+
+            Assert.Equal(SymbolIconKind.Reveal, revealIcon.Kind);
+            Assert.Equal(44, revealButton.Bounds.Width);
+            Assert.Equal(textBox.Bounds.Right, revealButton.Bounds.Right);
+            Assert.Equal(default, revealButton.BorderThickness);
 
             revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             window.UpdateLayout();
@@ -95,11 +101,13 @@ public sealed class MainWindowSmokeTests
             Assert.True(input.IsRevealed);
             Assert.Equal('\0', textBox.PasswordChar);
             Assert.True(textBox.IsFocused);
+            Assert.Equal(SymbolIconKind.Conceal, revealIcon.Kind);
 
             revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
             Assert.False(input.IsRevealed);
             Assert.NotEqual('\0', textBox.PasswordChar);
+            Assert.Equal(SymbolIconKind.Reveal, revealIcon.Kind);
         }
         finally
         {

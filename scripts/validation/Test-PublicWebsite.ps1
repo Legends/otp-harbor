@@ -98,7 +98,8 @@ foreach ($requiredText in @(
     'Get it from Microsoft Store',
     'class="store-symbol"',
     'OTP Harbor 2.0.1 is now publicly available from Microsoft Store, the primary Windows channel.',
-    'OTP Harbor 2.0.1 is the stable GitHub release for Linux, Android and source archives.',
+    'OTP Harbor 2.0.1 is the stable desktop GitHub release for Linux and source archives.',
+    'OTP Harbor Android 2.0.1 is the current APK version; Android updates use dedicated GitHub releases.',
     'Can you test OTP Harbor on a MacBook?',
     'Test only with synthetic accounts',
     'Right-click an existing desktop account to edit it, show its QR code or delete it after confirmation.',
@@ -110,10 +111,12 @@ foreach ($requiredText in @(
 }
 
 foreach ($releaseStampControl in @(
-    'Stamp latest stable release version',
+    'Stamp independent public release versions',
     'releases/latest',
     "`$releaseTag -notmatch '^v(?<version>\d+\.\d+\.\d+)`$'",
-    'Stamped website release note with OTP Harbor $releaseVersion.'
+    'packaging/windows-store/public-version.json',
+    "'^android-v\d+\.\d+\.\d+`$'",
+    'Stamped Store $storeVersion, desktop $desktopVersion, and Android $androidVersion.'
 )) {
     if (-not $pagesWorkflow.Contains($releaseStampControl, [StringComparison]::Ordinal)) {
         throw "The Pages workflow is missing automatic release-version stamping: $releaseStampControl"

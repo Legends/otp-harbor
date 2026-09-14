@@ -11,6 +11,8 @@
   <data name="SetupTitle" xml:space="preserve"><value>Protect your authenticator</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Create a master password. It remains the recovery method for your encrypted local vault.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Master password</value></data>
+  <data name="RevealPassword" xml:space="preserve"><value>Show or hide password</value></data>
+  <data name="RevealPasswordHelp" xml:space="preserve"><value>Select again to hide the password.</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Confirm master password</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Create encrypted vault</value></data>
   <data name="PasswordRequired" xml:space="preserve"><value>Enter your master password.</value></data>

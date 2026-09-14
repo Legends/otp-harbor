@@ -54,7 +54,7 @@ jobs:
           cp packaging/android/marketing/en-US/*.png _site/assets/android/
           cp TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
 
-      - name: Stamp latest stable release version
+      - name: Stamp independent public release versions
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -66,20 +66,55 @@ jobs:
             throw 'The latest published GitHub release is not a stable OTP Harbor version.'
           }
 
-          $releaseVersion = $Matches.version
+          $desktopVersion = $Matches.version
+          $storeMetadata = Get-Content packaging/windows-store/public-version.json -Raw | ConvertFrom-Json
+          $storeVersion = [string]$storeMetadata.displayVersion
+          if ($storeVersion -notmatch '^\d+\.\d+\.\d+$') {
+            throw 'The public Microsoft Store display version is invalid.'
+          }
+
+          $publishedReleases = gh api "repos/${{ github.repository }}/releases?per_page=100" | ConvertFrom-Json
+          $androidRelease = $publishedReleases |
+            Where-Object { -not $_.draft -and -not $_.prerelease -and $_.tag_name -match '^android-v\d+\.\d+\.\d+$' } |
+            Sort-Object published_at -Descending |
+            Select-Object -First 1
+          $androidVersion = if ($null -eq $androidRelease) {
+            $legacyAndroidRelease = $publishedReleases |
+              Where-Object {
+                -not $_.draft -and -not $_.prerelease -and
+                $_.tag_name -match '^v\d+\.\d+\.\d+$' -and
+                @($_.assets | Where-Object { $_.name -match '^OTP-Harbor-android-universal-.+\.apk$' }).Count -eq 1
+              } |
+              Sort-Object published_at -Descending |
+              Select-Object -First 1
+            if ($null -eq $legacyAndroidRelease -or
+                ([string]$legacyAndroidRelease.tag_name) -notmatch '^v(?<version>\d+\.\d+\.\d+)$') {
+              throw 'No published OTP Harbor Android release could be resolved.'
+            }
+            $Matches.version
+          }
+          elseif (([string]$androidRelease.tag_name) -match '^android-v(?<version>\d+\.\d+\.\d+)$') {
+            $Matches.version
+          }
+          else {
+            throw 'The latest Android release tag is invalid.'
+          }
+
           $indexPath = Join-Path $PWD '_site/index.html'
           $index = [IO.File]::ReadAllText($indexPath)
           $pattern = 'OTP Harbor \d+\.\d+\.\d+ is now publicly available from Microsoft Store, the primary Windows channel\.\s+' +
-            'OTP Harbor \d+\.\d+\.\d+ is the stable GitHub release for Linux, Android and source archives\.'
-          $replacement = "OTP Harbor $releaseVersion is now publicly available from Microsoft Store, the primary Windows channel.`n" +
-            "          OTP Harbor $releaseVersion is the stable GitHub release for Linux, Android and source archives."
+            'OTP Harbor \d+\.\d+\.\d+ is the stable desktop GitHub release for Linux and source archives\.\s+' +
+            'OTP Harbor Android \d+\.\d+\.\d+ is the current APK version; Android updates use dedicated GitHub releases\.'
+          $replacement = "OTP Harbor $storeVersion is now publicly available from Microsoft Store, the primary Windows channel.`n" +
+            "          OTP Harbor $desktopVersion is the stable desktop GitHub release for Linux and source archives.`n" +
+            "          OTP Harbor Android $androidVersion is the current APK version; Android updates use dedicated GitHub releases."
           $releaseNoteMatches = [Text.RegularExpressions.Regex]::Matches($index, $pattern)
           if ($releaseNoteMatches.Count -ne 1) {
             throw "Expected exactly one website release note, found $($releaseNoteMatches.Count)."
           }
           $index = [Text.RegularExpressions.Regex]::Replace($index, $pattern, $replacement)
           [IO.File]::WriteAllText($indexPath, $index, [Text.UTF8Encoding]::new($false))
-          Write-Host "Stamped website release note with OTP Harbor $releaseVersion."
+          Write-Host "Stamped Store $storeVersion, desktop $desktopVersion, and Android $androidVersion."
 
       - name: Publish the newest signed GitHub feed for RC subscribers
         shell: pwsh

@@ -11,6 +11,8 @@
   <data name="SetupTitle" xml:space="preserve"><value>Protégez votre authentificateur</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Créez un mot de passe principal. Il reste la méthode de récupération de votre coffre local chiffré.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Mot de passe principal</value></data>
+  <data name="RevealPassword" xml:space="preserve"><value>Afficher ou masquer le mot de passe</value></data>
+  <data name="RevealPasswordHelp" xml:space="preserve"><value>Sélectionnez à nouveau pour masquer le mot de passe.</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Confirmer le mot de passe principal</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Créer le coffre chiffré</value></data>
   <data name="PasswordRequired" xml:space="preserve"><value>Saisissez votre mot de passe principal.</value></data>

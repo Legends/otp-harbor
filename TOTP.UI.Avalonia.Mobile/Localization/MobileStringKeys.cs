@@ -10,6 +10,8 @@ public static class MobileStringKeys
     public const string SetupDescription = nameof(SetupDescription);
     public const string MasterPassword = nameof(MasterPassword);
     public const string ConfirmPassword = nameof(ConfirmPassword);
+    public const string RevealPassword = nameof(RevealPassword);
+    public const string RevealPasswordHelp = nameof(RevealPasswordHelp);
     public const string CreateVault = nameof(CreateVault);
     public const string PasswordRequired = nameof(PasswordRequired);
     public const string PasswordMinimumLength = nameof(PasswordMinimumLength);
@@ -185,6 +187,8 @@ public static class MobileStringKeys
         SetupDescription,
         MasterPassword,
         ConfirmPassword,
+        RevealPassword,
+        RevealPasswordHelp,
         CreateVault,
         PasswordRequired,
         PasswordMinimumLength,

@@ -43,11 +43,9 @@ if (-not $manifest.Contains('android:authorities="${applicationId}.fileprovider"
 }
 
 $versionCases = @(
-    @{ Tag = "v2.0.0-rc1"; Code = 20000001L; Name = "2.0.0-rc1" },
-    @{ Tag = "v2.0.0-rc98"; Code = 20000098L; Name = "2.0.0-rc98" },
-    @{ Tag = "v2.0.0"; Code = 20000099L; Name = "2.0.0" },
-    @{ Tag = "v2.0.17"; Code = 20001799L; Name = "2.0.17" },
-    @{ Tag = "v2.1.0-rc1"; Code = 20100001L; Name = "2.1.0-rc1" })
+    @{ Tag = "android-v2.0.0"; Code = 20000099L; Name = "2.0.0" },
+    @{ Tag = "android-v2.0.17"; Code = 20001799L; Name = "2.0.17" },
+    @{ Tag = "android-v2.1.0"; Code = 20100099L; Name = "2.1.0" })
 foreach ($case in $versionCases) {
     $actual = & (Join-Path $repositoryRoot "scripts\release\Get-AndroidReleaseVersion.ps1") `
         -ReleaseTag $case.Tag | ConvertFrom-Json
@@ -58,7 +56,12 @@ foreach ($case in $versionCases) {
     }
 }
 
-foreach ($invalidTag in @("2.0.0", "v2.0", "v2.0.0-rc0", "v2.0.0-rc99", "v210.0.0")) {
+foreach ($invalidTag in @(
+    "2.0.0",
+    "v2.0.0",
+    "android-v2.0",
+    "android-v2.0.0-rc1",
+    "android-v210.0.0")) {
     try {
         & (Join-Path $repositoryRoot "scripts\release\Get-AndroidReleaseVersion.ps1") `
             -ReleaseTag $invalidTag 2>$null | Out-Null
@@ -128,11 +131,16 @@ if (-not $releasePackager.Contains('verify --verbose --print-certs-pem', [String
 foreach ($required in @(
     "android-build-test:",
     "package-android-release:",
+    "publish-android-release:",
+    "- 'android-v*'",
+    "startsWith(github.ref, 'refs/tags/android-v')",
     "java-version: '21'",
     "environment: android-release",
     "ANDROID_SIGNING_KEYSTORE_BASE64",
     "ANDROID_SIGNING_CERTIFICATE_SHA256",
     'name: android-release-${{ github.sha }}',
+    'name: OTP Harbor Android ${{ steps.versioning.outputs.release_version }}',
+    'make_latest: false',
     "android-release.json",
     "New-AndroidRelease.ps1")) {
     if (-not $workflow.Contains($required, [StringComparison]::Ordinal)) {
@@ -142,10 +150,24 @@ foreach ($required in @(
 foreach ($required in @(
     "io.github.legends.otpharbor",
     "Android developer verification",
-    "same app-signing key")) {
+    "same app-signing key",
+    "android-v<major>.<minor>.<patch>")) {
     if (-not $documentation.Contains($required, [StringComparison]::OrdinalIgnoreCase)) {
         throw "The Android release guide is missing required guidance: $required"
     }
+}
+
+$desktopPublicationIndex = $workflow.IndexOf('  publish-avalonia-release:', [StringComparison]::Ordinal)
+$androidPublicationIndex = $workflow.IndexOf('  publish-android-release:', [StringComparison]::Ordinal)
+if ($desktopPublicationIndex -lt 0 -or $androidPublicationIndex -le $desktopPublicationIndex) {
+    throw 'Independent desktop and Android publication jobs are required.'
+}
+$desktopPublication = $workflow.Substring(
+    $desktopPublicationIndex,
+    $androidPublicationIndex - $desktopPublicationIndex)
+if ($desktopPublication.Contains('OTP-Harbor-android-universal-', [StringComparison]::Ordinal) -or
+    $desktopPublication.Contains('android-release.json', [StringComparison]::Ordinal)) {
+    throw 'The desktop release still includes Android release assets.'
 }
 
 Write-Output "Android identity, versioning, and release packaging controls are valid."

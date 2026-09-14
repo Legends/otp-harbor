@@ -10,7 +10,7 @@
     x:DataType="vm:MobileShellViewModel"
     Background="{DynamicResource BrushWindowBackground}">
     <UserControl.Styles>
-        <Style Selector="TextBox.unlock-method-attention">
+        <Style Selector="controls|RevealableSecretInput.unlock-method-attention /template/ TextBox#PART_Input">
             <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
             <Setter Property="BorderThickness" Value="3" />
@@ -93,15 +93,17 @@
                         Foreground="{DynamicResource BrushTextSecondary}"
                         Text="{Binding SetupDescription}"
                         TextWrapping="Wrap" />
-                    <TextBox
-                        automation:AutomationProperties.Name="{Binding MasterPasswordText}"
-                        PasswordChar="●"
+                    <controls:RevealableSecretInput
+                        AccessibleName="{Binding MasterPasswordText}"
                         PlaceholderText="{Binding MasterPasswordText}"
+                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                         Text="{Binding SetupPassword, Mode=TwoWay}" />
-                    <TextBox
-                        automation:AutomationProperties.Name="{Binding ConfirmPasswordText}"
-                        PasswordChar="●"
+                    <controls:RevealableSecretInput
+                        AccessibleName="{Binding ConfirmPasswordText}"
                         PlaceholderText="{Binding ConfirmPasswordText}"
+                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                         Text="{Binding SetupConfirmation, Mode=TwoWay}" />
                     <Button
                         Classes="wide primary"
@@ -121,10 +123,11 @@
                         Foreground="{DynamicResource BrushTextSecondary}"
                         Text="{Binding UnlockDescription}"
                         TextWrapping="Wrap" />
-                    <TextBox
-                        automation:AutomationProperties.Name="{Binding MasterPasswordText}"
-                        PasswordChar="●"
+                    <controls:RevealableSecretInput
+                        AccessibleName="{Binding MasterPasswordText}"
                         PlaceholderText="{Binding MasterPasswordText}"
+                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                         Text="{Binding UnlockPassword, Mode=TwoWay}" />
                     <Button
                         Classes="wide primary"
@@ -514,10 +517,11 @@
                                         <TextBlock
                                             Text="{Binding DisableAppLockWarningText}"
                                             TextWrapping="Wrap" />
-                                        <TextBox
-                                            automation:AutomationProperties.Name="{Binding MasterPasswordText}"
-                                            PasswordChar="●"
+                                        <controls:RevealableSecretInput
+                                            AccessibleName="{Binding MasterPasswordText}"
                                             PlaceholderText="{Binding MasterPasswordText}"
+                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                                             Text="{Binding AppLockRecoveryPassword, Mode=TwoWay}" />
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                                             <Button
@@ -584,11 +588,12 @@
                                         Foreground="{DynamicResource BrushTextSecondary}"
                                         Text="{Binding UnlockMethodPasswordPromptText}"
                                         TextWrapping="Wrap" />
-                                    <TextBox
+                                    <controls:RevealableSecretInput
                                         x:Name="UnlockMethodPasswordBox"
-                                        automation:AutomationProperties.Name="{Binding MasterPasswordText}"
-                                        PasswordChar="●"
+                                        AccessibleName="{Binding MasterPasswordText}"
                                         PlaceholderText="{Binding MasterPasswordText}"
+                                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                                         Text="{Binding BiometricRecoveryPassword, Mode=TwoWay}" />
                                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                                         <Button
@@ -646,10 +651,11 @@
                                     Foreground="{DynamicResource BrushTextSecondary}"
                                     Text="{Binding ImportBackupDescriptionText}"
                                     TextWrapping="Wrap" />
-                                <TextBox
-                                    automation:AutomationProperties.Name="{Binding BackupPasswordText}"
-                                    PasswordChar="●"
+                                <controls:RevealableSecretInput
+                                    AccessibleName="{Binding BackupPasswordText}"
                                     PlaceholderText="{Binding BackupPasswordText}"
+                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                                     Text="{Binding ImportPassword, Mode=TwoWay}" />
                                 <Button
                                     Classes="wide secondary"
@@ -671,15 +677,17 @@
                                     Foreground="{DynamicResource BrushTextSecondary}"
                                     Text="{Binding ExportBackupDescriptionText}"
                                     TextWrapping="Wrap" />
-                                <TextBox
-                                    automation:AutomationProperties.Name="{Binding BackupPasswordText}"
-                                    PasswordChar="●"
+                                <controls:RevealableSecretInput
+                                    AccessibleName="{Binding BackupPasswordText}"
                                     PlaceholderText="{Binding BackupPasswordText}"
+                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                                     Text="{Binding BackupPassword, Mode=TwoWay}" />
-                                <TextBox
-                                    automation:AutomationProperties.Name="{Binding ConfirmBackupPasswordText}"
-                                    PasswordChar="●"
+                                <controls:RevealableSecretInput
+                                    AccessibleName="{Binding ConfirmBackupPasswordText}"
                                     PlaceholderText="{Binding ConfirmBackupPasswordText}"
+                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                                     Text="{Binding BackupPasswordConfirmation, Mode=TwoWay}" />
                                 <Button
                                     Classes="wide primary"
@@ -706,10 +714,11 @@
                             automation:AutomationProperties.Name="{Binding AccountNameText}"
                             PlaceholderText="{Binding AccountNameText}"
                             Text="{Binding EditorAccountName, Mode=TwoWay}" />
-                        <TextBox
-                            automation:AutomationProperties.Name="{Binding EditorSecretPlaceholder}"
-                            PasswordChar="●"
+                        <controls:RevealableSecretInput
+                            AccessibleName="{Binding EditorSecretPlaceholder}"
                             PlaceholderText="{Binding EditorSecretPlaceholder}"
+                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                             Text="{Binding EditorSecret, Mode=TwoWay}" />
                         <controls:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
                         <Expander

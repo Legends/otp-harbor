@@ -12,7 +12,7 @@ macOS x64 remains outside the initial support policy because the aligned OpenCV 
 
 The stable Windows release is a self-contained MSIX for Microsoft Store. Repository CI creates the unsigned Partner Center submission input with package identity values supplied by the reserved Store product. It sets `DistributionMode=store`, disables application-owned updates, and removes the standalone updater. Microsoft signs the package after successful certification. The unsigned MSIX must never be sideloaded or attached to a GitHub Release.
 
-The direct Windows ZIP/update implementation is retained only as dormant future-provider groundwork. Stable GitHub releases publish Linux, the production-signed Android APK, integrity metadata, and source archives; they do not publish unsigned Windows executables.
+The direct Windows ZIP/update implementation is retained only as dormant future-provider groundwork. Stable desktop GitHub releases publish Linux packages, integrity metadata, and source archives; they do not publish unsigned Windows executables. Android APKs use independent Android releases.
 
 ## macOS release procedure
 
@@ -40,7 +40,7 @@ Conditional direct-download tag publication expects these GitHub Actions secrets
 
 A missing credential fails the conditional direct tag workflow. It never downgrades a production artifact to unsigned output. Store packaging uses its separate Partner Center-only workflow and no repository certificate secret.
 
-Earlier release-candidate tags formed a temporary preview channel and remain immutable historical evidence. The `v2.0.0` release ends that channel: it is a normal GitHub release marked `Latest`, publishes Linux and the production-signed Android APK, and uses the Windows payload only for the separate Partner Center artifact. Existing RC clients may use the legacy verified endpoint to advance to stable.
+Earlier release-candidate tags formed a temporary preview channel and remain immutable historical evidence. The `v2.0.0` release ended that channel. Current stable desktop releases are marked `Latest`, publish Linux artifacts, and use the Windows payload only for the separate Partner Center artifact. Android now publishes from independent `android-v` tags. Existing RC clients may use the legacy verified endpoint to advance to stable.
 
 The entitlements are limited to the camera capability and the current Microsoft-documented defaults required by a notarized .NET app host. Any removal or addition requires a physical launch/camera/Keychain regression on the signed bundle.
 

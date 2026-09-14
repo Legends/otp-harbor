@@ -79,7 +79,7 @@ The private key path is supplied to tooling; private key contents must never app
 - `NETSPARKLE_PUBLIC_KEY`
 - `NETSPARKLE_PRIVATE_KEY`
 
-The active Store packaging workflow requires no certificate secret and produces an unsigned Partner Center input that must never be directly distributed. Stable GitHub releases publish Linux, the production-signed Android APK, integrity metadata, and source archives; they do not publish Windows binaries. Dormant SignPath controls remain gated by `SIGNPATH_PRODUCTION_ENABLED` and the requirements in [SIGNPATH_FOUNDATION_ONBOARDING.md](SIGNPATH_FOUNDATION_ONBOARDING.md). Reapplication is deferred until public stars and verified download/adoption signals are materially stronger.
+The active Store packaging workflow requires no certificate secret and produces an unsigned Partner Center input that must never be directly distributed. Stable desktop GitHub releases publish Linux packages, integrity metadata, and source archives; independent Android releases publish the production-signed APK. Neither publishes Windows binaries. Dormant SignPath controls remain gated by `SIGNPATH_PRODUCTION_ENABLED` and the requirements in [SIGNPATH_FOUNDATION_ONBOARDING.md](SIGNPATH_FOUNDATION_ONBOARDING.md). Reapplication is deferred until public stars and verified download/adoption signals are materially stronger.
 
 ## Release behavior
 
@@ -87,10 +87,13 @@ For a stable GitHub release, CI:
 
 1. Builds and tests all supported projects.
 2. Produces the internal Windows payload for the Partner Center MSIX plus public Linux packages.
-3. Builds and verifies the production-signed Android APK.
-4. Signs eligible Linux update metadata and the aggregate release manifest.
-5. Generates and verifies `appcast-v2.xml`.
-6. Uploads the complete asset set to a draft and publishes it only after validation succeeds.
+3. Signs eligible Linux update metadata and the desktop release manifest.
+4. Generates and verifies `appcast-v2.xml`.
+5. Uploads the complete desktop asset set to a draft and publishes it only after validation succeeds.
+
+For an independent `android-v` release, CI validates the shared code and Android graph, builds and
+verifies the production-signed APK, creates Android-specific integrity metadata, and publishes only
+those Android assets after draft validation.
 
 After publishing a stable GitHub release, CI requests a website deployment. That deployment verifies the selected published appcast against the public key embedded in the client and mirrors it at the legacy RC endpoint so existing preview installations can advance to stable. Release assets remain immutable; the public endpoint is only a signed-feed pointer.
 

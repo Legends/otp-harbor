@@ -740,6 +740,8 @@ public sealed class MobileShellViewModel :
     public string SetupDescription => Get(MobileStringKeys.SetupDescription);
     public string MasterPasswordText => Get(MobileStringKeys.MasterPassword);
     public string ConfirmPasswordText => Get(MobileStringKeys.ConfirmPassword);
+    public string RevealPasswordText => Get(MobileStringKeys.RevealPassword);
+    public string RevealPasswordHelpText => Get(MobileStringKeys.RevealPasswordHelp);
     public string CreateVaultText => Get(MobileStringKeys.CreateVault);
     public string UnlockTitle => Get(MobileStringKeys.UnlockTitle);
     public string UnlockDescription => Get(MobileStringKeys.UnlockDescription);
@@ -2921,6 +2923,8 @@ public sealed class MobileShellViewModel :
         nameof(SetupDescription),
         nameof(MasterPasswordText),
         nameof(ConfirmPasswordText),
+        nameof(RevealPasswordText),
+        nameof(RevealPasswordHelpText),
         nameof(CreateVaultText),
         nameof(UnlockTitle),
         nameof(UnlockDescription),

@@ -533,32 +533,44 @@
     </Style>
     <Style Selector="controls|RevealableSecretInput">
         <Setter Property="MinHeight" Value="{DynamicResource ControlMinimumHeight}" />
+        <Setter Property="RevealButtonAccessibleName" Value="{DynamicResource RevealSecretAutomation}" />
+        <Setter Property="RevealButtonHelpText" Value="{DynamicResource RevealSecretHelp}" />
         <Setter Property="Template">
             <ControlTemplate>
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid>
                     <TextBox
                         Name="PART_Input"
                         automation:AutomationProperties.HelpText="{TemplateBinding HelpText}"
                         automation:AutomationProperties.IsRequiredForForm="{TemplateBinding IsRequired}"
                         automation:AutomationProperties.Name="{TemplateBinding AccessibleName}"
-                        Grid.Column="0"
+                        Padding="12,6,48,6"
                         PasswordChar="●"
                         PlaceholderText="{TemplateBinding PlaceholderText}"
                         Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
                     <Button
                         Name="PART_RevealButton"
-                        automation:AutomationProperties.HelpText="{DynamicResource RevealSecretHelp}"
-                        automation:AutomationProperties.Name="{DynamicResource RevealSecretAutomation}"
-                        Grid.Column="1"
-                        Margin="8,0,0,0"
-                        Content="{DynamicResource RevealSecret}"
-                        ToolTip.Tip="{DynamicResource RevealSecretAutomation}" />
+                        automation:AutomationProperties.HelpText="{TemplateBinding RevealButtonHelpText}"
+                        automation:AutomationProperties.Name="{TemplateBinding RevealButtonAccessibleName}"
+                        Width="44"
+                        MinWidth="44"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="{TemplateBinding RevealButtonAccessibleName}">
+                        <controls:SymbolIcon
+                            Name="PART_RevealIcon"
+                            Foreground="{DynamicResource BrushTextSecondary}"
+                            IconSize="18"
+                            Kind="Reveal" />
+                    </Button>
                 </Grid>
             </ControlTemplate>
         </Setter>
     </Style>
-    <Style Selector="controls|RevealableSecretInput:revealed /template/ Button#PART_RevealButton">
-        <Setter Property="Content" Value="{DynamicResource ConcealSecret}" />
+    <Style Selector="controls|RevealableSecretInput:revealed /template/ controls|SymbolIcon#PART_RevealIcon">
+        <Setter Property="Kind" Value="Conceal" />
     </Style>
     <Style Selector="controls|AccountRow">
         <Setter Property="HorizontalAlignment" Value="Stretch" />

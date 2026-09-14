@@ -4,7 +4,8 @@ on:
   push:
     branches: [master, 'release/1.x']
     tags:
-      - 'v*'  # This triggers release publishing only when a tag is pushed
+      - 'v*'
+      - 'android-v*'
   pull_request:
     branches: [master, 'release/1.x']
   workflow_dispatch:
@@ -853,7 +854,7 @@ jobs:
   package-android-release:
     name: Package signed Android release
     needs: [build-test, android-build-test]
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
+    if: startsWith(github.ref, 'refs/tags/android-v')
     runs-on: windows-2025
     environment: android-release
     permissions:
@@ -1016,8 +1017,8 @@ jobs:
           retention-days: 90
 
   publish-unsigned-preview:
-    name: Publish Windows, Linux, and Android preview
-    needs: [package-avalonia-release, package-android-release, package-microsoft-store-msix]
+    name: Publish Windows and Linux preview
+    needs: [package-avalonia-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
@@ -1046,12 +1047,6 @@ jobs:
           path: preview-assets
           merge-multiple: true
 
-      - name: Download retained Android preview artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: android-release-${{ github.sha }}
-          path: preview-assets
-
       - name: Validate unsigned preview payload
         id: versioning
         shell: pwsh
@@ -1064,10 +1059,10 @@ jobs:
           "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem preview-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|tar\.gz)|OTP-Harbor-windows-x64-setup-.+\.exe|OTP-Harbor-android-universal-.+\.apk|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-(windows-x64(?:-fast)?|linux-x64)-.+\.(zip|tar\.gz)|OTP-Harbor-windows-x64-setup-.+\.exe|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 6) {
-            throw "The preview must contain exactly six public Windows/Linux/Android artifacts."
+          if ($artifactPaths.Count -ne 5) {
+            throw "The preview must contain exactly five public Windows/Linux artifacts."
           }
           if (Get-ChildItem preview-assets -File | Where-Object { $_.Name -match '(appcast|macos|\.dmg$)' }) {
             throw "Unsigned previews cannot contain appcasts or macOS artifacts."
@@ -1155,20 +1150,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $currentTag = "${{ github.ref_name }}"
-          $previousTag = gh release list `
-            --repo "${{ github.repository }}" `
-            --limit 100 `
-            --exclude-drafts `
-            --json tagName,publishedAt `
-            --jq ".[] | select(.tagName != `"$currentTag`") | [.publishedAt, .tagName] | @tsv" |
-            Sort-Object -Descending |
-            Select-Object -First 1 |
-            ForEach-Object { ($_ -split "`t", 2)[1] }
+          $previousTag = git tag --list 'v*' --sort=-version:refname |
+            Where-Object { $_ -ne $currentTag -and $_ -match '^v\d+\.\d+\.\d+$' } |
+            Select-Object -First 1
           if ([string]::IsNullOrWhiteSpace($previousTag)) {
             throw "A previous published release is required to generate the change summary."
           }
 
-          $changes = @(git log "$previousTag..$currentTag" --no-merges --pretty=format:'- %s (`%h`)')
+          $releasePaths = @(
+            'TOTP.Core',
+            'TOTP.Infrastructure',
+            'TOTP.DAL',
+            'TOTP.Camera.OpenCv',
+            'TOTP.UI.Avalonia.Shared',
+            'TOTP.UI.Avalonia.Desktop',
+            'TOTP.Platform.Windows',
+            'TOTP.Platform.Linux',
+            'TOTP.Platform.MacOS',
+            'TOTP.Platform.Unix',
+            'TOTP.Updater')
+          $changes = @(git log "$previousTag..$currentTag" --no-merges --pretty=format:'- %s (`%h`)' -- $releasePaths)
           if ($LASTEXITCODE -ne 0 -or $changes.Count -eq 0) {
             throw "Release '$currentTag' contains no user-visible change summary after '$previousTag'."
           }
@@ -1202,22 +1203,19 @@ jobs:
             - Direct Windows and portable Linux builds check an Ed25519-signed preview appcast and require explicit confirmation before installation.
             - The first preview download remains outside operating-system publisher trust; verify its checksums before running it.
             - macOS is not included because Developer ID signing and notarization are unavailable.
-            - The Android universal APK is production-signed for in-place upgrades, but remains prerelease software and must be installed manually.
             - Do not use this preview with a production vault; test with synthetic accounts only.
 
             Verify the downloaded file against `SHA256SUMS` and the source commit recorded in `release-artifacts-v2.json`.
 
             ## Code signing policy
 
-            The desktop artifacts are intentionally unsigned at operating-system level; the Android APK is signed with the pinned production certificate. See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) for the stable-release trust model.
+            The desktop artifacts are intentionally unsigned at operating-system level. See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) for the stable-release trust model.
           files: |
             preview-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip
             preview-assets/OTP-Harbor-windows-x64-setup-${{ steps.versioning.outputs.release_version }}.exe
             preview-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             preview-assets/otp-harbor_*_amd64.deb
-            preview-assets/OTP-Harbor-android-universal-${{ steps.versioning.outputs.release_version }}.apk
-            preview-assets/android-release.json
             preview-assets/release-artifacts-v2.json
             preview-assets/release-artifacts-v2.json.signature
             preview-assets/appcast-v2.xml
@@ -1254,7 +1252,7 @@ jobs:
 
   publish-avalonia-release:
     name: Publish OTP Harbor stable release
-    needs: [package-avalonia-release, package-android-release, package-microsoft-store-msix]
+    needs: [package-avalonia-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
     runs-on: ubuntu-24.04
     permissions:
@@ -1282,12 +1280,6 @@ jobs:
           name: avalonia-release-linux-x64-${{ github.sha }}
           path: release-assets
 
-      - name: Download retained Android release artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: android-release-${{ github.sha }}
-          path: release-assets
-
       - name: Compute and validate aggregate artifact manifest
         id: versioning
         shell: pwsh
@@ -1303,10 +1295,10 @@ jobs:
           "prerelease=$(if ($rcNumber) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
 
           $artifactPaths = @(Get-ChildItem release-assets -File | Where-Object {
-            $_.Name -match '^(OTP-Harbor-linux-x64-.+\.tar\.gz|OTP-Harbor-android-universal-.+\.apk|otp-harbor_.+_amd64\.deb)$'
+            $_.Name -match '^(OTP-Harbor-linux-x64-.+\.tar\.gz|otp-harbor_.+_amd64\.deb)$'
           } | Select-Object -ExpandProperty FullName)
-          if ($artifactPaths.Count -ne 3) {
-            throw "The stable GitHub release must contain exactly the Linux and Android artifacts."
+          if ($artifactPaths.Count -ne 2) {
+            throw "The stable desktop GitHub release must contain exactly the two Linux artifacts."
           }
 
           ./scripts/release/New-ReleaseArtifactManifest.ps1 `
@@ -1457,16 +1449,10 @@ jobs:
 
             Windows is distributed through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), which signs accepted MSIX packages and manages updates. No unsigned Windows executable is attached to this stable GitHub release. SignPath remains deferred until the project has sufficient independent adoption signals.
 
-            GitHub provides the Linux packages, the production-signed Android APK, release integrity metadata, and the source archives generated by GitHub. See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) and [privacy policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/PRIVACY.md).
-
-            ## Android
-
-            The universal APK is signed with OTP Harbor's pinned Android app-signing certificate and supports in-place upgrades on Android 9 and newer. It is a separate download and is not bundled into a desktop installer.
+            GitHub provides the Linux packages, release integrity metadata, and the source archives generated by GitHub. Android uses independent `android-vX.Y.Z` releases so mobile changes do not force a desktop release. See the project [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md) and [privacy policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/PRIVACY.md).
           files: |
             release-assets/OTP-Harbor-linux-x64-${{ steps.versioning.outputs.release_version }}.tar.gz
             release-assets/otp-harbor_*_amd64.deb
-            release-assets/OTP-Harbor-android-universal-${{ steps.versioning.outputs.release_version }}.apk
-            release-assets/android-release.json
             release-assets/release-artifacts-v2.json
             release-assets/release-artifacts-v2.json.signature
             release-assets/appcast-v2.xml
@@ -1495,6 +1481,163 @@ jobs:
             -f make_latest=${{ steps.latest_release.outputs.make_latest }} | Out-Null
 
       - name: Refresh the website and legacy RC upgrade feed
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "${{ github.repository }}"
+
+  publish-android-release:
+    name: Publish OTP Harbor Android release
+    needs: [package-android-release]
+    if: startsWith(github.ref, 'refs/tags/android-v')
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download signed Android release artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: android-release-${{ github.sha }}
+          path: android-release-assets
+
+      - name: Validate Android release assets
+        id: versioning
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^android-v(?<version>\d+\.\d+\.\d+)$') {
+            throw "Android release tag must match android-v<major>.<minor>.<patch>."
+          }
+          $releaseVersion = $Matches.version
+          "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
+
+          $apkPaths = @(Get-ChildItem android-release-assets -File -Filter '*.apk')
+          if ($apkPaths.Count -ne 1 -or
+              $apkPaths[0].Name -cne "OTP-Harbor-android-universal-$releaseVersion.apk") {
+            throw "The Android release must contain exactly one correctly versioned APK."
+          }
+          $metadataPath = Join-Path $PWD 'android-release-assets/android-release.json'
+          if (-not (Test-Path -LiteralPath $metadataPath -PathType Leaf)) {
+            throw "The verified Android release metadata is missing."
+          }
+
+          ./scripts/release/New-ReleaseArtifactManifest.ps1 `
+            -ReleaseVersion $releaseVersion `
+            -SourceCommit "${{ github.sha }}" `
+            -ArtifactPath $apkPaths[0].FullName `
+            -OutputPath android-release-assets/release-artifacts-v2.json
+          ./scripts/release/Test-ReleaseArtifactManifest.ps1 `
+            -ManifestPath android-release-assets/release-artifacts-v2.json `
+            -ArtifactDirectory android-release-assets
+
+          $checksumTargets = @(
+            $apkPaths[0].FullName,
+            $metadataPath,
+            (Join-Path $PWD 'android-release-assets/release-artifacts-v2.json'))
+          $checksumLines = foreach ($path in $checksumTargets) {
+            $file = Get-Item -LiteralPath $path
+            $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($file.Name)"
+          }
+          [IO.File]::WriteAllText(
+            (Join-Path $PWD 'android-release-assets/SHA256SUMS'),
+            (($checksumLines -join "`n") + "`n"),
+            [Text.UTF8Encoding]::new($false))
+
+      - name: Build Android change summary
+        id: release_notes
+        shell: pwsh
+        run: |
+          $currentTag = "${{ github.ref_name }}"
+          $previousTag = git tag --list 'android-v*' --sort=-version:refname |
+            Where-Object { $_ -ne $currentTag -and $_ -match '^android-v\d+\.\d+\.\d+$' } |
+            Select-Object -First 1
+          if ([string]::IsNullOrWhiteSpace($previousTag)) {
+            $previousTag = git tag --list 'v*' --sort=-version:refname |
+              Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
+              Select-Object -First 1
+          }
+
+          $changes = if ([string]::IsNullOrWhiteSpace($previousTag)) {
+            @('- First independent Android release.')
+          }
+          else {
+            $releasePaths = @(
+              'TOTP.Core',
+              'TOTP.Infrastructure',
+              'TOTP.DAL',
+              'TOTP.UI.Avalonia.Shared',
+              'TOTP.UI.Avalonia.Mobile',
+              'TOTP.UI.Avalonia.Android',
+              'TOTP.Platform.Android')
+            @(git log "$previousTag..$currentTag" --no-merges --pretty=format:'- %s (`%h`)' -- $releasePaths)
+          }
+          if ($LASTEXITCODE -ne 0 -or $changes.Count -eq 0) {
+            throw "The Android release contains no changes after '$previousTag'."
+          }
+
+          $delimiter = [Guid]::NewGuid().ToString('N')
+          "summary<<$delimiter" >> $env:GITHUB_OUTPUT
+          $changes >> $env:GITHUB_OUTPUT
+          if (-not [string]::IsNullOrWhiteSpace($previousTag)) {
+            "" >> $env:GITHUB_OUTPUT
+            "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
+          }
+          $delimiter >> $env:GITHUB_OUTPUT
+
+      - name: Upload Android GitHub release to a draft
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          name: OTP Harbor Android ${{ steps.versioning.outputs.release_version }}
+          draft: true
+          prerelease: false
+          make_latest: false
+          fail_on_unmatched_files: true
+          body: |
+            ## Changes in this Android release
+
+            ${{ steps.release_notes.outputs.summary }}
+
+            ## Android package
+
+            This universal APK is signed with OTP Harbor's pinned production Android app-signing certificate and supports in-place upgrades on Android 9 and newer. Android releases are versioned independently from the desktop applications because the user interfaces ship on different schedules while continuing to share validated Core and Infrastructure code.
+
+            Verify the APK certificate and compare downloaded files with `SHA256SUMS`. See the project [Android release guide](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/docs/release/ANDROID.md), [code signing policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CODE_SIGNING_POLICY.md), and [privacy policy](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/PRIVACY.md).
+          files: |
+            android-release-assets/OTP-Harbor-android-universal-${{ steps.versioning.outputs.release_version }}.apk
+            android-release-assets/android-release.json
+            android-release-assets/release-artifacts-v2.json
+            android-release-assets/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Publish validated Android release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $releaseIds = @(gh api `
+            "repos/${{ github.repository }}/releases?per_page=100" `
+            --paginate `
+            --jq '.[] | select(.tag_name == "${{ github.ref_name }}") | .id')
+          if ($releaseIds.Count -ne 1) {
+            throw "Could not resolve exactly one validated Android draft release."
+          }
+          gh api `
+            --method PATCH `
+            "repos/${{ github.repository }}/releases/$($releaseIds[0])" `
+            -F draft=false `
+            -F prerelease=false `
+            -f make_latest=false | Out-Null
+
+      - name: Refresh public website release versions
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}

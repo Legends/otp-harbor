@@ -11,7 +11,7 @@
 
 **OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
-> **Release status:** OTP Harbor `v2.0.1` is the stable GitHub release. Windows is delivered only through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `2.0.1` is publicly available and Microsoft signs accepted MSIX packages. The matching [GitHub release](https://github.com/Legends/otp-harbor/releases/latest) provides Linux packages, a production-signed Android universal APK, integrity metadata, and source archives—without unsigned Windows binaries or prerelease labeling.
+> **Release status:** OTP Harbor `v2.0.1` is the stable desktop GitHub release. Windows is delivered only through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `2.0.1` is publicly available and Microsoft signs accepted MSIX packages. The [latest desktop release](https://github.com/Legends/otp-harbor/releases/latest) provides Linux packages, integrity metadata, and source archives. Production-signed APKs use [independent Android releases](https://github.com/Legends/otp-harbor/releases?q=android-v) so mobile and desktop versions can ship separately.
 
 <p align="center">
   <img src="packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png" alt="OTP Harbor for Windows with an encrypted local TOTP vault and synthetic sample accounts" width="960" />
@@ -80,14 +80,14 @@ All accounts, codes, and QR payloads shown in the marketing artwork are syntheti
 
 **[Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P) is the primary Windows distribution channel** (Store ID `9P31KH5L924P`). Microsoft signs the published MSIX and manages Store updates.
 
-[GitHub Releases](https://github.com/Legends/otp-harbor/releases/latest) provides the stable Linux and Android downloads plus source archives. Portable Linux packages use an Ed25519-signed appcast; Microsoft Store packages rely only on Store-managed updates.
+[GitHub Releases](https://github.com/Legends/otp-harbor/releases/latest) provides stable Linux downloads and source archives. [Android releases](https://github.com/Legends/otp-harbor/releases?q=android-v) independently provide production-signed APKs. Portable Linux packages use an Ed25519-signed appcast; Microsoft Store packages rely only on Store-managed updates.
 
 | Platform | Package type |
 | --- | --- |
 | Windows 10/11 x64 | Public Microsoft Store MSIX only; Microsoft signs accepted packages and manages updates |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
 | macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
-| Android 9 or newer | Production-signed universal APK from the matching stable GitHub release; manual installation with in-place upgrade support |
+| Android 9 or newer | Production-signed universal APK from an independent `android-vX.Y.Z` GitHub release; manual installation with in-place upgrade support |
 
 After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
 
@@ -136,7 +136,7 @@ The launcher checks the official `origin/master` branch on every invocation. Whe
 
 For safety, the launcher refuses to update a modified, ahead, or diverged checkout and never discards local files. It is a convenience for source users, not a signed binary update channel; Microsoft Store installations use Store updates, while portable Linux packages use the signed appcast.
 
-The Android host remains in the dedicated [Android solution](TOTP.Android.sln), so desktop-only development does not require the Android workload. Stable tagged releases publish its separately signed APK alongside the Linux artifacts. See the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
+The Android host remains in the dedicated [Android solution](TOTP.Android.sln), so desktop-only development does not require the Android workload. Stable `android-vX.Y.Z` tags publish its signed APK without republishing desktop artifacts. See the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for engineering rules and [docs/README.md](docs/README.md) for the maintained documentation map.
 

@@ -33,6 +33,16 @@ public sealed class RevealableSecretInput : TemplatedControl
             nameof(HelpText),
             string.Empty);
 
+    public static readonly StyledProperty<string> RevealButtonAccessibleNameProperty =
+        AvaloniaProperty.Register<RevealableSecretInput, string>(
+            nameof(RevealButtonAccessibleName),
+            string.Empty);
+
+    public static readonly StyledProperty<string> RevealButtonHelpTextProperty =
+        AvaloniaProperty.Register<RevealableSecretInput, string>(
+            nameof(RevealButtonHelpText),
+            string.Empty);
+
     public static readonly StyledProperty<bool> IsRequiredProperty =
         AvaloniaProperty.Register<RevealableSecretInput, bool>(nameof(IsRequired));
 
@@ -69,6 +79,18 @@ public sealed class RevealableSecretInput : TemplatedControl
     {
         get => GetValue(HelpTextProperty);
         set => SetValue(HelpTextProperty, value ?? string.Empty);
+    }
+
+    public string RevealButtonAccessibleName
+    {
+        get => GetValue(RevealButtonAccessibleNameProperty);
+        set => SetValue(RevealButtonAccessibleNameProperty, value ?? string.Empty);
+    }
+
+    public string RevealButtonHelpText
+    {
+        get => GetValue(RevealButtonHelpTextProperty);
+        set => SetValue(RevealButtonHelpTextProperty, value ?? string.Empty);
     }
 
     public bool IsRequired

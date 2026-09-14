@@ -5,7 +5,7 @@
 This policy covers the distinct platform distribution paths. They must never be presented as interchangeable:
 
 - **Microsoft Store (primary):** OTP Harbor is publicly available as Store product `9P31KH5L924P`. CI creates unsigned MSIX inputs solely for Partner Center; Microsoft signs accepted packages and the Store manages updates.
-- **GitHub (secondary):** stable source archives, Linux packages, release-integrity metadata, and the production-signed Android APK. Portable Linux packages use an Ed25519-signed appcast. A future Windows direct-download channel remains blocked unless an independent Authenticode trust path is approved and verified.
+- **GitHub (secondary):** stable desktop tags publish source archives, Linux packages, and release-integrity metadata. Independent Android tags publish the production-signed APK and Android integrity metadata. Portable Linux packages use an Ed25519-signed appcast. A future Windows direct-download channel remains blocked unless an independent Authenticode trust path is approved and verified.
 - **Android on GitHub:** a separately downloadable universal APK under the permanent
   `io.github.legends.otpharbor` ID. Every public APK must carry the pinned production Android
   app-signing certificate; development builds use the isolated `.debug` application ID.
@@ -22,13 +22,13 @@ Changes from contributors who do not have commit access require maintainer revie
 ## Build and signing controls
 
 - Release binaries are built from this public repository by the tag-triggered GitHub Actions workflow on GitHub-hosted runners.
-- Release versions use the documented `v<major>.<minor>.<patch>` format. Microsoft Store package versions use four components and reserve the fourth component as `0`.
+- Desktop releases use `v<major>.<minor>.<patch>`; Android releases use `android-v<major>.<minor>.<patch>`. Microsoft Store package versions use four components and reserve the fourth component as `0`.
 - The Store package is built from this public repository with the exact case-sensitive identity supplied by Partner Center. Placeholder CI identities are smoke-test inputs only.
 - Store packages set `DistributionMode` to `store`, disable application-owned updates, and exclude the standalone updater.
 - Portable Linux packages set `DistributionMode` to `direct` and use the stable GitHub Release appcast. Microsoft Store and Linux DEB packages keep application-owned updates disabled.
 - The legacy public RC endpoint remains only to move already-installed RC clients to the stable release. It mirrors only a published release whose appcast signature verifies against the client-embedded Ed25519 key and never signs or modifies metadata.
 - The generated unsigned MSIX and its SHA-256 metadata are retained only for the controlled Partner Center handoff.
-- Android's visible version follows the shared release tag, while its deterministic integer version code increases across release candidates and stable releases.
+- Android uses stable-only `android-v<major>.<minor>.<patch>` tags and an independent visible version, while its deterministic integer version code remains monotonic and compatible with existing APK upgrades.
 - The Android release job is protected by the `android-release` environment, reconstructs the signing key only in temporary runner storage, passes passwords through files, verifies the resulting APK signature and manifest identity, and rejects a certificate-fingerprint mismatch.
 - The production Android package name and certificate must be registered through Android developer verification before the first public APK. A future Play App Signing enrollment must use the existing app-signing key so GitHub and Play packages remain upgrade-compatible.
 - The Store package is published only after certification plus physical acceptance of install, launch, Windows Hello, QR scanning, encrypted backup/restore, lock behavior, and Store-managed updates.

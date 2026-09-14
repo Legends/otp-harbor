@@ -11,6 +11,8 @@
   <data name="SetupTitle" xml:space="preserve"><value>Authenticator schützen</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Erstellen Sie ein Masterpasswort. Es bleibt die Wiederherstellungsmethode für Ihren verschlüsselten lokalen Tresor.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Masterpasswort</value></data>
+  <data name="RevealPassword" xml:space="preserve"><value>Passwort anzeigen oder ausblenden</value></data>
+  <data name="RevealPasswordHelp" xml:space="preserve"><value>Erneut auswählen, um das Passwort auszublenden.</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Masterpasswort bestätigen</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Verschlüsselten Tresor erstellen</value></data>
   <data name="PasswordRequired" xml:space="preserve"><value>Geben Sie Ihr Masterpasswort ein.</value></data>

@@ -50,6 +50,9 @@
     <None Include="..\TOTP.UI.Avalonia.Desktop\App.axaml"
           Link="Fixtures\Avalonia\App.axaml"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Mobile\Views\MainView.axaml"
+          Link="Fixtures\Avalonia\MobileMainView.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- In TOTP.Tests.csproj -->

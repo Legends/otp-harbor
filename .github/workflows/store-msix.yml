@@ -157,4 +157,4 @@ jobs:
             --base master `
             --head $branch `
             --title "Report Microsoft Store $displayVersion" `
-            --body "Partner Center publication of Microsoft Store package **$($metadata.packageVersion)** was confirmed when this workflow was dispatched. This PR synchronizes the README and Store listing release heading from the canonical Store version metadata. The website version is stamped from the latest stable GitHub release during deployment."
+            --body "Partner Center publication of Microsoft Store package **$($metadata.packageVersion)** was confirmed when this workflow was dispatched. This PR synchronizes the README and Store listing release heading from the canonical Store version metadata. Website Store, desktop, and Android versions are stamped independently during deployment."
