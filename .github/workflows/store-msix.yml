@@ -35,7 +35,7 @@ on:
         required: true
         type: string
       display_version:
-        description: 'Optional customer-facing README/site version override; stable package versions are inferred'
+        description: 'Optional customer-facing README version override; stable package versions are inferred'
         required: false
         type: string
       mark_as_published:
@@ -140,7 +140,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           gh auth setup-git
           git switch -c $branch
-          git add -- readme.md site/index.html packaging/windows-store/STORE_LISTING.md packaging/windows-store/public-version.json
+          git add -- readme.md packaging/windows-store/STORE_LISTING.md packaging/windows-store/public-version.json
 
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) {
@@ -157,4 +157,4 @@ jobs:
             --base master `
             --head $branch `
             --title "Report Microsoft Store $displayVersion" `
-            --body "Partner Center publication of Microsoft Store package **$($metadata.packageVersion)** was confirmed when this workflow was dispatched. This PR synchronizes the README, website, and Store listing release heading from the canonical Store version metadata."
+            --body "Partner Center publication of Microsoft Store package **$($metadata.packageVersion)** was confirmed when this workflow was dispatched. This PR synchronizes the README and Store listing release heading from the canonical Store version metadata. The website version is stamped from the latest stable GitHub release during deployment."

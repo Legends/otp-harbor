@@ -570,6 +570,44 @@ public sealed class MainWindowSmokeTests
             precision: 2);
     }
 
+    [AvaloniaFact]
+    public void AccountPageHeightRefit_RestoresTheAccountListScrollOffset()
+    {
+        var content = new Border { Width = 200, Height = 2000 };
+        var scrollViewer = new ScrollViewer
+        {
+            Width = 220,
+            Height = 120,
+            Content = content
+        };
+        var window = new Window { Width = 260, Height = 160, Content = scrollViewer };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            scrollViewer.Offset = new Vector(0, 900);
+            window.UpdateLayout();
+            var offsetBeforeRefit = scrollViewer.Offset;
+            Assert.True(offsetBeforeRefit.Y > 0);
+
+            scrollViewer.Offset = default;
+            var restore = typeof(MainWindow).GetMethod(
+                "RestoreAccountListScrollOffset",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(restore);
+            restore.Invoke(null, [scrollViewer, offsetBeforeRefit]);
+
+            Assert.Equal(offsetBeforeRefit.X, scrollViewer.Offset.X, precision: 2);
+            Assert.Equal(offsetBeforeRefit.Y, scrollViewer.Offset.Y, precision: 2);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [Theory]
     [InlineData(Key.Delete, KeyModifiers.None, true, false, true)]
     [InlineData(Key.Delete, KeyModifiers.None, true, true, false)]

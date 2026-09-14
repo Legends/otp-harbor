@@ -62,6 +62,7 @@ if ($isDirty -and -not $AllowDirtySource) {
 
 $versionResolver = Join-Path $PSScriptRoot 'Get-MicrosoftStoreVersion.ps1'
 $storeVersion = (& $versionResolver -ReleaseTag $ReleaseTag).Trim()
+$productVersion = $ReleaseTag.Substring(1)
 $resolvedOutputDirectory = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     "artifacts/store/$ReleaseTag"
 } else {
@@ -74,6 +75,7 @@ $packager = Join-Path $PSScriptRoot 'New-MicrosoftStoreMsix.ps1'
     -Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9' `
     -PublisherDisplayName 'Legends77' `
     -Version $storeVersion `
+    -ProductVersion $productVersion `
     -OutputDirectory $resolvedOutputDirectory
 
 $absoluteOutput = [IO.Path]::GetFullPath((Join-Path $repositoryRoot $resolvedOutputDirectory))

@@ -6,8 +6,9 @@ Updates or verifies the Microsoft Store version shown in public project metadata
 Uses a confirmed, publicly deployed four-part Microsoft Store package version and its customer-facing
 product version. The fourth package component must be zero. Stable package versions whose build is
 65535 are mapped back to their SemVer display version automatically. The script updates the canonical
-version file and every public location that displays the Store version. Use -Check in CI to detect
-drift without changing files.
+version file, README badge/status, and Store listing heading. The website release note is stamped
+from the latest stable GitHub release during Pages deployment. Use -Check in CI to detect drift
+without changing files.
 #>
 [CmdletBinding()]
 param(
@@ -58,11 +59,6 @@ $updates = @(
         Path = 'readme.md'
         Pattern = 'OTP Harbor `\d+\.\d+\.\d+` is publicly available'
         Replacement = "OTP Harbor ``$displayVersion`` is publicly available"
-    },
-    @{
-        Path = 'site/index.html'
-        Pattern = 'OTP Harbor \d+\.\d+\.\d+ is now publicly available from Microsoft Store'
-        Replacement = "OTP Harbor $displayVersion is now publicly available from Microsoft Store"
     },
     @{
         Path = 'packaging/windows-store/STORE_LISTING.md'

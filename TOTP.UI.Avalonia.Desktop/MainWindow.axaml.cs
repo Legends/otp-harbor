@@ -510,6 +510,10 @@ public partial class MainWindow : Window
             return;
         }
 
+        var listScroller = accountList.GetVisualDescendants()
+            .OfType<ScrollViewer>()
+            .FirstOrDefault();
+        var listOffset = listScroller?.Offset ?? default;
         var accountCount = _observedAccountList?.Accounts.Count ?? 0;
         var realizedRowHeight = accountList.GetVisualDescendants()
             .OfType<ListBoxItem>()
@@ -546,6 +550,21 @@ public partial class MainWindow : Window
             MinHeight,
             MaxHeight);
         SetHeightImmediately(targetHeight);
+        UpdateLayout();
+        if (listScroller is not null)
+            RestoreAccountListScrollOffset(listScroller, listOffset);
+    }
+
+    private static void RestoreAccountListScrollOffset(
+        ScrollViewer scrollViewer,
+        Vector requestedOffset)
+    {
+        var maximumOffset = new Vector(
+            Math.Max(0, scrollViewer.Extent.Width - scrollViewer.Viewport.Width),
+            Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height));
+        scrollViewer.Offset = new Vector(
+            Math.Clamp(requestedOffset.X, 0, maximumOffset.X),
+            Math.Clamp(requestedOffset.Y, 0, maximumOffset.Y));
     }
 
     private static bool ShouldFitAccountPage(

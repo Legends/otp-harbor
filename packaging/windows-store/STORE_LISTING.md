@@ -158,12 +158,12 @@ Key features:
 
 Search terms: `TOTP,2FA,autenticador,OTP,sin conexión,seguridad`
 
-## Version 2.0.17 release notes
+## Version 2.0.1 release notes
 
-English: `First Microsoft Store release of OTP Harbor with encrypted local TOTP storage, Windows Hello quick unlock, QR workflows, locking controls, encrypted backup/restore, and four interface languages.`
+English: `Keeps your position in long account lists after copying a code instead of returning to the top when the confirmation disappears.`
 
-German: `Erste Microsoft-Store-Version von OTP Harbor mit verschlüsseltem lokalem TOTP-Speicher, schnellem Entsperren über Windows Hello, QR-Funktionen, Sperroptionen, verschlüsseltem Backup/Wiederherstellung und vier Oberflächensprachen.`
+German: `Behält nach dem Kopieren eines Codes die Position in langen Kontolisten bei, anstatt beim Ausblenden der Bestätigung zum Anfang zurückzuspringen.`
 
-French: `Première version Microsoft Store d’OTP Harbor avec stockage TOTP local chiffré, déverrouillage rapide Windows Hello, fonctions QR, options de verrouillage, sauvegarde/restauration chiffrée et quatre langues d’interface.`
+French: `Conserve votre position dans les longues listes de comptes après la copie d’un code, au lieu de revenir en haut lorsque la confirmation disparaît.`
 
-Spanish: `Primera versión de OTP Harbor en Microsoft Store con almacenamiento TOTP local cifrado, desbloqueo rápido con Windows Hello, funciones QR, controles de bloqueo, copia/restauración cifrada y cuatro idiomas de interfaz.`
+Spanish: `Mantiene la posición en listas de cuentas largas después de copiar un código, en lugar de volver al principio cuando desaparece la confirmación.`

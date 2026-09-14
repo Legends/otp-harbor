@@ -71,7 +71,8 @@ The lower-level packager remains available when explicit identity values are req
   -IdentityName '<Partner Center Identity Name>' `
   -Publisher '<Partner Center Publisher, such as CN=...>' `
   -PublisherDisplayName '<Partner Center publisher display name>' `
-  -Version '<four-part Store package version>'
+  -Version '<four-part Store package version>' `
+  -ProductVersion '<three-part OTP Harbor version>'
 ```
 
 The fourth version component is reserved by Microsoft and must remain `0`. The output under

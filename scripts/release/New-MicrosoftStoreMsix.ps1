@@ -23,6 +23,9 @@ param(
     [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+\.0$')]
     [string]$Version,
 
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
+    [string]$ProductVersion,
+
     [string]$OutputDirectory = 'artifacts/store',
 
     [string]$PublishDirectory
@@ -110,9 +113,14 @@ function New-StoreImage {
 
 try {
     if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
-        $productBuild = if ($packageVersion.Build -eq 65535) { 0 } else { $packageVersion.Build }
-        $productVersion = '{0}.{1}.{2}' -f $packageVersion.Major, $packageVersion.Minor, $productBuild
-        $assemblyVersion = "$productVersion.0"
+        $resolvedProductVersion = if ([string]::IsNullOrWhiteSpace($ProductVersion)) {
+            $productBuild = if ($packageVersion.Build -eq 65535) { 0 } else { $packageVersion.Build }
+            '{0}.{1}.{2}' -f $packageVersion.Major, $packageVersion.Minor, $productBuild
+        }
+        else {
+            $ProductVersion
+        }
+        $assemblyVersion = "$resolvedProductVersion.0"
         & dotnet publish `
             (Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj') `
             --configuration Release `
@@ -121,10 +129,11 @@ try {
             --nologo `
             --verbosity minimal `
             --output $packageRoot `
-            -p:Version=$productVersion `
+            -p:Version=$resolvedProductVersion `
             -p:FileVersion=$Version `
             -p:AssemblyVersion=$assemblyVersion `
-            -p:InformationalVersion=$productVersion
+            -p:InformationalVersion=$resolvedProductVersion `
+            -p:IncludeSourceRevisionInInformationalVersion=false
         if ($LASTEXITCODE -ne 0) { throw 'The Windows publish step failed.' }
     }
     else {

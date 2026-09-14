@@ -6,12 +6,12 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![Build](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml)
 [![Security](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml)
-[![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-2.0.17-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
+[![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-2.0.1-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
 [![License](https://img.shields.io/github/license/Legends/otp-harbor)](LICENSE.txt)
 
 **OTP Harbor** is an open-source, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
-> **Release status:** OTP Harbor `v2.0.0` is the stable GitHub release. Windows is delivered only through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `2.0.17` is publicly available and Microsoft signs accepted MSIX packages. The matching [GitHub release](https://github.com/Legends/otp-harbor/releases/latest) provides Linux packages, a production-signed Android universal APK, integrity metadata, and source archives—without unsigned Windows binaries or prerelease labeling.
+> **Release status:** OTP Harbor `v2.0.1` is the stable GitHub release. Windows is delivered only through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `2.0.1` is publicly available and Microsoft signs accepted MSIX packages. The matching [GitHub release](https://github.com/Legends/otp-harbor/releases/latest) provides Linux packages, a production-signed Android universal APK, integrity metadata, and source archives—without unsigned Windows binaries or prerelease labeling.
 
 <p align="center">
   <img src="packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png" alt="OTP Harbor for Windows with an encrypted local TOTP vault and synthetic sample accounts" width="960" />

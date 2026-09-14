@@ -29,7 +29,6 @@ $publicVersionUpdater = Join-Path $repositoryRoot 'scripts/release/Set-PublicMic
 $documentation = Read-RequiredFile 'docs/release/MICROSOFT_STORE.md'
 $listing = Read-RequiredFile 'packaging/windows-store/STORE_LISTING.md'
 $readme = Read-RequiredFile 'readme.md'
-$website = Read-RequiredFile 'site/index.html'
 $publicVersionJson = Read-RequiredFile 'packaging/windows-store/public-version.json'
 $publicVersion = $publicVersionJson | ConvertFrom-Json
 
@@ -115,6 +114,7 @@ foreach ($control in @(
     '-DisableUpdates',
     '$packageVersion.Build -eq 65535',
     '-p:AssemblyVersion=$assemblyVersion',
+    '-p:IncludeSourceRevisionInInformationalVersion=false',
     "distribution = 'microsoft-store-only'",
     'Do not distribute this unsigned MSIX directly.'
 )) {
@@ -146,6 +146,7 @@ foreach ($control in @(
     "-Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9'",
     "-PublisherDisplayName 'Legends77'",
     "-Version `$storeVersion",
+    "-ProductVersion `$productVersion",
     "-OutputDirectory `$resolvedOutputDirectory",
     'The generated MSIX does not match store-package.json.'
 )) {
@@ -223,7 +224,6 @@ $versionUpdateFixture = Join-Path ([IO.Path]::GetTempPath()) (
 try {
     foreach ($relativePath in @(
         'readme.md',
-        'site/index.html',
         'packaging/windows-store/STORE_LISTING.md',
         'packaging/windows-store/public-version.json'
     )) {
@@ -234,14 +234,14 @@ try {
     }
     & $publicVersionUpdater `
         -RepositoryRoot $versionUpdateFixture `
-        -PackageVersion '2.0.65535.0'
+        -PackageVersion '2.2.65535.0'
     $updatedVersion = Get-Content `
         -LiteralPath (Join-Path $versionUpdateFixture 'packaging/windows-store/public-version.json') `
         -Raw | ConvertFrom-Json
     $updatedReadme = [IO.File]::ReadAllText((Join-Path $versionUpdateFixture 'readme.md'))
-    if ($updatedVersion.displayVersion -cne '2.0.0' -or
-        $updatedVersion.packageVersion -cne '2.0.65535.0' -or
-        -not $updatedReadme.Contains('Microsoft%20Store-2.0.0-', [StringComparison]::Ordinal)) {
+    if ($updatedVersion.displayVersion -cne '2.0.2' -or
+        $updatedVersion.packageVersion -cne '2.2.65535.0' -or
+        -not $updatedReadme.Contains('Microsoft%20Store-2.0.2-', [StringComparison]::Ordinal)) {
         throw 'The Store publication updater did not infer the stable display version.'
     }
 }
@@ -254,7 +254,6 @@ finally {
 if (-not $listing.Contains("## Version $($publicVersion.displayVersion) release notes", [StringComparison]::Ordinal) -or
     -not $readme.Contains("Microsoft%20Store-$($publicVersion.displayVersion)-", [StringComparison]::Ordinal) -or
     -not $readme.Contains("OTP Harbor ``$($publicVersion.displayVersion)`` is publicly available", [StringComparison]::Ordinal) -or
-    -not $website.Contains("OTP Harbor $($publicVersion.displayVersion) is now publicly available from Microsoft Store", [StringComparison]::Ordinal) -or
     $readme.Contains('img.shields.io/github/v/release/Legends/otp-harbor', [StringComparison]::Ordinal)) {
     throw "The public Microsoft Store version is not reported consistently as $($publicVersion.displayVersion)."
 }
