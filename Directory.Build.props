@@ -3,10 +3,10 @@
     <Product>OTP Harbor</Product>
     <Company>OTP Harbor contributors</Company>
     <Authors>OTP Harbor contributors</Authors>
-    <Description>Source-available, noncommercial, local-first TOTP and 2FA authenticator.</Description>
+    <Description>GPLv3-licensed, open-source, local-first TOTP and 2FA authenticator.</Description>
     <Copyright>Copyright © OTP Harbor contributors</Copyright>
     <RepositoryUrl>https://github.com/Legends/otp-harbor</RepositoryUrl>
-    <PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 </Project>

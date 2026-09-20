@@ -21,24 +21,19 @@ license compliance take priority over convenience or distribution reach.
    restore workflows unmistakable.
 8. **Cross-platform consistency — ongoing.** Keep Windows, Linux, Android, and eventually macOS
    behavior and appearance coherent; macOS implementation work is currently deferred.
-9. **F-Droid-compatible Android distribution — planned with a license gate.** Add reproducible
+9. **Official F-Droid Android distribution — planned.** Add reproducible
    Android release builds, F-Droid metadata, deterministic dependency verification, signing and
-   update documentation, and an independently auditable publishing workflow. Under the current
-   PolyForm Noncommercial license, target a project-operated F-Droid-compatible repository rather
-   than the official F-Droid main repository. Official main-repository submission requires a
-   deliberate Android licensing decision because its FLOSS requirement conflicts with the project's
-   prohibition on commercial forks.
+   update documentation, and an independently auditable publishing workflow. GPL-3.0-only satisfies
+   the free-software licensing requirement; dependency, toolchain, reproducibility, metadata, and
+   maintainer-review requirements remain implementation gates.
 
 ## F-Droid acceptance gate
 
 Do not claim that OTP Harbor is available from the official F-Droid repository until it has been
-accepted there. Before implementation, choose and document one of these mutually exclusive paths:
+accepted there. GPLv3 permits commercial reuse and forks when its license, source-disclosure, and
+copyleft conditions are followed; F-Droid availability must not be described as preserving the
+superseded noncommercial restriction.
 
-- retain PolyForm Noncommercial and publish through a project-operated F-Droid-compatible
-  repository; or
-- separately license the complete Android application under an F-Droid-accepted FLOSS license and
-  explicitly accept that the license can permit commercial reuse and forks.
-
-Either path requires a clean source build without proprietary dependencies, reproducibility checks,
-reviewed metadata and screenshots, a protected repository-signing key, documented update recovery,
-and release validation that remains independent from Google Play and GitHub APK signing.
+Submission requires a clean source build without proprietary dependencies, reproducibility checks,
+reviewed metadata and screenshots, an F-Droid-compatible update strategy, documented recovery, and
+release validation that remains independent from Google Play and GitHub APK signing.

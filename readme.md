@@ -7,9 +7,9 @@
 [![Build](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml)
 [![Security](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml)
 [![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-2.0.1-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
-[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE.txt)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE.txt)
 
-**OTP Harbor** is a source-available, noncommercial, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
+**OTP Harbor** is a GPLv3-licensed, open-source, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
 
 > **Release status:** OTP Harbor `v2.0.1` is the stable desktop GitHub release. Windows is delivered only through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `2.0.1` is publicly available and Microsoft signs accepted MSIX packages. The [latest desktop release](https://github.com/Legends/otp-harbor/releases/latest) provides Linux packages, integrity metadata, and source archives. Production-signed APKs use [independent Android releases](https://github.com/Legends/otp-harbor/releases?q=android-v) so mobile and desktop versions can ship separately.
 
@@ -145,4 +145,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for engineering rules and [docs/README.md
 
 ## License
 
-Current OTP Harbor revisions are licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.txt). Commercial use is not granted. See [LICENSING.md](LICENSING.md) for the scope, contribution terms, and the immutable MIT status of earlier published revisions. Third-party components remain under their respective licenses listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Current OTP Harbor revisions are licensed under the [GNU General Public License version 3 only](LICENSE.txt) (`GPL-3.0-only`). GPLv3 permits commercial use and redistribution subject to its copyleft and corresponding-source requirements. See [LICENSING.md](LICENSING.md) for scope, contribution terms, trademark boundaries, and the immutable license history of earlier revisions. Third-party components remain under their respective licenses listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

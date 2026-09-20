@@ -4,11 +4,11 @@
 
 The initial SignPath Foundation application was not approved because OTP Harbor did not yet have sufficient independent public visibility and adoption signals. There is no Foundation certificate and no active SignPath-backed production channel. Microsoft Store is now the primary Windows distribution path.
 
-This document is retained as historical integration guidance only. OTP Harbor now uses a source-available noncommercial license rather than an OSI-approved license, so the project must not reapply for an open-source foundation program unless the program explicitly confirms eligibility under the then-current license. Do not configure SignPath credentials, set `SIGNPATH_PRODUCTION_ENABLED`, describe a release as SignPath-signed, or activate the direct Windows download workflow unless a later application is approved and the returned Authenticode signatures have been verified.
+This document is retained only as a future reapplication runbook. Reapplication remains deferred until GitHub stars, release-download counts, and other independently verifiable active-user signals show materially broader adoption. Do not configure SignPath credentials, set `SIGNPATH_PRODUCTION_ENABLED`, describe a release as SignPath-signed, or activate the direct Windows download workflow unless a later application is approved and the returned Authenticode signatures have been verified.
 
 Repository evidence:
 
-- Current project license: [PolyForm Noncommercial 1.0.0](../../LICENSE.txt) (source-available; not OSI-approved)
+- OSI-approved project license: [GNU GPL version 3 only](../../LICENSE.txt) (`GPL-3.0-only`)
 - Product and download documentation: [README](../../readme.md)
 - Published release form: Windows x64 ZIP packages on [GitHub Releases](https://github.com/Legends/otp-harbor/releases)
 - Code signing policy and roles: [CODE_SIGNING_POLICY.md](../../CODE_SIGNING_POLICY.md)
@@ -25,7 +25,7 @@ Before reapplying:
 3. Review the project-owned raster record in [ASSET_PROVENANCE.md](../assets/ASSET_PROVENANCE.md) whenever an embedded image changes. Unknown earlier icon and flag files have been replaced; do not reintroduce them.
 4. Establish credible external trust signals: sustained releases, real Store installs/reviews, independent contributors, stars/forks, and third-party discussion or coverage.
 5. Keep public evidence of supported installation, security reporting, release provenance, and real-world platform testing.
-6. Obtain written confirmation that the then-current project license is eligible, read and accept the current [SignPath Foundation conditions](https://signpath.org/terms.html), and only then submit a new [application](https://signpath.org/apply).
+6. Read and accept the current [SignPath Foundation conditions](https://signpath.org/terms.html), confirm that GPLv3 remains eligible, and then submit a new [application](https://signpath.org/apply).
 
 Certificate approval is discretionary. Repository preparation cannot guarantee acceptance, particularly while a project has limited verifiable reputation.
 

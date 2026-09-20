@@ -80,7 +80,7 @@ if ((Get-Item -LiteralPath $socialPreviewPath).Length -ge 1MB) {
 }
 
 foreach ($requiredText in @(
-    '<title>OTP Harbor — Source-Available TOTP & 2FA Authenticator</title>',
+    '<title>OTP Harbor — Open-Source TOTP & 2FA Authenticator</title>',
     '<meta name="google-site-verification" content="I36j8PWZYmhKsRKKNVM-fmcGW7wXbJ10fmbOe_4Az0U">',
     '<meta name="msvalidate.01" content="EAC868BC10B59CB9E6BFF0CE79DEEBAC">',
     '<link rel="canonical" href="https://legends.github.io/otp-harbor/">',
@@ -94,8 +94,8 @@ foreach ($requiredText in @(
     '"primaryImageOfPage"',
     '"@type": "SoftwareApplication"',
     '"@type": "Offer"',
-    'https://polyformproject.org/licenses/noncommercial/1.0.0',
-    'OTP Harbor is source-available, not OSI-approved open-source software.',
+    'https://spdx.org/licenses/GPL-3.0-only.html',
+    'GPLv3 permits use, modification, commercial redistribution, and forks',
     'https://apps.microsoft.com/detail/9P31KH5L924P',
     'Get it from Microsoft Store',
     'class="store-symbol"',
