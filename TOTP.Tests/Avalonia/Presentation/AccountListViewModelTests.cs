@@ -252,23 +252,26 @@ public sealed class AccountListViewModelTests
         Assert.Equal(2, sut.Accounts.Count);
         Assert.Contains(sut.Accounts, account => account.Issuer == "GitHub");
         Assert.Contains(sut.Accounts, account => account.AccountName == "github-user@example.test");
+        Assert.Same(sut.Accounts[0], sut.SelectedAccount);
 
         sut.SearchText = "  bob  ";
         Assert.Single(sut.Accounts);
         Assert.Equal("Microsoft", sut.Accounts[0].Issuer);
+        Assert.Same(sut.Accounts[0], sut.SelectedAccount);
 
         sut.SearchText = string.Empty;
         Assert.Equal(3, sut.Accounts.Count);
     }
 
     [Fact]
-    public async Task SearchText_WhenSelectedAccountIsFilteredOut_ClearsSelectionAndGeneratedCode()
+    public async Task SearchText_WhenSelectedAccountIsFilteredOut_SelectsFirstMatchAndClearsPreviousCode()
     {
         var selectedId = Guid.NewGuid();
+        var matchingId = Guid.NewGuid();
         IReadOnlyList<Account> accounts =
         [
             new(selectedId, "GitHub", ValidSecret, "alice@example.test"),
-            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob@example.test")
+            new(matchingId, "Microsoft", ValidSecret, "bob@example.test")
         ];
         var manager = new Mock<IAccountManager>();
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
@@ -286,14 +289,13 @@ public sealed class AccountListViewModelTests
             Mock.Of<IAvaloniaDialogService>(),
             Localization());
         await sut.LoadAsync();
-        sut.EnableAutomaticCodeGenerationOnSelection();
         sut.SelectedAccount = sut.Accounts.Single(account => account.Id == selectedId);
-        await WaitUntilAsync(() => sut.GeneratedCode == "123456");
+        await sut.GenerateCodeAsync();
 
         sut.SearchText = "Microsoft";
 
-        Assert.Null(sut.SelectedAccount);
-        Assert.False(sut.HasSelectedAccount);
+        Assert.Equal(matchingId, sut.SelectedAccount!.Id);
+        Assert.True(sut.HasSelectedAccount);
         Assert.Empty(sut.GeneratedCode);
         Assert.Equal(0, sut.RemainingSeconds);
         Assert.Equal(0, sut.PeriodSeconds);

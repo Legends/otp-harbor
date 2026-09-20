@@ -875,11 +875,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private void ApplyFilter()
     {
         Accounts = AccountListFilter.Apply(_allAccounts, SearchText);
-        if (SelectedAccount is not null
-            && !Accounts.Any(account => account.Id == SelectedAccount.Id))
-        {
-            SelectedAccount = null;
-        }
+        var selectionIsVisible = SelectedAccount is not null
+            && Accounts.Any(account => account.Id == SelectedAccount.Id);
+        if (selectionIsVisible) return;
+
+        SelectedAccount = HasSearchText ? Accounts.FirstOrDefault() : null;
     }
 
     public void ResumeRowCodeGeneration()

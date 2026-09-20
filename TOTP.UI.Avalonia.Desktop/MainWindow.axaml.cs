@@ -147,7 +147,7 @@ public partial class MainWindow : Window
                     && !copyViewModel.IsSettingsVisible
                     && !copyViewModel.AccountList.IsEditorVisible
                     && copyViewModel.AccountList.CopyCommand.CanExecute(null),
-                IsTextEditingSource(e.Source)))
+                HasSelectedText(e.Source)))
         {
             copyViewModel.AccountList.CopyCommand.Execute(null);
             e.Handled = true;
@@ -189,16 +189,23 @@ public partial class MainWindow : Window
         Key key,
         KeyModifiers modifiers,
         bool canCopySelectedAccount,
-        bool isTextEditingSource) =>
+        bool preserveTextCopy) =>
         key == Key.C
         && modifiers == KeyModifiers.Control
         && canCopySelectedAccount
-        && !isTextEditingSource;
+        && !preserveTextCopy;
 
-    private static bool IsTextEditingSource(object? source) =>
-        source is TextBox
-        || source is Visual visual
-            && visual.GetVisualAncestors().OfType<TextBox>().Any();
+    private static bool IsTextEditingSource(object? source) => FindTextBox(source) is not null;
+
+    private static bool HasSelectedText(object? source)
+    {
+        var textBox = FindTextBox(source);
+        return textBox is not null && textBox.SelectionStart != textBox.SelectionEnd;
+    }
+
+    private static TextBox? FindTextBox(object? source) =>
+        source as TextBox
+        ?? (source as Visual)?.GetVisualAncestors().OfType<TextBox>().FirstOrDefault();
 
     private void FocusAccountSearch(object? sender, RoutedEventArgs e) =>
         FocusAccountSearch();

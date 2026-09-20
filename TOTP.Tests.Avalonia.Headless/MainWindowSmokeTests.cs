@@ -698,11 +698,11 @@ public sealed class MainWindowSmokeTests
     [InlineData(Key.C, KeyModifiers.Control | KeyModifiers.Shift, true, false, false)]
     [InlineData(Key.C, KeyModifiers.None, true, false, false)]
     [InlineData(Key.V, KeyModifiers.Control, true, false, false)]
-    public void AccountCopyShortcut_RequiresControlCOutsideTextEditing(
+    public void AccountCopyShortcut_RequiresControlCWithoutSelectedText(
         Key key,
         KeyModifiers modifiers,
         bool canCopy,
-        bool isTextEditing,
+        bool preserveTextCopy,
         bool expected)
     {
         var policy = typeof(MainWindow).GetMethod(
@@ -710,7 +710,22 @@ public sealed class MainWindowSmokeTests
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         Assert.NotNull(policy);
-        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canCopy, isTextEditing]));
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canCopy, preserveTextCopy]));
+    }
+
+    [AvaloniaFact]
+    public void AccountCopyShortcut_PreservesCopyingSelectedSearchText()
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "HasSelectedText",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var searchBox = new TextBox { Text = "github" };
+
+        searchBox.SelectionStart = searchBox.SelectionEnd = searchBox.Text.Length;
+        Assert.False((bool)policy!.Invoke(null, [searchBox])!);
+
+        searchBox.SelectionStart = 0;
+        Assert.True((bool)policy.Invoke(null, [searchBox])!);
     }
 
     [AvaloniaFact]
