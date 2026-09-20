@@ -97,6 +97,7 @@ public static class AvaloniaStringKeys
     public const string SettingsSaveFailed = nameof(SettingsSaveFailed);
     public const string SearchAccounts = nameof(SearchAccounts);
     public const string SearchAccountsShortcut = nameof(SearchAccountsShortcut);
+    public const string ClearSearch = nameof(ClearSearch);
     public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string NoEntriesYet = nameof(NoEntriesYet);
     public const string NoMatchingEntries = nameof(NoMatchingEntries);
@@ -367,7 +368,7 @@ public static class AvaloniaStringKeys
         Language, EnglishLanguage, GermanLanguage, FrenchLanguage, SpanishLanguage,
         Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
         IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
-        SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut,
+        SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
         SearchResultsFormat, NoEntriesYet,
         NoMatchingEntries, CloseSettings, GenerateCode,
         ShowQrCode, CopyTimedClear, CopyTimedClearShortcut, Password, PasswordAuthorizationHelp,

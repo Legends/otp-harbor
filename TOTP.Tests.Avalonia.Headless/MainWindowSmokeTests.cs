@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
@@ -1280,6 +1281,7 @@ public sealed class MainWindowSmokeTests
 
             Assert.NotNull(window.Icon);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Empty(window.KeyBindings);
             var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
             Assert.Equal(window.Title, titleBar.Title);
             Assert.True(titleBar.ShowMinimizeButton);
@@ -1296,6 +1298,15 @@ public sealed class MainWindowSmokeTests
                 window.GetVisualDescendants().OfType<ComboBox>(),
                 combo => combo.Width == 64
                     && combo.HorizontalContentAlignment == global::Avalonia.Layout.HorizontalAlignment.Center);
+            Assert.Same(languageSelector, window.FindControl<ComboBox>("LanguageSelector"));
+            AssertToolbarAutomationName(window, "AddAccountButton", AvaloniaStringKeys.AddAccount);
+            AssertToolbarAutomationName(window, "ToggleSearchButton", AvaloniaStringKeys.SearchAccounts);
+            AssertToolbarAutomationName(window, "ClearSearchButton", AvaloniaStringKeys.ClearSearch);
+            AssertToolbarAutomationName(window, "OpenSettingsButton", AvaloniaStringKeys.Settings);
+            AssertToolbarAutomationName(window, "LockButton", AvaloniaStringKeys.Lock);
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Language],
+                AutomationProperties.GetName(languageSelector));
             languageSelector.ItemsSource = new[] { new LanguageOption("en", "English") };
             languageSelector.SelectedIndex = 0;
             window.UpdateLayout();
@@ -1322,6 +1333,19 @@ public sealed class MainWindowSmokeTests
         {
             window.Close();
         }
+    }
+
+    private static void AssertToolbarAutomationName(
+        MainWindow window,
+        string controlName,
+        string resourceKey)
+    {
+        var button = window.FindControl<Button>(controlName);
+
+        Assert.NotNull(button);
+        Assert.Equal(
+            Application.Current!.Resources[resourceKey],
+            AutomationProperties.GetName(button));
     }
 
     [AvaloniaFact]

@@ -125,6 +125,22 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en", "Clear search")]
+    [InlineData("de", "Suche löschen")]
+    [InlineData("fr", "Effacer la recherche")]
+    [InlineData("es", "Borrar búsqueda")]
+    public void Catalog_ClearSearchUsesSelectedLocale(string cultureName, string expected)
+    {
+        var sut = new AvaloniaStringCatalog();
+
+        Assert.Equal(
+            expected,
+            sut.Get(
+                AvaloniaStringKeys.ClearSearch,
+                System.Globalization.CultureInfo.GetCultureInfo(cultureName)));
+    }
+
+    [Theory]
     [InlineData(
         "en",
         "Add account (Ctrl+A)",

@@ -17,13 +17,6 @@
     WindowStartupLocation="CenterScreen"
     Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">
 
-    <Window.KeyBindings>
-        <KeyBinding Gesture="Ctrl+A" Command="{Binding BeginAddAccountCommand}" />
-        <KeyBinding Gesture="Ctrl+E" Command="{Binding BeginEditAccountCommand}" />
-        <KeyBinding Gesture="Ctrl+D" Command="{Binding DeleteAccountCommand}" />
-        <KeyBinding Gesture="Ctrl+L" Command="{Binding LockCommand}" />
-    </Window.KeyBindings>
-
     <Grid RowDefinitions="Auto,*">
         <controls:ProductTitleBar
             ShowMinimizeButton="True"
@@ -170,14 +163,18 @@
                             <shared:SymbolIcon Foreground="#E16C6C" IconSize="16" Kind="Camera" />
                         </Button>
                         <Button
+                            x:Name="AddAccountButton"
                             Grid.Column="1"
+                            automation:AutomationProperties.Name="{DynamicResource AddAccount}"
                             Classes="icon"
                             Command="{Binding BeginAddAccountCommand}"
                             ToolTip.Tip="{DynamicResource AddAccountShortcut}">
                             <shared:SymbolIcon Foreground="#87CE3E" IconSize="16" Kind="Add" />
                         </Button>
                         <Button
+                            x:Name="ToggleSearchButton"
                             Grid.Column="2"
+                            automation:AutomationProperties.Name="{DynamicResource SearchAccounts}"
                             Classes="icon"
                             Click="FocusAccountSearch"
                             Command="{Binding ToggleSearchCommand}"
@@ -200,12 +197,14 @@
                                 PlaceholderText="{DynamicResource SearchAccounts}"
                                 Text="{Binding AccountList.SearchText, Mode=TwoWay}" />
                             <Button
+                                x:Name="ClearSearchButton"
                                 Grid.Column="1"
                                 Width="20"
                                 Height="20"
                                 Margin="0,0,2,0"
                                 Padding="0"
                                 VerticalAlignment="Center"
+                                automation:AutomationProperties.Name="{DynamicResource ClearSearch}"
                                 Classes="link"
                                 Click="RefocusAccountSearchAfterClear"
                                 Command="{Binding ClearSearchCommand}"
@@ -213,11 +212,13 @@
                                 IsVisible="{Binding AccountList.HasSearchText}" />
                         </Grid>
                         <ComboBox
+                            x:Name="LanguageSelector"
                             Grid.Column="4"
                             Width="64"
                             MinHeight="28"
                             Padding="2"
                             HorizontalContentAlignment="Center"
+                            automation:AutomationProperties.Name="{DynamicResource Language}"
                             ItemsSource="{Binding SettingsPage.Languages}"
                             SelectedItem="{Binding SettingsPage.SelectedLanguage, Mode=TwoWay}"
                             ToolTip.Tip="{DynamicResource Language}">
@@ -235,14 +236,18 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
                         <Button
+                            x:Name="OpenSettingsButton"
                             Grid.Column="5"
+                            automation:AutomationProperties.Name="{DynamicResource Settings}"
                             Classes="icon"
                             Command="{Binding ShowSettingsCommand}"
                             ToolTip.Tip="{DynamicResource Settings}">
                             <shared:SymbolIcon Foreground="#787373" IconSize="16" Kind="Settings" />
                         </Button>
                         <Button
+                            x:Name="LockButton"
                             Grid.Column="6"
+                            automation:AutomationProperties.Name="{DynamicResource Lock}"
                             Classes="icon"
                             Command="{Binding LockCommand}"
                             ToolTip.Tip="{DynamicResource LockShortcut}">
