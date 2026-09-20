@@ -155,6 +155,23 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (DataContext is MainWindowViewModel navigationViewModel
+            && ShouldMoveFocusFromSearch(
+                e.Key,
+                e.KeyModifiers,
+                navigationViewModel.IsShellVisible
+                    && navigationViewModel.IsAccountListVisible
+                    && navigationViewModel.IsSearchVisible
+                    && !navigationViewModel.IsSettingsVisible
+                    && navigationViewModel.AccountList.Accounts.Count > 0,
+                FindTextBox(e.Source)?.Name == "AccountSearchBox"))
+        {
+            FocusAccountsList();
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
         if (e.Key == Key.F
             && e.KeyModifiers.HasFlag(KeyModifiers.Control)
             && DataContext is MainWindowViewModel viewModel
@@ -195,6 +212,16 @@ public partial class MainWindow : Window
         && canCopySelectedAccount
         && !preserveTextCopy;
 
+    private static bool ShouldMoveFocusFromSearch(
+        Key key,
+        KeyModifiers modifiers,
+        bool canNavigateAccounts,
+        bool isAccountSearchSource) =>
+        key == Key.Down
+        && modifiers == KeyModifiers.None
+        && canNavigateAccounts
+        && isAccountSearchSource;
+
     private static bool IsTextEditingSource(object? source) => FindTextBox(source) is not null;
 
     private static bool HasSelectedText(object? source)
@@ -226,6 +253,20 @@ public partial class MainWindow : Window
                     ?.Focus();
             },
             DispatcherPriority.Input);
+    }
+
+    private void FocusAccountsList()
+    {
+        var list = this.GetVisualDescendants()
+            .OfType<ContextPreservingAccountListBox>()
+            .FirstOrDefault(control => control.Name == "AccountsListBox");
+        if (list is null) return;
+
+        if (list.SelectedIndex < 0 && list.ItemCount > 0)
+            list.SelectedIndex = 0;
+        list.Focus();
+        if (list.SelectedItem is not null)
+            list.ScrollIntoView(list.SelectedItem);
     }
 
     private void ObserveViewModel(MainWindowViewModel? viewModel)

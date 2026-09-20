@@ -753,6 +753,27 @@ public sealed class MainWindowSmokeTests
         Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canCopy, preserveTextCopy]));
     }
 
+    [Theory]
+    [InlineData(Key.Down, KeyModifiers.None, true, true, true)]
+    [InlineData(Key.Down, KeyModifiers.None, false, true, false)]
+    [InlineData(Key.Down, KeyModifiers.None, true, false, false)]
+    [InlineData(Key.Down, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.Up, KeyModifiers.None, true, true, false)]
+    public void SearchDownArrow_MovesFocusOnlyToAnAvailableAccountList(
+        Key key,
+        KeyModifiers modifiers,
+        bool canNavigate,
+        bool isSearchSource,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldMoveFocusFromSearch",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canNavigate, isSearchSource]));
+    }
+
     [AvaloniaFact]
     public void AccountCopyShortcut_PreservesCopyingSelectedSearchText()
     {
