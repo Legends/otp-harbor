@@ -712,6 +712,9 @@ public sealed class MainWindowSmokeTests
 
     [Theory]
     [InlineData(Key.Delete, KeyModifiers.None, true, false, true)]
+    [InlineData(Key.D, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.D, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.D, KeyModifiers.Control | KeyModifiers.Shift, true, false, false)]
     [InlineData(Key.Delete, KeyModifiers.None, true, true, false)]
     [InlineData(Key.Delete, KeyModifiers.None, false, false, false)]
     [InlineData(Key.Delete, KeyModifiers.Control, true, false, false)]
@@ -729,6 +732,50 @@ public sealed class MainWindowSmokeTests
 
         Assert.NotNull(policy);
         Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canDelete, isTextEditing]));
+    }
+
+    [Theory]
+    [InlineData(Key.A, Key.A, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.E, Key.E, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.A, Key.A, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.E, Key.E, KeyModifiers.Control, false, false, false)]
+    [InlineData(Key.A, Key.E, KeyModifiers.Control, true, false, false)]
+    [InlineData(Key.A, Key.A, KeyModifiers.Control | KeyModifiers.Shift, true, false, false)]
+    public void AccountCommandShortcuts_RequireExactControlKeyOutsideTextEditors(
+        Key key,
+        Key expectedKey,
+        KeyModifiers modifiers,
+        bool canExecute,
+        bool isTextEditing,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldHandleAccountCommandShortcut",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expected,
+            policy.Invoke(null, [key, expectedKey, modifiers, canExecute, isTextEditing]));
+    }
+
+    [Theory]
+    [InlineData(Key.L, KeyModifiers.Control, true, true)]
+    [InlineData(Key.L, KeyModifiers.Control, false, false)]
+    [InlineData(Key.L, KeyModifiers.Control | KeyModifiers.Shift, true, false)]
+    [InlineData(Key.K, KeyModifiers.Control, true, false)]
+    public void LockShortcut_RequiresExactControlLAndAvailableLock(
+        Key key,
+        KeyModifiers modifiers,
+        bool canLock,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldHandleLockShortcut",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canLock]));
     }
 
     [Theory]
@@ -772,6 +819,50 @@ public sealed class MainWindowSmokeTests
 
         Assert.NotNull(policy);
         Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canNavigate, isSearchSource]));
+    }
+
+    [Theory]
+    [InlineData(Key.Up, KeyModifiers.None, true, true, true, true)]
+    [InlineData(Key.Up, KeyModifiers.None, true, true, false, false)]
+    [InlineData(Key.Up, KeyModifiers.None, true, false, true, false)]
+    [InlineData(Key.Up, KeyModifiers.None, false, true, true, false)]
+    [InlineData(Key.Up, KeyModifiers.Control, true, true, true, false)]
+    [InlineData(Key.Down, KeyModifiers.None, true, true, true, false)]
+    public void FirstSearchResultUpArrow_ReturnsFocusOnlyToVisibleSearch(
+        Key key,
+        KeyModifiers modifiers,
+        bool canNavigate,
+        bool isListSource,
+        bool isAtFirstResult,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldMoveFocusToSearch",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expected,
+            policy.Invoke(null, [key, modifiers, canNavigate, isListSource, isAtFirstResult]));
+    }
+
+    [Theory]
+    [InlineData(Key.F, KeyModifiers.Control, true, true)]
+    [InlineData(Key.F, KeyModifiers.Control, false, false)]
+    [InlineData(Key.F, KeyModifiers.Control | KeyModifiers.Shift, true, false)]
+    [InlineData(Key.G, KeyModifiers.Control, true, false)]
+    public void SearchShortcut_RequiresExactControlFAndAvailableSearch(
+        Key key,
+        KeyModifiers modifiers,
+        bool canFocus,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldFocusAccountSearch",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canFocus]));
     }
 
     [AvaloniaFact]

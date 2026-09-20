@@ -125,6 +125,46 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (DataContext is MainWindowViewModel lockViewModel
+            && ShouldHandleLockShortcut(
+                e.Key,
+                e.KeyModifiers,
+                lockViewModel.LockCommand.CanExecute(null)))
+        {
+            lockViewModel.LockCommand.Execute(null);
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
+        if (DataContext is MainWindowViewModel addViewModel
+            && ShouldHandleAccountCommandShortcut(
+                e.Key,
+                Key.A,
+                e.KeyModifiers,
+                addViewModel.BeginAddAccountCommand.CanExecute(null),
+                IsTextEditingSource(e.Source)))
+        {
+            addViewModel.BeginAddAccountCommand.Execute(null);
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
+        if (DataContext is MainWindowViewModel editViewModel
+            && ShouldHandleAccountCommandShortcut(
+                e.Key,
+                Key.E,
+                e.KeyModifiers,
+                editViewModel.BeginEditAccountCommand.CanExecute(null),
+                IsTextEditingSource(e.Source)))
+        {
+            editViewModel.BeginEditAccountCommand.Execute(null);
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
         if (DataContext is MainWindowViewModel deleteViewModel
             && ShouldHandleAccountDeleteKey(
                 e.Key,
@@ -172,12 +212,34 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.F
-            && e.KeyModifiers.HasFlag(KeyModifiers.Control)
-            && DataContext is MainWindowViewModel viewModel
-            && viewModel.IsShellVisible)
+        var sourceAccountList = FindAccountList(e.Source);
+        if (DataContext is MainWindowViewModel reverseNavigationViewModel
+            && ShouldMoveFocusToSearch(
+                e.Key,
+                e.KeyModifiers,
+                reverseNavigationViewModel.IsShellVisible
+                    && reverseNavigationViewModel.IsAccountListVisible
+                    && reverseNavigationViewModel.IsSearchVisible
+                    && !reverseNavigationViewModel.IsSettingsVisible,
+                sourceAccountList is not null,
+                sourceAccountList?.SelectedIndex <= 0))
         {
-            viewModel.ToggleSearchCommand.Execute(null);
+            FocusAccountSearch();
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
+        if (DataContext is MainWindowViewModel viewModel
+            && ShouldFocusAccountSearch(
+                e.Key,
+                e.KeyModifiers,
+                viewModel.IsShellVisible
+                    && !viewModel.IsSettingsVisible
+                    && viewModel.ToggleSearchCommand.CanExecute(null)))
+        {
+            if (!viewModel.IsSearchVisible)
+                viewModel.ToggleSearchCommand.Execute(null);
             FocusAccountSearch();
             e.Handled = true;
         }
@@ -197,10 +259,29 @@ public partial class MainWindow : Window
         KeyModifiers modifiers,
         bool canDeleteSelectedAccount,
         bool isTextEditingSource) =>
-        key == Key.Delete
-        && modifiers == KeyModifiers.None
+        (key == Key.Delete && modifiers == KeyModifiers.None
+            || key == Key.D && modifiers == KeyModifiers.Control)
         && canDeleteSelectedAccount
         && !isTextEditingSource;
+
+    private static bool ShouldHandleAccountCommandShortcut(
+        Key key,
+        Key expectedKey,
+        KeyModifiers modifiers,
+        bool canExecute,
+        bool isTextEditingSource) =>
+        key == expectedKey
+        && modifiers == KeyModifiers.Control
+        && canExecute
+        && !isTextEditingSource;
+
+    private static bool ShouldHandleLockShortcut(
+        Key key,
+        KeyModifiers modifiers,
+        bool canLock) =>
+        key == Key.L
+        && modifiers == KeyModifiers.Control
+        && canLock;
 
     private static bool ShouldHandleAccountCopyKey(
         Key key,
@@ -222,6 +303,26 @@ public partial class MainWindow : Window
         && canNavigateAccounts
         && isAccountSearchSource;
 
+    private static bool ShouldMoveFocusToSearch(
+        Key key,
+        KeyModifiers modifiers,
+        bool canNavigateSearch,
+        bool isAccountListSource,
+        bool isAtFirstResult) =>
+        key == Key.Up
+        && modifiers == KeyModifiers.None
+        && canNavigateSearch
+        && isAccountListSource
+        && isAtFirstResult;
+
+    private static bool ShouldFocusAccountSearch(
+        Key key,
+        KeyModifiers modifiers,
+        bool canFocusSearch) =>
+        key == Key.F
+        && modifiers == KeyModifiers.Control
+        && canFocusSearch;
+
     private static bool IsTextEditingSource(object? source) => FindTextBox(source) is not null;
 
     private static bool HasSelectedText(object? source)
@@ -233,6 +334,12 @@ public partial class MainWindow : Window
     private static TextBox? FindTextBox(object? source) =>
         source as TextBox
         ?? (source as Visual)?.GetVisualAncestors().OfType<TextBox>().FirstOrDefault();
+
+    private static ContextPreservingAccountListBox? FindAccountList(object? source) =>
+        source as ContextPreservingAccountListBox
+        ?? (source as Visual)?.GetVisualAncestors()
+            .OfType<ContextPreservingAccountListBox>()
+            .FirstOrDefault();
 
     private void FocusAccountSearch(object? sender, RoutedEventArgs e) =>
         FocusAccountSearch();
