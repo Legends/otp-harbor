@@ -218,6 +218,104 @@ public sealed class SettingsPageViewModelTests
     }
 
     [Fact]
+    public async Task SaveAsync_PersistsIssuerLogoPreferenceOutsidePortablePreferences()
+    {
+        var settings = CreateSettings(new AppSettings());
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.ShowIssuerLogo).Returns(true);
+        brandIcons.Setup(value => value.SetShowIssuerLogoAsync(false, CancellationToken.None))
+            .ReturnsAsync(Result.Ok());
+        using var sut = new SettingsPageViewModel(
+            settings.Object,
+            brandIconPackService: brandIcons.Object)
+        {
+            ShowIssuerLogo = false
+        };
+
+        await sut.SaveAsync();
+
+        brandIcons.Verify(
+            value => value.SetShowIssuerLogoAsync(false, CancellationToken.None),
+            Times.Once);
+        Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WhenIssuerLogoPreferenceFails_RestoresPersistedValue()
+    {
+        var settings = CreateSettings(new AppSettings());
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.ShowIssuerLogo).Returns(true);
+        brandIcons.Setup(value => value.SetShowIssuerLogoAsync(false, CancellationToken.None))
+            .ReturnsAsync(Result.Fail("synthetic failure"));
+        using var sut = new SettingsPageViewModel(
+            settings.Object,
+            brandIconPackService: brandIcons.Object)
+        {
+            ShowIssuerLogo = false
+        };
+
+        await sut.SaveAsync();
+
+        Assert.True(sut.ShowIssuerLogo);
+        Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
+        Assert.DoesNotContain("synthetic", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task SaveAsync_PersistsThemeOutsidePortablePreferences()
+    {
+        var settings = CreateSettings(new AppSettings());
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        var appearance = new Mock<IAppearanceSettingsService>();
+        appearance.SetupGet(value => value.ThemePreference).Returns(AppThemePreference.Dark);
+        appearance.Setup(value => value.SetThemePreferenceAsync(
+                AppThemePreference.Light,
+                CancellationToken.None))
+            .ReturnsAsync(Result.Ok());
+        using var sut = new SettingsPageViewModel(
+            settings.Object,
+            appearanceSettingsService: appearance.Object);
+        sut.SelectedTheme = Assert.Single(
+            sut.Themes,
+            option => option.Preference == AppThemePreference.Light);
+
+        await sut.SaveAsync();
+
+        appearance.Verify(value => value.SetThemePreferenceAsync(
+            AppThemePreference.Light,
+            CancellationToken.None), Times.Once);
+        Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WhenThemePersistenceFails_RestoresPersistedTheme()
+    {
+        var settings = CreateSettings(new AppSettings());
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        var appearance = new Mock<IAppearanceSettingsService>();
+        appearance.SetupGet(value => value.ThemePreference).Returns(AppThemePreference.Dark);
+        appearance.Setup(value => value.SetThemePreferenceAsync(
+                AppThemePreference.Light,
+                CancellationToken.None))
+            .ReturnsAsync(Result.Fail("synthetic failure"));
+        using var sut = new SettingsPageViewModel(
+            settings.Object,
+            appearanceSettingsService: appearance.Object);
+        sut.SelectedTheme = Assert.Single(
+            sut.Themes,
+            option => option.Preference == AppThemePreference.Light);
+
+        await sut.SaveAsync();
+
+        Assert.Equal(AppThemePreference.Dark, sut.SelectedTheme?.Preference);
+        Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
+        Assert.DoesNotContain("synthetic", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task OpenLogFolderAsync_UsesActiveLocaleForCompleteSuccessNotice()
     {
         var paths = new Mock<IPlatformApplicationPaths>();

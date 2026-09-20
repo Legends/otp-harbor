@@ -6,6 +6,7 @@ using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Core.Models;
+using TOTP.Core.Enums;
 using TOTP.Core.Security;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
@@ -1649,6 +1650,28 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task SelectThemeAsync_PersistsAndUpdatesVisibleSelection()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.SelectThemeAsync(AppThemePreference.Light);
+
+        Assert.True(context.Sut.IsLightThemeSelected);
+        Assert.False(context.Sut.IsDarkThemeSelected);
+        context.Appearance.Verify(value => value.SetThemePreferenceAsync(
+            AppThemePreference.Light,
+            CancellationToken.None), Times.Once);
+    }
+
+    [Fact]
     public async Task ImportBackupAsync_WithChangedAccount_OffersPerAccountRadioResolution()
     {
         var importedAccount = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "backup-name");
@@ -1917,6 +1940,26 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task ClearEditorPeriodCommand_ClearsCurrentPeriodAndDisablesItself()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await ConfigureAndBeginAddAsync(context);
+
+        Assert.Equal(30, context.Sut.EditorPeriodSeconds);
+        Assert.True(context.Sut.HasEditorPeriodSeconds);
+        Assert.True(context.Sut.ClearEditorPeriodCommand.CanExecute(null));
+
+        context.Sut.ClearEditorPeriodCommand.Execute(null);
+
+        Assert.Null(context.Sut.EditorPeriodSeconds);
+        Assert.False(context.Sut.HasEditorPeriodSeconds);
+        Assert.False(context.Sut.ClearEditorPeriodCommand.CanExecute(null));
+    }
+
+    [Fact]
     public async Task SaveAccountAsync_WithGoogleAuthenticatorCompatibleShortSecret_PersistsAccount()
     {
         var context = CreateContext(isConfigured: false);
@@ -2013,6 +2056,16 @@ public sealed class MobileShellViewModelTests
 
         var strings = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
         var time = new ManualTimeProvider();
+        var themePreference = AppThemePreference.Dark;
+        var appearance = new Mock<IAppearanceSettingsService>();
+        appearance.SetupGet(value => value.ThemePreference)
+            .Returns(() => themePreference);
+        appearance.Setup(value => value.SetThemePreferenceAsync(
+                It.IsAny<AppThemePreference>(),
+                CancellationToken.None))
+            .Callback<AppThemePreference, CancellationToken>((value, _) =>
+                themePreference = value)
+            .ReturnsAsync(Result.Ok());
         var sut = new MobileShellViewModel(
             authorization.Object,
             passwordValidation.Object,
@@ -2030,7 +2083,8 @@ public sealed class MobileShellViewModelTests
             settings.Object,
             paths.Object,
             strings,
-            time);
+            time,
+            appearanceSettingsService: appearance.Object);
         return new TestContext(
             sut,
             state,
@@ -2049,7 +2103,8 @@ public sealed class MobileShellViewModelTests
             settings,
             settingsValue,
             strings,
-            time);
+            time,
+            appearance);
     }
 
     private sealed record TestContext(
@@ -2070,7 +2125,8 @@ public sealed class MobileShellViewModelTests
         Mock<ISettingsService> Settings,
         AppSettings SettingsValue,
         MobileStringCatalog Strings,
-        ManualTimeProvider Time);
+        ManualTimeProvider Time,
+        Mock<IAppearanceSettingsService> Appearance);
 
     private sealed class ManualTimeProvider : TimeProvider
     {

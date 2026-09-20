@@ -5,6 +5,9 @@ public interface IMobileDocumentService
     Task<MobileReadableDocument?> OpenEncryptedBackupAsync(
         CancellationToken cancellationToken = default);
 
+    Task<MobileReadableDocument?> OpenBrandIconPackAsync(
+        CancellationToken cancellationToken = default);
+
     Task<MobileWritableDocument?> CreateEncryptedBackupAsync(
         string suggestedFileName,
         CancellationToken cancellationToken = default);

@@ -273,7 +273,7 @@
                                                 <controls:ContextPreservingAccountListBox
                                                     x:Name="AccountsListBox"
                                                     automation:AutomationProperties.Name="{DynamicResource AccountsList}"
-                                                    Classes="accounts"
+                                                    Classes="accounts desktop-accounts"
                                                     ContextAccount="{Binding ContextAccount, Mode=TwoWay}"
                                                     ItemsSource="{Binding Accounts}"
                                                     SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
@@ -311,19 +311,28 @@
                                                             <Border
                                                                 Classes="account-row-container"
                                                                 Classes.recently-added="{Binding IsRecentlyAdded}">
-                                                                <Grid
-                                                                    ColumnDefinitions="*,Auto,Auto"
-                                                                    RowDefinitions="Auto,2"
-                                                                    ColumnSpacing="6">
+                                                                    <Grid
+                                                                        ColumnDefinitions="Auto,*,Auto,Auto"
+                                                                        RowDefinitions="Auto,Auto"
+                                                                        ColumnSpacing="6">
+                                                                    <shared:BrandTile
+                                                                        Grid.Row="0"
+                                                                        Grid.RowSpan="2"
+                                                                        Grid.Column="0"
+                                                                        IsVisible="{Binding ShowIssuerLogo}"
+                                                                        Margin="0,0,6,0"
+                                                                        IconData="{Binding Brand.IconData}"
+                                                                        Initials="{Binding Brand.Initials}"
+                                                                        TileBackground="{Binding Brand.BackgroundBrush}" />
                                                                     <shared:AccountRow
                                                                         Grid.Row="0"
-                                                                        Grid.Column="0"
+                                                                        Grid.Column="1"
                                                                         AccountName="{Binding AccountName}"
                                                                         Issuer="{Binding Issuer}" />
                                                                     <Button
                                                                         automation:AutomationProperties.Name="{DynamicResource CopyTimedClear}"
                                                                         Grid.Row="0"
-                                                                        Grid.Column="2"
+                                                                        Grid.Column="3"
                                                                         Classes="row-code"
                                                                         Command="{Binding CopyCodeCommand}"
                                                                         CommandParameter="{Binding}"
@@ -336,17 +345,20 @@
                                                                     </Button>
                                                                     <TextBlock
                                                                         Grid.Row="0"
-                                                                        Grid.Column="1"
+                                                                        Grid.Column="2"
                                                                         VerticalAlignment="Center"
                                                                         Classes="secondary"
                                                                         IsVisible="{Binding HasCustomPeriod}"
                                                                         Text="{Binding CustomPeriodLabel}" />
                                                                     <ProgressBar
                                                                         Grid.Row="1"
+                                                                        Grid.Column="1"
                                                                         Grid.ColumnSpan="3"
-                                                                        Height="2"
+                                                                        Classes="account-countdown"
+                                                                        Classes.expiring="{Binding IsExpiring}"
                                                                         IsHitTestVisible="False"
                                                                         IsVisible="{Binding HasCode}"
+                                                                        Margin="0,3,0,0"
                                                                         Maximum="{Binding PeriodSeconds}"
                                                                         Minimum="0"
                                                                         Value="{Binding RemainingSeconds}" />
@@ -486,12 +498,21 @@
                                                         <TextBlock
                                                             Classes="field-label"
                                                             Text="{DynamicResource TotpPeriod}" />
-                                                        <NumericUpDown
-                                                            automation:AutomationProperties.Name="{DynamicResource TotpPeriod}"
-                                                            Increment="1"
-                                                            Maximum="3600"
-                                                            Minimum="5"
-                                                            Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
+                                                        <Grid>
+                                                            <NumericUpDown
+                                                                automation:AutomationProperties.Name="{DynamicResource TotpPeriod}"
+                                                                Increment="5"
+                                                                Maximum="3600"
+                                                                Minimum="5"
+                                                                Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
+                                                            <Button
+                                                                automation:AutomationProperties.Name="{DynamicResource ClearPeriod}"
+                                                                Classes="numeric-clear"
+                                                                Command="{Binding ClearEditorPeriodCommand}"
+                                                                Content="×"
+                                                                IsVisible="{Binding HasEditorPeriodSeconds}"
+                                                                ToolTip.Tip="{DynamicResource ClearPeriod}" />
+                                                        </Grid>
                                                         <shared:ValidationMessage Severity="Error" Text="{Binding EditorPeriodMessage}" />
                                                         <TextBlock
                                                             Classes="secondary"

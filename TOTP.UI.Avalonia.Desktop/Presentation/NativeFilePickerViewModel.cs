@@ -28,6 +28,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private readonly AsyncCommand _importCommand;
     private readonly AsyncCommand _importGoogleQrCommand;
     private readonly AsyncCommand _exportCommand;
+    private readonly AsyncCommand _importBrandIconsCommand;
+    private readonly AsyncCommand _resetBrandIconsCommand;
+    private readonly IBrandIconPackService? _brandIconPackService;
     private readonly CameraScannerViewModel? _cameraScanner;
     private bool _isBusy;
     private bool _disposed;
@@ -46,7 +49,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         IPlatformFolderLauncher folderLauncher,
         IAvaloniaLocalizationService localization,
         TimeSpan? transientMessageDuration = null,
-        CameraScannerViewModel? cameraScanner = null)
+        CameraScannerViewModel? cameraScanner = null,
+        IBrandIconPackService? brandIconPackService = null)
     {
         _filePicker = filePicker ?? throw new ArgumentNullException(nameof(filePicker));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
@@ -59,6 +63,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _folderLauncher = folderLauncher ?? throw new ArgumentNullException(nameof(folderLauncher));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _cameraScanner = cameraScanner;
+        _brandIconPackService = brandIconPackService;
         Notification = new NotificationState(transientMessageDuration);
         ConflictStrategies = CreateConflictStrategies();
         _selectedConflictStrategyOption = ConflictStrategies[0];
@@ -68,6 +73,14 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             ImportGoogleQrAsync,
             () => !_isBusy && _cameraScanner is not null);
         _exportCommand = new AsyncCommand(ExportEncryptedAsync, () => !_isBusy);
+        _importBrandIconsCommand = new AsyncCommand(
+            ImportBrandIconsAsync,
+            () => !_isBusy && _brandIconPackService is not null);
+        _resetBrandIconsCommand = new AsyncCommand(
+            ResetBrandIconsAsync,
+            () => !_isBusy && _brandIconPackService?.Status.IsInstalled == true);
+        if (_brandIconPackService is not null)
+            _brandIconPackService.CatalogChanged += BrandCatalogChanged;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -98,6 +111,73 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     public ICommand ImportCommand => _importCommand;
     public ICommand ImportGoogleQrCommand => _importGoogleQrCommand;
     public ICommand ExportCommand => _exportCommand;
+    public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
+    public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
+    public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
+
+    public async Task ImportBrandIconsAsync()
+    {
+        if (_brandIconPackService is null || !BeginOperation()) return;
+        try
+        {
+            await using var file = await _filePicker.PickBrandIconPackAsync();
+            if (file is null)
+            {
+                ShowTransientMessage(
+                    Localized(AvaloniaStringKeys.NoBrandIconPackSelected),
+                    NotificationSeverity.Information);
+                return;
+            }
+
+            await using var stream = await file.OpenReadAsync();
+            var imported = await _brandIconPackService.ImportAsync(stream);
+            if (imported.IsFailed)
+            {
+                SetMessage(
+                    Localized(AvaloniaStringKeys.BrandIconPackImportFailed),
+                    NotificationSeverity.Error);
+                return;
+            }
+            SetMessage(
+                Localized(
+                    AvaloniaStringKeys.BrandIconPackImported,
+                    imported.Value.BrandCount,
+                    imported.Value.Version),
+                NotificationSeverity.Success);
+        }
+        catch (Exception)
+        {
+            SetMessage(
+                Localized(AvaloniaStringKeys.BrandIconPackImportFailed),
+                NotificationSeverity.Error);
+        }
+        finally
+        {
+            EndOperation();
+        }
+    }
+
+    public async Task ResetBrandIconsAsync()
+    {
+        if (_brandIconPackService is null || !BeginOperation()) return;
+        try
+        {
+            var result = await _brandIconPackService.ResetAsync();
+            SetMessage(
+                result.IsSuccess
+                    ? Localized(AvaloniaStringKeys.BrandIconPackReset)
+                    : Localized(AvaloniaStringKeys.BrandIconPackResetFailed),
+                result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Error);
+        }
+        catch (Exception)
+        {
+            SetMessage(Localized(AvaloniaStringKeys.BrandIconPackResetFailed), NotificationSeverity.Error);
+        }
+        finally
+        {
+            EndOperation();
+        }
+    }
 
     public async Task ImportGoogleQrAsync()
     {
@@ -394,6 +474,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _importCommand.NotifyCanExecuteChanged();
         _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
+        _importBrandIconsCommand.NotifyCanExecuteChanged();
+        _resetBrandIconsCommand.NotifyCanExecuteChanged();
         return true;
     }
 
@@ -403,6 +485,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _importCommand.NotifyCanExecuteChanged();
         _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
+        _importBrandIconsCommand.NotifyCanExecuteChanged();
+        _resetBrandIconsCommand.NotifyCanExecuteChanged();
     }
 
     private string StrategyLabel(ImportConflictStrategy strategy) =>
@@ -454,10 +538,18 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
     public void Dispose()
     {
+        if (_brandIconPackService is not null)
+            _brandIconPackService.CatalogChanged -= BrandCatalogChanged;
         if (_disposed) return;
         _disposed = true;
         _localization.CultureChanged -= LocalizationCultureChanged;
         Notification.Dispose();
+    }
+
+    private void BrandCatalogChanged(object? sender, EventArgs args)
+    {
+        OnPropertyChanged(nameof(HasImportedBrandIcons));
+        _resetBrandIconsCommand.NotifyCanExecuteChanged();
     }
 
     private void SetMessage(string message, NotificationSeverity severity)

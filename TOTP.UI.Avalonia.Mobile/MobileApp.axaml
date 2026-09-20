@@ -3,6 +3,44 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="BrushWindowBackground" Color="#0C1C33" />
+                    <SolidColorBrush x:Key="BrushSurface" Color="#10213F" />
+                    <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#10213F" />
+                    <SolidColorBrush x:Key="BrushSurfaceAlternate" Color="#1A2E4E" />
+                    <SolidColorBrush x:Key="BrushSurfaceHover" Color="#243C63" />
+                    <SolidColorBrush x:Key="BrushSurfacePressed" Color="#152744" />
+                    <SolidColorBrush x:Key="BrushTextPrimary" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushTextSecondary" Color="#CBDAF3" />
+                    <SolidColorBrush x:Key="BrushTextBrand" Color="#AA3ADA" />
+                    <SolidColorBrush x:Key="BrushTextSelection" Color="#97B0DF" />
+                    <SolidColorBrush x:Key="BrushTextHighlight" Color="#87CE3E" />
+                    <SolidColorBrush x:Key="BrushBorder" Color="#1D3366" />
+                    <SolidColorBrush x:Key="BrushControlBorder" Color="#2F5E9E" />
+                    <SolidColorBrush x:Key="BrushControlBorderHover" Color="#4C78B8" />
+                    <SolidColorBrush x:Key="BrushAccent" Color="#7D7FF4" />
+                    <SolidColorBrush x:Key="BrushAccentHover" Color="#9193FF" />
+                    <SolidColorBrush x:Key="BrushAccentPressed" Color="#6A6CDF" />
+                    <SolidColorBrush x:Key="BrushOnAccent" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushDanger" Color="#EF5350" />
+                    <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushWarning" Color="#FFD166" />
+                    <SolidColorBrush x:Key="BrushSuccess" Color="#87CE3E" />
+                    <SolidColorBrush x:Key="BrushFocus" Color="#9899FF" />
+                    <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushDialogSurface" Color="#192B52" />
+                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#0078D4" />
+                    <SolidColorBrush x:Key="BrushCountdownTrack" Color="#45546A" />
+                    <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
+                    <BoxShadows x:Key="ElevationCard">0 2 8 0 #40000000</BoxShadows>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://TOTP.UI.Avalonia.Shared/Styles/SharedStyles.axaml" />
@@ -19,9 +57,19 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.icon-action:pointerover /template/ Border#PART_Border">
             <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+        </Style>
+        <Style Selector="Button.numeric-clear">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="MinWidth" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Margin" Value="0,0,42,0" />
+            <Setter Property="Padding" Value="0" />
         </Style>
         <Style Selector="Button.language-option.selected">
             <Setter Property="Background" Value="{DynamicResource BrushAccent}" />

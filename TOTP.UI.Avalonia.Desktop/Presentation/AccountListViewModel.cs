@@ -10,6 +10,7 @@ using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
+using TOTP.Avalonia.Shared.Branding;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
@@ -22,6 +23,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly IAvaloniaQrImageFactory _qrImageFactory;
     private readonly IAvaloniaDialogService _dialogs;
     private readonly IAvaloniaLocalizationService _localization;
+    private readonly IBrandIconResolver _brandIconResolver;
     private readonly TimeSpan _countdownTickInterval;
     private readonly ISettingsService? _settingsService;
     private readonly IAvaloniaQrPreviewDialogService? _qrPreviewDialogs;
@@ -34,6 +36,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _beginEditCommand;
     private readonly AsyncCommand _saveAccountCommand;
     private readonly AsyncCommand _cancelEditCommand;
+    private readonly AsyncCommand _clearEditorPeriodCommand;
     private readonly AsyncCommand _deleteAccountCommand;
     private readonly AsyncCommand _beginContextEditCommand;
     private readonly AsyncCommand _generateContextQrCommand;
@@ -80,7 +83,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         TimeSpan? countdownTickInterval = null,
         ISettingsService? settingsService = null,
         IAvaloniaQrPreviewDialogService? qrPreviewDialogs = null,
-        TimeSpan? transientMessageDuration = null)
+        TimeSpan? transientMessageDuration = null,
+        IBrandIconResolver? brandIconResolver = null)
     {
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountTotpService = accountTotpService ?? throw new ArgumentNullException(nameof(accountTotpService));
@@ -89,6 +93,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _qrImageFactory = qrImageFactory ?? throw new ArgumentNullException(nameof(qrImageFactory));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+        _brandIconResolver = brandIconResolver ?? FallbackBrandIconResolver.Instance;
+        _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         _countdownTickInterval = countdownTickInterval ?? TimeSpan.FromSeconds(1);
         _settingsService = settingsService;
         _qrPreviewDialogs = qrPreviewDialogs;
@@ -111,6 +117,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             () => !IsBusy && !IsEditorVisible && SelectedAccount is not null);
         _saveAccountCommand = new AsyncCommand(SaveAccountAsync, () => !IsBusy && IsEditorVisible);
         _cancelEditCommand = new AsyncCommand(CancelEditAsync, () => !IsBusy && IsEditorVisible);
+        _clearEditorPeriodCommand = new AsyncCommand(
+            ClearEditorPeriodAsync,
+            () => !IsBusy && IsEditorVisible && EditorPeriodSeconds.HasValue);
         _deleteAccountCommand = new AsyncCommand(
             DeleteAccountAsync,
             () => !IsBusy && !IsEditorVisible && SelectedAccount is not null);
@@ -269,6 +278,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public ICommand BeginEditCommand => _beginEditCommand;
     public ICommand SaveAccountCommand => _saveAccountCommand;
     public ICommand CancelEditCommand => _cancelEditCommand;
+    public ICommand ClearEditorPeriodCommand => _clearEditorPeriodCommand;
     public ICommand DeleteAccountCommand => _deleteAccountCommand;
     public ICommand BeginContextEditCommand => _beginContextEditCommand;
     public ICommand GenerateContextQrCommand => _generateContextQrCommand;
@@ -383,8 +393,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                     account.ID == recentlyAddedAccountId,
                     _copyAccountCodeCommand,
                     account.PeriodSeconds,
-                    FormatCustomPeriod(account.PeriodSeconds)))
+                    FormatCustomPeriod(account.PeriodSeconds),
+                    _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName)))
                 .ToArray();
+            foreach (var account in _allAccounts)
+                account.UpdateLogoVisibility(_brandIconResolver.ShowIssuerLogo);
             ApplyFilter();
             StartRecentHighlightLifetime(
                 _allAccounts.FirstOrDefault(account => account.IsRecentlyAdded));
@@ -473,9 +486,19 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         set
         {
             if (!SetField(ref _editorPeriodSeconds, value)) return;
+            OnPropertyChanged(nameof(HasEditorPeriodSeconds));
+            _clearEditorPeriodCommand.NotifyCanExecuteChanged();
             EditorPeriodMessage = string.Empty;
             EditorMessage = string.Empty;
         }
+    }
+
+    public bool HasEditorPeriodSeconds => EditorPeriodSeconds.HasValue;
+
+    public Task ClearEditorPeriodAsync()
+    {
+        EditorPeriodSeconds = null;
+        return Task.CompletedTask;
     }
 
     public bool IsAdvancedOptionsExpanded
@@ -891,17 +914,17 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             {
                 await Task.Delay(_countdownTickInterval, cancellationToken);
                 var accounts = GetTrackedAccounts();
-                foreach (var account in accounts)
+                var expiringAccounts = accounts
+                    .Where(account => account.RemainingSeconds <= 1)
+                    .ToArray();
+                foreach (var account in accounts.Except(expiringAccounts))
                     account.Tick();
 
                 if (_selectedAccount is not null)
                     ProjectSelectedCode(_selectedAccount);
 
-                var expiredAccounts = accounts
-                    .Where(account => account.RemainingSeconds == 0)
-                    .ToArray();
-                if (expiredAccounts.Length > 0)
-                    await RefreshAccountRowsAsync(expiredAccounts, cancellationToken);
+                if (expiringAccounts.Length > 0)
+                    await RefreshAccountRowsAsync(expiringAccounts, cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -921,8 +944,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         IReadOnlyList<AccountListItemViewModel> accounts,
         CancellationToken cancellationToken)
     {
-        foreach (var account in accounts)
-            account.ClearCode();
         if (accounts.Count == 0) return;
 
         FluentResults.Result<AccountTotpGenerationBatch> refreshed;
@@ -933,6 +954,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (Exception)
         {
+            foreach (var account in accounts)
+                account.ClearCode();
             SetLocalizedCodeMessage(AvaloniaStringKeys.CodeRefreshFailed);
             return;
         }
@@ -941,6 +964,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             return;
         if (refreshed.IsFailed)
         {
+            foreach (var account in accounts)
+                account.ClearCode();
             SetLocalizedCodeMessage(AvaloniaStringKeys.CodeRefreshFailed);
             return;
         }
@@ -951,6 +976,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!GetTrackedAccounts().Contains(account)) continue;
             if (!refreshed.Value.Codes.TryGetValue(account.Id, out var generated))
             {
+                account.ClearCode();
                 refreshFailed = true;
                 continue;
             }
@@ -992,6 +1018,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        _brandIconResolver.CatalogChanged -= BrandCatalogChanged;
         _localization.CultureChanged -= LocalizationCultureChanged;
         Notification.PropertyChanged -= NotificationPropertyChanged;
         Notification.Dispose();
@@ -1033,7 +1060,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ClearSelectedCodeProjection();
     }
 
-    public void NotifySettingsChanged() => OnPropertyChanged(nameof(QrPreviewSize));
+    public void NotifySettingsChanged()
+    {
+        OnPropertyChanged(nameof(QrPreviewSize));
+        var visible = _brandIconResolver.ShowIssuerLogo;
+        foreach (var account in _allAccounts)
+            account.UpdateLogoVisibility(visible);
+    }
 
     private void ClearEditor()
     {
@@ -1057,6 +1090,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _beginEditCommand.NotifyCanExecuteChanged();
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
+        _clearEditorPeriodCommand.NotifyCanExecuteChanged();
         _deleteAccountCommand.NotifyCanExecuteChanged();
         _beginContextEditCommand.NotifyCanExecuteChanged();
         _generateContextQrCommand.NotifyCanExecuteChanged();
@@ -1083,6 +1117,15 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
 
         RelocalizeNotification();
+    }
+
+    private void BrandCatalogChanged(object? sender, EventArgs args)
+    {
+        foreach (var account in _allAccounts)
+        {
+            account.UpdateBrand(_brandIconResolver.ResolveAccount(account.Issuer, account.AccountName));
+            account.UpdateLogoVisibility(_brandIconResolver.ShowIssuerLogo);
+        }
     }
 
     private void ShowLocalizedTransientNotification(

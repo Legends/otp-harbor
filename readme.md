@@ -70,6 +70,7 @@ All accounts, codes, and QR payloads shown in the marketing artwork are syntheti
 | Action | Shortcut |
 | --- | --- |
 | Search accounts | <kbd>Ctrl</kbd> + <kbd>F</kbd> |
+| Copy the selected account code | <kbd>Ctrl</kbd> + <kbd>C</kbd> |
 | Add an account | <kbd>Ctrl</kbd> + <kbd>A</kbd> |
 | Edit the selected account | <kbd>Ctrl</kbd> + <kbd>E</kbd> |
 | Delete the selected account after confirmation | <kbd>Ctrl</kbd> + <kbd>D</kbd> or <kbd>Delete</kbd> |

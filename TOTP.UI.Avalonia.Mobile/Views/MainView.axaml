@@ -261,7 +261,7 @@
                             Grid.Row="3"
                             Background="Transparent"
                             BorderThickness="0"
-                            Classes="accounts"
+                            Classes="accounts mobile-accounts"
                             IsHitTestVisible="{Binding !IsDeleteConfirmationVisible}"
                             IsVisible="{Binding HasAccounts}"
                             ItemsSource="{Binding Accounts}"
@@ -270,9 +270,10 @@
                                 <DataTemplate x:DataType="vm:MobileAccountItem">
                                     <Border
                                         BorderBrush="{DynamicResource BrushBorder}"
-                                        BorderThickness="0,0,0,1"
+                                        BorderThickness="1"
                                         ClipToBounds="True"
-                                        CornerRadius="0">
+                                        CornerRadius="{DynamicResource RadiusMedium}"
+                                        Margin="8,4">
                                         <Grid MinHeight="76">
                                             <Grid
                                                 Width="120"
@@ -319,7 +320,7 @@
                                                     Kind="Delete" />
                                             </Border>
                                             <Border
-                                                Background="{DynamicResource BrushSurface}"
+                                                Background="{DynamicResource BrushAccountItemBackground}"
                                                 Padding="16,10"
                                                 Tapped="CopyAccountCode"
                                                 ToolTip.Tip="{Binding DataContext.CopyCodeText, ElementName=Root}"
@@ -335,17 +336,26 @@
                                                         Threshold="24" />
                                                 </Border.GestureRecognizers>
                                                 <Grid
-                                                    ColumnDefinitions="*,Auto"
+                                                    ColumnDefinitions="Auto,*,Auto"
                                                     RowDefinitions="*,Auto"
                                                     ColumnSpacing="12">
-                                                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="3">
+                                                    <controls:BrandTile
+                                                        Grid.Row="0"
+                                                        Grid.RowSpan="2"
+                                                        Grid.Column="0"
+                                                        IsVisible="{Binding ShowIssuerLogo}"
+                                                        Margin="0,0,12,0"
+                                                        IconData="{Binding Brand.IconData}"
+                                                        Initials="{Binding Brand.Initials}"
+                                                        TileBackground="{Binding Brand.BackgroundBrush}" />
+                                                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="3">
                                                         <TextBlock
                                                             FontSize="17"
                                                             FontWeight="SemiBold"
                                                             Text="{Binding Issuer}"
                                                             TextTrimming="CharacterEllipsis" />
                                                         <TextBlock
-                                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                                            Foreground="{DynamicResource BrushAccountName}"
                                                             IsVisible="{Binding HasAccountName}"
                                                             Text="{Binding AccountName}"
                                                             TextTrimming="CharacterEllipsis" />
@@ -356,7 +366,7 @@
                                                     </StackPanel>
                                                     <TextBlock
                                                         Grid.Row="0"
-                                                        Grid.Column="1"
+                                                        Grid.Column="2"
                                                         VerticalAlignment="Center"
                                                         Foreground="{DynamicResource BrushTextSelection}"
                                                         FontFamily="Consolas"
@@ -365,8 +375,10 @@
                                                         Text="{Binding DisplayCode}" />
                                                     <ProgressBar
                                                         Grid.Row="1"
+                                                        Grid.Column="1"
                                                         Grid.ColumnSpan="2"
-                                                        Height="3"
+                                                        Classes="account-countdown"
+                                                        Classes.expiring="{Binding IsExpiring}"
                                                         Margin="0,7,0,0"
                                                         Maximum="{Binding PeriodSeconds}"
                                                         Value="{Binding RemainingSeconds}" />
@@ -480,6 +492,28 @@
                                         Command="{Binding SelectSpanishLanguageCommand}"
                                         Content="{Binding SpanishLanguageText}" />
                                 </Grid>
+                                <TextBlock
+                                    Margin="0,8,0,0"
+                                    FontSize="18"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding AppearanceText}" />
+                                <StackPanel Spacing="4">
+                                    <RadioButton
+                                        GroupName="AppearanceTheme"
+                                        Command="{Binding SelectSystemThemeCommand}"
+                                        Content="{Binding ThemeFollowSystemText}"
+                                        IsChecked="{Binding IsSystemThemeSelected, Mode=OneWay}" />
+                                    <RadioButton
+                                        GroupName="AppearanceTheme"
+                                        Command="{Binding SelectDarkThemeCommand}"
+                                        Content="{Binding ThemeDarkText}"
+                                        IsChecked="{Binding IsDarkThemeSelected, Mode=OneWay}" />
+                                    <RadioButton
+                                        GroupName="AppearanceTheme"
+                                        Command="{Binding SelectLightThemeCommand}"
+                                        Content="{Binding ThemeLightText}"
+                                        IsChecked="{Binding IsLightThemeSelected, Mode=OneWay}" />
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                         <Border Classes="card" Padding="16">
@@ -661,6 +695,30 @@
                                     Classes="wide secondary"
                                     Command="{Binding ImportBackupCommand}"
                                     Content="{Binding ImportBackupText}" />
+                                <TextBlock
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding BrandIconsText}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding BrandIconsDescriptionText}"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    Classes="wide secondary"
+                                    Command="{Binding ImportBrandIconsCommand}"
+                                    Content="{Binding ImportSimpleIconsPackText}" />
+                                <Button
+                                    Classes="wide secondary"
+                                    Command="{Binding ResetBrandIconsCommand}"
+                                    Content="{Binding ResetBrandIconsText}"
+                                    IsVisible="{Binding HasImportedBrandIcons}" />
+                                <CheckBox
+                                    Content="{Binding ShowIssuerLogoText}"
+                                    IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding ShowIssuerLogoDescriptionText}"
+                                    TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
                         <Border Classes="card" Padding="16">
@@ -728,12 +786,21 @@
                                 <TextBlock
                                     Classes="field-label"
                                     Text="{Binding TotpPeriodText}" />
-                                <NumericUpDown
-                                    automation:AutomationProperties.Name="{Binding TotpPeriodText}"
-                                    Increment="1"
-                                    Maximum="3600"
-                                    Minimum="5"
-                                    Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
+                                <Grid>
+                                    <NumericUpDown
+                                        automation:AutomationProperties.Name="{Binding TotpPeriodText}"
+                                        Increment="5"
+                                        Maximum="3600"
+                                        Minimum="5"
+                                        Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
+                                    <Button
+                                        automation:AutomationProperties.Name="{Binding ClearPeriodText}"
+                                        Classes="numeric-clear"
+                                        Command="{Binding ClearEditorPeriodCommand}"
+                                        Content="×"
+                                        IsVisible="{Binding HasEditorPeriodSeconds}"
+                                        ToolTip.Tip="{Binding ClearPeriodText}" />
+                                </Grid>
                                 <controls:ValidationMessage Severity="Error" Text="{Binding EditorPeriodMessage}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"

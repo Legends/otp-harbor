@@ -32,6 +32,10 @@ public static class MobileStringKeys
     public const string FrenchLanguage = nameof(FrenchLanguage);
     public const string SpanishLanguage = nameof(SpanishLanguage);
     public const string LanguageSaveFailed = nameof(LanguageSaveFailed);
+    public const string Appearance = nameof(Appearance);
+    public const string ThemeFollowSystem = nameof(ThemeFollowSystem);
+    public const string ThemeDark = nameof(ThemeDark);
+    public const string ThemeLight = nameof(ThemeLight);
     public const string Security = nameof(Security);
     public const string AppLockTitle = nameof(AppLockTitle);
     public const string AppLockEnabledDescription = nameof(AppLockEnabledDescription);
@@ -80,6 +84,18 @@ public static class MobileStringKeys
     public const string ConfirmBackupPassword = nameof(ConfirmBackupPassword);
     public const string ExportBackup = nameof(ExportBackup);
     public const string ImportBackup = nameof(ImportBackup);
+    public const string BrandIcons = nameof(BrandIcons);
+    public const string BrandIconsDescription = nameof(BrandIconsDescription);
+    public const string ImportSimpleIconsPack = nameof(ImportSimpleIconsPack);
+    public const string NoBrandIconPackSelected = nameof(NoBrandIconPackSelected);
+    public const string BrandIconPackImported = nameof(BrandIconPackImported);
+    public const string BrandIconPackImportFailed = nameof(BrandIconPackImportFailed);
+    public const string BrandIconPackReset = nameof(BrandIconPackReset);
+    public const string BrandIconPackResetFailed = nameof(BrandIconPackResetFailed);
+    public const string ResetBrandIcons = nameof(ResetBrandIcons);
+    public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
+    public const string ShowIssuerLogoDescription = nameof(ShowIssuerLogoDescription);
+    public const string SettingsSaveFailed = nameof(SettingsSaveFailed);
     public const string BackupFileName = nameof(BackupFileName);
     public const string BackupPasswordRequired = nameof(BackupPasswordRequired);
     public const string BackupPasswordMinimumLength = nameof(BackupPasswordMinimumLength);
@@ -126,6 +142,7 @@ public static class MobileStringKeys
     public const string SecretOptionalOnEdit = nameof(SecretOptionalOnEdit);
     public const string AdvancedOptions = nameof(AdvancedOptions);
     public const string TotpPeriod = nameof(TotpPeriod);
+    public const string ClearPeriod = nameof(ClearPeriod);
     public const string TotpPeriodHelp = nameof(TotpPeriodHelp);
     public const string TotpPeriodInvalid = nameof(TotpPeriodInvalid);
     public const string CustomPeriodFormat = nameof(CustomPeriodFormat);
@@ -209,6 +226,10 @@ public static class MobileStringKeys
         FrenchLanguage,
         SpanishLanguage,
         LanguageSaveFailed,
+        Appearance,
+        ThemeFollowSystem,
+        ThemeDark,
+        ThemeLight,
         Security,
         AppLockTitle,
         AppLockEnabledDescription,
@@ -257,6 +278,13 @@ public static class MobileStringKeys
         ConfirmBackupPassword,
         ExportBackup,
         ImportBackup,
+        BrandIcons,
+        BrandIconsDescription,
+        ImportSimpleIconsPack,
+        NoBrandIconPackSelected,
+        BrandIconPackImported,
+        BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
+        ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, SettingsSaveFailed,
         BackupFileName,
         BackupPasswordRequired,
         BackupPasswordMinimumLength,
@@ -303,6 +331,7 @@ public static class MobileStringKeys
         SecretOptionalOnEdit,
         AdvancedOptions,
         TotpPeriod,
+        ClearPeriod,
         TotpPeriodHelp,
         TotpPeriodInvalid,
         CustomPeriodFormat,

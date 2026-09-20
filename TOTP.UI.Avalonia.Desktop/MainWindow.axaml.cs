@@ -138,6 +138,23 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (DataContext is MainWindowViewModel copyViewModel
+            && ShouldHandleAccountCopyKey(
+                e.Key,
+                e.KeyModifiers,
+                copyViewModel.IsShellVisible
+                    && copyViewModel.IsAccountListVisible
+                    && !copyViewModel.IsSettingsVisible
+                    && !copyViewModel.AccountList.IsEditorVisible
+                    && copyViewModel.AccountList.CopyCommand.CanExecute(null),
+                IsTextEditingSource(e.Source)))
+        {
+            copyViewModel.AccountList.CopyCommand.Execute(null);
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
         if (e.Key == Key.F
             && e.KeyModifiers.HasFlag(KeyModifiers.Control)
             && DataContext is MainWindowViewModel viewModel
@@ -166,6 +183,16 @@ public partial class MainWindow : Window
         key == Key.Delete
         && modifiers == KeyModifiers.None
         && canDeleteSelectedAccount
+        && !isTextEditingSource;
+
+    private static bool ShouldHandleAccountCopyKey(
+        Key key,
+        KeyModifiers modifiers,
+        bool canCopySelectedAccount,
+        bool isTextEditingSource) =>
+        key == Key.C
+        && modifiers == KeyModifiers.Control
+        && canCopySelectedAccount
         && !isTextEditingSource;
 
     private static bool IsTextEditingSource(object? source) =>

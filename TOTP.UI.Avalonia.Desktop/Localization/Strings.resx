@@ -64,6 +64,7 @@
   <data name="Secret" xml:space="preserve"><value>Base32 secret</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Advanced options</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code period in seconds</value></data>
+  <data name="ClearPeriod" xml:space="preserve"><value>Clear code period</value></data>
   <data name="TotpPeriodHelp" xml:space="preserve"><value>Keep 30 seconds unless the provider explicitly requires a different period. Longer periods keep each code valid longer.</value></data>
   <data name="TotpPeriodInvalid" xml:space="preserve"><value>Enter a code period between 5 and 3600 seconds.</value></data>
   <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
@@ -316,4 +317,21 @@
   <data name="ImportGoogleAuthenticator" xml:space="preserve"><value>Import from Google Authenticator</value></data>
   <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Choose a crisp screenshot or saved image of a Google Authenticator transfer QR code. Multi-account and multi-page exports are imported one QR image at a time.</value></data>
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choose Google Authenticator QR image…</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
+  <data name="BrandIconsHelp" xml:space="preserve"><value>Import a Simple Icons release ZIP that you downloaded yourself. OTP Harbor copies it only to your local app-data folder and never uploads issuer or account information. The icon trademarks remain the property of their owners.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import Simple Icons ZIP…</value></data>
+  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Select Simple Icons release ZIP</value></data>
+  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Simple Icons ZIP files</value></data>
+  <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No icon pack was selected.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from Simple Icons {1}.</value></data>
+  <data name="BrandIconPackImportFailed" xml:space="preserve"><value>The icon pack is invalid or could not be installed safely.</value></data>
+  <data name="BrandIconPackReset" xml:space="preserve"><value>Imported brand icons were removed.</value></data>
+  <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Could not remove the imported brand icons.</value></data>
+  <data name="ResetBrandIcons" xml:space="preserve"><value>Remove imported icons</value></data>
+  <data name="ShowIssuerLogo" xml:space="preserve"><value>Show issuer logo</value></data>
+  <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Show a branded or placeholder tile beside each account.</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="ThemeFollowSystem" xml:space="preserve"><value>Follow system</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
 </root>

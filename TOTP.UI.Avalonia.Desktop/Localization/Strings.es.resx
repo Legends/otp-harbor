@@ -64,6 +64,7 @@
   <data name="Secret" xml:space="preserve"><value>Secreto Base32</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Opciones avanzadas</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Período del código en segundos</value></data>
+  <data name="ClearPeriod" xml:space="preserve"><value>Borrar el período del código</value></data>
   <data name="TotpPeriodHelp" xml:space="preserve"><value>Mantén 30 segundos salvo que el proveedor requiera explícitamente otro período. Los períodos más largos mantienen cada código válido durante más tiempo.</value></data>
   <data name="TotpPeriodInvalid" xml:space="preserve"><value>Introduce un período entre 5 y 3600 segundos.</value></data>
   <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
@@ -316,4 +317,21 @@
   <data name="ImportGoogleAuthenticator" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
   <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Elige una captura nítida o una imagen guardada de un código QR de transferencia de Google Authenticator. Las exportaciones de varias cuentas o páginas se importan una imagen QR a la vez.</value></data>
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Elegir imagen QR de Google Authenticator…</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Iconos de marca opcionales</value></data>
+  <data name="BrandIconsHelp" xml:space="preserve"><value>Importa un ZIP de Simple Icons que hayas descargado tú mismo. OTP Harbor solo lo copia en los datos locales de la aplicación y nunca transmite información de cuentas o emisores. Las marcas pertenecen a sus respectivos propietarios.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Importar ZIP de Simple Icons…</value></data>
+  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Seleccionar ZIP de Simple Icons</value></data>
+  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Archivos ZIP de Simple Icons</value></data>
+  <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No se seleccionó ningún paquete de iconos.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>Se importaron {0} iconos locales de Simple Icons {1}.</value></data>
+  <data name="BrandIconPackImportFailed" xml:space="preserve"><value>El paquete de iconos no es válido o no pudo instalarse de forma segura.</value></data>
+  <data name="BrandIconPackReset" xml:space="preserve"><value>Se quitaron los iconos de marca importados.</value></data>
+  <data name="BrandIconPackResetFailed" xml:space="preserve"><value>No se pudieron quitar los iconos de marca importados.</value></data>
+  <data name="ResetBrandIcons" xml:space="preserve"><value>Quitar iconos importados</value></data>
+  <data name="ShowIssuerLogo" xml:space="preserve"><value>Mostrar el logotipo del emisor</value></data>
+  <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Mostrar una tesela de marca o de marcador junto a cada cuenta.</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Apariencia</value></data>
+  <data name="ThemeFollowSystem" xml:space="preserve"><value>Usar configuración del sistema</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Claro</value></data>
 </root>

@@ -12,6 +12,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
 {
     private const int OpenRequestCode = 0x4f55;
     private const int CreateRequestCode = 0x4f56;
+    private const int BrandIconPackRequestCode = 0x4f57;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
 
     public async Task<MobileReadableDocument?> OpenEncryptedBackupAsync(
@@ -58,6 +59,20 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
                 resolver.Delete(selected, null, null);
                 return Task.CompletedTask;
             });
+    }
+
+    public async Task<MobileReadableDocument?> OpenBrandIconPackAsync(
+        CancellationToken cancellationToken = default)
+    {
+        using var intent = new Intent(Intent.ActionOpenDocument);
+        intent.AddCategory(Intent.CategoryOpenable);
+        intent.SetType("application/zip");
+        var selected = await StartAsync(intent, BrandIconPackRequestCode, cancellationToken);
+        if (selected is null) return null;
+
+        var activity = activityProvider.GetCurrent();
+        var stream = activity?.ContentResolver?.OpenInputStream(selected);
+        return stream is null ? null : new MobileReadableDocument(stream);
     }
 
     private async Task<global::Android.Net.Uri?> StartAsync(

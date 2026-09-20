@@ -114,6 +114,7 @@
   <data name="SecretOptionalOnEdit" xml:space="preserve"><value>Neues Base32-Geheimnis (leer lassen, um das aktuelle beizubehalten)</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Erweiterte Optionen</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code-Periode in Sekunden</value></data>
+  <data name="ClearPeriod" xml:space="preserve"><value>Code-Periode löschen</value></data>
   <data name="TotpPeriodHelp" xml:space="preserve"><value>Behalten Sie 30 Sekunden bei, sofern der Anbieter nicht ausdrücklich eine andere Periode verlangt. Längere Perioden halten jeden Code länger gültig.</value></data>
   <data name="TotpPeriodInvalid" xml:space="preserve"><value>Geben Sie eine Code-Periode zwischen 5 und 3600 Sekunden ein.</value></data>
   <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
@@ -178,4 +179,20 @@
   <data name="ApplyUnlockMethod" xml:space="preserve"><value>Übernehmen</value></data>
   <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>OTP Harbor entsperren</value></data>
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Verwenden Sie die Gerätesperre (PIN, Muster oder Passwort).</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Optionale Markensymbole</value></data>
+  <data name="BrandIconsDescription" xml:space="preserve"><value>Importieren Sie eine selbst heruntergeladene Simple-Icons-ZIP-Datei. OTP Harbor speichert sie nur auf diesem Gerät und lädt niemals Aussteller- oder Kontoinformationen hoch. Die Markenrechte verbleiben bei ihren Eigentümern.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Simple-Icons-ZIP importieren…</value></data>
+  <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Es wurde kein Symbolpaket ausgewählt.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus Simple Icons {1} wurden importiert.</value></data>
+  <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Das Symbolpaket ist ungültig oder konnte nicht sicher installiert werden.</value></data>
+  <data name="BrandIconPackReset" xml:space="preserve"><value>Importierte Markensymbole wurden entfernt.</value></data>
+  <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Importierte Markensymbole konnten nicht entfernt werden.</value></data>
+  <data name="ResetBrandIcons" xml:space="preserve"><value>Importierte Symbole entfernen</value></data>
+  <data name="ShowIssuerLogo" xml:space="preserve"><value>Ausstellerlogo anzeigen</value></data>
+  <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Ein Marken- oder Platzhalterfeld neben jedem Konto anzeigen.</value></data>
+  <data name="SettingsSaveFailed" xml:space="preserve"><value>Diese Einstellung konnte nicht gespeichert werden.</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Erscheinungsbild</value></data>
+  <data name="ThemeFollowSystem" xml:space="preserve"><value>Systemeinstellung verwenden</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dunkel</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Hell</value></data>
 </root>

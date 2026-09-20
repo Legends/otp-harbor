@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using TOTP.Core.Validation;
+using TOTP.Avalonia.Shared.Branding;
 
 namespace TOTP.Avalonia.Mobile.Presentation;
 
@@ -9,12 +10,15 @@ public sealed class MobileAccountItem(
     string issuer,
     string accountName,
     int configuredPeriodSeconds = TotpPeriodPolicy.DefaultSeconds,
-    string customPeriodLabel = "") : INotifyPropertyChanged
+    string customPeriodLabel = "",
+    BrandInfo? brand = null) : INotifyPropertyChanged
 {
     private string _code = string.Empty;
     private int _remainingSeconds;
     private int _periodSeconds = configuredPeriodSeconds;
     private string _customPeriodLabel = customPeriodLabel;
+    private BrandInfo _brand = brand ?? BrandInfo.Generic(issuer);
+    private bool _showIssuerLogo = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -24,11 +28,14 @@ public sealed class MobileAccountItem(
     public int ConfiguredPeriodSeconds { get; } = configuredPeriodSeconds;
     public bool HasCustomPeriod => ConfiguredPeriodSeconds != TotpPeriodPolicy.DefaultSeconds;
     public string CustomPeriodLabel => _customPeriodLabel;
+    public BrandInfo Brand => _brand;
+    public bool ShowIssuerLogo => _showIssuerLogo;
     public bool HasAccountName => AccountName.Length > 0;
     public string Code => _code;
     public string DisplayCode => FormatCode(_code);
     public int RemainingSeconds => _remainingSeconds;
     public int PeriodSeconds => _periodSeconds;
+    public bool IsExpiring => Code.Length > 0 && RemainingSeconds is > 0 and <= 10;
 
     public string DisplayName => HasAccountName
         ? $"{Issuer} · {AccountName}"
@@ -47,6 +54,7 @@ public sealed class MobileAccountItem(
         if (_remainingSeconds <= 0) return;
         _remainingSeconds--;
         OnPropertyChanged(nameof(RemainingSeconds));
+        OnPropertyChanged(nameof(IsExpiring));
     }
 
     internal void UpdateCustomPeriodLabel(string label)
@@ -54,6 +62,21 @@ public sealed class MobileAccountItem(
         if (_customPeriodLabel == label) return;
         _customPeriodLabel = label;
         OnPropertyChanged(nameof(CustomPeriodLabel));
+    }
+
+    internal void UpdateBrand(BrandInfo brand)
+    {
+        ArgumentNullException.ThrowIfNull(brand);
+        if (ReferenceEquals(_brand, brand)) return;
+        _brand = brand;
+        OnPropertyChanged(nameof(Brand));
+    }
+
+    internal void UpdateLogoVisibility(bool visible)
+    {
+        if (_showIssuerLogo == visible) return;
+        _showIssuerLogo = visible;
+        OnPropertyChanged(nameof(ShowIssuerLogo));
     }
 
     internal void ClearCode()
@@ -77,6 +100,7 @@ public sealed class MobileAccountItem(
         OnPropertyChanged(nameof(DisplayCode));
         OnPropertyChanged(nameof(RemainingSeconds));
         OnPropertyChanged(nameof(PeriodSeconds));
+        OnPropertyChanged(nameof(IsExpiring));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>

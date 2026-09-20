@@ -47,6 +47,11 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<ISettingsService, PortableSettingsService>();
+        services.AddSingleton<IAppearanceSettingsService>(sp =>
+            new AppearanceSettingsService(
+                applicationPaths,
+                sp.GetRequiredService<IPlatformFileSecurity>(),
+                sp.GetRequiredService<ILogger<AppearanceSettingsService>>()));
         services.AddSingleton<ITotpGenerator, OtpNetTotpGenerator>();
         services.AddSingleton<IAccountTotpService, AccountTotpService>();
         services.AddSingleton<IQrCodeService, QrCodeService>();
@@ -54,6 +59,11 @@ public static class DependencyInjection
         services.AddSingleton<IQrPayloadValidator, QrPayloadValidator>();
         services.AddSingleton<IQrAccountImportService, QrAccountImportService>();
         services.AddSingleton<IAccountImportService, AccountImportService>();
+        services.AddSingleton<IBrandIconPackService>(sp =>
+            new SimpleIconsBrandIconPackService(
+                applicationPaths,
+                sp.GetRequiredService<IPlatformFileSecurity>(),
+                sp.GetRequiredService<ILogger<SimpleIconsBrandIconPackService>>()));
         services.AddSingleton<IStartupDiagnostics, StartupDiagnostics>();
         services.AddSingleton<ISupportDiagnosticsService, SupportDiagnosticsService>();
         services.AddSingleton<ISignedAppcastVerifier, SignedAppcastVerifier>();

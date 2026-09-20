@@ -39,6 +39,19 @@ public static class AvaloniaStringKeys
     public const string ImportGoogleAuthenticator = nameof(ImportGoogleAuthenticator);
     public const string GoogleAuthenticatorImportHelp = nameof(GoogleAuthenticatorImportHelp);
     public const string ChooseGoogleAuthenticatorQrImage = nameof(ChooseGoogleAuthenticatorQrImage);
+    public const string BrandIcons = nameof(BrandIcons);
+    public const string BrandIconsHelp = nameof(BrandIconsHelp);
+    public const string ImportSimpleIconsPack = nameof(ImportSimpleIconsPack);
+    public const string SelectSimpleIconsPack = nameof(SelectSimpleIconsPack);
+    public const string SimpleIconsZipFiles = nameof(SimpleIconsZipFiles);
+    public const string NoBrandIconPackSelected = nameof(NoBrandIconPackSelected);
+    public const string BrandIconPackImported = nameof(BrandIconPackImported);
+    public const string BrandIconPackImportFailed = nameof(BrandIconPackImportFailed);
+    public const string BrandIconPackReset = nameof(BrandIconPackReset);
+    public const string BrandIconPackResetFailed = nameof(BrandIconPackResetFailed);
+    public const string ResetBrandIcons = nameof(ResetBrandIcons);
+    public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
+    public const string ShowIssuerLogoHelp = nameof(ShowIssuerLogoHelp);
     public const string OpenQrImage = nameof(OpenQrImage);
     public const string SelectQrImage = nameof(SelectQrImage);
     public const string QrImageFiles = nameof(QrImageFiles);
@@ -67,6 +80,10 @@ public static class AvaloniaStringKeys
     public const string ImportExport = nameof(ImportExport);
     public const string Miscellaneous = nameof(Miscellaneous);
     public const string Language = nameof(Language);
+    public const string Appearance = nameof(Appearance);
+    public const string ThemeFollowSystem = nameof(ThemeFollowSystem);
+    public const string ThemeDark = nameof(ThemeDark);
+    public const string ThemeLight = nameof(ThemeLight);
     public const string EnglishLanguage = nameof(EnglishLanguage);
     public const string GermanLanguage = nameof(GermanLanguage);
     public const string FrenchLanguage = nameof(FrenchLanguage);
@@ -154,6 +171,7 @@ public static class AvaloniaStringKeys
     public const string Secret = nameof(Secret);
     public const string AdvancedOptions = nameof(AdvancedOptions);
     public const string TotpPeriod = nameof(TotpPeriod);
+    public const string ClearPeriod = nameof(ClearPeriod);
     public const string TotpPeriodHelp = nameof(TotpPeriodHelp);
     public const string TotpPeriodInvalid = nameof(TotpPeriodInvalid);
     public const string CustomPeriodFormat = nameof(CustomPeriodFormat);
@@ -327,6 +345,10 @@ public static class AvaloniaStringKeys
         DownloadUpdate, InstallUpdate, ReleaseNotes, VerifyAppcast, SoftwareUpdates,
         ScanQrCamera, ImportQrCode, ImportGoogleAuthenticator,
         GoogleAuthenticatorImportHelp, ChooseGoogleAuthenticatorQrImage,
+        BrandIcons, BrandIconsHelp, ImportSimpleIconsPack, SelectSimpleIconsPack,
+        SimpleIconsZipFiles, NoBrandIconPackSelected, BrandIconPackImported,
+        BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed, ResetBrandIcons,
+        ShowIssuerLogo, ShowIssuerLogoHelp,
         OpenQrImage, SelectQrImage, QrImageFiles,
         QrImageReading, QrImageNoCode, QrImageInvalid, QrImageTooLarge,
         QrImageReadFailedSafely, QrImageSelectionCancelled, QrScannerSupportedFormats,
@@ -335,7 +357,8 @@ public static class AvaloniaStringKeys
         CameraInitializing, CameraActive, CameraScanCancelled,
         CameraScanFailedSafely, CameraRuntimeUnavailable, CameraNotFound, CameraStartFailed,
         SecuritySettings, Security, ImportExport, Miscellaneous,
-        Language, EnglishLanguage, GermanLanguage, FrenchLanguage, SpanishLanguage, IdleTimeout,
+        Language, EnglishLanguage, GermanLanguage, FrenchLanguage, SpanishLanguage,
+        Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
         IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, NoEntriesYet,
         NoMatchingEntries, CloseSettings, GenerateCode,
@@ -357,7 +380,7 @@ public static class AvaloniaStringKeys
         PasswordChangeFailed, PasswordChanged, RecoveryAndCompatibility,
         PortableEnvelopeStatus, AutomaticRollbackStatus, LegacyMigrationStatus,
         AddAccount, EditAccount, DeleteAccount, DeleteAccountPrompt, Delete, Issuer,
-        AccountName, Secret, AdvancedOptions, TotpPeriod, TotpPeriodHelp,
+        AccountName, Secret, AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,
         AccountSecretInvalid, AccountDuplicate, AccountSaveFailed, AccountSaved,
         AccountEditLoadFailed, AccountDeleteFailed, AccountDeleted, CodeRefreshFailed,

@@ -2,9 +2,11 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using TOTP.Avalonia.Shared.Appearance;
 using TOTP.Avalonia.Desktop.Platform;
 using TOTP.Avalonia.Desktop.Startup;
 using TOTP.Core.Platform;
+using TOTP.Core.Services.Interfaces;
 using TOTP.Infrastructure.Services;
 
 namespace TOTP.Avalonia.Desktop;
@@ -25,9 +27,12 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            _themeService = new AvaloniaThemeService(PlatformSettings, ApplyTheme);
-            _themeService.Start();
             _services = AvaloniaCompositionRoot.Build(desktop);
+            _themeService = new AvaloniaThemeService(
+                PlatformSettings,
+                _services.GetRequiredService<IAppearanceSettingsService>(),
+                ApplyTheme);
+            _themeService.Start();
             _exceptionHooks = new AvaloniaExceptionHooks(
                 global::Avalonia.Threading.Dispatcher.UIThread,
                 _services.GetRequiredService<AvaloniaExceptionBoundary>());

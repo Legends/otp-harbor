@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TOTP.Avalonia.Mobile;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Avalonia.Mobile.Views;
+using TOTP.Core.Services.Interfaces;
 
 namespace TOTP.Avalonia.Android;
 
@@ -27,6 +28,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
             var viewModel = _services.GetRequiredService<MobileShellViewModel>();
             var app = global::Avalonia.Application.Current as MobileApp
                 ?? throw new InvalidOperationException("The mobile Avalonia application is unavailable.");
+            app.ConfigureAppearance(_services.GetRequiredService<IAppearanceSettingsService>());
             app.MainViewFactory = () =>
             {
                 var view = new MainView { DataContext = viewModel };
@@ -62,6 +64,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 
     public override void OnTerminate()
     {
+        (global::Avalonia.Application.Current as MobileApp)?.DisposeAppearance();
         _services?.Dispose();
         _services = null;
         base.OnTerminate();

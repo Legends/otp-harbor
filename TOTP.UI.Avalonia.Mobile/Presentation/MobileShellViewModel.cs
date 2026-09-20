@@ -15,6 +15,7 @@ using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
+using TOTP.Avalonia.Shared.Branding;
 
 namespace TOTP.Avalonia.Mobile.Presentation;
 
@@ -43,6 +44,9 @@ public sealed class MobileShellViewModel :
     private readonly IPlatformApplicationPaths _paths;
     private readonly MobileStringCatalog _strings;
     private readonly TimeProvider _timeProvider;
+    private readonly IBrandIconResolver _brandIconResolver;
+    private readonly IBrandIconPackService? _brandIconPackService;
+    private readonly IAppearanceSettingsService? _appearanceSettingsService;
     private readonly MobileAsyncCommand _initializeCommand;
     private readonly MobileAsyncCommand _configureCommand;
     private readonly MobileAsyncCommand _unlockCommand;
@@ -64,6 +68,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _beginAddCommand;
     private readonly MobileAsyncCommand _saveAccountCommand;
     private readonly MobileAsyncCommand _cancelEditCommand;
+    private readonly MobileAsyncCommand _clearEditorPeriodCommand;
     private readonly MobileAsyncCommand _confirmDeleteCommand;
     private readonly MobileAsyncCommand _cancelDeleteCommand;
     private readonly MobileAsyncCommand _scanQrCommand;
@@ -74,6 +79,8 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _dismissQrCommand;
     private readonly MobileAsyncCommand _exportBackupCommand;
     private readonly MobileAsyncCommand _importBackupCommand;
+    private readonly MobileAsyncCommand _importBrandIconsCommand;
+    private readonly MobileAsyncCommand _resetBrandIconsCommand;
     private readonly MobileAsyncCommand _confirmImportCommand;
     private readonly MobileAsyncCommand _cancelImportCommand;
     private readonly MobileAsyncCommand _skipAllBackupConflictsCommand;
@@ -84,6 +91,9 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _selectGermanLanguageCommand;
     private readonly MobileAsyncCommand _selectFrenchLanguageCommand;
     private readonly MobileAsyncCommand _selectSpanishLanguageCommand;
+    private readonly MobileAsyncCommand _selectSystemThemeCommand;
+    private readonly MobileAsyncCommand _selectDarkThemeCommand;
+    private readonly MobileAsyncCommand _selectLightThemeCommand;
 
     private MobileScreen _screen = MobileScreen.Starting;
     private bool _isBusy;
@@ -104,6 +114,8 @@ public sealed class MobileShellViewModel :
         PreferredUnlockMethod.PlatformQuickUnlock;
     private bool _isReenablingAppLock;
     private bool _isSettingsVisible;
+    private bool _showIssuerLogo = true;
+    private long _showIssuerLogoRevision;
     private string _searchText = string.Empty;
     private readonly List<MobileAccountItem> _allAccounts = [];
     private MobileAccountItem? _selectedAccount;
@@ -159,7 +171,10 @@ public sealed class MobileShellViewModel :
         ISettingsService settings,
         IPlatformApplicationPaths paths,
         MobileStringCatalog strings,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IBrandIconResolver? brandIconResolver = null,
+        IBrandIconPackService? brandIconPackService = null,
+        IAppearanceSettingsService? appearanceSettingsService = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
@@ -180,6 +195,11 @@ public sealed class MobileShellViewModel :
         _paths = paths ?? throw new ArgumentNullException(nameof(paths));
         _strings = strings ?? throw new ArgumentNullException(nameof(strings));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        _brandIconResolver = brandIconResolver ?? FallbackBrandIconResolver.Instance;
+        _brandIconPackService = brandIconPackService;
+        _appearanceSettingsService = appearanceSettingsService;
+        _showIssuerLogo = _brandIconPackService?.ShowIssuerLogo ?? true;
+        _brandIconResolver.CatalogChanged += BrandCatalogChanged;
 
         _initializeCommand = new MobileAsyncCommand(InitializeAsync, () => !IsBusy);
         _configureCommand = new MobileAsyncCommand(ConfigureAsync, () => IsSetupVisible && !IsBusy);
@@ -242,6 +262,9 @@ public sealed class MobileShellViewModel :
         _cancelEditCommand = new MobileAsyncCommand(
             CancelEditAsync,
             () => IsEditorVisible && !IsBusy);
+        _clearEditorPeriodCommand = new MobileAsyncCommand(
+            ClearEditorPeriodAsync,
+            () => IsEditorVisible && !IsBusy && EditorPeriodSeconds.HasValue);
         _confirmDeleteCommand = new MobileAsyncCommand(
             ConfirmDeleteAsync,
             () => IsDeleteConfirmationVisible && !IsBusy);
@@ -270,6 +293,12 @@ public sealed class MobileShellViewModel :
         _importBackupCommand = new MobileAsyncCommand(
             ImportBackupAsync,
             () => IsSettingsVisible && !IsBusy);
+        _importBrandIconsCommand = new MobileAsyncCommand(
+            ImportBrandIconsAsync,
+            () => IsSettingsVisible && !IsBusy && _brandIconPackService is not null);
+        _resetBrandIconsCommand = new MobileAsyncCommand(
+            ResetBrandIconsAsync,
+            () => IsSettingsVisible && !IsBusy && _brandIconPackService?.Status.IsInstalled == true);
         _confirmImportCommand = new MobileAsyncCommand(
             () => ResolveImportConfirmationAsync(true),
             () => IsImportConfirmationVisible);
@@ -301,6 +330,15 @@ public sealed class MobileShellViewModel :
         _selectSpanishLanguageCommand = new MobileAsyncCommand(
             () => SelectLanguageAsync("es"),
             () => IsSettingsVisible && !IsBusy);
+        _selectSystemThemeCommand = new MobileAsyncCommand(
+            () => SelectThemeAsync(AppThemePreference.System),
+            () => IsSettingsVisible && !IsBusy && _appearanceSettingsService is not null);
+        _selectDarkThemeCommand = new MobileAsyncCommand(
+            () => SelectThemeAsync(AppThemePreference.Dark),
+            () => IsSettingsVisible && !IsBusy && _appearanceSettingsService is not null);
+        _selectLightThemeCommand = new MobileAsyncCommand(
+            () => SelectThemeAsync(AppThemePreference.Light),
+            () => IsSettingsVisible && !IsBusy && _appearanceSettingsService is not null);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -331,6 +369,7 @@ public sealed class MobileShellViewModel :
     public ICommand BeginAddCommand => _beginAddCommand;
     public ICommand SaveAccountCommand => _saveAccountCommand;
     public ICommand CancelEditCommand => _cancelEditCommand;
+    public ICommand ClearEditorPeriodCommand => _clearEditorPeriodCommand;
     public ICommand ConfirmDeleteCommand => _confirmDeleteCommand;
     public ICommand CancelDeleteCommand => _cancelDeleteCommand;
     public ICommand ScanQrCommand => _scanQrCommand;
@@ -341,6 +380,22 @@ public sealed class MobileShellViewModel :
     public ICommand DismissQrCommand => _dismissQrCommand;
     public ICommand ExportBackupCommand => _exportBackupCommand;
     public ICommand ImportBackupCommand => _importBackupCommand;
+    public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
+    public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
+    public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
+    public bool ShowIssuerLogo
+    {
+        get => _showIssuerLogo;
+        set
+        {
+            if (_showIssuerLogo == value) return;
+            var previous = _showIssuerLogo;
+            _showIssuerLogo = value;
+            var revision = ++_showIssuerLogoRevision;
+            UpdateLogoVisibility();
+            _ = SaveShowIssuerLogoAsync(value, previous, revision);
+        }
+    }
     public ICommand ConfirmImportCommand => _confirmImportCommand;
     public ICommand CancelImportCommand => _cancelImportCommand;
     public ICommand SkipAllBackupConflictsCommand => _skipAllBackupConflictsCommand;
@@ -353,6 +408,9 @@ public sealed class MobileShellViewModel :
     public ICommand SelectGermanLanguageCommand => _selectGermanLanguageCommand;
     public ICommand SelectFrenchLanguageCommand => _selectFrenchLanguageCommand;
     public ICommand SelectSpanishLanguageCommand => _selectSpanishLanguageCommand;
+    public ICommand SelectSystemThemeCommand => _selectSystemThemeCommand;
+    public ICommand SelectDarkThemeCommand => _selectDarkThemeCommand;
+    public ICommand SelectLightThemeCommand => _selectLightThemeCommand;
 
     public bool IsStartingVisible => _screen == MobileScreen.Starting;
     public bool IsSetupVisible => _screen == MobileScreen.Setup;
@@ -449,6 +507,12 @@ public sealed class MobileShellViewModel :
     public bool IsGermanLanguageSelected => _strings.Culture.TwoLetterISOLanguageName == "de";
     public bool IsFrenchLanguageSelected => _strings.Culture.TwoLetterISOLanguageName == "fr";
     public bool IsSpanishLanguageSelected => _strings.Culture.TwoLetterISOLanguageName == "es";
+    public bool IsSystemThemeSelected =>
+        _appearanceSettingsService?.ThemePreference == AppThemePreference.System;
+    public bool IsDarkThemeSelected =>
+        _appearanceSettingsService?.ThemePreference == AppThemePreference.Dark;
+    public bool IsLightThemeSelected =>
+        _appearanceSettingsService?.ThemePreference == AppThemePreference.Light;
 
     public bool IsBusy
     {
@@ -692,9 +756,19 @@ public sealed class MobileShellViewModel :
         set
         {
             if (!SetField(ref _editorPeriodSeconds, value)) return;
+            OnPropertyChanged(nameof(HasEditorPeriodSeconds));
+            _clearEditorPeriodCommand.NotifyCanExecuteChanged();
             EditorPeriodMessage = string.Empty;
             ClearErrorNotification();
         }
+    }
+
+    public bool HasEditorPeriodSeconds => EditorPeriodSeconds.HasValue;
+
+    public Task ClearEditorPeriodAsync()
+    {
+        EditorPeriodSeconds = null;
+        return Task.CompletedTask;
     }
 
     public string EditorIssuerMessage
@@ -756,6 +830,7 @@ public sealed class MobileShellViewModel :
     public string AccountNameText => Get(MobileStringKeys.AccountName);
     public string AdvancedOptionsText => Get(MobileStringKeys.AdvancedOptions);
     public string TotpPeriodText => Get(MobileStringKeys.TotpPeriod);
+    public string ClearPeriodText => Get(MobileStringKeys.ClearPeriod);
     public string TotpPeriodHelpText => Get(MobileStringKeys.TotpPeriodHelp);
     public string SaveText => Get(MobileStringKeys.Save);
     public string CancelText => Get(MobileStringKeys.Cancel);
@@ -786,6 +861,10 @@ public sealed class MobileShellViewModel :
     public string GermanLanguageText => Get(MobileStringKeys.GermanLanguage);
     public string FrenchLanguageText => Get(MobileStringKeys.FrenchLanguage);
     public string SpanishLanguageText => Get(MobileStringKeys.SpanishLanguage);
+    public string AppearanceText => Get(MobileStringKeys.Appearance);
+    public string ThemeFollowSystemText => Get(MobileStringKeys.ThemeFollowSystem);
+    public string ThemeDarkText => Get(MobileStringKeys.ThemeDark);
+    public string ThemeLightText => Get(MobileStringKeys.ThemeLight);
     public string SecurityText => Get(MobileStringKeys.Security);
     public string AppLockTitleText => Get(MobileStringKeys.AppLockTitle);
     public string AppLockEnabledDescriptionText =>
@@ -828,6 +907,12 @@ public sealed class MobileShellViewModel :
     public string ConfirmBackupPasswordText => Get(MobileStringKeys.ConfirmBackupPassword);
     public string ExportBackupText => Get(MobileStringKeys.ExportBackup);
     public string ImportBackupText => Get(MobileStringKeys.ImportBackup);
+    public string BrandIconsText => Get(MobileStringKeys.BrandIcons);
+    public string BrandIconsDescriptionText => Get(MobileStringKeys.BrandIconsDescription);
+    public string ImportSimpleIconsPackText => Get(MobileStringKeys.ImportSimpleIconsPack);
+    public string ShowIssuerLogoText => Get(MobileStringKeys.ShowIssuerLogo);
+    public string ShowIssuerLogoDescriptionText => Get(MobileStringKeys.ShowIssuerLogoDescription);
+    public string ResetBrandIconsText => Get(MobileStringKeys.ResetBrandIcons);
     public string ImportConfirmationTitle => Get(_isImportConfirmationAcknowledgementOnly
         ? MobileStringKeys.NoImportTitle
         : MobileStringKeys.ImportConfirmationTitle);
@@ -1829,6 +1914,101 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    public async Task SelectThemeAsync(AppThemePreference preference)
+    {
+        if (!IsSettingsVisible
+            || IsBusy
+            || _appearanceSettingsService is null
+            || _appearanceSettingsService.ThemePreference == preference)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var saved = await _appearanceSettingsService.SetThemePreferenceAsync(preference);
+            if (saved.IsFailed)
+            {
+                SetError(MobileStringKeys.SettingsSaveFailed);
+                return;
+            }
+
+            NotifyThemeSelectionChanged();
+            ClearNotification();
+        }
+        catch (Exception)
+        {
+            SetError(MobileStringKeys.SettingsSaveFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task ImportBrandIconsAsync()
+    {
+        if (!IsSettingsVisible || IsBusy || _brandIconPackService is null) return;
+        IsBusy = true;
+        try
+        {
+            using var document = await _documents.OpenBrandIconPackAsync();
+            if (document is null)
+            {
+                SetNotification(
+                    Get(MobileStringKeys.NoBrandIconPackSelected),
+                    NotificationSeverity.Information);
+                return;
+            }
+
+            var imported = await _brandIconPackService.ImportAsync(document.Stream);
+            if (imported.IsFailed)
+            {
+                SetError(MobileStringKeys.BrandIconPackImportFailed);
+                return;
+            }
+
+            SetNotification(
+                string.Format(
+                    Get(MobileStringKeys.BrandIconPackImported),
+                    imported.Value.BrandCount,
+                    imported.Value.Version),
+                NotificationSeverity.Success);
+        }
+        catch (Exception)
+        {
+            SetError(MobileStringKeys.BrandIconPackImportFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task ResetBrandIconsAsync()
+    {
+        if (!IsSettingsVisible || IsBusy || _brandIconPackService is null) return;
+        IsBusy = true;
+        try
+        {
+            var result = await _brandIconPackService.ResetAsync();
+            SetNotification(
+                Get(result.IsSuccess
+                    ? MobileStringKeys.BrandIconPackReset
+                    : MobileStringKeys.BrandIconPackResetFailed),
+                result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Error);
+        }
+        catch (Exception)
+        {
+            SetError(MobileStringKeys.BrandIconPackResetFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     public Task ResolveImportConfirmationAsync(bool confirmed)
     {
         CompleteImportConfirmation(confirmed);
@@ -2163,6 +2343,7 @@ public sealed class MobileShellViewModel :
     {
         if (_disposed) return;
         _disposed = true;
+        _brandIconResolver.CatalogChanged -= BrandCatalogChanged;
         _sensitiveOperationLifetime?.Cancel();
         CancelNotificationLifetime();
         CancelBackgroundLockTimer();
@@ -2194,7 +2375,9 @@ public sealed class MobileShellViewModel :
                 account.Issuer,
                 account.AccountName ?? string.Empty,
                 account.PeriodSeconds,
-                FormatCustomPeriod(account.PeriodSeconds)));
+                FormatCustomPeriod(account.PeriodSeconds),
+                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName)));
+            _allAccounts[^1].UpdateLogoVisibility(ShowIssuerLogo);
         }
 
         ApplyAccountFilter(selectedId);
@@ -2558,6 +2741,52 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    private void BrandCatalogChanged(object? sender, EventArgs args)
+    {
+        OnPropertyChanged(nameof(HasImportedBrandIcons));
+        if (_brandIconPackService is not null
+            && _showIssuerLogo != _brandIconPackService.ShowIssuerLogo)
+        {
+            _showIssuerLogo = _brandIconPackService.ShowIssuerLogo;
+            OnPropertyChanged(nameof(ShowIssuerLogo));
+        }
+        _resetBrandIconsCommand.NotifyCanExecuteChanged();
+        foreach (var account in _allAccounts)
+            account.UpdateBrand(_brandIconResolver.ResolveAccount(account.Issuer, account.AccountName));
+    }
+
+    private void UpdateLogoVisibility()
+    {
+        foreach (var account in _allAccounts)
+            account.UpdateLogoVisibility(ShowIssuerLogo);
+        OnPropertyChanged(nameof(ShowIssuerLogo));
+    }
+
+    private async Task SaveShowIssuerLogoAsync(bool requested, bool previous, long revision)
+    {
+        try
+        {
+            if (_brandIconPackService is null
+                || (await _brandIconPackService.SetShowIssuerLogoAsync(requested)).IsFailed)
+            {
+                RestoreShowIssuerLogoAfterSaveFailure(previous, revision);
+                SetError(MobileStringKeys.SettingsSaveFailed);
+            }
+        }
+        catch (Exception)
+        {
+            RestoreShowIssuerLogoAfterSaveFailure(previous, revision);
+            SetError(MobileStringKeys.SettingsSaveFailed);
+        }
+    }
+
+    private void RestoreShowIssuerLogoAfterSaveFailure(bool previous, long revision)
+    {
+        if (_showIssuerLogoRevision != revision) return;
+        _showIssuerLogo = previous;
+        UpdateLogoVisibility();
+    }
+
     private void CompleteBackupConflictResolution(AccountImportResolution? resolution) =>
         _backupConflictResolutionCompletion?.TrySetResult(resolution);
 
@@ -2878,6 +3107,7 @@ public sealed class MobileShellViewModel :
         _beginAddCommand.NotifyCanExecuteChanged();
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
+        _clearEditorPeriodCommand.NotifyCanExecuteChanged();
         _confirmDeleteCommand.NotifyCanExecuteChanged();
         _cancelDeleteCommand.NotifyCanExecuteChanged();
         _scanQrCommand.NotifyCanExecuteChanged();
@@ -2888,6 +3118,8 @@ public sealed class MobileShellViewModel :
         _dismissQrCommand.NotifyCanExecuteChanged();
         _exportBackupCommand.NotifyCanExecuteChanged();
         _importBackupCommand.NotifyCanExecuteChanged();
+        _importBrandIconsCommand.NotifyCanExecuteChanged();
+        _resetBrandIconsCommand.NotifyCanExecuteChanged();
         _confirmImportCommand.NotifyCanExecuteChanged();
         _cancelImportCommand.NotifyCanExecuteChanged();
         _skipAllBackupConflictsCommand.NotifyCanExecuteChanged();
@@ -2898,6 +3130,16 @@ public sealed class MobileShellViewModel :
         _selectGermanLanguageCommand.NotifyCanExecuteChanged();
         _selectFrenchLanguageCommand.NotifyCanExecuteChanged();
         _selectSpanishLanguageCommand.NotifyCanExecuteChanged();
+        _selectSystemThemeCommand.NotifyCanExecuteChanged();
+        _selectDarkThemeCommand.NotifyCanExecuteChanged();
+        _selectLightThemeCommand.NotifyCanExecuteChanged();
+    }
+
+    private void NotifyThemeSelectionChanged()
+    {
+        OnPropertyChanged(nameof(IsSystemThemeSelected));
+        OnPropertyChanged(nameof(IsDarkThemeSelected));
+        OnPropertyChanged(nameof(IsLightThemeSelected));
     }
 
     private bool SetField<T>(
@@ -2939,6 +3181,7 @@ public sealed class MobileShellViewModel :
         nameof(AccountNameText),
         nameof(AdvancedOptionsText),
         nameof(TotpPeriodText),
+        nameof(ClearPeriodText),
         nameof(TotpPeriodHelpText),
         nameof(SaveText),
         nameof(CancelText),
@@ -2967,6 +3210,10 @@ public sealed class MobileShellViewModel :
         nameof(GermanLanguageText),
         nameof(FrenchLanguageText),
         nameof(SpanishLanguageText),
+        nameof(AppearanceText),
+        nameof(ThemeFollowSystemText),
+        nameof(ThemeDarkText),
+        nameof(ThemeLightText),
         nameof(SecurityText),
         nameof(AppLockTitleText),
         nameof(AppLockEnabledDescriptionText),
@@ -3000,6 +3247,12 @@ public sealed class MobileShellViewModel :
         nameof(ConfirmBackupPasswordText),
         nameof(ExportBackupText),
         nameof(ImportBackupText),
+        nameof(BrandIconsText),
+        nameof(BrandIconsDescriptionText),
+        nameof(ImportSimpleIconsPackText),
+        nameof(ResetBrandIconsText),
+        nameof(ShowIssuerLogoText),
+        nameof(ShowIssuerLogoDescriptionText),
         nameof(ImportConfirmationTitle),
         nameof(ConfirmImportText),
         nameof(BackupConflictResolutionTitle),

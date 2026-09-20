@@ -1029,6 +1029,101 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task ClearEditorPeriodCommand_ClearsCurrentPeriodAndDisablesItself()
+    {
+        var sut = CreateSut(Mock.Of<IAccountManager>());
+        await sut.BeginAddAsync();
+
+        Assert.Equal(30, sut.EditorPeriodSeconds);
+        Assert.True(sut.HasEditorPeriodSeconds);
+        Assert.True(sut.ClearEditorPeriodCommand.CanExecute(null));
+
+        sut.ClearEditorPeriodCommand.Execute(null);
+
+        Assert.Null(sut.EditorPeriodSeconds);
+        Assert.False(sut.HasEditorPeriodSeconds);
+        Assert.False(sut.ClearEditorPeriodCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void AccountRow_EntersWarningStateAtTenSecondsAndLeavesItAfterRefresh()
+    {
+        var sut = new AccountListItemViewModel(Guid.NewGuid(), "Issuer", "account");
+
+        sut.UpdateCode("123456", 11, 30);
+        Assert.False(sut.IsExpiring);
+
+        sut.Tick();
+        Assert.True(sut.IsExpiring);
+
+        sut.UpdateCode("654321", 30, 30);
+        Assert.False(sut.IsExpiring);
+    }
+
+    [Fact]
+    public async Task CountdownAsync_KeepsCurrentRowVisibleUntilReplacementCodeIsReady()
+    {
+        var id = Guid.NewGuid();
+        var replacement = new TaskCompletionSource<Result<AccountTotpGenerationBatch>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var replacementRequested = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        var totp = new Mock<IAccountTotpService>();
+        totp.Setup(value => value.GenerateManyAsync(
+                It.Is<IReadOnlyCollection<Guid>>(ids => ids.Single() == id)))
+            .Returns(() =>
+            {
+                if (Interlocked.Increment(ref calls) == 1)
+                {
+                    return Task.FromResult(Result.Ok(new AccountTotpGenerationBatch(
+                        new Dictionary<Guid, TotpGenerationResult>
+                        {
+                            [id] = new("111111", 1, 30)
+                        },
+                        new HashSet<Guid>())));
+                }
+
+                replacementRequested.TrySetResult();
+                return replacement.Task;
+            });
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [
+                new(id, "Issuer", ValidSecret, "account")
+            ]));
+        using var sut = new AccountListViewModel(
+            manager.Object,
+            totp.Object,
+            Mock.Of<IAsyncClipboardService>(),
+            Mock.Of<IAccountQrCodeService>(),
+            Mock.Of<IAvaloniaQrImageFactory>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            Localization(),
+            TimeSpan.FromMilliseconds(10));
+        sut.EnableAutomaticCodeGenerationOnSelection();
+
+        await sut.LoadAsync();
+        await replacementRequested.Task.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            TestContext.Current.CancellationToken);
+
+        var row = Assert.Single(sut.Accounts);
+        Assert.True(row.HasCode);
+        Assert.Equal("111 111", row.DisplayCode);
+        Assert.Equal(1, row.RemainingSeconds);
+
+        replacement.SetResult(Result.Ok(new AccountTotpGenerationBatch(
+            new Dictionary<Guid, TotpGenerationResult>
+            {
+                [id] = new("222222", 30, 30)
+            },
+            new HashSet<Guid>())));
+        await WaitUntilAsync(() => row.Code == "222222");
+    }
+
+    [Fact]
     public async Task CopyCodeAsync_WhenAutomaticClearIsDisabled_CopiesWithoutSchedulingClear()
     {
         var id = Guid.NewGuid();

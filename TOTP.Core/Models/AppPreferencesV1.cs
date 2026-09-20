@@ -60,4 +60,11 @@ public sealed record AppPreferencesV1
     [JsonPropertyName("hideSecretsByDefault")]
     // Retained in the strict version-1 wire contract for existing preference files.
     public bool HideSecretsByDefault { get; init; } = true;
+
+    // Accepted only to migrate development builds that briefly wrote this
+    // branding-only value into the strict v1 preferences contract. New writes
+    // omit it and persist the value under BrandIcons instead.
+    [JsonPropertyName("showIssuerLogo")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? LegacyShowIssuerLogo { get; init; }
 }

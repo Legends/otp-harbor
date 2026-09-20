@@ -30,6 +30,7 @@ public sealed class AppPreferencesV1CodecTests
         Assert.DoesNotContain("helloWrappedDek", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("passwordSalt", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("otpSeed", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("showIssuerLogo", json, StringComparison.Ordinal);
         Assert.Contains("\"preferredUnlockMethod\": \"PlatformQuickUnlock\"", json, StringComparison.Ordinal);
         Assert.DoesNotContain("Hello", json, StringComparison.Ordinal);
     }
@@ -129,6 +130,20 @@ public sealed class AppPreferencesV1CodecTests
         Assert.True(result.IsSuccess);
         Assert.Equal(PreferredUnlockMethod.Password, result.Value.PreferredUnlockMethod);
         Assert.True(result.Value.AppLockEnabled);
+    }
+
+    [Fact]
+    public void Deserialize_DevelopmentBrandPreference_IsAcceptedForMigrationOnly()
+    {
+        const string json = "{\"format\":\"totp-preferences\",\"version\":1,\"showIssuerLogo\":false}";
+
+        var decoded = AppPreferencesV1Codec.Deserialize(Encoding.UTF8.GetBytes(json));
+        var reencoded = AppPreferencesV1Codec.Serialize(decoded.Value);
+
+        Assert.True(decoded.IsSuccess);
+        Assert.False(decoded.Value.LegacyShowIssuerLogo);
+        Assert.True(reencoded.IsSuccess);
+        Assert.Contains("\"showIssuerLogo\": false", Encoding.UTF8.GetString(reencoded.Value));
     }
 
     internal static AppPreferencesV1 CreatePreferences() => new()

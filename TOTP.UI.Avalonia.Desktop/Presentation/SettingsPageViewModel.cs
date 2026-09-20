@@ -17,6 +17,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private readonly AvaloniaStringCatalog _fallbackLocalization = new();
     private readonly IPlatformApplicationPaths? _applicationPaths;
     private readonly IPlatformFolderLauncher? _folderLauncher;
+    private readonly IBrandIconPackService? _brandIconPackService;
+    private readonly IAppearanceSettingsService? _appearanceSettingsService;
     private readonly AsyncCommand _openLogFolderCommand;
     private readonly TimeSpan _autoSaveDelay;
     private CancellationTokenSource? _autoSaveCts;
@@ -28,12 +30,15 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private decimal _qrPreviewScaleFactor;
     private InterfaceScaleOption? _selectedInterfaceScale;
     private bool _openExportFileAfterExport;
+    private bool _showIssuerLogo;
     private AppLogLevel _minimumLogLevel;
     private bool _isBusy;
     private bool _isReloading;
     private bool _saveRequested;
     private bool _disposed;
     private LanguageOption? _selectedLanguage;
+    private ThemeOption? _selectedTheme;
+    private IReadOnlyList<ThemeOption> _themes = [];
 
     public SettingsPageViewModel(
         ISettingsService settingsService,
@@ -41,18 +46,23 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         IPlatformApplicationPaths? applicationPaths = null,
         IPlatformFolderLauncher? folderLauncher = null,
         TimeSpan? autoSaveDelay = null,
-        TimeSpan? transientMessageDuration = null)
+        TimeSpan? transientMessageDuration = null,
+        IBrandIconPackService? brandIconPackService = null,
+        IAppearanceSettingsService? appearanceSettingsService = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _localization = localization;
         _applicationPaths = applicationPaths;
         _folderLauncher = folderLauncher;
+        _brandIconPackService = brandIconPackService;
+        _appearanceSettingsService = appearanceSettingsService;
         _autoSaveDelay = autoSaveDelay ?? TimeSpan.FromMilliseconds(200);
         SettingsNotification = new NotificationState(transientMessageDuration);
         LogFolderNotification = new NotificationState(transientMessageDuration);
         Languages = localization?.SupportedLanguages ?? [];
         LogLevels = Enum.GetValues<AppLogLevel>();
         InterfaceScales = CreateInterfaceScaleOptions();
+        _themes = CreateThemeOptions();
         _selectedLanguage = localization?.CurrentLanguage;
         if (_localization is not null)
             _localization.CultureChanged += LocalizationCultureChanged;
@@ -73,6 +83,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public IReadOnlyList<LanguageOption> Languages { get; }
     public IReadOnlyList<AppLogLevel> LogLevels { get; }
     public IReadOnlyList<InterfaceScaleOption> InterfaceScales { get; }
+    public IReadOnlyList<ThemeOption> Themes => _themes;
     public bool IsInterfaceScaleAvailable => OperatingSystem.IsLinux();
     public string VersionText { get; }
     public ICommand OpenLogFolderCommand => _openLogFolderCommand;
@@ -170,6 +181,26 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public ThemeOption? SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (!SetField(ref _selectedTheme, value) || value is null) return;
+            QueueAutoSave();
+        }
+    }
+
+    public bool ShowIssuerLogo
+    {
+        get => _showIssuerLogo;
+        set
+        {
+            if (!SetField(ref _showIssuerLogo, value)) return;
+            QueueAutoSave();
+        }
+    }
+
     public AppLogLevel MinimumLogLevel
     {
         get => _minimumLogLevel;
@@ -205,6 +236,10 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
                 option => option.Percent == _settingsService.Current.InterfaceScalePercent)
                 ?? InterfaceScales[0];
             OpenExportFileAfterExport = _settingsService.Current.OpenExportFileAfterExport;
+            ShowIssuerLogo = _brandIconPackService?.ShowIssuerLogo ?? true;
+            var themePreference = _appearanceSettingsService?.ThemePreference
+                ?? AppThemePreference.Dark;
+            SelectedTheme = Themes.First(option => option.Preference == themePreference);
             MinimumLogLevel = _settingsService.Current.MinimumLogLevel;
             SettingsNotification.Clear();
             LogFolderNotification.Clear();
@@ -221,7 +256,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             || ClearClipboardSeconds is < 1 or > 300
             || QrPreviewScaleFactor is < 1.0m or > 6.0m
             || QrPreviewScaleFactor * 2 != decimal.Truncate(QrPreviewScaleFactor * 2)
-            || SelectedInterfaceScale is null) return;
+            || SelectedInterfaceScale is null
+            || SelectedTheme is null) return;
 
         CancelAutoSaveDelay();
         if (_isBusy)
@@ -248,7 +284,17 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             if (SelectedLanguage is not null)
                 _settingsService.Current.CultureName = SelectedLanguage.CultureName;
             var result = await _settingsService.SaveAsync();
-            if (result.IsSuccess)
+            var brandResult = result.IsSuccess && _brandIconPackService is not null
+                ? await _brandIconPackService.SetShowIssuerLogoAsync(ShowIssuerLogo)
+                : FluentResults.Result.Ok();
+            var appearanceResult = result.IsSuccess
+                                   && brandResult.IsSuccess
+                                   && _appearanceSettingsService is not null
+                                   && SelectedTheme is not null
+                ? await _appearanceSettingsService.SetThemePreferenceAsync(
+                    SelectedTheme.Preference)
+                : FluentResults.Result.Ok();
+            if (result.IsSuccess && brandResult.IsSuccess && appearanceResult.IsSuccess)
             {
                 if (previous.InterfaceScalePercent != SelectedInterfaceScale.Percent)
                 {
@@ -266,7 +312,12 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            TOTP.Core.Models.AppPreferencesMapper.ApplyTo(previous, _settingsService.Current);
+            if (result.IsFailed)
+                TOTP.Core.Models.AppPreferencesMapper.ApplyTo(previous, _settingsService.Current);
+            if (brandResult.IsFailed && _brandIconPackService is not null)
+                SetField(ref _showIssuerLogo, _brandIconPackService.ShowIssuerLogo, nameof(ShowIssuerLogo));
+            if (appearanceResult.IsFailed && _appearanceSettingsService is not null)
+                RestoreSelectedTheme();
             ShowTransientMessage(
                 Localize(AvaloniaStringKeys.SettingsSaveFailed),
                 NotificationSeverity.Error);
@@ -274,6 +325,9 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception)
         {
             TOTP.Core.Models.AppPreferencesMapper.ApplyTo(previous, _settingsService.Current);
+            if (_brandIconPackService is not null)
+                SetField(ref _showIssuerLogo, _brandIconPackService.ShowIssuerLogo, nameof(ShowIssuerLogo));
+            RestoreSelectedTheme();
             ShowTransientMessage(
                 Localize(AvaloniaStringKeys.SettingsSaveFailed),
                 NotificationSeverity.Error);
@@ -304,6 +358,15 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             ref _selectedLanguage,
             _localization.CurrentLanguage,
             nameof(SelectedLanguage));
+        var preference = _selectedTheme?.Preference
+            ?? _appearanceSettingsService?.ThemePreference
+            ?? AppThemePreference.Dark;
+        _themes = CreateThemeOptions();
+        OnPropertyChanged(nameof(Themes));
+        SetField(
+            ref _selectedTheme,
+            _themes.First(option => option.Preference == preference),
+            nameof(SelectedTheme));
     }
 
     public async Task OpenLogFolderAsync()
@@ -402,5 +465,26 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         })
     ];
 
+    private IReadOnlyList<ThemeOption> CreateThemeOptions() =>
+    [
+        new(AppThemePreference.System, Localize(AvaloniaStringKeys.ThemeFollowSystem)),
+        new(AppThemePreference.Dark, Localize(AvaloniaStringKeys.ThemeDark)),
+        new(AppThemePreference.Light, Localize(AvaloniaStringKeys.ThemeLight))
+    ];
+
+    private void RestoreSelectedTheme()
+    {
+        if (_appearanceSettingsService is null) return;
+        SetField(
+            ref _selectedTheme,
+            Themes.First(option =>
+                option.Preference == _appearanceSettingsService.ThemePreference),
+            nameof(SelectedTheme));
+    }
+
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
     public sealed record InterfaceScaleOption(int Percent, string Label);
+    public sealed record ThemeOption(AppThemePreference Preference, string Label);
 }

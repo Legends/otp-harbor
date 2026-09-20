@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using TOTP.Core.Common;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
+using TOTP.Core.Services.Interfaces;
 
 namespace TOTP.Infrastructure.Services;
 
@@ -14,16 +15,19 @@ public sealed class PortableSettingsService : ISettingsService, IDisposable
 {
     private readonly IAppPreferencesStore _store;
     private readonly ILogger<PortableSettingsService> _logger;
+    private readonly IBrandIconPackService? _brandIconPackService;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly AppSettings _current = new();
     private bool _isLoaded;
 
     public PortableSettingsService(
         IAppPreferencesStore store,
-        ILogger<PortableSettingsService> logger)
+        ILogger<PortableSettingsService> logger,
+        IBrandIconPackService? brandIconPackService = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _brandIconPackService = brandIconPackService;
     }
 
     public IAppSettings Current => _current;
@@ -45,7 +49,10 @@ public sealed class PortableSettingsService : ISettingsService, IDisposable
             }
 
             if (loaded.Value is not null)
+            {
+                await MigrateLegacyBrandDisplayPreferenceAsync(loaded.Value);
                 AppPreferencesMapper.ApplyTo(loaded.Value, _current);
+            }
 
             _isLoaded = true;
             return Result.Ok<IAppSettings>(_current);
@@ -94,4 +101,25 @@ public sealed class PortableSettingsService : ISettingsService, IDisposable
     }
 
     public void Dispose() => _lock.Dispose();
+
+    private async Task MigrateLegacyBrandDisplayPreferenceAsync(AppPreferencesV1 preferences)
+    {
+        if (preferences.LegacyShowIssuerLogo is not { } showIssuerLogo
+            || _brandIconPackService is null)
+        {
+            return;
+        }
+
+        var migrated = await _brandIconPackService.SetShowIssuerLogoAsync(showIssuerLogo);
+        if (migrated.IsFailed)
+        {
+            _logger.LogWarning("The legacy brand-icon display preference could not be migrated.");
+            return;
+        }
+
+        var sanitized = preferences with { LegacyShowIssuerLogo = null };
+        var saved = await _store.SaveAsync(sanitized);
+        if (saved.IsFailed)
+            _logger.LogWarning("The migrated application preferences could not be sanitized.");
+    }
 }

@@ -88,6 +88,35 @@ public sealed class PortableSettingsServiceTests
     }
 
     [Fact]
+    public async Task LoadAsync_MigratesDevelopmentBrandPreferenceOutOfStrictPreferences()
+    {
+        var preferences = new AppPreferencesV1 { LegacyShowIssuerLogo = false };
+        var store = new Mock<IAppPreferencesStore>();
+        store.Setup(value => value.LoadAsync(CancellationToken.None))
+            .ReturnsAsync(Result.Ok<AppPreferencesV1?>(preferences));
+        AppPreferencesV1? sanitized = null;
+        store.Setup(value => value.SaveAsync(It.IsAny<AppPreferencesV1>(), CancellationToken.None))
+            .Callback<AppPreferencesV1, CancellationToken>((value, _) => sanitized = value)
+            .ReturnsAsync(Result.Ok());
+        var brandIcons = new Mock<TOTP.Core.Services.Interfaces.IBrandIconPackService>();
+        brandIcons.Setup(value => value.SetShowIssuerLogoAsync(false, CancellationToken.None))
+            .ReturnsAsync(Result.Ok());
+        using var sut = new PortableSettingsService(
+            store.Object,
+            NullLogger<PortableSettingsService>.Instance,
+            brandIcons.Object);
+
+        var result = await sut.LoadAsync();
+
+        Assert.True(result.IsSuccess);
+        brandIcons.Verify(
+            value => value.SetShowIssuerLogoAsync(false, CancellationToken.None),
+            Times.Once);
+        Assert.NotNull(sanitized);
+        Assert.Null(sanitized.LegacyShowIssuerLogo);
+    }
+
+    [Fact]
     public async Task LoadAsync_WhenStoreFails_PreservesTypedStoreFailureAndAllowsRetry()
     {
         var failure = new AppPreferencesError(

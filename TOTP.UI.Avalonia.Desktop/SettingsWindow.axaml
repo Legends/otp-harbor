@@ -5,6 +5,7 @@
     xmlns:localization="using:TOTP.Avalonia.Desktop.Localization"
     xmlns:presentation="using:TOTP.Avalonia.Desktop.Presentation"
     xmlns:shared="using:TOTP.Avalonia.Shared.Controls"
+    x:Name="SettingsRoot"
     x:DataType="presentation:MainWindowViewModel"
     Title="{DynamicResource Settings}"
     Width="520"
@@ -27,7 +28,12 @@
             Classes="settings-page"
             RowDefinitions="Auto,*">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0" Classes="page-title" Text="{DynamicResource Settings}" />
+                <Border
+                    Grid.Column="0"
+                    Background="Transparent"
+                    PointerPressed="MoveWindow">
+                    <TextBlock Classes="page-title" Text="{DynamicResource Settings}" />
+                </Border>
                 <Button
                     Grid.Column="1"
                     Classes="icon"
@@ -177,6 +183,29 @@
                                                     Content="{DynamicResource ExportEncryptedBackup}" />
                                             </StackPanel>
                                         </Border>
+                                        <Border Classes="panel">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
+                                                <TextBlock
+                                                    Classes="secondary"
+                                                    Text="{DynamicResource BrandIconsHelp}"
+                                                    TextWrapping="Wrap" />
+                                                <Button
+                                                    Command="{Binding ImportBrandIconsCommand}"
+                                                    Content="{DynamicResource ImportSimpleIconsPack}" />
+                                                <Button
+                                                    Command="{Binding ResetBrandIconsCommand}"
+                                                    Content="{DynamicResource ResetBrandIcons}"
+                                                    IsVisible="{Binding HasImportedBrandIcons}" />
+                                                <CheckBox
+                                                    Content="{DynamicResource ShowIssuerLogo}"
+                                                    IsChecked="{Binding DataContext.SettingsPage.ShowIssuerLogo, ElementName=SettingsRoot, Mode=TwoWay}" />
+                                                <TextBlock
+                                                    Classes="secondary"
+                                                    Text="{DynamicResource ShowIssuerLogoHelp}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
                                         </StackPanel>
                                     </ScrollViewer>
                                 </Grid>
@@ -208,6 +237,14 @@
                                                             <Image Width="24" Height="18" Source="{Binding Icon}" Stretch="Uniform" />
                                                             <TextBlock VerticalAlignment="Center" Text="{Binding DisplayName}" />
                                                         </StackPanel>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource Appearance}" />
+                                            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="presentation:SettingsPageViewModel+ThemeOption">
+                                                        <TextBlock Text="{Binding Label}" />
                                                     </DataTemplate>
                                                 </ComboBox.ItemTemplate>
                                             </ComboBox>

@@ -114,6 +114,7 @@
   <data name="SecretOptionalOnEdit" xml:space="preserve"><value>New Base32 secret (leave empty to keep the current secret)</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Advanced options</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code period in seconds</value></data>
+  <data name="ClearPeriod" xml:space="preserve"><value>Clear code period</value></data>
   <data name="TotpPeriodHelp" xml:space="preserve"><value>Keep 30 seconds unless the provider explicitly requires a different period. Longer periods keep each code valid longer.</value></data>
   <data name="TotpPeriodInvalid" xml:space="preserve"><value>Enter a code period between 5 and 3600 seconds.</value></data>
   <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
@@ -178,4 +179,20 @@
   <data name="ApplyUnlockMethod" xml:space="preserve"><value>Apply</value></data>
   <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>Unlock OTP Harbor</value></data>
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Use your device screen lock (PIN, pattern, or password).</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
+  <data name="BrandIconsDescription" xml:space="preserve"><value>Import a Simple Icons release ZIP that you downloaded yourself. OTP Harbor stores it only on this device and never uploads issuer or account information. The icon trademarks remain the property of their owners.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import Simple Icons ZIP…</value></data>
+  <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No icon pack was selected.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from Simple Icons {1}.</value></data>
+  <data name="BrandIconPackImportFailed" xml:space="preserve"><value>The icon pack is invalid or could not be installed safely.</value></data>
+  <data name="BrandIconPackReset" xml:space="preserve"><value>Imported brand icons were removed.</value></data>
+  <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Could not remove the imported brand icons.</value></data>
+  <data name="ResetBrandIcons" xml:space="preserve"><value>Remove imported icons</value></data>
+  <data name="ShowIssuerLogo" xml:space="preserve"><value>Show issuer logo</value></data>
+  <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Show a branded or placeholder tile beside each account.</value></data>
+  <data name="SettingsSaveFailed" xml:space="preserve"><value>Could not save this setting.</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="ThemeFollowSystem" xml:space="preserve"><value>Follow system</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
 </root>

@@ -26,4 +26,6 @@ OTP Harbor uses third-party packages under licenses compatible with this reposit
 
 The application icon and locale flags are project-owned or locally rendered from public-domain flag geometry. Provenance and reviewed hashes are recorded in [docs/assets/ASSET_PROVENANCE.md](docs/assets/ASSET_PROVENANCE.md).
 
+OTP Harbor distributions do not bundle Simple Icons or third-party service-logo artwork. Users may optionally import a Simple Icons release ZIP into their own local application data. The imported archive's license and disclaimer are preserved locally; see [docs/assets/BRAND_ICONS.md](docs/assets/BRAND_ICONS.md). Displayed trademarks remain the property of their respective owners, and their appearance does not imply sponsorship, affiliation, or endorsement.
+
 This file is an inventory aid, not legal advice. Review upstream license texts when adding or upgrading a dependency.

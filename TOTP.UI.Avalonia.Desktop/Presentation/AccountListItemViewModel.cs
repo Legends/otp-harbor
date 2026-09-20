@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows.Input;
+using TOTP.Avalonia.Shared.Branding;
 using TOTP.Core.Validation;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
@@ -11,13 +12,16 @@ public sealed class AccountListItemViewModel(
     bool isRecentlyAdded = false,
     ICommand? copyCodeCommand = null,
     int configuredPeriodSeconds = TotpPeriodPolicy.DefaultSeconds,
-    string customPeriodLabel = "") : INotifyPropertyChanged
+    string customPeriodLabel = "",
+    BrandInfo? brand = null) : INotifyPropertyChanged
 {
     private bool _isRecentlyAdded = isRecentlyAdded;
     private string _code = string.Empty;
     private int _remainingSeconds;
     private int _periodSeconds;
     private string _customPeriodLabel = customPeriodLabel;
+    private BrandInfo _brand = brand ?? BrandInfo.Generic(issuer);
+    private bool _showIssuerLogo = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -28,6 +32,8 @@ public sealed class AccountListItemViewModel(
     public int ConfiguredPeriodSeconds { get; } = configuredPeriodSeconds;
     public bool HasCustomPeriod => ConfiguredPeriodSeconds != TotpPeriodPolicy.DefaultSeconds;
     public string CustomPeriodLabel => _customPeriodLabel;
+    public BrandInfo Brand => _brand;
+    public bool ShowIssuerLogo => _showIssuerLogo;
 
     public string Code
     {
@@ -39,6 +45,7 @@ public sealed class AccountListItemViewModel(
             OnPropertyChanged(nameof(Code));
             OnPropertyChanged(nameof(DisplayCode));
             OnPropertyChanged(nameof(HasCode));
+            OnPropertyChanged(nameof(IsExpiring));
         }
     }
 
@@ -47,6 +54,7 @@ public sealed class AccountListItemViewModel(
         : Code.Insert(Code.Length / 2, " ");
 
     public bool HasCode => Code.Length > 0;
+    public bool IsExpiring => HasCode && RemainingSeconds is > 0 and <= 10;
 
     public int RemainingSeconds
     {
@@ -57,6 +65,7 @@ public sealed class AccountListItemViewModel(
             if (_remainingSeconds == normalized) return;
             _remainingSeconds = normalized;
             OnPropertyChanged(nameof(RemainingSeconds));
+            OnPropertyChanged(nameof(IsExpiring));
         }
     }
 
@@ -84,6 +93,21 @@ public sealed class AccountListItemViewModel(
     }
 
     public void ClearRecentlyAdded() => IsRecentlyAdded = false;
+
+    public void UpdateBrand(BrandInfo brand)
+    {
+        ArgumentNullException.ThrowIfNull(brand);
+        if (ReferenceEquals(_brand, brand)) return;
+        _brand = brand;
+        OnPropertyChanged(nameof(Brand));
+    }
+
+    public void UpdateLogoVisibility(bool visible)
+    {
+        if (_showIssuerLogo == visible) return;
+        _showIssuerLogo = visible;
+        OnPropertyChanged(nameof(ShowIssuerLogo));
+    }
 
     public void UpdateCustomPeriodLabel(string label)
     {

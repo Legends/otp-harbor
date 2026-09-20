@@ -10,6 +10,7 @@ using TOTP.Core.Services.Interfaces;
 using TOTP.Infrastructure.Extensions;
 using TOTP.Infrastructure.Services;
 using TOTP.Platform.Android;
+using TOTP.Avalonia.Shared.Branding;
 
 namespace TOTP.Avalonia.Android;
 
@@ -63,6 +64,7 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IAsyncClipboardService>(provider =>
             provider.GetRequiredService<AsyncClipboardService>());
         services.AddSingleton<MobileStringCatalog>();
+        services.AddSingleton<IBrandIconResolver, BrandIconResolver>();
         services.AddSingleton<MobileShellViewModel>();
         services.AddSingleton<IMobileLifecycleSink>(provider =>
             provider.GetRequiredService<MobileShellViewModel>());

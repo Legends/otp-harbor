@@ -345,6 +345,7 @@ public sealed class MainWindowSmokeTests
             window.UpdateLayout();
 
             Assert.Equal(new Thickness(8, 5), highlight.Padding);
+            Assert.Equal(new Thickness(0), highlight.BorderThickness);
             Assert.True(text.Bounds.X >= 8);
             Assert.True(text.Bounds.Y >= 5);
         }
@@ -355,8 +356,10 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void AccountRow_RendersIssuerAndAccountNameOnOneLineWithAccessibleContext()
+    public void AccountRow_RendersAccountNameBelowIssuerWithAccessibleContext()
     {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
         var row = new AccountRow { Issuer = "Issuer", AccountName = "account@example.test" };
         var window = new Window { Content = row };
 
@@ -366,26 +369,38 @@ public sealed class MainWindowSmokeTests
             row.ApplyTemplate();
             window.UpdateLayout();
 
-            var text = Assert.Single(row.GetVisualDescendants().OfType<TextBlock>());
-            Assert.Equal("Issuer : account@example.test", text.Text);
+            var text = row.GetVisualDescendants().OfType<TextBlock>().ToArray();
+            Assert.Equal(2, text.Length);
+            Assert.Equal("Issuer", text[0].Text);
+            Assert.Equal("account@example.test", text[1].Text);
+            Assert.Equal(11, text[1].FontSize);
+            Assert.Equal(
+                Color.Parse("#7E7E84"),
+                Assert.IsType<SolidColorBrush>(text[1].Foreground).Color);
             Assert.Equal("Issuer, account@example.test", row.AccessibleName);
         }
         finally
         {
             window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
         }
     }
 
     [AvaloniaFact]
-    public void AccountList_SelectedRowUsesProductPaletteInsteadOfSystemAccent()
+    public void DesktopAccountList_SelectedRowUsesSubtleSurfaceWithoutTextRecoloring()
     {
-        var item = new AccountRow { Issuer = "Issuer", AccountName = "account" };
+        var item = new Border
+        {
+            Child = new AccountRow { Issuer = "Issuer", AccountName = "account" }
+        };
+        item.Classes.Add("account-row-container");
         var list = new ListBox
         {
             ItemsSource = new[] { item },
             SelectedItem = item
         };
         list.Classes.Add("accounts");
+        list.Classes.Add("desktop-accounts");
         var window = new Window { Content = list };
 
         try
@@ -399,8 +414,11 @@ public sealed class MainWindowSmokeTests
                 container.GetVisualDescendants().OfType<ContentPresenter>(),
                 candidate => candidate.Name == "PART_ContentPresenter");
             Assert.Equal(
-                Color.Parse("#1D3366"),
-                Assert.IsType<SolidColorBrush>(presenter.Background).Color);
+                Colors.Transparent,
+                Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Background).Color);
+            Assert.Equal(
+                Color.Parse("#1A2E4E"),
+                Assert.IsType<SolidColorBrush>(item.Background).Color);
         }
         finally
         {
@@ -579,6 +597,42 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void MobileAccountList_SelectedRowKeepsPrimaryTextColor()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var item = new TextBlock { Text = "Issuer" };
+        var list = new ListBox
+        {
+            ItemsSource = new[] { item },
+            SelectedItem = item
+        };
+        list.Classes.Add("accounts");
+        list.Classes.Add("mobile-accounts");
+        var window = new Window { Content = list };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var container = Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>());
+            var presenter = Assert.Single(
+                container.GetVisualDescendants().OfType<ContentPresenter>(),
+                candidate => candidate.Name == "PART_ContentPresenter");
+            Assert.Equal(
+                Color.Parse("#172033"),
+                Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Foreground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
     public void AccountPageHeightRefit_RestoresTheAccountListScrollOffset()
     {
         var content = new Border { Width = 200, Height = 2000 };
@@ -635,6 +689,28 @@ public sealed class MainWindowSmokeTests
 
         Assert.NotNull(policy);
         Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canDelete, isTextEditing]));
+    }
+
+    [Theory]
+    [InlineData(Key.C, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.C, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.C, KeyModifiers.Control, false, false, false)]
+    [InlineData(Key.C, KeyModifiers.Control | KeyModifiers.Shift, true, false, false)]
+    [InlineData(Key.C, KeyModifiers.None, true, false, false)]
+    [InlineData(Key.V, KeyModifiers.Control, true, false, false)]
+    public void AccountCopyShortcut_RequiresControlCOutsideTextEditing(
+        Key key,
+        KeyModifiers modifiers,
+        bool canCopy,
+        bool isTextEditing,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldHandleAccountCopyKey",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canCopy, isTextEditing]));
     }
 
     [AvaloniaFact]
@@ -761,7 +837,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void AccountRow_WithoutAccountNameOmitsSeparator()
+    public void AccountRow_WithoutAccountNameOmitsSecondaryLine()
     {
         var row = new AccountRow { Issuer = "Issuer" };
         var window = new Window { Content = row };
@@ -772,8 +848,10 @@ public sealed class MainWindowSmokeTests
             row.ApplyTemplate();
             window.UpdateLayout();
 
-            var text = Assert.Single(row.GetVisualDescendants().OfType<TextBlock>());
-            Assert.Equal("Issuer", text.Text);
+            var text = row.GetVisualDescendants().OfType<TextBlock>().ToArray();
+            Assert.Equal(2, text.Length);
+            Assert.Equal("Issuer", text[0].Text);
+            Assert.False(text[1].IsVisible);
         }
         finally
         {
@@ -1203,7 +1281,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void DarkVariant_UsesEstablishedWpfVisualIdentity()
+    public void DarkVariant_UsesOriginalNavyAndPurplePalette()
     {
         var application = Assert.IsType<App>(Application.Current);
         application.RequestedThemeVariant = ThemeVariant.Dark;
@@ -1232,6 +1310,100 @@ public sealed class MainWindowSmokeTests
         {
             window.Close();
             application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void LightVariant_UsesBrightSurfaceAndMatchingBlueAccent()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+
+            Assert.True(window.TryFindResource(
+                "BrushWindowBackground",
+                ThemeVariant.Light,
+                out var background));
+            Assert.Equal(
+                Colors.White,
+                Assert.IsType<SolidColorBrush>(background).Color);
+            Assert.True(window.TryFindResource(
+                "BrushAccountItemBackground",
+                ThemeVariant.Light,
+                out var accountBackground));
+            Assert.Equal(
+                Color.Parse("#F2F4FB"),
+                Assert.IsType<SolidColorBrush>(accountBackground).Color);
+            Assert.True(window.TryFindResource(
+                "BrushAccent",
+                ThemeVariant.Light,
+                out var accent));
+            Assert.Equal(
+                Color.Parse("#168AE0"),
+                Assert.IsType<SolidColorBrush>(accent).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void ExpiringAccountProgress_UsesCountdownWarningRed()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var progress = new ProgressBar { Maximum = 30, Value = 10 };
+        progress.Classes.Add("account-countdown");
+        progress.Classes.Add("expiring");
+        var window = new Window { Content = progress };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(
+                Color.Parse("#F44336"),
+                Assert.IsType<SolidColorBrush>(progress.Foreground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountCountdownProgress_RendersAsOneDipHairline()
+    {
+        var progress = new ProgressBar
+        {
+            Width = 200,
+            Maximum = 30,
+            Value = 15
+        };
+        progress.Classes.Add("account-countdown");
+        var window = new Window { Content = progress };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(1, progress.Bounds.Height, precision: 2);
+            Assert.Equal(0, progress.MinHeight);
+            Assert.Equal(1, progress.MaxHeight);
+            Assert.True(progress.ClipToBounds);
+        }
+        finally
+        {
+            window.Close();
         }
     }
 

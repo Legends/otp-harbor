@@ -17,6 +17,7 @@ using TOTP.Infrastructure.Services;
 using TOTP.Camera.OpenCv;
 using TOTP.Avalonia.Desktop.Localization;
 using Serilog;
+using TOTP.Avalonia.Shared.Branding;
 using AppLifetime = TOTP.Core.Services.Interfaces.IApplicationLifetime;
 #if TOTP_PLATFORM_WINDOWS
 using TOTP.Platform.Windows;
@@ -111,6 +112,7 @@ public static class AvaloniaCompositionRoot
             AvaloniaQrPreviewDialogService>();
         services.AddSingleton<IAvaloniaFilePicker, AvaloniaFilePicker>();
         services.AddSingleton<IAvaloniaQrImageFactory, AvaloniaQrImageFactory>();
+        services.AddSingleton<IBrandIconResolver, BrandIconResolver>();
         services.AddSingleton<IPlatformFolderLauncher, AvaloniaPlatformFolderLauncher>();
         services.AddSingleton<IAsyncPlatformClipboard>(provider =>
             new AvaloniaPlatformClipboard(
