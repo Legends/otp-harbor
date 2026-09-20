@@ -150,11 +150,17 @@
 
             <!-- Authorized shell uses the compact toolbar/list/code hierarchy. -->
             <Grid
+                x:Name="AuthorizedShell"
                 RowDefinitions="Auto,*"
                 IsVisible="{Binding IsShellVisible}">
-                <Border Grid.Row="0" Classes="toolbar" IsEnabled="{Binding !IsSettingsVisible}">
+                <Border
+                    x:Name="MainToolbar"
+                    Grid.Row="0"
+                    Classes="toolbar"
+                    IsEnabled="{Binding !IsSettingsVisible}">
                     <Grid ColumnDefinitions="Auto,Auto,Auto,*,64,Auto,Auto">
                         <Button
+                            x:Name="ScanQrButton"
                             Grid.Column="0"
                             automation:AutomationProperties.Name="{DynamicResource QrScannerSupportedFormats}"
                             Classes="icon"
@@ -182,6 +188,7 @@
                             <shared:SymbolIcon Foreground="#87CE3E" IconSize="16" Kind="Search" />
                         </Button>
                         <Grid
+                            x:Name="AccountSearchHost"
                             Grid.Column="3"
                             Margin="4,0"
                             ColumnDefinitions="*,Auto"

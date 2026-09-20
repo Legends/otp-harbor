@@ -1335,6 +1335,74 @@ public sealed class MainWindowSmokeTests
         }
     }
 
+    [AvaloniaFact]
+    public void MainToolbar_TabAndShiftTabFollowVisualWorkflowOrder()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+            window.FindControl<Grid>("AuthorizedShell")!.IsVisible = true;
+            window.FindControl<Border>("MainToolbar")!.IsEnabled = true;
+            window.FindControl<Grid>("AccountSearchHost")!.IsVisible = true;
+            window.FindControl<Button>("ClearSearchButton")!.IsVisible = true;
+            window.UpdateLayout();
+
+            Control[] expectedOrder =
+            [
+                window.FindControl<Button>("ScanQrButton")!,
+                window.FindControl<Button>("AddAccountButton")!,
+                window.FindControl<Button>("ToggleSearchButton")!,
+                window.FindControl<TextBox>("AccountSearchBox")!,
+                window.FindControl<Button>("ClearSearchButton")!,
+                window.FindControl<ComboBox>("LanguageSelector")!,
+                window.FindControl<Button>("OpenSettingsButton")!,
+                window.FindControl<Button>("LockButton")!
+            ];
+            foreach (var button in expectedOrder.OfType<Button>())
+                button.Command = new TestCommand(static () => { });
+            window.UpdateLayout();
+
+            Assert.True(
+                expectedOrder[0].IsEffectivelyVisible,
+                "The scanner button must be effectively visible for focus traversal.");
+            Assert.True(
+                expectedOrder[0].IsEffectivelyEnabled,
+                "The scanner button must be effectively enabled for focus traversal.");
+            Assert.True(expectedOrder[0].Focusable);
+            Assert.True(expectedOrder[0].Focus());
+            Assert.True(expectedOrder[0].IsFocused);
+            for (var index = 1; index < expectedOrder.Length; index++)
+            {
+                window.KeyPress(
+                    Key.Tab,
+                    RawInputModifiers.None,
+                    PhysicalKey.Tab,
+                    null);
+                Assert.True(
+                    expectedOrder[index].IsFocused,
+                    $"Expected forward focus on {expectedOrder[index].Name}.");
+            }
+
+            for (var index = expectedOrder.Length - 2; index >= 0; index--)
+            {
+                window.KeyPress(
+                    Key.Tab,
+                    RawInputModifiers.Shift,
+                    PhysicalKey.Tab,
+                    null);
+                Assert.True(
+                    expectedOrder[index].IsFocused,
+                    $"Expected reverse focus on {expectedOrder[index].Name}.");
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     private static void AssertToolbarAutomationName(
         MainWindow window,
         string controlName,
