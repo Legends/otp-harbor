@@ -79,6 +79,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _dismissQrCommand;
     private readonly MobileAsyncCommand _exportBackupCommand;
     private readonly MobileAsyncCommand _importBackupCommand;
+    private readonly MobileAsyncCommand _importAccountFileCommand;
     private readonly MobileAsyncCommand _importBrandIconsCommand;
     private readonly MobileAsyncCommand _resetBrandIconsCommand;
     private readonly MobileAsyncCommand _confirmImportCommand;
@@ -293,6 +294,9 @@ public sealed class MobileShellViewModel :
         _importBackupCommand = new MobileAsyncCommand(
             ImportBackupAsync,
             () => IsSettingsVisible && !IsBusy);
+        _importAccountFileCommand = new MobileAsyncCommand(
+            ImportAccountFileAsync,
+            () => IsSettingsVisible && !IsBusy);
         _importBrandIconsCommand = new MobileAsyncCommand(
             ImportBrandIconsAsync,
             () => IsSettingsVisible && !IsBusy && _brandIconPackService is not null);
@@ -380,6 +384,7 @@ public sealed class MobileShellViewModel :
     public ICommand DismissQrCommand => _dismissQrCommand;
     public ICommand ExportBackupCommand => _exportBackupCommand;
     public ICommand ImportBackupCommand => _importBackupCommand;
+    public ICommand ImportAccountFileCommand => _importAccountFileCommand;
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
     public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
     public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
@@ -901,6 +906,9 @@ public sealed class MobileShellViewModel :
     public string BackupDescription => Get(MobileStringKeys.BackupDescription);
     public string ImportBackupDescriptionText =>
         Get(MobileStringKeys.ImportBackupDescription);
+    public string ImportAccountFileText => Get(MobileStringKeys.ImportAccountFile);
+    public string ImportAccountFileDescriptionText =>
+        Get(MobileStringKeys.ImportAccountFileDescription);
     public string ExportBackupDescriptionText =>
         Get(MobileStringKeys.ExportBackupDescription);
     public string BackupPasswordText => Get(MobileStringKeys.BackupPassword);
@@ -1907,6 +1915,91 @@ public sealed class MobileShellViewModel :
         {
             EndSensitiveOperation(operation);
             password = string.Empty;
+            CompleteImportConfirmation(false);
+            CompleteBackupConflictResolution(null);
+            IsBusy = false;
+            TryStartAutomaticBiometricUnlock();
+        }
+    }
+
+    public async Task ImportAccountFileAsync()
+    {
+        if (!IsSettingsVisible || IsBusy) return;
+
+        IsBusy = true;
+        using var operation = BeginSensitiveOperation();
+        try
+        {
+            using var document = await _documents.OpenAccountImportAsync(operation.Token);
+            if (document is null) return;
+            if (!_authorization.State.IsUnlocked || !IsSettingsVisible)
+            {
+                SetError(MobileStringKeys.BackupRetryAfterUnlock);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(document.Name))
+            {
+                SetError(MobileStringKeys.AccountFileImportRejected);
+                return;
+            }
+
+            var decoded = await _exportService.ImportFromStreamAsync(
+                document.Stream,
+                document.Name,
+                cancellationToken: operation.Token);
+            if (decoded.IsFailed || decoded.Value.Count == 0)
+            {
+                SetError(MobileStringKeys.AccountFileImportRejected);
+                return;
+            }
+
+            var imported = await _accountImport.ImportWithConflictResolutionAsync(
+                decoded.Value,
+                ResolveBackupImportAsync,
+                operation.Token);
+            if (imported.IsFailed)
+            {
+                SetError(MobileStringKeys.AccountFileImportFailed);
+                return;
+            }
+
+            var outcome = imported.Value;
+            if (outcome.Status == AccountImportStatus.Cancelled)
+            {
+                SetNotification(
+                    Get(MobileStringKeys.AccountFileImportCancelled),
+                    NotificationSeverity.Information);
+                return;
+            }
+
+            if (outcome.Status != AccountImportStatus.Completed || outcome.Failed > 0)
+            {
+                SetError(MobileStringKeys.AccountFileImportFailed);
+                return;
+            }
+
+            if (outcome.Added == 0 && outcome.Replaced == 0) return;
+
+            await LoadAccountsAsync();
+            SetNotification(
+                string.Format(
+                    Get(MobileStringKeys.AccountFileImported),
+                    outcome.Added,
+                    outcome.Replaced,
+                    outcome.Skipped),
+                NotificationSeverity.Success);
+        }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested)
+        {
+        }
+        catch (Exception)
+        {
+            SetError(MobileStringKeys.AccountFileImportFailed);
+        }
+        finally
+        {
+            EndSensitiveOperation(operation);
             CompleteImportConfirmation(false);
             CompleteBackupConflictResolution(null);
             IsBusy = false;
@@ -3118,6 +3211,7 @@ public sealed class MobileShellViewModel :
         _dismissQrCommand.NotifyCanExecuteChanged();
         _exportBackupCommand.NotifyCanExecuteChanged();
         _importBackupCommand.NotifyCanExecuteChanged();
+        _importAccountFileCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
         _confirmImportCommand.NotifyCanExecuteChanged();
@@ -3242,6 +3336,8 @@ public sealed class MobileShellViewModel :
         nameof(BackupTitle),
         nameof(BackupDescription),
         nameof(ImportBackupDescriptionText),
+        nameof(ImportAccountFileText),
+        nameof(ImportAccountFileDescriptionText),
         nameof(ExportBackupDescriptionText),
         nameof(BackupPasswordText),
         nameof(ConfirmBackupPasswordText),

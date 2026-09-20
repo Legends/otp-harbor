@@ -122,7 +122,7 @@
   <data name="ImportConflictHandling" xml:space="preserve"><value>Gestión de conflictos de importación</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Importar cuentas</value></data>
   <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Importar copia de OTP Harbor</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importa una copia cifrada .totp de OTP Harbor o un archivo de cuentas compatible.</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importa una copia cifrada .totp de OTP Harbor, un archivo de cuentas de OTP Harbor o un archivo de texto con un URI TOTP otpauth:// estándar por línea.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exportar cuentas</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Crea una copia de seguridad portátil de todas las cuentas protegida por contraseña.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Diagnóstico de soporte</value></data>

@@ -1650,6 +1650,51 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task ImportAccountFileAsync_UsesPortableParserAndTransactionalImportWorkflow()
+    {
+        var importedAccount = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "authenticator-export.txt"));
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(),
+                "authenticator-export.txt",
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { importedAccount }));
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+                It.Is<IReadOnlyList<Account>>(accounts =>
+                    accounts.Count == 1 && ReferenceEquals(accounts[0], importedAccount)),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new AccountImportOutcome(
+                AccountImportStatus.Completed,
+                Added: 1,
+                Replaced: 0,
+                Skipped: 0)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.ImportAccountFileAsync();
+
+        context.ExportService.VerifyAll();
+        context.AccountImport.VerifyAll();
+        Assert.Equal(
+            string.Format(context.Strings.Get(MobileStringKeys.AccountFileImported), 1, 0, 0),
+            context.Sut.NotificationText);
+        Assert.Equal(NotificationSeverity.Success, context.Sut.NotificationSeverity);
+    }
+
+    [Fact]
     public async Task SelectThemeAsync_PersistsAndUpdatesVisibleSelection()
     {
         var context = CreateContext(isConfigured: true);

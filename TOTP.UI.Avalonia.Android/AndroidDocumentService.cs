@@ -13,6 +13,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
     private const int OpenRequestCode = 0x4f55;
     private const int CreateRequestCode = 0x4f56;
     private const int BrandIconPackRequestCode = 0x4f57;
+    private const int AccountImportRequestCode = 0x4f58;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
 
     public async Task<MobileReadableDocument?> OpenEncryptedBackupAsync(
@@ -61,6 +62,26 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
             });
     }
 
+    public async Task<MobileReadableDocument?> OpenAccountImportAsync(
+        CancellationToken cancellationToken = default)
+    {
+        using var intent = new Intent(Intent.ActionOpenDocument);
+        intent.AddCategory(Intent.CategoryOpenable);
+        intent.SetType("*/*");
+        intent.PutExtra(Intent.ExtraMimeTypes, new[]
+        {
+            "application/json",
+            "text/plain",
+            "text/csv",
+            "text/comma-separated-values",
+            "application/csv"
+        });
+        var selected = await StartAsync(intent, AccountImportRequestCode, cancellationToken);
+        if (selected is null) return null;
+
+        return OpenReadableDocument(selected, "accounts.txt");
+    }
+
     public async Task<MobileReadableDocument?> OpenBrandIconPackAsync(
         CancellationToken cancellationToken = default)
     {
@@ -70,9 +91,45 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         var selected = await StartAsync(intent, BrandIconPackRequestCode, cancellationToken);
         if (selected is null) return null;
 
-        var activity = activityProvider.GetCurrent();
-        var stream = activity?.ContentResolver?.OpenInputStream(selected);
-        return stream is null ? null : new MobileReadableDocument(stream);
+        return OpenReadableDocument(selected, "simple-icons.zip");
+    }
+
+    private MobileReadableDocument? OpenReadableDocument(
+        global::Android.Net.Uri selected,
+        string fallbackName)
+    {
+        var resolver = activityProvider.GetCurrent()?.ContentResolver;
+        var stream = resolver?.OpenInputStream(selected);
+        if (stream is null) return null;
+
+        try
+        {
+            var name = resolver?.GetType(selected) switch
+            {
+                "application/json" => "accounts.json",
+                "text/csv" or "text/comma-separated-values" or "application/csv" => "accounts.csv",
+                _ => fallbackName
+            };
+            using var cursor = resolver?.Query(
+                selected,
+                [IOpenableColumns.DisplayName],
+                null,
+                null,
+                null);
+            if (cursor is not null && cursor.MoveToFirst())
+            {
+                var nameColumn = cursor.GetColumnIndex(IOpenableColumns.DisplayName);
+                if (nameColumn >= 0 && !cursor.IsNull(nameColumn))
+                    name = cursor.GetString(nameColumn) ?? fallbackName;
+            }
+
+            return new MobileReadableDocument(stream, name);
+        }
+        catch
+        {
+            stream.Dispose();
+            throw;
+        }
     }
 
     private async Task<global::Android.Net.Uri?> StartAsync(

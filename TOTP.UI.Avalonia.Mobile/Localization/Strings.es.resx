@@ -63,6 +63,8 @@
   <data name="BackupTitle" xml:space="preserve"><value>Copia de seguridad cifrada</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Exporte o importe una copia de seguridad cifrada de OTP Harbor. Las cuentas existentes se mantienen sin cambios durante la importación.</value></data>
   <data name="ImportBackupDescription" xml:space="preserve"><value>Elija una copia de seguridad cifrada de OTP Harbor en formato .totp. Las cuentas existentes coincidentes permanecen sin cambios.</value></data>
+  <data name="ImportAccountFile" xml:space="preserve"><value>Importar archivo de cuentas</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Elige un archivo de cuentas de OTP Harbor en formato JSON, texto o CSV. Los archivos de texto pueden contener un URI TOTP otpauth:// estándar por línea.</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Cree una copia de seguridad portátil y protegida con contraseña de todas las cuentas.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Contraseña de la copia de seguridad</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirmar contraseña de la copia de seguridad</value></data>
@@ -80,13 +82,17 @@
   <data name="BackupImportFailed" xml:space="preserve"><value>No se pudo importar la copia de seguridad cifrada de forma segura. No se sobrescribió ninguna cuenta existente.</value></data>
   <data name="BackupImportCancelled" xml:space="preserve"><value>Importación de copia de seguridad cancelada. No se modificó ninguna cuenta.</value></data>
   <data name="BackupImported" xml:space="preserve"><value>Copia de seguridad importada: {0} añadida(s), {1} sobrescrita(s), {2} existente(s) sin cambios.</value></data>
+  <data name="AccountFileImportRejected" xml:space="preserve"><value>El archivo de cuentas seleccionado no es válido o no es compatible.</value></data>
+  <data name="AccountFileImportFailed" xml:space="preserve"><value>El archivo de cuentas no se pudo importar de forma segura. Las cuentas existentes no se modificaron.</value></data>
+  <data name="AccountFileImportCancelled" xml:space="preserve"><value>Importación del archivo de cuentas cancelada. No se modificó ninguna cuenta.</value></data>
+  <data name="AccountFileImported" xml:space="preserve"><value>Archivo de cuentas importado: {0} añadida(s), {1} reemplazada(s), {2} existente(s) sin cambios.</value></data>
   <data name="ImportConfirmationTitle" xml:space="preserve"><value>Confirmar importación de la copia</value></data>
   <data name="ImportConfirmation" xml:space="preserve"><value>¿Importar {0} cuentas? Las {1} cuentas existentes coincidentes permanecerán sin cambios. Se crea una copia de recuperación antes de aplicar cambios.</value></data>
   <data name="ConfirmImport" xml:space="preserve"><value>Importar</value></data>
   <data name="NoImportTitle" xml:space="preserve"><value>Sin importación</value></data>
   <data name="NoImportIdentical" xml:space="preserve"><value>Todas las cuentas son idénticas. No hay nada que importar.</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
-  <data name="BackupConflictResolutionTitle" xml:space="preserve"><value>Resolver diferencias de la copia</value></data>
+  <data name="BackupConflictResolutionTitle" xml:space="preserve"><value>Resolver diferencias de importación</value></data>
   <data name="BackupConflictResolution" xml:space="preserve"><value>{0} cuentas: {1} nueva(s), {2} sin cambios, {3} por revisar. Elija la acción para cada cuenta modificada. Primero se creará una copia de recuperación.</value></data>
   <data name="ConflictAccount" xml:space="preserve"><value>Cuenta</value></data>
   <data name="Skip" xml:space="preserve"><value>Conservar</value></data>
@@ -94,7 +100,7 @@
   <data name="SkipAll" xml:space="preserve"><value>Conservar todas</value></data>
   <data name="OverrideAll" xml:space="preserve"><value>Restaurar todas</value></data>
   <data name="CurrentAccountFormat" xml:space="preserve"><value>Actual: {0}</value></data>
-  <data name="BackupAccountFormat" xml:space="preserve"><value>Copia: {0}</value></data>
+  <data name="BackupAccountFormat" xml:space="preserve"><value>Importado: {0}</value></data>
   <data name="ChangedFieldsFormat" xml:space="preserve"><value>Cambios: {0}</value></data>
   <data name="IssuerField" xml:space="preserve"><value>emisor</value></data>
   <data name="AccountNameField" xml:space="preserve"><value>nombre de cuenta</value></data>
@@ -102,7 +108,7 @@
   <data name="PeriodField" xml:space="preserve"><value>período</value></data>
   <data name="ApplyToAll" xml:space="preserve"><value>Aplicar a todas</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Conservar la versión actual de {0}</value></data>
-  <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Restaurar la versión de la copia de {0}</value></data>
+  <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Usar la versión importada de {0}</value></data>
   <data name="NoAccounts" xml:space="preserve"><value>Todavía no hay cuentas. Añada una manualmente o escanee el QR de una cuenta o exportación de Google Authenticator.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Añadir cuenta</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Editar</value></data>

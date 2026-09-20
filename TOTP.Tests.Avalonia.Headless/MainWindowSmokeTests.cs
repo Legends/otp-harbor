@@ -33,6 +33,46 @@ namespace TOTP.Tests.Avalonia.Headless;
 public sealed class MainWindowSmokeTests
 {
     [AvaloniaFact]
+    public void PeriodClearButton_IsCenteredBeforeSpinnerWithoutOverlap()
+    {
+        var clear = new Button { Content = "×" };
+        clear.Classes.Add("numeric-clear");
+        var input = new NumericUpDown
+        {
+            Width = 320,
+            Value = 30,
+            InnerRightContent = clear
+        };
+        var window = new Window { Content = input };
+
+        try
+        {
+            window.Show();
+            input.ApplyTemplate();
+            window.UpdateLayout();
+
+            var spinner = Assert.Single(
+                input.GetVisualDescendants().OfType<StackPanel>(),
+                panel => panel.Name == "PART_SpinnerPanel");
+            var clearRight = clear.TranslatePoint(
+                new Point(clear.Bounds.Width, clear.Bounds.Height / 2),
+                input);
+            var spinnerLeft = spinner.TranslatePoint(
+                new Point(0, spinner.Bounds.Height / 2),
+                input);
+
+            Assert.NotNull(clearRight);
+            Assert.NotNull(spinnerLeft);
+            Assert.True(clearRight.Value.X <= spinnerLeft.Value.X);
+            Assert.Equal(input.Bounds.Height / 2, clearRight.Value.Y, 3);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void RevealableSecretInput_FocusInputFocusesPasswordTextBox()
     {
         var input = new RevealableSecretInput();

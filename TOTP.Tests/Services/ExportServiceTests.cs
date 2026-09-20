@@ -138,6 +138,79 @@ public sealed class ExportServiceTests
     }
 
     [Fact]
+    public async Task ImportFromStreamAsync_WithOtpAuthTextFile_ImportsStandardTotpUris()
+    {
+        const string content = """
+            # Exported TOTP accounts
+
+            otpauth://totp/GitHub%3Aalice%40example.test?secret=JBSWY3DPEHPK3PXP&issuer=GitHub
+            otpauth://totp/AWS%3Aproduction?secret=KRSXG5DSNFXGOIDB&issuer=Amazon%20Web%20Services&period=60
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "authenticator-export.txt",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Collection(
+            result.Value,
+            github =>
+            {
+                Assert.Equal("GitHub", github.Issuer);
+                Assert.Equal("alice@example.test", github.AccountName);
+                Assert.Equal("JBSWY3DPEHPK3PXP", github.Secret);
+                Assert.Equal(30, github.PeriodSeconds);
+            },
+            aws =>
+            {
+                Assert.Equal("Amazon Web Services", aws.Issuer);
+                Assert.Equal("production", aws.AccountName);
+                Assert.Equal("KRSXG5DSNFXGOIDB", aws.Secret);
+                Assert.Equal(60, aws.PeriodSeconds);
+            });
+    }
+
+    [Theory]
+    [InlineData("otpauth://hotp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&counter=1")]
+    [InlineData("otpauth://totp/Example%3Aalice?secret=INVALID1&issuer=Example")]
+    [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&algorithm=SHA256")]
+    [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&digits=8")]
+    [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&period=invalid")]
+    public async Task ImportFromStreamAsync_WithInvalidOrUnsupportedOtpAuthUri_FailsClosed(
+        string content)
+    {
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "accounts.txt",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Fact]
+    public async Task ImportFromStreamAsync_WithMixedOtpAuthAndLegacyRows_RejectsWholeFile()
+    {
+        const string content = """
+            otpauth://totp/GitHub%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=GitHub
+            Example|bob|KRSXG5DSNFXGOIDB
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "mixed.txt",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Fact]
     public async Task ExportToEncryptedStreamAsync_ThenPathImporter_RoundTripsCompatibilityFormat()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

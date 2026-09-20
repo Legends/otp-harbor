@@ -13,7 +13,7 @@ The current Android application provides:
 - account listing, manual creation, editing, and deletion
 - account search by issuer or account name
 - offline QR capture through the system camera, including Google Authenticator bulk-migration QR codes, explicit conflict handling, and account QR display
-- encrypted backup import and export through Android's system document picker
+- encrypted backup import/export and local JSON, CSV, OTP Harbor text, or `otpauth://` URI-list import through Android's system document picker
 - current TOTP code and countdown display inside every visible account row
 - tap-to-copy account rows and thresholded swipe actions for QR display, editing, and confirmed
   deletion

@@ -498,21 +498,22 @@
                                                         <TextBlock
                                                             Classes="field-label"
                                                             Text="{DynamicResource TotpPeriod}" />
-                                                        <Grid>
-                                                            <NumericUpDown
-                                                                automation:AutomationProperties.Name="{DynamicResource TotpPeriod}"
-                                                                Increment="5"
-                                                                Maximum="3600"
-                                                                Minimum="5"
-                                                                Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
-                                                            <Button
-                                                                automation:AutomationProperties.Name="{DynamicResource ClearPeriod}"
-                                                                Classes="numeric-clear"
-                                                                Command="{Binding ClearEditorPeriodCommand}"
-                                                                Content="×"
-                                                                IsVisible="{Binding HasEditorPeriodSeconds}"
-                                                                ToolTip.Tip="{DynamicResource ClearPeriod}" />
-                                                        </Grid>
+                                                        <NumericUpDown
+                                                            automation:AutomationProperties.Name="{DynamicResource TotpPeriod}"
+                                                            Increment="5"
+                                                            Maximum="3600"
+                                                            Minimum="5"
+                                                            Value="{Binding EditorPeriodSeconds, Mode=TwoWay}">
+                                                            <NumericUpDown.InnerRightContent>
+                                                                <Button
+                                                                    automation:AutomationProperties.Name="{DynamicResource ClearPeriod}"
+                                                                    Classes="numeric-clear"
+                                                                    Command="{Binding ClearEditorPeriodCommand}"
+                                                                    Content="×"
+                                                                    IsVisible="{Binding HasEditorPeriodSeconds}"
+                                                                    ToolTip.Tip="{DynamicResource ClearPeriod}" />
+                                                            </NumericUpDown.InnerRightContent>
+                                                        </NumericUpDown>
                                                         <shared:ValidationMessage Severity="Error" Text="{Binding EditorPeriodMessage}" />
                                                         <TextBlock
                                                             Classes="secondary"

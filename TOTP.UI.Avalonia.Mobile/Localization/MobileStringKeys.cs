@@ -79,6 +79,8 @@ public static class MobileStringKeys
     public const string BackupTitle = nameof(BackupTitle);
     public const string BackupDescription = nameof(BackupDescription);
     public const string ImportBackupDescription = nameof(ImportBackupDescription);
+    public const string ImportAccountFile = nameof(ImportAccountFile);
+    public const string ImportAccountFileDescription = nameof(ImportAccountFileDescription);
     public const string ExportBackupDescription = nameof(ExportBackupDescription);
     public const string BackupPassword = nameof(BackupPassword);
     public const string ConfirmBackupPassword = nameof(ConfirmBackupPassword);
@@ -108,6 +110,10 @@ public static class MobileStringKeys
     public const string BackupImportFailed = nameof(BackupImportFailed);
     public const string BackupImportCancelled = nameof(BackupImportCancelled);
     public const string BackupImported = nameof(BackupImported);
+    public const string AccountFileImportRejected = nameof(AccountFileImportRejected);
+    public const string AccountFileImportFailed = nameof(AccountFileImportFailed);
+    public const string AccountFileImportCancelled = nameof(AccountFileImportCancelled);
+    public const string AccountFileImported = nameof(AccountFileImported);
     public const string ImportConfirmationTitle = nameof(ImportConfirmationTitle);
     public const string ImportConfirmation = nameof(ImportConfirmation);
     public const string ConfirmImport = nameof(ConfirmImport);
@@ -273,6 +279,8 @@ public static class MobileStringKeys
         BackupTitle,
         BackupDescription,
         ImportBackupDescription,
+        ImportAccountFile,
+        ImportAccountFileDescription,
         ExportBackupDescription,
         BackupPassword,
         ConfirmBackupPassword,
@@ -297,6 +305,10 @@ public static class MobileStringKeys
         BackupImportFailed,
         BackupImportCancelled,
         BackupImported,
+        AccountFileImportRejected,
+        AccountFileImportFailed,
+        AccountFileImportCancelled,
+        AccountFileImported,
         ImportConfirmationTitle,
         ImportConfirmation,
         ConfirmImport,

@@ -63,6 +63,8 @@
   <data name="BackupTitle" xml:space="preserve"><value>Verschlüsseltes Backup</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Exportieren oder importieren Sie ein verschlüsseltes OTP-Harbor-Backup. Vorhandene Konten bleiben beim Import unverändert.</value></data>
   <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-Backupdatei im .totp-Format aus. Passende vorhandene Konten bleiben unverändert.</value></data>
+  <data name="ImportAccountFile" xml:space="preserve"><value>Kontodatei importieren</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Wählen Sie eine OTP-Harbor-Kontodatei im JSON-, Text- oder CSV-Format. Textdateien können pro Zeile eine standardmäßige otpauth://-TOTP-URI enthalten.</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie ein portables, passwortgeschütztes Backup aller Konten.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup-Passwort</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Backup-Passwort bestätigen</value></data>
@@ -80,13 +82,17 @@
   <data name="BackupImportFailed" xml:space="preserve"><value>Das verschlüsselte Backup konnte nicht sicher importiert werden. Kein vorhandenes Konto wurde überschrieben.</value></data>
   <data name="BackupImportCancelled" xml:space="preserve"><value>Backup-Import abgebrochen. Es wurde kein Konto geändert.</value></data>
   <data name="BackupImported" xml:space="preserve"><value>Backup importiert: {0} hinzugefügt, {1} überschrieben, {2} vorhandene unverändert.</value></data>
+  <data name="AccountFileImportRejected" xml:space="preserve"><value>Die ausgewählte Kontodatei ist ungültig oder wird nicht unterstützt.</value></data>
+  <data name="AccountFileImportFailed" xml:space="preserve"><value>Die Kontodatei konnte nicht sicher importiert werden. Vorhandene Konten wurden nicht geändert.</value></data>
+  <data name="AccountFileImportCancelled" xml:space="preserve"><value>Der Kontodatei-Import wurde abgebrochen. Kein Konto wurde geändert.</value></data>
+  <data name="AccountFileImported" xml:space="preserve"><value>Kontodatei importiert: {0} hinzugefügt, {1} überschrieben, {2} vorhandene unverändert.</value></data>
   <data name="ImportConfirmationTitle" xml:space="preserve"><value>Backup-Import bestätigen</value></data>
   <data name="ImportConfirmation" xml:space="preserve"><value>{0} Konten importieren? {1} passende vorhandene Konten bleiben unverändert. Vor Änderungen wird ein Wiederherstellungs-Backup erstellt.</value></data>
   <data name="ConfirmImport" xml:space="preserve"><value>Importieren</value></data>
   <data name="NoImportTitle" xml:space="preserve"><value>Kein Import</value></data>
   <data name="NoImportIdentical" xml:space="preserve"><value>Alle Konten sind identisch. Es gibt nichts zu importieren.</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
-  <data name="BackupConflictResolutionTitle" xml:space="preserve"><value>Backup-Unterschiede auflösen</value></data>
+  <data name="BackupConflictResolutionTitle" xml:space="preserve"><value>Import-Unterschiede auflösen</value></data>
   <data name="BackupConflictResolution" xml:space="preserve"><value>{0} Konten: {1} neu, {2} unverändert, {3} zu prüfen. Wählen Sie die Aktion für jedes geänderte Konto. Zuerst wird ein Wiederherstellungs-Backup erstellt.</value></data>
   <data name="ConflictAccount" xml:space="preserve"><value>Konto</value></data>
   <data name="Skip" xml:space="preserve"><value>Behalten</value></data>
@@ -94,7 +100,7 @@
   <data name="SkipAll" xml:space="preserve"><value>Alle behalten</value></data>
   <data name="OverrideAll" xml:space="preserve"><value>Alle wiederherstellen</value></data>
   <data name="CurrentAccountFormat" xml:space="preserve"><value>Aktuell: {0}</value></data>
-  <data name="BackupAccountFormat" xml:space="preserve"><value>Backup: {0}</value></data>
+  <data name="BackupAccountFormat" xml:space="preserve"><value>Importiert: {0}</value></data>
   <data name="ChangedFieldsFormat" xml:space="preserve"><value>Geändert: {0}</value></data>
   <data name="IssuerField" xml:space="preserve"><value>Anbieter</value></data>
   <data name="AccountNameField" xml:space="preserve"><value>Kontoname</value></data>
@@ -102,7 +108,7 @@
   <data name="PeriodField" xml:space="preserve"><value>Zeitraum</value></data>
   <data name="ApplyToAll" xml:space="preserve"><value>Auf alle anwenden</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Aktuelle Version von {0} behalten</value></data>
-  <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Backup-Version von {0} wiederherstellen</value></data>
+  <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Importierte Version von {0} verwenden</value></data>
   <data name="NoAccounts" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu oder scannen Sie einen Konto- oder Google-Authenticator-Export-QR-Code.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Konto hinzufügen</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Bearbeiten</value></data>

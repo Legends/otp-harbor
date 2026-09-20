@@ -680,6 +680,18 @@
                                 <TextBlock
                                     FontSize="17"
                                     FontWeight="SemiBold"
+                                    Text="{Binding ImportAccountFileText}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding ImportAccountFileDescriptionText}"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    Classes="wide secondary"
+                                    Command="{Binding ImportAccountFileCommand}"
+                                    Content="{Binding ImportAccountFileText}" />
+                                <TextBlock
+                                    FontSize="17"
+                                    FontWeight="SemiBold"
                                     Text="{Binding ImportBackupText}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
@@ -786,21 +798,23 @@
                                 <TextBlock
                                     Classes="field-label"
                                     Text="{Binding TotpPeriodText}" />
-                                <Grid>
-                                    <NumericUpDown
-                                        automation:AutomationProperties.Name="{Binding TotpPeriodText}"
-                                        Increment="5"
-                                        Maximum="3600"
-                                        Minimum="5"
-                                        Value="{Binding EditorPeriodSeconds, Mode=TwoWay}" />
-                                    <Button
-                                        automation:AutomationProperties.Name="{Binding ClearPeriodText}"
-                                        Classes="numeric-clear"
-                                        Command="{Binding ClearEditorPeriodCommand}"
-                                        Content="×"
-                                        IsVisible="{Binding HasEditorPeriodSeconds}"
-                                        ToolTip.Tip="{Binding ClearPeriodText}" />
-                                </Grid>
+                                <NumericUpDown
+                                    automation:AutomationProperties.Name="{Binding TotpPeriodText}"
+                                    Classes="mobile-period"
+                                    Increment="5"
+                                    Maximum="3600"
+                                    Minimum="5"
+                                    Value="{Binding EditorPeriodSeconds, Mode=TwoWay}">
+                                    <NumericUpDown.InnerRightContent>
+                                        <Button
+                                            automation:AutomationProperties.Name="{Binding ClearPeriodText}"
+                                            Classes="numeric-clear"
+                                            Command="{Binding ClearEditorPeriodCommand}"
+                                            Content="×"
+                                            IsVisible="{Binding HasEditorPeriodSeconds}"
+                                            ToolTip.Tip="{Binding ClearPeriodText}" />
+                                    </NumericUpDown.InnerRightContent>
+                                </NumericUpDown>
                                 <controls:ValidationMessage Severity="Error" Text="{Binding EditorPeriodMessage}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"

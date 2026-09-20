@@ -5,6 +5,9 @@ public interface IMobileDocumentService
     Task<MobileReadableDocument?> OpenEncryptedBackupAsync(
         CancellationToken cancellationToken = default);
 
+    Task<MobileReadableDocument?> OpenAccountImportAsync(
+        CancellationToken cancellationToken = default);
+
     Task<MobileReadableDocument?> OpenBrandIconPackAsync(
         CancellationToken cancellationToken = default);
 
@@ -13,9 +16,11 @@ public interface IMobileDocumentService
         CancellationToken cancellationToken = default);
 }
 
-public sealed class MobileReadableDocument(Stream stream) : IDisposable
+public sealed class MobileReadableDocument(Stream stream, string name = "") : IDisposable
 {
     public Stream Stream { get; } = stream ?? throw new ArgumentNullException(nameof(stream));
+
+    public string Name { get; } = name ?? string.Empty;
 
     public void Dispose() => Stream.Dispose();
 }

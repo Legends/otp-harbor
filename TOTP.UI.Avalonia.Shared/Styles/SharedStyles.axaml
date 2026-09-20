@@ -514,7 +514,7 @@
         <Setter Property="MinWidth" Value="24" />
         <Setter Property="Height" Value="24" />
         <Setter Property="MinHeight" Value="24" />
-        <Setter Property="Margin" Value="0,0,34,0" />
+        <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="VerticalAlignment" Value="Center" />

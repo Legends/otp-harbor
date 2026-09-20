@@ -21,7 +21,7 @@
 
 - AES-256-GCM encrypted local vault with Argon2id password derivation
 - Windows Hello and macOS quick unlock with master-password recovery
-- Account creation, editing, search, deletion, QR import/export, and Google Authenticator bulk migration
+- Account creation, editing, search, deletion, QR import/export, Google Authenticator bulk migration, and local `otpauth://` URI-list import
 - Automatic clipboard clearing and idle/session locking
 - Encrypted `.totp` backup, restore, and conflict handling
 - English, German, French, and Spanish UI
@@ -41,6 +41,8 @@ On desktop, right-click any existing account to open its contextual actions: **E
 OTP Harbor recognizes both normal `otpauth://` account QR codes and Google Authenticator transfer QR codes. For a desktop migration, start **Transfer accounts** / **Export accounts** in Google Authenticator, capture each generated QR code as a crisp screenshot, and choose each saved image in **Settings > Import / Export > Import from Google Authenticator**. OTP Harbor shows the number of detected accounts and asks for confirmation before changing the vault; multi-part exports prompt you to choose the next QR image. Android can scan the transfer QR codes directly with its camera workflow.
 
 Treat migration QR codes as secrets: anyone who captures one can recreate the exported accounts. After importing, verify several generated codes and create a fresh encrypted OTP Harbor backup.
+
+Desktop and Android can also import a local `.txt` file containing one standard `otpauth://` TOTP URI per line. JSON, CSV, and OTP Harbor text account files remain supported. Imports are parsed locally, previewed before mutation, and protected by the same recovery-backup and conflict-resolution workflow. Treat every unencrypted account file as secret material and remove it from shared storage after verifying the migration.
 
 ## Desktop experience
 

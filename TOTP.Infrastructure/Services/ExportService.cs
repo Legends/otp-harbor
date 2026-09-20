@@ -10,6 +10,7 @@ using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Validation;
 using TOTP.Infrastructure.Common;
+using TOTP.Infrastructure.Parser;
 
 namespace TOTP.Infrastructure.Services;
 
@@ -423,7 +424,17 @@ public sealed class ExportService : IExportService
     private static List<Account> ParseTxt(string content)
     {
         var result = new List<Account>();
-        var lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = content
+            .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(line => !string.IsNullOrWhiteSpace(line)
+                && !line.TrimStart().StartsWith('#'))
+            .ToArray();
+        if (lines.Length > 0
+            && lines[0].TrimStart().StartsWith("otpauth://", StringComparison.OrdinalIgnoreCase))
+        {
+            return ParseOtpAuthLines(lines.Select(line => line.Trim()));
+        }
+
         foreach (var line in lines)
         {
             if (line.StartsWith("issuer|account_name|secret|id", StringComparison.OrdinalIgnoreCase))
@@ -447,6 +458,31 @@ public sealed class ExportService : IExportService
 
         return result;
     }
+
+    private static List<Account> ParseOtpAuthLines(IEnumerable<string> lines)
+    {
+        var result = new List<Account>();
+        foreach (var line in lines)
+        {
+            if (!line.StartsWith("otpauth://", StringComparison.OrdinalIgnoreCase))
+                throw new FormatException("The text import mixes incompatible account formats.");
+
+            var parsed = OtpauthParser.Parse(line);
+            if (!OtpAuthSupportPolicy.IsSupported(parsed))
+                throw new FormatException("The text import contains unsupported TOTP parameters.");
+
+            result.Add(new Account(
+                Guid.NewGuid(),
+                parsed.Issuer?.Trim() ?? string.Empty,
+                parsed.SecretBase32,
+                EmptyToNull(parsed.Label.Trim()),
+                parsed.Period));
+        }
+
+        return result;
+    }
+
+    private static string? EmptyToNull(string value) => value.Length == 0 ? null : value;
 
     private static List<Account> ParseCsv(string content)
     {

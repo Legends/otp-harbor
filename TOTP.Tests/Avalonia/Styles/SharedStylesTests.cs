@@ -168,7 +168,10 @@ public sealed class SharedStylesTests
                         StringComparison.Ordinal) == true);
             Assert.Equal("5", periodEditor.Attribute("Increment")?.Value);
 
-            var clearButton = periodEditor.Parent!
+            var innerRightContent = periodEditor
+                .Elements(avalonia + "NumericUpDown.InnerRightContent")
+                .Single();
+            var clearButton = innerRightContent
                 .Elements(avalonia + "Button")
                 .Single(element => element.Attribute("Classes")?.Value == "numeric-clear");
             Assert.Equal(
@@ -178,6 +181,29 @@ public sealed class SharedStylesTests
                 "{Binding HasEditorPeriodSeconds}",
                 clearButton.Attribute("IsVisible")?.Value);
         }
+
+        var mobileApp = XDocument.Load(Path.Combine(fixtureDirectory, "MobileApp.axaml"));
+        var spinnerButtonStyle = mobileApp
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value ==
+                "NumericUpDown.mobile-period /template/ ButtonSpinner#PART_Spinner /template/ RepeatButton");
+        Assert.Contains(
+            spinnerButtonStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "MinWidth"
+                && setter.Attribute("Value")?.Value == "48");
+
+        var sharedStyles = XDocument.Load(Path.Combine(fixtureDirectory, "SharedStyles.axaml"));
+        var clearStyle = sharedStyles
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value == "Button.numeric-clear");
+        Assert.Contains(
+            clearStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "VerticalAlignment"
+                && setter.Attribute("Value")?.Value == "Center");
+        Assert.Contains(
+            clearStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "Margin"
+                && setter.Attribute("Value")?.Value == "0");
     }
 
     private static string BrushColor(XElement dictionary, XNamespace avalonia, string key) =>
