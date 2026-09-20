@@ -173,7 +173,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Settings saved automatically.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Settings could not be saved. Existing settings remain active.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Search issuer or account</value></data>
-  <data name="NoEntriesYet" xml:space="preserve"><value>No entries yet.</value></data>
+  <data name="NoEntriesYet" xml:space="preserve"><value>No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No matching entries.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Close settings</value></data>
   <data name="GenerateCode" xml:space="preserve"><value>Generate code</value></data>
@@ -192,7 +192,7 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>This QR code contains the account secret. Keep it private.</value></data>
   <data name="CameraPreview" xml:space="preserve"><value>Live camera preview</value></data>
   <data name="CreatePasswordHeading" xml:space="preserve"><value>Create your master password</value></data>
-  <data name="PasswordSetupHelp" xml:space="preserve"><value>This password protects your local vault and is required for recovery.</value></data>
+  <data name="PasswordSetupHelp" xml:space="preserve"><value>Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.</value></data>
   <data name="NewPassword" xml:space="preserve"><value>New master password</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Confirm master password</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Create protected vault</value></data>

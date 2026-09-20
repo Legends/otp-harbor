@@ -44,6 +44,34 @@ public sealed class MobileStringCatalogTests
         Assert.Equal("Export encrypted backup", catalog.Get(MobileStringKeys.ExportBackup));
     }
 
+    [Theory]
+    [InlineData(
+        "en",
+        "Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.",
+        "No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.")]
+    [InlineData(
+        "de",
+        "Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.",
+        "Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.")]
+    [InlineData(
+        "fr",
+        "Créez un mot de passe principal pour chiffrer votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez. Créez ensuite une sauvegarde chiffrée et conservez son mot de passe séparément.",
+        "Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.")]
+    [InlineData(
+        "es",
+        "Cree una contraseña maestra para cifrar su almacén local. OTP Harbor no puede restablecerla si la olvida. Después, cree una copia de seguridad cifrada y guarde su contraseña por separado.",
+        "Todavía no hay cuentas. Añada una manualmente, escanee el QR de una cuenta o exportación de Google Authenticator, o restaure una copia de seguridad cifrada desde Configuración.")]
+    public void Get_OnboardingExplainsPasswordRecoveryAndFirstAccountOptions(
+        string cultureName,
+        string expectedSetupDescription,
+        string expectedEmptyState)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Equal(expectedSetupDescription, catalog.Get(MobileStringKeys.SetupDescription));
+        Assert.Equal(expectedEmptyState, catalog.Get(MobileStringKeys.NoAccounts));
+    }
+
     [Fact]
     public void Get_BiometricRecoveryMessage_UsesOnlyActiveGermanLocale()
     {

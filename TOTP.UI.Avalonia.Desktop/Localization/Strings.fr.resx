@@ -173,7 +173,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Paramètres enregistrés automatiquement.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Les paramètres n’ont pas pu être enregistrés. Les paramètres existants restent actifs.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Rechercher un émetteur ou un compte</value></data>
-  <data name="NoEntriesYet" xml:space="preserve"><value>Aucune entrée pour le moment.</value></data>
+  <data name="NoEntriesYet" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Aucune entrée correspondante.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Fermer les paramètres</value></data>
   <data name="GenerateCode" xml:space="preserve"><value>Générer un code</value></data>
@@ -192,7 +192,7 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Ce code QR contient le secret du compte. Gardez-le confidentiel.</value></data>
   <data name="CameraPreview" xml:space="preserve"><value>Aperçu en direct de la caméra</value></data>
   <data name="CreatePasswordHeading" xml:space="preserve"><value>Créez votre mot de passe principal</value></data>
-  <data name="PasswordSetupHelp" xml:space="preserve"><value>Ce mot de passe protège votre coffre-fort local et est requis pour la récupération.</value></data>
+  <data name="PasswordSetupHelp" xml:space="preserve"><value>Créez un mot de passe principal pour chiffrer votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez. Créez ensuite une sauvegarde chiffrée et conservez son mot de passe séparément.</value></data>
   <data name="NewPassword" xml:space="preserve"><value>Nouveau mot de passe principal</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Confirmer le mot de passe principal</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Créer un coffre-fort protégé</value></data>

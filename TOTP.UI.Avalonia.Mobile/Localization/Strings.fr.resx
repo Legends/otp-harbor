@@ -9,7 +9,7 @@
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor n’a pas pu démarrer de manière sécurisée. Vos données chiffrées n’ont pas été modifiées.</value></data>
   <data name="Retry" xml:space="preserve"><value>Réessayer</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Protégez votre authentificateur</value></data>
-  <data name="SetupDescription" xml:space="preserve"><value>Créez un mot de passe principal. Il reste la méthode de récupération de votre coffre local chiffré.</value></data>
+  <data name="SetupDescription" xml:space="preserve"><value>Créez un mot de passe principal pour chiffrer votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez. Créez ensuite une sauvegarde chiffrée et conservez son mot de passe séparément.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Mot de passe principal</value></data>
   <data name="RevealPassword" xml:space="preserve"><value>Afficher ou masquer le mot de passe</value></data>
   <data name="RevealPasswordHelp" xml:space="preserve"><value>Sélectionnez à nouveau pour masquer le mot de passe.</value></data>
@@ -109,7 +109,7 @@
   <data name="ApplyToAll" xml:space="preserve"><value>Appliquer à tous</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Conserver la version actuelle de {0}</value></data>
   <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Utiliser la version importée de {0}</value></data>
-  <data name="NoAccounts" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement ou scannez le QR code d’un compte ou d’une exportation Google Authenticator.</value></data>
+  <data name="NoAccounts" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Ajouter un compte</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Modifier</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Supprimer</value></data>

@@ -9,7 +9,7 @@
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor no pudo iniciarse de forma segura. Sus datos cifrados no se modificaron.</value></data>
   <data name="Retry" xml:space="preserve"><value>Reintentar</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Proteja su autenticador</value></data>
-  <data name="SetupDescription" xml:space="preserve"><value>Cree una contraseña maestra. Seguirá siendo el método de recuperación de su almacén local cifrado.</value></data>
+  <data name="SetupDescription" xml:space="preserve"><value>Cree una contraseña maestra para cifrar su almacén local. OTP Harbor no puede restablecerla si la olvida. Después, cree una copia de seguridad cifrada y guarde su contraseña por separado.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Contraseña maestra</value></data>
   <data name="RevealPassword" xml:space="preserve"><value>Mostrar u ocultar contraseña</value></data>
   <data name="RevealPasswordHelp" xml:space="preserve"><value>Selecciona de nuevo para ocultar la contraseña.</value></data>
@@ -109,7 +109,7 @@
   <data name="ApplyToAll" xml:space="preserve"><value>Aplicar a todas</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Conservar la versión actual de {0}</value></data>
   <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Usar la versión importada de {0}</value></data>
-  <data name="NoAccounts" xml:space="preserve"><value>Todavía no hay cuentas. Añada una manualmente o escanee el QR de una cuenta o exportación de Google Authenticator.</value></data>
+  <data name="NoAccounts" xml:space="preserve"><value>Todavía no hay cuentas. Añada una manualmente, escanee el QR de una cuenta o exportación de Google Authenticator, o restaure una copia de seguridad cifrada desde Configuración.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Añadir cuenta</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Editar</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Eliminar</value></data>

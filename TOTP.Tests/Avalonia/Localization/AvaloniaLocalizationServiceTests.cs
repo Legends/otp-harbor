@@ -78,6 +78,35 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData(
+        "en",
+        "Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.",
+        "No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.")]
+    [InlineData(
+        "de",
+        "Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.",
+        "Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.")]
+    [InlineData(
+        "fr",
+        "Créez un mot de passe principal pour chiffrer votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez. Créez ensuite une sauvegarde chiffrée et conservez son mot de passe séparément.",
+        "Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.")]
+    [InlineData(
+        "es",
+        "Crea una contraseña maestra para cifrar tu caja fuerte local. OTP Harbor no puede restablecerla si la olvidas. Después, crea una copia de seguridad cifrada y guarda su contraseña por separado.",
+        "Todavía no hay cuentas. Añade una manualmente, escanea el QR de una cuenta o exportación de Google Authenticator, o restaura una copia de seguridad cifrada desde Ajustes.")]
+    public void Catalog_OnboardingExplainsPasswordRecoveryAndFirstAccountOptions(
+        string cultureName,
+        string expectedSetupHelp,
+        string expectedEmptyState)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        Assert.Equal(expectedSetupHelp, sut.Get(AvaloniaStringKeys.PasswordSetupHelp, culture));
+        Assert.Equal(expectedEmptyState, sut.Get(AvaloniaStringKeys.NoEntriesYet, culture));
+    }
+
+    [Theory]
     [InlineData("fr-FR", "fr", "Réessayer", "Mot de passe principal")]
     [InlineData("es-ES", "es", "Reintentar", "Contraseña maestra")]
     public void ApplyCulture_ForAdditionalLanguage_UsesCompleteLocale(

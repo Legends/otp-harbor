@@ -9,7 +9,7 @@
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor could not start safely. Your encrypted data was not changed.</value></data>
   <data name="Retry" xml:space="preserve"><value>Retry</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Protect your authenticator</value></data>
-  <data name="SetupDescription" xml:space="preserve"><value>Create a master password. It remains the recovery method for your encrypted local vault.</value></data>
+  <data name="SetupDescription" xml:space="preserve"><value>Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Master password</value></data>
   <data name="RevealPassword" xml:space="preserve"><value>Show or hide password</value></data>
   <data name="RevealPasswordHelp" xml:space="preserve"><value>Select again to hide the password.</value></data>
@@ -109,7 +109,7 @@
   <data name="ApplyToAll" xml:space="preserve"><value>Apply to all</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Keep the current version of {0}</value></data>
   <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Use the imported version of {0}</value></data>
-  <data name="NoAccounts" xml:space="preserve"><value>No accounts yet. Add one manually or scan an account or Google Authenticator export QR code.</value></data>
+  <data name="NoAccounts" xml:space="preserve"><value>No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Add account</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Edit</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Delete</value></data>

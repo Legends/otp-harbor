@@ -9,7 +9,7 @@
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor konnte nicht sicher gestartet werden. Ihre verschlüsselten Daten wurden nicht verändert.</value></data>
   <data name="Retry" xml:space="preserve"><value>Erneut versuchen</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Authenticator schützen</value></data>
-  <data name="SetupDescription" xml:space="preserve"><value>Erstellen Sie ein Masterpasswort. Es bleibt die Wiederherstellungsmethode für Ihren verschlüsselten lokalen Tresor.</value></data>
+  <data name="SetupDescription" xml:space="preserve"><value>Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Masterpasswort</value></data>
   <data name="RevealPassword" xml:space="preserve"><value>Passwort anzeigen oder ausblenden</value></data>
   <data name="RevealPasswordHelp" xml:space="preserve"><value>Erneut auswählen, um das Passwort auszublenden.</value></data>
@@ -109,7 +109,7 @@
   <data name="ApplyToAll" xml:space="preserve"><value>Auf alle anwenden</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Aktuelle Version von {0} behalten</value></data>
   <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Importierte Version von {0} verwenden</value></data>
-  <data name="NoAccounts" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu oder scannen Sie einen Konto- oder Google-Authenticator-Export-QR-Code.</value></data>
+  <data name="NoAccounts" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Konto hinzufügen</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Bearbeiten</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Löschen</value></data>

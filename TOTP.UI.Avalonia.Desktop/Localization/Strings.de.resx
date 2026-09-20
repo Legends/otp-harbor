@@ -173,7 +173,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Einstellungen automatisch gespeichert.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Die Einstellungen konnten nicht gespeichert werden. Die bisherigen Einstellungen bleiben aktiv.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Aussteller oder Konto suchen</value></data>
-  <data name="NoEntriesYet" xml:space="preserve"><value>Noch keine Einträge.</value></data>
+  <data name="NoEntriesYet" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Keine passenden Einträge.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Einstellungen schließen</value></data>
   <data name="GenerateCode" xml:space="preserve"><value>Code erzeugen</value></data>
@@ -192,7 +192,7 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Dieser QR-Code enthält das Kontogeheimnis. Halten Sie ihn privat.</value></data>
   <data name="CameraPreview" xml:space="preserve"><value>Live-Kameravorschau</value></data>
   <data name="CreatePasswordHeading" xml:space="preserve"><value>Master-Passwort erstellen</value></data>
-  <data name="PasswordSetupHelp" xml:space="preserve"><value>Dieses Passwort schützt Ihren lokalen Tresor und wird zur Wiederherstellung benötigt.</value></data>
+  <data name="PasswordSetupHelp" xml:space="preserve"><value>Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.</value></data>
   <data name="NewPassword" xml:space="preserve"><value>Neues Master-Passwort</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Master-Passwort bestätigen</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Geschützten Tresor erstellen</value></data>

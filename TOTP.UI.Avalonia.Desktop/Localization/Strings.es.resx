@@ -173,7 +173,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Ajustes guardados automáticamente.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>No se pudieron guardar los ajustes. Los ajustes existentes siguen activos.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Buscar emisor o cuenta</value></data>
-  <data name="NoEntriesYet" xml:space="preserve"><value>Todavía no hay entradas.</value></data>
+  <data name="NoEntriesYet" xml:space="preserve"><value>Todavía no hay cuentas. Añade una manualmente, escanea el QR de una cuenta o exportación de Google Authenticator, o restaura una copia de seguridad cifrada desde Ajustes.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No hay entradas coincidentes.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Cerrar ajustes</value></data>
   <data name="GenerateCode" xml:space="preserve"><value>Generar código</value></data>
@@ -192,7 +192,7 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Este código QR contiene el secreto de la cuenta. Mantenlo en privado.</value></data>
   <data name="CameraPreview" xml:space="preserve"><value>Vista previa de la cámara en directo</value></data>
   <data name="CreatePasswordHeading" xml:space="preserve"><value>Crea tu contraseña maestra</value></data>
-  <data name="PasswordSetupHelp" xml:space="preserve"><value>Esta contraseña protege tu caja fuerte local y es necesaria para la recuperación.</value></data>
+  <data name="PasswordSetupHelp" xml:space="preserve"><value>Crea una contraseña maestra para cifrar tu caja fuerte local. OTP Harbor no puede restablecerla si la olvidas. Después, crea una copia de seguridad cifrada y guarda su contraseña por separado.</value></data>
   <data name="NewPassword" xml:space="preserve"><value>Nueva contraseña maestra</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Confirmar contraseña maestra</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Crear caja fuerte protegida</value></data>
