@@ -4,6 +4,7 @@ This index lists maintained documentation. Git history preserves completed migra
 
 ## Users and contributors
 
+- [Product agenda](PRODUCT_AGENDA.md)
 - [Recovery guide](RECOVERY.md)
 - [Contribution guide](../CONTRIBUTING.md)
 - [Desktop test commands](testing/DESKTOP_APP_TEST_COMMANDS.md)
