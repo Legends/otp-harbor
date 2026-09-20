@@ -326,7 +326,7 @@
   <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Choose a crisp screenshot or saved image of a Google Authenticator transfer QR code. Multi-account and multi-page exports are imported one QR image at a time.</value></data>
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choose Google Authenticator QR image…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
-  <data name="BrandIconsHelp" xml:space="preserve"><value>Import a Simple Icons release ZIP that you downloaded yourself. OTP Harbor copies it only to your local app-data folder and never uploads issuer or account information. The icon trademarks remain the property of their owners.</value></data>
+  <data name="BrandIconsHelp" xml:space="preserve"><value>OTP Harbor includes no third-party logos and is not affiliated with or endorsed by Simple Icons, icon-pack providers, or depicted brands. Import only a ZIP you obtained independently and are authorized to use. Imported artwork stays in local app data; no issuer or account information is uploaded.</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import Simple Icons ZIP…</value></data>
   <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Select Simple Icons release ZIP</value></data>
   <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Simple Icons ZIP files</value></data>

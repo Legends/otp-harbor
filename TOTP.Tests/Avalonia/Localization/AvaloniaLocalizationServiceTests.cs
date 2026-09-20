@@ -141,6 +141,24 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en", "OTP Harbor includes no third-party logos and is not affiliated with or endorsed by Simple Icons, icon-pack providers, or depicted brands. Import only a ZIP you obtained independently and are authorized to use. Imported artwork stays in local app data; no issuer or account information is uploaded.")]
+    [InlineData("de", "OTP Harbor enthält keine Logos Dritter und ist weder mit Simple Icons, Anbietern von Symbolpaketen noch mit dargestellten Marken verbunden oder von ihnen unterstützt. Importieren Sie nur eine unabhängig bezogene ZIP-Datei, zu deren Nutzung Sie berechtigt sind. Importierte Grafiken verbleiben in den lokalen App-Daten; Anbieter- oder Kontoinformationen werden nicht hochgeladen.")]
+    [InlineData("fr", "OTP Harbor n’inclut aucun logo tiers et n’est ni affilié ni approuvé par Simple Icons, les fournisseurs de packs d’icônes ou les marques représentées. Importez uniquement une archive ZIP obtenue indépendamment et que vous êtes autorisé à utiliser. Les images importées restent dans les données locales de l’application ; aucune information d’émetteur ou de compte n’est transmise.")]
+    [InlineData("es", "OTP Harbor no incluye logotipos de terceros ni está afiliado o respaldado por Simple Icons, los proveedores de paquetes de iconos o las marcas representadas. Importa únicamente un archivo ZIP obtenido de forma independiente y para cuyo uso tengas autorización. Las imágenes importadas permanecen en los datos locales de la aplicación; no se transmite información de emisores o cuentas.")]
+    public void Catalog_BrandIconImportNoticeUsesCompleteSelectedLocale(
+        string cultureName,
+        string expected)
+    {
+        var sut = new AvaloniaStringCatalog();
+
+        Assert.Equal(
+            expected,
+            sut.Get(
+                AvaloniaStringKeys.BrandIconsHelp,
+                System.Globalization.CultureInfo.GetCultureInfo(cultureName)));
+    }
+
+    [Theory]
     [InlineData(
         "en",
         "Add account (Ctrl+A)",

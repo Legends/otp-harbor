@@ -53,6 +53,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-SignPathFoundationReadiness.ps1
 
+      - name: Validate third-party brand-asset policy
+        shell: pwsh
+        run: ./scripts/validation/Test-BrandAssetPolicy.ps1
+
       - name: Validate Microsoft Store packaging controls
         shell: pwsh
         run: ./scripts/validation/Test-MicrosoftStorePackaging.ps1

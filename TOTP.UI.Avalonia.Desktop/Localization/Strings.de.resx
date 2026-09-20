@@ -326,7 +326,7 @@
   <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Wähle einen scharfen Screenshot oder ein gespeichertes Bild eines Google-Authenticator-Übertragungs-QR-Codes. Exporte mit mehreren Konten oder Seiten werden Bild für Bild importiert.</value></data>
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Google-Authenticator-QR-Bild auswählen…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optionale Markensymbole</value></data>
-  <data name="BrandIconsHelp" xml:space="preserve"><value>Importieren Sie eine selbst heruntergeladene Simple-Icons-ZIP-Datei. OTP Harbor kopiert sie nur in den lokalen App-Datenordner und lädt niemals Aussteller- oder Kontoinformationen hoch. Die Markenrechte an den Symbolen verbleiben bei ihren Eigentümern.</value></data>
+  <data name="BrandIconsHelp" xml:space="preserve"><value>OTP Harbor enthält keine Logos Dritter und ist weder mit Simple Icons, Anbietern von Symbolpaketen noch mit dargestellten Marken verbunden oder von ihnen unterstützt. Importieren Sie nur eine unabhängig bezogene ZIP-Datei, zu deren Nutzung Sie berechtigt sind. Importierte Grafiken verbleiben in den lokalen App-Daten; Anbieter- oder Kontoinformationen werden nicht hochgeladen.</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Simple-Icons-ZIP importieren…</value></data>
   <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Simple-Icons-Release-ZIP auswählen</value></data>
   <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Simple-Icons-ZIP-Dateien</value></data>
