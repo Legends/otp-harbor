@@ -1,8 +1,10 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Mobile.Views;
@@ -16,6 +18,30 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
+    }
+
+    private void RefocusAccountSearchAfterClear(object? sender, RoutedEventArgs e) =>
+        PostInputFocus(AccountSearchBox);
+
+    private void RefocusAccountPeriodAfterClear(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Visual)?.GetVisualAncestors().OfType<NumericUpDown>().FirstOrDefault()
+            is { } periodInput)
+        {
+            PostInputFocus(periodInput);
+        }
+    }
+
+    private static void PostInputFocus(Control input)
+    {
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                var textBox = input as TextBox
+                    ?? input.GetVisualDescendants().OfType<TextBox>().FirstOrDefault();
+                (textBox as InputElement ?? input).Focus();
+            },
+            DispatcherPriority.Input);
     }
 
     private void HighlightUnlockMethodConfirmation(object? sender, RoutedEventArgs e)

@@ -237,6 +237,30 @@ public partial class MainWindow : Window
     private void FocusAccountSearch(object? sender, RoutedEventArgs e) =>
         FocusAccountSearch();
 
+    private void RefocusAccountSearchAfterClear(object? sender, RoutedEventArgs e) =>
+        PostInputFocus(AccountSearchBox);
+
+    private void RefocusAccountPeriodAfterClear(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Visual)?.GetVisualAncestors().OfType<NumericUpDown>().FirstOrDefault()
+            is { } periodInput)
+        {
+            PostInputFocus(periodInput);
+        }
+    }
+
+    private static void PostInputFocus(Control input)
+    {
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                var textBox = input as TextBox
+                    ?? input.GetVisualDescendants().OfType<TextBox>().FirstOrDefault();
+                (textBox as InputElement ?? input).Focus();
+            },
+            DispatcherPriority.Input);
+    }
+
     private void FocusAccountSearch()
     {
         if (DataContext is not MainWindowViewModel viewModel

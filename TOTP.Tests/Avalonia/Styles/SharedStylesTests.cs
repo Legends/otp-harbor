@@ -180,6 +180,29 @@ public sealed class SharedStylesTests
             Assert.Equal(
                 "{Binding HasEditorPeriodSeconds}",
                 clearButton.Attribute("IsVisible")?.Value);
+            Assert.Equal(
+                "RefocusAccountPeriodAfterClear",
+                clearButton.Attribute("Click")?.Value);
+        }
+
+        foreach (var fixtureName in new[] { "DesktopMainWindow.axaml", "MobileMainView.axaml" })
+        {
+            var document = XDocument.Load(Path.Combine(fixtureDirectory, fixtureName));
+            var searchEditor = document
+                .Descendants(avalonia + "TextBox")
+                .Single(element => element.Attributes().Any(attribute =>
+                    attribute.Name.LocalName == "Name"
+                    && attribute.Value == "AccountSearchBox"));
+            var searchContainer = searchEditor.Parent
+                ?? throw new InvalidOperationException("The search editor container is missing.");
+            var clearSearchButton = searchContainer
+                .Elements(avalonia + "Button")
+                .Single(element => element.Attribute("Command")?.Value.Contains(
+                    "ClearSearchCommand",
+                    StringComparison.Ordinal) == true);
+            Assert.Equal(
+                "RefocusAccountSearchAfterClear",
+                clearSearchButton.Attribute("Click")?.Value);
         }
 
         var mobileApp = XDocument.Load(Path.Combine(fixtureDirectory, "MobileApp.axaml"));

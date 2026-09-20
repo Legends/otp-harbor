@@ -879,7 +879,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             && Accounts.Any(account => account.Id == SelectedAccount.Id);
         if (selectionIsVisible) return;
 
-        SelectedAccount = HasSearchText ? Accounts.FirstOrDefault() : null;
+        SelectedAccount = null;
     }
 
     public void ResumeRowCodeGeneration()

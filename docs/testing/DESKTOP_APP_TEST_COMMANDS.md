@@ -7,10 +7,11 @@ Use the repository root as the working directory unless stated otherwise.
 Run in **Windows PowerShell** from the repository root:
 
 ```powershell
-.\scripts\dev\Publish-And-Run-AvaloniaWindows.ps1 -Configuration Release -StopRunningInstance
+.\scripts\dev\Publish-And-Run-AvaloniaWindows.ps1 -Configuration Release
 ```
 
-This publishes and starts the Windows version of `TOTP.UI.Avalonia.Desktop`.
+This publishes and starts the Windows version of `TOTP.UI.Avalonia.Desktop`. It stops an existing
+single-instance process by default so the launched window always uses the newly published files.
 
 ## Ubuntu Hyper-V VM — full Linux desktop test
 

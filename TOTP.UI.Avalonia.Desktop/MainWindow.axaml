@@ -207,6 +207,7 @@
                                 Padding="0"
                                 VerticalAlignment="Center"
                                 Classes="link"
+                                Click="RefocusAccountSearchAfterClear"
                                 Command="{Binding ClearSearchCommand}"
                                 Content="×"
                                 IsVisible="{Binding AccountList.HasSearchText}" />
@@ -508,6 +509,7 @@
                                                                 <Button
                                                                     automation:AutomationProperties.Name="{DynamicResource ClearPeriod}"
                                                                     Classes="numeric-clear"
+                                                                    Click="RefocusAccountPeriodAfterClear"
                                                                     Command="{Binding ClearEditorPeriodCommand}"
                                                                     Content="×"
                                                                     IsVisible="{Binding HasEditorPeriodSeconds}"

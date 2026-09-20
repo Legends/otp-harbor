@@ -32,15 +32,21 @@ else {
 }
 
 if (-not $SkipBuild) {
-    dotnet build $projectPath -c Debug
+    dotnet build $projectPath -c Debug -t:SignAndroidPackage
     if ($LASTEXITCODE -ne 0) {
-        throw 'The Android development build failed.'
+        throw 'The signed Android development package build failed.'
     }
 }
 
 if (-not (Test-Path -LiteralPath $apkPath -PathType Leaf)) {
     throw "The signed development APK was not found: $apkPath"
 }
+
+$apk = Get-Item -LiteralPath $apkPath
+$apkHash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
+Write-Host "Installing: $($apk.FullName)"
+Write-Host "Timestamp: $($apk.LastWriteTime.ToString('O'))"
+Write-Host "SHA-256: $apkHash"
 
 & $adbPath start-server | Out-Null
 $devices = @(

@@ -191,6 +191,7 @@
                             Margin="0,0,0,14"
                             ColumnDefinitions="*,Auto">
                             <TextBox
+                                x:Name="AccountSearchBox"
                                 Grid.ColumnSpan="2"
                                 Padding="12,8,48,8"
                                 automation:AutomationProperties.Name="{Binding SearchAccountsText}"
@@ -206,6 +207,7 @@
                                 VerticalAlignment="Center"
                                 automation:AutomationProperties.Name="{Binding ClearSearchText}"
                                 Classes="link"
+                                Click="RefocusAccountSearchAfterClear"
                                 Command="{Binding ClearSearchCommand}"
                                 Content="×"
                                 FontSize="26"
@@ -809,6 +811,7 @@
                                         <Button
                                             automation:AutomationProperties.Name="{Binding ClearPeriodText}"
                                             Classes="numeric-clear"
+                                            Click="RefocusAccountPeriodAfterClear"
                                             Command="{Binding ClearEditorPeriodCommand}"
                                             Content="×"
                                             IsVisible="{Binding HasEditorPeriodSeconds}"

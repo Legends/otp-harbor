@@ -3,7 +3,7 @@
 Publishes and starts a local Windows Avalonia build of OTP Harbor.
 
 .DESCRIPTION
-Publishes the desktop project for the selected Windows runtime into artifacts/dev by default, optionally stops an existing instance, validates the produced executable, and launches it from the publish directory.
+Publishes the desktop project for the selected Windows runtime into artifacts/dev by default, stops an existing instance so the newly published single-instance app is used, validates the produced executable, and launches it from the publish directory. Pass -StopRunningInstance:$false only when intentionally publishing without replacing the running app.
 #>
 [CmdletBinding()]
 param(
@@ -16,7 +16,7 @@ param(
 
     [switch]$SelfContained,
 
-    [switch]$StopRunningInstance
+    [switch]$StopRunningInstance = $true
 )
 
 $ErrorActionPreference = "Stop"
@@ -69,5 +69,10 @@ if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
     throw "Published executable not found: $executablePath"
 }
 
+$publishedExecutable = Get-Item -LiteralPath $executablePath
+$publishedHash = (Get-FileHash -LiteralPath $executablePath -Algorithm SHA256).Hash
+Write-Host "Published: $($publishedExecutable.FullName)"
+Write-Host "Timestamp: $($publishedExecutable.LastWriteTime.ToString('O'))"
+Write-Host "SHA-256: $publishedHash"
 Write-Host "Starting $executablePath"
 Start-Process -FilePath $executablePath -WorkingDirectory $OutputPath

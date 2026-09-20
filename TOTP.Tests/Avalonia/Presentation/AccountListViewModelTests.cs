@@ -252,26 +252,25 @@ public sealed class AccountListViewModelTests
         Assert.Equal(2, sut.Accounts.Count);
         Assert.Contains(sut.Accounts, account => account.Issuer == "GitHub");
         Assert.Contains(sut.Accounts, account => account.AccountName == "github-user@example.test");
-        Assert.Same(sut.Accounts[0], sut.SelectedAccount);
+        Assert.Null(sut.SelectedAccount);
 
         sut.SearchText = "  bob  ";
         Assert.Single(sut.Accounts);
         Assert.Equal("Microsoft", sut.Accounts[0].Issuer);
-        Assert.Same(sut.Accounts[0], sut.SelectedAccount);
+        Assert.Null(sut.SelectedAccount);
 
         sut.SearchText = string.Empty;
         Assert.Equal(3, sut.Accounts.Count);
     }
 
     [Fact]
-    public async Task SearchText_WhenSelectedAccountIsFilteredOut_SelectsFirstMatchAndClearsPreviousCode()
+    public async Task SearchText_WhenSelectedAccountIsFilteredOut_ClearsSelectionAndPreviousCode()
     {
         var selectedId = Guid.NewGuid();
-        var matchingId = Guid.NewGuid();
         IReadOnlyList<Account> accounts =
         [
             new(selectedId, "GitHub", ValidSecret, "alice@example.test"),
-            new(matchingId, "Microsoft", ValidSecret, "bob@example.test")
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob@example.test")
         ];
         var manager = new Mock<IAccountManager>();
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
@@ -294,11 +293,56 @@ public sealed class AccountListViewModelTests
 
         sut.SearchText = "Microsoft";
 
-        Assert.Equal(matchingId, sut.SelectedAccount!.Id);
-        Assert.True(sut.HasSelectedAccount);
+        Assert.Null(sut.SelectedAccount);
+        Assert.False(sut.HasSelectedAccount);
         Assert.Empty(sut.GeneratedCode);
         Assert.Equal(0, sut.RemainingSeconds);
         Assert.Equal(0, sut.PeriodSeconds);
+    }
+
+    [Fact]
+    public async Task SearchText_WithAutomaticGenerationEnabled_DoesNotSelectOrCopyFirstMatch()
+    {
+        var accountId = Guid.NewGuid();
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [
+                new(accountId, "GitHub", ValidSecret, "alice@example.test")
+            ]));
+        var totp = new Mock<IAccountTotpService>();
+        totp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult>
+                {
+                    [accountId] = new("123456", 30, 30)
+                },
+                new HashSet<Guid>())));
+        totp.Setup(value => value.GenerateAsync(accountId))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 30, 30)));
+        var clipboard = SuccessfulClipboard();
+        using var sut = new AccountListViewModel(
+            manager.Object,
+            totp.Object,
+            clipboard.Object,
+            Mock.Of<IAccountQrCodeService>(),
+            Mock.Of<IAvaloniaQrImageFactory>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            Localization());
+        sut.EnableAutomaticCodeGenerationOnSelection();
+        await sut.LoadAsync();
+
+        sut.SearchText = "git";
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+
+        Assert.Single(sut.Accounts);
+        Assert.Null(sut.SelectedAccount);
+        Assert.Empty(sut.Notification.Text);
+        totp.Verify(value => value.GenerateAsync(It.IsAny<Guid>()), Times.Never);
+        clipboard.Verify(value => value.CopyAndScheduleClearAsync(
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
