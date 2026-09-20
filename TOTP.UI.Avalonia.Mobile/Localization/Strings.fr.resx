@@ -65,7 +65,7 @@
   <data name="ImportBackupDescription" xml:space="preserve"><value>Choisissez une sauvegarde OTP Harbor chiffrée au format .totp. Les comptes existants correspondants restent inchangés.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Importer un fichier de comptes</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Choisissez un fichier de comptes OTP Harbor ou une exportation JSON Aegis ou .2fas de 2FAS non chiffrée. Un fichier texte peut contenir une URI TOTP otpauth:// standard par ligne.</value></data>
-  <data name="ExportBackupDescription" xml:space="preserve"><value>Créez une sauvegarde portable et protégée par mot de passe de tous les comptes.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Créez une sauvegarde portable protégée par mot de passe. Android demande où l’enregistrer. Conservez la sauvegarde et son mot de passe séparément ; restaurez-la avec « Importer une sauvegarde OTP Harbor ».</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Mot de passe de sauvegarde</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirmer le mot de passe de sauvegarde</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Exporter la sauvegarde chiffrée</value></data>
@@ -74,7 +74,7 @@
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Saisissez un mot de passe de sauvegarde.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>Le mot de passe de sauvegarde doit contenir au moins {0} caractères.</value></data>
   <data name="BackupPasswordMismatch" xml:space="preserve"><value>Les mots de passe de sauvegarde ne correspondent pas.</value></data>
-  <data name="BackupExported" xml:space="preserve"><value>Sauvegarde chiffrée exportée.</value></data>
+  <data name="BackupExported" xml:space="preserve"><value>La sauvegarde chiffrée « {0} » a été enregistrée à l’emplacement choisi.</value></data>
   <data name="BackupExportFailed" xml:space="preserve"><value>La sauvegarde chiffrée n’a pas pu être exportée de manière sécurisée.</value></data>
   <data name="BackupExportCleanupFailed" xml:space="preserve"><value>L’exportation a échoué et la destination incomplète n’a pas pu être supprimée. Supprimez-la depuis le fournisseur de documents.</value></data>
   <data name="BackupRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor s’est verrouillé pendant la sélection du document. Déverrouillez-le et réessayez.</value></data>

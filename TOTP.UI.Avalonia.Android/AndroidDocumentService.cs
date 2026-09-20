@@ -59,7 +59,8 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
             {
                 resolver.Delete(selected, null, null);
                 return Task.CompletedTask;
-            });
+            },
+            suggestedFileName);
     }
 
     public async Task<MobileReadableDocument?> OpenAccountImportAsync(

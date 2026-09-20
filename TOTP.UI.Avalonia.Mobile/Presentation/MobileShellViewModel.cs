@@ -1783,10 +1783,11 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
+            var suggestedFileName = string.Format(
+                Get(MobileStringKeys.BackupFileName),
+                _timeProvider.GetUtcNow().ToString("yyyyMMdd", CultureInfo.InvariantCulture));
             document = await _documents.CreateEncryptedBackupAsync(
-                string.Format(
-                    Get(MobileStringKeys.BackupFileName),
-                    _timeProvider.GetUtcNow().ToString("yyyyMMdd", CultureInfo.InvariantCulture)),
+                suggestedFileName,
                 operation.Token);
             if (document is null) return;
             if (!_authorization.State.IsUnlocked || !IsSettingsVisible)
@@ -1809,7 +1810,11 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            SetSuccess(MobileStringKeys.BackupExported);
+            SetNotification(
+                string.Format(
+                    Get(MobileStringKeys.BackupExported),
+                    string.IsNullOrWhiteSpace(document.Name) ? suggestedFileName : document.Name),
+                NotificationSeverity.Success);
         }
         catch (OperationCanceledException) when (operation.IsCancellationRequested)
         {

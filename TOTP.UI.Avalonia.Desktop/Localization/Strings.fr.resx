@@ -124,7 +124,7 @@
   <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Importer une sauvegarde OTP Harbor</value></data>
   <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importez une sauvegarde OTP Harbor .totp chiffrée, un fichier de comptes OTP Harbor, une exportation JSON Aegis ou .2fas de 2FAS non chiffrée, ou un fichier texte contenant une URI TOTP otpauth:// standard par ligne.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exporter les comptes</value></data>
-  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Créer une sauvegarde portable protégée par mot de passe de tous les comptes.</value></data>
+  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Créez une sauvegarde portable de tous les comptes, protégée par mot de passe, et choisissez son emplacement. Conservez la sauvegarde et son mot de passe séparément ; restaurez-la avec « Importer une sauvegarde OTP Harbor ».</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Diagnostics d’assistance</value></data>
   <data name="RefreshSupportInformation" xml:space="preserve"><value>Actualiser les informations d’assistance</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Télécharger la mise à jour</value></data>

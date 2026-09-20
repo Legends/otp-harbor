@@ -27,12 +27,15 @@ public sealed class MobileReadableDocument(Stream stream, string name = "") : ID
 
 public sealed class MobileWritableDocument(
     Stream stream,
-    Func<CancellationToken, Task> discardAsync) : IDisposable
+    Func<CancellationToken, Task> discardAsync,
+    string name = "") : IDisposable
 {
     private Stream? _stream = stream ?? throw new ArgumentNullException(nameof(stream));
 
     public Stream Stream => _stream
         ?? throw new ObjectDisposedException(nameof(MobileWritableDocument));
+
+    public string Name { get; } = name ?? string.Empty;
 
     public async Task DiscardAsync(CancellationToken cancellationToken = default)
     {

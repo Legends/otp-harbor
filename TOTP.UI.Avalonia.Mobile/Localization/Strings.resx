@@ -65,7 +65,7 @@
   <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup. Matching existing accounts remain unchanged.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Import account file</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Choose an OTP Harbor account file or an unencrypted Aegis JSON or 2FAS .2fas export. Text files may contain one standard otpauth:// TOTP URI per line.</value></data>
-  <data name="ExportBackupDescription" xml:space="preserve"><value>Create a portable, password-protected backup of all accounts.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Create a portable, password-protected backup. Android asks where to save it. Keep the backup and password separately; restore it with Import OTP Harbor backup.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup password</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirm backup password</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Export encrypted backup</value></data>
@@ -74,7 +74,7 @@
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Enter a backup password.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>The backup password must contain at least {0} characters.</value></data>
   <data name="BackupPasswordMismatch" xml:space="preserve"><value>The backup passwords do not match.</value></data>
-  <data name="BackupExported" xml:space="preserve"><value>Encrypted backup exported.</value></data>
+  <data name="BackupExported" xml:space="preserve"><value>Encrypted backup '{0}' saved to the location you selected.</value></data>
   <data name="BackupExportFailed" xml:space="preserve"><value>The encrypted backup could not be exported safely.</value></data>
   <data name="BackupExportCleanupFailed" xml:space="preserve"><value>The export failed and the incomplete destination could not be removed. Delete it from the document provider.</value></data>
   <data name="BackupRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor locked during document selection. Unlock it and try again.</value></data>

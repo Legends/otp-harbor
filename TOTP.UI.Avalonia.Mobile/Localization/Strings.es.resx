@@ -65,7 +65,7 @@
   <data name="ImportBackupDescription" xml:space="preserve"><value>Elija una copia de seguridad cifrada de OTP Harbor en formato .totp. Las cuentas existentes coincidentes permanecen sin cambios.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Importar archivo de cuentas</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Elige un archivo de cuentas de OTP Harbor o una exportación JSON de Aegis o .2fas de 2FAS sin cifrar. Los archivos de texto pueden contener un URI TOTP otpauth:// estándar por línea.</value></data>
-  <data name="ExportBackupDescription" xml:space="preserve"><value>Cree una copia de seguridad portátil y protegida con contraseña de todas las cuentas.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Crea una copia portátil protegida por contraseña. Android pregunta dónde guardarla. Conserva la copia y la contraseña por separado; restáurala con «Importar copia de OTP Harbor».</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Contraseña de la copia de seguridad</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirmar contraseña de la copia de seguridad</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Exportar copia de seguridad cifrada</value></data>
@@ -74,7 +74,7 @@
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Introduzca una contraseña para la copia de seguridad.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>La contraseña de la copia de seguridad debe contener al menos {0} caracteres.</value></data>
   <data name="BackupPasswordMismatch" xml:space="preserve"><value>Las contraseñas de la copia de seguridad no coinciden.</value></data>
-  <data name="BackupExported" xml:space="preserve"><value>Copia de seguridad cifrada exportada.</value></data>
+  <data name="BackupExported" xml:space="preserve"><value>La copia cifrada «{0}» se guardó en la ubicación seleccionada.</value></data>
   <data name="BackupExportFailed" xml:space="preserve"><value>No se pudo exportar la copia de seguridad cifrada de forma segura.</value></data>
   <data name="BackupExportCleanupFailed" xml:space="preserve"><value>La exportación falló y no se pudo eliminar el destino incompleto. Elimínelo desde el proveedor de documentos.</value></data>
   <data name="BackupRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor se bloqueó durante la selección del documento. Desbloquéelo e inténtelo de nuevo.</value></data>

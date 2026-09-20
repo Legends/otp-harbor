@@ -65,7 +65,7 @@
   <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-Backupdatei im .totp-Format aus. Passende vorhandene Konten bleiben unverändert.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Kontodatei importieren</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Wählen Sie eine OTP-Harbor-Kontodatei oder einen unverschlüsselten Aegis-JSON- bzw. 2FAS-.2fas-Export. Textdateien können pro Zeile eine standardmäßige otpauth://-TOTP-URI enthalten.</value></data>
-  <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie ein portables, passwortgeschütztes Backup aller Konten.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie ein portables, passwortgeschütztes Backup. Android fragt nach dem Speicherort. Bewahren Sie Backup und Passwort getrennt auf; zur Wiederherstellung verwenden Sie „OTP-Harbor-Backup importieren“.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup-Passwort</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Backup-Passwort bestätigen</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Verschlüsseltes Backup exportieren</value></data>
@@ -74,7 +74,7 @@
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Geben Sie ein Backup-Passwort ein.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>Das Backup-Passwort muss mindestens {0} Zeichen enthalten.</value></data>
   <data name="BackupPasswordMismatch" xml:space="preserve"><value>Die Backup-Passwörter stimmen nicht überein.</value></data>
-  <data name="BackupExported" xml:space="preserve"><value>Verschlüsseltes Backup exportiert.</value></data>
+  <data name="BackupExported" xml:space="preserve"><value>Das verschlüsselte Backup „{0}“ wurde am ausgewählten Speicherort gespeichert.</value></data>
   <data name="BackupExportFailed" xml:space="preserve"><value>Das verschlüsselte Backup konnte nicht sicher exportiert werden.</value></data>
   <data name="BackupExportCleanupFailed" xml:space="preserve"><value>Der Export ist fehlgeschlagen und das unvollständige Ziel konnte nicht entfernt werden. Löschen Sie es im Dokumentanbieter.</value></data>
   <data name="BackupRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor wurde während der Dokumentauswahl gesperrt. Entsperren Sie die App und versuchen Sie es erneut.</value></data>

@@ -1507,7 +1507,8 @@ public sealed class MobileShellViewModelTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MobileWritableDocument(
                 new MemoryStream(),
-                _ => Task.CompletedTask));
+                _ => Task.CompletedTask,
+                "otp-harbor-20260920.totp"));
         context.ExportService.Setup(value => value.ExportToEncryptedStreamAsync(
                 It.IsAny<IEnumerable<Account>>(),
                 "backup-password",
@@ -1527,7 +1528,9 @@ public sealed class MobileShellViewModelTests
         Assert.Empty(context.Sut.BackupPassword);
         Assert.Empty(context.Sut.BackupPasswordConfirmation);
         Assert.Equal(
-            context.Strings.Get(MobileStringKeys.BackupExported),
+            string.Format(
+                context.Strings.Get(MobileStringKeys.BackupExported),
+                "otp-harbor-20260920.totp"),
             context.Sut.NotificationText);
         context.ExportService.Verify(value => value.ExportToStreamAsync(
             It.IsAny<IEnumerable<Account>>(),

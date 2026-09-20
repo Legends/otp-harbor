@@ -124,7 +124,7 @@
   <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Import OTP Harbor backup</value></data>
   <data name="OtpHarborImportHelp" xml:space="preserve"><value>Import an encrypted OTP Harbor .totp backup, an OTP Harbor account file, an unencrypted Aegis JSON or 2FAS .2fas export, or a text file containing one standard otpauth:// TOTP URI per line.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Export accounts</value></data>
-  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Create a portable password-protected backup of all accounts.</value></data>
+  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Create a portable password-protected backup of all accounts and choose where to save it. Keep the backup and its password separately; restore it with Import OTP Harbor backup.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Support diagnostics</value></data>
   <data name="RefreshSupportInformation" xml:space="preserve"><value>Refresh support information</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Download update</value></data>
