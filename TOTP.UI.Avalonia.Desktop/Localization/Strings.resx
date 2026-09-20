@@ -122,7 +122,7 @@
   <data name="ImportConflictHandling" xml:space="preserve"><value>Import conflict handling</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Import accounts</value></data>
   <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Import OTP Harbor backup</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Import an encrypted OTP Harbor .totp backup, an OTP Harbor account file, or a text file containing one standard otpauth:// TOTP URI per line.</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Import an encrypted OTP Harbor .totp backup, an OTP Harbor account file, an unencrypted Aegis JSON or 2FAS .2fas export, or a text file containing one standard otpauth:// TOTP URI per line.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Export accounts</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Create a portable password-protected backup of all accounts.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Support diagnostics</value></data>

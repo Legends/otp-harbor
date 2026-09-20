@@ -42,7 +42,7 @@ OTP Harbor recognizes both normal `otpauth://` account QR codes and Google Authe
 
 Treat migration QR codes as secrets: anyone who captures one can recreate the exported accounts. After importing, verify several generated codes and create a fresh encrypted OTP Harbor backup.
 
-Desktop and Android can also import a local `.txt` file containing one standard `otpauth://` TOTP URI per line. JSON, CSV, and OTP Harbor text account files remain supported. Imports are parsed locally, previewed before mutation, and protected by the same recovery-backup and conflict-resolution workflow. Treat every unencrypted account file as secret material and remove it from shared storage after verifying the migration.
+Desktop and Android can also import a local `.txt` file containing one standard `otpauth://` TOTP URI per line, an unencrypted [Aegis JSON vault export](https://github.com/beemdevelopment/Aegis/blob/master/docs/vault.md), or an unencrypted [2FAS `.2fas` backup](https://2fas.com/support/2fas-auth-mobile-app/i-want-to-move-copy-transfer-tokens-codes-between-ios-and-android/). JSON, CSV, and OTP Harbor text account files remain supported. Password-protected Aegis and 2FAS backups are deliberately rejected rather than attempting a partial or incompatible decryption flow. Imports are parsed locally, previewed before mutation, and protected by the same recovery-backup and conflict-resolution workflow. Treat every unencrypted account file as secret material and remove it from shared storage after verifying the migration.
 
 ## Desktop experience
 

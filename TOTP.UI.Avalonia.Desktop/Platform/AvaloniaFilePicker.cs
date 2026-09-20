@@ -22,7 +22,7 @@ public sealed class AvaloniaFilePicker(
             [
                 new FilePickerFileType(localization.GetString(AvaloniaStringKeys.TotpFiles))
                 {
-                    Patterns = ["*.totp", "*.json", "*.txt", "*.csv"]
+                    Patterns = ["*.totp", "*.2fas", "*.json", "*.txt", "*.csv"]
                 }
             ]
         });

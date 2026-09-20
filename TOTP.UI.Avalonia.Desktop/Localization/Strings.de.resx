@@ -122,7 +122,7 @@
   <data name="ImportConflictHandling" xml:space="preserve"><value>Behandlung von Importkonflikten</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Konten importieren</value></data>
   <data name="ImportOtpHarborBackup" xml:space="preserve"><value>OTP-Harbor-Sicherung importieren</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importiere eine verschlüsselte OTP-Harbor-.totp-Sicherung, eine OTP-Harbor-Kontendatei oder eine Textdatei mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile.</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importieren Sie eine verschlüsselte OTP-Harbor-.totp-Sicherung, eine OTP-Harbor-Kontendatei, einen unverschlüsselten Aegis-JSON- oder 2FAS-.2fas-Export oder eine Textdatei mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Konten exportieren</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Erstellen Sie eine portable, passwortgeschützte Sicherung aller Konten.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Support-Diagnose</value></data>

@@ -64,7 +64,7 @@
   <data name="BackupDescription" xml:space="preserve"><value>Export or import an encrypted OTP Harbor backup. Existing accounts are kept unchanged during import.</value></data>
   <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup. Matching existing accounts remain unchanged.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Import account file</value></data>
-  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Choose an OTP Harbor JSON, text, or CSV account file. Text files may contain one standard otpauth:// TOTP URI per line.</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Choose an OTP Harbor account file or an unencrypted Aegis JSON or 2FAS .2fas export. Text files may contain one standard otpauth:// TOTP URI per line.</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Create a portable, password-protected backup of all accounts.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup password</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirm backup password</value></data>

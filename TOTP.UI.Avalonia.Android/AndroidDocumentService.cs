@@ -71,6 +71,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         intent.PutExtra(Intent.ExtraMimeTypes, new[]
         {
             "application/json",
+            "application/octet-stream",
             "text/plain",
             "text/csv",
             "text/comma-separated-values",
@@ -107,6 +108,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
             var name = resolver?.GetType(selected) switch
             {
                 "application/json" => "accounts.json",
+                "application/octet-stream" => "accounts.2fas",
                 "text/csv" or "text/comma-separated-values" or "application/csv" => "accounts.csv",
                 _ => fallbackName
             };

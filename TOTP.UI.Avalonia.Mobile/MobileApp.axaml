@@ -71,6 +71,9 @@
             <Setter Property="Margin" Value="0" />
             <Setter Property="Padding" Value="0" />
         </Style>
+        <Style Selector="NumericUpDown.mobile-period">
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
         <Style Selector="NumericUpDown.mobile-period /template/ ButtonSpinner#PART_Spinner /template/ RepeatButton">
             <Setter Property="Width" Value="48" />
             <Setter Property="MinWidth" Value="48" />

@@ -64,7 +64,7 @@
   <data name="BackupDescription" xml:space="preserve"><value>Exportez ou importez une sauvegarde OTP Harbor chiffrée. Les comptes existants restent inchangés lors de l’importation.</value></data>
   <data name="ImportBackupDescription" xml:space="preserve"><value>Choisissez une sauvegarde OTP Harbor chiffrée au format .totp. Les comptes existants correspondants restent inchangés.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Importer un fichier de comptes</value></data>
-  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Choisissez un fichier de comptes OTP Harbor JSON, texte ou CSV. Un fichier texte peut contenir une URI TOTP otpauth:// standard par ligne.</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Choisissez un fichier de comptes OTP Harbor ou une exportation JSON Aegis ou .2fas de 2FAS non chiffrée. Un fichier texte peut contenir une URI TOTP otpauth:// standard par ligne.</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Créez une sauvegarde portable et protégée par mot de passe de tous les comptes.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Mot de passe de sauvegarde</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirmer le mot de passe de sauvegarde</value></data>

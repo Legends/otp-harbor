@@ -64,7 +64,7 @@
   <data name="BackupDescription" xml:space="preserve"><value>Exportieren oder importieren Sie ein verschlüsseltes OTP-Harbor-Backup. Vorhandene Konten bleiben beim Import unverändert.</value></data>
   <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-Backupdatei im .totp-Format aus. Passende vorhandene Konten bleiben unverändert.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Kontodatei importieren</value></data>
-  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Wählen Sie eine OTP-Harbor-Kontodatei im JSON-, Text- oder CSV-Format. Textdateien können pro Zeile eine standardmäßige otpauth://-TOTP-URI enthalten.</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Wählen Sie eine OTP-Harbor-Kontodatei oder einen unverschlüsselten Aegis-JSON- bzw. 2FAS-.2fas-Export. Textdateien können pro Zeile eine standardmäßige otpauth://-TOTP-URI enthalten.</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie ein portables, passwortgeschütztes Backup aller Konten.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup-Passwort</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Backup-Passwort bestätigen</value></data>

@@ -183,6 +183,14 @@ public sealed class SharedStylesTests
         }
 
         var mobileApp = XDocument.Load(Path.Combine(fixtureDirectory, "MobileApp.axaml"));
+        var mobilePeriodStyle = mobileApp
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value == "NumericUpDown.mobile-period");
+        Assert.Contains(
+            mobilePeriodStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "VerticalContentAlignment"
+                && setter.Attribute("Value")?.Value == "Center");
+
         var spinnerButtonStyle = mobileApp
             .Descendants(avalonia + "Style")
             .Single(element => element.Attribute("Selector")?.Value ==
@@ -199,6 +207,14 @@ public sealed class SharedStylesTests
         Assert.Contains(
             clearStyle.Elements(avalonia + "Setter"),
             setter => setter.Attribute("Property")?.Value == "VerticalAlignment"
+                && setter.Attribute("Value")?.Value == "Center");
+        Assert.Contains(
+            clearStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "HorizontalContentAlignment"
+                && setter.Attribute("Value")?.Value == "Center");
+        Assert.Contains(
+            clearStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "VerticalContentAlignment"
                 && setter.Attribute("Value")?.Value == "Center");
         Assert.Contains(
             clearStyle.Elements(avalonia + "Setter"),

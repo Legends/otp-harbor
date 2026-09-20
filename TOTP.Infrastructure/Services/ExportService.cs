@@ -387,10 +387,24 @@ public sealed class ExportService : IExportService
     {
         return format switch
         {
-            ExportFileFormat.Json => JsonSerializer.Deserialize<List<Account>>(content) ?? [],
+            ExportFileFormat.Json => ParseJson(content),
             ExportFileFormat.Txt => ParseTxt(content),
             ExportFileFormat.Csv => ParseCsv(content),
             _ => JsonSerializer.Deserialize<List<Account>>(content) ?? []
+        };
+    }
+
+    private static List<Account> ParseJson(string content)
+    {
+        using var document = JsonDocument.Parse(content);
+        var root = document.RootElement;
+        return root.ValueKind switch
+        {
+            JsonValueKind.Array => JsonSerializer.Deserialize<List<Account>>(content) ?? [],
+            JsonValueKind.Object when root.TryGetProperty("db", out _) => AegisVaultParser.Parse(root),
+            JsonValueKind.Object when root.TryGetProperty("services", out _)
+                || root.TryGetProperty("schemaVersion", out _) => TwoFasBackupParser.Parse(root),
+            _ => throw new FormatException("The JSON import payload is unsupported.")
         };
     }
 
@@ -558,6 +572,12 @@ public sealed class ExportService : IExportService
     private static bool TryGetUnencryptedFormat(string extension, out ExportFileFormat format)
     {
         if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            format = ExportFileFormat.Json;
+            return true;
+        }
+
+        if (extension.Equals(".2fas", StringComparison.OrdinalIgnoreCase))
         {
             format = ExportFileFormat.Json;
             return true;

@@ -172,6 +172,265 @@ public sealed class ExportServiceTests
             });
     }
 
+    [Fact]
+    public async Task ImportFromStreamAsync_WithPlaintextAegisVault_ImportsSupportedTotpEntries()
+    {
+        const string content = """
+            {
+              "version": 1,
+              "header": { "slots": null, "params": null },
+              "db": {
+                "version": 3,
+                "entries": [
+                  {
+                    "type": "totp",
+                    "uuid": "00000000-0000-0000-0000-000000000001",
+                    "name": " alice@example.test ",
+                    "issuer": " GitHub ",
+                    "info": {
+                      "secret": "jbsw y3dp-ehpk3pxp====",
+                      "algo": "SHA1",
+                      "digits": 6,
+                      "period": 60
+                    }
+                  }
+                ],
+                "groups": []
+              }
+            }
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "aegis-export.json",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var account = Assert.Single(result.Value);
+        Assert.Equal("GitHub", account.Issuer);
+        Assert.Equal("alice@example.test", account.AccountName);
+        Assert.Equal("JBSWY3DPEHPK3PXP", account.Secret);
+        Assert.Equal(60, account.PeriodSeconds);
+    }
+
+    [Fact]
+    public async Task ImportFromStreamAsync_WithEncryptedAegisVault_FailsClosed()
+    {
+        const string content = """
+            {
+              "version": 1,
+              "header": { "slots": [], "params": { "nonce": "00", "tag": "00" } },
+              "db": "encrypted-base64-payload"
+            }
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "encrypted-aegis.json",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Fact]
+    public async Task ImportFromStreamAsync_WithPlaintextTwoFasBackup_ImportsSupportedTotpServices()
+    {
+        const string content = """
+            {
+              "services": [
+                {
+                  "name": "GitHub display name",
+                  "secret": "jbsw y3dp-ehpk3pxp====",
+                  "updatedAt": 1,
+                  "serviceTypeID": null,
+                  "otp": {
+                    "link": null,
+                    "label": "fallback@example.test",
+                    "account": "alice@example.test",
+                    "issuer": "GitHub",
+                    "digits": 6,
+                    "period": 60,
+                    "algorithm": "SHA1",
+                    "counter": null,
+                    "tokenType": "TOTP",
+                    "source": "Manual"
+                  },
+                  "order": { "position": 0 },
+                  "badge": null,
+                  "icon": null,
+                  "groupId": null
+                }
+              ],
+              "groups": [],
+              "updatedAt": 1,
+              "schemaVersion": 4,
+              "appVersionCode": 1,
+              "appVersionName": "test",
+              "appOrigin": "android",
+              "servicesEncrypted": null,
+              "reference": null
+            }
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "twofas-backup.2fas",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var account = Assert.Single(result.Value);
+        Assert.Equal("GitHub", account.Issuer);
+        Assert.Equal("alice@example.test", account.AccountName);
+        Assert.Equal("JBSWY3DPEHPK3PXP", account.Secret);
+        Assert.Equal(60, account.PeriodSeconds);
+    }
+
+    [Fact]
+    public async Task ImportFromStreamAsync_WithLegacyPlaintextTwoFasDefaults_UsesServiceNameAndTotpDefaults()
+    {
+        const string content = """
+            {
+              "services": [
+                {
+                  "name": "Example",
+                  "secret": "JBSWY3DPEHPK3PXP",
+                  "otp": { "label": "bob@example.test" }
+                }
+              ],
+              "schemaVersion": 2,
+              "servicesEncrypted": null,
+              "reference": null
+            }
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "legacy.2fas",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var account = Assert.Single(result.Value);
+        Assert.Equal("Example", account.Issuer);
+        Assert.Equal("bob@example.test", account.AccountName);
+        Assert.Equal(30, account.PeriodSeconds);
+    }
+
+    [Fact]
+    public async Task ImportFromStreamAsync_WithEncryptedTwoFasBackup_FailsClosed()
+    {
+        const string content = """
+            {
+              "services": [],
+              "schemaVersion": 4,
+              "servicesEncrypted": "encrypted-services",
+              "reference": "encrypted-reference"
+            }
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "encrypted.2fas",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Theory]
+    [InlineData("HOTP", "SHA1", 6, 30)]
+    [InlineData("TOTP", "SHA256", 6, 30)]
+    [InlineData("TOTP", "SHA1", 8, 30)]
+    [InlineData("TOTP", "SHA1", 6, 3601)]
+    public async Task ImportFromStreamAsync_WithUnsupportedTwoFasService_FailsWholeImport(
+        string tokenType,
+        string algorithm,
+        int digits,
+        int period)
+    {
+        var content = $$"""
+            {
+              "services": [
+                {
+                  "name": "Example",
+                  "secret": "JBSWY3DPEHPK3PXP",
+                  "otp": {
+                    "account": "alice",
+                    "issuer": "Example",
+                    "tokenType": "{{tokenType}}",
+                    "algorithm": "{{algorithm}}",
+                    "digits": {{digits}},
+                    "period": {{period}}
+                  }
+                }
+              ],
+              "schemaVersion": 4,
+              "servicesEncrypted": null,
+              "reference": null
+            }
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "unsupported.2fas",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Theory]
+    [InlineData("hotp", "SHA1", 6, 30)]
+    [InlineData("totp", "SHA256", 6, 30)]
+    [InlineData("totp", "SHA1", 8, 30)]
+    [InlineData("totp", "SHA1", 6, 4)]
+    public async Task ImportFromStreamAsync_WithUnsupportedAegisEntry_FailsWholeImport(
+        string type,
+        string algorithm,
+        int digits,
+        int period)
+    {
+        var content = $$"""
+            {
+              "version": 1,
+              "header": { "slots": null, "params": null },
+              "db": {
+                "version": 3,
+                "entries": [
+                  {
+                    "type": "totp",
+                    "name": "valid",
+                    "issuer": "Example",
+                    "info": { "secret": "JBSWY3DPEHPK3PXP", "algo": "SHA1", "digits": 6, "period": 30 }
+                  },
+                  {
+                    "type": "{{type}}",
+                    "name": "unsupported",
+                    "issuer": "Example",
+                    "info": { "secret": "KRSXG5DSNFXGOIDB", "algo": "{{algorithm}}", "digits": {{digits}}, "period": {{period}} }
+                  }
+                ],
+                "groups": []
+              }
+            }
+            """;
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "aegis-export.json",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
     [Theory]
     [InlineData("otpauth://hotp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&counter=1")]
     [InlineData("otpauth://totp/Example%3Aalice?secret=INVALID1&issuer=Example")]
@@ -270,6 +529,7 @@ public sealed class ExportServiceTests
 
     [Theory]
     [InlineData("accounts.JSON")]
+    [InlineData("accounts.2FAS")]
     [InlineData("accounts.txt")]
     [InlineData("accounts.CsV")]
     public async Task ImportFromStreamAsync_UsesPortableFileNameExtension(string fileName)
@@ -277,7 +537,7 @@ public sealed class ExportServiceTests
         var cancellationToken = TestContext.Current.CancellationToken;
         var format = Path.GetExtension(fileName).ToLowerInvariant() switch
         {
-            ".json" => ExportFileFormat.Json,
+            ".json" or ".2fas" => ExportFileFormat.Json,
             ".txt" => ExportFileFormat.Txt,
             _ => ExportFileFormat.Csv
         };

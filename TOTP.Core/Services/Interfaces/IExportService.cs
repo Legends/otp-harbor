@@ -50,7 +50,8 @@ public interface IExportService
 
     /// <summary>
     /// Importiert OTP-Accounts aus einer Datei.
-    /// Unterstützt verschlüsselte .totp sowie unverschlüsselte .json/.txt/.csv.
+    /// Unterstützt verschlüsselte .totp sowie unverschlüsselte .json/.txt/.csv,
+    /// einschließlich unverschlüsselter Aegis-JSON-Vaults und 2FAS-.2fas-Dateien.
     /// </summary>
     Task<Result<List<Account>>> ImportFromFileAsync(string filePath, string? password = null);
 }
