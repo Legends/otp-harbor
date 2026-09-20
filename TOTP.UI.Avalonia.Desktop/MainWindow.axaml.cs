@@ -393,12 +393,39 @@ public partial class MainWindow : Window
             .FirstOrDefault(control => control.Name == "AccountsListBox");
         if (list is null) return;
 
-        if (list.SelectedIndex < 0 && list.ItemCount > 0)
-            list.SelectedIndex = 0;
-        list.Focus();
-        if (list.SelectedItem is not null)
-            list.ScrollIntoView(list.SelectedItem);
+        var account = list.SelectedItem as AccountListItemViewModel;
+        if (account is null
+            && DataContext is MainWindowViewModel viewModel
+            && viewModel.AccountList.Accounts.FirstOrDefault() is { } firstAccount)
+        {
+            viewModel.AccountList.SelectForKeyboardNavigation(firstAccount);
+            list.SelectedItem = firstAccount;
+            account = firstAccount;
+        }
+
+        if (account is not null)
+            FocusAccountListItem(list, account);
     }
+
+    private static void FocusAccountListItem(
+        ContextPreservingAccountListBox list,
+        AccountListItemViewModel account)
+    {
+        list.ScrollIntoView(account);
+        if (TryFocusAccountListItem(list, account)) return;
+
+        Dispatcher.UIThread.Post(
+            () => TryFocusAccountListItem(list, account),
+            DispatcherPriority.Loaded);
+    }
+
+    private static bool TryFocusAccountListItem(
+        ContextPreservingAccountListBox list,
+        AccountListItemViewModel account) =>
+        list.GetVisualDescendants()
+            .OfType<ListBoxItem>()
+            .FirstOrDefault(item => ReferenceEquals(item.DataContext, account))
+            ?.Focus() == true;
 
     private void ObserveViewModel(MainWindowViewModel? viewModel)
     {

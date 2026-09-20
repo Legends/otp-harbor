@@ -417,6 +417,36 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public void SelectForKeyboardNavigation_WhenAutoGenerateEnabled_SelectsWithoutCopying()
+    {
+        var accountId = Guid.NewGuid();
+        var totp = new Mock<IAccountTotpService>();
+        var clipboard = SuccessfulClipboard();
+        using var sut = new AccountListViewModel(
+            Mock.Of<IAccountManager>(),
+            totp.Object,
+            clipboard.Object,
+            Mock.Of<IAccountQrCodeService>(),
+            Mock.Of<IAvaloniaQrImageFactory>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            Localization());
+        var account = new AccountListItemViewModel(accountId, "Issuer", "account");
+        account.UpdateCode("654321", 24, 30);
+        sut.EnableAutomaticCodeGenerationOnSelection();
+
+        sut.SelectForKeyboardNavigation(account);
+
+        Assert.Same(account, sut.SelectedAccount);
+        Assert.Equal("654321", sut.GeneratedCode);
+        Assert.Equal(24, sut.RemainingSeconds);
+        totp.Verify(value => value.GenerateAsync(It.IsAny<Guid>()), Times.Never);
+        clipboard.Verify(value => value.CopyAndScheduleClearAsync(
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task SelectedAccount_WhenChangedDuringGeneration_ShowsOnlyLatestAccountCode()
     {
         var firstId = Guid.NewGuid();

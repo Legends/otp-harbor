@@ -821,6 +821,50 @@ public sealed class MainWindowSmokeTests
         Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canNavigate, isSearchSource]));
     }
 
+    [AvaloniaFact]
+    public async Task SearchDownArrow_FocusesTheSelectedAccountContainer()
+    {
+        var account = new AccountListItemViewModel(Guid.NewGuid(), "Issuer", "account");
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 220,
+            Height = 120,
+            ItemsSource = new[] { account },
+            SelectedItem = account
+        };
+        var search = new TextBox();
+        var window = new Window
+        {
+            Width = 260,
+            Height = 200,
+            Content = new StackPanel { Children = { search, list } }
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            search.Focus();
+            var focusItem = typeof(MainWindow).GetMethod(
+                "FocusAccountListItem",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(focusItem);
+            focusItem.Invoke(null, [list, account]);
+            await Dispatcher.UIThread.InvokeAsync(static () => { }, DispatcherPriority.Loaded);
+
+            var container = Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, account));
+            Assert.True(container.IsFocused);
+            Assert.False(search.IsFocused);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [Theory]
     [InlineData(Key.Up, KeyModifiers.None, true, true, true, true)]
     [InlineData(Key.Up, KeyModifiers.None, true, true, false, false)]

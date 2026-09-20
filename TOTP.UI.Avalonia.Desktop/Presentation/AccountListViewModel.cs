@@ -162,19 +162,15 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public AccountListItemViewModel? SelectedAccount
     {
         get => _selectedAccount;
-        set
-        {
-            if (!SetField(ref _selectedAccount, value)) return;
-            ClearSelectedCodeProjection();
-            ClearQrImage();
-            _generateCommand.NotifyCanExecuteChanged();
-            _generateQrCommand.NotifyCanExecuteChanged();
-            _beginEditCommand.NotifyCanExecuteChanged();
-            _deleteAccountCommand.NotifyCanExecuteChanged();
-            OnPropertyChanged(nameof(HasSelectedAccount));
-            if (_autoGenerateCodeOnSelection && _selectedAccount is not null)
-                _generateCommand.Execute(null);
-        }
+        set => SetSelectedAccount(value, generateAndCopyCode: true);
+    }
+
+    public void SelectForKeyboardNavigation(AccountListItemViewModel account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        SetSelectedAccount(account, generateAndCopyCode: false);
+        if (ReferenceEquals(_selectedAccount, account) && account.HasCode)
+            ProjectSelectedCode(account);
     }
 
     public void EnableAutomaticCodeGenerationOnSelection() =>
@@ -188,6 +184,22 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool HasSelectedAccount => SelectedAccount is not null;
+
+    private void SetSelectedAccount(
+        AccountListItemViewModel? account,
+        bool generateAndCopyCode)
+    {
+        if (!SetField(ref _selectedAccount, account)) return;
+        ClearSelectedCodeProjection();
+        ClearQrImage();
+        _generateCommand.NotifyCanExecuteChanged();
+        _generateQrCommand.NotifyCanExecuteChanged();
+        _beginEditCommand.NotifyCanExecuteChanged();
+        _deleteAccountCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(HasSelectedAccount));
+        if (generateAndCopyCode && _autoGenerateCodeOnSelection && _selectedAccount is not null)
+            _generateCommand.Execute(null);
+    }
 
     public string GeneratedCode
     {
