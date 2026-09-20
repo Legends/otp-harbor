@@ -55,8 +55,11 @@
   <data name="AutomaticRollbackStatus" xml:space="preserve"><value>Les modifications d’autorisation sont vérifiées avant activation. Si un remplacement atomique échoue, l’enveloppe précédemment vérifiée est restaurée automatiquement.</value></data>
   <data name="LegacyMigrationStatus" xml:space="preserve"><value>Les formats d’autorisation de développement ne sont pas importés automatiquement. Les données chiffrées existantes du coffre-fort ne sont jamais remplacées ; utilisez les éléments de récupération correspondants ou une procédure de migration explicitement vérifiée.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Ajouter un compte</value></data>
+  <data name="AddAccountShortcut" xml:space="preserve"><value>Ajouter un compte (Ctrl+A)</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Modifier le compte</value></data>
+  <data name="EditAccountShortcut" xml:space="preserve"><value>Modifier le compte (Ctrl+E)</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Supprimer le compte</value></data>
+  <data name="DeleteAccountShortcut" xml:space="preserve"><value>Supprimer le compte (Ctrl+D ou Suppr)</value></data>
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;L’entrée de compte chiffrée sera supprimée définitivement.&#10;Cette action est irréversible.</value></data>
   <data name="Delete" xml:space="preserve"><value>Supprimer</value></data>
   <data name="Issuer" xml:space="preserve"><value>Émetteur</value></data>
@@ -114,6 +117,7 @@
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>Le dossier des journaux n’a pas pu être ouvert.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>Le dossier des journaux n’a pas pu être ouvert de manière sécurisée.</value></data>
   <data name="Lock" xml:space="preserve"><value>Verrouiller</value></data>
+  <data name="LockShortcut" xml:space="preserve"><value>Verrouiller (Ctrl+L)</value></data>
   <data name="Accounts" xml:space="preserve"><value>Comptes</value></data>
   <data name="Tools" xml:space="preserve"><value>Outils</value></data>
   <data name="Settings" xml:space="preserve"><value>Paramètres</value></data>
@@ -173,6 +177,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Paramètres enregistrés automatiquement.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Les paramètres n’ont pas pu être enregistrés. Les paramètres existants restent actifs.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Rechercher un émetteur ou un compte</value></data>
+  <data name="SearchAccountsShortcut" xml:space="preserve"><value>Rechercher un émetteur ou un compte (Ctrl+F)</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} comptes affichés sur {1}</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Aucune entrée correspondante.</value></data>
@@ -180,6 +185,7 @@
   <data name="GenerateCode" xml:space="preserve"><value>Générer un code</value></data>
   <data name="ShowQrCode" xml:space="preserve"><value>Afficher le code QR</value></data>
   <data name="CopyTimedClear" xml:space="preserve"><value>Copier avec effacement différé</value></data>
+  <data name="CopyTimedClearShortcut" xml:space="preserve"><value>Copier avec effacement différé (Ctrl+C)</value></data>
   <data name="Password" xml:space="preserve"><value>Mot de passe</value></data>
   <data name="PasswordAuthorizationHelp" xml:space="preserve"><value>Requis pour autoriser cette action.</value></data>
   <data name="ValidatingSecurely" xml:space="preserve"><value>Validation sécurisée…</value></data>

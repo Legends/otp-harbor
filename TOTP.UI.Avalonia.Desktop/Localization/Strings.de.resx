@@ -55,8 +55,11 @@
   <data name="AutomaticRollbackStatus" xml:space="preserve"><value>Autorisierungsänderungen werden vor der Aktivierung geprüft. Schlägt ein atomarer Austausch fehl, wird der vorherige geprüfte Umschlag automatisch wiederhergestellt.</value></data>
   <data name="LegacyMigrationStatus" xml:space="preserve"><value>Autorisierungsformate aus der Entwicklungsphase werden nicht automatisch importiert. Vorhandene verschlüsselte Tresordaten werden nie ersetzt; verwende das zugehörige Wiederherstellungsmaterial oder einen ausdrücklich geprüften Migrationspfad.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Konto hinzufügen</value></data>
+  <data name="AddAccountShortcut" xml:space="preserve"><value>Konto hinzufügen (Strg+A)</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Konto bearbeiten</value></data>
+  <data name="EditAccountShortcut" xml:space="preserve"><value>Konto bearbeiten (Strg+E)</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Konto löschen</value></data>
+  <data name="DeleteAccountShortcut" xml:space="preserve"><value>Konto löschen (Strg+D oder Entf)</value></data>
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;Der verschlüsselte Kontoeintrag wird dauerhaft entfernt.&#10;Dies kann nicht rückgängig gemacht werden.</value></data>
   <data name="Delete" xml:space="preserve"><value>Löschen</value></data>
   <data name="Issuer" xml:space="preserve"><value>Anbieter</value></data>
@@ -114,6 +117,7 @@
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>Der Protokollordner konnte nicht geöffnet werden.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>Der Protokollordner konnte nicht sicher geöffnet werden.</value></data>
   <data name="Lock" xml:space="preserve"><value>Sperren</value></data>
+  <data name="LockShortcut" xml:space="preserve"><value>Sperren (Strg+L)</value></data>
   <data name="Accounts" xml:space="preserve"><value>Konten</value></data>
   <data name="Tools" xml:space="preserve"><value>Werkzeuge</value></data>
   <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
@@ -173,6 +177,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Einstellungen automatisch gespeichert.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Die Einstellungen konnten nicht gespeichert werden. Die bisherigen Einstellungen bleiben aktiv.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Aussteller oder Konto suchen</value></data>
+  <data name="SearchAccountsShortcut" xml:space="preserve"><value>Aussteller oder Konto suchen (Strg+F)</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} von {1} Konten angezeigt</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Keine passenden Einträge.</value></data>
@@ -180,6 +185,7 @@
   <data name="GenerateCode" xml:space="preserve"><value>Code erzeugen</value></data>
   <data name="ShowQrCode" xml:space="preserve"><value>QR-Code anzeigen</value></data>
   <data name="CopyTimedClear" xml:space="preserve"><value>Kopieren und zeitgesteuert löschen</value></data>
+  <data name="CopyTimedClearShortcut" xml:space="preserve"><value>Kopieren und zeitgesteuert löschen (Strg+C)</value></data>
   <data name="Password" xml:space="preserve"><value>Passwort</value></data>
   <data name="PasswordAuthorizationHelp" xml:space="preserve"><value>Zur Autorisierung dieser Aktion erforderlich.</value></data>
   <data name="ValidatingSecurely" xml:space="preserve"><value>Wird sicher geprüft…</value></data>

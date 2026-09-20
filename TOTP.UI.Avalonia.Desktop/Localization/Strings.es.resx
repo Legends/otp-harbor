@@ -55,8 +55,11 @@
   <data name="AutomaticRollbackStatus" xml:space="preserve"><value>Los cambios de autorización se verifican antes de activarlos. Si falla una sustitución atómica, se restaura automáticamente el sobre verificado anterior.</value></data>
   <data name="LegacyMigrationStatus" xml:space="preserve"><value>Los formatos de autorización de la fase de desarrollo no se importan automáticamente. Los datos cifrados existentes de la caja fuerte nunca se sustituyen; usa el material de recuperación correspondiente o una ruta de migración revisada explícitamente.</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Añadir cuenta</value></data>
+  <data name="AddAccountShortcut" xml:space="preserve"><value>Añadir cuenta (Ctrl+A)</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Editar cuenta</value></data>
+  <data name="EditAccountShortcut" xml:space="preserve"><value>Editar cuenta (Ctrl+E)</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Eliminar cuenta</value></data>
+  <data name="DeleteAccountShortcut" xml:space="preserve"><value>Eliminar cuenta (Ctrl+D o Supr)</value></data>
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;La entrada cifrada de la cuenta se eliminará permanentemente.&#10;Esta acción no se puede deshacer.</value></data>
   <data name="Delete" xml:space="preserve"><value>Eliminar</value></data>
   <data name="Issuer" xml:space="preserve"><value>Emisor</value></data>
@@ -114,6 +117,7 @@
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>No se pudo abrir la carpeta de registros.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>No se pudo abrir la carpeta de registros de forma segura.</value></data>
   <data name="Lock" xml:space="preserve"><value>Bloquear</value></data>
+  <data name="LockShortcut" xml:space="preserve"><value>Bloquear (Ctrl+L)</value></data>
   <data name="Accounts" xml:space="preserve"><value>Cuentas</value></data>
   <data name="Tools" xml:space="preserve"><value>Herramientas</value></data>
   <data name="Settings" xml:space="preserve"><value>Ajustes</value></data>
@@ -173,6 +177,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Ajustes guardados automáticamente.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>No se pudieron guardar los ajustes. Los ajustes existentes siguen activos.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Buscar emisor o cuenta</value></data>
+  <data name="SearchAccountsShortcut" xml:space="preserve"><value>Buscar emisor o cuenta (Ctrl+F)</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Todavía no hay cuentas. Añade una manualmente, escanea el QR de una cuenta o exportación de Google Authenticator, o restaura una copia de seguridad cifrada desde Ajustes.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No hay entradas coincidentes.</value></data>
@@ -180,6 +185,7 @@
   <data name="GenerateCode" xml:space="preserve"><value>Generar código</value></data>
   <data name="ShowQrCode" xml:space="preserve"><value>Mostrar código QR</value></data>
   <data name="CopyTimedClear" xml:space="preserve"><value>Copiar con borrado programado</value></data>
+  <data name="CopyTimedClearShortcut" xml:space="preserve"><value>Copiar con borrado programado (Ctrl+C)</value></data>
   <data name="Password" xml:space="preserve"><value>Contraseña</value></data>
   <data name="PasswordAuthorizationHelp" xml:space="preserve"><value>Necesaria para autorizar esta acción.</value></data>
   <data name="ValidatingSecurely" xml:space="preserve"><value>Validando de forma segura…</value></data>

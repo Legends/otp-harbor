@@ -125,6 +125,59 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData(
+        "en",
+        "Add account (Ctrl+A)",
+        "Search issuer or account (Ctrl+F)",
+        "Edit account (Ctrl+E)",
+        "Delete account (Ctrl+D or Delete)",
+        "Copy with timed clear (Ctrl+C)",
+        "Lock (Ctrl+L)")]
+    [InlineData(
+        "de",
+        "Konto hinzufügen (Strg+A)",
+        "Aussteller oder Konto suchen (Strg+F)",
+        "Konto bearbeiten (Strg+E)",
+        "Konto löschen (Strg+D oder Entf)",
+        "Kopieren und zeitgesteuert löschen (Strg+C)",
+        "Sperren (Strg+L)")]
+    [InlineData(
+        "fr",
+        "Ajouter un compte (Ctrl+A)",
+        "Rechercher un émetteur ou un compte (Ctrl+F)",
+        "Modifier le compte (Ctrl+E)",
+        "Supprimer le compte (Ctrl+D ou Suppr)",
+        "Copier avec effacement différé (Ctrl+C)",
+        "Verrouiller (Ctrl+L)")]
+    [InlineData(
+        "es",
+        "Añadir cuenta (Ctrl+A)",
+        "Buscar emisor o cuenta (Ctrl+F)",
+        "Editar cuenta (Ctrl+E)",
+        "Eliminar cuenta (Ctrl+D o Supr)",
+        "Copiar con borrado programado (Ctrl+C)",
+        "Bloquear (Ctrl+L)")]
+    public void Catalog_ShortcutHintsUseCompleteSelectedLocale(
+        string cultureName,
+        string expectedAdd,
+        string expectedSearch,
+        string expectedEdit,
+        string expectedDelete,
+        string expectedCopy,
+        string expectedLock)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        Assert.Equal(expectedAdd, sut.Get(AvaloniaStringKeys.AddAccountShortcut, culture));
+        Assert.Equal(expectedSearch, sut.Get(AvaloniaStringKeys.SearchAccountsShortcut, culture));
+        Assert.Equal(expectedEdit, sut.Get(AvaloniaStringKeys.EditAccountShortcut, culture));
+        Assert.Equal(expectedDelete, sut.Get(AvaloniaStringKeys.DeleteAccountShortcut, culture));
+        Assert.Equal(expectedCopy, sut.Get(AvaloniaStringKeys.CopyTimedClearShortcut, culture));
+        Assert.Equal(expectedLock, sut.Get(AvaloniaStringKeys.LockShortcut, culture));
+    }
+
+    [Theory]
     [InlineData("fr-FR", "fr", "Réessayer", "Mot de passe principal")]
     [InlineData("es-ES", "es", "Reintentar", "Contraseña maestra")]
     public void ApplyCulture_ForAdditionalLanguage_UsesCompleteLocale(

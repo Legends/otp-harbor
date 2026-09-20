@@ -173,7 +173,7 @@
                             Grid.Column="1"
                             Classes="icon"
                             Command="{Binding BeginAddAccountCommand}"
-                            ToolTip.Tip="{DynamicResource AddAccount}">
+                            ToolTip.Tip="{DynamicResource AddAccountShortcut}">
                             <shared:SymbolIcon Foreground="#87CE3E" IconSize="16" Kind="Add" />
                         </Button>
                         <Button
@@ -181,7 +181,7 @@
                             Classes="icon"
                             Click="FocusAccountSearch"
                             Command="{Binding ToggleSearchCommand}"
-                            ToolTip.Tip="{DynamicResource SearchAccounts}">
+                            ToolTip.Tip="{DynamicResource SearchAccountsShortcut}">
                             <shared:SymbolIcon Foreground="#87CE3E" IconSize="16" Kind="Search" />
                         </Button>
                         <Grid
@@ -245,7 +245,7 @@
                             Grid.Column="6"
                             Classes="icon"
                             Command="{Binding LockCommand}"
-                            ToolTip.Tip="{DynamicResource Lock}">
+                            ToolTip.Tip="{DynamicResource LockShortcut}">
                             <shared:SymbolIcon IconSize="16" Kind="Lock" />
                         </Button>
                     </Grid>
@@ -292,7 +292,7 @@
                                                     </ListBox.ItemsPanel>
                                                     <ListBox.ContextMenu>
                                                         <ContextMenu Classes="account-context-menu">
-                                                            <MenuItem Command="{Binding BeginContextEditCommand}" Header="{DynamicResource EditAccount}">
+                                                            <MenuItem Command="{Binding BeginContextEditCommand}" Header="{DynamicResource EditAccountShortcut}">
                                                                 <MenuItem.Icon>
                                                                     <shared:SymbolIcon IconSize="15" Kind="Edit" />
                                                                 </MenuItem.Icon>
@@ -306,7 +306,7 @@
                                                             <MenuItem
                                                                 Classes="danger-context-item"
                                                                 Command="{Binding DeleteContextAccountCommand}"
-                                                                Header="{DynamicResource DeleteAccount}">
+                                                                Header="{DynamicResource DeleteAccountShortcut}">
                                                                 <MenuItem.Icon>
                                                                     <shared:SymbolIcon IconSize="15" Kind="Delete" />
                                                                 </MenuItem.Icon>
@@ -344,7 +344,7 @@
                                                                         Command="{Binding CopyCodeCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         IsVisible="{Binding HasCode}"
-                                                                        ToolTip.Tip="{DynamicResource CopyTimedClear}">
+                                                                        ToolTip.Tip="{DynamicResource CopyTimedClearShortcut}">
                                                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                                                             <shared:SymbolIcon IconSize="10" Kind="Copy" />
                                                                             <TextBlock Text="{Binding DisplayCode}" />

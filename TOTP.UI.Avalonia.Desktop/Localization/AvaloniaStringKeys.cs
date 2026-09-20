@@ -16,6 +16,7 @@ public static class AvaloniaStringKeys
     public const string MasterPasswordHelp = nameof(MasterPasswordHelp);
     public const string Unlock = nameof(Unlock);
     public const string Lock = nameof(Lock);
+    public const string LockShortcut = nameof(LockShortcut);
     public const string Accounts = nameof(Accounts);
     public const string Tools = nameof(Tools);
     public const string Settings = nameof(Settings);
@@ -95,6 +96,7 @@ public static class AvaloniaStringKeys
     public const string SettingsSavedAutomatically = nameof(SettingsSavedAutomatically);
     public const string SettingsSaveFailed = nameof(SettingsSaveFailed);
     public const string SearchAccounts = nameof(SearchAccounts);
+    public const string SearchAccountsShortcut = nameof(SearchAccountsShortcut);
     public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string NoEntriesYet = nameof(NoEntriesYet);
     public const string NoMatchingEntries = nameof(NoMatchingEntries);
@@ -102,6 +104,7 @@ public static class AvaloniaStringKeys
     public const string GenerateCode = nameof(GenerateCode);
     public const string ShowQrCode = nameof(ShowQrCode);
     public const string CopyTimedClear = nameof(CopyTimedClear);
+    public const string CopyTimedClearShortcut = nameof(CopyTimedClearShortcut);
     public const string Password = nameof(Password);
     public const string PasswordAuthorizationHelp = nameof(PasswordAuthorizationHelp);
     public const string ValidatingSecurely = nameof(ValidatingSecurely);
@@ -163,8 +166,11 @@ public static class AvaloniaStringKeys
     public const string AutomaticRollbackStatus = nameof(AutomaticRollbackStatus);
     public const string LegacyMigrationStatus = nameof(LegacyMigrationStatus);
     public const string AddAccount = nameof(AddAccount);
+    public const string AddAccountShortcut = nameof(AddAccountShortcut);
     public const string EditAccount = nameof(EditAccount);
+    public const string EditAccountShortcut = nameof(EditAccountShortcut);
     public const string DeleteAccount = nameof(DeleteAccount);
+    public const string DeleteAccountShortcut = nameof(DeleteAccountShortcut);
     public const string DeleteAccountPrompt = nameof(DeleteAccountPrompt);
     public const string Delete = nameof(Delete);
     public const string Issuer = nameof(Issuer);
@@ -339,7 +345,7 @@ public static class AvaloniaStringKeys
         AppTitle, AppHeading, StartingSafely, StartupCreateMasterPassword,
         StartupEnterMasterPassword, StartupPreferencesUnavailable, StartupFailedSafely,
         StartupCancelled, ClosingSafely, Retry, MasterPassword, MasterPasswordHelp,
-        Unlock, Lock, Accounts, Tools, Settings, ChooseImportFile, ExportEncryptedBackup,
+        Unlock, Lock, LockShortcut, Accounts, Tools, Settings, ChooseImportFile, ExportEncryptedBackup,
         ImportConflictHandling, ImportAccounts, ImportOtpHarborBackup, OtpHarborImportHelp,
         EncryptedBackup, EncryptedBackupHelp,
         SupportDiagnostics, RefreshSupportInformation,
@@ -361,9 +367,10 @@ public static class AvaloniaStringKeys
         Language, EnglishLanguage, GermanLanguage, FrenchLanguage, SpanishLanguage,
         Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
         IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
-        SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchResultsFormat, NoEntriesYet,
+        SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut,
+        SearchResultsFormat, NoEntriesYet,
         NoMatchingEntries, CloseSettings, GenerateCode,
-        ShowQrCode, CopyTimedClear, Password, PasswordAuthorizationHelp,
+        ShowQrCode, CopyTimedClear, CopyTimedClearShortcut, Password, PasswordAuthorizationHelp,
         ValidatingSecurely, NavAccounts, NavTools, NavSettings, AccountsList,
         GeneratedCode, GeneratedQr, GeneratedQrTitleFormat, QrPrivacyNotice, CameraPreview,
         CreatePasswordHeading,
@@ -380,7 +387,8 @@ public static class AvaloniaStringKeys
         ChangeMasterPassword, CurrentPasswordPrompt, PasswordChangeCancelled,
         PasswordChangeFailed, PasswordChanged, RecoveryAndCompatibility,
         PortableEnvelopeStatus, AutomaticRollbackStatus, LegacyMigrationStatus,
-        AddAccount, EditAccount, DeleteAccount, DeleteAccountPrompt, Delete, Issuer,
+        AddAccount, AddAccountShortcut, EditAccount, EditAccountShortcut,
+        DeleteAccount, DeleteAccountShortcut, DeleteAccountPrompt, Delete, Issuer,
         AccountName, Secret, AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,
         AccountSecretInvalid, AccountDuplicate, AccountSaveFailed, AccountSaved,
