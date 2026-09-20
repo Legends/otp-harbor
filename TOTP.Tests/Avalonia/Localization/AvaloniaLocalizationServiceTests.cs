@@ -107,6 +107,24 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en", "Showing {0} of {1} accounts")]
+    [InlineData("de", "{0} von {1} Konten angezeigt")]
+    [InlineData("fr", "{0} comptes affichés sur {1}")]
+    [InlineData("es", "Mostrando {0} de {1} cuentas")]
+    public void Catalog_SearchResultSummaryUsesCompleteSelectedLocale(
+        string cultureName,
+        string expected)
+    {
+        var sut = new AvaloniaStringCatalog();
+
+        Assert.Equal(
+            expected,
+            sut.Get(
+                AvaloniaStringKeys.SearchResultsFormat,
+                System.Globalization.CultureInfo.GetCultureInfo(cultureName)));
+    }
+
+    [Theory]
     [InlineData("fr-FR", "fr", "Réessayer", "Mot de passe principal")]
     [InlineData("es-ES", "es", "Reintentar", "Contraseña maestra")]
     public void ApplyCulture_ForAdditionalLanguage_UsesCompleteLocale(

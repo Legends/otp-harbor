@@ -145,6 +145,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!SetField(ref _accounts, value)) return;
             OnPropertyChanged(nameof(HasNoAccounts));
             OnPropertyChanged(nameof(HasNoSearchResults));
+            OnPropertyChanged(nameof(SearchResultSummary));
         }
     }
 
@@ -250,6 +251,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool HasSearchText => SearchText.Length > 0;
+
+    public string SearchResultSummary => string.Format(
+        _localization.GetString(AvaloniaStringKeys.SearchResultsFormat),
+        Accounts.Count,
+        _allAccounts.Count);
 
     public bool IsBusy
     {
@@ -1107,6 +1113,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
+        OnPropertyChanged(nameof(SearchResultSummary));
         foreach (var account in _allAccounts)
             account.UpdateCustomPeriodLabel(FormatCustomPeriod(account.ConfiguredPeriodSeconds));
 

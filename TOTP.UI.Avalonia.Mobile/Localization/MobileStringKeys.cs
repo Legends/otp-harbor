@@ -53,6 +53,7 @@ public static class MobileStringKeys
     public const string ImportGoogleQrDescription = nameof(ImportGoogleQrDescription);
     public const string SearchAccounts = nameof(SearchAccounts);
     public const string ClearSearch = nameof(ClearSearch);
+    public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string NoSearchResults = nameof(NoSearchResults);
     public const string AccountSwipeHint = nameof(AccountSwipeHint);
     public const string ScanQr = nameof(ScanQr);
@@ -253,6 +254,7 @@ public static class MobileStringKeys
         ImportGoogleQrDescription,
         SearchAccounts,
         ClearSearch,
+        SearchResultsFormat,
         NoSearchResults,
         AccountSwipeHint,
         ScanQr,

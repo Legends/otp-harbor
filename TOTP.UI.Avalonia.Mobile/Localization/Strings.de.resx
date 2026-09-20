@@ -37,6 +37,7 @@
   <data name="Security" xml:space="preserve"><value>Sicherheit</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Konten durchsuchen</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Suche löschen</value></data>
+  <data name="SearchResultsFormat" xml:space="preserve"><value>{0} von {1} Konten angezeigt</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>Keine passenden Konten.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Nach rechts wischen für QR und Bearbeiten, nach links zum Löschen. Die Kamera importiert auch Google-Authenticator-Exporte.</value></data>
   <data name="ScanQr" xml:space="preserve"><value>Konto- oder Google-Authenticator-QR scannen</value></data>

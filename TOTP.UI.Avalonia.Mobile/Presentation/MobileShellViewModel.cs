@@ -428,6 +428,10 @@ public sealed class MobileShellViewModel :
     public bool HasNoAccounts => _allAccounts.Count == 0;
     public bool HasNoSearchResults => _allAccounts.Count > 0 && Accounts.Count == 0;
     public bool HasSearchText => SearchText.Length > 0;
+    public string SearchResultSummary => string.Format(
+        Get(MobileStringKeys.SearchResultsFormat),
+        Accounts.Count,
+        _allAccounts.Count);
     public IImage? QrImage => _qrImage?.Image;
     public bool HasQrImage => QrImage is not null;
     public bool CanRetry => _startupFailed && !IsBusy;
@@ -2497,6 +2501,7 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(HasAccounts));
         OnPropertyChanged(nameof(HasNoAccounts));
         OnPropertyChanged(nameof(HasNoSearchResults));
+        OnPropertyChanged(nameof(SearchResultSummary));
         SelectedAccount = selectedId.HasValue
             ? Accounts.FirstOrDefault(account => account.Id == selectedId.Value)
                 ?? Accounts.FirstOrDefault()
@@ -3323,6 +3328,7 @@ public sealed class MobileShellViewModel :
         nameof(DisableAppLockWarningText),
         nameof(SearchAccountsText),
         nameof(ClearSearchText),
+        nameof(SearchResultSummary),
         nameof(NoSearchResultsText),
         nameof(AccountSwipeHintText),
         nameof(ScanQrText),

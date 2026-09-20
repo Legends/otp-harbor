@@ -189,15 +189,18 @@
                         <Grid
                             Grid.Row="1"
                             Margin="0,0,0,14"
-                            ColumnDefinitions="*,Auto">
+                            ColumnDefinitions="*,Auto"
+                            RowDefinitions="Auto,Auto">
                             <TextBox
                                 x:Name="AccountSearchBox"
+                                Grid.Row="0"
                                 Grid.ColumnSpan="2"
                                 Padding="12,8,48,8"
                                 automation:AutomationProperties.Name="{Binding SearchAccountsText}"
                                 PlaceholderText="{Binding SearchAccountsText}"
                                 Text="{Binding SearchText, Mode=TwoWay}" />
                             <Button
+                                Grid.Row="0"
                                 Grid.Column="1"
                                 Width="44"
                                 Height="44"
@@ -213,6 +216,15 @@
                                 FontSize="26"
                                 IsVisible="{Binding HasSearchText}"
                                 ToolTip.Tip="{Binding ClearSearchText}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.ColumnSpan="2"
+                                Margin="0,5,0,0"
+                                HorizontalAlignment="Right"
+                                Foreground="{DynamicResource BrushTextSecondary}"
+                                FontSize="12"
+                                IsVisible="{Binding HasSearchText}"
+                                Text="{Binding SearchResultSummary}" />
                         </Grid>
 
                         <Border

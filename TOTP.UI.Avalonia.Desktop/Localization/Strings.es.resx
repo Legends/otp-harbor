@@ -173,6 +173,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Ajustes guardados automáticamente.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>No se pudieron guardar los ajustes. Los ajustes existentes siguen activos.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Buscar emisor o cuenta</value></data>
+  <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Todavía no hay cuentas. Añade una manualmente, escanea el QR de una cuenta o exportación de Google Authenticator, o restaura una copia de seguridad cifrada desde Ajustes.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No hay entradas coincidentes.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Cerrar ajustes</value></data>

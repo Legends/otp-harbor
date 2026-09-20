@@ -1056,12 +1056,14 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(privateAccount.ID, match.Id);
         Assert.False(context.Sut.HasNoAccounts);
         Assert.False(context.Sut.HasNoSearchResults);
+        Assert.Equal("Showing 1 of 2 accounts", context.Sut.SearchResultSummary);
 
         context.Sut.SearchText = "does-not-exist";
 
         Assert.Empty(context.Sut.Accounts);
         Assert.False(context.Sut.HasNoAccounts);
         Assert.True(context.Sut.HasNoSearchResults);
+        Assert.Equal("Showing 0 of 2 accounts", context.Sut.SearchResultSummary);
 
         Assert.True(context.Sut.HasSearchText);
         Assert.True(context.Sut.ClearSearchCommand.CanExecute(null));

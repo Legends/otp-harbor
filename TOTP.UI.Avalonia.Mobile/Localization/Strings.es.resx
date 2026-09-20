@@ -37,6 +37,7 @@
   <data name="Security" xml:space="preserve"><value>Seguridad</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Buscar cuentas</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Borrar búsqueda</value></data>
+  <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No hay cuentas coincidentes.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Deslice a la derecha para QR y editar, o a la izquierda para eliminar. La cámara también importa exportaciones de Google Authenticator.</value></data>
   <data name="ScanQr" xml:space="preserve"><value>Escanear QR de cuenta o Google Authenticator</value></data>

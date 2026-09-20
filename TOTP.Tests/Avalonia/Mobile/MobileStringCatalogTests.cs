@@ -72,6 +72,20 @@ public sealed class MobileStringCatalogTests
         Assert.Equal(expectedEmptyState, catalog.Get(MobileStringKeys.NoAccounts));
     }
 
+    [Theory]
+    [InlineData("en", "Showing {0} of {1} accounts")]
+    [InlineData("de", "{0} von {1} Konten angezeigt")]
+    [InlineData("fr", "{0} comptes affichés sur {1}")]
+    [InlineData("es", "Mostrando {0} de {1} cuentas")]
+    public void Get_SearchResultSummaryUsesCompleteSelectedLocale(
+        string cultureName,
+        string expected)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Equal(expected, catalog.Get(MobileStringKeys.SearchResultsFormat));
+    }
+
     [Fact]
     public void Get_BiometricRecoveryMessage_UsesOnlyActiveGermanLocale()
     {

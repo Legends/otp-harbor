@@ -253,11 +253,13 @@ public sealed class AccountListViewModelTests
         Assert.Contains(sut.Accounts, account => account.Issuer == "GitHub");
         Assert.Contains(sut.Accounts, account => account.AccountName == "github-user@example.test");
         Assert.Null(sut.SelectedAccount);
+        Assert.Equal("Showing 2 of 3 accounts", sut.SearchResultSummary);
 
         sut.SearchText = "  bob  ";
         Assert.Single(sut.Accounts);
         Assert.Equal("Microsoft", sut.Accounts[0].Issuer);
         Assert.Null(sut.SelectedAccount);
+        Assert.Equal("Showing 1 of 3 accounts", sut.SearchResultSummary);
 
         sut.SearchText = string.Empty;
         Assert.Equal(3, sut.Accounts.Count);

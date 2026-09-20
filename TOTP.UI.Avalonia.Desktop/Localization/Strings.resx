@@ -173,6 +173,7 @@
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Settings saved automatically.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Settings could not be saved. Existing settings remain active.</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Search issuer or account</value></data>
+  <data name="SearchResultsFormat" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No matching entries.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Close settings</value></data>

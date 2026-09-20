@@ -270,6 +270,12 @@
                                             Margin="10,8,10,12"
                                             VerticalAlignment="Top"
                                             Spacing="8">
+                                            <TextBlock
+                                                HorizontalAlignment="Right"
+                                                Classes="secondary"
+                                                FontSize="11"
+                                                IsVisible="{Binding HasSearchText}"
+                                                Text="{Binding SearchResultSummary}" />
                                             <Grid x:Name="AccountListRegion">
                                                 <controls:ContextPreservingAccountListBox
                                                     x:Name="AccountsListBox"
