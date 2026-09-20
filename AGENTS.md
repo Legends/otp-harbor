@@ -4,6 +4,12 @@ This file is the working contract for humans and coding agents contributing to `
 
 It is intentionally opinionated. The repo is security-sensitive, cross-platform, and already has clear architectural direction. Contributions should reinforce that direction, not dilute it.
 
+> **Efficiency:** Minimize redundant tool calls and context consumption. Reuse
+> repository knowledge acquired during the current task, use narrowly scoped
+> searches and file reads, and stop investigating once the implementation
+> location and relevant tests are known. Do not sacrifice correctness,
+> verification, security review, or test coverage to reduce tool usage.
+
 ## Mission
 
 Build OTP Harbor as a trustworthy cross-platform desktop TOTP authenticator that is:
@@ -65,7 +71,7 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 
 ## Current Repo Shape
 
-### Solution layout
+### Project layout
 
 - `TOTP.Core`
   - domain models, enums, common primitives, contracts, security abstractions
@@ -73,14 +79,32 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
   - concrete implementations for logging, crypto orchestration, security, settings, account management, export, QR generation
 - `TOTP.DAL`
   - persistence and filesystem-facing data access
+- `TOTP.Camera.OpenCv`
+  - OpenCV camera capture and QR scanning
+- `TOTP.Platform.Windows`
+  - Windows-specific platform implementation
+- `TOTP.Platform.Linux`
+  - Linux-specific platform implementation
+- `TOTP.Platform.MacOS`
+  - macOS-specific platform implementation
+- `TOTP.Platform.Unix`
+  - shared Unix-specific implementation
 - `TOTP.UI.Avalonia.Shared`
   - portable presentation contracts and shared Avalonia-facing workflows
 - `TOTP.UI.Avalonia.Desktop`
   - Avalonia views, view models, commands, bootstrap, platform UI adapters, and assets
+- `TOTP.Installer`
+  - installer-related functionality
 - `TOTP.Tests`
   - unit, regression, security-adjacent, and integration tests
+- `TOTP.Tests.Avalonia.Headless`
+  - Avalonia headless UI and interaction tests
+- `TOTP.Tests.Unix`
+  - Unix/platform-specific tests
 - `TOTP.Updater`
   - updater/install support UI and logic
+- `TOTP.UI.Avalonia.Mobile`, `TOTP.UI.Avalonia.Android`, and `TOTP.Platform.Android`
+  - adjacent shared mobile UI, Android host, and Android platform projects built by the Android workflow rather than `TOTP.sln`
 - `scripts`
   - release, security, and local update/testing helpers
 - `docs/security`
@@ -384,6 +408,205 @@ When making these changes, document:
 - add tests with behavior changes
 - do not "simplify" by removing security boundaries
 - optimize tool calls and test scope without reducing security, localization, regression coverage, or release confidence
+
+### Codex Efficiency and Repository Navigation
+
+This is a multi-project .NET/Avalonia repository. Work efficiently and minimize
+unnecessary repository reads, searches, builds, and test runs while preserving
+correctness. Use the project map in **Current Repo Shape** before searching
+broadly.
+
+#### Repository inspection rules
+
+Do not rediscover repository structure repeatedly during the same task.
+
+1. Reuse information already obtained during the current task when the relevant
+   files have not changed.
+2. Do not repeatedly run nearly identical `rg`, `Get-Content`, Git, or other
+   search commands against unchanged files.
+3. Before a repository-wide search, determine which project or directory is
+   most likely to contain the implementation.
+4. Scope searches as narrowly as practical. Prefer:
+
+   ```powershell
+   rg -n "SymbolName" TOTP.UI.Avalonia.Desktop TOTP.Tests
+   ```
+
+   over:
+
+   ```powershell
+   rg -n "SymbolName" .
+   ```
+
+5. Combine related symbols into one targeted search where practical:
+
+   ```powershell
+   rg -n "SymbolA|SymbolB|SymbolC" <relevant-directories>
+   ```
+
+6. Once a symbol has been located, inspect its known file directly instead of
+   searching the repository for the same symbol again.
+7. Read only the relevant portion of large files. Prefer bounded ranges such as:
+
+   ```powershell
+   Get-Content path/to/File.cs | Select-Object -Skip 400 -First 120
+   ```
+
+   Avoid dumping a complete large source file unless it is genuinely required.
+8. Do not reread an unchanged file merely to refresh context. Reread it only
+   when it changed, a precise detail must be verified, previous output was
+   incomplete, or correctness requires confirmation.
+9. Treat command output as part of the context budget. Avoid commands producing
+   hundreds or thousands of irrelevant lines.
+10. Prefer exact symbol, class, method, property, XAML control name, test name,
+    or error-message searches over broad keyword searches.
+
+#### Investigation workflow
+
+For implementation tasks, normally use this order:
+
+1. Identify the likely project from the repository map.
+2. Locate the primary implementation with one targeted search.
+3. Locate directly related tests with one targeted search.
+4. Read only the relevant implementation and test sections.
+5. Form an implementation plan.
+6. Make the change.
+7. Inspect the Git diff for changed files.
+8. Run the smallest relevant test or build command.
+9. Escalate to broader tests or builds only when justified.
+
+Do not restart repository discovery after step 4 unless new information makes
+it necessary.
+
+#### Editing and verification
+
+After editing, prefer reviewing the change with:
+
+```powershell
+git diff -- path/to/changed/file
+```
+
+or:
+
+```powershell
+git diff --stat
+```
+
+Use a small contextual reread around an edited method only when needed to
+verify surrounding code. Do not repeatedly inspect a file before and after
+every small edit when the diff already provides sufficient verification.
+
+#### Build efficiency
+
+Do not build the complete solution after every change. Prefer the narrowest
+applicable project build first, for example:
+
+```powershell
+dotnet build TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+```
+
+Build the full solution when:
+
+- shared APIs used by several projects changed
+- project references changed
+- package or configuration changes may affect multiple projects
+- release-level verification is requested
+- narrower builds are insufficient
+
+Do not repeat an identical successful build unless relevant source or build
+configuration changed afterward.
+
+#### Test efficiency
+
+Run the smallest scope that meaningfully validates the change. Prefer the
+relevant test project, test class, or filtered set before the complete suite.
+Examples:
+
+```powershell
+dotnet test TOTP.Tests/TOTP.Tests.csproj --filter "FullyQualifiedName~AccountListViewModel"
+```
+
+```powershell
+dotnet test TOTP.Tests.Avalonia.Headless/TOTP.Tests.Avalonia.Headless.csproj
+```
+
+Expand to broader tests when shared behavior changed, targeted tests reveal
+related failures, the change crosses project boundaries, or final verification
+warrants it. Do not rerun an unchanged test command after it passed unless
+subsequent changes could affect the result.
+
+#### Search-result reuse
+
+Maintain a working map during the task. If a previous command established a
+class location, method location, test class, or project responsibility, reuse
+that information. For example, after establishing:
+
+```text
+AccountListViewModel
+  -> TOTP.UI.Avalonia.Desktop/Presentation/AccountListViewModel.cs
+
+AccountListViewModelTests
+  -> TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs
+```
+
+do not search the entire repository for those types again during the same task
+without a specific reason.
+
+#### Avoid speculative searching
+
+Do not search for many possible implementations "just in case." Start with the
+most likely location based on project architecture, namespaces, file names,
+referenced symbols, compile errors, stack traces, bindings, and existing tests.
+Broaden only when the targeted search fails.
+
+#### XAML and Avalonia tasks
+
+For desktop UI behavior, inspect in this approximate order when applicable:
+
+1. Relevant `.axaml` view.
+2. Its `.axaml.cs` code-behind when interaction, focus, or input is involved.
+3. Relevant presentation or view-model class.
+4. Shared Avalonia code only when behavior is shared.
+5. Existing Avalonia/headless tests.
+
+Do not automatically scan all UI projects for desktop-only changes. For
+keyboard, focus, pointer, routing, window, or desktop-shell behavior, prioritize
+`TOTP.UI.Avalonia.Desktop` and corresponding Avalonia tests.
+
+#### Documentation tasks
+
+Search only the relevant documentation directory and exact terms first. Do not
+scan source projects merely to verify wording unless a documentation claim must
+be validated against implementation.
+
+#### Git usage
+
+Use Git as the primary way to understand modifications made during the current
+task:
+
+```powershell
+git status --short
+git diff --stat
+git diff -- <file>
+```
+
+Do not use repeated repository-wide source reads to determine what changed when
+the Git diff already answers the question.
+
+#### Quality rule
+
+Efficiency must not replace verification. Do not skip relevant tests,
+compilation checks, security-sensitive validation, persistence or encryption
+correctness checks, platform-boundary checks, or inspection of directly affected
+code merely to reduce tool usage. The goal is to remove redundant exploration,
+not necessary engineering work.
+
+#### Stop condition for investigation
+
+Once the implementation location, related dependencies, and relevant tests are
+known, stop searching and begin implementation. Every additional repository
+search must answer a concrete unresolved question; do not continue searching
+merely to gather more context.
 
 ### Before editing
 
