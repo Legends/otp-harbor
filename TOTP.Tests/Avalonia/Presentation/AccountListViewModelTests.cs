@@ -417,9 +417,10 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
-    public void SelectForKeyboardNavigation_WhenAutoGenerateEnabled_SelectsWithoutCopying()
+    public void SelectForKeyboardNavigation_WhenRepeated_SelectsWithoutCopying()
     {
         var accountId = Guid.NewGuid();
+        var secondAccountId = Guid.NewGuid();
         var totp = new Mock<IAccountTotpService>();
         var clipboard = SuccessfulClipboard();
         using var sut = new AccountListViewModel(
@@ -432,13 +433,19 @@ public sealed class AccountListViewModelTests
             Localization());
         var account = new AccountListItemViewModel(accountId, "Issuer", "account");
         account.UpdateCode("654321", 24, 30);
+        var secondAccount = new AccountListItemViewModel(
+            secondAccountId,
+            "Second issuer",
+            "second account");
+        secondAccount.UpdateCode("123456", 18, 30);
         sut.EnableAutomaticCodeGenerationOnSelection();
 
         sut.SelectForKeyboardNavigation(account);
+        sut.SelectForKeyboardNavigation(secondAccount);
 
-        Assert.Same(account, sut.SelectedAccount);
-        Assert.Equal("654321", sut.GeneratedCode);
-        Assert.Equal(24, sut.RemainingSeconds);
+        Assert.Same(secondAccount, sut.SelectedAccount);
+        Assert.Equal("123456", sut.GeneratedCode);
+        Assert.Equal(18, sut.RemainingSeconds);
         totp.Verify(value => value.GenerateAsync(It.IsAny<Guid>()), Times.Never);
         clipboard.Verify(value => value.CopyAndScheduleClearAsync(
             It.IsAny<string>(),

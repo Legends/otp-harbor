@@ -845,12 +845,7 @@ public sealed class MainWindowSmokeTests
             window.Show();
             window.UpdateLayout();
             search.Focus();
-            var focusItem = typeof(MainWindow).GetMethod(
-                "FocusAccountListItem",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-            Assert.NotNull(focusItem);
-            focusItem.Invoke(null, [list, account]);
+            list.FocusAccount(account);
             await Dispatcher.UIThread.InvokeAsync(static () => { }, DispatcherPriority.Loaded);
 
             var container = Assert.Single(
@@ -858,6 +853,43 @@ public sealed class MainWindowSmokeTests
                 item => ReferenceEquals(item.DataContext, account));
             Assert.True(container.IsFocused);
             Assert.False(search.IsFocused);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountList_ArrowNavigationMovesSelectionAndKeyboardFocus()
+    {
+        var first = new AccountListItemViewModel(Guid.NewGuid(), "First", "account");
+        var second = new AccountListItemViewModel(Guid.NewGuid(), "Second", "account");
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 220,
+            Height = 120,
+            ItemsSource = new[] { first, second },
+            SelectedItem = first
+        };
+        var window = new Window { Width = 260, Height = 160, Content = list };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            list.FocusAccount(first);
+
+            window.KeyPress(
+                Key.Down,
+                RawInputModifiers.None,
+                PhysicalKey.ArrowDown,
+                null);
+
+            Assert.Same(second, list.SelectedItem);
+            Assert.True(Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, second)).IsFocused);
         }
         finally
         {

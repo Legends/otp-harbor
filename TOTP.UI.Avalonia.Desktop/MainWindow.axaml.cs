@@ -404,28 +404,8 @@ public partial class MainWindow : Window
         }
 
         if (account is not null)
-            FocusAccountListItem(list, account);
+            list.FocusAccount(account);
     }
-
-    private static void FocusAccountListItem(
-        ContextPreservingAccountListBox list,
-        AccountListItemViewModel account)
-    {
-        list.ScrollIntoView(account);
-        if (TryFocusAccountListItem(list, account)) return;
-
-        Dispatcher.UIThread.Post(
-            () => TryFocusAccountListItem(list, account),
-            DispatcherPriority.Loaded);
-    }
-
-    private static bool TryFocusAccountListItem(
-        ContextPreservingAccountListBox list,
-        AccountListItemViewModel account) =>
-        list.GetVisualDescendants()
-            .OfType<ListBoxItem>()
-            .FirstOrDefault(item => ReferenceEquals(item.DataContext, account))
-            ?.Focus() == true;
 
     private void ObserveViewModel(MainWindowViewModel? viewModel)
     {
