@@ -45,6 +45,9 @@
       <Link>Resources\drawable\app_icon.png</Link>
       <LogicalName>drawable\app_icon.png</LogicalName>
     </AndroidResource>
+    <AndroidAsset Include="..\LICENSE.txt" Link="LICENSE.txt" />
+    <AndroidAsset Include="..\LICENSING.md" Link="LICENSING.md" />
+    <AndroidAsset Include="..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" />
   </ItemGroup>
 
   <ItemGroup>

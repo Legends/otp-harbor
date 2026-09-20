@@ -70,7 +70,7 @@ Short description: `Local-first TOTP authenticator with encrypted storage and no
 
 Description:
 
-> OTP Harbor is an open-source TOTP and 2FA authenticator designed to keep your authentication secrets under your control. Accounts are stored in an encrypted local vault and no OTP Harbor cloud account is required.
+> OTP Harbor is a source-available, noncommercial TOTP and 2FA authenticator designed to keep your authentication secrets under your control. Accounts are stored in an encrypted local vault and no OTP Harbor cloud account is required.
 >
 > Add accounts manually or scan an otpauth QR code, search your account list, copy the current code, and configure automatic clipboard clearing and locking. Windows Hello provides convenient quick unlock while your master password remains the recovery method. Encrypted backups support deliberate recovery and migration.
 
@@ -94,7 +94,7 @@ Short description: `Lokaler TOTP-Authenticator mit verschlüsseltem Speicher ohn
 
 Description:
 
-> OTP Harbor ist ein quelloffener TOTP- und 2FA-Authenticator, bei dem Ihre Anmeldegeheimnisse unter Ihrer Kontrolle bleiben. Konten werden in einem verschlüsselten lokalen Tresor gespeichert; ein OTP-Harbor-Cloudkonto ist nicht erforderlich.
+> OTP Harbor ist ein TOTP- und 2FA-Authenticator mit einsehbarem Quellcode und nichtkommerzieller Lizenz, bei dem Ihre Anmeldegeheimnisse unter Ihrer Kontrolle bleiben. Konten werden in einem verschlüsselten lokalen Tresor gespeichert; ein OTP-Harbor-Cloudkonto ist nicht erforderlich.
 >
 > Fügen Sie Konten manuell oder per otpauth-QR-Code hinzu, durchsuchen Sie die Kontoliste, kopieren Sie den aktuellen Code und konfigurieren Sie das automatische Leeren der Zwischenablage sowie die Sperrung. Windows Hello ermöglicht schnelles Entsperren, während das Masterpasswort die Wiederherstellungsmethode bleibt. Verschlüsselte Backups unterstützen eine kontrollierte Wiederherstellung und Migration.
 
@@ -118,7 +118,7 @@ Short description: `Authentificateur TOTP local avec stockage chiffré, sans com
 
 Description:
 
-> OTP Harbor est un authentificateur TOTP et 2FA open source conçu pour garder vos secrets d’authentification sous votre contrôle. Les comptes sont conservés dans un coffre local chiffré et aucun compte cloud OTP Harbor n’est requis.
+> OTP Harbor est un authentificateur TOTP et 2FA à code source disponible, sous licence non commerciale, conçu pour garder vos secrets d’authentification sous votre contrôle. Les comptes sont conservés dans un coffre local chiffré et aucun compte cloud OTP Harbor n’est requis.
 >
 > Ajoutez des comptes manuellement ou scannez un code QR otpauth, recherchez un compte, copiez le code actuel et configurez l’effacement automatique du presse-papiers ainsi que le verrouillage. Windows Hello permet un déverrouillage rapide, tandis que le mot de passe principal reste la méthode de récupération. Les sauvegardes chiffrées facilitent une récupération et une migration maîtrisées.
 
@@ -142,7 +142,7 @@ Short description: `Autenticador TOTP local con almacenamiento cifrado y sin cue
 
 Description:
 
-> OTP Harbor es un autenticador TOTP y 2FA de código abierto diseñado para mantener sus secretos de autenticación bajo su control. Las cuentas se guardan en un almacén local cifrado y no se necesita una cuenta de OTP Harbor en la nube.
+> OTP Harbor es un autenticador TOTP y 2FA con código fuente disponible y licencia no comercial, diseñado para mantener sus secretos de autenticación bajo su control. Las cuentas se guardan en un almacén local cifrado y no se necesita una cuenta de OTP Harbor en la nube.
 >
 > Añada cuentas manualmente o escanee un código QR otpauth, busque en la lista, copie el código actual y configure el borrado automático del portapapeles y el bloqueo. Windows Hello permite un desbloqueo rápido, mientras que la contraseña maestra sigue siendo el método de recuperación. Las copias de seguridad cifradas permiten una recuperación y migración controladas.
 

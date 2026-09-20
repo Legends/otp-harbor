@@ -57,6 +57,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-BrandAssetPolicy.ps1
 
+      - name: Validate repository license policy
+        shell: pwsh
+        run: ./scripts/validation/Test-RepositoryLicensePolicy.ps1
+
       - name: Validate Microsoft Store packaging controls
         shell: pwsh
         run: ./scripts/validation/Test-MicrosoftStorePackaging.ps1

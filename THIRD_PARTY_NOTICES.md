@@ -1,6 +1,6 @@
 # Third-party notices
 
-OTP Harbor uses third-party packages under licenses compatible with this repository's MIT distribution. Exact versions are declared in the project files and resolved by `dotnet restore`; dependency and vulnerability review runs in CI.
+OTP Harbor uses third-party packages under their respective licenses. Those licenses remain separate from OTP Harbor's PolyForm Noncommercial license and may grant different rights. Exact versions are declared in the project files and resolved by `dotnet restore`; dependency and vulnerability review runs in CI.
 
 ## Runtime dependencies
 

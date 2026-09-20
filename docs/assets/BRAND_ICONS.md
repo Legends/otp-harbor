@@ -2,16 +2,25 @@
 
 OTP Harbor releases do not contain Simple Icons artwork or any other third-party service logos. Account rows use deterministic initial tiles until the user explicitly imports a Simple Icons release ZIP that they obtained independently.
 
-## Project distribution policy
+## Third-party brand assets
 
-- OTP Harbor does not publish, mirror, bundle, endorse, or designate an official third-party brand-icon pack.
-- OTP Harbor includes no third-party service logos in application packages, installers, update artifacts, backups, exports, repository marketing artwork, or store listings.
-- Icon import is an explicit local user action. Users must obtain packs independently and import only assets they are authorized to use.
-- Third-party names used in compatibility text or resolver metadata identify the corresponding service only. They do not claim ownership, sponsorship, affiliation, certification, or endorsement.
-- Imported icons and their service associations are not used in OTP Harbor screenshots, advertising, or other outward-facing project material.
-- Project maintainers do not warrant that an upstream pack or individual icon is cleared for every jurisdiction or use. Commercial distributors should obtain qualified legal review for their intended markets.
+OTP Harbor intentionally does not distribute third-party brand assets. It does not bundle, host, provide, or automatically download third-party brand logos or icon packs.
 
-Putting an icon pack in another OTP Harbor-owned repository would still make the project a distributor of that pack. This policy therefore prohibits an official mixed-logo pack unless every included asset has received documented legal review and the policy is deliberately revised.
+Users may independently obtain image files or compatible icon packs and import them into OTP Harbor for local use. Such files remain user-provided content and are stored and processed locally.
+
+OTP Harbor does not grant any license or other rights to third-party trademarks, logos, artwork, or other intellectual property. Users are responsible for ensuring that their acquisition and use of imported assets is permitted under the applicable licenses, trademark rules, copyright rules, and brand guidelines.
+
+References to third-party product, service, or company names are used solely for identification and interoperability purposes. They do not imply sponsorship, endorsement, certification, authorization, or affiliation with OTP Harbor.
+
+OTP Harbor is not affiliated with or endorsed by the owners of any third-party trademarks referenced by the application.
+
+Third-party licenses and notices supplied with user-imported packages are preserved where technically applicable. Their presence does not constitute or imply authorization by the relevant trademark or copyright owner.
+
+OTP Harbor does not upload issuer names, account names, imported icons, or other icon-matching data for the purpose of resolving brand assets.
+
+The OTP Harbor release process includes automated checks intended to prevent third-party brand assets or automatic brand-asset download functionality from being included in official releases, installers, update artifacts, backups, exports, repository artwork, store listings, test fixtures, or other tracked visual media.
+
+Putting an icon pack in another OTP Harbor-owned repository would still make the project a distributor of that pack. OTP Harbor therefore does not publish, mirror, endorse, or designate an official mixed-logo pack. Any deliberate change to this policy requires documented asset-by-asset legal and provenance review.
 
 ## Data flow
 

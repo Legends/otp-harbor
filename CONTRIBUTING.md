@@ -48,6 +48,10 @@ The complete coding-agent and architecture contract is in [AGENTS.md](AGENTS.md)
 
 ## Pull requests
 
+By intentionally submitting a contribution for inclusion, you agree to license it under the
+repository license in effect when it is accepted and certify that you have the authority to do so.
+Copyright ownership is not transferred. Review [LICENSING.md](LICENSING.md) before contributing.
+
 A pull request should explain:
 
 - what changed and why;

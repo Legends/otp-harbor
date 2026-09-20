@@ -1,6 +1,6 @@
 # Project asset provenance
 
-This record covers every raster image embedded by `TOTP.UI.Avalonia.Desktop` and the public repository artwork. The files are project-owned outputs and are distributed under the repository's [MIT license](../../LICENSE.txt). No downloaded raster artwork is included.
+This record covers every versioned visual-media file in the repository, including application assets, public artwork, store material, screenshots, videos, and test fixtures. Their origins and review status are described below; this record does not purport to license third-party names or interface elements shown solely for compatibility documentation. No downloaded third-party brand artwork is included.
 
 ## Application icon
 
@@ -117,6 +117,13 @@ and reserved `example.invalid` account names. The screenshots were visually revi
 that they contain no real accounts, OTP seeds, personal paths, desktop content, or OS notifications.
 One-time codes and the QR workflow, when shown, derive only from synthetic fixture material.
 
+## QR import test fixtures
+
+`TOTP.Tests/Fixtures/Qr/google-authenticator-10-account-export-1.png` and
+`google-authenticator-10-account-export-2.png` are machine-readable transfer QR fixtures containing
+only synthetic test accounts. They contain no logo, brand artwork, real OTP secret, or personal
+account data. They are retained solely to exercise the offline Google Authenticator migration parser.
+
 ## Reviewed file hashes
 
 | File | SHA-256 |
@@ -142,8 +149,8 @@ One-time codes and the QR workflow, when shown, derive only from synthetic fixtu
 | `packaging/android/google-play/en-US/03-camera-google-import-1080x1920.png` | `00ec947db6c99ee51a197ce85db3792d94bc198c5d5910e705d865479ce01c89` |
 | `packaging/android/google-play/en-US/04-unlock-methods-1080x1920.png` | `fc4ded8671007ed4b0b0bc987bc13c1b2966b7c61191dee0679c76b8ca597613` |
 | `packaging/android/google-play/en-US/05-encrypted-backup-1080x1920.png` | `876b3d210c9bc74f679b119421363d60520e11d68ae45e573197cab632620a94` |
-| `packaging/android/google-play/en-US/06-four-languages-1080x1920.png` | `27416b536b1eb7235413ec71b391f843fed1f8475137dfafb462f3375257433` |
-| `packaging/android/google-play/en-US/app-icon-512x512.png` | `de5100e5175bdd9b61d1d9ae22222997f4c41f1ce0439764ec5436ccd89145b` |
+| `packaging/android/google-play/en-US/06-four-languages-1080x1920.png` | `27416b536b1eb7235413ec71b391f843fed1f8475137dfa7fb462f3375257433` |
+| `packaging/android/google-play/en-US/app-icon-512x512.png` | `de5100e5175bbdd9b61d1d9ae22222997f4c41f1ce0439764ec5436ccd89145b` |
 | `packaging/android/google-play/en-US/feature-graphic-1024x500.png` | `a65a9e4164b2b166d6b4de9fc79ee5a433b44a6a795f10fd60e4390464f42117` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png` | `66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-128.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
@@ -193,5 +200,7 @@ One-time codes and the QR workflow, when shown, derive only from synthetic fixtu
 | `packaging/windows-store/screenshots/fr-FR/marketing/03-add-and-import.png` | `2a5ed9a1b1d12845b3a23fc661e2c75cbac58cbdb99faefa3e8b76dcbdfe0d52` |
 | `packaging/windows-store/screenshots/fr-FR/marketing/04-windows-hello.png` | `885d9e38ff04dadc724ac055fd8f20dae754ac5101c336b68078c9ab3bafe4a5` |
 | `packaging/windows-store/screenshots/fr-FR/marketing/05-import-export.png` | `242772834189dba90a966ee59995a348241b33bc54aab6f2f801c2fe730ef82d` |
+| `TOTP.Tests/Fixtures/Qr/google-authenticator-10-account-export-1.png` | `8187e829ce68e29abed16a344ef9bcc3057e52f02f7e98348f921a2d8fa90640` |
+| `TOTP.Tests/Fixtures/Qr/google-authenticator-10-account-export-2.png` | `c0df83d925168869e81798a2974c7f90c4443dd31eabe8068759108076d130b3` |
 
 Any replacement requires a new provenance record, license review, updated hashes, and visual/build validation.
