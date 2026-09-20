@@ -278,7 +278,7 @@
                                                     ContextAccount="{Binding ContextAccount, Mode=TwoWay}"
                                                     ItemsSource="{Binding Accounts}"
                                                     SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
-                                                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                                    ScrollViewer.VerticalScrollBarVisibility="Hidden">
                                                     <ListBox.ItemsPanel>
                                                         <ItemsPanelTemplate>
                                                             <VirtualizingStackPanel />

@@ -104,6 +104,9 @@ public sealed class SharedStylesTests
                     "mobile-accounts",
                     StringComparison.Ordinal) == true);
         Assert.Contains("accounts", accountList.Attribute("Classes")?.Value);
+        Assert.Equal(
+            "Hidden",
+            accountList.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
 
         var countdown = accountList
             .Descendants(avalonia + "ProgressBar")
@@ -146,6 +149,31 @@ public sealed class SharedStylesTests
             iconStyle.Elements(avalonia + "Setter"),
             setter => setter.Attribute("Property")?.Value == "VerticalContentAlignment"
                 && setter.Attribute("Value")?.Value == "Center");
+    }
+
+    [Fact]
+    public void AccountLists_HideVerticalScrollBarsWithoutDisablingScrolling()
+    {
+        var fixtureDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia");
+
+        foreach (var fixtureName in new[] { "DesktopMainWindow.axaml", "MobileMainView.axaml" })
+        {
+            var document = XDocument.Load(Path.Combine(fixtureDirectory, fixtureName));
+            var accountList = document
+                .Descendants()
+                .Single(element =>
+                    element.Name.LocalName.EndsWith("ListBox", StringComparison.Ordinal)
+                    && element.Attribute("Classes")?.Value.Contains(
+                        "accounts",
+                        StringComparison.Ordinal) == true);
+
+            Assert.Equal(
+                "Hidden",
+                accountList.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
+        }
     }
 
     [Fact]

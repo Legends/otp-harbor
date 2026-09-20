@@ -267,7 +267,8 @@
                             IsHitTestVisible="{Binding !IsDeleteConfirmationVisible}"
                             IsVisible="{Binding HasAccounts}"
                             ItemsSource="{Binding Accounts}"
-                            SelectedItem="{Binding SelectedAccount, Mode=TwoWay}">
+                            SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
+                            ScrollViewer.VerticalScrollBarVisibility="Hidden">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="vm:MobileAccountItem">
                                     <Border
