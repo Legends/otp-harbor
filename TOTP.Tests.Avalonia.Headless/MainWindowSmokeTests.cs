@@ -1403,6 +1403,7 @@ public sealed class MainWindowSmokeTests
 
             Assert.NotNull(window.Icon);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Equal(new CornerRadius(2), window.CornerRadius);
             Assert.Empty(window.KeyBindings);
             var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
             Assert.Equal(window.Title, titleBar.Title);
@@ -1687,6 +1688,7 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(520, window.MinWidth);
             Assert.True(window.Topmost);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Equal(new CornerRadius(2), window.CornerRadius);
             Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
             var settingsTabs = Assert.Single(
                 window.GetVisualDescendants().OfType<TabControl>(),

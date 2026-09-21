@@ -13,6 +13,7 @@
     Height="540"
     MinWidth="360"
     MinHeight="200"
+    CornerRadius="2"
     WindowDecorations="None"
     WindowStartupLocation="CenterScreen"
     Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">

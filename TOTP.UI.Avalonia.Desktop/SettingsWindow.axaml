@@ -12,6 +12,7 @@
     Height="620"
     MinWidth="520"
     MinHeight="480"
+    CornerRadius="2"
     CanResize="False"
     ShowInTaskbar="False"
     Topmost="True"
