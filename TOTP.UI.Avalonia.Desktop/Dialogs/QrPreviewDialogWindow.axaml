@@ -11,14 +11,14 @@
     MinHeight="390"
     CanResize="True"
     ShowInTaskbar="False"
-    CornerRadius="2"
+    CornerRadius="4"
     WindowDecorations="None"
     WindowStartupLocation="CenterOwner"
     Title="{Binding Title}">
     <Border
         Background="{DynamicResource BrushWindowBackground}"
         ClipToBounds="True"
-        CornerRadius="2">
+        CornerRadius="4">
         <Grid RowDefinitions="Auto,*">
             <controls:ProductTitleBar
                 ShowIcon="False"
