@@ -3,14 +3,18 @@
 This is the maintained product agenda. Security, recovery confidence, local-first behavior, and
 license compliance take priority over convenience or distribution reach.
 
-1. **Issuer and logo handling — in progress.** Keep third-party artwork outside OTP Harbor
-   distributions while improving issuer resolution for user-imported local icon packs and custom
-   per-account icons.
+1. **Issuer and logo handling — implemented baseline, continue refinement.** Keep third-party
+   artwork outside OTP Harbor distributions. A versioned, logo-free local alias resolver improves
+   matching for user-imported icon packs, manifest-free packs are indexed from canonical SVG
+   filenames, and users can override automatic matching per account from the installed pack.
 2. **Import and export workflow — implemented baseline, continue hardening.** Keep migration from
    Aegis, Google Authenticator, 2FAS, URI lists, and OTP Harbor backups explicit, recoverable, and
    well-tested.
-3. **Large-vault navigation — planned.** Improve filtering, grouping, tags, favorites, and
-   navigation for vaults containing hundreds of accounts.
+3. **Large-vault navigation — in progress.** Search supports multiple terms. Desktop users can
+   create color-coded groups, assign or move accounts, filter from horizontally scrollable group
+   cards, and edit or delete groups from a right-click menu without deleting their accounts. The
+   default list shows ungrouped accounts, while search also matches group names. Continue with
+   favorites and additional organization for vaults containing hundreds of accounts.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.
 5. **First-run and onboarding — implemented baseline, continue refinement.** Explain vault

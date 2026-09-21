@@ -138,12 +138,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                     NotificationSeverity.Error);
                 return;
             }
-            SetMessage(
-                Localized(
+            var successMessage = imported.Value.Format == BrandIconPackFormat.FilenameIndexed
+                ? Localized(
+                    AvaloniaStringKeys.FilenameIndexedBrandIconPackImported,
+                    imported.Value.BrandCount)
+                : Localized(
                     AvaloniaStringKeys.BrandIconPackImported,
                     imported.Value.BrandCount,
-                    imported.Value.Version),
-                NotificationSeverity.Success);
+                    imported.Value.Version);
+            SetMessage(successMessage, NotificationSeverity.Success);
         }
         catch (Exception)
         {

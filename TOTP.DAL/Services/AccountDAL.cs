@@ -113,6 +113,43 @@ public sealed class AccountDAL : IAccountDAL
             }
         }, AppErrorCode.OtpUpdateFailed, "Failed to update OTP entry.");
 
+    public async Task<Result> SaveGroupAsync(
+        AccountGroup group,
+        IReadOnlyCollection<Guid> accountIds)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(accountIds);
+        var selectedIds = accountIds.ToHashSet();
+        return await ExecuteWriteAsync(list =>
+        {
+            if (!list.Any(account => selectedIds.Contains(account.ID)))
+                throw new InvalidOperationException("No selected group account is available.");
+
+            for (var index = 0; index < list.Count; index++)
+            {
+                var account = list[index];
+                if (selectedIds.Contains(account.ID))
+                {
+                    list[index] = account.WithGroup(group);
+                }
+                else if (account.Group?.Id == group.Id)
+                {
+                    list[index] = account.WithGroup(null);
+                }
+            }
+        }, AppErrorCode.OtpUpdateFailed, "Failed to save account group.");
+    }
+
+    public async Task<Result> DeleteGroupAsync(Guid groupId) =>
+        await ExecuteWriteAsync(list =>
+        {
+            for (var index = 0; index < list.Count; index++)
+            {
+                if (list[index].Group?.Id == groupId)
+                    list[index] = list[index].WithGroup(null);
+            }
+        }, AppErrorCode.OtpUpdateFailed, "Failed to delete account group.");
+
     public async Task<Result> DeleteAsync(Account account) =>
         await ExecuteWriteAsync(list => list.RemoveAll(x => x.ID == account.ID), AppErrorCode.OtpDeleteFailed, "Failed to delete OTP entry.");
 

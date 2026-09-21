@@ -47,6 +47,9 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
         return CreateFallbackForIssuer(string.IsNullOrWhiteSpace(issuer) ? accountName : issuer);
     }
 
+    public BrandInfo ResolveAccount(Guid accountId, string? issuer, string? accountName) =>
+        ResolveAccount(issuer, accountName, _packService.GetAccountBrandId(accountId));
+
     private BrandInfo CreateFallbackForIssuer(string? issuer)
     {
         var displayName = string.IsNullOrWhiteSpace(issuer) ? string.Empty : issuer.Trim();

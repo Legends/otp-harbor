@@ -63,8 +63,12 @@ public sealed class AvaloniaCompositionRootTests
             services.GetRequiredService<PasswordUnlockViewModel>());
         Assert.IsType<PasswordSetupViewModel>(
             services.GetRequiredService<PasswordSetupViewModel>());
-        Assert.IsType<AccountListViewModel>(
+        var accountList = Assert.IsType<AccountListViewModel>(
             services.GetRequiredService<AccountListViewModel>());
+        var brandIcons = services.GetRequiredService<IBrandIconPackService>();
+        Assert.Equal(
+            brandIcons.AvailableBrands.Count + 1,
+            accountList.EditorBrandIconOptions.Count);
         Assert.IsType<AccountQrCodeService>(
             services.GetRequiredService<IAccountQrCodeService>());
         Assert.IsType<QrAccountImportService>(

@@ -141,7 +141,18 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IQrImageDecoder, OpenCvQrImageDecoder>();
         services.AddSingleton<PasswordUnlockViewModel>();
         services.AddSingleton<PasswordSetupViewModel>();
-        services.AddSingleton<AccountListViewModel>();
+        services.AddSingleton(provider => new AccountListViewModel(
+            provider.GetRequiredService<IAccountManager>(),
+            provider.GetRequiredService<IAccountTotpService>(),
+            provider.GetRequiredService<IAsyncClipboardService>(),
+            provider.GetRequiredService<IAccountQrCodeService>(),
+            provider.GetRequiredService<IAvaloniaQrImageFactory>(),
+            provider.GetRequiredService<IAvaloniaDialogService>(),
+            provider.GetRequiredService<IAvaloniaLocalizationService>(),
+            settingsService: provider.GetRequiredService<ISettingsService>(),
+            qrPreviewDialogs: provider.GetRequiredService<IAvaloniaQrPreviewDialogService>(),
+            brandIconResolver: provider.GetRequiredService<IBrandIconResolver>(),
+            brandIconPackService: provider.GetRequiredService<IBrandIconPackService>()));
         services.AddSingleton<SettingsPageViewModel>();
         services.AddSingleton<AuthorizationSettingsViewModel>();
         services.AddSingleton<NativeFilePickerViewModel>();

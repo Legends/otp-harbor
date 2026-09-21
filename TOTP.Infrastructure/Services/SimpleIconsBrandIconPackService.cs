@@ -9,6 +9,7 @@ using FluentResults;
 using Microsoft.Extensions.Logging;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
+using TOTP.Infrastructure.Branding;
 
 namespace TOTP.Infrastructure.Services;
 
@@ -19,45 +20,31 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private const int MaximumEntries = 10_000;
     private const int MaximumMetadataBytes = 8 * 1024 * 1024;
     private const int MaximumSvgBytes = 64 * 1024;
+    private const int MaximumGenericIcons = 5_000;
+    private const int MaximumGenericNotices = 64;
+    private const int MaximumNoticeBytes = 128 * 1024;
     private const int MaximumAliasesPerBrand = 32;
-    private const int PackFormatVersion = 2;
+    private const int PackFormatVersion = 3;
     private const string StorageDirectoryName = "BrandIcons";
     private const string CurrentPackFileName = "current.json";
     private const string DisplaySettingsFileName = "display-settings.json";
+    private const string AccountBrandSettingsFileName = "account-brand-settings.json";
     private const string IndexFileName = "brand-index.json";
-
-    private static readonly IReadOnlyDictionary<string, string> KnownAliases =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["github com"] = "github",
-            ["gitlab com"] = "gitlab",
-            ["microsoft account"] = "microsoft",
-            ["microsoft 365"] = "microsoft",
-            ["office 365"] = "microsoft",
-            ["outlook"] = "microsoft",
-            ["hotmail"] = "microsoft",
-            ["azure"] = "microsoftazure",
-            ["azure ad"] = "microsoftentra",
-            ["aws"] = "amazonwebservices",
-            ["amazon web services"] = "amazonwebservices",
-            ["amazon"] = "amazon",
-            ["amazon com"] = "amazon",
-            ["paypal com"] = "paypal",
-            ["twitter"] = "x",
-            ["twitter com"] = "x",
-            ["x com"] = "x"
-        };
 
     private readonly string _storageRoot;
     private readonly string _packsRoot;
     private readonly string _currentPackPath;
     private readonly string _displaySettingsPath;
+    private readonly string _accountBrandSettingsPath;
     private readonly IPlatformFileSecurity _fileSecurity;
     private readonly ILogger<SimpleIconsBrandIconPackService> _logger;
+    private readonly IssuerAliasResolver _issuerAliases;
     private readonly SemaphoreSlim _importLock = new(1, 1);
     private readonly ConcurrentDictionary<string, string> _pathDataCache =
         new(StringComparer.Ordinal);
     private CatalogSnapshot _catalog = CatalogSnapshot.Empty;
+    private IReadOnlyDictionary<Guid, string> _accountBrandIds =
+        new Dictionary<Guid, string>();
     private bool _showIssuerLogo = true;
 
     public SimpleIconsBrandIconPackService(
@@ -68,11 +55,14 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         ArgumentNullException.ThrowIfNull(applicationPaths);
         _fileSecurity = fileSecurity ?? throw new ArgumentNullException(nameof(fileSecurity));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _issuerAliases = LoadIssuerAliases(_logger);
         _storageRoot = Path.Combine(applicationPaths.ApplicationDataDirectory, StorageDirectoryName);
         _packsRoot = Path.Combine(_storageRoot, "packs");
         _currentPackPath = Path.Combine(_storageRoot, CurrentPackFileName);
         _displaySettingsPath = Path.Combine(_storageRoot, DisplaySettingsFileName);
+        _accountBrandSettingsPath = Path.Combine(_storageRoot, AccountBrandSettingsFileName);
         TryLoadDisplaySettings();
+        TryLoadAccountBrandSettings();
         TryLoadInstalledCatalog();
     }
 
@@ -81,6 +71,16 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     public BrandIconPackStatus Status => Volatile.Read(ref _catalog).Status;
 
     public bool ShowIssuerLogo => Volatile.Read(ref _showIssuerLogo);
+
+    public IReadOnlyList<BrandDefinition> AvailableBrands =>
+        Volatile.Read(ref _catalog).Brands;
+
+    public string? GetAccountBrandId(Guid accountId)
+    {
+        if (accountId == Guid.Empty) return null;
+        var mappings = Volatile.Read(ref _accountBrandIds);
+        return mappings.TryGetValue(accountId, out var brandId) ? brandId : null;
+    }
 
     public BrandDefinition? Resolve(string? issuer, string? explicitBrandId = null)
     {
@@ -95,7 +95,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         var trimmed = issuer.Trim();
         if (catalog.ByAlias.TryGetValue(trimmed, out var exact)) return exact;
 
-        var normalized = Normalize(trimmed);
+        var normalized = IssuerAliasResolver.Normalize(trimmed);
         if (TryResolveNormalized(catalog, normalized, out var normalizedMatch)) return normalizedMatch;
 
         return null;
@@ -111,12 +111,14 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         return Resolve(accountName, explicitBrandId);
     }
 
-    private static bool TryResolveNormalized(
+    private bool TryResolveNormalized(
         CatalogSnapshot catalog,
         string normalized,
         out BrandDefinition? definition)
     {
         if (catalog.ByNormalizedAlias.TryGetValue(normalized, out definition)) return true;
+        if (_issuerAliases.TryResolve(normalized, out var exactKnownId))
+            return catalog.ById.TryGetValue(exactKnownId, out definition);
 
         // Some imported labels contain a human qualifier (for example
         // "GitHub test"). Only accept a known alias at the beginning and
@@ -125,15 +127,28 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         for (var length = tokens.Length - 1; length > 0; length--)
         {
             var prefix = string.Join(' ', tokens, 0, length);
+            if (prefix.Length < 3) continue;
             if (catalog.ByNormalizedAlias.TryGetValue(prefix, out definition)) return true;
-            if (KnownAliases.TryGetValue(prefix, out var knownId)
-                && catalog.ById.TryGetValue(knownId, out definition)) return true;
+            if (_issuerAliases.TryResolve(prefix, out var knownId))
+                return catalog.ById.TryGetValue(knownId, out definition);
         }
 
-        if (KnownAliases.TryGetValue(normalized, out var exactKnownId)
-            && catalog.ById.TryGetValue(exactKnownId, out definition)) return true;
         definition = null;
         return false;
+    }
+
+    private static IssuerAliasResolver LoadIssuerAliases(
+        ILogger<SimpleIconsBrandIconPackService> logger)
+    {
+        try
+        {
+            return IssuerAliasResolver.LoadDefault();
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or InvalidDataException)
+        {
+            logger.LogWarning("The built-in issuer resolver database could not be loaded.");
+            return IssuerAliasResolver.Empty;
+        }
     }
 
     public bool TryGetIconPathData(string brandId, out string pathData)
@@ -193,11 +208,15 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
             using var archive = ZipFile.OpenRead(temporaryArchive);
             ValidateArchiveShape(archive);
-            var metadataEntry = FindSingleMetadataEntry(archive);
-            var archivePrefix = metadataEntry.FullName[..^"data/simple-icons.json".Length];
-            var parsed = await ParseMetadataAsync(metadataEntry, cancellationToken);
+            var metadataEntry = FindMetadataEntry(archive);
+            var parsed = metadataEntry is null
+                ? ParseFilenameIndexedPack(archive)
+                : await ParseSimpleIconsMetadataAsync(metadataEntry, cancellationToken);
             var packageVersion = parsed.Version;
-            var packId = $"simple-icons-{SanitizeVersion(packageVersion)}-v{PackFormatVersion}-{archiveHash[..12].ToLowerInvariant()}";
+            var packPrefix = parsed.Format == BrandIconPackFormat.SimpleIcons
+                ? "simple-icons"
+                : "local-icons";
+            var packId = $"{packPrefix}-{SanitizeVersion(packageVersion)}-v{PackFormatVersion}-{archiveHash[..12].ToLowerInvariant()}";
             stagingDirectory = Path.Combine(_packsRoot, $".{packId}-{Guid.NewGuid():N}.staging");
             Directory.CreateDirectory(stagingDirectory);
             _fileSecurity.RestrictDirectoryToCurrentUser(stagingDirectory);
@@ -209,8 +228,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             foreach (var sourceBrand in parsed.Brands.OrderBy(value => value.Id, StringComparer.Ordinal))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var expectedName = $"{archivePrefix}icons/{sourceBrand.Id}.svg";
-                var iconEntry = archive.GetEntry(expectedName);
+                var iconEntry = archive.GetEntry(sourceBrand.ArchiveEntryName);
                 if (iconEntry is null || iconEntry.Length is <= 0 or > MaximumSvgBytes) continue;
                 var destination = Path.Combine(iconsDirectory, $"{sourceBrand.Id}.svg");
                 await ExtractValidatedSvgAsync(iconEntry, destination, cancellationToken);
@@ -221,10 +239,18 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     $"{sourceBrand.Id}.svg",
                     sourceBrand.Aliases));
             }
-            if (imported.Count == 0) return Result.Fail("The archive did not contain usable Simple Icons SVG files.");
+            if (imported.Count == 0) return Result.Fail("The archive did not contain usable brand SVG files.");
 
-            await CopyNoticeIfPresentAsync(archive, archivePrefix, "LICENSE.md", stagingDirectory, cancellationToken);
-            await CopyNoticeIfPresentAsync(archive, archivePrefix, "DISCLAIMER.md", stagingDirectory, cancellationToken);
+            if (parsed.Format == BrandIconPackFormat.SimpleIcons)
+            {
+                var archivePrefix = metadataEntry!.FullName[..^"data/simple-icons.json".Length];
+                await CopyNoticeIfPresentAsync(archive, archivePrefix, "LICENSE.md", stagingDirectory, cancellationToken);
+                await CopyNoticeIfPresentAsync(archive, archivePrefix, "DISCLAIMER.md", stagingDirectory, cancellationToken);
+            }
+            else
+            {
+                await CopyGenericNoticesAsync(archive, stagingDirectory, cancellationToken);
+            }
             var index = new BrandIndex(packageVersion, imported);
             var indexPath = Path.Combine(stagingDirectory, IndexFileName);
             await WriteJsonAsync(indexPath, index, cancellationToken);
@@ -246,7 +272,10 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             Volatile.Write(ref _catalog, snapshot);
             _pathDataCache.Clear();
             CatalogChanged?.Invoke(this, EventArgs.Empty);
-            return Result.Ok(new BrandIconPackImportResult(packageVersion, imported.Count));
+            return Result.Ok(new BrandIconPackImportResult(
+                packageVersion,
+                imported.Count,
+                parsed.Format));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -254,8 +283,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "A local Simple Icons pack could not be imported.");
-            return Result.Fail("The selected Simple Icons archive is invalid or could not be installed safely.");
+            _logger.LogWarning(ex, "A local brand icon pack could not be imported.");
+            return Result.Fail("The selected brand icon archive is invalid or could not be installed safely.");
         }
         finally
         {
@@ -291,7 +320,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "The local Simple Icons pack could not be removed.");
+            _logger.LogWarning(ex, "The local brand icon pack could not be removed.");
             return Result.Fail("The local brand-icon pack could not be removed.");
         }
         finally
@@ -344,6 +373,68 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
     }
 
+    public async Task<Result> SetAccountBrandIdAsync(
+        Guid accountId,
+        string? brandId,
+        CancellationToken cancellationToken = default)
+    {
+        if (accountId == Guid.Empty)
+            return Result.Fail("The account identifier is invalid.");
+        var normalizedBrandId = string.IsNullOrWhiteSpace(brandId)
+            ? null
+            : brandId.Trim().ToLowerInvariant();
+        await _importLock.WaitAsync(cancellationToken);
+        string? temporaryPath = null;
+        try
+        {
+            if (normalizedBrandId is not null
+                && !Volatile.Read(ref _catalog).ById.ContainsKey(normalizedBrandId))
+                return Result.Fail("The selected local brand icon is unavailable.");
+
+            var updated = new Dictionary<Guid, string>(
+                Volatile.Read(ref _accountBrandIds));
+            var changed = normalizedBrandId is null
+                ? updated.Remove(accountId)
+                : !updated.TryGetValue(accountId, out var current)
+                    || !string.Equals(current, normalizedBrandId, StringComparison.Ordinal);
+            if (normalizedBrandId is not null) updated[accountId] = normalizedBrandId;
+            if (!changed) return Result.Ok();
+
+            Directory.CreateDirectory(_storageRoot);
+            _fileSecurity.RestrictDirectoryToCurrentUser(_storageRoot);
+            temporaryPath = Path.Combine(
+                _storageRoot,
+                $"{AccountBrandSettingsFileName}.{Guid.NewGuid():N}.tmp");
+            var settings = new AccountBrandSettings(
+                1,
+                updated.OrderBy(pair => pair.Key)
+                    .Select(pair => new AccountBrandOverride(pair.Key, pair.Value))
+                    .ToList());
+            await WriteJsonAsync(temporaryPath, settings, cancellationToken);
+            _fileSecurity.RestrictFileToCurrentUser(temporaryPath);
+            File.Move(temporaryPath, _accountBrandSettingsPath, overwrite: true);
+            temporaryPath = null;
+            _fileSecurity.RestrictFileToCurrentUser(_accountBrandSettingsPath);
+            Volatile.Write(ref _accountBrandIds, updated);
+            CatalogChanged?.Invoke(this, EventArgs.Empty);
+            return Result.Ok();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "A local per-account brand-icon preference could not be saved.");
+            return Result.Fail("The per-account brand-icon preference could not be saved.");
+        }
+        finally
+        {
+            TryDeleteFile(temporaryPath);
+            _importLock.Release();
+        }
+    }
+
     private void RemoveImportedPackFiles()
     {
         if (Directory.Exists(_packsRoot))
@@ -372,6 +463,36 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
     }
 
+    private void TryLoadAccountBrandSettings()
+    {
+        try
+        {
+            if (!File.Exists(_accountBrandSettingsPath)) return;
+            var file = new FileInfo(_accountBrandSettingsPath);
+            if (file.Length is <= 0 or > 1024 * 1024) return;
+            var settings = JsonSerializer.Deserialize<AccountBrandSettings>(
+                File.ReadAllText(_accountBrandSettingsPath));
+            if (settings is null
+                || settings.Version != 1
+                || settings.Overrides is null
+                || settings.Overrides.Count > MaximumEntries) return;
+            var mappings = new Dictionary<Guid, string>();
+            foreach (var item in settings.Overrides)
+            {
+                if (item is null
+                    || item.AccountId == Guid.Empty
+                    || string.IsNullOrWhiteSpace(item.BrandId)
+                    || !SafeSlugRegex().IsMatch(item.BrandId)
+                    || !mappings.TryAdd(item.AccountId, item.BrandId)) return;
+            }
+            Volatile.Write(ref _accountBrandIds, mappings);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogWarning("The local per-account brand-icon preferences could not be loaded.");
+        }
+    }
+
     private void TryLoadInstalledCatalog()
     {
         try
@@ -397,16 +518,25 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         var byId = new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase);
         var byAlias = new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase);
         var byNormalizedAlias = new Dictionary<string, BrandDefinition>(StringComparer.Ordinal);
+        var ambiguousAliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var ambiguousNormalizedAliases = new HashSet<string>(StringComparer.Ordinal);
         foreach (var item in index.Brands)
         {
-            if (!SafeSlugRegex().IsMatch(item.Id) || !SafeSvgNameRegex().IsMatch(item.IconFileName)) continue;
+            if (!SafeSlugRegex().IsMatch(item.Id)
+                || !SafeSvgNameRegex().IsMatch(item.IconFileName)
+                || !IsSafeDisplayText(item.DisplayName, 256)
+                || item.Aliases is null) continue;
             var definition = new BrandDefinition(item.Id, item.DisplayName, item.BackgroundColor, item.IconFileName);
-            byId.TryAdd(item.Id, definition);
+            if (!byId.TryAdd(item.Id, definition)) continue;
             foreach (var alias in item.Aliases.Append(item.Id).Append(item.DisplayName))
             {
                 if (string.IsNullOrWhiteSpace(alias)) continue;
-                byAlias.TryAdd(alias.Trim(), definition);
-                byNormalizedAlias.TryAdd(Normalize(alias), definition);
+                AddUnambiguousAlias(byAlias, ambiguousAliases, alias.Trim(), definition);
+                AddUnambiguousAlias(
+                    byNormalizedAlias,
+                    ambiguousNormalizedAliases,
+                    IssuerAliasResolver.Normalize(alias),
+                    definition);
             }
         }
         return new CatalogSnapshot(
@@ -414,7 +544,27 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             byId,
             byAlias,
             byNormalizedAlias,
+            byId.Values.OrderBy(value => value.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(value => value.Id, StringComparer.Ordinal)
+                .ToArray(),
             new BrandIconPackStatus(true, index.Version, byId.Count));
+    }
+
+    private static void AddUnambiguousAlias(
+        IDictionary<string, BrandDefinition> aliases,
+        ISet<string> ambiguousAliases,
+        string alias,
+        BrandDefinition definition)
+    {
+        if (alias.Length == 0 || ambiguousAliases.Contains(alias)) return;
+        if (!aliases.TryGetValue(alias, out var existing))
+        {
+            aliases.Add(alias, definition);
+            return;
+        }
+        if (string.Equals(existing.Id, definition.Id, StringComparison.OrdinalIgnoreCase)) return;
+        aliases.Remove(alias);
+        ambiguousAliases.Add(alias);
     }
 
     private static async Task<string> CopyBoundedAndHashAsync(Stream source, string destination, CancellationToken token)
@@ -451,19 +601,26 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
     }
 
-    private static ZipArchiveEntry FindSingleMetadataEntry(ZipArchive archive)
+    private static ZipArchiveEntry? FindMetadataEntry(ZipArchive archive)
     {
         var matches = archive.Entries.Where(entry =>
-            entry.FullName.Replace('\\', '/').EndsWith("data/simple-icons.json", StringComparison.Ordinal)
-            && entry.Length is > 0 and <= MaximumMetadataBytes).ToArray();
-        return matches.Length == 1 ? matches[0] : throw new InvalidDataException("Simple Icons metadata is missing or ambiguous.");
+            entry.FullName.Replace('\\', '/').EndsWith(
+                "data/simple-icons.json",
+                StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (matches.Length == 0) return null;
+        if (matches.Length != 1 || matches[0].Length is <= 0 or > MaximumMetadataBytes)
+            throw new InvalidDataException("Simple Icons metadata is invalid or ambiguous.");
+        return matches[0];
     }
 
-    private static async Task<ParsedMetadata> ParseMetadataAsync(ZipArchiveEntry entry, CancellationToken token)
+    private static async Task<ParsedMetadata> ParseSimpleIconsMetadataAsync(
+        ZipArchiveEntry entry,
+        CancellationToken token)
     {
         await using var stream = entry.Open();
         using var document = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 16 }, token);
         if (document.RootElement.ValueKind != JsonValueKind.Array) throw new InvalidDataException("Unexpected Simple Icons metadata.");
+        var archivePrefix = entry.FullName[..^"data/simple-icons.json".Length];
         var brands = new List<SourceBrand>();
         foreach (var icon in document.RootElement.EnumerateArray())
         {
@@ -471,25 +628,63 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 || !icon.TryGetProperty("hex", out var hexElement)) continue;
             var title = titleElement.GetString();
             var hex = hexElement.GetString();
-            if (title is null || hex is null
-                || title.Length is 0 or > 256
+            if (hex is null
+                || !IsSafeDisplayText(title, 256)
                 || hex.Length is not 6
                 ) continue;
+            var safeTitle = title!;
             var slug = icon.TryGetProperty("slug", out var slugElement)
                 ? slugElement.GetString()
-                : TitleToSlug(title);
+                : TitleToSlug(safeTitle);
             if (slug is null
                 || !SafeSlugRegex().IsMatch(slug) || !HexRegex().IsMatch(hex)) continue;
-            var aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { slug, title };
+            var aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { slug, safeTitle };
             if (icon.TryGetProperty("aliases", out var aliasObject))
             {
                 AddAliases(aliasObject, "aka", aliases);
                 AddAliases(aliasObject, "old", aliases);
             }
-            brands.Add(new SourceBrand(slug, title, $"#{hex.ToUpperInvariant()}", aliases.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).Take(MaximumAliasesPerBrand).ToArray()));
+            brands.Add(new SourceBrand(
+                slug,
+                safeTitle,
+                $"#{hex.ToUpperInvariant()}",
+                aliases.OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+                    .Take(MaximumAliasesPerBrand)
+                    .ToArray(),
+                $"{archivePrefix}icons/{slug}.svg"));
         }
         var version = ReadVersionFromArchivePrefix(entry.FullName) ?? "unknown";
-        return new ParsedMetadata(version, brands);
+        return new ParsedMetadata(version, BrandIconPackFormat.SimpleIcons, brands);
+    }
+
+    private static ParsedMetadata ParseFilenameIndexedPack(ZipArchive archive)
+    {
+        var brands = new List<SourceBrand>();
+        var brandIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in archive.Entries)
+        {
+            if (entry.Name.Length == 0
+                || !entry.Name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)) continue;
+            if (entry.Length is <= 0 or > MaximumSvgBytes)
+                throw new InvalidDataException("A filename-indexed SVG has an invalid size.");
+            if (!SafeGenericSvgNameRegex().IsMatch(entry.Name))
+                throw new InvalidDataException("A filename-indexed SVG has an unsafe brand id.");
+            var sourceName = Path.GetFileNameWithoutExtension(entry.Name);
+            var brandId = sourceName.ToLowerInvariant();
+            if (!brandIds.Add(brandId))
+                throw new InvalidDataException("A filename-indexed brand id is duplicated or ambiguous.");
+            if (brands.Count >= MaximumGenericIcons)
+                throw new InvalidDataException("The filename-indexed icon count exceeds the supported limit.");
+            brands.Add(new SourceBrand(
+                brandId,
+                sourceName,
+                "#334155",
+                [brandId, sourceName],
+                entry.FullName));
+        }
+        if (brands.Count == 0)
+            throw new InvalidDataException("The archive contains no filename-indexed SVG files.");
+        return new ParsedMetadata("filename-indexed", BrandIconPackFormat.FilenameIndexed, brands);
     }
 
     private static void AddAliases(JsonElement aliasObject, string propertyName, HashSet<string> target)
@@ -500,9 +695,14 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             string? value = alias.ValueKind == JsonValueKind.String ? alias.GetString()
                 : alias.ValueKind == JsonValueKind.Object && alias.TryGetProperty("title", out var title) ? title.GetString()
                 : null;
-            if (!string.IsNullOrWhiteSpace(value) && value.Length <= 128) target.Add(value);
+            if (IsSafeDisplayText(value, 128)) target.Add(value!);
         }
     }
+
+    private static bool IsSafeDisplayText(string? value, int maximumLength) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.Length <= maximumLength
+        && !value.Any(char.IsControl);
 
     private static async Task ExtractValidatedSvgAsync(ZipArchiveEntry entry, string destination, CancellationToken token)
     {
@@ -534,10 +734,44 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private static async Task CopyNoticeIfPresentAsync(ZipArchive archive, string prefix, string name, string destinationDirectory, CancellationToken token)
     {
         var entry = archive.GetEntry(prefix + name);
-        if (entry is null || entry.Length <= 0 || entry.Length > 128 * 1024) return;
+        if (entry is null || entry.Length <= 0 || entry.Length > MaximumNoticeBytes) return;
         await using var input = entry.Open();
         await using var output = new FileStream(Path.Combine(destinationDirectory, name), FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
         await input.CopyToAsync(output, token);
+    }
+
+    private static async Task CopyGenericNoticesAsync(
+        ZipArchive archive,
+        string destinationDirectory,
+        CancellationToken token)
+    {
+        var notices = archive.Entries.Where(entry =>
+            entry.Name.Length > 0
+            && GenericNoticeNameRegex().IsMatch(entry.Name)).ToArray();
+        if (notices.Length == 0) return;
+        if (notices.Length > MaximumGenericNotices
+            || notices.Any(entry => entry.Length is <= 0 or > MaximumNoticeBytes))
+            throw new InvalidDataException("The filename-indexed pack contains invalid notice files.");
+
+        var noticesDirectory = Path.Combine(destinationDirectory, "notices");
+        Directory.CreateDirectory(noticesDirectory);
+        for (var index = 0; index < notices.Length; index++)
+        {
+            token.ThrowIfCancellationRequested();
+            var entry = notices[index];
+            var destination = Path.Combine(
+                noticesDirectory,
+                $"{index + 1:D2}-{entry.Name.ToUpperInvariant()}");
+            await using var input = entry.Open();
+            await using var output = new FileStream(
+                destination,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                81920,
+                true);
+            await input.CopyToAsync(output, token);
+        }
     }
 
     private static async Task WriteJsonAsync<T>(string path, T value, CancellationToken token)
@@ -545,23 +779,6 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         await using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
         await JsonSerializer.SerializeAsync(stream, value, cancellationToken: token);
         await stream.FlushAsync(token);
-    }
-
-    private static string Normalize(string value)
-    {
-        var builder = new StringBuilder(value.Length);
-        var needsSpace = false;
-        foreach (var character in value.Normalize(NormalizationForm.FormKC))
-        {
-            if (char.IsLetterOrDigit(character))
-            {
-                if (needsSpace && builder.Length > 0) builder.Append(' ');
-                builder.Append(char.ToLowerInvariant(character));
-                needsSpace = false;
-            }
-            else needsSpace = true;
-        }
-        return builder.ToString();
     }
 
     // Mirrors Simple Icons' titleToSlug implementation so metadata entries that
@@ -638,10 +855,16 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     [GeneratedRegex("^[a-z0-9_]+\\.svg$", RegexOptions.CultureInvariant)]
     private static partial Regex SafeSvgNameRegex();
 
+    [GeneratedRegex("^[A-Za-z0-9_]+\\.svg$", RegexOptions.CultureInvariant)]
+    private static partial Regex SafeGenericSvgNameRegex();
+
+    [GeneratedRegex("^(?:LICENSE|LICENCE|COPYING|NOTICE|DISCLAIMER)(?:\\.(?:MD|TXT))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex GenericNoticeNameRegex();
+
     [GeneratedRegex("^[0-9A-Fa-f]{6}$", RegexOptions.CultureInvariant)]
     private static partial Regex HexRegex();
 
-    [GeneratedRegex("^simple-icons-[0-9A-Za-z.-]+-[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^(?:simple-icons|local-icons)-[0-9A-Za-z.-]+-[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
     private static partial Regex SafePackIdRegex();
 
     [GeneratedRegex(@"(?:^|/)simple-icons-([0-9]+(?:\.[0-9]+){1,3}(?:-[0-9A-Za-z.-]+)?)/data/simple-icons\.json$", RegexOptions.CultureInvariant)]
@@ -649,15 +872,26 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     private sealed record CurrentPack(string PackId);
     private sealed record BrandDisplaySettings(bool ShowIssuerLogo);
+    private sealed record AccountBrandSettings(int Version, List<AccountBrandOverride> Overrides);
+    private sealed record AccountBrandOverride(Guid AccountId, string BrandId);
     private sealed record BrandIndex(string Version, List<IndexBrand> Brands);
     private sealed record IndexBrand(string Id, string DisplayName, string BackgroundColor, string IconFileName, string[] Aliases);
-    private sealed record SourceBrand(string Id, string DisplayName, string BackgroundColor, string[] Aliases);
-    private sealed record ParsedMetadata(string Version, List<SourceBrand> Brands);
+    private sealed record SourceBrand(
+        string Id,
+        string DisplayName,
+        string BackgroundColor,
+        string[] Aliases,
+        string ArchiveEntryName);
+    private sealed record ParsedMetadata(
+        string Version,
+        BrandIconPackFormat Format,
+        List<SourceBrand> Brands);
     private sealed record CatalogSnapshot(
         string? PackDirectory,
         IReadOnlyDictionary<string, BrandDefinition> ById,
         IReadOnlyDictionary<string, BrandDefinition> ByAlias,
         IReadOnlyDictionary<string, BrandDefinition> ByNormalizedAlias,
+        IReadOnlyList<BrandDefinition> Brands,
         BrandIconPackStatus Status)
     {
         internal static CatalogSnapshot Empty { get; } = new(
@@ -665,6 +899,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase),
             new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase),
             new Dictionary<string, BrandDefinition>(StringComparer.Ordinal),
+            [],
             new BrandIconPackStatus(false, null, 0));
     }
 }

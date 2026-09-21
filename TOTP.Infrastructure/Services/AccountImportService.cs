@@ -197,7 +197,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     incoming.Issuer,
                     incoming.Secret,
                     incoming.AccountName,
-                    incoming.PeriodSeconds);
+                    incoming.PeriodSeconds,
+                    incoming.Group);
                 write = await accountManager.UpdateAsync(match, replacement);
                 if (write.IsSuccess)
                 {
@@ -214,7 +215,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                         incoming.Issuer,
                         incoming.Secret,
                         incoming.AccountName,
-                        incoming.PeriodSeconds)
+                        incoming.PeriodSeconds,
+                        incoming.Group)
                     : CreateKeepBoth(incoming, working);
                 write = await accountManager.AddNewAsync(added);
                 if (write.IsSuccess)
@@ -244,11 +246,13 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         {
             var issuer = account.Issuer?.Trim();
             var accountName = account.AccountName?.Trim();
+            var validGroup = AccountGroupPolicy.TryNormalize(account.Group, out var group);
             if (string.IsNullOrWhiteSpace(issuer)
                 || issuer.Length > 256
                 || (accountName?.Length ?? 0) > 256
                 || !SecretValidation.IsValidBase32Secret(account.Secret)
-                || !TotpPeriodPolicy.IsSupported(account.PeriodSeconds))
+                || !TotpPeriodPolicy.IsSupported(account.PeriodSeconds)
+                || !validGroup)
             {
                 validated.Clear();
                 return false;
@@ -259,7 +263,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 issuer,
                 SecretValidation.NormalizeBase32Secret(account.Secret),
                 string.IsNullOrWhiteSpace(accountName) ? null : accountName,
-                account.PeriodSeconds));
+                account.PeriodSeconds,
+                group));
         }
 
         return true;
@@ -350,6 +355,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             issuer,
             incoming.Secret,
             incoming.AccountName,
-            incoming.PeriodSeconds);
+            incoming.PeriodSeconds,
+            incoming.Group);
     }
 }

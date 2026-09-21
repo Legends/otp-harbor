@@ -42,11 +42,13 @@ public static class AvaloniaStringKeys
     public const string ChooseGoogleAuthenticatorQrImage = nameof(ChooseGoogleAuthenticatorQrImage);
     public const string BrandIcons = nameof(BrandIcons);
     public const string BrandIconsHelp = nameof(BrandIconsHelp);
+    public const string BrandIconsFormatHelp = nameof(BrandIconsFormatHelp);
     public const string ImportSimpleIconsPack = nameof(ImportSimpleIconsPack);
     public const string SelectSimpleIconsPack = nameof(SelectSimpleIconsPack);
     public const string SimpleIconsZipFiles = nameof(SimpleIconsZipFiles);
     public const string NoBrandIconPackSelected = nameof(NoBrandIconPackSelected);
     public const string BrandIconPackImported = nameof(BrandIconPackImported);
+    public const string FilenameIndexedBrandIconPackImported = nameof(FilenameIndexedBrandIconPackImported);
     public const string BrandIconPackImportFailed = nameof(BrandIconPackImportFailed);
     public const string BrandIconPackReset = nameof(BrandIconPackReset);
     public const string BrandIconPackResetFailed = nameof(BrandIconPackResetFailed);
@@ -98,6 +100,30 @@ public static class AvaloniaStringKeys
     public const string SearchAccounts = nameof(SearchAccounts);
     public const string SearchAccountsShortcut = nameof(SearchAccountsShortcut);
     public const string ClearSearch = nameof(ClearSearch);
+    public const string ManageGroups = nameof(ManageGroups);
+    public const string Groups = nameof(Groups);
+    public const string AllAccounts = nameof(AllAccounts);
+    public const string CreateGroup = nameof(CreateGroup);
+    public const string EditGroup = nameof(EditGroup);
+    public const string DeleteGroup = nameof(DeleteGroup);
+    public const string DeleteGroupPrompt = nameof(DeleteGroupPrompt);
+    public const string GroupName = nameof(GroupName);
+    public const string GroupColor = nameof(GroupColor);
+    public const string GroupAccounts = nameof(GroupAccounts);
+    public const string GroupNameRequired = nameof(GroupNameRequired);
+    public const string GroupNameDuplicate = nameof(GroupNameDuplicate);
+    public const string GroupAccountRequired = nameof(GroupAccountRequired);
+    public const string GroupSaveFailed = nameof(GroupSaveFailed);
+    public const string GroupSaved = nameof(GroupSaved);
+    public const string GroupDeleteFailed = nameof(GroupDeleteFailed);
+    public const string GroupDeleted = nameof(GroupDeleted);
+    public const string GroupColorGreen = nameof(GroupColorGreen);
+    public const string GroupColorTurquoise = nameof(GroupColorTurquoise);
+    public const string GroupColorBlue = nameof(GroupColorBlue);
+    public const string GroupColorOrange = nameof(GroupColorOrange);
+    public const string GroupColorRed = nameof(GroupColorRed);
+    public const string GroupColorPurple = nameof(GroupColorPurple);
+    public const string Save = nameof(Save);
     public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string NoEntriesYet = nameof(NoEntriesYet);
     public const string NoMatchingEntries = nameof(NoMatchingEntries);
@@ -177,6 +203,9 @@ public static class AvaloniaStringKeys
     public const string Issuer = nameof(Issuer);
     public const string AccountName = nameof(AccountName);
     public const string Secret = nameof(Secret);
+    public const string BrandIcon = nameof(BrandIcon);
+    public const string AutomaticBrandIcon = nameof(AutomaticBrandIcon);
+    public const string BrandIconHelp = nameof(BrandIconHelp);
     public const string AdvancedOptions = nameof(AdvancedOptions);
     public const string TotpPeriod = nameof(TotpPeriod);
     public const string ClearPeriod = nameof(ClearPeriod);
@@ -190,6 +219,7 @@ public static class AvaloniaStringKeys
     public const string AccountDuplicate = nameof(AccountDuplicate);
     public const string AccountSaveFailed = nameof(AccountSaveFailed);
     public const string AccountSaved = nameof(AccountSaved);
+    public const string AccountSavedIconPreferenceFailed = nameof(AccountSavedIconPreferenceFailed);
     public const string AccountEditLoadFailed = nameof(AccountEditLoadFailed);
     public const string AccountDeleteFailed = nameof(AccountDeleteFailed);
     public const string AccountDeleted = nameof(AccountDeleted);
@@ -353,8 +383,9 @@ public static class AvaloniaStringKeys
         DownloadUpdate, InstallUpdate, ReleaseNotes, VerifyAppcast, SoftwareUpdates,
         ScanQrCamera, ImportQrCode, ImportGoogleAuthenticator,
         GoogleAuthenticatorImportHelp, ChooseGoogleAuthenticatorQrImage,
-        BrandIcons, BrandIconsHelp, ImportSimpleIconsPack, SelectSimpleIconsPack,
+        BrandIcons, BrandIconsHelp, BrandIconsFormatHelp, ImportSimpleIconsPack, SelectSimpleIconsPack,
         SimpleIconsZipFiles, NoBrandIconPackSelected, BrandIconPackImported,
+        FilenameIndexedBrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed, ResetBrandIcons,
         ShowIssuerLogo, ShowIssuerLogoHelp,
         OpenQrImage, SelectQrImage, QrImageFiles,
@@ -369,6 +400,11 @@ public static class AvaloniaStringKeys
         Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
         IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
+        ManageGroups, Groups, AllAccounts, CreateGroup, EditGroup, DeleteGroup,
+        DeleteGroupPrompt, GroupName, GroupColor, GroupAccounts, GroupNameRequired,
+        GroupNameDuplicate, GroupAccountRequired, GroupSaveFailed, GroupSaved,
+        GroupDeleteFailed, GroupDeleted, GroupColorGreen, GroupColorTurquoise,
+        GroupColorBlue, GroupColorOrange, GroupColorRed, GroupColorPurple, Save,
         SearchResultsFormat, NoEntriesYet,
         NoMatchingEntries, CloseSettings, GenerateCode,
         ShowQrCode, CopyTimedClear, CopyTimedClearShortcut, Password, PasswordAuthorizationHelp,
@@ -390,9 +426,11 @@ public static class AvaloniaStringKeys
         PortableEnvelopeStatus, AutomaticRollbackStatus, LegacyMigrationStatus,
         AddAccount, AddAccountShortcut, EditAccount, EditAccountShortcut,
         DeleteAccount, DeleteAccountShortcut, DeleteAccountPrompt, Delete, Issuer,
-        AccountName, Secret, AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
+        AccountName, Secret, BrandIcon, AutomaticBrandIcon, BrandIconHelp,
+        AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,
         AccountSecretInvalid, AccountDuplicate, AccountSaveFailed, AccountSaved,
+        AccountSavedIconPreferenceFailed,
         AccountEditLoadFailed, AccountDeleteFailed, AccountDeleted, CodeRefreshFailed,
         CodeCopied, CodeCopiedWithClear, CodeCopiedWithoutClear, ClipboardCopyUnavailable,
         CodeRemainingTime, QrInvalid, QrImportFailed,

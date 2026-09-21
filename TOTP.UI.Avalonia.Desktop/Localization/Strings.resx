@@ -65,6 +65,9 @@
   <data name="Issuer" xml:space="preserve"><value>Issuer</value></data>
   <data name="AccountName" xml:space="preserve"><value>Account name</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32 secret</value></data>
+  <data name="BrandIcon" xml:space="preserve"><value>Account icon</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatic issuer match</value></data>
+  <data name="BrandIconHelp" xml:space="preserve"><value>Choose an icon from the imported local pack or keep automatic matching. This local display preference is not included in vault backups.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Advanced options</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code period in seconds</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Clear code period</value></data>
@@ -78,6 +81,7 @@
   <data name="AccountDuplicate" xml:space="preserve"><value>An account with the same issuer and account name already exists.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>The account could not be saved safely. Existing encrypted data was not changed.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Account saved.</value></data>
+  <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Account saved, but its local icon preference could not be saved.</value></data>
   <data name="AccountEditLoadFailed" xml:space="preserve"><value>The selected account could not be opened for editing.</value></data>
   <data name="AccountDeleteFailed" xml:space="preserve"><value>The account could not be deleted safely.</value></data>
   <data name="AccountDeleted" xml:space="preserve"><value>Account deleted.</value></data>
@@ -179,6 +183,30 @@
   <data name="SearchAccounts" xml:space="preserve"><value>Search issuer or account</value></data>
   <data name="SearchAccountsShortcut" xml:space="preserve"><value>Search issuer or account (Ctrl+F)</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Clear search</value></data>
+  <data name="ManageGroups" xml:space="preserve"><value>Manage groups</value></data>
+  <data name="Groups" xml:space="preserve"><value>Groups</value></data>
+  <data name="AllAccounts" xml:space="preserve"><value>All accounts</value></data>
+  <data name="CreateGroup" xml:space="preserve"><value>Create group</value></data>
+  <data name="EditGroup" xml:space="preserve"><value>Edit group</value></data>
+  <data name="DeleteGroup" xml:space="preserve"><value>Delete group</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>Delete the group “{0}”? Its accounts will remain in the vault.</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Name</value></data>
+  <data name="GroupColor" xml:space="preserve"><value>Color</value></data>
+  <data name="GroupAccounts" xml:space="preserve"><value>Accounts</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Enter a group name.</value></data>
+  <data name="GroupNameDuplicate" xml:space="preserve"><value>A group with this name already exists.</value></data>
+  <data name="GroupAccountRequired" xml:space="preserve"><value>Select at least one account.</value></data>
+  <data name="GroupSaveFailed" xml:space="preserve"><value>The group could not be saved.</value></data>
+  <data name="GroupSaved" xml:space="preserve"><value>Group saved.</value></data>
+  <data name="GroupDeleteFailed" xml:space="preserve"><value>The group could not be deleted.</value></data>
+  <data name="GroupDeleted" xml:space="preserve"><value>Group deleted.</value></data>
+  <data name="GroupColorGreen" xml:space="preserve"><value>Green</value></data>
+  <data name="GroupColorTurquoise" xml:space="preserve"><value>Turquoise</value></data>
+  <data name="GroupColorBlue" xml:space="preserve"><value>Blue</value></data>
+  <data name="GroupColorOrange" xml:space="preserve"><value>Orange</value></data>
+  <data name="GroupColorRed" xml:space="preserve"><value>Red</value></data>
+  <data name="GroupColorPurple" xml:space="preserve"><value>Purple</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No matching entries.</value></data>
@@ -327,11 +355,13 @@
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choose Google Authenticator QR image…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
   <data name="BrandIconsHelp" xml:space="preserve"><value>OTP Harbor includes no third-party logos and is not affiliated with or endorsed by Simple Icons, icon-pack providers, or depicted brands. Import only a ZIP you obtained independently and are authorized to use. Imported artwork stays in local app data; no issuer or account information is uploaded.</value></data>
-  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import Simple Icons ZIP…</value></data>
-  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Select Simple Icons release ZIP</value></data>
-  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Simple Icons ZIP files</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Supported ZIPs: a Simple Icons release, or SVG files named with canonical IDs such as github.svg. Nested folders are allowed; duplicate or non-canonical filenames are rejected.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import local icon pack ZIP…</value></data>
+  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Select local icon pack ZIP</value></data>
+  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Icon pack ZIP files</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No icon pack was selected.</value></data>
   <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from Simple Icons {1}.</value></data>
+  <data name="FilenameIndexedBrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from the filename-indexed ZIP.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>The icon pack is invalid or could not be installed safely.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Imported brand icons were removed.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Could not remove the imported brand icons.</value></data>

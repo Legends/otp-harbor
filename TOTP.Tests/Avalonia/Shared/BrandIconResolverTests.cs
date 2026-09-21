@@ -55,4 +55,20 @@ public sealed class BrandIconResolverTests
         Assert.Same(first, second);
         pack.Verify(value => value.TryGetIconPathData("github", out It.Ref<string>.IsAny), Times.Once);
     }
+
+    [Fact]
+    public void ResolveAccount_UsesPersistedAccountOverrideBeforeIssuerMatch()
+    {
+        var accountId = Guid.NewGuid();
+        var pack = new Mock<IBrandIconPackService>();
+        pack.Setup(value => value.GetAccountBrandId(accountId)).Returns("amazon");
+        pack.Setup(value => value.ResolveAccount("GitHub", "alice", "amazon"))
+            .Returns(new BrandDefinition("amazon", "Amazon", "#FF9900", "amazon.svg"));
+        using var sut = new BrandIconResolver(pack.Object);
+
+        var resolved = sut.ResolveAccount(accountId, "GitHub", "alice");
+
+        Assert.Equal("amazon", resolved.Id);
+        pack.Verify(value => value.ResolveAccount("GitHub", "alice", "amazon"), Times.Once);
+    }
 }

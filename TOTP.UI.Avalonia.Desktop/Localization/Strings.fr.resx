@@ -65,6 +65,9 @@
   <data name="Issuer" xml:space="preserve"><value>Émetteur</value></data>
   <data name="AccountName" xml:space="preserve"><value>Nom du compte</value></data>
   <data name="Secret" xml:space="preserve"><value>Secret Base32</value></data>
+  <data name="BrandIcon" xml:space="preserve"><value>Icône du compte</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Correspondance automatique de l’émetteur</value></data>
+  <data name="BrandIconHelp" xml:space="preserve"><value>Choisissez une icône du pack local importé ou conservez la correspondance automatique. Cette préférence d’affichage locale n’est pas incluse dans les sauvegardes du coffre-fort.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Options avancées</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Période du code en secondes</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Effacer la période du code</value></data>
@@ -78,6 +81,7 @@
   <data name="AccountDuplicate" xml:space="preserve"><value>Un compte avec le même émetteur et le même nom existe déjà.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>Le compte n’a pas pu être enregistré de manière sécurisée. Les données chiffrées existantes n’ont pas été modifiées.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Compte enregistré.</value></data>
+  <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Le compte a été enregistré, mais sa préférence d’icône locale n’a pas pu être sauvegardée.</value></data>
   <data name="AccountEditLoadFailed" xml:space="preserve"><value>Le compte sélectionné n’a pas pu être ouvert pour modification.</value></data>
   <data name="AccountDeleteFailed" xml:space="preserve"><value>Le compte n’a pas pu être supprimé de manière sécurisée.</value></data>
   <data name="AccountDeleted" xml:space="preserve"><value>Compte supprimé.</value></data>
@@ -179,6 +183,30 @@
   <data name="SearchAccounts" xml:space="preserve"><value>Rechercher un émetteur ou un compte</value></data>
   <data name="SearchAccountsShortcut" xml:space="preserve"><value>Rechercher un émetteur ou un compte (Ctrl+F)</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Effacer la recherche</value></data>
+  <data name="ManageGroups" xml:space="preserve"><value>Gérer les groupes</value></data>
+  <data name="Groups" xml:space="preserve"><value>Groupes</value></data>
+  <data name="AllAccounts" xml:space="preserve"><value>Tous les comptes</value></data>
+  <data name="CreateGroup" xml:space="preserve"><value>Créer un groupe</value></data>
+  <data name="EditGroup" xml:space="preserve"><value>Modifier le groupe</value></data>
+  <data name="DeleteGroup" xml:space="preserve"><value>Supprimer le groupe</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>Supprimer le groupe « {0} » ? Ses comptes resteront dans le coffre.</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Nom</value></data>
+  <data name="GroupColor" xml:space="preserve"><value>Couleur</value></data>
+  <data name="GroupAccounts" xml:space="preserve"><value>Comptes</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Saisissez un nom de groupe.</value></data>
+  <data name="GroupNameDuplicate" xml:space="preserve"><value>Un groupe portant ce nom existe déjà.</value></data>
+  <data name="GroupAccountRequired" xml:space="preserve"><value>Sélectionnez au moins un compte.</value></data>
+  <data name="GroupSaveFailed" xml:space="preserve"><value>Le groupe n’a pas pu être enregistré.</value></data>
+  <data name="GroupSaved" xml:space="preserve"><value>Groupe enregistré.</value></data>
+  <data name="GroupDeleteFailed" xml:space="preserve"><value>Le groupe n’a pas pu être supprimé.</value></data>
+  <data name="GroupDeleted" xml:space="preserve"><value>Groupe supprimé.</value></data>
+  <data name="GroupColorGreen" xml:space="preserve"><value>Vert</value></data>
+  <data name="GroupColorTurquoise" xml:space="preserve"><value>Turquoise</value></data>
+  <data name="GroupColorBlue" xml:space="preserve"><value>Bleu</value></data>
+  <data name="GroupColorOrange" xml:space="preserve"><value>Orange</value></data>
+  <data name="GroupColorRed" xml:space="preserve"><value>Rouge</value></data>
+  <data name="GroupColorPurple" xml:space="preserve"><value>Violet</value></data>
+  <data name="Save" xml:space="preserve"><value>Enregistrer</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} comptes affichés sur {1}</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Aucune entrée correspondante.</value></data>
@@ -327,11 +355,13 @@
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choisir l’image QR Google Authenticator…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Icônes de marque facultatives</value></data>
   <data name="BrandIconsHelp" xml:space="preserve"><value>OTP Harbor n’inclut aucun logo tiers et n’est ni affilié ni approuvé par Simple Icons, les fournisseurs de packs d’icônes ou les marques représentées. Importez uniquement une archive ZIP obtenue indépendamment et que vous êtes autorisé à utiliser. Les images importées restent dans les données locales de l’application ; aucune information d’émetteur ou de compte n’est transmise.</value></data>
-  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Importer l’archive ZIP Simple Icons…</value></data>
-  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Sélectionner l’archive ZIP Simple Icons</value></data>
-  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Archives ZIP Simple Icons</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Archives ZIP prises en charge : une version de Simple Icons ou des fichiers SVG nommés avec des identifiants canoniques tels que github.svg. Les sous-dossiers sont autorisés ; les noms en double ou non canoniques sont refusés.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Importer une archive ZIP d’icônes locale…</value></data>
+  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Sélectionner une archive ZIP d’icônes locale</value></data>
+  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Archives ZIP de packs d’icônes</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Aucun pack d’icônes n’a été sélectionné.</value></data>
   <data name="BrandIconPackImported" xml:space="preserve"><value>{0} icônes locales importées depuis Simple Icons {1}.</value></data>
+  <data name="FilenameIndexedBrandIconPackImported" xml:space="preserve"><value>{0} icônes de marque locales importées depuis l’archive ZIP indexée par nom de fichier.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Le pack d’icônes est invalide ou n’a pas pu être installé en toute sécurité.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Les icônes de marque importées ont été supprimées.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Impossible de supprimer les icônes de marque importées.</value></data>

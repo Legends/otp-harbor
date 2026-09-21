@@ -19,4 +19,7 @@ public sealed class FallbackBrandIconResolver : IBrandIconResolver
 
     public BrandInfo ResolveAccount(string? issuer, string? accountName, string? explicitBrandId = null) =>
         BrandInfo.Generic(string.IsNullOrWhiteSpace(issuer) ? accountName : issuer);
+
+    public BrandInfo ResolveAccount(Guid accountId, string? issuer, string? accountName) =>
+        ResolveAccount(issuer, accountName);
 }

@@ -12,6 +12,7 @@ using TOTP.Avalonia.Desktop.Platform;
 using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
 using TOTP.Avalonia.Desktop.Localization;
+using TOTP.Avalonia.Shared.Branding;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
@@ -263,6 +264,261 @@ public sealed class AccountListViewModelTests
 
         sut.SearchText = string.Empty;
         Assert.Equal(3, sut.Accounts.Count);
+    }
+
+    [Fact]
+    public async Task GroupFilter_HidesGroupedAccountsAndSearchesGloballyByGroupOrAccount()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice@example.test", group: group),
+            new(Guid.NewGuid(), "github", ValidSecret, "bob@example.test", group: group),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob@example.test")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+
+        await sut.LoadAsync();
+
+        var work = Assert.Single(sut.Groups);
+        Assert.Equal("Work", work.Name);
+        Assert.Equal(2, work.AccountCount);
+        var ungrouped = Assert.Single(sut.Accounts);
+        Assert.Equal("Microsoft", ungrouped.Issuer);
+
+        sut.SearchText = "work";
+        Assert.Equal(2, sut.Accounts.Count);
+        Assert.All(sut.Accounts, account => Assert.Equal(group.Id, account.Group?.Id));
+        sut.SearchText = string.Empty;
+
+        work.SelectCommand.Execute(null);
+
+        Assert.True(sut.HasSelectedGroup);
+        Assert.True(sut.HasActiveAccountFilter);
+        Assert.Equal(2, sut.Accounts.Count);
+
+        sut.SearchText = "bob";
+
+        Assert.False(sut.HasSelectedGroup);
+        Assert.Single(sut.Groups);
+        Assert.Equal(2, sut.Accounts.Count);
+        Assert.Contains(sut.Accounts, account => account.Issuer == "github");
+        Assert.Contains(sut.Accounts, account => account.Issuer == "Microsoft");
+        Assert.Equal("Showing 2 of 3 accounts", sut.SearchResultSummary);
+
+        sut.ClearGroupFilterCommand.Execute(null);
+        Assert.Equal(2, sut.Accounts.Count);
+    }
+
+    [Fact]
+    public async Task LoadAsync_WithStoredLegacyGroupColor_RestoresVisibleGroupAndColor()
+    {
+        var storedGroup = new AccountGroup(Guid.NewGuid(), "Personal", "#7c3aed");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [
+                new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice", group: storedGroup)
+            ]));
+        using var sut = CreateSut(manager.Object);
+
+        await sut.LoadAsync();
+
+        var group = Assert.Single(sut.Groups);
+        Assert.Equal("#7C3AED", group.Group.Color);
+        Assert.Equal(Color.Parse("#7C3AED"), Assert.IsType<SolidColorBrush>(group.Foreground).Color);
+    }
+
+    [Fact]
+    public async Task SaveGroup_CreatesThenEditsColorNameAndAssignments()
+    {
+        var first = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var second = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "bob");
+        var third = new Account(Guid.NewGuid(), "Google", ValidSecret, "carol");
+        IReadOnlyList<Account> accounts = [first, second, third];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(accounts));
+        manager.Setup(value => value.SaveGroupAsync(
+                It.IsAny<AccountGroup>(),
+                It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Callback<AccountGroup, IReadOnlyCollection<Guid>>((group, selectedIds) =>
+            {
+                var ids = selectedIds.ToHashSet();
+                accounts = accounts.Select(account =>
+                    ids.Contains(account.ID)
+                        ? account.WithGroup(group)
+                        : account.Group?.Id == group.Id
+                            ? account.WithGroup(null)
+                            : account).ToArray();
+            })
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        await sut.BeginAddGroupAsync();
+        sut.GroupEditorName = "Work";
+        sut.GroupEditorAccounts[0].IsSelected = true;
+        sut.GroupEditorAccounts[1].IsSelected = true;
+        sut.SelectedGroupColor = sut.GroupColorOptions.Single(color => color.Hex == "#4F6BED");
+        await sut.SaveGroupAsync();
+
+        var created = Assert.Single(sut.Groups);
+        Assert.Equal("Work", created.Name);
+        Assert.Equal(2, created.AccountCount);
+        created.EditCommand.Execute(null);
+        Assert.True(sut.IsEditingExistingGroup);
+        sut.GroupEditorName = "Office";
+        sut.GroupEditorAccounts[0].IsSelected = false;
+        sut.GroupEditorAccounts[2].IsSelected = true;
+        sut.SelectedGroupColor = sut.GroupColorOptions.Single(color => color.Hex == "#E45757");
+        await sut.SaveGroupAsync();
+
+        var edited = Assert.Single(sut.Groups);
+        Assert.Equal("Office", edited.Name);
+        Assert.Equal("#E45757", edited.Group.Color);
+        var editedBackground = Assert.IsType<SolidColorBrush>(edited.Background);
+        Assert.Equal(Color.Parse("#E45757").R, editedBackground.Color.R);
+        Assert.Equal(Color.Parse("#E45757").G, editedBackground.Color.G);
+        Assert.Equal(Color.Parse("#E45757").B, editedBackground.Color.B);
+        Assert.Equal(2, edited.AccountCount);
+        Assert.DoesNotContain(accounts, account => account.ID == first.ID && account.Group is not null);
+        Assert.Contains(accounts, account => account.ID == third.ID && account.Group?.Id == edited.Id);
+    }
+
+    [Fact]
+    public async Task GroupEditorSearch_FiltersAccountsWithoutLosingHiddenSelectionsOrIcons()
+    {
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice"),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        await sut.BeginAddGroupAsync();
+        sut.GroupEditorAccounts[0].IsSelected = true;
+
+        sut.GroupEditorSearchText = "micro bob";
+
+        var visible = Assert.Single(sut.GroupEditorAccounts);
+        Assert.Equal("Microsoft", visible.Issuer);
+        Assert.NotNull(visible.Brand);
+
+        sut.GroupEditorSearchText = string.Empty;
+
+        Assert.Equal(2, sut.GroupEditorAccounts.Count);
+        Assert.True(sut.GroupEditorAccounts.Single(account => account.Issuer == "GitHub").IsSelected);
+    }
+
+    [Fact]
+    public async Task SaveNewAccount_WhileViewingGroup_AssignsItToThatGroup()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var existing = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice", group: group);
+        Account? added = null;
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(
+                added is null ? [existing] : [existing, added]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => added = account)
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        Assert.Single(sut.Groups).SelectCommand.Execute(null);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "Microsoft";
+        sut.EditorAccountName = "bob";
+        sut.EditorSecret = ValidSecret;
+
+        await sut.SaveAccountAsync();
+
+        Assert.NotNull(added);
+        Assert.Equal(group, added.Group);
+        Assert.Equal(2, sut.Accounts.Count);
+        Assert.Equal(added.ID, sut.SelectedAccount?.Id);
+    }
+
+    [Fact]
+    public async Task DeleteGroup_ConfirmsThenKeepsAccountsUngrouped()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice", group: group),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob", group: group)
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(accounts));
+        manager.Setup(value => value.DeleteGroupAsync(group.Id))
+            .Callback(() => accounts = accounts.Select(account => account.WithGroup(null)).ToArray())
+            .ReturnsAsync(Result.Ok());
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        using var sut = CreateSut(manager.Object, dialogs.Object);
+        await sut.LoadAsync();
+        var work = Assert.Single(sut.Groups);
+
+        work.DeleteCommand.Execute(null);
+        await Task.Yield();
+
+        Assert.Empty(sut.Groups);
+        Assert.Equal(2, sut.Accounts.Count);
+        Assert.All(accounts, account => Assert.Null(account.Group));
+    }
+
+    [Fact]
+    public async Task SearchText_WithMultipleTerms_RequiresEveryTermAcrossIssuerAndAccountName()
+    {
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice@example.test"),
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "bob@example.test"),
+            new(Guid.NewGuid(), "Example", ValidSecret, "alice@example.test")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        sut.SearchText = "  github\t alice  ";
+
+        var match = Assert.Single(sut.Accounts);
+        Assert.Equal("GitHub", match.Issuer);
+        Assert.Equal("alice@example.test", match.AccountName);
+    }
+
+    [Fact]
+    public async Task SearchText_WithOnlyWhitespace_DoesNotActivateFiltering()
+    {
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice@example.test"),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob@example.test")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        sut.SearchText = " \t ";
+
+        Assert.False(sut.HasSearchText);
+        Assert.False(sut.HasActiveAccountFilter);
+        Assert.Equal(2, sut.Accounts.Count);
     }
 
     [Fact]
@@ -801,6 +1057,106 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task EditAccount_OffersImportedIconsAndPersistsExplicitSelection()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        manager.Setup(value => value.UpdateAsync(account, It.IsAny<Account>()))
+            .ReturnsAsync(Result.Ok());
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("amazon", "Amazon", "#FF9900", "amazon.svg"),
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg")
+        ]);
+        brandIcons.Setup(value => value.GetAccountBrandId(account.ID)).Returns("amazon");
+        brandIcons.Setup(value => value.SetAccountBrandIdAsync(
+                account.ID, "github", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object, brandIconPackService: brandIcons.Object);
+        await sut.LoadAsync();
+        sut.SelectForKeyboardNavigation(Assert.Single(sut.Accounts));
+
+        await sut.BeginEditAsync();
+
+        Assert.True(sut.HasBrandIconChoices);
+        Assert.Equal("amazon", sut.SelectedEditorBrandIconOption?.Id);
+        sut.SelectedEditorBrandIconOption = Assert.Single(
+            sut.EditorBrandIconOptions,
+            option => option.Id == "github");
+        await sut.SaveAccountAsync();
+
+        brandIcons.Verify(value => value.SetAccountBrandIdAsync(
+            account.ID, "github", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_WhenIconPreferenceFails_ReportsAccountWasStillSaved()
+    {
+        var manager = new Mock<IAccountManager>();
+        Account? created = null;
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(
+                created is null ? [] : [created]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => created = account)
+            .ReturnsAsync(Result.Ok());
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg")
+        ]);
+        brandIcons.Setup(value => value.SetAccountBrandIdAsync(
+                It.IsAny<Guid>(), "github", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail("synthetic preference failure"));
+        using var sut = CreateSut(manager.Object, brandIconPackService: brandIcons.Object);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "GitHub";
+        sut.EditorSecret = ValidSecret;
+        sut.SelectedEditorBrandIconOption = Assert.Single(
+            sut.EditorBrandIconOptions,
+            option => option.Id == "github");
+
+        await sut.SaveAccountAsync();
+
+        Assert.NotNull(created);
+        Assert.Equal(
+            "Account saved, but its local icon preference could not be saved.",
+            sut.Message);
+    }
+
+    [Fact]
+    public async Task SaveEditedAccount_DoesNotGenerateOrCopyACode()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        manager.Setup(value => value.UpdateAsync(account, It.IsAny<Account>()))
+            .ReturnsAsync(Result.Ok());
+        var totp = new Mock<IAccountTotpService>();
+        var clipboard = new Mock<IAsyncClipboardService>();
+        using var sut = CreateSut(
+            manager.Object,
+            accountTotpService: totp.Object,
+            clipboardService: clipboard.Object);
+        await sut.LoadAsync();
+        sut.SelectForKeyboardNavigation(Assert.Single(sut.Accounts));
+        sut.EnableAutomaticCodeGenerationOnSelection();
+        await sut.BeginEditAsync();
+
+        await sut.SaveAccountAsync();
+
+        Assert.Equal("Account saved.", sut.Message);
+        clipboard.Verify(value => value.CopyAndScheduleClearAsync(
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task SaveAccountAsync_WithUnsupportedPeriod_DoesNotWrite()
     {
         var manager = new Mock<IAccountManager>();
@@ -1335,16 +1691,22 @@ public sealed class AccountListViewModelTests
     private static AccountListViewModel CreateSut(
         IAccountManager manager,
         IAvaloniaDialogService? dialogs = null,
-        TimeSpan? transientMessageDuration = null) =>
+        TimeSpan? transientMessageDuration = null,
+        IAccountTotpService? accountTotpService = null,
+        IAsyncClipboardService? clipboardService = null,
+        IBrandIconResolver? brandIconResolver = null,
+        IBrandIconPackService? brandIconPackService = null) =>
         new(
             manager,
-            Mock.Of<IAccountTotpService>(),
-            Mock.Of<IAsyncClipboardService>(),
+            accountTotpService ?? Mock.Of<IAccountTotpService>(),
+            clipboardService ?? Mock.Of<IAsyncClipboardService>(),
             Mock.Of<IAccountQrCodeService>(),
             Mock.Of<IAvaloniaQrImageFactory>(),
             dialogs ?? Mock.Of<IAvaloniaDialogService>(),
             Localization(),
-            transientMessageDuration: transientMessageDuration);
+            transientMessageDuration: transientMessageDuration,
+            brandIconResolver: brandIconResolver,
+            brandIconPackService: brandIconPackService);
 
     private static Mock<IAsyncClipboardService> SuccessfulClipboard()
     {

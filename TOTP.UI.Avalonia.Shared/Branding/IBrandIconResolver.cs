@@ -9,4 +9,6 @@ public interface IBrandIconResolver
     BrandInfo Resolve(string? issuer, string? explicitBrandId = null);
 
     BrandInfo ResolveAccount(string? issuer, string? accountName, string? explicitBrandId = null);
+
+    BrandInfo ResolveAccount(Guid accountId, string? issuer, string? accountName);
 }

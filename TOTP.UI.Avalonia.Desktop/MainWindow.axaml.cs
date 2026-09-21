@@ -117,9 +117,20 @@ public partial class MainWindow : Window
         if (e.Key == Key.Escape
             && DataContext is MainWindowViewModel accountViewModel
             && accountViewModel.IsAccountListVisible
-            && accountViewModel.AccountList.IsEditorVisible)
+            && accountViewModel.AccountList.IsGroupEditorVisible)
         {
-            accountViewModel.AccountList.CancelEditCommand.Execute(null);
+            accountViewModel.AccountList.CancelGroupEditCommand.Execute(null);
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
+        if (e.Key == Key.Escape
+            && DataContext is MainWindowViewModel accountViewModel2
+            && accountViewModel2.IsAccountListVisible
+            && accountViewModel2.AccountList.IsEditorVisible)
+        {
+            accountViewModel2.AccountList.CancelEditCommand.Execute(null);
             e.Handled = true;
             base.OnKeyDown(e);
             return;
@@ -528,6 +539,28 @@ public partial class MainWindow : Window
 
     private void AccountListPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(AccountListViewModel.IsGroupEditorVisible))
+        {
+            if (_observedAccountList?.IsGroupEditorVisible == true)
+            {
+                ApplyScreenSizeLimits();
+                MinHeight = Math.Min(StandardMinimumHeight, MaxHeight);
+                StartHeightAnimation(Math.Clamp(DefaultPageHeight, MinHeight, MaxHeight));
+                Dispatcher.UIThread.Post(
+                    () => this.GetVisualDescendants()
+                        .OfType<TextBox>()
+                        .FirstOrDefault(control => control.Name == "GroupNameBox")
+                        ?.Focus(),
+                    DispatcherPriority.Input);
+            }
+            else
+            {
+                ScheduleAccountPageFit();
+            }
+
+            return;
+        }
+
         if (e.PropertyName == nameof(AccountListViewModel.IsEditorVisible))
         {
             if (_observedAccountList?.IsEditorVisible == true)
@@ -544,6 +577,8 @@ public partial class MainWindow : Window
         }
 
         if (e.PropertyName is nameof(AccountListViewModel.Accounts)
+            or nameof(AccountListViewModel.Groups)
+            or nameof(AccountListViewModel.HasGroups)
             or nameof(AccountListViewModel.SelectedAccount)
             or nameof(AccountListViewModel.HasSelectedAccount)
             or nameof(AccountListViewModel.HasNoAccounts)
@@ -693,7 +728,8 @@ public partial class MainWindow : Window
         if (_observedViewModel?.IsSettingsVisible == true
             || !ShouldFitAccountPage(
                 _observedViewModel is { IsAccountListVisible: true },
-                _observedAccountList?.IsEditorVisible == true))
+                _observedAccountList?.IsEditorVisible == true
+                || _observedAccountList?.IsGroupEditorVisible == true))
         {
             return;
         }
@@ -778,6 +814,23 @@ public partial class MainWindow : Window
         scrollViewer.Offset = new Vector(
             Math.Clamp(requestedOffset.X, 0, maximumOffset.X),
             Math.Clamp(requestedOffset.Y, 0, maximumOffset.Y));
+    }
+
+    private void ScrollGroupsHorizontally(object? sender, PointerWheelEventArgs e)
+    {
+        if (sender is not ScrollViewer scrollViewer) return;
+
+        var wheelDelta = Math.Abs(e.Delta.X) > Math.Abs(e.Delta.Y)
+            ? e.Delta.X
+            : e.Delta.Y;
+        var maximumOffset = Math.Max(0, scrollViewer.Extent.Width - scrollViewer.Viewport.Width);
+        if (maximumOffset <= 0) return;
+
+        var requestedOffset = scrollViewer.Offset.X - (wheelDelta * 48);
+        scrollViewer.Offset = new Vector(
+            Math.Clamp(requestedOffset, 0, maximumOffset),
+            scrollViewer.Offset.Y);
+        e.Handled = true;
     }
 
     private static bool ShouldFitAccountPage(

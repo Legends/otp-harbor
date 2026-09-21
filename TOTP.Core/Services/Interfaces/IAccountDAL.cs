@@ -11,6 +11,8 @@ public interface IAccountDAL : IDisposable
     Task<Result<List<Account>>> GetAllAsync();
     Task<Result> AddNewAsync(Account newItem);
     Task<Result> UpdateAsync(Account updated);
+    Task<Result> SaveGroupAsync(AccountGroup group, IReadOnlyCollection<Guid> accountIds);
+    Task<Result> DeleteGroupAsync(Guid groupId);
     Task<Result> DeleteAsync(Account otp);
     Task<Result> BackupOtpEntriesStorageFileAsync();
     // Added for professional key rotation

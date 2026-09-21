@@ -28,6 +28,7 @@ using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Validation;
 
 namespace TOTP.Tests.Avalonia.Headless;
 
@@ -132,9 +133,18 @@ public sealed class MainWindowSmokeTests
             var revealIcon = Assert.Single(revealButton.GetVisualDescendants().OfType<SymbolIcon>());
 
             Assert.Equal(SymbolIconKind.Reveal, revealIcon.Kind);
+            Assert.Equal(3, Assert.IsType<TranslateTransform>(revealIcon.RenderTransform).Y);
             Assert.Equal(44, revealButton.Bounds.Width);
             Assert.Equal(textBox.Bounds.Right, revealButton.Bounds.Right);
             Assert.Equal(default, revealButton.BorderThickness);
+            Assert.Equal(VerticalAlignment.Center, revealButton.VerticalContentAlignment);
+
+            var inputCenter = input.Bounds.Height / 2;
+            var buttonCenter = revealButton.TranslatePoint(
+                new Point(revealButton.Bounds.Width / 2, revealButton.Bounds.Height / 2),
+                input);
+            Assert.NotNull(buttonCenter);
+            Assert.Equal(inputCenter, buttonCenter.Value.Y, 3);
 
             revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             window.UpdateLayout();
@@ -149,6 +159,47 @@ public sealed class MainWindowSmokeTests
             Assert.False(input.IsRevealed);
             Assert.NotEqual('\0', textBox.PasswordChar);
             Assert.Equal(SymbolIconKind.Reveal, revealIcon.Kind);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void BrandIconComboBox_QuickTypedPrefixSelectsMatchingEntry()
+    {
+        var options = new[]
+        {
+            new BrandIconOption(null, "Automatic"),
+            new BrandIconOption("paypal", "PayPal"),
+            new BrandIconOption("pr-co", "pr.co"),
+            new BrandIconOption("proton", "Proton")
+        };
+        var comboBox = new TypeAheadComboBox
+        {
+            Width = 240,
+            DisplayMemberBinding = new Binding(nameof(BrandIconOption.DisplayName)),
+            ItemsSource = options,
+            SelectedIndex = 0
+        };
+        var window = new Window { Content = comboBox };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            comboBox.Focus();
+            comboBox.IsDropDownOpen = true;
+            window.UpdateLayout();
+
+            Assert.True(comboBox.Bounds.Height > 0);
+
+            window.KeyPress(Key.P, RawInputModifiers.None, PhysicalKey.P, "p");
+            Assert.Same(options[1], comboBox.SelectedItem);
+
+            window.KeyPress(Key.R, RawInputModifiers.None, PhysicalKey.R, "r");
+            Assert.Same(options[2], comboBox.SelectedItem);
         }
         finally
         {
@@ -635,6 +686,36 @@ public sealed class MainWindowSmokeTests
                 null,
                 [contentHeight, listRegionHeight])),
             precision: 2);
+    }
+
+    [AvaloniaFact]
+    public void DesktopAccountRow_UsesRequestedLightThemeBackground()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousTheme = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var row = new Border { Child = new TextBlock { Text = "account" } };
+        row.Classes.Add("account-row-container");
+        var item = new ListBoxItem { Content = row };
+        var list = new ListBox { ItemsSource = new[] { item } };
+        list.Classes.Add("accounts");
+        list.Classes.Add("desktop-accounts");
+        var window = new Window { Content = list };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(
+                Color.Parse("#F4F6FB"),
+                Assert.IsType<SolidColorBrush>(row.Background).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = previousTheme;
+        }
     }
 
     [AvaloniaFact]
@@ -1256,6 +1337,47 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public async Task ProductTitleBar_MaximizeToggleRestoresOriginalWindowSize()
+    {
+        var titleBar = new ProductTitleBar();
+        var window = new Window
+        {
+            Width = 420,
+            Height = 300,
+            MinWidth = 200,
+            MinHeight = 150,
+            Content = titleBar
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var originalSize = window.Bounds.Size;
+            var toggle = typeof(ProductTitleBar).GetMethod(
+                "ToggleMaximizedState",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(toggle);
+
+            toggle.Invoke(titleBar, [window]);
+            Assert.Equal(WindowState.Maximized, window.WindowState);
+            window.Width = 900;
+            window.Height = 700;
+
+            toggle.Invoke(titleBar, [window]);
+            await Dispatcher.UIThread.InvokeAsync(static () => { }, DispatcherPriority.Background);
+
+            Assert.Equal(WindowState.Normal, window.WindowState);
+            Assert.Equal(originalSize.Width, window.Width, precision: 2);
+            Assert.Equal(originalSize.Height, window.Height, precision: 2);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void QrPreviewDialog_EscapeClosesWindow()
     {
         var window = new QrPreviewDialogWindow();
@@ -1301,6 +1423,14 @@ public sealed class MainWindowSmokeTests
             Assert.Same(languageSelector, window.FindControl<ComboBox>("LanguageSelector"));
             AssertToolbarAutomationName(window, "AddAccountButton", AvaloniaStringKeys.AddAccount);
             AssertToolbarAutomationName(window, "ToggleSearchButton", AvaloniaStringKeys.SearchAccounts);
+            AssertToolbarAutomationName(window, "ManageGroupsButton", AvaloniaStringKeys.CreateGroup);
+            var manageGroupsButton = window.FindControl<Button>("ManageGroupsButton")!;
+            var toggleSearchButton = window.FindControl<Button>("ToggleSearchButton")!;
+            Assert.Equal(2, Grid.GetColumn(manageGroupsButton));
+            Assert.Equal(3, Grid.GetColumn(toggleSearchButton));
+            Assert.Equal(
+                SymbolIconKind.FolderAdd,
+                Assert.IsType<SymbolIcon>(manageGroupsButton.Content).Kind);
             AssertToolbarAutomationName(window, "ClearSearchButton", AvaloniaStringKeys.ClearSearch);
             AssertToolbarAutomationName(window, "OpenSettingsButton", AvaloniaStringKeys.Settings);
             AssertToolbarAutomationName(window, "LockButton", AvaloniaStringKeys.Lock);
@@ -1353,6 +1483,7 @@ public sealed class MainWindowSmokeTests
             [
                 window.FindControl<Button>("ScanQrButton")!,
                 window.FindControl<Button>("AddAccountButton")!,
+                window.FindControl<Button>("ManageGroupsButton")!,
                 window.FindControl<Button>("ToggleSearchButton")!,
                 window.FindControl<TextBox>("AccountSearchBox")!,
                 window.FindControl<Button>("ClearSearchButton")!,
@@ -1436,6 +1567,9 @@ public sealed class MainWindowSmokeTests
             var advancedOptions = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Expander>(),
                 expander => expander.Name == "AccountAdvancedOptions");
+            var brandIconPicker = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<TypeAheadComboBox>(),
+                comboBox => comboBox.Name == "AccountBrandIconComboBox");
             var scrollViewer = Assert.Single(
                 templateHost.GetVisualDescendants().OfType<ScrollViewer>(),
                 viewer => viewer.Name == "AccountEditorScrollViewer");
@@ -1443,6 +1577,9 @@ public sealed class MainWindowSmokeTests
             advancedOptions.IsExpanded = true;
             scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
             templateHost.UpdateLayout();
+
+            Assert.True(brandIconPicker.IsVisible);
+            Assert.True(brandIconPicker.Bounds.Height > 0);
 
             var accountEditorContent = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<StackPanel>(),
@@ -1460,6 +1597,54 @@ public sealed class MainWindowSmokeTests
             Assert.NotNull(issuerRight);
             Assert.NotNull(scrollBarLeft);
             Assert.InRange(scrollBarLeft.Value.X - issuerRight.Value.X, 4, 12);
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void GroupEditorFlyout_ProvidesBoundedNameColorAndAccountSelection()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 540 };
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage?.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+            var groupScroller = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<ScrollViewer>(),
+                viewer => viewer.Name == "GroupCardsScrollViewer");
+            Assert.Equal(ScrollBarVisibility.Hidden, groupScroller.HorizontalScrollBarVisibility);
+            var groupBackButton = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "GroupBackButton");
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.AllAccounts],
+                AutomationProperties.GetName(groupBackButton));
+            var flyout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "GroupEditorFlyout");
+            flyout.IsVisible = true;
+            templateHost.UpdateLayout();
+
+            var name = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<TextBox>(),
+                textBox => textBox.Name == "GroupNameBox");
+            Assert.Equal(AccountGroupPolicy.MaximumNameLength, name.MaxLength);
+            Assert.Single(
+                flyout.GetLogicalDescendants().OfType<TextBox>(),
+                textBox => textBox.Name == "GroupAccountSearchBox");
+            var colorList = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<ListBox>());
+            Assert.Equal(SelectionMode.Single, colorList.SelectionMode);
+            Assert.True(flyout.Bounds.Height > 0);
         }
         finally
         {

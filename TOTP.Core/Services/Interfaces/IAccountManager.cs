@@ -35,6 +35,8 @@ public interface IAccountManager
     /// <param name="updated"></param>
     /// <returns></returns>
     Task<Result> UpdateAsync(Account previous, Account updated);
+    Task<Result> SaveGroupAsync(AccountGroup group, IReadOnlyCollection<Guid> accountIds);
+    Task<Result> DeleteGroupAsync(Guid groupId);
 
     /// <summary>
     /// Deletes a secret item from the encrypted secrets file.

@@ -4,7 +4,7 @@ using TOTP.Core.Services.Models;
 namespace TOTP.Core.Services.Interfaces;
 
 /// <summary>
-/// Imports and resolves a user-supplied local Simple Icons archive.
+/// Imports and resolves a user-supplied local brand-icon archive.
 /// The service never receives OTP secrets or account names.
 /// </summary>
 public interface IBrandIconPackService
@@ -14,6 +14,10 @@ public interface IBrandIconPackService
     BrandIconPackStatus Status { get; }
 
     bool ShowIssuerLogo { get; }
+
+    IReadOnlyList<BrandDefinition> AvailableBrands { get; }
+
+    string? GetAccountBrandId(Guid accountId);
 
     BrandDefinition? Resolve(string? issuer, string? explicitBrandId = null);
 
@@ -30,5 +34,10 @@ public interface IBrandIconPackService
 
     Task<Result> SetShowIssuerLogoAsync(
         bool showIssuerLogo,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> SetAccountBrandIdAsync(
+        Guid accountId,
+        string? brandId,
         CancellationToken cancellationToken = default);
 }

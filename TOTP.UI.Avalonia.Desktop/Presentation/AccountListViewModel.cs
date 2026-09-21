@@ -24,6 +24,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly IAvaloniaDialogService _dialogs;
     private readonly IAvaloniaLocalizationService _localization;
     private readonly IBrandIconResolver _brandIconResolver;
+    private readonly IBrandIconPackService? _brandIconPackService;
     private readonly TimeSpan _countdownTickInterval;
     private readonly ISettingsService? _settingsService;
     private readonly IAvaloniaQrPreviewDialogService? _qrPreviewDialogs;
@@ -41,10 +42,17 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _beginContextEditCommand;
     private readonly AsyncCommand _generateContextQrCommand;
     private readonly AsyncCommand _deleteContextAccountCommand;
+    private readonly AsyncCommand _beginAddGroupCommand;
+    private readonly AsyncCommand _saveGroupCommand;
+    private readonly AsyncCommand _cancelGroupEditCommand;
+    private readonly AsyncCommand _clearGroupFilterCommand;
     private CancellationTokenSource? _rowCodeLifetime;
     private CancellationTokenSource? _recentHighlightLifetime;
     private IReadOnlyList<AccountListItemViewModel> _allAccounts = [];
     private IReadOnlyList<AccountListItemViewModel> _accounts = [];
+    private IReadOnlyList<AccountGroupListItemViewModel> _allGroups = [];
+    private IReadOnlyList<AccountGroupListItemViewModel> _groups = [];
+    private Guid? _selectedGroupId;
     private string _searchText = string.Empty;
     private AccountListItemViewModel? _selectedAccount;
     private AccountListItemViewModel? _contextAccount;
@@ -70,6 +78,17 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _editorSecretMessage = string.Empty;
     private string _editorPeriodMessage = string.Empty;
     private string _editorMessage = string.Empty;
+    private IReadOnlyList<BrandIconOption> _editorBrandIconOptions = [];
+    private BrandIconOption? _selectedEditorBrandIconOption;
+    private bool _isGroupEditorVisible;
+    private Guid? _editingGroupId;
+    private string _groupEditorName = string.Empty;
+    private string _groupEditorMessage = string.Empty;
+    private IReadOnlyList<GroupColorOption> _groupColorOptions = [];
+    private GroupColorOption? _selectedGroupColor;
+    private IReadOnlyList<GroupAccountSelectionViewModel> _allGroupEditorAccounts = [];
+    private IReadOnlyList<GroupAccountSelectionViewModel> _groupEditorAccounts = [];
+    private string _groupEditorSearchText = string.Empty;
     private bool _autoGenerateCodeOnSelection;
 
     public AccountListViewModel(
@@ -84,7 +103,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ISettingsService? settingsService = null,
         IAvaloniaQrPreviewDialogService? qrPreviewDialogs = null,
         TimeSpan? transientMessageDuration = null,
-        IBrandIconResolver? brandIconResolver = null)
+        IBrandIconResolver? brandIconResolver = null,
+        IBrandIconPackService? brandIconPackService = null)
     {
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountTotpService = accountTotpService ?? throw new ArgumentNullException(nameof(accountTotpService));
@@ -94,6 +114,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _brandIconResolver = brandIconResolver ?? FallbackBrandIconResolver.Instance;
+        _brandIconPackService = brandIconPackService;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         _countdownTickInterval = countdownTickInterval ?? TimeSpan.FromSeconds(1);
         _settingsService = settingsService;
@@ -111,10 +132,12 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             CopyAccountCodeAsync,
             _ => true);
         _generateQrCommand = new AsyncCommand(GenerateQrAsync, () => _selectedAccount is not null);
-        _beginAddCommand = new AsyncCommand(BeginAddAsync, () => !IsBusy && !IsEditorVisible);
+        _beginAddCommand = new AsyncCommand(
+            BeginAddAsync,
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible);
         _beginEditCommand = new AsyncCommand(
             BeginEditAsync,
-            () => !IsBusy && !IsEditorVisible && SelectedAccount is not null);
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && SelectedAccount is not null);
         _saveAccountCommand = new AsyncCommand(SaveAccountAsync, () => !IsBusy && IsEditorVisible);
         _cancelEditCommand = new AsyncCommand(CancelEditAsync, () => !IsBusy && IsEditorVisible);
         _clearEditorPeriodCommand = new AsyncCommand(
@@ -122,17 +145,29 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             () => !IsBusy && IsEditorVisible && EditorPeriodSeconds.HasValue);
         _deleteAccountCommand = new AsyncCommand(
             DeleteAccountAsync,
-            () => !IsBusy && !IsEditorVisible && SelectedAccount is not null);
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && SelectedAccount is not null);
         _beginContextEditCommand = new AsyncCommand(
             BeginContextEditAsync,
-            () => !IsBusy && !IsEditorVisible && ContextAccount is not null);
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && ContextAccount is not null);
         _generateContextQrCommand = new AsyncCommand(
             GenerateContextQrAsync,
-            () => !IsBusy && !IsEditorVisible && ContextAccount is not null);
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && ContextAccount is not null);
         _deleteContextAccountCommand = new AsyncCommand(
             DeleteContextAccountAsync,
-            () => !IsBusy && !IsEditorVisible && ContextAccount is not null);
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && ContextAccount is not null);
+        _beginAddGroupCommand = new AsyncCommand(
+            BeginAddGroupAsync,
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && _allAccounts.Count > 0);
+        _saveGroupCommand = new AsyncCommand(
+            SaveGroupAsync,
+            () => !IsBusy && IsGroupEditorVisible);
+        _cancelGroupEditCommand = new AsyncCommand(
+            CancelGroupEditAsync,
+            () => !IsBusy && IsGroupEditorVisible);
+        _clearGroupFilterCommand = new AsyncCommand(ClearGroupFilterAsync, () => HasSelectedGroup);
         _localization.CultureChanged += LocalizationCultureChanged;
+        RefreshBrandIconOptions(null);
+        RefreshGroupColorOptions(null);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -153,7 +188,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         !IsBusy && !HasMessage && _allAccounts.Count == 0;
 
     public bool HasNoSearchResults =>
-        !IsBusy && !HasMessage && _allAccounts.Count > 0 && Accounts.Count == 0;
+        !IsBusy
+        && !HasMessage
+        && HasActiveAccountFilter
+        && _allAccounts.Count > 0
+        && Accounts.Count == 0;
 
     public NotificationState Notification { get; }
     public string Message => Notification.Text;
@@ -258,11 +297,36 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!SetField(ref _searchText, value ?? string.Empty)) return;
             ClearRecentHighlight();
             OnPropertyChanged(nameof(HasSearchText));
+            if (HasSearchText && _selectedGroupId.HasValue)
+            {
+                _selectedGroupId = null;
+                RefreshGroups();
+                OnPropertyChanged(nameof(HasSelectedGroup));
+                _clearGroupFilterCommand.NotifyCanExecuteChanged();
+            }
+            OnPropertyChanged(nameof(HasActiveAccountFilter));
+            ApplyGroupSearch();
             ApplyFilter();
         }
     }
 
-    public bool HasSearchText => SearchText.Length > 0;
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(SearchText);
+
+    public IReadOnlyList<AccountGroupListItemViewModel> Groups
+    {
+        get => _groups;
+        private set
+        {
+            if (!SetField(ref _groups, value)) return;
+            OnPropertyChanged(nameof(HasGroups));
+        }
+    }
+
+    public bool HasGroups => _allGroups.Count > 0;
+
+    public bool HasSelectedGroup => _selectedGroupId.HasValue;
+
+    public bool HasActiveAccountFilter => HasSearchText || HasSelectedGroup;
 
     public string SearchResultSummary => string.Format(
         _localization.GetString(AvaloniaStringKeys.SearchResultsFormat),
@@ -301,6 +365,69 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public ICommand BeginContextEditCommand => _beginContextEditCommand;
     public ICommand GenerateContextQrCommand => _generateContextQrCommand;
     public ICommand DeleteContextAccountCommand => _deleteContextAccountCommand;
+    public ICommand BeginAddGroupCommand => _beginAddGroupCommand;
+    public ICommand SaveGroupCommand => _saveGroupCommand;
+    public ICommand CancelGroupEditCommand => _cancelGroupEditCommand;
+    public ICommand ClearGroupFilterCommand => _clearGroupFilterCommand;
+
+    public bool IsGroupEditorVisible
+    {
+        get => _isGroupEditorVisible;
+        private set
+        {
+            if (!SetField(ref _isGroupEditorVisible, value)) return;
+            NotifyCrudCommands();
+            _beginAddGroupCommand.NotifyCanExecuteChanged();
+            _saveGroupCommand.NotifyCanExecuteChanged();
+            _cancelGroupEditCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public bool IsEditingExistingGroup => _editingGroupId.HasValue;
+
+    public string GroupEditorName
+    {
+        get => _groupEditorName;
+        set
+        {
+            if (!SetField(ref _groupEditorName, value ?? string.Empty)) return;
+            GroupEditorMessage = string.Empty;
+        }
+    }
+
+    public string GroupEditorMessage
+    {
+        get => _groupEditorMessage;
+        private set => SetField(ref _groupEditorMessage, value);
+    }
+
+    public IReadOnlyList<GroupColorOption> GroupColorOptions
+    {
+        get => _groupColorOptions;
+        private set => SetField(ref _groupColorOptions, value);
+    }
+
+    public GroupColorOption? SelectedGroupColor
+    {
+        get => _selectedGroupColor;
+        set => SetField(ref _selectedGroupColor, value);
+    }
+
+    public IReadOnlyList<GroupAccountSelectionViewModel> GroupEditorAccounts
+    {
+        get => _groupEditorAccounts;
+        private set => SetField(ref _groupEditorAccounts, value);
+    }
+
+    public string GroupEditorSearchText
+    {
+        get => _groupEditorSearchText;
+        set
+        {
+            if (!SetField(ref _groupEditorSearchText, value ?? string.Empty)) return;
+            ApplyGroupEditorSearch();
+        }
+    }
 
     public AccountListItemViewModel? ContextAccount
     {
@@ -382,6 +509,24 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         private set => SetField(ref _editorMessage, value);
     }
 
+    public IReadOnlyList<BrandIconOption> EditorBrandIconOptions
+    {
+        get => _editorBrandIconOptions;
+        private set
+        {
+            if (!SetField(ref _editorBrandIconOptions, value)) return;
+            OnPropertyChanged(nameof(HasBrandIconChoices));
+        }
+    }
+
+    public BrandIconOption? SelectedEditorBrandIconOption
+    {
+        get => _selectedEditorBrandIconOption;
+        set => SetField(ref _selectedEditorBrandIconOption, value);
+    }
+
+    public bool HasBrandIconChoices => EditorBrandIconOptions.Count > 1;
+
     public Task LoadAsync() => LoadAsync(null);
 
     private async Task LoadAsync(Guid? recentlyAddedAccountId)
@@ -397,6 +542,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (result.IsFailed)
             {
                 _allAccounts = [];
+                RefreshGroups();
                 Accounts = [];
                 ShowError(_localization.GetString(AvaloniaStringKeys.AccountsLoadFailed));
                 return;
@@ -404,18 +550,27 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
             SelectedAccount = null;
             _allAccounts = result.Value
-                .Select(account => new AccountListItemViewModel(
-                    account.ID,
-                    account.Issuer,
-                    account.AccountName ?? string.Empty,
-                    account.ID == recentlyAddedAccountId,
-                    _copyAccountCodeCommand,
-                    account.PeriodSeconds,
-                    FormatCustomPeriod(account.PeriodSeconds),
-                    _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName)))
+                .Select(account =>
+                {
+                    AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
+                    return new AccountListItemViewModel(
+                        account.ID,
+                        account.Issuer,
+                        account.AccountName ?? string.Empty,
+                        account.ID == recentlyAddedAccountId,
+                        _copyAccountCodeCommand,
+                        account.PeriodSeconds,
+                        FormatCustomPeriod(account.PeriodSeconds),
+                        _brandIconResolver.ResolveAccount(
+                            account.ID,
+                            account.Issuer,
+                            account.AccountName),
+                        group);
+                })
                 .ToArray();
             foreach (var account in _allAccounts)
                 account.UpdateLogoVisibility(_brandIconResolver.ShowIssuerLogo);
+            RefreshGroups();
             ApplyFilter();
             StartRecentHighlightLifetime(
                 _allAccounts.FirstOrDefault(account => account.IsRecentlyAdded));
@@ -425,6 +580,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception)
         {
             _allAccounts = [];
+            RefreshGroups();
             Accounts = [];
             ShowError(_localization.GetString(AvaloniaStringKeys.AccountsLoadFailedSafely));
         }
@@ -658,7 +814,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public Task BeginAddAsync()
     {
-        if (IsBusy || IsEditorVisible) return Task.CompletedTask;
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible) return Task.CompletedTask;
         ClearEditor();
         IsEditorVisible = true;
         return Task.CompletedTask;
@@ -670,7 +826,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private async Task BeginEditAsync(AccountListItemViewModel? target)
     {
-        if (IsBusy || IsEditorVisible || target is null) return;
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || target is null) return;
 
         IsBusy = true;
         try
@@ -691,6 +847,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             EditorAccountName = account.AccountName ?? string.Empty;
             EditorSecret = account.Secret;
             EditorPeriodSeconds = account.PeriodSeconds;
+            RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
             IsEditorVisible = true;
         }
         catch (Exception)
@@ -748,13 +905,18 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             }
 
             var isNewAccount = !_editingAccountId.HasValue;
+            var selectedBrandId = SelectedEditorBrandIconOption?.Id;
+            var selectedGroup = isNewAccount
+                ? _allGroups.FirstOrDefault(group => group.Id == _selectedGroupId)?.Group
+                : null;
             var normalizedSecret = SecretValidation.NormalizeBase32Secret(secret);
             var updated = new Account(
                 _editingAccountId ?? Guid.NewGuid(),
                 issuer,
                 normalizedSecret,
                 accountName.Length == 0 ? null : accountName,
-                periodSeconds);
+                periodSeconds,
+                selectedGroup);
             var saved = _editingAccountId.HasValue
                 ? await UpdateExistingAsync(loaded.Value, updated)
                 : await _accountManager.AddNewAsync(updated);
@@ -764,13 +926,33 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
+            var iconPreferenceSaved = true;
+            if (_brandIconPackService is not null)
+            {
+                try
+                {
+                    iconPreferenceSaved = (await _brandIconPackService.SetAccountBrandIdAsync(
+                        updated.ID,
+                        selectedBrandId)).IsSuccess;
+                }
+                catch (Exception)
+                {
+                    iconPreferenceSaved = false;
+                }
+            }
+
             ClearEditor();
             IsBusy = false;
             await LoadAsync(isNewAccount ? updated.ID : null);
             if (!HasMessage)
             {
-                SelectedAccount = Accounts.FirstOrDefault(account => account.Id == updated.ID);
-                ShowTransientMessage(_localization.GetString(AvaloniaStringKeys.AccountSaved));
+                SetSelectedAccount(
+                    Accounts.FirstOrDefault(account => account.Id == updated.ID),
+                    generateAndCopyCode: false);
+                ShowTransientMessage(_localization.GetString(
+                    iconPreferenceSaved
+                        ? AvaloniaStringKeys.AccountSaved
+                        : AvaloniaStringKeys.AccountSavedIconPreferenceFailed));
             }
         }
         catch (Exception)
@@ -800,6 +982,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         await LoadAsync(highlightAsNew ? accountId : null);
         if (HasMessage) return;
 
+        var revealed = _allAccounts.FirstOrDefault(account => account.Id == accountId);
+        if (revealed is not null && Accounts.All(account => account.Id != accountId))
+        {
+            _selectedGroupId = revealed.Group?.Id;
+            RefreshGroups();
+            ApplyFilter();
+        }
         SelectedAccount = Accounts.FirstOrDefault(account => account.Id == accountId);
         ShowTransientMessage(successMessage);
     }
@@ -810,7 +999,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private async Task DeleteAccountAsync(AccountListItemViewModel? target)
     {
-        if (IsBusy || IsEditorVisible || target is null) return;
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || target is null) return;
 
         var selected = target;
         IsBusy = true;
@@ -852,6 +1041,18 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
+            if (_brandIconPackService is not null)
+            {
+                try
+                {
+                    await _brandIconPackService.SetAccountBrandIdAsync(selected.Id, null);
+                }
+                catch (Exception)
+                {
+                    // Account deletion is authoritative; a stale local display preference is harmless.
+                }
+            }
+
             SelectedAccount = null;
             IsBusy = false;
             await LoadAsync();
@@ -890,9 +1091,213 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 accountName,
                 StringComparison.OrdinalIgnoreCase));
 
+    public Task BeginAddGroupAsync()
+    {
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || _allAccounts.Count == 0)
+            return Task.CompletedTask;
+
+        _editingGroupId = null;
+        OnPropertyChanged(nameof(IsEditingExistingGroup));
+        GroupEditorName = string.Empty;
+        GroupEditorMessage = string.Empty;
+        RefreshGroupColorOptions(null);
+        GroupEditorSearchText = string.Empty;
+        _allGroupEditorAccounts = CreateGroupAccountSelections(null);
+        ApplyGroupEditorSearch();
+        IsGroupEditorVisible = true;
+        return Task.CompletedTask;
+    }
+
+    private Task BeginEditGroupAsync(Guid groupId)
+    {
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible)
+            return Task.CompletedTask;
+
+        var group = _allGroups.FirstOrDefault(item => item.Id == groupId)?.Group;
+        if (group is null) return Task.CompletedTask;
+
+        _editingGroupId = group.Id;
+        OnPropertyChanged(nameof(IsEditingExistingGroup));
+        GroupEditorName = group.Name;
+        GroupEditorMessage = string.Empty;
+        RefreshGroupColorOptions(group.Color);
+        GroupEditorSearchText = string.Empty;
+        _allGroupEditorAccounts = CreateGroupAccountSelections(group.Id);
+        ApplyGroupEditorSearch();
+        IsGroupEditorVisible = true;
+        return Task.CompletedTask;
+    }
+
+    public async Task SaveGroupAsync()
+    {
+        if (IsBusy || !IsGroupEditorVisible) return;
+
+        var name = GroupEditorName.Trim();
+        if (name.Length == 0)
+        {
+            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupNameRequired);
+            return;
+        }
+
+        if (_allGroups.Any(group => group.Id != _editingGroupId
+            && string.Equals(group.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupNameDuplicate);
+            return;
+        }
+
+        var selectedAccountIds = _allGroupEditorAccounts
+            .Where(account => account.IsSelected)
+            .Select(account => account.AccountId)
+            .ToArray();
+        if (selectedAccountIds.Length == 0)
+        {
+            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupAccountRequired);
+            return;
+        }
+
+        var color = SelectedGroupColor ?? GroupColorOptions.First();
+        var group = new AccountGroup(_editingGroupId ?? Guid.NewGuid(), name, color.Hex);
+        IsBusy = true;
+        try
+        {
+            var result = await _accountManager.SaveGroupAsync(group, selectedAccountIds);
+            if (result.IsFailed)
+            {
+                GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupSaveFailed);
+                return;
+            }
+
+            _selectedGroupId = group.Id;
+            ClearGroupEditor();
+            IsBusy = false;
+            await LoadAsync();
+            ShowLocalizedTransientNotification(
+                AvaloniaStringKeys.GroupSaved,
+                NotificationSeverity.Success);
+        }
+        catch (Exception)
+        {
+            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupSaveFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public Task CancelGroupEditAsync()
+    {
+        if (IsBusy || !IsGroupEditorVisible) return Task.CompletedTask;
+        ClearGroupEditor();
+        return Task.CompletedTask;
+    }
+
+    private async Task DeleteGroupAsync(Guid groupId, string groupName)
+    {
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible) return;
+        bool confirmed;
+        try
+        {
+            confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                _localization.GetString(AvaloniaStringKeys.DeleteGroup),
+                string.Format(
+                    _localization.GetString(AvaloniaStringKeys.DeleteGroupPrompt),
+                    groupName),
+                NotificationSeverity.Warning,
+                _localization.GetString(AvaloniaStringKeys.Delete),
+                _localization.GetString(AvaloniaStringKeys.Cancel),
+                IsDestructive: true));
+        }
+        catch (Exception)
+        {
+            ShowError(_localization.GetString(AvaloniaStringKeys.GroupDeleteFailed));
+            return;
+        }
+
+        if (!confirmed) return;
+        IsBusy = true;
+        try
+        {
+            var result = await _accountManager.DeleteGroupAsync(groupId);
+            if (result.IsFailed)
+            {
+                ShowError(_localization.GetString(AvaloniaStringKeys.GroupDeleteFailed));
+                return;
+            }
+
+            if (_selectedGroupId == groupId) _selectedGroupId = null;
+            IsBusy = false;
+            await LoadAsync();
+            ShowLocalizedTransientNotification(
+                AvaloniaStringKeys.GroupDeleted,
+                NotificationSeverity.Success);
+        }
+        catch (Exception)
+        {
+            ShowError(_localization.GetString(AvaloniaStringKeys.GroupDeleteFailed));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private Task SelectGroupAsync(Guid groupId)
+    {
+        _selectedGroupId = _selectedGroupId == groupId ? null : groupId;
+        ClearRecentHighlight();
+        RefreshGroups();
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        ApplyFilter();
+        return Task.CompletedTask;
+    }
+
+    private Task ClearGroupFilterAsync()
+    {
+        if (!_selectedGroupId.HasValue) return Task.CompletedTask;
+        _selectedGroupId = null;
+        RefreshGroups();
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        ApplyFilter();
+        return Task.CompletedTask;
+    }
+
+    private IReadOnlyList<GroupAccountSelectionViewModel> CreateGroupAccountSelections(Guid? groupId) =>
+        _allAccounts
+            .Select(account => new GroupAccountSelectionViewModel(
+                account.Id,
+                account.Issuer,
+                account.AccountName,
+                account.Brand,
+                account.ShowIssuerLogo,
+                account.Group?.Id == groupId && groupId.HasValue))
+            .ToArray();
+
+    private void ApplyGroupEditorSearch()
+    {
+        var terms = GroupEditorSearchText.Split(
+            (char[]?)null,
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        GroupEditorAccounts = terms.Length == 0
+            ? _allGroupEditorAccounts
+            : _allGroupEditorAccounts
+                .Where(account => terms.All(term =>
+                    account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
+                    || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)))
+                .ToArray();
+    }
+
     private void ApplyFilter()
     {
-        Accounts = AccountListFilter.Apply(_allAccounts, SearchText);
+        Accounts = AccountListFilter.Apply(
+            _allAccounts,
+            SearchText,
+            _selectedGroupId);
         var selectionIsVisible = SelectedAccount is not null
             && Accounts.Any(account => account.Id == SelectedAccount.Id);
         if (selectionIsVisible) return;
@@ -1055,9 +1460,12 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         SelectedAccount = null;
         SearchText = string.Empty;
         _allAccounts = [];
+        _selectedGroupId = null;
+        RefreshGroups();
         Accounts = [];
         ClearQrImage();
         ClearEditor();
+        ClearGroupEditor();
     }
 
     public void ClearSensitiveOutput()
@@ -1099,8 +1507,114 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorSecretMessage = string.Empty;
         EditorPeriodMessage = string.Empty;
         EditorMessage = string.Empty;
+        SelectBrandIconOption(null);
         IsEditorVisible = false;
     }
+
+    private void ClearGroupEditor()
+    {
+        _editingGroupId = null;
+        OnPropertyChanged(nameof(IsEditingExistingGroup));
+        GroupEditorName = string.Empty;
+        GroupEditorMessage = string.Empty;
+        GroupEditorSearchText = string.Empty;
+        _allGroupEditorAccounts = [];
+        GroupEditorAccounts = [];
+        RefreshGroupColorOptions(null);
+        IsGroupEditorVisible = false;
+    }
+
+    private void RefreshBrandIconOptions(string? selectedBrandId)
+    {
+        var automatic = new BrandIconOption(
+            null,
+            _localization.GetString(AvaloniaStringKeys.AutomaticBrandIcon));
+        var available = _brandIconPackService?.AvailableBrands ?? [];
+        EditorBrandIconOptions =
+        [
+            automatic,
+            .. available.Select(brand => new BrandIconOption(brand.Id, brand.DisplayName))
+        ];
+        SelectBrandIconOption(selectedBrandId);
+    }
+
+    private void SelectBrandIconOption(string? brandId)
+    {
+        SelectedEditorBrandIconOption = EditorBrandIconOptions.FirstOrDefault(option =>
+            string.Equals(option.Id, brandId, StringComparison.OrdinalIgnoreCase))
+            ?? EditorBrandIconOptions.FirstOrDefault();
+    }
+
+    private void RefreshGroups()
+    {
+        _allGroups = _allAccounts
+            .Where(account => account.Group is not null)
+            .GroupBy(account => account.Group!.Id)
+            .Select(group =>
+            {
+                var stored = group.First().Group!;
+                var normalized = new AccountGroup(
+                    stored.Id,
+                    stored.Name,
+                    NormalizeGroupColor(stored.Color));
+                return new AccountGroupListItemViewModel(
+                    normalized,
+                    group.Count(),
+                    normalized.Id == _selectedGroupId,
+                    new AsyncCommand(() => SelectGroupAsync(normalized.Id), () => !IsBusy),
+                    new AsyncCommand(() => BeginEditGroupAsync(normalized.Id), () => !IsBusy),
+                    new AsyncCommand(
+                        () => DeleteGroupAsync(normalized.Id, normalized.Name),
+                        () => !IsBusy));
+            })
+            .OrderBy(group => group.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+
+        if (_selectedGroupId.HasValue && _allGroups.All(group => group.Id != _selectedGroupId))
+            _selectedGroupId = null;
+        ApplyGroupSearch();
+        OnPropertyChanged(nameof(HasGroups));
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        _beginAddGroupCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ApplyGroupSearch()
+    {
+        var terms = SearchText.Split(
+            (char[]?)null,
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        Groups = terms.Length == 0
+            ? _allGroups
+            : _allGroups
+                .Where(group => terms.All(term =>
+                    group.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
+                    || _allAccounts.Any(account =>
+                        account.Group?.Id == group.Id
+                        && (account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
+                            || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)))))
+                .ToArray();
+    }
+
+    private void RefreshGroupColorOptions(string? selectedColor)
+    {
+        GroupColorOptions =
+        [
+            new("#4C956C", _localization.GetString(AvaloniaStringKeys.GroupColorGreen)),
+            new("#18A999", _localization.GetString(AvaloniaStringKeys.GroupColorTurquoise)),
+            new("#4F6BED", _localization.GetString(AvaloniaStringKeys.GroupColorBlue)),
+            new("#F59E0B", _localization.GetString(AvaloniaStringKeys.GroupColorOrange)),
+            new("#E45757", _localization.GetString(AvaloniaStringKeys.GroupColorRed)),
+            new("#B455C7", _localization.GetString(AvaloniaStringKeys.GroupColorPurple))
+        ];
+        SelectedGroupColor = GroupColorOptions.FirstOrDefault(option =>
+            string.Equals(option.Hex, selectedColor, StringComparison.OrdinalIgnoreCase))
+            ?? GroupColorOptions[0];
+    }
+
+    private static string NormalizeGroupColor(string? color)
+        => AccountGroupPolicy.NormalizeColor(color);
 
     private void NotifyCrudCommands()
     {
@@ -1113,6 +1627,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _beginContextEditCommand.NotifyCanExecuteChanged();
         _generateContextQrCommand.NotifyCanExecuteChanged();
         _deleteContextAccountCommand.NotifyCanExecuteChanged();
+        _beginAddGroupCommand.NotifyCanExecuteChanged();
+        _saveGroupCommand.NotifyCanExecuteChanged();
+        _cancelGroupEditCommand.NotifyCanExecuteChanged();
     }
 
     private void SetLocalizedCodeMessage(string key, params object[] arguments)
@@ -1125,6 +1642,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
+        RefreshBrandIconOptions(SelectedEditorBrandIconOption?.Id);
+        RefreshGroupColorOptions(SelectedGroupColor?.Hex);
+        RefreshGroups();
         OnPropertyChanged(nameof(SearchResultSummary));
         foreach (var account in _allAccounts)
             account.UpdateCustomPeriodLabel(FormatCustomPeriod(account.ConfiguredPeriodSeconds));
@@ -1140,9 +1660,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void BrandCatalogChanged(object? sender, EventArgs args)
     {
+        RefreshBrandIconOptions(SelectedEditorBrandIconOption?.Id);
         foreach (var account in _allAccounts)
         {
-            account.UpdateBrand(_brandIconResolver.ResolveAccount(account.Issuer, account.AccountName));
+            account.UpdateBrand(_brandIconResolver.ResolveAccount(
+                account.Id,
+                account.Issuer,
+                account.AccountName));
             account.UpdateLogoVisibility(_brandIconResolver.ShowIssuerLogo);
         }
     }

@@ -17,6 +17,36 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class NativeFilePickerViewModelTests
 {
     [Fact]
+    public async Task ImportBrandIconsAsync_ReportsFilenameIndexedPackInActiveLocale()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickBrandIconPackAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("local-icons.zip", content: [1, 2, 3]));
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.ImportAsync(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new BrandIconPackImportResult(
+                "filename-indexed",
+                3,
+                BrandIconPackFormat.FilenameIndexed)));
+        using var sut = Create(
+            picker.Object,
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            brandIconPackService: brandIcons.Object,
+            localization: Localization("de"));
+
+        await sut.ImportBrandIconsAsync();
+
+        Assert.Equal(
+            "3 lokale Markensymbole aus dem nach Dateinamen indizierten ZIP wurden importiert.",
+            sut.Message);
+        brandIcons.Verify(value => value.ImportAsync(
+            It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ImportGoogleQrAsync_OpensImagePickerDirectlyWithoutStartingCamera()
     {
         const string payload = "otpauth-migration://offline?data=synthetic";
@@ -401,7 +431,9 @@ public sealed class NativeFilePickerViewModelTests
         ISettingsService? settings = null,
         IPlatformFolderLauncher? folderLauncher = null,
         TimeSpan? transientMessageDuration = null,
-        CameraScannerViewModel? cameraScanner = null)
+        CameraScannerViewModel? cameraScanner = null,
+        IBrandIconPackService? brandIconPackService = null,
+        IAvaloniaLocalizationService? localization = null)
     {
         var passwordValidation = new Mock<IPasswordValidationService>();
         passwordValidation.SetupGet(value => value.MinimumLength).Returns(8);
@@ -425,17 +457,18 @@ public sealed class NativeFilePickerViewModelTests
             security ?? Mock.Of<IPlatformFileSecurity>(),
             settings,
             folderLauncher ?? Mock.Of<IPlatformFolderLauncher>(),
-            Localization(),
+            localization ?? Localization(),
             transientMessageDuration,
-            cameraScanner);
+            cameraScanner,
+            brandIconPackService);
     }
 
-    private static IAvaloniaLocalizationService Localization()
+    private static IAvaloniaLocalizationService Localization(string culture = "en")
     {
         var localization = new AvaloniaLocalizationService(
             new ResourceDictionary(),
             new AvaloniaStringCatalog());
-        localization.ApplyCulture("en");
+        localization.ApplyCulture(culture);
         return localization;
     }
 

@@ -11,6 +11,13 @@ public sealed record BrandIconPackStatus(
     string? Version,
     int BrandCount);
 
+public enum BrandIconPackFormat
+{
+    SimpleIcons,
+    FilenameIndexed
+}
+
 public sealed record BrandIconPackImportResult(
     string Version,
-    int BrandCount);
+    int BrandCount,
+    BrandIconPackFormat Format);

@@ -190,6 +190,10 @@
                                                     Classes="secondary"
                                                     Text="{DynamicResource BrandIconsHelp}"
                                                     TextWrapping="Wrap" />
+                                                <TextBlock
+                                                    Classes="secondary"
+                                                    Text="{DynamicResource BrandIconsFormatHelp}"
+                                                    TextWrapping="Wrap" />
                                                 <Button
                                                     Command="{Binding ImportBrandIconsCommand}"
                                                     Content="{DynamicResource ImportSimpleIconsPack}" />

@@ -18,9 +18,26 @@ public class AccountManager(
 
     public async Task<Result> UpdateAsync(Account previous, Account updated)
     {
+        ArgumentNullException.ThrowIfNull(previous);
         ArgumentNullException.ThrowIfNull(updated);
-        return await otpDal.UpdateAsync(updated);
+        return await otpDal.UpdateAsync(updated.WithGroup(updated.Group ?? previous.Group));
     }
+
+    public Task<Result> SaveGroupAsync(AccountGroup group, IReadOnlyCollection<Guid> accountIds)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(accountIds);
+        if (!TOTP.Core.Validation.AccountGroupPolicy.TryNormalize(group, out var normalized)
+            || normalized is null
+            || accountIds.Count == 0)
+        {
+            return Task.FromResult(Result.Fail("Account group is invalid."));
+        }
+
+        return otpDal.SaveGroupAsync(normalized, accountIds);
+    }
+
+    public Task<Result> DeleteGroupAsync(Guid groupId) => otpDal.DeleteGroupAsync(groupId);
 
     public async Task<Result<IReadOnlyList<Account>>> GetAllOtpEntriesSortedAsync()
     {

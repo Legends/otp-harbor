@@ -43,6 +43,25 @@ public sealed class AccountPeriodTests
         Assert.Contains("\"period\":60", json, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void SerializeAndDeserialize_WithGroup_PreservesEncryptedPayloadMetadata()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var source = new Account(
+            Guid.NewGuid(),
+            "Example",
+            "JBSWY3DPEHPK3PXP",
+            "alice",
+            group: group);
+
+        var json = JsonSerializer.Serialize(source);
+        var account = JsonSerializer.Deserialize<Account>(json);
+
+        Assert.NotNull(account);
+        Assert.Equal(group, account.Group);
+        Assert.Contains("\"group\":", json, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData(4, false)]
     [InlineData(5, true)]

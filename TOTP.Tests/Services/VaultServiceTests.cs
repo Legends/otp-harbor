@@ -38,9 +38,10 @@ public sealed class VaultServiceTests
         security.SetupGet(s => s.IsUnlocked).Returns(true);
         security.Setup(s => s.GetDekCopy()).Returns(() => (byte[])dek.Clone());
         var sut = new VaultService(security.Object);
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
         List<Account> input =
         [
-            new(Guid.NewGuid(), "GitHub", "AAAA", "john", 60),
+            new(Guid.NewGuid(), "GitHub", "AAAA", "john", 60, group),
             new(Guid.NewGuid(), "Google", "BBBB")
         ];
 
@@ -53,6 +54,7 @@ public sealed class VaultServiceTests
         Assert.Equal(input[0].Secret, output[0].Secret);
         Assert.Equal(input[0].AccountName, output[0].AccountName);
         Assert.Equal(60, output[0].PeriodSeconds);
+        Assert.Equal(group, output[0].Group);
     }
 
     [Fact]

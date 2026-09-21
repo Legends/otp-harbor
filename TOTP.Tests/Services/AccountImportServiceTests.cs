@@ -44,6 +44,56 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
+    public async Task ImportAsync_WithValidGroup_PreservesGroupForNewAccount()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var incoming = new Account(
+            Guid.NewGuid(),
+            "Issuer",
+            "JBSWY3DPEHPK3PXP",
+            "user",
+            group: group);
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            [incoming],
+            ImportConflictStrategy.SkipExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(AccountImportStatus.Completed, result.Value.Status);
+        accounts.Verify(value => value.AddNewAsync(
+            It.Is<Account>(account => account.Group == group)), Times.Once);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WithInvalidGroupMetadata_RejectsBeforeVaultRead()
+    {
+        var invalidGroup = new AccountGroup(Guid.NewGuid(), "Work", "#123456");
+        var accounts = new Mock<IAccountManager>(MockBehavior.Strict);
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            [new Account(
+                Guid.NewGuid(),
+                "Issuer",
+                "JBSWY3DPEHPK3PXP",
+                "user",
+                group: invalidGroup)],
+            ImportConflictStrategy.SkipExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(AccountImportStatus.InvalidTargets, result.Value.Status);
+        accounts.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task ImportAsync_WithKeepBoth_AssignsNewIdentityAndCollisionFreeIssuer()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

@@ -59,6 +59,61 @@ public sealed class AccountDalIntegrationTests
     }
 
     [Fact]
+    public async Task SaveAndDeleteGroup_UpdatesEveryAssignmentInSingleVaultWrite()
+    {
+        using var temp = new TempDir();
+        var storagePath = Path.Combine(temp.Path, "master.totp");
+        var vault = new EchoVaultService();
+        var sut = CreateSut(storagePath, vault);
+        var first = new Account(Guid.NewGuid(), "GitHub", "AAAA", "alice");
+        var second = new Account(Guid.NewGuid(), "Microsoft", "BBBB", "bob");
+        var third = new Account(Guid.NewGuid(), "Google", "CCCC", "carol");
+        Assert.True((await sut.AddNewAsync(first)).IsSuccess);
+        Assert.True((await sut.AddNewAsync(second)).IsSuccess);
+        Assert.True((await sut.AddNewAsync(third)).IsSuccess);
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+
+        Assert.True((await sut.SaveGroupAsync(group, [first.ID, second.ID])).IsSuccess);
+        var grouped = (await sut.GetAllAsync()).Value;
+        Assert.Equal(group, grouped.Single(account => account.ID == first.ID).Group);
+        Assert.Equal(group, grouped.Single(account => account.ID == second.ID).Group);
+        Assert.Null(grouped.Single(account => account.ID == third.ID).Group);
+
+        var renamed = new AccountGroup(group.Id, "Office", "#E45757");
+        Assert.True((await sut.SaveGroupAsync(renamed, [second.ID, third.ID])).IsSuccess);
+        var reassigned = (await sut.GetAllAsync()).Value;
+        Assert.Null(reassigned.Single(account => account.ID == first.ID).Group);
+        Assert.Equal(renamed, reassigned.Single(account => account.ID == second.ID).Group);
+        Assert.Equal(renamed, reassigned.Single(account => account.ID == third.ID).Group);
+
+        Assert.True((await sut.DeleteGroupAsync(group.Id)).IsSuccess);
+        Assert.All((await sut.GetAllAsync()).Value, account => Assert.Null(account.Group));
+    }
+
+    [Fact]
+    public async Task SaveGroup_WhenNoSelectedAccountExists_LeavesAssignmentsUnchanged()
+    {
+        using var temp = new TempDir();
+        var storagePath = Path.Combine(temp.Path, "master.totp");
+        var sut = CreateSut(storagePath, new EchoVaultService());
+        var existingGroup = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var account = new Account(
+            Guid.NewGuid(),
+            "GitHub",
+            "AAAA",
+            "alice",
+            group: existingGroup);
+        Assert.True((await sut.AddNewAsync(account)).IsSuccess);
+
+        var result = await sut.SaveGroupAsync(
+            new AccountGroup(existingGroup.Id, "Renamed", "#E45757"),
+            [Guid.NewGuid()]);
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(existingGroup, Assert.Single((await sut.GetAllAsync()).Value).Group);
+    }
+
+    [Fact]
     public async Task ExportEncryptedAsync_WritesDecryptableBlob()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

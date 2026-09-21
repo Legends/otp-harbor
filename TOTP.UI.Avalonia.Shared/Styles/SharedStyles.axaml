@@ -11,6 +11,7 @@
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#F2F4FB" />
+                    <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#E4ECF5" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#7E7E84" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#86ACCC" />
@@ -50,6 +51,7 @@
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#F2F4FB" />
+                    <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#E4ECF5" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#7E7E84" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#86ACCC" />
@@ -89,6 +91,7 @@
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#0C1C33" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#10213F" />
+                    <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#1A2E4E" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#CBDAF3" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#0078D4" />
@@ -128,6 +131,7 @@
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#FFFFFF" />
@@ -442,6 +446,35 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
     </Style>
+    <Style Selector="Border.group-card">
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <Style Selector="Border.group-card.selected">
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+    </Style>
+    <Style Selector="Button.group-card-hit-target">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="Button.group-card-hit-target:pointerover">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.group-card-hit-target:pressed">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="ListBox.desktop-accounts Border.account-row-container">
+        <Setter Property="Background" Value="{DynamicResource BrushDesktopAccountItemBackground}" />
+    </Style>
     <Style Selector="ListBox.desktop-accounts ListBoxItem:selected">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
@@ -508,6 +541,24 @@
         <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+    </Style>
+    <Style Selector="ListBox.desktop-accounts Border.account-row-container.recently-added">
+        <Style.Animations>
+            <Animation
+                Duration="0:0:1.4"
+                Easing="CubicEaseOut"
+                FillMode="Forward"
+                PlaybackBehavior="OnlyIfVisible">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Background" Value="{DynamicResource BrushRecentAccountHighlight}" />
+                    <Setter Property="Opacity" Value="1" />
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Background" Value="{DynamicResource BrushDesktopAccountItemBackground}" />
+                    <Setter Property="Opacity" Value="1" />
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
     </Style>
     <Style Selector="Button.numeric-clear">
         <Setter Property="Width" Value="24" />
@@ -655,15 +706,40 @@
                         MinWidth="44"
                         Padding="0"
                         HorizontalAlignment="Right"
+                        HorizontalContentAlignment="Center"
                         VerticalAlignment="Stretch"
+                        VerticalContentAlignment="Center"
                         Background="Transparent"
                         BorderThickness="0"
                         ToolTip.Tip="{TemplateBinding RevealButtonAccessibleName}">
+                        <Button.Template>
+                            <ControlTemplate>
+                                <Border
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}">
+                                    <ContentPresenter
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
                         <controls:SymbolIcon
                             Name="PART_RevealIcon"
                             Foreground="{DynamicResource BrushTextSecondary}"
+                            HorizontalAlignment="Center"
                             IconSize="18"
-                            Kind="Reveal" />
+                            Kind="Reveal"
+                            VerticalAlignment="Center">
+                            <controls:SymbolIcon.RenderTransform>
+                                <TranslateTransform Y="3" />
+                            </controls:SymbolIcon.RenderTransform>
+                        </controls:SymbolIcon>
                     </Button>
                 </Grid>
             </ControlTemplate>

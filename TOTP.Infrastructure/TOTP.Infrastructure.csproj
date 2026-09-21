@@ -37,4 +37,9 @@
     <ProjectReference Include="..\TOTP.DAL\TOTP.DAL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Branding\issuer-resolver.v1.json"
+                      LogicalName="TOTP.Infrastructure.Branding.issuer-resolver.v1.json" />
+  </ItemGroup>
+
 </Project>

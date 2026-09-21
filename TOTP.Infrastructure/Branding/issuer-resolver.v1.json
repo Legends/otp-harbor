@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "brandId": "1password",
+      "aliases": ["1Password.com"]
+    },
+    {
+      "brandId": "amazon",
+      "aliases": ["Amazon Account", "Amazon.com"]
+    },
+    {
+      "brandId": "amazonwebservices",
+      "aliases": ["Amazon Web Services", "AWS", "AWS IAM", "AWS SSO"]
+    },
+    {
+      "brandId": "atlassian",
+      "aliases": ["Atlassian Cloud", "Atlassian.com"]
+    },
+    {
+      "brandId": "auth0",
+      "aliases": ["Auth0.com"]
+    },
+    {
+      "brandId": "bitbucket",
+      "aliases": ["Bitbucket Cloud", "Bitbucket.org"]
+    },
+    {
+      "brandId": "bitwarden",
+      "aliases": ["Bitwarden.com"]
+    },
+    {
+      "brandId": "cloudflare",
+      "aliases": ["Cloudflare.com", "Cloudflare Zero Trust"]
+    },
+    {
+      "brandId": "digitalocean",
+      "aliases": ["Digital Ocean", "DigitalOcean.com"]
+    },
+    {
+      "brandId": "discord",
+      "aliases": ["Discord.com"]
+    },
+    {
+      "brandId": "docker",
+      "aliases": ["Docker Hub", "Docker.com"]
+    },
+    {
+      "brandId": "dropbox",
+      "aliases": ["Dropbox.com"]
+    },
+    {
+      "brandId": "github",
+      "aliases": ["GitHub.com"]
+    },
+    {
+      "brandId": "gitlab",
+      "aliases": ["GitLab.com"]
+    },
+    {
+      "brandId": "google",
+      "aliases": ["Gmail", "Google Account", "Google Workspace", "Google.com"]
+    },
+    {
+      "brandId": "microsoft",
+      "aliases": ["Hotmail", "Live.com", "Microsoft 365", "Microsoft Account", "Office 365", "Outlook", "Outlook.com"]
+    },
+    {
+      "brandId": "microsoftazure",
+      "aliases": ["Azure", "Azure Portal", "Microsoft Azure"]
+    },
+    {
+      "brandId": "microsoftentra",
+      "aliases": ["Azure Active Directory", "Azure AD", "Microsoft Entra", "Microsoft Entra ID"]
+    },
+    {
+      "brandId": "notion",
+      "aliases": ["Notion.so"]
+    },
+    {
+      "brandId": "npm",
+      "aliases": ["npmjs.com"]
+    },
+    {
+      "brandId": "okta",
+      "aliases": ["Okta.com"]
+    },
+    {
+      "brandId": "paypal",
+      "aliases": ["PayPal.com"]
+    },
+    {
+      "brandId": "protonmail",
+      "aliases": ["Proton Mail", "ProtonMail"]
+    },
+    {
+      "brandId": "reddit",
+      "aliases": ["Reddit.com"]
+    },
+    {
+      "brandId": "slack",
+      "aliases": ["Slack.com"]
+    },
+    {
+      "brandId": "x",
+      "aliases": ["Twitter", "Twitter.com", "X.com"]
+    }
+  ]
+}

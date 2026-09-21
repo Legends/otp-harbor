@@ -21,6 +21,10 @@ namespace TOTP.Core.Models
         [JsonPropertyName("period")]
         public int PeriodSeconds { get; }
 
+        [JsonPropertyName("group")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public AccountGroup? Group { get; }
+
         // JsonConstructor wird benötigt, da die Properties nur 'get' haben
         [JsonConstructor]
         public Account(
@@ -28,14 +32,19 @@ namespace TOTP.Core.Models
             string issuer,
             string secret,
             string? accountName = null,
-            int periodSeconds = TotpPeriodPolicy.DefaultSeconds)
+            int periodSeconds = TotpPeriodPolicy.DefaultSeconds,
+            AccountGroup? group = null)
         {
             ID = id;
             Issuer = issuer;
             Secret = secret;
             AccountName = accountName;
             PeriodSeconds = periodSeconds;
+            Group = group;
         }
+
+        public Account WithGroup(AccountGroup? group) =>
+            new(ID, Issuer, Secret, AccountName, PeriodSeconds, group);
 
         public bool Equals(Account? other) => other is not null && ID == other.ID;
         public override bool Equals(object? obj) => Equals(obj as Account);

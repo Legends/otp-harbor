@@ -29,6 +29,7 @@ $policy = Read-RepositoryFile 'docs/assets/BRAND_ICONS.md'
 $assetProvenance = Read-RepositoryFile 'docs/assets/ASSET_PROVENANCE.md'
 $desktopStringsPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Localization/Strings.resx'
 $brandService = Read-RepositoryFile 'TOTP.Infrastructure/Services/SimpleIconsBrandIconPackService.cs'
+$resolverDatabaseText = Read-RepositoryFile 'TOTP.Infrastructure/Branding/issuer-resolver.v1.json'
 
 foreach ($requiredText in @(
     'intentionally does not distribute third-party brand assets',
@@ -37,10 +38,36 @@ foreach ($requiredText in @(
     'used solely for identification and interoperability purposes',
     'do not imply sponsorship, endorsement, certification, authorization, or affiliation',
     'does not upload issuer names, account names, imported icons, or other icon-matching data',
-    'does not publish, mirror, endorse, or designate an official mixed-logo pack'
+    'does not publish, mirror, endorse, or designate an official mixed-logo pack',
+    'versioned, logo-free resolver database',
+    'BrandIcons/account-brand-settings.json',
+    'contains no issuer, account name, OTP secret, icon path, or artwork'
 )) {
     if (-not $policy.Contains($requiredText, [StringComparison]::Ordinal)) {
         throw "The brand-asset policy is missing the required safeguard: $requiredText"
+    }
+}
+
+if ($resolverDatabaseText -match '(?i)https?://|\.svg\b|\.png\b|"(?:artwork|assetUrl|downloadUrl|iconFile)"') {
+    throw 'The built-in issuer resolver must contain aliases only, never artwork or asset locations.'
+}
+$resolverDatabase = $resolverDatabaseText | ConvertFrom-Json
+if ($resolverDatabase.schemaVersion -ne 1) {
+    throw 'The built-in issuer resolver has an unsupported schema version.'
+}
+$resolverEntries = @($resolverDatabase.entries)
+if ($resolverEntries.Count -eq 0 -or $resolverEntries.Count -gt 512) {
+    throw 'The built-in issuer resolver entry count is outside the reviewed bounds.'
+}
+$resolverBrandIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+foreach ($entry in $resolverEntries) {
+    $brandId = [string]$entry.brandId
+    $aliases = @($entry.aliases)
+    if ($brandId -cnotmatch '^[a-z0-9_]+$' -or -not $resolverBrandIds.Add($brandId)) {
+        throw "The built-in issuer resolver contains an invalid or duplicate brand id: $brandId"
+    }
+    if ($aliases.Count -eq 0 -or $aliases.Count -gt 32) {
+        throw "The built-in issuer resolver has an invalid alias count for: $brandId"
     }
 }
 
@@ -59,6 +86,16 @@ foreach ($requiredText in @(
 )) {
     if (-not $brandHelpText.Contains($requiredText, [StringComparison]::Ordinal)) {
         throw "The brand-icon import disclosure is missing: $requiredText"
+    }
+}
+
+$brandFormatHelp = @($desktopStrings.root.data | Where-Object name -eq 'BrandIconsFormatHelp')
+if ($brandFormatHelp.Count -ne 1) {
+    throw 'The invariant BrandIconsFormatHelp disclosure is missing or duplicated.'
+}
+foreach ($requiredText in @('canonical IDs', 'Nested folders', 'duplicate', 'rejected')) {
+    if (-not ([string]$brandFormatHelp[0].value).Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The filename-indexed icon-pack guidance is missing: $requiredText"
     }
 }
 
@@ -137,7 +174,8 @@ foreach ($relativePath in $trackedVisualAssets) {
 
 foreach ($requiredText in @(
     'CopyNoticeIfPresentAsync(archive, archivePrefix, "LICENSE.md"',
-    'CopyNoticeIfPresentAsync(archive, archivePrefix, "DISCLAIMER.md"'
+    'CopyNoticeIfPresentAsync(archive, archivePrefix, "DISCLAIMER.md"',
+    'CopyGenericNoticesAsync(archive, stagingDirectory'
 )) {
     if (-not $brandService.Contains($requiredText, [StringComparison]::Ordinal)) {
         throw "The icon importer no longer preserves an upstream notice: $requiredText"
@@ -147,6 +185,15 @@ $usesHttpClient = $brandService.Contains('HttpClient', [StringComparison]::Ordin
 $usesWebRequest = $brandService.Contains('WebRequest', [StringComparison]::Ordinal)
 if ($usesHttpClient -or $usesWebRequest) {
     throw 'The local icon-pack importer must not download or fetch brand assets.'
+}
+foreach ($requiredText in @(
+    'AccountBrandSettingsFileName = "account-brand-settings.json"',
+    'SetAccountBrandIdAsync',
+    'new AccountBrandOverride(pair.Key, pair.Value)'
+)) {
+    if (-not $brandService.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The display-only account icon mapping boundary is missing: $requiredText"
+    }
 }
 
 Write-Output "Third-party brand assets remain user-supplied and local-only; $($trackedVisualAssets.Count) tracked visual-media files match the reviewed provenance ledger."

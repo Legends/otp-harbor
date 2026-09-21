@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows.Input;
 using TOTP.Avalonia.Shared.Branding;
 using TOTP.Core.Validation;
+using TOTP.Core.Models;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
@@ -13,7 +14,8 @@ public sealed class AccountListItemViewModel(
     ICommand? copyCodeCommand = null,
     int configuredPeriodSeconds = TotpPeriodPolicy.DefaultSeconds,
     string customPeriodLabel = "",
-    BrandInfo? brand = null) : INotifyPropertyChanged
+    BrandInfo? brand = null,
+    AccountGroup? group = null) : INotifyPropertyChanged
 {
     private bool _isRecentlyAdded = isRecentlyAdded;
     private string _code = string.Empty;
@@ -34,6 +36,7 @@ public sealed class AccountListItemViewModel(
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
+    public AccountGroup? Group { get; } = group;
 
     public string Code
     {

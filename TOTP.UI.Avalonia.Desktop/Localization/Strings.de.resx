@@ -65,6 +65,9 @@
   <data name="Issuer" xml:space="preserve"><value>Anbieter</value></data>
   <data name="AccountName" xml:space="preserve"><value>Kontoname</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32-Geheimnis</value></data>
+  <data name="BrandIcon" xml:space="preserve"><value>Kontosymbol</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatisch nach Anbieter zuordnen</value></data>
+  <data name="BrandIconHelp" xml:space="preserve"><value>Wählen Sie ein Symbol aus dem importierten lokalen Paket oder behalten Sie die automatische Zuordnung bei. Diese lokale Anzeigeeinstellung ist nicht in Tresor-Sicherungen enthalten.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Erweiterte Optionen</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code-Periode in Sekunden</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Code-Periode löschen</value></data>
@@ -78,6 +81,7 @@
   <data name="AccountDuplicate" xml:space="preserve"><value>Ein Konto mit demselben Anbieter und Kontonamen ist bereits vorhanden.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>Das Konto konnte nicht sicher gespeichert werden. Vorhandene verschlüsselte Daten wurden nicht geändert.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Konto gespeichert.</value></data>
+  <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Das Konto wurde gespeichert, aber seine lokale Symboleinstellung konnte nicht gespeichert werden.</value></data>
   <data name="AccountEditLoadFailed" xml:space="preserve"><value>Das ausgewählte Konto konnte nicht zur Bearbeitung geöffnet werden.</value></data>
   <data name="AccountDeleteFailed" xml:space="preserve"><value>Das Konto konnte nicht sicher gelöscht werden.</value></data>
   <data name="AccountDeleted" xml:space="preserve"><value>Konto gelöscht.</value></data>
@@ -179,6 +183,30 @@
   <data name="SearchAccounts" xml:space="preserve"><value>Aussteller oder Konto suchen</value></data>
   <data name="SearchAccountsShortcut" xml:space="preserve"><value>Aussteller oder Konto suchen (Strg+F)</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Suche löschen</value></data>
+  <data name="ManageGroups" xml:space="preserve"><value>Gruppen verwalten</value></data>
+  <data name="Groups" xml:space="preserve"><value>Gruppen</value></data>
+  <data name="AllAccounts" xml:space="preserve"><value>Alle Konten</value></data>
+  <data name="CreateGroup" xml:space="preserve"><value>Gruppe erstellen</value></data>
+  <data name="EditGroup" xml:space="preserve"><value>Gruppe bearbeiten</value></data>
+  <data name="DeleteGroup" xml:space="preserve"><value>Gruppe löschen</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>Gruppe „{0}“ löschen? Die Konten bleiben im Tresor erhalten.</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Name</value></data>
+  <data name="GroupColor" xml:space="preserve"><value>Farbe</value></data>
+  <data name="GroupAccounts" xml:space="preserve"><value>Konten</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Gib einen Gruppennamen ein.</value></data>
+  <data name="GroupNameDuplicate" xml:space="preserve"><value>Eine Gruppe mit diesem Namen ist bereits vorhanden.</value></data>
+  <data name="GroupAccountRequired" xml:space="preserve"><value>Wähle mindestens ein Konto aus.</value></data>
+  <data name="GroupSaveFailed" xml:space="preserve"><value>Die Gruppe konnte nicht gespeichert werden.</value></data>
+  <data name="GroupSaved" xml:space="preserve"><value>Gruppe gespeichert.</value></data>
+  <data name="GroupDeleteFailed" xml:space="preserve"><value>Die Gruppe konnte nicht gelöscht werden.</value></data>
+  <data name="GroupDeleted" xml:space="preserve"><value>Gruppe gelöscht.</value></data>
+  <data name="GroupColorGreen" xml:space="preserve"><value>Grün</value></data>
+  <data name="GroupColorTurquoise" xml:space="preserve"><value>Türkis</value></data>
+  <data name="GroupColorBlue" xml:space="preserve"><value>Blau</value></data>
+  <data name="GroupColorOrange" xml:space="preserve"><value>Orange</value></data>
+  <data name="GroupColorRed" xml:space="preserve"><value>Rot</value></data>
+  <data name="GroupColorPurple" xml:space="preserve"><value>Lila</value></data>
+  <data name="Save" xml:space="preserve"><value>Speichern</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} von {1} Konten angezeigt</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Keine passenden Einträge.</value></data>
@@ -327,11 +355,13 @@
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Google-Authenticator-QR-Bild auswählen…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optionale Markensymbole</value></data>
   <data name="BrandIconsHelp" xml:space="preserve"><value>OTP Harbor enthält keine Logos Dritter und ist weder mit Simple Icons, Anbietern von Symbolpaketen noch mit dargestellten Marken verbunden oder von ihnen unterstützt. Importieren Sie nur eine unabhängig bezogene ZIP-Datei, zu deren Nutzung Sie berechtigt sind. Importierte Grafiken verbleiben in den lokalen App-Daten; Anbieter- oder Kontoinformationen werden nicht hochgeladen.</value></data>
-  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Simple-Icons-ZIP importieren…</value></data>
-  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Simple-Icons-Release-ZIP auswählen</value></data>
-  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Simple-Icons-ZIP-Dateien</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Unterstützte ZIP-Dateien: ein Simple-Icons-Release oder SVG-Dateien mit kanonischen IDs als Namen, etwa github.svg. Unterordner sind erlaubt; doppelte oder nicht kanonische Dateinamen werden abgelehnt.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Lokales Symbolpaket-ZIP importieren…</value></data>
+  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Lokales Symbolpaket-ZIP auswählen</value></data>
+  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Symbolpaket-ZIP-Dateien</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Es wurde kein Symbolpaket ausgewählt.</value></data>
   <data name="BrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus Simple Icons {1} wurden importiert.</value></data>
+  <data name="FilenameIndexedBrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus dem nach Dateinamen indizierten ZIP wurden importiert.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Das Symbolpaket ist ungültig oder konnte nicht sicher installiert werden.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Importierte Markensymbole wurden entfernt.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Importierte Markensymbole konnten nicht entfernt werden.</value></data>

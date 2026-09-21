@@ -158,7 +158,7 @@
                     Grid.Row="0"
                     Classes="toolbar"
                     IsEnabled="{Binding !IsSettingsVisible}">
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,64,Auto,Auto">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,64,Auto,Auto">
                         <Button
                             x:Name="ScanQrButton"
                             Grid.Column="0"
@@ -178,8 +178,17 @@
                             <shared:SymbolIcon Foreground="#87CE3E" IconSize="16" Kind="Add" />
                         </Button>
                         <Button
-                            x:Name="ToggleSearchButton"
+                            x:Name="ManageGroupsButton"
                             Grid.Column="2"
+                            automation:AutomationProperties.Name="{DynamicResource CreateGroup}"
+                            Classes="icon"
+                            Command="{Binding AccountList.BeginAddGroupCommand}"
+                            ToolTip.Tip="{DynamicResource ManageGroups}">
+                            <shared:SymbolIcon Foreground="#4F6BED" IconSize="16" Kind="FolderAdd" />
+                        </Button>
+                        <Button
+                            x:Name="ToggleSearchButton"
+                            Grid.Column="3"
                             automation:AutomationProperties.Name="{DynamicResource SearchAccounts}"
                             Classes="icon"
                             Click="FocusAccountSearch"
@@ -189,7 +198,7 @@
                         </Button>
                         <Grid
                             x:Name="AccountSearchHost"
-                            Grid.Column="3"
+                            Grid.Column="4"
                             Margin="4,0"
                             ColumnDefinitions="*,Auto"
                             IsVisible="{Binding IsSearchVisible}">
@@ -220,7 +229,7 @@
                         </Grid>
                         <ComboBox
                             x:Name="LanguageSelector"
-                            Grid.Column="4"
+                            Grid.Column="5"
                             Width="64"
                             MinHeight="28"
                             Padding="2"
@@ -244,7 +253,7 @@
                         </ComboBox>
                         <Button
                             x:Name="OpenSettingsButton"
-                            Grid.Column="5"
+                            Grid.Column="6"
                             automation:AutomationProperties.Name="{DynamicResource Settings}"
                             Classes="icon"
                             Command="{Binding ShowSettingsCommand}"
@@ -253,7 +262,7 @@
                         </Button>
                         <Button
                             x:Name="LockButton"
-                            Grid.Column="6"
+                            Grid.Column="7"
                             automation:AutomationProperties.Name="{DynamicResource Lock}"
                             Classes="icon"
                             Command="{Binding LockCommand}"
@@ -282,11 +291,85 @@
                                             Margin="10,8,10,12"
                                             VerticalAlignment="Top"
                                             Spacing="8">
+                                            <StackPanel IsVisible="{Binding HasGroups}" Spacing="6">
+                                                <Grid>
+                                                    <Button
+                                                        x:Name="GroupBackButton"
+                                                        HorizontalAlignment="Left"
+                                                        automation:AutomationProperties.Name="{DynamicResource AllAccounts}"
+                                                        Classes="compact secondary"
+                                                        Command="{Binding ClearGroupFilterCommand}"
+                                                        IsVisible="{Binding HasSelectedGroup}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <shared:SymbolIcon IconSize="14" Kind="ArrowLeft" />
+                                                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource AllAccounts}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Grid>
+                                                <ScrollViewer
+                                                    x:Name="GroupCardsScrollViewer"
+                                                    MaxHeight="72"
+                                                    HorizontalScrollBarVisibility="Hidden"
+                                                    PointerWheelChanged="ScrollGroupsHorizontally"
+                                                    VerticalScrollBarVisibility="Disabled">
+                                                    <ItemsControl ItemsSource="{Binding Groups}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="presentation:AccountGroupListItemViewModel">
+                                                                <Border
+                                                                    Width="150"
+                                                                    MinHeight="54"
+                                                                    Margin="2"
+                                                                    Background="{Binding Background}"
+                                                                    Classes="group-card"
+                                                                    Classes.selected="{Binding IsSelected}"
+                                                                    CornerRadius="7">
+                                                                    <Border.ContextMenu>
+                                                                        <ContextMenu Classes="account-context-menu">
+                                                                            <MenuItem Command="{Binding EditCommand}" Header="{DynamicResource EditGroup}">
+                                                                                <MenuItem.Icon>
+                                                                                    <shared:SymbolIcon IconSize="15" Kind="Edit" />
+                                                                                </MenuItem.Icon>
+                                                                            </MenuItem>
+                                                                            <MenuItem
+                                                                                Classes="danger-context-item"
+                                                                                Command="{Binding DeleteCommand}"
+                                                                                Header="{DynamicResource DeleteGroup}">
+                                                                                <MenuItem.Icon>
+                                                                                    <shared:SymbolIcon IconSize="15" Kind="Delete" />
+                                                                                </MenuItem.Icon>
+                                                                            </MenuItem>
+                                                                        </ContextMenu>
+                                                                    </Border.ContextMenu>
+                                                                    <Button
+                                                                        Classes="group-card-hit-target"
+                                                                        Command="{Binding SelectCommand}">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                                                            <shared:SymbolIcon
+                                                                                Foreground="{Binding Foreground}"
+                                                                                IconSize="20"
+                                                                                Kind="Folder" />
+                                                                            <StackPanel>
+                                                                                <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                                                                <TextBlock FontSize="11" Text="{Binding AccountCount}" />
+                                                                            </StackPanel>
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </ScrollViewer>
+                                            </StackPanel>
                                             <TextBlock
                                                 HorizontalAlignment="Right"
                                                 Classes="secondary"
                                                 FontSize="11"
-                                                IsVisible="{Binding HasSearchText}"
+                                                IsVisible="{Binding HasActiveAccountFilter}"
                                                 Text="{Binding SearchResultSummary}" />
                                             <Grid x:Name="AccountListRegion">
                                                 <controls:ContextPreservingAccountListBox
@@ -508,6 +591,29 @@
                                                 <TextBox
                                                     automation:AutomationProperties.Name="{DynamicResource AccountName}"
                                                     Text="{Binding EditorAccountName, Mode=TwoWay}" />
+                                                <StackPanel
+                                                    Margin="0,10,0,0"
+                                                    Spacing="6">
+                                                    <TextBlock
+                                                        Classes="field-label"
+                                                        Text="{DynamicResource BrandIcon}" />
+                                                    <controls:TypeAheadComboBox
+                                                        x:Name="AccountBrandIconComboBox"
+                                                        automation:AutomationProperties.Name="{DynamicResource BrandIcon}"
+                                                        IsEnabled="{Binding HasBrandIconChoices}"
+                                                        ItemsSource="{Binding EditorBrandIconOptions}"
+                                                        SelectedItem="{Binding SelectedEditorBrandIconOption, Mode=TwoWay}">
+                                                        <controls:TypeAheadComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="presentation:BrandIconOption">
+                                                                <TextBlock Text="{Binding DisplayName}" />
+                                                            </DataTemplate>
+                                                        </controls:TypeAheadComboBox.ItemTemplate>
+                                                    </controls:TypeAheadComboBox>
+                                                    <TextBlock
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource BrandIconHelp}"
+                                                        TextWrapping="Wrap" />
+                                                </StackPanel>
                                                 <Expander
                                                     x:Name="AccountAdvancedOptions"
                                                     Margin="0,10,0,0"
@@ -550,6 +656,122 @@
                                                     <Button Padding="14,6" Classes="primary" Command="{Binding SaveAccountCommand}" Content="{DynamicResource SaveAccount}" />
                                                     <Button Padding="14,6" Command="{Binding CancelEditCommand}" Content="{DynamicResource CancelEdit}" />
                                                 </StackPanel>
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </Border>
+
+                                    <Border
+                                        x:Name="GroupEditorFlyout"
+                                        ZIndex="21"
+                                        Padding="16"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        Classes="flyout"
+                                        IsVisible="{Binding IsGroupEditorVisible}">
+                                        <ScrollViewer
+                                            HorizontalScrollBarVisibility="Disabled"
+                                            VerticalScrollBarVisibility="Auto">
+                                            <StackPanel Margin="0,10,20,10" Spacing="10">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock
+                                                        Classes="section-title"
+                                                        IsVisible="{Binding IsEditingExistingGroup}"
+                                                        Text="{DynamicResource EditGroup}" />
+                                                    <TextBlock
+                                                        Classes="section-title"
+                                                        IsVisible="{Binding !IsEditingExistingGroup}"
+                                                        Text="{DynamicResource CreateGroup}" />
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        Width="26"
+                                                        Height="26"
+                                                        MinHeight="26"
+                                                        Classes="icon"
+                                                        Command="{Binding CancelGroupEditCommand}"
+                                                        Content="✕" />
+                                                </Grid>
+                                                <TextBlock Classes="field-label" Text="{DynamicResource GroupName}" />
+                                                <TextBox
+                                                    x:Name="GroupNameBox"
+                                                    MaxLength="64"
+                                                    automation:AutomationProperties.Name="{DynamicResource GroupName}"
+                                                    Text="{Binding GroupEditorName, Mode=TwoWay}" />
+                                                <TextBlock Classes="field-label" Text="{DynamicResource GroupColor}" />
+                                                <ListBox
+                                                    MaxHeight="58"
+                                                    automation:AutomationProperties.Name="{DynamicResource GroupColor}"
+                                                    ItemsSource="{Binding GroupColorOptions}"
+                                                    SelectedItem="{Binding SelectedGroupColor, Mode=TwoWay}"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                    SelectionMode="Single">
+                                                    <ListBox.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal" Spacing="7" />
+                                                        </ItemsPanelTemplate>
+                                                    </ListBox.ItemsPanel>
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="presentation:GroupColorOption">
+                                                            <Border
+                                                                Width="30"
+                                                                Height="30"
+                                                                Background="{Binding Brush}"
+                                                                CornerRadius="15"
+                                                                ToolTip.Tip="{Binding DisplayName}" />
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                                <TextBlock Classes="field-label" Text="{DynamicResource GroupAccounts}" />
+                                                <TextBox
+                                                    x:Name="GroupAccountSearchBox"
+                                                    automation:AutomationProperties.Name="{DynamicResource SearchAccounts}"
+                                                    PlaceholderText="{DynamicResource SearchAccounts}"
+                                                    Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
+                                                <Border Classes="panel" Padding="4">
+                                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                                                        <ItemsControl ItemsSource="{Binding GroupEditorAccounts}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="presentation:GroupAccountSelectionViewModel">
+                                                                    <Grid
+                                                                        Margin="4,3"
+                                                                        ColumnDefinitions="Auto,Auto,*"
+                                                                        ColumnSpacing="8">
+                                                                        <CheckBox
+                                                                            Grid.Column="0"
+                                                                            VerticalAlignment="Center"
+                                                                            IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                                                        <shared:BrandTile
+                                                                            Grid.Column="1"
+                                                                            IsVisible="{Binding ShowIssuerLogo}"
+                                                                            IconData="{Binding Brand.IconData}"
+                                                                            Initials="{Binding Brand.Initials}"
+                                                                            TileBackground="{Binding Brand.BackgroundBrush}" />
+                                                                        <StackPanel
+                                                                            Grid.Column="2"
+                                                                            VerticalAlignment="Center">
+                                                                            <TextBlock Text="{Binding Issuer}" />
+                                                                            <TextBlock Classes="secondary" FontSize="11" Text="{Binding AccountName}" />
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </Border>
+                                                <shared:ValidationMessage Severity="Error" Text="{Binding GroupEditorMessage}" />
+                                                <Grid Margin="0,6,0,0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        Padding="14,6"
+                                                        Classes="primary"
+                                                        Command="{Binding SaveGroupCommand}"
+                                                        Content="{DynamicResource Save}" />
+                                                    <Button
+                                                        Grid.Column="2"
+                                                        Padding="14,6"
+                                                        Command="{Binding CancelGroupEditCommand}"
+                                                        Content="{DynamicResource Cancel}" />
+                                                </Grid>
                                             </StackPanel>
                                         </ScrollViewer>
                                     </Border>
