@@ -689,7 +689,7 @@
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <shared:SymbolIcon
                                                         Foreground="{Binding SelectedGroupColor.Brush}"
-                                                        IconSize="18"
+                                                        IconSize="27"
                                                         Kind="Folder" />
                                                     <TextBlock
                                                         VerticalAlignment="Center"
