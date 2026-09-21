@@ -12,8 +12,6 @@
     CanResize="True"
     ShowInTaskbar="False"
     CornerRadius="4"
-    TransparencyLevelHint="Transparent"
-    Background="Transparent"
     WindowDecorations="None"
     WindowStartupLocation="CenterOwner"
     Title="{Binding Title}">
