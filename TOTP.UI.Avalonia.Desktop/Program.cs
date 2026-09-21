@@ -67,8 +67,12 @@ internal static class Program
 
     public static AppBuilder BuildAvaloniaApp()
     {
-        return AppBuilder.Configure<App>()
+        var builder = AppBuilder.Configure<App>()
             .UsePlatformDetect();
+#if DEBUG
+        builder = builder.WithDeveloperTools();
+#endif
+        return builder;
     }
 
     private static void ApplyInterfaceScalePreference(DesktopPlatformServices platformServices)
