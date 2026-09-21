@@ -292,78 +292,83 @@
                                             VerticalAlignment="Top"
                                             Spacing="8">
                                             <StackPanel IsVisible="{Binding HasGroups}" Spacing="6">
-                                                <Grid>
+                                                <Grid ColumnDefinitions="10,*">
                                                     <Button
                                                         x:Name="GroupBackButton"
+                                                        Grid.Column="0"
+                                                        Height="54"
                                                         HorizontalAlignment="Left"
+                                                        Margin="-10,0,0,0"
+                                                        Padding="3,5"
+                                                        VerticalAlignment="Center"
+                                                        Width="20"
                                                         automation:AutomationProperties.Name="{DynamicResource AllAccounts}"
-                                                        Classes="compact secondary"
+                                                        Classes="icon"
                                                         Command="{Binding ClearGroupFilterCommand}"
-                                                        IsVisible="{Binding HasSelectedGroup}">
-                                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <shared:SymbolIcon IconSize="14" Kind="ArrowLeft" />
-                                                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource AllAccounts}" />
-                                                        </StackPanel>
+                                                        IsVisible="{Binding HasSelectedGroup}"
+                                                        ToolTip.Tip="{DynamicResource AllAccounts}">
+                                                        <shared:SymbolIcon IconSize="14" Kind="ArrowLeft" />
                                                     </Button>
-                                                </Grid>
-                                                <ScrollViewer
-                                                    x:Name="GroupCardsScrollViewer"
-                                                    MaxHeight="72"
-                                                    HorizontalScrollBarVisibility="Hidden"
-                                                    PointerWheelChanged="ScrollGroupsHorizontally"
-                                                    VerticalScrollBarVisibility="Disabled">
-                                                    <ItemsControl ItemsSource="{Binding Groups}">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <StackPanel Orientation="Horizontal" />
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate x:DataType="presentation:AccountGroupListItemViewModel">
-                                                                <Border
-                                                                    Width="150"
-                                                                    MinHeight="54"
-                                                                    Margin="2"
-                                                                    Background="{Binding Background}"
-                                                                    Classes="group-card"
-                                                                    Classes.selected="{Binding IsSelected}"
-                                                                    CornerRadius="7">
-                                                                    <Border.ContextMenu>
-                                                                        <ContextMenu Classes="account-context-menu">
-                                                                            <MenuItem Command="{Binding EditCommand}" Header="{DynamicResource EditGroup}">
-                                                                                <MenuItem.Icon>
-                                                                                    <shared:SymbolIcon IconSize="15" Kind="Edit" />
-                                                                                </MenuItem.Icon>
-                                                                            </MenuItem>
-                                                                            <MenuItem
-                                                                                Classes="danger-context-item"
-                                                                                Command="{Binding DeleteCommand}"
-                                                                                Header="{DynamicResource DeleteGroup}">
-                                                                                <MenuItem.Icon>
-                                                                                    <shared:SymbolIcon IconSize="15" Kind="Delete" />
-                                                                                </MenuItem.Icon>
-                                                                            </MenuItem>
-                                                                        </ContextMenu>
-                                                                    </Border.ContextMenu>
-                                                                    <Button
-                                                                        Classes="group-card-hit-target"
-                                                                        Command="{Binding SelectCommand}">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="7">
-                                                                            <shared:SymbolIcon
-                                                                                Foreground="{Binding Foreground}"
-                                                                                IconSize="20"
-                                                                                Kind="Folder" />
-                                                                            <StackPanel>
-                                                                                <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
-                                                                                <TextBlock FontSize="11" Text="{Binding AccountCount}" />
+                                                    <ScrollViewer
+                                                        x:Name="GroupCardsScrollViewer"
+                                                        Grid.Column="1"
+                                                        MaxHeight="72"
+                                                        HorizontalScrollBarVisibility="Hidden"
+                                                        PointerWheelChanged="ScrollGroupsHorizontally"
+                                                        VerticalScrollBarVisibility="Disabled">
+                                                        <ItemsControl ItemsSource="{Binding Groups}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel Orientation="Horizontal" />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="presentation:AccountGroupListItemViewModel">
+                                                                    <Border
+                                                                        Width="150"
+                                                                        MinHeight="54"
+                                                                        Margin="2"
+                                                                        Background="{Binding Background}"
+                                                                        Classes="group-card"
+                                                                        Classes.selected="{Binding IsSelected}"
+                                                                        CornerRadius="7">
+                                                                        <Border.ContextMenu>
+                                                                            <ContextMenu Classes="account-context-menu">
+                                                                                <MenuItem Command="{Binding EditCommand}" Header="{DynamicResource EditGroup}">
+                                                                                    <MenuItem.Icon>
+                                                                                        <shared:SymbolIcon IconSize="15" Kind="Edit" />
+                                                                                    </MenuItem.Icon>
+                                                                                </MenuItem>
+                                                                                <MenuItem
+                                                                                    Classes="danger-context-item"
+                                                                                    Command="{Binding DeleteCommand}"
+                                                                                    Header="{DynamicResource DeleteGroup}">
+                                                                                    <MenuItem.Icon>
+                                                                                        <shared:SymbolIcon IconSize="15" Kind="Delete" />
+                                                                                    </MenuItem.Icon>
+                                                                                </MenuItem>
+                                                                            </ContextMenu>
+                                                                        </Border.ContextMenu>
+                                                                        <Button
+                                                                            Classes="group-card-hit-target"
+                                                                            Command="{Binding SelectCommand}">
+                                                                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                                                                <shared:SymbolIcon
+                                                                                    Foreground="{Binding Foreground}"
+                                                                                    IconSize="20"
+                                                                                    Kind="Folder" />
+                                                                                <StackPanel>
+                                                                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                                                                    <TextBlock FontSize="11" Text="{Binding AccountCount}" />
+                                                                                </StackPanel>
                                                                             </StackPanel>
-                                                                        </StackPanel>
-                                                                    </Button>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </ScrollViewer>
+                                                                        </Button>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </Grid>
                                             </StackPanel>
                                             <TextBlock
                                                 HorizontalAlignment="Right"

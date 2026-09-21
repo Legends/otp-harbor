@@ -1628,6 +1628,15 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.AllAccounts],
                 AutomationProperties.GetName(groupBackButton));
+            Assert.Same(groupScroller.Parent, groupBackButton.Parent);
+            Assert.Equal(0, Grid.GetColumn(groupBackButton));
+            Assert.Equal(1, Grid.GetColumn(groupScroller));
+            var groupNavigationGrid = Assert.IsType<Grid>(groupScroller.Parent);
+            Assert.Equal(new GridLength(10), groupNavigationGrid.ColumnDefinitions[0].Width);
+            Assert.Equal(new Thickness(-10, 0, 0, 0), groupBackButton.Margin);
+            Assert.Equal(54, groupBackButton.Height);
+            Assert.Equal(20, groupBackButton.Width);
+            Assert.Empty(groupBackButton.GetLogicalDescendants().OfType<TextBlock>());
             var flyout = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "GroupEditorFlyout");
