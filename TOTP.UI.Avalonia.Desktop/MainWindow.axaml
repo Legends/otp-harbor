@@ -694,6 +694,7 @@
                                                     Text="{Binding GroupEditorName, Mode=TwoWay}" />
                                                 <TextBlock Classes="field-label" Text="{DynamicResource GroupColor}" />
                                                 <ListBox
+                                                    Classes="group-color-picker"
                                                     MaxHeight="58"
                                                     automation:AutomationProperties.Name="{DynamicResource GroupColor}"
                                                     ItemsSource="{Binding GroupColorOptions}"
@@ -724,7 +725,7 @@
                                                     PlaceholderText="{DynamicResource SearchAccounts}"
                                                     Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
                                                 <Border Classes="panel" Padding="4">
-                                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Hidden">
                                                         <ItemsControl ItemsSource="{Binding GroupEditorAccounts}">
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate x:DataType="presentation:GroupAccountSelectionViewModel">

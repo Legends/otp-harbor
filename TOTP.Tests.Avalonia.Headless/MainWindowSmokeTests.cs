@@ -1653,6 +1653,12 @@ public sealed class MainWindowSmokeTests
             var colorList = Assert.Single(
                 flyout.GetLogicalDescendants().OfType<ListBox>());
             Assert.Equal(SelectionMode.Single, colorList.SelectionMode);
+            Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(colorList));
+            Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetVerticalScrollBarVisibility(colorList));
+            var accountPickerScroller = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<ScrollViewer>(),
+                viewer => viewer.MaxHeight == 240);
+            Assert.Equal(ScrollBarVisibility.Hidden, accountPickerScroller.VerticalScrollBarVisibility);
             Assert.True(flyout.Bounds.Height > 0);
         }
         finally
