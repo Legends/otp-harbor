@@ -1269,10 +1269,6 @@ public sealed class MainWindowSmokeTests
 
             Assert.False(titleBar.ShowIcon);
             Assert.Equal(new Thickness(8, 0, 0, 0), titleBar.TitlePadding);
-            Assert.Equal(new CornerRadius(4), window.CornerRadius);
-            Assert.Single(
-                window.GetVisualDescendants().OfType<Border>(),
-                border => border.CornerRadius == new CornerRadius(4) && border.ClipToBounds);
         }
         finally
         {
@@ -1407,10 +1403,6 @@ public sealed class MainWindowSmokeTests
 
             Assert.NotNull(window.Icon);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
-            Assert.Equal(new CornerRadius(4), window.CornerRadius);
-            Assert.Single(
-                window.GetVisualDescendants().OfType<Border>(),
-                border => border.CornerRadius == new CornerRadius(4) && border.ClipToBounds);
             Assert.Empty(window.KeyBindings);
             var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
             Assert.Equal(window.Title, titleBar.Title);
@@ -1695,7 +1687,6 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(520, window.MinWidth);
             Assert.True(window.Topmost);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
-            Assert.Equal(new CornerRadius(4), window.CornerRadius);
             Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
             var settingsTabs = Assert.Single(
                 window.GetVisualDescendants().OfType<TabControl>(),

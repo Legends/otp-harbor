@@ -13,26 +13,19 @@
     Height="540"
     MinWidth="360"
     MinHeight="200"
-    CornerRadius="4"
     WindowDecorations="None"
     WindowStartupLocation="CenterScreen"
     Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">
 
-    <Border
-        Background="{DynamicResource BrushWindowBackground}"
-        BorderBrush="{DynamicResource BrushWindowBorder}"
-        BorderThickness="1"
-        ClipToBounds="True"
-        CornerRadius="4">
-        <Grid RowDefinitions="Auto,*">
-            <controls:ProductTitleBar
-                ShowMinimizeButton="True"
-                Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <shared:BusyOverlay
-                Grid.Row="1"
-                BusyMessage="{DynamicResource StartingSafely}"
-                IsBusy="{Binding IsBusy}">
-            <Grid Background="{DynamicResource BrushWindowBackground}">
+    <Grid RowDefinitions="Auto,*">
+        <controls:ProductTitleBar
+            ShowMinimizeButton="True"
+            Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+        <shared:BusyOverlay
+            Grid.Row="1"
+            BusyMessage="{DynamicResource StartingSafely}"
+            IsBusy="{Binding IsBusy}">
+        <Grid Background="{DynamicResource BrushWindowBackground}">
 
             <!-- Locked and first-run presentation uses the compact authorization gate. -->
             <ScrollViewer
@@ -827,8 +820,7 @@
 
                 </Grid>
             </Grid>
-            </Grid>
-            </shared:BusyOverlay>
         </Grid>
-    </Border>
+        </shared:BusyOverlay>
+    </Grid>
 </Window>

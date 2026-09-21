@@ -11,22 +11,15 @@
     MinHeight="390"
     CanResize="True"
     ShowInTaskbar="False"
-    CornerRadius="4"
     WindowDecorations="None"
     WindowStartupLocation="CenterOwner"
     Title="{Binding Title}">
-    <Border
-        Background="{DynamicResource BrushWindowBackground}"
-        BorderBrush="{DynamicResource BrushWindowBorder}"
-        BorderThickness="1"
-        ClipToBounds="True"
-        CornerRadius="4">
-        <Grid RowDefinitions="Auto,*">
-            <controls:ProductTitleBar
-                ShowIcon="False"
-                TitlePadding="8,0,0,0"
-                Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <Grid Grid.Row="1" Margin="12" RowDefinitions="*,Auto">
+    <Grid RowDefinitions="Auto,*">
+        <controls:ProductTitleBar
+            ShowIcon="False"
+            TitlePadding="8,0,0,0"
+            Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+        <Grid Grid.Row="1" Margin="12" RowDefinitions="*,Auto">
             <Border
             Background="{DynamicResource BrushQrBackground}"
             BorderBrush="{DynamicResource BrushBorder}"
@@ -44,7 +37,6 @@
                 Severity="Warning"
                 Text="{DynamicResource QrPrivacyNotice}"
                 TextAlignment="Center" />
-            </Grid>
         </Grid>
-    </Border>
+    </Grid>
 </Window>
