@@ -13,6 +13,8 @@
     MinWidth="520"
     MinHeight="480"
     CornerRadius="4"
+    TransparencyLevelHint="Transparent"
+    Background="Transparent"
     CanResize="False"
     ShowInTaskbar="False"
     Topmost="True"

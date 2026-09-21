@@ -14,6 +14,8 @@
     MinWidth="360"
     MinHeight="200"
     CornerRadius="4"
+    TransparencyLevelHint="Transparent"
+    Background="Transparent"
     WindowDecorations="None"
     WindowStartupLocation="CenterScreen"
     Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">
