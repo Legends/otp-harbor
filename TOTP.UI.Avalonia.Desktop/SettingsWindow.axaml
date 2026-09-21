@@ -23,11 +23,17 @@
         <KeyBinding Gesture="Escape" Command="{Binding CloseSettingsCommand}" />
     </Window.KeyBindings>
 
-    <Grid>
-        <Grid
-            Margin="16"
-            Classes="settings-page"
-            RowDefinitions="Auto,*">
+    <Border
+        Background="{DynamicResource BrushWindowBackground}"
+        BorderBrush="{DynamicResource BrushWindowBorder}"
+        BorderThickness="1"
+        ClipToBounds="True"
+        CornerRadius="4">
+        <Grid>
+            <Grid
+                Margin="16"
+                Classes="settings-page"
+                RowDefinitions="Auto,*">
             <Grid ColumnDefinitions="*,Auto">
                 <Border
                     Grid.Column="0"
@@ -344,15 +350,16 @@
                     </ScrollViewer>
                 </TabItem>
             </TabControl>
+            </Grid>
+            <shared:NotificationBanner
+                x:Name="SettingsNotificationToast"
+                ZIndex="50"
+                Margin="20"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Bottom"
+                IsHitTestVisible="False"
+                Severity="{Binding SettingsNotification.Severity}"
+                Text="{Binding SettingsNotification.Text}" />
         </Grid>
-        <shared:NotificationBanner
-            x:Name="SettingsNotificationToast"
-            ZIndex="50"
-            Margin="20"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Bottom"
-            IsHitTestVisible="False"
-            Severity="{Binding SettingsNotification.Severity}"
-            Text="{Binding SettingsNotification.Text}" />
-    </Grid>
+    </Border>
 </Window>

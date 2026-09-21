@@ -9,6 +9,7 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushWindowBorder" Color="#DBDBDB" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#F2F4FB" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
@@ -49,6 +50,7 @@
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushWindowBorder" Color="#DBDBDB" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#F2F4FB" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
@@ -89,6 +91,7 @@
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#0C1C33" />
+                    <SolidColorBrush x:Key="BrushWindowBorder" Color="#1D3366" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#10213F" />
@@ -129,6 +132,7 @@
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="{x:Static styles:AvaloniaThemeVariants.HighContrast}">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushWindowBorder" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#000000" />

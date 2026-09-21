@@ -20,6 +20,8 @@
 
     <Border
         Background="{DynamicResource BrushWindowBackground}"
+        BorderBrush="{DynamicResource BrushWindowBorder}"
+        BorderThickness="1"
         ClipToBounds="True"
         CornerRadius="4">
         <Grid RowDefinitions="Auto,*">
