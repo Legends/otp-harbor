@@ -449,8 +449,17 @@
                                                                         Grid.Row="0"
                                                                         Grid.Column="2"
                                                                         VerticalAlignment="Center"
+                                                                        FontSize="10"
+                                                                        FontWeight="SemiBold"
+                                                                        Foreground="{DynamicResource BrushSuccess}"
+                                                                        IsVisible="{Binding HasCopyConfirmation}"
+                                                                        Text="{Binding CopyConfirmation}" />
+                                                                    <TextBlock
+                                                                        Grid.Row="0"
+                                                                        Grid.Column="2"
+                                                                        VerticalAlignment="Center"
                                                                         Classes="secondary"
-                                                                        IsVisible="{Binding HasCustomPeriod}"
+                                                                        IsVisible="{Binding !HasCopyConfirmation}"
                                                                         Text="{Binding CustomPeriodLabel}" />
                                                                     <ProgressBar
                                                                         Grid.Row="1"
@@ -487,24 +496,6 @@
                                                     Text="{DynamicResource NoMatchingEntries}" />
                                             </Grid>
 
-                                            <StackPanel
-                                                HorizontalAlignment="Center"
-                                                IsVisible="{Binding HasSelectedAccount}"
-                                                Orientation="Horizontal"
-                                                Spacing="6">
-                                                <Button
-                                                    Classes="link"
-                                                    Command="{Binding BeginEditCommand}"
-                                                    Content="{DynamicResource EditAccount}" />
-                                                <Button
-                                                    Classes="link danger-link"
-                                                    Command="{Binding DeleteAccountCommand}"
-                                                    Content="{DynamicResource DeleteAccount}" />
-                                                <Button
-                                                    Classes="link"
-                                                    Command="{Binding GenerateQrCommand}"
-                                                    Content="{DynamicResource ShowQrCode}" />
-                                            </StackPanel>
                                             <TextBlock
                                                 Classes="inline-message"
                                                 IsVisible="{Binding HasCodeMessage}"

@@ -26,6 +26,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly IBrandIconResolver _brandIconResolver;
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly TimeSpan _countdownTickInterval;
+    private readonly TimeSpan _copyConfirmationDuration;
     private readonly ISettingsService? _settingsService;
     private readonly IAvaloniaQrPreviewDialogService? _qrPreviewDialogs;
     private readonly AsyncCommand _loadCommand;
@@ -48,6 +49,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _clearGroupFilterCommand;
     private CancellationTokenSource? _rowCodeLifetime;
     private CancellationTokenSource? _recentHighlightLifetime;
+    private CancellationTokenSource? _copyConfirmationLifetime;
+    private AccountListItemViewModel? _copyConfirmationAccount;
     private IReadOnlyList<AccountListItemViewModel> _allAccounts = [];
     private IReadOnlyList<AccountListItemViewModel> _accounts = [];
     private IReadOnlyList<AccountGroupListItemViewModel> _allGroups = [];
@@ -117,6 +120,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _brandIconPackService = brandIconPackService;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         _countdownTickInterval = countdownTickInterval ?? TimeSpan.FromSeconds(1);
+        _copyConfirmationDuration = transientMessageDuration
+            ?? TransientNotificationDefaults.Duration;
         _settingsService = settingsService;
         _qrPreviewDialogs = qrPreviewDialogs;
         Notification = new NotificationState(transientMessageDuration);
@@ -695,9 +700,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             var copyResult = await _clipboardService.CopyAsync(code);
             if (copyResult.IsSuccess)
             {
-                ShowLocalizedTransientNotification(
-                    AvaloniaStringKeys.CodeCopied,
-                    NotificationSeverity.Information);
+                ShowCopyConfirmation(account);
             }
             else
             {
@@ -717,10 +720,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             TimeSpan.FromSeconds(clearSeconds));
         if (clearResult.IsSuccess)
         {
-            ShowLocalizedTransientNotification(
-                AvaloniaStringKeys.CodeCopiedWithClear,
-                NotificationSeverity.Information,
-                clearSeconds);
+            ShowCopyConfirmation(account);
             return;
         }
 
@@ -731,6 +731,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             var fallbackResult = await _clipboardService.CopyAsync(code);
             if (fallbackResult.IsSuccess)
             {
+                ShowCopyConfirmation(account);
                 ShowLocalizedTransientNotification(
                     AvaloniaStringKeys.CodeCopiedWithoutClear,
                     NotificationSeverity.Warning);
@@ -1445,6 +1446,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _localization.CultureChanged -= LocalizationCultureChanged;
         Notification.PropertyChanged -= NotificationPropertyChanged;
         Notification.Dispose();
+        ClearCopyConfirmation();
         ClearRecentHighlight();
         StopAndClearRowCodes();
         ClearQrImage();
@@ -1455,6 +1457,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     {
         StopAndClearRowCodes();
         ClearNotification();
+        ClearCopyConfirmation();
         ClearRecentHighlight();
         ContextAccount = null;
         SelectedAccount = null;
@@ -1649,6 +1652,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         foreach (var account in _allAccounts)
             account.UpdateCustomPeriodLabel(FormatCustomPeriod(account.ConfiguredPeriodSeconds));
 
+        if (_copyConfirmationAccount is { HasCopyConfirmation: true } copiedAccount)
+            copiedAccount.ShowCopyConfirmation(
+                _localization.GetString(AvaloniaStringKeys.CodeCopied));
+
         if (_codeMessageLocalizationKey is { } key)
         {
             var arguments = _codeMessageLocalizationArguments;
@@ -1742,6 +1749,49 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(HasMessage));
         OnPropertyChanged(nameof(HasNoAccounts));
         OnPropertyChanged(nameof(HasNoSearchResults));
+    }
+
+    private void ShowCopyConfirmation(AccountListItemViewModel account)
+    {
+        ClearCopyConfirmation();
+        account.ShowCopyConfirmation(_localization.GetString(AvaloniaStringKeys.CodeCopied));
+        _copyConfirmationAccount = account;
+        var lifetime = new CancellationTokenSource();
+        _copyConfirmationLifetime = lifetime;
+        _ = ClearCopyConfirmationAfterDelayAsync(account, lifetime);
+    }
+
+    private async Task ClearCopyConfirmationAfterDelayAsync(
+        AccountListItemViewModel account,
+        CancellationTokenSource lifetime)
+    {
+        try
+        {
+            await Task.Delay(_copyConfirmationDuration, lifetime.Token);
+            if (ReferenceEquals(_copyConfirmationLifetime, lifetime))
+            {
+                account.ClearCopyConfirmation();
+                _copyConfirmationAccount = null;
+            }
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_copyConfirmationLifetime, lifetime))
+                _copyConfirmationLifetime = null;
+            lifetime.Dispose();
+        }
+    }
+
+    private void ClearCopyConfirmation()
+    {
+        var lifetime = _copyConfirmationLifetime;
+        _copyConfirmationLifetime = null;
+        lifetime?.Cancel();
+        _copyConfirmationAccount?.ClearCopyConfirmation();
+        _copyConfirmationAccount = null;
     }
 
     private void StartRecentHighlightLifetime(AccountListItemViewModel? highlightedAccount)

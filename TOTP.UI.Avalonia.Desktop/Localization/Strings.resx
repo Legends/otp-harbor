@@ -86,7 +86,7 @@
   <data name="AccountDeleteFailed" xml:space="preserve"><value>The account could not be deleted safely.</value></data>
   <data name="AccountDeleted" xml:space="preserve"><value>Account deleted.</value></data>
   <data name="CodeRefreshFailed" xml:space="preserve"><value>The code expired and could not be refreshed safely.</value></data>
-  <data name="CodeCopied" xml:space="preserve"><value>Copied.</value></data>
+  <data name="CodeCopied" xml:space="preserve"><value>Copied</value></data>
   <data name="CodeCopiedWithClear" xml:space="preserve"><value>Copied. Conditional clipboard clear is scheduled in {0} seconds.</value></data>
   <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Copied. Automatic clipboard clearing is unavailable on this platform.</value></data>
   <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>The code could not be copied to the clipboard.</value></data>

@@ -24,6 +24,7 @@ public sealed class AccountListItemViewModel(
     private string _customPeriodLabel = customPeriodLabel;
     private BrandInfo _brand = brand ?? BrandInfo.Generic(issuer);
     private bool _showIssuerLogo = true;
+    private string _copyConfirmation = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -37,6 +38,20 @@ public sealed class AccountListItemViewModel(
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
     public AccountGroup? Group { get; } = group;
+
+    public string CopyConfirmation
+    {
+        get => _copyConfirmation;
+        private set
+        {
+            if (_copyConfirmation == value) return;
+            _copyConfirmation = value;
+            OnPropertyChanged(nameof(CopyConfirmation));
+            OnPropertyChanged(nameof(HasCopyConfirmation));
+        }
+    }
+
+    public bool HasCopyConfirmation => CopyConfirmation.Length > 0;
 
     public string Code
     {
@@ -96,6 +111,11 @@ public sealed class AccountListItemViewModel(
     }
 
     public void ClearRecentlyAdded() => IsRecentlyAdded = false;
+
+    public void ShowCopyConfirmation(string message) =>
+        CopyConfirmation = message ?? string.Empty;
+
+    public void ClearCopyConfirmation() => CopyConfirmation = string.Empty;
 
     public void UpdateBrand(BrandInfo brand)
     {

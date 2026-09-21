@@ -190,6 +190,8 @@ public sealed class AccountListViewModelTests
             "222222",
             TimeSpan.FromSeconds(12),
             It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("Copied", sut.Accounts[1].CopyConfirmation);
+        Assert.Empty(sut.Accounts[0].CopyConfirmation);
     }
 
     [Fact]
@@ -870,13 +872,11 @@ public sealed class AccountListViewModelTests
             "123456",
             TimeSpan.FromSeconds(18),
             It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(
-            "Copied. Conditional clipboard clear is scheduled in 18 seconds.",
-            sut.Notification.Text);
-        Assert.Equal(NotificationSeverity.Information, sut.Notification.Severity);
+        Assert.Equal("Copied", sut.SelectedAccount.CopyConfirmation);
+        Assert.Empty(sut.Notification.Text);
         Assert.Empty(sut.CodeMessage);
 
-        await WaitUntilAsync(() => !sut.Notification.HasMessage);
+        await WaitUntilAsync(() => !sut.SelectedAccount.HasCopyConfirmation);
     }
 
     [Fact]
@@ -912,10 +912,8 @@ public sealed class AccountListViewModelTests
 
         localization.ApplyCulture("de");
 
-        Assert.Equal(
-            "Kopiert. Die Zwischenablage wird in 15 Sekunden geleert, sofern der Code unverändert ist.",
-            sut.Notification.Text);
-        Assert.Equal(NotificationSeverity.Information, sut.Notification.Severity);
+        Assert.Equal("Kopiert", sut.SelectedAccount.CopyConfirmation);
+        Assert.Empty(sut.Notification.Text);
     }
 
     [Fact]
@@ -1601,8 +1599,8 @@ public sealed class AccountListViewModelTests
             It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
         clipboard.Verify(value => value.CopyAsync(
             "123456", It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal("Copied.", sut.Notification.Text);
-        Assert.Equal(NotificationSeverity.Information, sut.Notification.Severity);
+        Assert.Equal("Copied", sut.SelectedAccount.CopyConfirmation);
+        Assert.Empty(sut.Notification.Text);
         Assert.Empty(sut.CodeMessage);
     }
 
@@ -1653,6 +1651,7 @@ public sealed class AccountListViewModelTests
 
         clipboard.Verify(value => value.CopyAsync(
             "123456", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("Kopiert", sut.SelectedAccount.CopyConfirmation);
         Assert.Equal(
             "Kopiert. Das automatische Leeren der Zwischenablage ist auf dieser Plattform nicht verfügbar.",
             sut.Notification.Text);

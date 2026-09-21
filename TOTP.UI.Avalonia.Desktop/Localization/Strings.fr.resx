@@ -86,7 +86,7 @@
   <data name="AccountDeleteFailed" xml:space="preserve"><value>Le compte n’a pas pu être supprimé de manière sécurisée.</value></data>
   <data name="AccountDeleted" xml:space="preserve"><value>Compte supprimé.</value></data>
   <data name="CodeRefreshFailed" xml:space="preserve"><value>Le code a expiré et n’a pas pu être actualisé de manière sécurisée.</value></data>
-  <data name="CodeCopied" xml:space="preserve"><value>Copié.</value></data>
+  <data name="CodeCopied" xml:space="preserve"><value>Copié</value></data>
   <data name="CodeCopiedWithClear" xml:space="preserve"><value>Copié. L’effacement conditionnel du presse-papiers est prévu dans {0} secondes.</value></data>
   <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Copié. L’effacement automatique du presse-papiers n’est pas disponible sur cette plateforme.</value></data>
   <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>Le code n’a pas pu être copié dans le presse-papiers.</value></data>

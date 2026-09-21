@@ -86,7 +86,7 @@
   <data name="AccountDeleteFailed" xml:space="preserve"><value>La cuenta no se pudo eliminar de forma segura.</value></data>
   <data name="AccountDeleted" xml:space="preserve"><value>Cuenta eliminada.</value></data>
   <data name="CodeRefreshFailed" xml:space="preserve"><value>El código caducó y no se pudo actualizar de forma segura.</value></data>
-  <data name="CodeCopied" xml:space="preserve"><value>Copiado.</value></data>
+  <data name="CodeCopied" xml:space="preserve"><value>Copiado</value></data>
   <data name="CodeCopiedWithClear" xml:space="preserve"><value>Copiado. El borrado condicional del portapapeles está programado dentro de {0} segundos.</value></data>
   <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Copiado. El borrado automático del portapapeles no está disponible en esta plataforma.</value></data>
   <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>El código no se pudo copiar al portapapeles.</value></data>

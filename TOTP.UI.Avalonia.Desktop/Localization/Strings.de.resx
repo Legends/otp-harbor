@@ -86,7 +86,7 @@
   <data name="AccountDeleteFailed" xml:space="preserve"><value>Das Konto konnte nicht sicher gelöscht werden.</value></data>
   <data name="AccountDeleted" xml:space="preserve"><value>Konto gelöscht.</value></data>
   <data name="CodeRefreshFailed" xml:space="preserve"><value>Der Code ist abgelaufen und konnte nicht sicher aktualisiert werden.</value></data>
-  <data name="CodeCopied" xml:space="preserve"><value>Kopiert.</value></data>
+  <data name="CodeCopied" xml:space="preserve"><value>Kopiert</value></data>
   <data name="CodeCopiedWithClear" xml:space="preserve"><value>Kopiert. Die Zwischenablage wird in {0} Sekunden geleert, sofern der Code unverändert ist.</value></data>
   <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Kopiert. Das automatische Leeren der Zwischenablage ist auf dieser Plattform nicht verfügbar.</value></data>
   <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>Der Code konnte nicht in die Zwischenablage kopiert werden.</value></data>
