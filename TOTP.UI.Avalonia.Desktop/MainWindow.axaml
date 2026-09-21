@@ -705,6 +705,7 @@
                                                 <ListBox
                                                     Classes="group-color-picker"
                                                     MaxHeight="58"
+                                                    Padding="4,0"
                                                     automation:AutomationProperties.Name="{DynamicResource GroupColor}"
                                                     ItemsSource="{Binding GroupColorOptions}"
                                                     SelectedItem="{Binding SelectedGroupColor, Mode=TwoWay}"
@@ -713,7 +714,7 @@
                                                     SelectionMode="Single">
                                                     <ListBox.ItemsPanel>
                                                         <ItemsPanelTemplate>
-                                                            <StackPanel Orientation="Horizontal" Spacing="7" />
+                                                            <UniformGrid Columns="6" />
                                                         </ItemsPanelTemplate>
                                                     </ListBox.ItemsPanel>
                                                     <ListBox.ItemTemplate>

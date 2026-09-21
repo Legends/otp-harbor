@@ -439,7 +439,6 @@
         <Setter Property="Foreground" Value="{DynamicResource BrushTextHighlight}" />
     </Style>
     <Style Selector="ListBox.group-color-picker ListBoxItem">
-        <Setter Property="Width" Value="30" />
         <Setter Property="Height" Value="30" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="0" />
