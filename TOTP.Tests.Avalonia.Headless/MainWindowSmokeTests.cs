@@ -1652,6 +1652,10 @@ public sealed class MainWindowSmokeTests
                 textBox => textBox.Name == "GroupAccountSearchBox");
             var colorList = Assert.Single(
                 flyout.GetLogicalDescendants().OfType<ListBox>());
+            var groupNameIcon = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Folder);
+            Assert.Equal(SymbolIconKind.Folder, groupNameIcon.Kind);
             Assert.Equal(SelectionMode.Single, colorList.SelectionMode);
             Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(colorList));
             Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetVerticalScrollBarVisibility(colorList));

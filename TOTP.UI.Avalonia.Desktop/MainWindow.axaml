@@ -686,7 +686,16 @@
                                                         Command="{Binding CancelGroupEditCommand}"
                                                         Content="✕" />
                                                 </Grid>
-                                                <TextBlock Classes="field-label" Text="{DynamicResource GroupName}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <shared:SymbolIcon
+                                                        Foreground="{Binding SelectedGroupColor.Brush}"
+                                                        IconSize="18"
+                                                        Kind="Folder" />
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        Classes="field-label"
+                                                        Text="{DynamicResource GroupName}" />
+                                                </StackPanel>
                                                 <TextBox
                                                     x:Name="GroupNameBox"
                                                     MaxLength="64"
