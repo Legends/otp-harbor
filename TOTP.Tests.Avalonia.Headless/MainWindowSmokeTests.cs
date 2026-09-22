@@ -1257,6 +1257,26 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void DesktopWindows_UseSmallRoundedCorners()
+    {
+        var window = new Window();
+
+        try
+        {
+            window.Show();
+
+            Assert.Equal(new CornerRadius(4), window.CornerRadius);
+            Assert.Equal(
+                Win32Properties.WindowCornerPreference.RoundSmall,
+                Win32Properties.GetWindowCornerPreference(window));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void QrPreviewDialog_TitleHasLeftPaddingWhenIconIsHidden()
     {
         var window = new QrPreviewDialogWindow();
