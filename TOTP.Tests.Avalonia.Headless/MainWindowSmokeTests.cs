@@ -1257,7 +1257,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void DesktopWindows_UseSmallRoundedCorners()
+    public void DesktopWindows_UseNativeRoundedCorners()
     {
         var window = new Window();
 
@@ -1265,9 +1265,8 @@ public sealed class MainWindowSmokeTests
         {
             window.Show();
 
-            Assert.Equal(new CornerRadius(4), window.CornerRadius);
             Assert.Equal(
-                Win32Properties.WindowCornerPreference.RoundSmall,
+                Win32Properties.WindowCornerPreference.Round,
                 Win32Properties.GetWindowCornerPreference(window));
         }
         finally

@@ -194,10 +194,9 @@
 
     <Style Selector="Window">
         <Setter Property="Background" Value="{DynamicResource BrushWindowBackground}" />
-        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
         <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
-        <Setter Property="Win32Properties.WindowCornerPreference" Value="RoundSmall" />
+        <Setter Property="Win32Properties.WindowCornerPreference" Value="Round" />
     </Style>
     <Style Selector="Border.card">
         <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
