@@ -2,6 +2,7 @@
     x:Class="TOTP.Avalonia.Desktop.SettingsWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation"
     xmlns:localization="using:TOTP.Avalonia.Desktop.Localization"
     xmlns:presentation="using:TOTP.Avalonia.Desktop.Presentation"
     xmlns:shared="using:TOTP.Avalonia.Shared.Controls"
@@ -36,6 +37,7 @@
                 </Border>
                 <Button
                     Grid.Column="1"
+                    automation:AutomationProperties.Name="{DynamicResource CloseSettings}"
                     Classes="icon"
                     Command="{Binding CloseSettingsCommand}"
                     Content="✕"

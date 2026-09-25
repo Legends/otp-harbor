@@ -1792,6 +1792,30 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void SettingsWindow_CloseButtonHasLocalizedAutomationName()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var closeButton = Assert.Single(
+                window.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("icon")
+                    && button.Content is string content
+                    && content == "✕");
+
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.CloseSettings],
+                AutomationProperties.GetName(closeButton));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void ImportExportSettings_ProvidesDedicatedBackupRecoveryActions()
     {
         var window = new SettingsWindow();
