@@ -22,7 +22,7 @@ public sealed class AvaloniaFilePicker(
             [
                 new FilePickerFileType(localization.GetString(AvaloniaStringKeys.TotpFiles))
                 {
-                    Patterns = ["*.totp", "*.2fas", "*.json", "*.txt", "*.csv"]
+                    Patterns = ["*.2fas", "*.json", "*.txt", "*.csv"]
                 }
             ]
         });
@@ -102,6 +102,30 @@ public sealed class AvaloniaFilePicker(
             ]
         });
         cancellationToken.ThrowIfCancellationRequested();
+        return files.Count == 1 ? new AvaloniaStorageFile(files[0]) : null;
+    }
+
+    public async Task<INativeStorageFile?> PickEncryptedBackupFileAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var provider = windowCoordinator.GetRequiredDialogOwner().StorageProvider;
+        if (!provider.CanOpen) return null;
+
+        var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = localization.GetString(AvaloniaStringKeys.RestoreEncryptedBackup),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType(localization.GetString(AvaloniaStringKeys.EncryptedTotpBackupFile))
+                {
+                    Patterns = ["*.totp"]
+                }
+            ]
+        });
+        cancellationToken.ThrowIfCancellationRequested();
+
         return files.Count == 1 ? new AvaloniaStorageFile(files[0]) : null;
     }
 }

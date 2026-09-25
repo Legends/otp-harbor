@@ -817,6 +817,27 @@ public sealed class MainWindowSmokeTests
     }
 
     [Theory]
+    [InlineData(Key.Escape, true, true, true)]
+    [InlineData(Key.Escape, true, false, false)]
+    [InlineData(Key.Escape, false, true, false)]
+    [InlineData(Key.Enter, true, true, false)]
+    public void EscapeClearsGroupFilterOnlyOnVisibleFilteredAccountList(
+        Key key,
+        bool isAccountListVisible,
+        bool hasSelectedGroup,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldClearGroupFilterOnEscape",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expected,
+            policy.Invoke(null, [key, isAccountListVisible, hasSelectedGroup]));
+    }
+
+    [Theory]
     [InlineData(Key.A, Key.A, KeyModifiers.Control, true, false, true)]
     [InlineData(Key.E, Key.E, KeyModifiers.Control, true, false, true)]
     [InlineData(Key.A, Key.A, KeyModifiers.Control, true, true, false)]
@@ -1763,6 +1784,40 @@ public sealed class MainWindowSmokeTests
 
             Assert.DoesNotContain("primary", changeButton.Classes);
             Assert.DoesNotContain("danger", changeButton.Classes);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ImportExportSettings_ProvidesDedicatedBackupRecoveryActions()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var host = window.FindControl<ContentControl>("ImportExportSettingsHost");
+            Assert.NotNull(host?.ContentTemplate);
+            var content = Assert.IsAssignableFrom<Control>(host.ContentTemplate!.Build(null));
+
+            var exportButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "EncryptedBackupExportButton");
+            var restoreButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "EncryptedBackupRestoreButton");
+            var openFolderButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "OpenLastBackupFolderButton");
+
+            Assert.Contains("primary", exportButton.Classes);
+            Assert.Contains("wide", exportButton.Classes);
+            Assert.Contains("wide", restoreButton.Classes);
+            Assert.Contains("secondary", openFolderButton.Classes);
+            Assert.Contains("wide", openFolderButton.Classes);
         }
         finally
         {

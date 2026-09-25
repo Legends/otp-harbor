@@ -97,3 +97,10 @@
   - On every security-significant feature
   - On new external dependency introduction
   - Before each production release tag
+
+## 9. Desktop backup/recovery workflow review (2026-09-25)
+
+- **Threat impact:** Encrypted exports remain password-protected `.totp` files. The restore action accepts only the encrypted-backup path, rejects non-`.totp` selections before reading them, validates the password through authenticated import, and requires explicit conflict confirmation before account mutation. Exported location text contains only the user-selected path or a provider-managed-location notice; no password, seed, or decrypted payload is displayed or logged. The folder launcher is offered only when the provider supplies a local path.
+- **Data-flow impact:** Export streams account data through `IExportService` to the native save destination, then hardens local files for the current user. Restore streams the selected file through password validation and encrypted import, then delegates account changes to the existing pre-import-backup workflow. Provider-backed files remain under the document provider's ownership and are not passed through local ACL hardening.
+- **Compatibility/migration impact:** The `.totp` format, vault format, account schema, and generic import formats are unchanged. This change adds a dedicated desktop restore picker and presentation-only backup-location state; no migration is required. Existing encrypted exports remain the supported recovery artifact.
+- **Verification evidence:** Full solution Debug build completed with zero warnings and errors. The full solution test run passed 1,034 core tests, 110 Avalonia headless tests, and 13 Unix tests (five expected platform skips). Focused backup/recovery coverage includes 16 `NativeFilePickerViewModelTests` and dedicated settings UI structure coverage.

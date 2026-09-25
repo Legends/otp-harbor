@@ -130,9 +130,20 @@
   <data name="ImportConflictHandling" xml:space="preserve"><value>Gestión de conflictos de importación</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Importar cuentas</value></data>
   <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Importar copia de OTP Harbor</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importa una copia cifrada .totp de OTP Harbor, un archivo de cuentas de OTP Harbor, una exportación JSON de Aegis o .2fas de 2FAS sin cifrar, o un archivo de texto con un URI TOTP otpauth:// estándar por línea.</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importa un archivo de cuentas de OTP Harbor, una exportación JSON de Aegis o .2fas de 2FAS sin cifrar, o un archivo de texto con un URI TOTP otpauth:// estándar por línea.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exportar cuentas</value></data>
-  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Crea una copia portátil de todas las cuentas protegida por contraseña y elige dónde guardarla. Conserva la copia y su contraseña por separado; restáurala con «Importar copia de OTP Harbor».</value></data>
+  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Crea una copia portátil de todas las cuentas protegida por contraseña y elige dónde guardarla. Conserva la copia y su contraseña por separado; restáurala con «Restaurar copia cifrada» más abajo.</value></data>
+  <data name="BackupAndRecovery" xml:space="preserve"><value>Copia de seguridad y recuperación</value></data>
+  <data name="BackupSecuritySummary" xml:space="preserve"><value>Cifrado: cada copia exportada está protegida por la contraseña que creas. OTP Harbor no puede recuperar esa contraseña.</value></data>
+  <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Ubicación: elige el destino en el diálogo del sistema. OTP Harbor no sube ni copia automáticamente la copia de seguridad.</value></data>
+  <data name="LastBackupLocation" xml:space="preserve"><value>Última copia: {0}</value></data>
+  <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Última copia: guardada en la ubicación elegida en el proveedor de documentos del sistema.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Elige una copia cifrada .totp de OTP Harbor e introduce la contraseña usada para crearla. La gestión de conflictos se revisa antes de cambiar ninguna cuenta.</value></data>
+  <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Restaurar copia cifrada…</value></data>
+  <data name="RestoreBackup" xml:space="preserve"><value>Restaurar copia</value></data>
+  <data name="OpenLastBackupFolder" xml:space="preserve"><value>Abrir la carpeta de la última copia</value></data>
+  <data name="BackupFolderOpenFailed" xml:space="preserve"><value>No se pudo abrir la carpeta de la copia de seguridad.</value></data>
+  <data name="NoBackupFileSelected" xml:space="preserve"><value>No se seleccionó ningún archivo de copia de seguridad.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Diagnóstico de soporte</value></data>
   <data name="RefreshSupportInformation" xml:space="preserve"><value>Actualizar información de soporte</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Descargar actualización</value></data>

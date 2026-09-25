@@ -138,6 +138,94 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
+    public async Task RestoreEncryptedBackupAsync_WhenNoFileIsSelected_ShowsRestoreSpecificNotice()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickEncryptedBackupFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((INativeStorageFile?)null);
+        using var sut = Create(
+            picker.Object,
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            transientMessageDuration: TimeSpan.FromMilliseconds(20));
+
+        await sut.RestoreEncryptedBackupAsync();
+
+        Assert.Equal("No backup file selected.", sut.Message);
+        Assert.Equal(NotificationSeverity.Information, sut.MessageSeverity);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Empty(sut.Message);
+    }
+
+    [Fact]
+    public async Task RestoreEncryptedBackupAsync_WhenSelectionIsNotTotp_RejectsBeforeReading()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickEncryptedBackupFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("backup.json", content: [1, 2, 3]));
+        var export = new Mock<IExportService>();
+        using var sut = Create(
+            picker.Object,
+            export.Object,
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>());
+
+        await sut.RestoreEncryptedBackupAsync();
+
+        Assert.Equal("The backup is invalid or unavailable.", sut.Message);
+        export.Verify(value => value.ImportFromStreamAsync(
+            It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RestoreEncryptedBackupAsync_WhenPasswordAndConfirmationSucceed_ImportsAccounts()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickEncryptedBackupFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("backup.totp", content: [1, 2, 3]));
+        var imported = new Account(Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "user");
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(), "backup.totp", "strong-password", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { imported }));
+        var accounts = new Mock<IAccountManager>(MockBehavior.Strict);
+        var sequence = new MockSequence();
+        accounts.InSequence(sequence).Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.InSequence(sequence).Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Ok());
+        accounts.InSequence(sequence).Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .ReturnsAsync(Result.Ok());
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async (PasswordDialogRequest request, CancellationToken token) =>
+            {
+                var validateAsync = request.ValidateAsync;
+                Assert.NotNull(validateAsync);
+                Assert.Null(await validateAsync("strong-password", token));
+                return "strong-password";
+            });
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.Is<ConfirmationDialogRequest>(request =>
+                    request.Title == "Restore backup"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
+        var changed = 0;
+        sut.AccountsChanged += (_, _) => changed++;
+
+        await sut.RestoreEncryptedBackupAsync();
+
+        accounts.Verify(value => value.AddNewAsync(It.Is<Account>(account =>
+            account.Secret == imported.Secret)), Times.Once);
+        Assert.Equal(1, changed);
+        Assert.Contains("1 added", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ExportEncryptedAsync_WhenPasswordPromptIsCancelled_ShowsOneShortInformationNotice()
     {
         var accounts = new Mock<IAccountManager>();
@@ -379,7 +467,7 @@ public sealed class NativeFilePickerViewModelTests
         var settings = new Mock<ISettingsService>();
         settings.SetupGet(value => value.Current).Returns(new AppSettings
         {
-            OpenExportFileAfterExport = true
+            OpenExportFileAfterExport = false
         });
         var folderLauncher = new Mock<IPlatformFolderLauncher>();
         folderLauncher.Setup(value => value.OpenFolderAsync(
@@ -398,11 +486,96 @@ public sealed class NativeFilePickerViewModelTests
         await sut.ExportEncryptedAsync();
 
         Assert.Contains("successfully", sut.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Last backup: C:\\safe\\backup.totp", sut.BackupLocationText);
+        Assert.True(sut.HasLastBackupFolder);
         security.Verify(value => value.RestrictFileToCurrentUser("C:\\safe\\backup.totp"), Times.Once);
+        await sut.OpenLastBackupFolderAsync();
         folderLauncher.Verify(value => value.OpenFolderAsync(
             "C:\\safe", It.IsAny<CancellationToken>()), Times.Once);
         await Task.Delay(100, TestContext.Current.CancellationToken);
         Assert.Empty(sut.Message);
+    }
+
+    [Fact]
+    public async Task OpenLastBackupFolderAsync_WhenLauncherFails_ShowsRecoverableError()
+    {
+        var file = new TestStorageFile("backup.totp", "C:\\safe\\backup.totp");
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickEncryptedExportFileAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(file);
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ExportToEncryptedStreamAsync(
+                It.IsAny<IEnumerable<Account>>(), "strong-password", It.IsAny<Stream>(),
+                ExportFileFormat.Json, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+                [new Account(Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "user")]));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("strong-password");
+        var folderLauncher = new Mock<IPlatformFolderLauncher>();
+        folderLauncher.Setup(value => value.OpenFolderAsync(
+                "C:\\safe", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail("folder unavailable"));
+        using var sut = Create(
+            picker.Object,
+            export.Object,
+            accounts.Object,
+            dialogs.Object,
+            folderLauncher: folderLauncher.Object);
+
+        await sut.ExportEncryptedAsync();
+        await sut.OpenLastBackupFolderAsync();
+
+        Assert.Equal("The backup folder could not be opened.", sut.Message);
+        Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
+        folderLauncher.Verify(value => value.OpenFolderAsync(
+            "C:\\safe", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExportEncryptedAsync_WhenProviderOwnsDestination_ExplainsLocationWithoutFolderAction()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickEncryptedExportFileAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("backup.totp"));
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ExportToEncryptedStreamAsync(
+                It.IsAny<IEnumerable<Account>>(), "strong-password", It.IsAny<Stream>(),
+                ExportFileFormat.Json, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+                [new Account(Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "user")]));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("strong-password");
+        var folderLauncher = new Mock<IPlatformFolderLauncher>();
+        using var sut = Create(
+            picker.Object,
+            export.Object,
+            accounts.Object,
+            dialogs.Object,
+            folderLauncher: folderLauncher.Object);
+
+        await sut.ExportEncryptedAsync();
+
+        Assert.Equal(
+            "Last backup: saved to the location selected in the system document provider.",
+            sut.BackupLocationText);
+        Assert.False(sut.HasLastBackupFolder);
+        Assert.False(sut.OpenLastBackupFolderCommand.CanExecute(null));
+        folderLauncher.Verify(value => value.OpenFolderAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

@@ -130,9 +130,20 @@
   <data name="ImportConflictHandling" xml:space="preserve"><value>Gestion des conflits d’importation</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Importer des comptes</value></data>
   <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Importer une sauvegarde OTP Harbor</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importez une sauvegarde OTP Harbor .totp chiffrée, un fichier de comptes OTP Harbor, une exportation JSON Aegis ou .2fas de 2FAS non chiffrée, ou un fichier texte contenant une URI TOTP otpauth:// standard par ligne.</value></data>
+  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importez un fichier de comptes OTP Harbor, une exportation JSON Aegis ou .2fas de 2FAS non chiffrée, ou un fichier texte contenant une URI TOTP otpauth:// standard par ligne.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exporter les comptes</value></data>
-  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Créez une sauvegarde portable de tous les comptes, protégée par mot de passe, et choisissez son emplacement. Conservez la sauvegarde et son mot de passe séparément ; restaurez-la avec « Importer une sauvegarde OTP Harbor ».</value></data>
+  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Créez une sauvegarde portable de tous les comptes, protégée par mot de passe, et choisissez son emplacement. Conservez la sauvegarde et son mot de passe séparément ; restaurez-la avec « Restaurer une sauvegarde chiffrée » ci-dessous.</value></data>
+  <data name="BackupAndRecovery" xml:space="preserve"><value>Sauvegarde et récupération</value></data>
+  <data name="BackupSecuritySummary" xml:space="preserve"><value>Chiffrement : chaque sauvegarde exportée est protégée par le mot de passe que vous créez. OTP Harbor ne peut pas récupérer ce mot de passe.</value></data>
+  <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Emplacement : choisissez la destination dans la boîte de dialogue système. OTP Harbor ne téléverse ni ne copie automatiquement la sauvegarde.</value></data>
+  <data name="LastBackupLocation" xml:space="preserve"><value>Dernière sauvegarde : {0}</value></data>
+  <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Dernière sauvegarde : enregistrée à l’emplacement choisi dans le fournisseur de documents système.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Choisissez une sauvegarde OTP Harbor .totp chiffrée et saisissez le mot de passe utilisé pour la créer. La gestion des conflits est vérifiée avant toute modification de compte.</value></data>
+  <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Restaurer une sauvegarde chiffrée…</value></data>
+  <data name="RestoreBackup" xml:space="preserve"><value>Restaurer la sauvegarde</value></data>
+  <data name="OpenLastBackupFolder" xml:space="preserve"><value>Ouvrir le dossier de la dernière sauvegarde</value></data>
+  <data name="BackupFolderOpenFailed" xml:space="preserve"><value>Le dossier de sauvegarde n’a pas pu être ouvert.</value></data>
+  <data name="NoBackupFileSelected" xml:space="preserve"><value>Aucun fichier de sauvegarde sélectionné.</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Diagnostics d’assistance</value></data>
   <data name="RefreshSupportInformation" xml:space="preserve"><value>Actualiser les informations d’assistance</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Télécharger la mise à jour</value></data>

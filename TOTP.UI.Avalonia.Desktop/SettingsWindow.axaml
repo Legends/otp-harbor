@@ -130,7 +130,9 @@
                     </Grid>
                 </TabItem>
                 <TabItem Header="{DynamicResource ImportExport}">
-                    <ContentControl Content="{Binding NativeFilePicker}">
+                    <ContentControl
+                        x:Name="ImportExportSettingsHost"
+                        Content="{Binding NativeFilePicker}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:NativeFilePickerViewModel">
                                 <Grid RowDefinitions="*,Auto">
@@ -139,26 +141,81 @@
                                         HorizontalScrollBarVisibility="Disabled"
                                         VerticalScrollBarVisibility="Auto">
                                         <StackPanel Margin="4,8,4,4" VerticalAlignment="Top" Spacing="12">
-                                        <Border Classes="panel">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="section-title" Text="{DynamicResource ImportOtpHarborBackup}" />
-                                                <TextBlock
-                                                    Classes="secondary"
-                                                    Text="{DynamicResource OtpHarborImportHelp}"
-                                                    TextWrapping="Wrap" />
-                                                <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
-                                                <ComboBox ItemsSource="{Binding ConflictStrategies}" SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
-                                                            <TextBlock Text="{Binding Label}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                                <Button
-                                                    Command="{Binding ImportCommand}"
-                                                    Content="{DynamicResource ChooseImportFile}" />
-                                            </StackPanel>
-                                        </Border>
+                                            <Border Classes="panel">
+                                                <StackPanel Spacing="10">
+                                                    <TextBlock Classes="section-title" Text="{DynamicResource BackupAndRecovery}" />
+                                                    <TextBlock
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource BackupSecuritySummary}"
+                                                        TextWrapping="Wrap" />
+                                                    <Border
+                                                        Background="{DynamicResource BrushSurfaceAlternate}"
+                                                        CornerRadius="{DynamicResource RadiusSmall}"
+                                                        Padding="10">
+                                                        <StackPanel Spacing="7">
+                                                            <TextBlock Classes="settings-label" Text="{DynamicResource EncryptedBackup}" />
+                                                            <TextBlock
+                                                                Classes="secondary"
+                                                                Text="{DynamicResource EncryptedBackupHelp}"
+                                                                TextWrapping="Wrap" />
+                                                            <TextBlock
+                                                                Classes="secondary"
+                                                                Text="{Binding BackupLocationText}"
+                                                                TextWrapping="Wrap" />
+                                                            <Button
+                                                                x:Name="EncryptedBackupExportButton"
+                                                                Classes="primary wide"
+                                                                Command="{Binding ExportCommand}"
+                                                                Content="{DynamicResource ExportEncryptedBackup}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <Border
+                                                        Background="{DynamicResource BrushSurfaceAlternate}"
+                                                        CornerRadius="{DynamicResource RadiusSmall}"
+                                                        Padding="10">
+                                                        <StackPanel Spacing="7">
+                                                            <TextBlock Classes="settings-label" Text="{DynamicResource RestoreEncryptedBackup}" />
+                                                            <TextBlock
+                                                                Classes="secondary"
+                                                                Text="{DynamicResource RestoreBackupHelp}"
+                                                                TextWrapping="Wrap" />
+                                                            <StackPanel Spacing="8">
+                                                                <Button
+                                                                    x:Name="EncryptedBackupRestoreButton"
+                                                                    Classes="wide"
+                                                                    Command="{Binding RestoreBackupCommand}"
+                                                                    Content="{DynamicResource RestoreEncryptedBackup}" />
+                                                                <Button
+                                                                    x:Name="OpenLastBackupFolderButton"
+                                                                    Classes="secondary wide"
+                                                                    Command="{Binding OpenLastBackupFolderCommand}"
+                                                                    Content="{DynamicResource OpenLastBackupFolder}"
+                                                                    IsVisible="{Binding HasLastBackupFolder}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="section-title" Text="{DynamicResource ImportOtpHarborBackup}" />
+                                                    <TextBlock
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource OtpHarborImportHelp}"
+                                                        TextWrapping="Wrap" />
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
+                                                    <ComboBox ItemsSource="{Binding ConflictStrategies}" SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
+                                                                <TextBlock Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <Button
+                                                        Command="{Binding ImportCommand}"
+                                                        Content="{DynamicResource ChooseImportFile}" />
+                                                </StackPanel>
+                                            </Border>
                                         <Border Classes="panel">
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource ImportGoogleAuthenticator}" />
@@ -169,18 +226,6 @@
                                                 <Button
                                                     Command="{Binding ImportGoogleQrCommand}"
                                                     Content="{DynamicResource ChooseGoogleAuthenticatorQrImage}" />
-                                            </StackPanel>
-                                        </Border>
-                                        <Border Classes="panel">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="section-title" Text="{DynamicResource EncryptedBackup}" />
-                                                <TextBlock
-                                                    Classes="secondary"
-                                                    Text="{DynamicResource EncryptedBackupHelp}"
-                                                    TextWrapping="Wrap" />
-                                                <Button
-                                                    Command="{Binding ExportCommand}"
-                                                    Content="{DynamicResource ExportEncryptedBackup}" />
                                             </StackPanel>
                                         </Border>
                                         <Border Classes="panel">

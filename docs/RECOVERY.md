@@ -14,7 +14,7 @@ Use synthetic data when rehearsing these steps. Before changing any application-
 
 1. Verify that the application came from the expected signed release and start it normally.
 2. Create or unlock the destination vault with its master password.
-3. Open Settings, choose Import / Export, and select the encrypted `.totp` export through the native file picker.
+3. Open Settings, choose Import / Export, and use **Restore encrypted backup** to select the encrypted `.totp` export through the native file picker.
 4. Enter the export password when requested and review the conflict policy before confirming.
 5. Confirm that expected synthetic accounts are present and generate a code from a non-production test account.
 6. Keep the original backup unchanged until a restart and second unlock have succeeded.

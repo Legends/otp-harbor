@@ -4,6 +4,9 @@ public interface IAvaloniaFilePicker
 {
     Task<INativeStorageFile?> PickImportFileAsync(CancellationToken cancellationToken = default);
 
+    Task<INativeStorageFile?> PickEncryptedBackupFileAsync(
+        CancellationToken cancellationToken = default);
+
     Task<INativeStorageFile?> PickQrImageAsync(CancellationToken cancellationToken = default);
 
     Task<INativeStorageFile?> PickBrandIconPackAsync(CancellationToken cancellationToken = default);

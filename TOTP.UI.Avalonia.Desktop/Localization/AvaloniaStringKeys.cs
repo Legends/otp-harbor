@@ -28,6 +28,17 @@ public static class AvaloniaStringKeys
     public const string OtpHarborImportHelp = nameof(OtpHarborImportHelp);
     public const string EncryptedBackup = nameof(EncryptedBackup);
     public const string EncryptedBackupHelp = nameof(EncryptedBackupHelp);
+    public const string BackupAndRecovery = nameof(BackupAndRecovery);
+    public const string BackupSecuritySummary = nameof(BackupSecuritySummary);
+    public const string BackupDestinationBeforeExport = nameof(BackupDestinationBeforeExport);
+    public const string LastBackupLocation = nameof(LastBackupLocation);
+    public const string ProviderManagedBackupLocation = nameof(ProviderManagedBackupLocation);
+    public const string RestoreBackupHelp = nameof(RestoreBackupHelp);
+    public const string RestoreEncryptedBackup = nameof(RestoreEncryptedBackup);
+    public const string RestoreBackup = nameof(RestoreBackup);
+    public const string OpenLastBackupFolder = nameof(OpenLastBackupFolder);
+    public const string BackupFolderOpenFailed = nameof(BackupFolderOpenFailed);
+    public const string NoBackupFileSelected = nameof(NoBackupFileSelected);
     public const string SupportDiagnostics = nameof(SupportDiagnostics);
     public const string RefreshSupportInformation = nameof(RefreshSupportInformation);
     public const string DownloadUpdate = nameof(DownloadUpdate);
@@ -378,7 +389,10 @@ public static class AvaloniaStringKeys
         StartupCancelled, ClosingSafely, Retry, MasterPassword, MasterPasswordHelp,
         Unlock, Lock, LockShortcut, Accounts, Tools, Settings, ChooseImportFile, ExportEncryptedBackup,
         ImportConflictHandling, ImportAccounts, ImportOtpHarborBackup, OtpHarborImportHelp,
-        EncryptedBackup, EncryptedBackupHelp,
+        EncryptedBackup, EncryptedBackupHelp, BackupAndRecovery, BackupSecuritySummary,
+        BackupDestinationBeforeExport, LastBackupLocation, ProviderManagedBackupLocation,
+        RestoreBackupHelp, RestoreEncryptedBackup, RestoreBackup, OpenLastBackupFolder,
+        BackupFolderOpenFailed, NoBackupFileSelected,
         SupportDiagnostics, RefreshSupportInformation,
         DownloadUpdate, InstallUpdate, ReleaseNotes, VerifyAppcast, SoftwareUpdates,
         ScanQrCamera, ImportQrCode, ImportGoogleAuthenticator,

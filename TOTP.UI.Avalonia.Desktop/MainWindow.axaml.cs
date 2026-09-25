@@ -136,6 +136,19 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (e.Key == Key.Escape
+            && DataContext is MainWindowViewModel groupFilterViewModel
+            && ShouldClearGroupFilterOnEscape(
+                e.Key,
+                groupFilterViewModel.IsAccountListVisible,
+                groupFilterViewModel.AccountList.HasSelectedGroup))
+        {
+            groupFilterViewModel.AccountList.ClearGroupFilterCommand.Execute(null);
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
         if (DataContext is MainWindowViewModel lockViewModel
             && ShouldHandleLockShortcut(
                 e.Key,
@@ -274,6 +287,14 @@ public partial class MainWindow : Window
             || key == Key.D && modifiers == KeyModifiers.Control)
         && canDeleteSelectedAccount
         && !isTextEditingSource;
+
+    private static bool ShouldClearGroupFilterOnEscape(
+        Key key,
+        bool isAccountListVisible,
+        bool hasSelectedGroup) =>
+        key == Key.Escape
+        && isAccountListVisible
+        && hasSelectedGroup;
 
     private static bool ShouldHandleAccountCommandShortcut(
         Key key,

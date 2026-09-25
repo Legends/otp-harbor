@@ -26,14 +26,20 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private readonly IPlatformFolderLauncher _folderLauncher;
     private readonly IAvaloniaLocalizationService _localization;
     private readonly AsyncCommand _importCommand;
+    private readonly AsyncCommand _restoreBackupCommand;
     private readonly AsyncCommand _importGoogleQrCommand;
     private readonly AsyncCommand _exportCommand;
+    private readonly AsyncCommand _openLastBackupFolderCommand;
     private readonly AsyncCommand _importBrandIconsCommand;
     private readonly AsyncCommand _resetBrandIconsCommand;
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly CameraScannerViewModel? _cameraScanner;
     private bool _isBusy;
     private bool _disposed;
+    private string? _lastBackupPath;
+    private string? _lastBackupFolder;
+    private bool _lastBackupUsesProviderLocation;
+    private string _backupLocationText;
     private ImportConflictStrategy _conflictStrategy = ImportConflictStrategy.SkipExisting;
     private ImportStrategyOption? _selectedConflictStrategyOption;
 
@@ -65,14 +71,19 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _cameraScanner = cameraScanner;
         _brandIconPackService = brandIconPackService;
         Notification = new NotificationState(transientMessageDuration);
+        _backupLocationText = Localized(AvaloniaStringKeys.BackupDestinationBeforeExport);
         ConflictStrategies = CreateConflictStrategies();
         _selectedConflictStrategyOption = ConflictStrategies[0];
         _localization.CultureChanged += LocalizationCultureChanged;
         _importCommand = new AsyncCommand(ImportAsync, () => !_isBusy);
+        _restoreBackupCommand = new AsyncCommand(RestoreEncryptedBackupAsync, () => !_isBusy);
         _importGoogleQrCommand = new AsyncCommand(
             ImportGoogleQrAsync,
             () => !_isBusy && _cameraScanner is not null);
         _exportCommand = new AsyncCommand(ExportEncryptedAsync, () => !_isBusy);
+        _openLastBackupFolderCommand = new AsyncCommand(
+            OpenLastBackupFolderAsync,
+            () => !_isBusy && _lastBackupFolder is not null);
         _importBrandIconsCommand = new AsyncCommand(
             ImportBrandIconsAsync,
             () => !_isBusy && _brandIconPackService is not null);
@@ -107,10 +118,18 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     public NotificationState Notification { get; }
     public string Message => Notification.Text;
     public NotificationSeverity MessageSeverity => Notification.Severity;
+    public string BackupLocationText
+    {
+        get => _backupLocationText;
+        private set => SetField(ref _backupLocationText, value);
+    }
+    public bool HasLastBackupFolder => _lastBackupFolder is not null;
 
     public ICommand ImportCommand => _importCommand;
+    public ICommand RestoreBackupCommand => _restoreBackupCommand;
     public ICommand ImportGoogleQrCommand => _importGoogleQrCommand;
     public ICommand ExportCommand => _exportCommand;
+    public ICommand OpenLastBackupFolderCommand => _openLastBackupFolderCommand;
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
     public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
     public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
@@ -210,17 +229,39 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         }
     }
 
-    public async Task ImportAsync()
+    public Task ImportAsync() => ImportSelectedFileAsync(
+        _filePicker.PickImportFileAsync,
+        AvaloniaStringKeys.NoImportFileSelected,
+        isBackupRestore: false);
+
+    public Task RestoreEncryptedBackupAsync() => ImportSelectedFileAsync(
+        _filePicker.PickEncryptedBackupFileAsync,
+        AvaloniaStringKeys.NoBackupFileSelected,
+        isBackupRestore: true);
+
+    private async Task ImportSelectedFileAsync(
+        Func<CancellationToken, Task<INativeStorageFile?>> pickFile,
+        string noSelectionMessageKey,
+        bool isBackupRestore)
     {
         if (!BeginOperation()) return;
         try
         {
-            await using var file = await _filePicker.PickImportFileAsync();
+            await using var file = await pickFile(CancellationToken.None);
             if (file is null)
             {
                 ShowTransientMessage(
-                    _localization.GetString(AvaloniaStringKeys.NoImportFileSelected),
+                    Localized(noSelectionMessageKey),
                     NotificationSeverity.Information);
+                return;
+            }
+
+            if (isBackupRestore
+                && !Path.GetExtension(file.Name).Equals(".totp", StringComparison.OrdinalIgnoreCase))
+            {
+                SetMessage(
+                    Localized(AvaloniaStringKeys.BackupInvalidOrUnavailable),
+                    NotificationSeverity.Error);
                 return;
             }
 
@@ -265,10 +306,14 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
             Task<bool> ConfirmImportAsync(AccountImportPreview preview, CancellationToken token) =>
                 _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
-                    Localized(AvaloniaStringKeys.ImportAccounts),
+                    Localized(isBackupRestore
+                        ? AvaloniaStringKeys.RestoreBackup
+                        : AvaloniaStringKeys.ImportAccounts),
                     ImportConfirmationMessage(preview),
                     NotificationSeverity.Warning,
-                    Localized(AvaloniaStringKeys.ImportAccounts),
+                    Localized(isBackupRestore
+                        ? AvaloniaStringKeys.RestoreBackup
+                        : AvaloniaStringKeys.ImportAccounts),
                     Localized(AvaloniaStringKeys.Cancel)), token);
         }
         catch (Exception)
@@ -347,6 +392,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 return;
             }
 
+            UpdateLastBackupLocation(file);
+
             if (file.LocalPath is { } localPath)
             {
                 try
@@ -383,6 +430,52 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             password = null;
             EndOperation();
         }
+    }
+
+    public async Task OpenLastBackupFolderAsync()
+    {
+        if (_lastBackupFolder is not { } folder || !BeginOperation()) return;
+        try
+        {
+            var result = await _folderLauncher.OpenFolderAsync(folder);
+            if (result.IsFailed)
+            {
+                SetMessage(
+                    Localized(AvaloniaStringKeys.BackupFolderOpenFailed),
+                    NotificationSeverity.Error);
+            }
+        }
+        catch (Exception)
+        {
+            SetMessage(
+                Localized(AvaloniaStringKeys.BackupFolderOpenFailed),
+                NotificationSeverity.Error);
+        }
+        finally
+        {
+            EndOperation();
+        }
+    }
+
+    private void UpdateLastBackupLocation(INativeStorageFile file)
+    {
+        _lastBackupPath = file.LocalPath;
+        _lastBackupFolder = file.LocalPath is { } localPath
+            ? Path.GetDirectoryName(localPath)
+            : null;
+        _lastBackupUsesProviderLocation = file.LocalPath is null;
+        RefreshBackupLocationText();
+        OnPropertyChanged(nameof(HasLastBackupFolder));
+        _openLastBackupFolderCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RefreshBackupLocationText()
+    {
+        BackupLocationText = _lastBackupPath is { } path
+            ? Localized(AvaloniaStringKeys.LastBackupLocation, path)
+            : _lastBackupUsesProviderLocation
+                ? Localized(AvaloniaStringKeys.ProviderManagedBackupLocation)
+                : Localized(AvaloniaStringKeys.BackupDestinationBeforeExport);
     }
 
     private async Task<List<Account>?> ReadImportAsync(INativeStorageFile file)
@@ -475,8 +568,10 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _isBusy = true;
         Notification.Clear();
         _importCommand.NotifyCanExecuteChanged();
+        _restoreBackupCommand.NotifyCanExecuteChanged();
         _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
+        _openLastBackupFolderCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
         return true;
@@ -486,8 +581,10 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     {
         _isBusy = false;
         _importCommand.NotifyCanExecuteChanged();
+        _restoreBackupCommand.NotifyCanExecuteChanged();
         _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
+        _openLastBackupFolderCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
     }
@@ -537,6 +634,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         ConflictStrategies = CreateConflictStrategies();
         OnPropertyChanged(nameof(ConflictStrategies));
         SelectedConflictStrategyOption = ConflictStrategies.First(option => option.Strategy == selectedStrategy);
+        RefreshBackupLocationText();
     }
 
     public void Dispose()
