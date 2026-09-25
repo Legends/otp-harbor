@@ -21,8 +21,9 @@ license compliance take priority over convenience or distribution reach.
    creation, encryption, backups, and recovery without overwhelming new users.
 6. **UI consistency — ongoing.** Continue reviewing spacing, dialogs, context menus, focus,
    confirmations, accessibility, and resizing behavior.
-7. **Backup UX — planned.** Make backup locations, encryption status, recovery requirements, and
-   restore workflows unmistakable.
+7. **Backup UX — implemented baseline, continue refinement.** Backup locations, encryption status,
+   recovery requirements, and dedicated restore workflows are now explicit in the desktop settings
+   flow; continue refining platform-provider guidance and physical acceptance.
 8. **Cross-platform consistency — ongoing.** Keep Windows, Linux, Android, and eventually macOS
    behavior and appearance coherent; macOS implementation work is currently deferred.
 9. **Official F-Droid Android distribution — planned.** Add reproducible
