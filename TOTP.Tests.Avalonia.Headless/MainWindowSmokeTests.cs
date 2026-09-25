@@ -1812,12 +1812,24 @@ public sealed class MainWindowSmokeTests
             var openFolderButton = Assert.Single(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "OpenLastBackupFolderButton");
+            var importButtons = new[]
+            {
+                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtpHarborImportButton"),
+                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton"),
+                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "BrandIconsImportButton")
+            };
+            var resetBrandIconsButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "BrandIconsResetButton");
 
             Assert.Contains("primary", exportButton.Classes);
             Assert.Contains("wide", exportButton.Classes);
             Assert.Contains("wide", restoreButton.Classes);
             Assert.Contains("secondary", openFolderButton.Classes);
             Assert.Contains("wide", openFolderButton.Classes);
+            Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));
+            Assert.Contains("secondary", resetBrandIconsButton.Classes);
+            Assert.Contains("wide", resetBrandIconsButton.Classes);
         }
         finally
         {
