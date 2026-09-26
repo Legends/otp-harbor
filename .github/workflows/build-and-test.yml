@@ -77,6 +77,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-AndroidFossBuild.ps1
 
+      - name: Validate Android APK payload comparator
+        shell: pwsh
+        run: ./scripts/validation/Test-AndroidApkPayloadComparison.ps1
+
       - name: Validate source launcher safeguards
         shell: pwsh
         run: ./scripts/validation/Test-SourceLauncher.ps1

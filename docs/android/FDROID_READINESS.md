@@ -19,7 +19,7 @@ They were last reviewed for this repository on 2026-09-27.
 | Deterministic NuGet graph | Implemented baseline | Every project in `TOTP.Android.sln` has a committed `packages.lock.json`; Android CI and release jobs restore with `--locked-mode`. |
 | Proprietary runtime dependency exclusion | Implemented baseline | `Test-AndroidFossBuild.ps1` rejects known proprietary service, analytics, advertising, and billing package families. This supplements, but does not replace, F-Droid's scanner and human review. |
 | F-Droid build-server-compatible toolchain | **Blocked** | The .NET Android workload and every prebuilt NuGet dependency must be accepted under F-Droid's FLOSS toolchain and binary-origin rules. A successful GitHub build does not establish this. |
-| Reproducible APK evidence | **Blocked** | Build the same tagged source in two clean, independently provisioned environments and compare the unsigned APK payload. Then reproduce it using the proposed F-Droid build recipe. |
+| Reproducible APK evidence | **Blocked** | A tested comparator now checks non-signature APK entries by SHA-256. Same-machine clean-build evidence is only a baseline; two clean, independently provisioned environments and the proposed F-Droid build recipe must still match. |
 | F-Droid metadata and screenshots | Implemented baseline | Localized listing text for all four supported languages and authentic synthetic-data screenshots are committed under `fastlane/metadata/android`. Final submission review remains required. |
 | Signing and update-channel decision | Planned | Decide between F-Droid signing and a verified reproducible upstream-signed APK. Keep this independent from GitHub's protected signing credentials. |
 | Maintainer and F-Droid review | **Blocked** | Submission and acceptance must occur before public availability is claimed. |
@@ -40,6 +40,41 @@ dotnet build TOTP.Android.sln -c Release --no-restore
 the project reference, regenerate the Android lock files with `--use-lock-file --force-evaluate`,
 review resolved versions and content hashes, run the vulnerability and license checks, and commit
 the project and lock changes together.
+
+## APK payload comparison
+
+Compare two APKs without treating ZIP timestamps, entry order, compression choices, JAR signature
+records, or APK signing blocks as application payload differences:
+
+```powershell
+./scripts/validation/Compare-AndroidApkPayload.ps1 `
+  -ReferenceApk path/to/first.apk `
+  -CandidateApk path/to/second.apk
+```
+
+The comparator requires identical entry names, uncompressed lengths, and SHA-256 hashes for every
+non-signature entry. Passing it demonstrates payload equivalence only. It does not prove that the
+toolchain is acceptable to F-Droid, that two independent environments reproduce the payload, or that
+signed APK bytes match. `Test-AndroidApkPayloadComparison.ps1` regression-tests these boundaries in CI.
+
+### Current local baseline
+
+Clean same-machine builds from the same checkout were compared on Windows on 2026-09-27. These are
+diagnostic results, not independent reproducibility evidence:
+
+| Build profile | Non-signature payload result |
+| --- | --- |
+| Debug defaults | 36 embedded managed-assembly wrapper entries differed. |
+| Release with deterministic CI flags | 238 Mono AOT native-library entries differed. |
+| Release with `RunAOTCompilation=false` | Only the arm64 and x86_64 assembly-store entries differed. |
+| Release with AOT and the assembly store disabled | Only the arm64 and x86_64 `_Microsoft.Android.Resource.Designer.dll` wrapper entries differed. |
+
+[Microsoft's .NET Android build-property reference](https://learn.microsoft.com/dotnet/android/building-apps/build-properties#runaotcompilation)
+documents that Mono AOT defaults to enabled for Release and disabled for Debug. Disabling
+`AndroidUseDesignerAssembly` is not a viable workaround: the supported build fails with XA1034
+because Avalonia.Android, HarfBuzzSharp, and SkiaSharp require the designer assembly. The comparator
+therefore continues to treat these runtime entries as payload and the reproducibility gate remains
+blocked. Do not add exclusions merely to turn this baseline green.
 
 ## Security and compatibility impact
 

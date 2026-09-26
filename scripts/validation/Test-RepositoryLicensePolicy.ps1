@@ -107,7 +107,7 @@ $storeListsReleaseUrl = $storeListing.Contains('https://github.com/Legends/otp-h
 if (-not $storeListsSource -or -not $storeListsReleaseUrl) {
     throw 'The Store listing does not direct binary recipients to corresponding source and GPLv3 terms.'
 }
-$agendaHasOfficialTarget = $productAgenda.Contains('Official F-Droid Android distribution — planned', [StringComparison]::Ordinal)
+$agendaHasOfficialTarget = $productAgenda.Contains('Official F-Droid Android distribution — in progress', [StringComparison]::Ordinal)
 $agendaHasLicenseGate = $productAgenda.Contains('GPL-3.0-only satisfies', [StringComparison]::Ordinal)
 if (-not $agendaHasOfficialTarget -or -not $agendaHasLicenseGate) {
     throw 'The product agenda does not reflect the GPLv3-compatible official F-Droid path.'

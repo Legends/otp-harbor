@@ -26,11 +26,12 @@ license compliance take priority over convenience or distribution reach.
    flow; continue refining platform-provider guidance and physical acceptance.
 8. **Cross-platform consistency — ongoing.** Keep Windows, Linux, Android, and eventually macOS
    behavior and appearance coherent; macOS implementation work is currently deferred.
-9. **Official F-Droid Android distribution — planned.** Add reproducible
-   Android release builds, F-Droid metadata, deterministic dependency verification, signing and
-   update documentation, and an independently auditable publishing workflow. GPL-3.0-only satisfies
-   the free-software licensing requirement; dependency, toolchain, reproducibility, metadata, and
-   maintainer-review requirements remain implementation gates.
+9. **Official F-Droid Android distribution — in progress.** The Android dependency graph and SDK are
+   pinned, CI enforces locked restores and excludes known proprietary SDK families, localized
+   Fastlane metadata is versioned, and an APK payload comparator has exposed remaining .NET Android
+   nondeterminism. Continue with toolchain acceptance, reproducibility, signing/update policy, and an
+   independently auditable publishing workflow. GPL-3.0-only satisfies the free-software licensing
+   requirement; toolchain, reproducibility, and maintainer-review requirements remain gates.
 
 ## F-Droid acceptance gate
 

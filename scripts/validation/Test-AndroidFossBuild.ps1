@@ -87,7 +87,8 @@ foreach ($required in @(
     'dotnet restore TOTP.Android.sln --locked-mode',
     'dotnet restore TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj --locked-mode',
     'dotnet workload install android --skip-manifest-update',
-    './scripts/validation/Test-AndroidFossBuild.ps1')) {
+    './scripts/validation/Test-AndroidFossBuild.ps1',
+    './scripts/validation/Test-AndroidApkPayloadComparison.ps1')) {
     if (-not $workflow.Contains($required, [StringComparison]::Ordinal)) {
         throw "Android workflow is missing deterministic build control: $required"
     }
