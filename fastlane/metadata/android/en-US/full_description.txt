@@ -1,0 +1,12 @@
+OTP Harbor is a free and open-source authenticator for time-based one-time passwords (TOTP). It keeps your accounts in an encrypted vault on your Android device and works without a network permission.
+
+Features:
+• View, search, copy, add, edit, and delete TOTP accounts.
+• Scan standard otpauth QR codes and Google Authenticator transfer QR codes.
+• Import OTP Harbor JSON, CSV, and text; Aegis JSON; 2FAS .2fas; or otpauth URI lists.
+• Export and restore password-protected encrypted backups with explicit conflict handling.
+• Unlock with your master password or, on supported devices, strong biometrics backed by Android Keystore.
+• Protect sensitive screens from screenshots and recent-app previews.
+• Use the interface in English, German, French, or Spanish.
+
+OTP Harbor contains no ads, analytics, or trackers. Android system backup is disabled so encrypted vault data is not copied to cloud backup services. Keep independent copies of important encrypted backups and their passwords.

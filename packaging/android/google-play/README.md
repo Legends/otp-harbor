@@ -1,16 +1,18 @@
 # Google Play listing artwork
 
 The English Google Play artwork is generated from reviewed, synthetic-data Android captures by
-`scripts/assets/New-AndroidMarketingImages.ps1`.
+`scripts/assets/New-AndroidMarketingImages.ps1`. The canonical files live under
+`fastlane/metadata/android/en-US/images` so F-Droid-compatible tooling and Google Play use the same
+reviewed images.
 
-Upload the files from `en-US` in Play Console under **Grow users > Store presence > Main store
+Upload the files from that Fastlane image directory in Play Console under **Grow users > Store presence > Main store
 listing > Graphics**:
 
 | Play Console field | File(s) |
 | --- | --- |
-| App icon | `app-icon-512x512.png` |
-| Feature graphic | `feature-graphic-1024x500.png` |
-| Phone screenshots | `01-...` through `06-...-1080x1920.png`, in numeric order |
+| App icon | `icon.png` |
+| Feature graphic | `featureGraphic.png` |
+| Phone screenshots | `phoneScreenshots/01-...` through `phoneScreenshots/06-...-1080x1920.png`, in numeric order |
 
 The six phone images are 24-bit, non-transparent PNGs at 1080×1920. The feature graphic is a
 24-bit, non-transparent PNG at 1024×500. The app icon is a 32-bit PNG with alpha at 512×512 and is

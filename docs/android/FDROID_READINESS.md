@@ -20,7 +20,7 @@ They were last reviewed for this repository on 2026-09-27.
 | Proprietary runtime dependency exclusion | Implemented baseline | `Test-AndroidFossBuild.ps1` rejects known proprietary service, analytics, advertising, and billing package families. This supplements, but does not replace, F-Droid's scanner and human review. |
 | F-Droid build-server-compatible toolchain | **Blocked** | The .NET Android workload and every prebuilt NuGet dependency must be accepted under F-Droid's FLOSS toolchain and binary-origin rules. A successful GitHub build does not establish this. |
 | Reproducible APK evidence | **Blocked** | Build the same tagged source in two clean, independently provisioned environments and compare the unsigned APK payload. Then reproduce it using the proposed F-Droid build recipe. |
-| F-Droid metadata and screenshots | Planned | Review localized descriptions and place authentic, synthetic-data screenshots in the source layout accepted by F-Droid. Existing Google Play artwork is not automatically treated as submitted F-Droid metadata. |
+| F-Droid metadata and screenshots | Implemented baseline | Localized listing text for all four supported languages and authentic synthetic-data screenshots are committed under `fastlane/metadata/android`. Final submission review remains required. |
 | Signing and update-channel decision | Planned | Decide between F-Droid signing and a verified reproducible upstream-signed APK. Keep this independent from GitHub's protected signing credentials. |
 | Maintainer and F-Droid review | **Blocked** | Submission and acceptance must occur before public availability is claimed. |
 
@@ -53,4 +53,4 @@ the project and lock changes together.
   updates.
 - **Verification evidence:** CI validates the pinned SDK declaration, lock-file completeness and
   content hashes, NuGet source restriction, prohibited package families, locked restore commands,
-  and this non-availability disclosure.
+  localized Fastlane metadata and image constraints, and this non-availability disclosure.

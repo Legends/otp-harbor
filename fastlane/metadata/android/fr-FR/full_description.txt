@@ -1,0 +1,12 @@
+OTP Harbor est une application d'authentification libre et open source pour les mots de passe à usage unique basés sur le temps (TOTP). Les comptes restent dans un coffre chiffré sur l'appareil Android et l'application fonctionne sans autorisation réseau.
+
+Fonctionnalités :
+• Afficher, rechercher, copier, ajouter, modifier et supprimer des comptes TOTP.
+• Scanner les codes QR otpauth standard et les codes QR de transfert Google Authenticator.
+• Importer les formats OTP Harbor JSON, CSV et texte, Aegis JSON, 2FAS .2fas ou des listes d'URI otpauth.
+• Exporter et restaurer des sauvegardes chiffrées protégées par mot de passe avec une gestion explicite des conflits.
+• Déverrouiller avec le mot de passe principal ou, sur les appareils compatibles, avec une biométrie forte protégée par Android Keystore.
+• Protéger les écrans sensibles contre les captures et les aperçus des applications récentes.
+• Utiliser l'interface en français, allemand, anglais ou espagnol.
+
+OTP Harbor ne contient ni publicité, ni outil d'analyse, ni traceur. La sauvegarde système Android est désactivée afin que les données chiffrées du coffre ne soient pas copiées vers un service cloud. Conservez des copies indépendantes des sauvegardes chiffrées importantes et de leurs mots de passe.

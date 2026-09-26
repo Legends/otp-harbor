@@ -57,8 +57,9 @@ protection for the account list.
 - `source/android-marketing-background.png`: generated reusable background.
 - `source/captures/`: reviewed raw Android captures from the isolated synthetic-data package.
 - `en-US/`: five final 1920×1080 website composites.
-- `../google-play/en-US/`: six 1080×1920 phone screenshots, the 1024×500 feature graphic, and the
-  512×512 high-resolution app icon.
+- `../../../fastlane/metadata/android/en-US/images/`: six 1080×1920 phone screenshots, the 1024×500
+  feature graphic, and the 512×512 high-resolution app icon shared by F-Droid-compatible tooling and
+  Play Console.
 
 Run `scripts/assets/New-AndroidMarketingImages.ps1` to regenerate both final sets. The compositor
 keeps all app and Android-system UI pixel-authentic; only crop, scale, rounded clipping, framing,

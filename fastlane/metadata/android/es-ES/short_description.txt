@@ -1,0 +1,1 @@
+Autenticador TOTP sin conexión con copias cifradas

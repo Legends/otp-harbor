@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Validates the reproducible Android website and Google Play marketing asset sets.
+Validates the reproducible Android website and shared F-Droid/Google Play store-listing assets.
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -23,6 +23,14 @@ function Get-PngInfo([string]$RelativePath) {
         ColorType = $bytes[25]
         Length = $bytes.Length
     }
+}
+
+function Read-RequiredText([string]$RelativePath) {
+    $path = Join-Path $repositoryRoot $RelativePath
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Required Android store metadata is missing: $RelativePath"
+    }
+    return [IO.File]::ReadAllText($path)
 }
 
 $websiteFiles = @(
@@ -48,20 +56,38 @@ $phoneFiles = @(
     '06-four-languages-1080x1920.png'
 )
 foreach ($file in $phoneFiles) {
-    $info = Get-PngInfo "packaging/android/google-play/en-US/$file"
+    $info = Get-PngInfo "fastlane/metadata/android/en-US/images/phoneScreenshots/$file"
     if ($info.Width -ne 1080 -or $info.Height -ne 1920 -or $info.BitDepth -ne 8 -or $info.ColorType -ne 2) {
-        throw "Google Play phone asset must be an opaque 24-bit 1080x1920 PNG: $file"
+        throw "Android store phone asset must be an opaque 24-bit 1080x1920 PNG: $file"
     }
 }
 
-$feature = Get-PngInfo 'packaging/android/google-play/en-US/feature-graphic-1024x500.png'
+$feature = Get-PngInfo 'fastlane/metadata/android/en-US/images/featureGraphic.png'
 if ($feature.Width -ne 1024 -or $feature.Height -ne 500 -or $feature.BitDepth -ne 8 -or $feature.ColorType -ne 2) {
-    throw 'The Google Play feature graphic must be an opaque 24-bit 1024x500 PNG.'
+    throw 'The Android store feature graphic must be an opaque 24-bit 1024x500 PNG.'
 }
 
-$icon = Get-PngInfo 'packaging/android/google-play/en-US/app-icon-512x512.png'
+$icon = Get-PngInfo 'fastlane/metadata/android/en-US/images/icon.png'
 if ($icon.Width -ne 512 -or $icon.Height -ne 512 -or $icon.BitDepth -ne 8 -or $icon.ColorType -ne 6 -or $icon.Length -ge 1MB) {
-    throw 'The Google Play app icon must be a 32-bit 512x512 PNG with alpha below 1,024 KB.'
+    throw 'The Android store app icon must be a 32-bit 512x512 PNG with alpha below 1,024 KB.'
+}
+
+foreach ($locale in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
+    $metadataRoot = "fastlane/metadata/android/$locale"
+    $title = (Read-RequiredText "$metadataRoot/title.txt").Trim()
+    $summary = (Read-RequiredText "$metadataRoot/short_description.txt").Trim()
+    $description = (Read-RequiredText "$metadataRoot/full_description.txt").Trim()
+    if ($title -cne 'OTP Harbor') {
+        throw "Android store title is inconsistent for locale '$locale'."
+    }
+    if ($summary.Length -eq 0 -or $summary.Length -gt 80) {
+        throw "Android store short description must contain 1-80 characters for locale '$locale'."
+    }
+    foreach ($claim in @('TOTP', 'otpauth', '2FAS', 'Android Keystore')) {
+        if (-not $description.Contains($claim, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Android store full description for '$locale' is missing reviewed claim '$claim'."
+        }
+    }
 }
 
 foreach ($source in @(
@@ -81,4 +107,4 @@ foreach ($source in @(
     }
 }
 
-Write-Output 'Android website and Google Play marketing assets meet the required formats and dimensions.'
+Write-Output 'Android website and shared F-Droid/Google Play metadata meet the required content and image constraints.'

@@ -12,7 +12,7 @@ param(
     [string]$IconPath = 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
     [string]$CaptureDirectory = 'packaging/android/marketing/source/captures',
     [string]$OutputDirectory = 'packaging/android/marketing/en-US',
-    [string]$PlayStoreOutputDirectory = 'packaging/android/google-play/en-US'
+    [string]$StoreListingOutputDirectory = 'fastlane/metadata/android/en-US/images'
 )
 
 Set-StrictMode -Version Latest
@@ -265,7 +265,7 @@ $backgroundPath = Resolve-RepositoryPath $BackgroundPath
 $iconPath = Resolve-RepositoryPath $IconPath
 $capturesPath = Resolve-RepositoryPath $CaptureDirectory
 $outputPath = Resolve-RepositoryPath $OutputDirectory
-$playStoreOutputPath = Resolve-RepositoryPath $PlayStoreOutputDirectory
+$storeListingOutputPath = Resolve-RepositoryPath $StoreListingOutputDirectory
 $captureFiles = @{
     Vault = Join-Path $capturesPath '01-account-list.jpg'
     Swipe = Join-Path $capturesPath '02-swipe-actions.jpg'
@@ -283,7 +283,8 @@ foreach ($path in @($backgroundPath, $iconPath) + $captureFiles.Values) {
     }
 }
 [IO.Directory]::CreateDirectory($outputPath) | Out-Null
-[IO.Directory]::CreateDirectory($playStoreOutputPath) | Out-Null
+[IO.Directory]::CreateDirectory($storeListingOutputPath) | Out-Null
+[IO.Directory]::CreateDirectory((Join-Path $storeListingOutputPath 'phoneScreenshots')) | Out-Null
 
 $background = [Drawing.Image]::FromFile($backgroundPath)
 $icon = [Drawing.Image]::FromFile($iconPath)
@@ -319,26 +320,26 @@ try {
         (Join-Path $outputPath '05-backup-and-languages.png') -Pair -HeadlineSize 58
 
     New-PlayStoreFeatureGraphic $background $icon $images.Vault $images.Security `
-        (Join-Path $playStoreOutputPath 'feature-graphic-1024x500.png')
-    New-PlayStoreIcon $icon (Join-Path $playStoreOutputPath 'app-icon-512x512.png')
+        (Join-Path $storeListingOutputPath 'featureGraphic.png')
+    New-PlayStoreIcon $icon (Join-Path $storeListingOutputPath 'icon.png')
     New-PlayStoreScreenshot $background $icon $images.Vault $null `
         'All your codes.' 'A focused encrypted vault on your Android device.' `
-        (Join-Path $playStoreOutputPath '01-local-vault-1080x1920.png')
+        (Join-Path $storeListingOutputPath 'phoneScreenshots/01-local-vault-1080x1920.png')
     New-PlayStoreScreenshot $background $icon $images.Swipe $images.Qr `
         'Swipe to manage.' 'Edit, delete, or show an account QR through deliberate actions.' `
-        (Join-Path $playStoreOutputPath '02-swipe-and-qr-1080x1920.png') -Pair
+        (Join-Path $storeListingOutputPath 'phoneScreenshots/02-swipe-and-qr-1080x1920.png') -Pair
     New-PlayStoreScreenshot $background $icon $images.ImportExport $images.Scanner `
         'Scan and migrate.' 'Import account and Google Authenticator transfer QR codes.' `
-        (Join-Path $playStoreOutputPath '03-camera-google-import-1080x1920.png') -Pair
+        (Join-Path $storeListingOutputPath 'phoneScreenshots/03-camera-google-import-1080x1920.png') -Pair
     New-PlayStoreScreenshot $background $icon $images.Unlock $images.Security `
         'Unlock your way.' 'Strong biometrics, Android screen lock, or master password.' `
-        (Join-Path $playStoreOutputPath '04-unlock-methods-1080x1920.png') -Pair
+        (Join-Path $storeListingOutputPath 'phoneScreenshots/04-unlock-methods-1080x1920.png') -Pair
     New-PlayStoreScreenshot $background $icon $images.ImportExport $null `
         'Encrypted portability.' 'Export and restore password-protected OTP Harbor backups.' `
-        (Join-Path $playStoreOutputPath '05-encrypted-backup-1080x1920.png')
+        (Join-Path $storeListingOutputPath 'phoneScreenshots/05-encrypted-backup-1080x1920.png')
     New-PlayStoreScreenshot $background $icon $images.Language $null `
         'Made for you.' 'Use OTP Harbor in English, German, French, or Spanish.' `
-        (Join-Path $playStoreOutputPath '06-four-languages-1080x1920.png')
+        (Join-Path $storeListingOutputPath 'phoneScreenshots/06-four-languages-1080x1920.png')
 }
 finally {
     foreach ($image in $images.Values) { $image.Dispose() }
@@ -346,4 +347,4 @@ finally {
 }
 
 Write-Output "Android website marketing images created in $outputPath"
-Write-Output "Android Google Play assets created in $playStoreOutputPath"
+Write-Output "Android store-listing assets created in $storeListingOutputPath"
