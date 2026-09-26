@@ -1838,10 +1838,16 @@ public sealed class MainWindowSmokeTests
                 button => button.Name == "OpenLastBackupFolderButton");
             var importButtons = new[]
             {
-                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtpHarborImportButton"),
+                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtherFormatsImportButton"),
                 Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton"),
                 Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "BrandIconsImportButton")
             };
+            var restoreConflictStrategy = Assert.Single(
+                content.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "RestoreConflictStrategyComboBox");
+            var otherFormatsConflictStrategy = Assert.Single(
+                content.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "OtherFormatsConflictStrategyComboBox");
             var resetBrandIconsButton = Assert.Single(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "BrandIconsResetButton");
@@ -1851,6 +1857,8 @@ public sealed class MainWindowSmokeTests
             Assert.Contains("wide", restoreButton.Classes);
             Assert.Contains("secondary", openFolderButton.Classes);
             Assert.Contains("wide", openFolderButton.Classes);
+            Assert.NotNull(restoreConflictStrategy);
+            Assert.NotNull(otherFormatsConflictStrategy);
             Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));
             Assert.Contains("secondary", resetBrandIconsButton.Classes);
             Assert.Contains("wide", resetBrandIconsButton.Classes);

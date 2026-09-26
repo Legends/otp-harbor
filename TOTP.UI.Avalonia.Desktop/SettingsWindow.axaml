@@ -181,6 +181,17 @@
                                                                 Classes="secondary"
                                                                 Text="{DynamicResource RestoreBackupHelp}"
                                                                 TextWrapping="Wrap" />
+                                                            <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
+                                                            <ComboBox
+                                                                x:Name="RestoreConflictStrategyComboBox"
+                                                                ItemsSource="{Binding ConflictStrategies}"
+                                                                SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
+                                                                <ComboBox.ItemTemplate>
+                                                                    <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
+                                                                        <TextBlock Text="{Binding Label}" />
+                                                                    </DataTemplate>
+                                                                </ComboBox.ItemTemplate>
+                                                            </ComboBox>
                                                             <StackPanel Spacing="8">
                                                                 <Button
                                                                     x:Name="EncryptedBackupRestoreButton"
@@ -200,13 +211,16 @@
                                             </Border>
                                             <Border Classes="panel">
                                                 <StackPanel Spacing="8">
-                                                    <TextBlock Classes="section-title" Text="{DynamicResource ImportOtpHarborBackup}" />
+                                                    <TextBlock Classes="section-title" Text="{DynamicResource ImportOtherFormats}" />
                                                     <TextBlock
                                                         Classes="secondary"
-                                                        Text="{DynamicResource OtpHarborImportHelp}"
+                                                        Text="{DynamicResource OtherFormatsImportHelp}"
                                                         TextWrapping="Wrap" />
                                                     <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
-                                                    <ComboBox ItemsSource="{Binding ConflictStrategies}" SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
+                                                    <ComboBox
+                                                        x:Name="OtherFormatsConflictStrategyComboBox"
+                                                        ItemsSource="{Binding ConflictStrategies}"
+                                                        SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
                                                         <ComboBox.ItemTemplate>
                                                             <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
                                                                 <TextBlock Text="{Binding Label}" />
@@ -214,7 +228,7 @@
                                                     </ComboBox.ItemTemplate>
                                                     </ComboBox>
                                                     <Button
-                                                        x:Name="OtpHarborImportButton"
+                                                        x:Name="OtherFormatsImportButton"
                                                         Classes="wide"
                                                         Command="{Binding ImportCommand}"
                                                         Content="{DynamicResource ChooseImportFile}" />

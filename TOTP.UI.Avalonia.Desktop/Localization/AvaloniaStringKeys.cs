@@ -24,8 +24,8 @@ public static class AvaloniaStringKeys
     public const string ExportEncryptedBackup = nameof(ExportEncryptedBackup);
     public const string ImportConflictHandling = nameof(ImportConflictHandling);
     public const string ImportAccounts = nameof(ImportAccounts);
-    public const string ImportOtpHarborBackup = nameof(ImportOtpHarborBackup);
-    public const string OtpHarborImportHelp = nameof(OtpHarborImportHelp);
+    public const string ImportOtherFormats = nameof(ImportOtherFormats);
+    public const string OtherFormatsImportHelp = nameof(OtherFormatsImportHelp);
     public const string EncryptedBackup = nameof(EncryptedBackup);
     public const string EncryptedBackupHelp = nameof(EncryptedBackupHelp);
     public const string BackupAndRecovery = nameof(BackupAndRecovery);
@@ -388,7 +388,7 @@ public static class AvaloniaStringKeys
         StartupEnterMasterPassword, StartupPreferencesUnavailable, StartupFailedSafely,
         StartupCancelled, ClosingSafely, Retry, MasterPassword, MasterPasswordHelp,
         Unlock, Lock, LockShortcut, Accounts, Tools, Settings, ChooseImportFile, ExportEncryptedBackup,
-        ImportConflictHandling, ImportAccounts, ImportOtpHarborBackup, OtpHarborImportHelp,
+        ImportConflictHandling, ImportAccounts, ImportOtherFormats, OtherFormatsImportHelp,
         EncryptedBackup, EncryptedBackupHelp, BackupAndRecovery, BackupSecuritySummary,
         BackupDestinationBeforeExport, LastBackupLocation, ProviderManagedBackupLocation,
         RestoreBackupHelp, RestoreEncryptedBackup, RestoreBackup, OpenLastBackupFolder,

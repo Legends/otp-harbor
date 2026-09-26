@@ -127,10 +127,10 @@
   <data name="Settings" xml:space="preserve"><value>Ajustes</value></data>
   <data name="ChooseImportFile" xml:space="preserve"><value>Elegir archivo de importación…</value></data>
   <data name="ExportEncryptedBackup" xml:space="preserve"><value>Exportar copia de seguridad cifrada…</value></data>
-  <data name="ImportConflictHandling" xml:space="preserve"><value>Gestión de conflictos de importación</value></data>
+  <data name="ImportConflictHandling" xml:space="preserve"><value>Gestión de conflictos</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Importar cuentas</value></data>
-  <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Importar copia de OTP Harbor</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importa un archivo de cuentas de OTP Harbor, una exportación JSON de Aegis o .2fas de 2FAS sin cifrar, o un archivo de texto con un URI TOTP otpauth:// estándar por línea.</value></data>
+  <data name="ImportOtherFormats" xml:space="preserve"><value>Importar cuentas desde otros formatos</value></data>
+  <data name="OtherFormatsImportHelp" xml:space="preserve"><value>Formatos compatibles: archivos de OTP Harbor sin cifrar en JSON (.json), CSV (.csv) o texto delimitado por barras verticales (.txt); exportaciones JSON de Aegis sin cifrar (.json); copias de 2FAS sin cifrar (.2fas); y archivos de texto (.txt) con un URI TOTP otpauth:// estándar por línea.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exportar cuentas</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Crea una copia portátil de todas las cuentas protegida por contraseña y elige dónde guardarla. Conserva la copia y su contraseña por separado; restáurala con «Restaurar copia cifrada» más abajo.</value></data>
   <data name="BackupAndRecovery" xml:space="preserve"><value>Copia de seguridad y recuperación</value></data>
@@ -138,7 +138,7 @@
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Ubicación: elige el destino en el diálogo del sistema. OTP Harbor no sube ni copia automáticamente la copia de seguridad.</value></data>
   <data name="LastBackupLocation" xml:space="preserve"><value>Última copia: {0}</value></data>
   <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Última copia: guardada en la ubicación elegida en el proveedor de documentos del sistema.</value></data>
-  <data name="RestoreBackupHelp" xml:space="preserve"><value>Elige una copia cifrada .totp de OTP Harbor e introduce la contraseña usada para crearla. La gestión de conflictos se revisa antes de cambiar ninguna cuenta.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Elige una copia cifrada .totp de OTP Harbor e introduce su contraseña. De forma predeterminada, se omiten las cuentas existentes. Elige abajo cómo gestionar los conflictos; deberás confirmar antes de cambiar ninguna cuenta.</value></data>
   <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Restaurar copia cifrada…</value></data>
   <data name="RestoreBackup" xml:space="preserve"><value>Restaurar copia</value></data>
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Abrir la carpeta de la última copia</value></data>

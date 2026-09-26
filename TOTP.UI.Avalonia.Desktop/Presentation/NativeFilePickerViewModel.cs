@@ -283,7 +283,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             if (IsNothingToImport(outcome))
             {
                 await _dialogs.ShowMessageAsync(new MessageDialogRequest(
-                    Localized(AvaloniaStringKeys.ImportAccounts),
+                    Localized(isBackupRestore
+                        ? AvaloniaStringKeys.RestoreBackup
+                        : AvaloniaStringKeys.ImportAccounts),
                     Localized(AvaloniaStringKeys.ImportNothingToImport, outcome.Skipped),
                     NotificationSeverity.Information,
                     Localized(AvaloniaStringKeys.Ok)));

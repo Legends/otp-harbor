@@ -127,10 +127,10 @@
   <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
   <data name="ChooseImportFile" xml:space="preserve"><value>Importdatei auswählen…</value></data>
   <data name="ExportEncryptedBackup" xml:space="preserve"><value>Verschlüsselte Sicherung exportieren…</value></data>
-  <data name="ImportConflictHandling" xml:space="preserve"><value>Behandlung von Importkonflikten</value></data>
+  <data name="ImportConflictHandling" xml:space="preserve"><value>Konfliktbehandlung</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Konten importieren</value></data>
-  <data name="ImportOtpHarborBackup" xml:space="preserve"><value>OTP-Harbor-Sicherung importieren</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Importieren Sie eine OTP-Harbor-Kontendatei, einen unverschlüsselten Aegis-JSON- oder 2FAS-.2fas-Export oder eine Textdatei mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile.</value></data>
+  <data name="ImportOtherFormats" xml:space="preserve"><value>Konten aus anderen Formaten importieren</value></data>
+  <data name="OtherFormatsImportHelp" xml:space="preserve"><value>Unterstützte Formate: unverschlüsselte OTP-Harbor-Dateien als JSON (.json), CSV (.csv) oder durch senkrechte Striche getrennte Textdatei (.txt); unverschlüsselte Aegis-JSON-Exporte (.json); unverschlüsselte 2FAS-Sicherungen (.2fas); und Textdateien (.txt) mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Konten exportieren</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Erstellen Sie eine portable, passwortgeschützte Sicherung aller Konten und wählen Sie den Speicherort. Bewahren Sie Sicherung und Passwort getrennt auf; zur Wiederherstellung verwenden Sie unten „Verschlüsselte Sicherung wiederherstellen“.</value></data>
   <data name="BackupAndRecovery" xml:space="preserve"><value>Sicherung und Wiederherstellung</value></data>
@@ -138,7 +138,7 @@
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Speicherort: Wählen Sie das Ziel im Systemdialog. OTP Harbor lädt die Sicherung nicht hoch und kopiert sie nicht automatisch.</value></data>
   <data name="LastBackupLocation" xml:space="preserve"><value>Letzte Sicherung: {0}</value></data>
   <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Letzte Sicherung: am im Systemdialog gewählten Speicherort gespeichert.</value></data>
-  <data name="RestoreBackupHelp" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-.totp-Sicherung und geben Sie das bei der Erstellung verwendete Passwort ein. Die Konfliktbehandlung wird vor jeder Kontoänderung geprüft.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-.totp-Sicherung und geben Sie ihr Passwort ein. Vorhandene Konten werden standardmäßig übersprungen. Wählen Sie unten die Konfliktbehandlung; Änderungen müssen anschließend bestätigt werden.</value></data>
   <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Verschlüsselte Sicherung wiederherstellen…</value></data>
   <data name="RestoreBackup" xml:space="preserve"><value>Sicherung wiederherstellen</value></data>
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Ordner der letzten Sicherung öffnen</value></data>

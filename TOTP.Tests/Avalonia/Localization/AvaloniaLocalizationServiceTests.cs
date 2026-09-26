@@ -78,6 +78,30 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("es")]
+    public void Catalog_OtherFormatImportHelpNamesEverySupportedFormat(string cultureName)
+    {
+        var sut = new AvaloniaStringCatalog();
+
+        var help = sut.Get(
+            AvaloniaStringKeys.OtherFormatsImportHelp,
+            System.Globalization.CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Contains("OTP", help, StringComparison.Ordinal);
+        Assert.Contains("Harbor", help, StringComparison.Ordinal);
+        Assert.Contains("Aegis", help, StringComparison.Ordinal);
+        Assert.Contains("2FAS", help, StringComparison.Ordinal);
+        Assert.Contains(".json", help, StringComparison.Ordinal);
+        Assert.Contains(".csv", help, StringComparison.Ordinal);
+        Assert.Contains(".txt", help, StringComparison.Ordinal);
+        Assert.Contains(".2fas", help, StringComparison.Ordinal);
+        Assert.Contains("otpauth://", help, StringComparison.Ordinal);
+    }
+
+    [Theory]
     [InlineData(
         "en",
         "Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.",

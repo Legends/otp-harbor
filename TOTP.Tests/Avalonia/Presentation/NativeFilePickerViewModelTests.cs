@@ -226,6 +226,51 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
+    public async Task RestoreEncryptedBackupAsync_WithDefaultConflictHandling_DoesNotReplaceExistingAccount()
+    {
+        var existing = new Account(Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "user");
+        var incoming = new Account(Guid.NewGuid(), "GitHub", "KRSXG5DSNFXGOIDB", "user");
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickEncryptedBackupFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("backup.totp", content: [1, 2, 3]));
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(), "backup.totp", "strong-password", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { incoming }));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async (PasswordDialogRequest request, CancellationToken token) =>
+            {
+                Assert.NotNull(request.ValidateAsync);
+                Assert.Null(await request.ValidateAsync("strong-password", token));
+                return "strong-password";
+            });
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
+
+        await sut.RestoreEncryptedBackupAsync();
+
+        Assert.Equal(ImportConflictStrategy.SkipExisting, sut.ConflictStrategy);
+        dialogs.Verify(value => value.ShowMessageAsync(
+            It.Is<MessageDialogRequest>(request =>
+                request.Title == "Restore backup"
+                && request.Message.Contains("nothing to import", StringComparison.OrdinalIgnoreCase)),
+            It.IsAny<CancellationToken>()), Times.Once);
+        dialogs.Verify(value => value.ConfirmAsync(
+            It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+    }
+
+    [Fact]
     public async Task ExportEncryptedAsync_WhenPasswordPromptIsCancelled_ShowsOneShortInformationNotice()
     {
         var accounts = new Mock<IAccountManager>();

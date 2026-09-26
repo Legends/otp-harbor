@@ -127,10 +127,10 @@
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>
   <data name="ChooseImportFile" xml:space="preserve"><value>Choose import file…</value></data>
   <data name="ExportEncryptedBackup" xml:space="preserve"><value>Export encrypted backup…</value></data>
-  <data name="ImportConflictHandling" xml:space="preserve"><value>Import conflict handling</value></data>
+  <data name="ImportConflictHandling" xml:space="preserve"><value>Conflict handling</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Import accounts</value></data>
-  <data name="ImportOtpHarborBackup" xml:space="preserve"><value>Import OTP Harbor backup</value></data>
-  <data name="OtpHarborImportHelp" xml:space="preserve"><value>Import an OTP Harbor account file, an unencrypted Aegis JSON or 2FAS .2fas export, or a text file containing one standard otpauth:// TOTP URI per line.</value></data>
+  <data name="ImportOtherFormats" xml:space="preserve"><value>Import accounts from other formats</value></data>
+  <data name="OtherFormatsImportHelp" xml:space="preserve"><value>Supported formats: unencrypted OTP Harbor JSON (.json), CSV (.csv), or pipe-delimited text (.txt); unencrypted Aegis JSON (.json); unencrypted 2FAS backup (.2fas); and text (.txt) containing one standard otpauth:// TOTP URI per line.</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Export accounts</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Create a portable password-protected backup of all accounts and choose where to save it. Keep the backup and its password separately; restore it with Restore encrypted backup below.</value></data>
   <data name="BackupAndRecovery" xml:space="preserve"><value>Backup and recovery</value></data>
@@ -138,7 +138,7 @@
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Location: choose the destination in the system save dialog. OTP Harbor does not upload or automatically copy the backup.</value></data>
   <data name="LastBackupLocation" xml:space="preserve"><value>Last backup: {0}</value></data>
   <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Last backup: saved to the location selected in the system document provider.</value></data>
-  <data name="RestoreBackupHelp" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup and enter the password used to create it. Conflict handling is reviewed before any account is changed.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup and enter its password. Existing accounts are skipped by default. Choose how to handle conflicts below; you must confirm before any account is changed.</value></data>
   <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Restore encrypted backup…</value></data>
   <data name="RestoreBackup" xml:space="preserve"><value>Restore backup</value></data>
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Open last backup folder</value></data>
