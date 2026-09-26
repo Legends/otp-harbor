@@ -6,6 +6,11 @@ without incrementing or republishing the other. The APK is not embedded in a des
 Play Android App Bundle will be produced by a separate submission workflow when Play distribution
 is enabled; an AAB is not directly installable and is therefore not a GitHub download for users.
 
+Official F-Droid distribution is not available yet. Its source-build, reproducibility, metadata, and
+review gates are tracked separately in the [F-Droid readiness guide](../android/FDROID_READINESS.md).
+Do not share production signing credentials with third-party build infrastructure or describe the app
+as F-Droid-available before those gates and the F-Droid review are complete.
+
 ## Permanent application identity
 
 The production application ID is:

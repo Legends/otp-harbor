@@ -32,7 +32,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             **/*.csproj
@@ -72,6 +72,10 @@ jobs:
       - name: Validate Android marketing assets
         shell: pwsh
         run: ./scripts/validation/Test-AndroidMarketingAssets.ps1
+
+      - name: Validate Android FOSS build inputs
+        shell: pwsh
+        run: ./scripts/validation/Test-AndroidFossBuild.ps1
 
       - name: Validate source launcher safeguards
         shell: pwsh
@@ -144,18 +148,19 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             TOTP.Android.sln
             **/*.csproj
+            **/packages.lock.json
             NuGet.config
 
       - name: Install Android workload
         run: dotnet workload install android --skip-manifest-update
 
       - name: Restore Android solution
-        run: dotnet restore TOTP.Android.sln --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore TOTP.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Build Android development package
         run: dotnet build TOTP.Android.sln --configuration Debug --no-restore --nologo --verbosity minimal
@@ -179,7 +184,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             TOTP.Core/TOTP.Core.csproj
@@ -223,7 +228,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             TOTP.Tests.Avalonia.Headless/TOTP.Tests.Avalonia.Headless.csproj
@@ -262,7 +267,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             TOTP.Camera.OpenCv/TOTP.Camera.OpenCv.csproj
@@ -478,7 +483,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
@@ -584,7 +589,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
@@ -888,18 +893,19 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: true
           cache-dependency-path: |
             TOTP.Android.sln
             **/*.csproj
+            **/packages.lock.json
             NuGet.config
 
       - name: Install Android workload
         run: dotnet workload install android --skip-manifest-update
 
       - name: Restore Android release graph
-        run: dotnet restore TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Materialize protected signing inputs
         shell: pwsh
@@ -1046,7 +1052,7 @@ jobs:
       - name: Setup .NET SDK for signed preview metadata
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
 
       - name: Download retained preview artifacts
         uses: actions/download-artifact@v6
@@ -1280,7 +1286,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
 
       - name: Download retained Linux release artifacts
         uses: actions/download-artifact@v6

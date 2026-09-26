@@ -77,16 +77,21 @@ still validates both graphs where shared Core or Infrastructure behavior can aff
 Build the Android solution explicitly:
 
 ```powershell
-dotnet restore .\TOTP.Android.sln --configfile .\NuGet.config
-dotnet build .\TOTP.Android.sln -c Debug
+dotnet restore .\TOTP.Android.sln --locked-mode --configfile .\NuGet.config
+dotnet build .\TOTP.Android.sln -c Debug --no-restore
 ```
 
 Or build the application project directly:
 
 ```powershell
-dotnet restore .\TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj --configfile .\NuGet.config
+dotnet restore .\TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj --locked-mode --configfile .\NuGet.config
 dotnet build .\TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj -c Debug --no-restore
 ```
+
+The repository pins the .NET SDK in `global.json` and commits the NuGet lock files used by the
+Android solution. Dependency upgrades must be intentional: update the project references, regenerate
+the affected lock files with `--force-evaluate`, review the resolved graph and content hashes, and then
+return to `--locked-mode` for validation and CI.
 
 To install on one authorized Android device and launch the app:
 
@@ -112,7 +117,9 @@ assemblies and therefore do not depend on IDE-specific Android Fast Deployment s
 
 The permanent production application ID is `io.github.legends.otpharbor`. Signing, Android developer
 verification, GitHub environment setup, and the future Google Play path are documented in the
-[Android release guide](../release/ANDROID.md).
+[Android release guide](../release/ANDROID.md). Official F-Droid availability has separate build,
+reproducibility, metadata, and review gates documented in the
+[F-Droid readiness guide](FDROID_READINESS.md); it must not be advertised until those gates pass.
 
 ## Security review notes
 
