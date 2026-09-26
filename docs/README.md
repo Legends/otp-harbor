@@ -10,6 +10,7 @@ This index lists maintained documentation. Git history preserves completed migra
 - [Desktop test commands](testing/DESKTOP_APP_TEST_COMMANDS.md)
 - [Android development preview](android/FOUNDATION.md)
 - [F-Droid readiness](android/FDROID_READINESS.md)
+- [F-Droid dependency audit](android/FDROID_DEPENDENCY_AUDIT.md)
 - [F-Droid signing and update channels](android/FDROID_SIGNING_AND_UPDATES.md)
 - [Public Android user guide](https://legends.github.io/otp-harbor/android/guide/)
 - [Microsoft Store release](release/MICROSOFT_STORE.md)

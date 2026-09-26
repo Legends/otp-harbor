@@ -170,6 +170,10 @@ jobs:
       - name: Restore Android solution
         run: dotnet restore TOTP.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
 
+      - name: Audit Android dependency licenses
+        shell: pwsh
+        run: ./scripts/validation/Test-AndroidDependencyLicenses.ps1
+
       - name: Build Android development package
         run: dotnet build TOTP.Android.sln --configuration Debug --no-restore --nologo --verbosity minimal
 
