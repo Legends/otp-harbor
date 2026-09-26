@@ -62,15 +62,15 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>This QR code contains the account secret. Share it only with a trusted authenticator.</value></data>
   <data name="QrDisplayFailed" xml:space="preserve"><value>The account QR code could not be displayed safely.</value></data>
   <data name="BackupTitle" xml:space="preserve"><value>Encrypted backup</value></data>
-  <data name="BackupDescription" xml:space="preserve"><value>Export or import an encrypted OTP Harbor backup. Existing accounts are kept unchanged during import.</value></data>
-  <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup. Matching existing accounts remain unchanged.</value></data>
-  <data name="ImportAccountFile" xml:space="preserve"><value>Import account file</value></data>
-  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Choose an OTP Harbor account file or an unencrypted Aegis JSON or 2FAS .2fas export. Text files may contain one standard otpauth:// TOTP URI per line.</value></data>
-  <data name="ExportBackupDescription" xml:space="preserve"><value>Create a portable, password-protected backup. Android asks where to save it. Keep the backup and password separately; restore it with Import OTP Harbor backup.</value></data>
+  <data name="BackupDescription" xml:space="preserve"><value>Export or restore an encrypted OTP Harbor backup. Existing accounts are skipped by default; changed matches are reviewed before import.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup and enter its password. Existing accounts are skipped by default; review each changed match before any account is changed.</value></data>
+  <data name="ImportAccountFile" xml:space="preserve"><value>Import accounts from other formats</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Supported formats: unencrypted OTP Harbor JSON (.json), CSV (.csv), or pipe-delimited text (.txt); unencrypted Aegis JSON (.json); unencrypted 2FAS backup (.2fas); and text (.txt) containing one standard otpauth:// TOTP URI per line.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Create a portable, password-protected backup. Android asks where to save it. Keep the backup and password separately; restore it with Restore encrypted backup.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup password</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirm backup password</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Export encrypted backup</value></data>
-  <data name="ImportBackup" xml:space="preserve"><value>Import OTP Harbor backup</value></data>
+  <data name="ImportBackup" xml:space="preserve"><value>Restore encrypted backup</value></data>
   <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Enter a backup password.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>The backup password must contain at least {0} characters.</value></data>
@@ -87,7 +87,7 @@
   <data name="AccountFileImportFailed" xml:space="preserve"><value>The account file could not be imported safely. Existing accounts were not changed.</value></data>
   <data name="AccountFileImportCancelled" xml:space="preserve"><value>Account-file import cancelled. No account was changed.</value></data>
   <data name="AccountFileImported" xml:space="preserve"><value>Account file imported: {0} added, {1} overwritten, {2} existing unchanged.</value></data>
-  <data name="ImportConfirmationTitle" xml:space="preserve"><value>Confirm backup import</value></data>
+  <data name="ImportConfirmationTitle" xml:space="preserve"><value>Confirm account import</value></data>
   <data name="ImportConfirmation" xml:space="preserve"><value>Import {0} accounts? {1} matching existing accounts will remain unchanged. A recovery backup is created before changes.</value></data>
   <data name="ConfirmImport" xml:space="preserve"><value>Import</value></data>
   <data name="NoImportTitle" xml:space="preserve"><value>No import</value></data>
@@ -97,9 +97,9 @@
   <data name="BackupConflictResolution" xml:space="preserve"><value>{0} accounts: {1} new, {2} unchanged, {3} need review. Choose what to do with each changed account. A recovery backup will be created first.</value></data>
   <data name="ConflictAccount" xml:space="preserve"><value>Account</value></data>
   <data name="Skip" xml:space="preserve"><value>Keep</value></data>
-  <data name="Override" xml:space="preserve"><value>Restore</value></data>
+  <data name="Override" xml:space="preserve"><value>Replace</value></data>
   <data name="SkipAll" xml:space="preserve"><value>Keep all</value></data>
-  <data name="OverrideAll" xml:space="preserve"><value>Restore all</value></data>
+  <data name="OverrideAll" xml:space="preserve"><value>Replace all</value></data>
   <data name="CurrentAccountFormat" xml:space="preserve"><value>Current: {0}</value></data>
   <data name="BackupAccountFormat" xml:space="preserve"><value>Imported: {0}</value></data>
   <data name="ChangedFieldsFormat" xml:space="preserve"><value>Changed: {0}</value></data>

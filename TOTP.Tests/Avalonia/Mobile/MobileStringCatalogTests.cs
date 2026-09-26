@@ -39,9 +39,36 @@ public sealed class MobileStringCatalogTests
         Assert.Equal(
             "Import from Google Authenticator",
             catalog.Get(MobileStringKeys.ImportGoogleQr));
-        Assert.Equal("Import OTP Harbor backup", catalog.Get(MobileStringKeys.ImportBackup));
+        Assert.Equal(
+            "Import accounts from other formats",
+            catalog.Get(MobileStringKeys.ImportAccountFile));
+        Assert.Equal("Restore encrypted backup", catalog.Get(MobileStringKeys.ImportBackup));
         Assert.Equal("Export", catalog.Get(MobileStringKeys.ExportSection));
         Assert.Equal("Export encrypted backup", catalog.Get(MobileStringKeys.ExportBackup));
+        Assert.Equal("Confirm account import", catalog.Get(MobileStringKeys.ImportConfirmationTitle));
+        Assert.Equal("Replace", catalog.Get(MobileStringKeys.Override));
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("es")]
+    public void Get_OtherFormatImportHelpNamesEverySupportedFormat(string cultureName)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        var help = catalog.Get(MobileStringKeys.ImportAccountFileDescription);
+
+        Assert.Contains("OTP", help, StringComparison.Ordinal);
+        Assert.Contains("Harbor", help, StringComparison.Ordinal);
+        Assert.Contains("Aegis", help, StringComparison.Ordinal);
+        Assert.Contains("2FAS", help, StringComparison.Ordinal);
+        Assert.Contains(".json", help, StringComparison.Ordinal);
+        Assert.Contains(".csv", help, StringComparison.Ordinal);
+        Assert.Contains(".txt", help, StringComparison.Ordinal);
+        Assert.Contains(".2fas", help, StringComparison.Ordinal);
+        Assert.Contains("otpauth://", help, StringComparison.Ordinal);
     }
 
     [Theory]

@@ -177,9 +177,10 @@ verification, GitHub environment setup, and the future Google Play path are docu
   selection changes, and whenever the app leaves the foreground.
   Backup export passes account data directly to the existing encrypted stream format and never
   offers plaintext export. Backup passwords are removed from bound state before document I/O.
-  Import decrypts only after document selection, requires an explicit count/conflict confirmation,
-  creates the existing recovery backup before writes, and skips matching accounts instead of
-  overwriting them. An incomplete failed export is removed from its document provider when that
+  Import decrypts only after document selection, requires explicit count and per-account conflict
+  review, creates the existing recovery backup before writes, and skips matching accounts by
+  default. A matching account is replaced only after the user explicitly selects the imported
+  version. An incomplete failed export is removed from its document provider when that
   provider permits deletion.
 - **Compatibility impact:** the Android projects remain outside `TOTP.sln`. The infrastructure
   dependency on `NSec.Cryptography` was upgraded from 25.4.0 to 26.4.0 for current Android native
@@ -215,7 +216,7 @@ verification, GitHub environment setup, and the future Google Play path are docu
   Mobile navigation, search, unavailable-scanner fallback, localized QR-import outcomes, and
   disposal of generated QR images and sensitive PNG buffers have regression coverage.
   Encrypted-only backup export, immediate password-field clearing, explicit import confirmation,
-  and skip-existing conflict policy have regression coverage.
+  default skip-existing behavior, and per-account replacement choices have regression coverage.
 
 ## Physical-device evidence
 

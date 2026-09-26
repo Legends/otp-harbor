@@ -62,15 +62,15 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Dieser QR-Code enthält das Kontogeheimnis. Teilen Sie ihn nur mit einem vertrauenswürdigen Authenticator.</value></data>
   <data name="QrDisplayFailed" xml:space="preserve"><value>Der Konto-QR-Code konnte nicht sicher angezeigt werden.</value></data>
   <data name="BackupTitle" xml:space="preserve"><value>Verschlüsseltes Backup</value></data>
-  <data name="BackupDescription" xml:space="preserve"><value>Exportieren oder importieren Sie ein verschlüsseltes OTP-Harbor-Backup. Vorhandene Konten bleiben beim Import unverändert.</value></data>
-  <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-Backupdatei im .totp-Format aus. Passende vorhandene Konten bleiben unverändert.</value></data>
-  <data name="ImportAccountFile" xml:space="preserve"><value>Kontodatei importieren</value></data>
-  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Wählen Sie eine OTP-Harbor-Kontodatei oder einen unverschlüsselten Aegis-JSON- bzw. 2FAS-.2fas-Export. Textdateien können pro Zeile eine standardmäßige otpauth://-TOTP-URI enthalten.</value></data>
-  <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie ein portables, passwortgeschütztes Backup. Android fragt nach dem Speicherort. Bewahren Sie Backup und Passwort getrennt auf; zur Wiederherstellung verwenden Sie „OTP-Harbor-Backup importieren“.</value></data>
+  <data name="BackupDescription" xml:space="preserve"><value>Exportieren Sie eine verschlüsselte OTP-Harbor-Sicherung oder stellen Sie sie wieder her. Vorhandene Konten werden standardmäßig übersprungen; geänderte Treffer werden vor dem Import geprüft.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-.totp-Sicherung und geben Sie ihr Passwort ein. Vorhandene Konten werden standardmäßig übersprungen; prüfen Sie jeden geänderten Treffer, bevor ein Konto geändert wird.</value></data>
+  <data name="ImportAccountFile" xml:space="preserve"><value>Konten aus anderen Formaten importieren</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Unterstützte Formate: unverschlüsselte OTP-Harbor-Dateien als JSON (.json), CSV (.csv) oder durch senkrechte Striche getrennte Textdatei (.txt); unverschlüsselte Aegis-JSON-Exporte (.json); unverschlüsselte 2FAS-Sicherungen (.2fas); und Textdateien (.txt) mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile.</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie eine portable, passwortgeschützte Sicherung. Android fragt nach dem Speicherort. Bewahren Sie Sicherung und Passwort getrennt auf; verwenden Sie zur Wiederherstellung „Verschlüsselte Sicherung wiederherstellen“.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup-Passwort</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Backup-Passwort bestätigen</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Verschlüsseltes Backup exportieren</value></data>
-  <data name="ImportBackup" xml:space="preserve"><value>OTP-Harbor-Backup importieren</value></data>
+  <data name="ImportBackup" xml:space="preserve"><value>Verschlüsselte Sicherung wiederherstellen</value></data>
   <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Geben Sie ein Backup-Passwort ein.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>Das Backup-Passwort muss mindestens {0} Zeichen enthalten.</value></data>
@@ -87,7 +87,7 @@
   <data name="AccountFileImportFailed" xml:space="preserve"><value>Die Kontodatei konnte nicht sicher importiert werden. Vorhandene Konten wurden nicht geändert.</value></data>
   <data name="AccountFileImportCancelled" xml:space="preserve"><value>Der Kontodatei-Import wurde abgebrochen. Kein Konto wurde geändert.</value></data>
   <data name="AccountFileImported" xml:space="preserve"><value>Kontodatei importiert: {0} hinzugefügt, {1} überschrieben, {2} vorhandene unverändert.</value></data>
-  <data name="ImportConfirmationTitle" xml:space="preserve"><value>Backup-Import bestätigen</value></data>
+  <data name="ImportConfirmationTitle" xml:space="preserve"><value>Kontoimport bestätigen</value></data>
   <data name="ImportConfirmation" xml:space="preserve"><value>{0} Konten importieren? {1} passende vorhandene Konten bleiben unverändert. Vor Änderungen wird ein Wiederherstellungs-Backup erstellt.</value></data>
   <data name="ConfirmImport" xml:space="preserve"><value>Importieren</value></data>
   <data name="NoImportTitle" xml:space="preserve"><value>Kein Import</value></data>
@@ -97,9 +97,9 @@
   <data name="BackupConflictResolution" xml:space="preserve"><value>{0} Konten: {1} neu, {2} unverändert, {3} zu prüfen. Wählen Sie die Aktion für jedes geänderte Konto. Zuerst wird ein Wiederherstellungs-Backup erstellt.</value></data>
   <data name="ConflictAccount" xml:space="preserve"><value>Konto</value></data>
   <data name="Skip" xml:space="preserve"><value>Behalten</value></data>
-  <data name="Override" xml:space="preserve"><value>Wiederherstellen</value></data>
+  <data name="Override" xml:space="preserve"><value>Ersetzen</value></data>
   <data name="SkipAll" xml:space="preserve"><value>Alle behalten</value></data>
-  <data name="OverrideAll" xml:space="preserve"><value>Alle wiederherstellen</value></data>
+  <data name="OverrideAll" xml:space="preserve"><value>Alle ersetzen</value></data>
   <data name="CurrentAccountFormat" xml:space="preserve"><value>Aktuell: {0}</value></data>
   <data name="BackupAccountFormat" xml:space="preserve"><value>Importiert: {0}</value></data>
   <data name="ChangedFieldsFormat" xml:space="preserve"><value>Geändert: {0}</value></data>
