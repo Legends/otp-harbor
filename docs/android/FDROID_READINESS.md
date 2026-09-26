@@ -21,7 +21,7 @@ They were last reviewed for this repository on 2026-09-27.
 | F-Droid build-server-compatible toolchain | **Blocked** | The .NET Android workload and every prebuilt NuGet dependency must be accepted under F-Droid's FLOSS toolchain and binary-origin rules. A successful GitHub build does not establish this. |
 | Reproducible APK evidence | **Blocked** | A tested comparator now checks non-signature APK entries by SHA-256. Same-machine clean-build evidence is only a baseline; two clean, independently provisioned environments and the proposed F-Droid build recipe must still match. |
 | F-Droid metadata and screenshots | Implemented baseline | Localized listing text for all four supported languages and authentic synthetic-data screenshots are committed under `fastlane/metadata/android`. Final submission review remains required. |
-| Signing and update-channel decision | Planned | Decide between F-Droid signing and a verified reproducible upstream-signed APK. Keep this independent from GitHub's protected signing credentials. |
+| Signing and update-channel decision | Implemented policy | Initial acceptance uses F-Droid-managed signing. GitHub/Play signing material is never shared; switching signatures requires encrypted-backup migration. Activation remains blocked on the other gates. |
 | Maintainer and F-Droid review | **Blocked** | Submission and acceptance must occur before public availability is claimed. |
 
 ## Locked Android build

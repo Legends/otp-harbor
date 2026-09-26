@@ -11,6 +11,11 @@ review gates are tracked separately in the [F-Droid readiness guide](../android/
 Do not share production signing credentials with third-party build infrastructure or describe the app
 as F-Droid-available before those gates and the F-Droid review are complete.
 
+If official F-Droid acceptance becomes possible, its initial package will use a separate
+F-Droid-managed signature. Android cannot install it over a GitHub/Play-signed package with the same
+application ID. The required encrypted-backup migration and future reproducible upstream-signing gate
+are documented in [F-Droid signing and update channels](../android/FDROID_SIGNING_AND_UPDATES.md).
+
 ## Permanent application identity
 
 The production application ID is:
