@@ -410,6 +410,34 @@ public sealed class AccountListViewModelTests
         Assert.Equal("Microsoft", Assert.Single(sut.Accounts).Issuer);
     }
 
+    [Theory]
+    [InlineData("en", "Ungrouped", "All accounts")]
+    [InlineData("de", "Nicht gruppiert", "Alle Konten")]
+    [InlineData("fr", "Non groupés", "Tous les comptes")]
+    [InlineData("es", "Sin agrupar", "Todas las cuentas")]
+    public async Task AccountNavigationBackLabel_DescribesItsSearchAwareDestination(
+        string cultureName,
+        string expectedDefault,
+        string expectedSearch)
+    {
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [
+                new(Guid.NewGuid(), "GitHub", ValidSecret, "alice", isFavorite: true),
+                new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob")
+            ]));
+        using var sut = CreateSut(manager.Object, localization: Localization(cultureName));
+        await sut.LoadAsync();
+        sut.ToggleFavoritesFilterCommand.Execute(null);
+
+        Assert.Equal(expectedDefault, sut.AccountNavigationBackLabel);
+
+        sut.SearchText = "git";
+
+        Assert.Equal(expectedSearch, sut.AccountNavigationBackLabel);
+    }
+
     [Fact]
     public async Task FavoritesFilter_IncludesGroupedAccountsAndCanBeNarrowedBySearch()
     {
@@ -2044,7 +2072,8 @@ public sealed class AccountListViewModelTests
         IAsyncClipboardService? clipboardService = null,
         IBrandIconResolver? brandIconResolver = null,
         IBrandIconPackService? brandIconPackService = null,
-        ISettingsService? settingsService = null) =>
+        ISettingsService? settingsService = null,
+        IAvaloniaLocalizationService? localization = null) =>
         new(
             manager,
             accountTotpService ?? Mock.Of<IAccountTotpService>(),
@@ -2052,7 +2081,7 @@ public sealed class AccountListViewModelTests
             Mock.Of<IAccountQrCodeService>(),
             Mock.Of<IAvaloniaQrImageFactory>(),
             dialogs ?? Mock.Of<IAvaloniaDialogService>(),
-            Localization(),
+            localization ?? Localization(),
             transientMessageDuration: transientMessageDuration,
             settingsService: settingsService,
             brandIconResolver: brandIconResolver,
@@ -2069,12 +2098,12 @@ public sealed class AccountListViewModelTests
         return clipboard;
     }
 
-    private static IAvaloniaLocalizationService Localization()
+    private static IAvaloniaLocalizationService Localization(string cultureName = "en")
     {
         var localization = new AvaloniaLocalizationService(
             new ResourceDictionary(),
             new AvaloniaStringCatalog());
-        localization.ApplyCulture("en");
+        localization.ApplyCulture(cultureName);
         return localization;
     }
 

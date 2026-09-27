@@ -1757,9 +1757,6 @@ public sealed class MainWindowSmokeTests
             var groupBackButton = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "GroupBackButton");
-            Assert.Equal(
-                Application.Current!.Resources[AvaloniaStringKeys.UngroupedAccounts],
-                AutomationProperties.GetName(groupBackButton));
             Assert.Same(groupScroller.Parent, groupBackButton.Parent);
             Assert.Equal(0, Grid.GetColumn(groupBackButton));
             Assert.Equal(1, Grid.GetColumn(groupScroller));

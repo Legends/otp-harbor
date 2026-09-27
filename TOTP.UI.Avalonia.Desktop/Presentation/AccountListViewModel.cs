@@ -329,6 +329,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             ClearRecentHighlight();
             OnPropertyChanged(nameof(HasSearchText));
             OnPropertyChanged(nameof(IsUngroupedFilterSelected));
+            OnPropertyChanged(nameof(AccountNavigationBackLabel));
             if (HasSearchText && _selectedGroupId.HasValue)
             {
                 _selectedGroupId = null;
@@ -399,6 +400,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasActiveAccountFilter =>
         HasSearchText || HasSelectedGroup || IsFavoritesFilterSelected || IsAllAccountsFilterSelected;
+
+    public string AccountNavigationBackLabel => _localization.GetString(
+        HasSearchText
+            ? AvaloniaStringKeys.AllAccounts
+            : AvaloniaStringKeys.UngroupedAccounts);
 
     public string SearchResultSummary => string.Format(
         _localization.GetString(AvaloniaStringKeys.SearchResultsFormat),
@@ -2005,6 +2011,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         RefreshGroupColorOptions(SelectedGroupColor?.Hex);
         RefreshGroups();
         OnPropertyChanged(nameof(SearchResultSummary));
+        OnPropertyChanged(nameof(AccountNavigationBackLabel));
         foreach (var account in _allAccounts)
             account.UpdateCustomPeriodLabel(FormatCustomPeriod(account.ConfiguredPeriodSeconds));
 

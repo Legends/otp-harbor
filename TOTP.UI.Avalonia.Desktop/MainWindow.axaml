@@ -302,11 +302,11 @@
                                                         Padding="3,5"
                                                         VerticalAlignment="Center"
                                                         Width="20"
-                                                        automation:AutomationProperties.Name="{DynamicResource UngroupedAccounts}"
+                                                        automation:AutomationProperties.Name="{Binding AccountNavigationBackLabel}"
                                                         Classes="icon"
                                                         Command="{Binding ClearGroupFilterCommand}"
                                                         IsVisible="{Binding HasSelectedAccountNavigationCard}"
-                                                        ToolTip.Tip="{DynamicResource UngroupedAccounts}">
+                                                        ToolTip.Tip="{Binding AccountNavigationBackLabel}">
                                                         <shared:SymbolIcon IconSize="14" Kind="ArrowLeft" />
                                                     </Button>
                                                     <ScrollViewer

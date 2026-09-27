@@ -21,8 +21,8 @@ license compliance take priority over convenience or distribution reach.
    and can be edited to change its color and account membership without exposing a destructive
    group-delete action. Favorites remains visible and editable at a zero count so users can add its
    first account through the group editor. Counted All accounts and Ungrouped cards make the complete
-   vault and default bucket directly discoverable. Continue with additional organization for vaults
-   containing hundreds of accounts.
+   vault and default bucket directly discoverable, while the back action names its search-aware
+   destination. Continue with additional organization for vaults containing hundreds of accounts.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.
 5. **First-run and onboarding — implemented baseline, continue refinement.** Explain vault
