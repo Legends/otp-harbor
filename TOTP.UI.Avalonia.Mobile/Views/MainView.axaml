@@ -274,12 +274,46 @@
                             </StackPanel>
                         </Border>
 
-                        <TextBlock
+                        <Border
+                            x:Name="FirstAccountOnboardingCard"
                             Grid.Row="3"
-                            Foreground="{DynamicResource BrushTextSecondary}"
+                            Padding="18"
+                            Background="{DynamicResource BrushSurfaceAlternate}"
+                            BorderBrush="{DynamicResource BrushBorder}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource RadiusMedium}"
                             IsVisible="{Binding HasNoAccounts}"
-                            Text="{Binding NoAccountsText}"
-                            TextWrapping="Wrap" />
+                            VerticalAlignment="Center">
+                            <StackPanel Spacing="12">
+                                <controls:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    Foreground="{DynamicResource BrushAccent}"
+                                    IconSize="32"
+                                    Kind="Add" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    FontSize="20"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding SetUpFirstAccountText}"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding NoAccountsText}"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    x:Name="AddFirstAccountButton"
+                                    Classes="wide primary"
+                                    Command="{Binding BeginAddCommand}"
+                                    Content="{Binding AddAccountText}" />
+                                <Button
+                                    x:Name="ScanFirstAccountButton"
+                                    Classes="wide secondary"
+                                    Command="{Binding ScanQrCommand}"
+                                    Content="{Binding ScanQrText}" />
+                            </StackPanel>
+                        </Border>
 
                         <TextBlock
                             Grid.Row="3"

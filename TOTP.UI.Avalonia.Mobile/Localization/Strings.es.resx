@@ -114,6 +114,7 @@
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Conservar la versión actual de {0}</value></data>
   <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Usar la versión importada de {0}</value></data>
   <data name="NoAccounts" xml:space="preserve"><value>Todavía no hay cuentas. Añada una manualmente, escanee el QR de una cuenta o exportación de Google Authenticator, o restaure una copia de seguridad cifrada desde Configuración.</value></data>
+  <data name="SetUpFirstAccount" xml:space="preserve"><value>Configure su primera cuenta</value></data>
   <data name="AddAccount" xml:space="preserve"><value>Añadir cuenta</value></data>
   <data name="EditAccount" xml:space="preserve"><value>Editar</value></data>
   <data name="DeleteAccount" xml:space="preserve"><value>Eliminar</value></data>

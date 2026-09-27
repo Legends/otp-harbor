@@ -34,7 +34,8 @@ license compliance take priority over convenience or distribution reach.
    flow. The last-backup location and folder action remain attached to export rather than restore;
    continue refining platform-provider guidance and physical acceptance.
 8. **Cross-platform consistency — ongoing.** Keep Windows, Linux, Android, and eventually macOS
-   behavior and appearance coherent; macOS implementation work is currently deferred.
+   behavior and appearance coherent. Desktop and Android now both provide actionable first-account
+   onboarding with manual-add and QR guidance; macOS implementation work is currently deferred.
 9. **Official F-Droid Android distribution — in progress.** The Android dependency graph and SDK are
    pinned, CI enforces locked restores and excludes known proprietary SDK families, localized
    Fastlane metadata is versioned, and an APK payload comparator has exposed remaining .NET Android

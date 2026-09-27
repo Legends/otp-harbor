@@ -142,6 +142,7 @@ public static class MobileStringKeys
     public const string KeepAccountAutomationFormat = nameof(KeepAccountAutomationFormat);
     public const string RestoreAccountAutomationFormat = nameof(RestoreAccountAutomationFormat);
     public const string NoAccounts = nameof(NoAccounts);
+    public const string SetUpFirstAccount = nameof(SetUpFirstAccount);
     public const string AddAccount = nameof(AddAccount);
     public const string EditAccount = nameof(EditAccount);
     public const string DeleteAccount = nameof(DeleteAccount);
@@ -341,6 +342,7 @@ public static class MobileStringKeys
         KeepAccountAutomationFormat,
         RestoreAccountAutomationFormat,
         NoAccounts,
+        SetUpFirstAccount,
         AddAccount,
         EditAccount,
         DeleteAccount,

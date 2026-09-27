@@ -859,6 +859,7 @@ public sealed class MobileShellViewModel :
     public string UnlockText => Get(MobileStringKeys.Unlock);
     public string AccountsTitle => Get(MobileStringKeys.AccountsTitle);
     public string NoAccountsText => Get(MobileStringKeys.NoAccounts);
+    public string SetUpFirstAccountText => Get(MobileStringKeys.SetUpFirstAccount);
     public string AddAccountText => Get(MobileStringKeys.AddAccount);
     public string EditAccountText => Get(MobileStringKeys.EditAccount);
     public string DeleteAccountText => Get(MobileStringKeys.DeleteAccount);
@@ -3334,6 +3335,7 @@ public sealed class MobileShellViewModel :
         nameof(UnlockText),
         nameof(AccountsTitle),
         nameof(NoAccountsText),
+        nameof(SetUpFirstAccountText),
         nameof(AddAccountText),
         nameof(EditAccountText),
         nameof(DeleteAccountText),
