@@ -68,6 +68,31 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task RevealImportedAccountAsync_LeavesFavoritesFilterToShowNonFavoriteImport()
+    {
+        var imported = new Account(Guid.NewGuid(), "Imported", ValidSecret, "alice");
+        var favorite = new Account(
+            Guid.NewGuid(),
+            "Favorite",
+            ValidSecret,
+            "bob",
+            isFavorite: true);
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([favorite, imported]));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        sut.ToggleFavoritesFilterCommand.Execute(null);
+        Assert.True(sut.IsFavoritesFilterSelected);
+
+        await sut.RevealImportedAccountAsync(imported.ID, true, "Imported safely.");
+
+        Assert.False(sut.IsFavoritesFilterSelected);
+        Assert.Equal(imported.ID, sut.SelectedAccount?.Id);
+        Assert.True(sut.SelectedAccount?.IsRecentlyAdded);
+    }
+
+    [Fact]
     public async Task SearchText_WithNoMatches_ExposesFilteredEmptyState()
     {
         var manager = new Mock<IAccountManager>();
@@ -313,6 +338,46 @@ public sealed class AccountListViewModelTests
 
         sut.ClearGroupFilterCommand.Execute(null);
         Assert.Equal(2, sut.Accounts.Count);
+    }
+
+    [Fact]
+    public async Task FavoritesFilter_IncludesGroupedAccountsAndCanBeNarrowedBySearch()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice", group: group, isFavorite: true),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob", isFavorite: true),
+            new(Guid.NewGuid(), "Example", ValidSecret, "carol")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+
+        await sut.LoadAsync();
+
+        Assert.True(sut.HasFavoriteAccounts);
+        Assert.Equal(2, sut.FavoriteCount);
+        Assert.Equal(2, sut.Accounts.Count);
+        sut.ToggleFavoritesFilterCommand.Execute(null);
+
+        Assert.True(sut.IsFavoritesFilterSelected);
+        Assert.True(sut.HasActiveAccountFilter);
+        Assert.Equal(2, sut.Accounts.Count);
+        Assert.All(sut.Accounts, account => Assert.True(account.IsFavorite));
+
+        sut.SearchText = "git";
+
+        var result = Assert.Single(sut.Accounts);
+        Assert.Equal("GitHub", result.Issuer);
+        Assert.True(sut.IsFavoritesFilterSelected);
+
+        sut.Groups.Single().SelectCommand.Execute(null);
+
+        Assert.False(sut.IsFavoritesFilterSelected);
+        Assert.True(sut.HasSelectedGroup);
+        Assert.Single(sut.Accounts);
     }
 
     [Fact]
@@ -1052,6 +1117,66 @@ public sealed class AccountListViewModelTests
         var row = Assert.Single(sut.Accounts);
         Assert.True(row.HasCustomPeriod);
         Assert.Equal("60 s", row.CustomPeriodLabel);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_PersistsFavoriteSelectionForNewAccount()
+    {
+        var manager = new Mock<IAccountManager>();
+        Account? created = null;
+        manager.SetupSequence(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]))
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(created is null ? [] : [created]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => created = account)
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "GitHub";
+        sut.EditorSecret = ValidSecret;
+        sut.EditorIsFavorite = true;
+
+        await sut.SaveAccountAsync();
+
+        Assert.NotNull(created);
+        Assert.True(created.IsFavorite);
+        Assert.True(Assert.Single(sut.Accounts).IsFavorite);
+        Assert.False(sut.EditorIsFavorite);
+    }
+
+    [Fact]
+    public async Task BeginEditAndSave_CanRemoveFavorite()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var original = new Account(
+            Guid.NewGuid(),
+            "GitHub",
+            ValidSecret,
+            "alice",
+            group: group,
+            isFavorite: true);
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([original]));
+        Account? updated = null;
+        manager.Setup(value => value.UpdateAsync(original, It.IsAny<Account>()))
+            .Callback<Account, Account>((_, account) => updated = account)
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        sut.Groups.Single().SelectCommand.Execute(null);
+        sut.SelectedAccount = Assert.Single(sut.Accounts);
+
+        await sut.BeginEditAsync();
+        Assert.True(sut.EditorIsFavorite);
+        sut.EditorIsFavorite = false;
+        await sut.SaveAccountAsync();
+
+        Assert.NotNull(updated);
+        Assert.False(updated.IsFavorite);
+        manager.Verify(value => value.UpdateAsync(
+            original,
+            It.Is<Account>(account => !account.IsFavorite)), Times.Once);
     }
 
     [Fact]

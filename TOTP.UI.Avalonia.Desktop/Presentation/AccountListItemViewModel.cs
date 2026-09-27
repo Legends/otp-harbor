@@ -15,7 +15,8 @@ public sealed class AccountListItemViewModel(
     int configuredPeriodSeconds = TotpPeriodPolicy.DefaultSeconds,
     string customPeriodLabel = "",
     BrandInfo? brand = null,
-    AccountGroup? group = null) : INotifyPropertyChanged
+    AccountGroup? group = null,
+    bool isFavorite = false) : INotifyPropertyChanged
 {
     private bool _isRecentlyAdded = isRecentlyAdded;
     private string _code = string.Empty;
@@ -38,6 +39,7 @@ public sealed class AccountListItemViewModel(
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
     public AccountGroup? Group { get; } = group;
+    public bool IsFavorite { get; } = isFavorite;
 
     public string CopyConfirmation
     {

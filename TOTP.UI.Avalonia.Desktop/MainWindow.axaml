@@ -291,6 +291,29 @@
                                             Margin="10,8,10,12"
                                             VerticalAlignment="Top"
                                             Spacing="8">
+                                            <Border
+                                                Width="150"
+                                                MinHeight="54"
+                                                HorizontalAlignment="Left"
+                                                Margin="2"
+                                                Classes="group-card"
+                                                Classes.selected="{Binding IsFavoritesFilterSelected}"
+                                                CornerRadius="7"
+                                                IsVisible="{Binding HasFavoriteAccounts}">
+                                                <Button
+                                                    automation:AutomationProperties.Name="{DynamicResource FavoriteAccounts}"
+                                                    Classes="group-card-hit-target"
+                                                    Command="{Binding ToggleFavoritesFilterCommand}"
+                                                    ToolTip.Tip="{DynamicResource FavoriteAccounts}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                                        <shared:SymbolIcon IconSize="20" Kind="Favorite" />
+                                                        <StackPanel>
+                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource FavoriteAccounts}" />
+                                                            <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Border>
                                             <StackPanel IsVisible="{Binding HasGroups}" Spacing="6">
                                                 <Grid ColumnDefinitions="10,*">
                                                     <Button
@@ -419,7 +442,7 @@
                                                                 Classes="account-row-container"
                                                                 Classes.recently-added="{Binding IsRecentlyAdded}">
                                                                     <Grid
-                                                                        ColumnDefinitions="Auto,*,Auto,Auto"
+                                                                        ColumnDefinitions="Auto,*,Auto,Auto,Auto"
                                                                         RowDefinitions="Auto,Auto"
                                                                         ColumnSpacing="6">
                                                                     <shared:BrandTile
@@ -439,7 +462,7 @@
                                                                     <Button
                                                                         automation:AutomationProperties.Name="{DynamicResource CopyTimedClear}"
                                                                         Grid.Row="0"
-                                                                        Grid.Column="3"
+                                                                        Grid.Column="4"
                                                                         Classes="row-code"
                                                                         Command="{Binding CopyCodeCommand}"
                                                                         CommandParameter="{Binding}"
@@ -452,7 +475,7 @@
                                                                     </Button>
                                                                     <TextBlock
                                                                         Grid.Row="0"
-                                                                        Grid.Column="2"
+                                                                        Grid.Column="3"
                                                                         VerticalAlignment="Center"
                                                                         FontSize="10"
                                                                         FontWeight="SemiBold"
@@ -461,15 +484,25 @@
                                                                         Text="{Binding CopyConfirmation}" />
                                                                     <TextBlock
                                                                         Grid.Row="0"
-                                                                        Grid.Column="2"
+                                                                        Grid.Column="3"
                                                                         VerticalAlignment="Center"
                                                                         Classes="secondary"
                                                                         IsVisible="{Binding !HasCopyConfirmation}"
                                                                         Text="{Binding CustomPeriodLabel}" />
+                                                                    <shared:SymbolIcon
+                                                                        Grid.Row="0"
+                                                                        Grid.Column="2"
+                                                                        VerticalAlignment="Center"
+                                                                        automation:AutomationProperties.Name="{DynamicResource FavoriteAccount}"
+                                                                        Foreground="{DynamicResource BrushAccent}"
+                                                                        IconSize="13"
+                                                                        IsVisible="{Binding IsFavorite}"
+                                                                        Kind="Favorite"
+                                                                        ToolTip.Tip="{DynamicResource FavoriteAccount}" />
                                                                     <ProgressBar
                                                                         Grid.Row="1"
                                                                         Grid.Column="1"
-                                                                        Grid.ColumnSpan="3"
+                                                                        Grid.ColumnSpan="4"
                                                                         Classes="account-countdown"
                                                                         Classes.expiring="{Binding IsExpiring}"
                                                                         IsHitTestVisible="False"
@@ -587,6 +620,11 @@
                                                 <TextBox
                                                     automation:AutomationProperties.Name="{DynamicResource AccountName}"
                                                     Text="{Binding EditorAccountName, Mode=TwoWay}" />
+                                                <CheckBox
+                                                    Margin="0,12,0,0"
+                                                    automation:AutomationProperties.Name="{DynamicResource FavoriteAccount}"
+                                                    Content="{DynamicResource FavoriteAccount}"
+                                                    IsChecked="{Binding EditorIsFavorite, Mode=TwoWay}" />
                                                 <StackPanel
                                                     Margin="0,10,0,0"
                                                     Spacing="6">

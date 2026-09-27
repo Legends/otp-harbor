@@ -10,6 +10,7 @@ public enum SymbolIconKind
     Copy,
     Delete,
     Edit,
+    Favorite,
     Folder,
     FolderAdd,
     Lock,

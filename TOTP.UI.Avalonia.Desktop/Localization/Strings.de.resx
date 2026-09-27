@@ -197,6 +197,8 @@
   <data name="ManageGroups" xml:space="preserve"><value>Gruppen verwalten</value></data>
   <data name="Groups" xml:space="preserve"><value>Gruppen</value></data>
   <data name="AllAccounts" xml:space="preserve"><value>Alle Konten</value></data>
+  <data name="FavoriteAccounts" xml:space="preserve"><value>Favoriten</value></data>
+  <data name="FavoriteAccount" xml:space="preserve"><value>Favoritenkonto</value></data>
   <data name="CreateGroup" xml:space="preserve"><value>Gruppe erstellen</value></data>
   <data name="EditGroup" xml:space="preserve"><value>Gruppe bearbeiten</value></data>
   <data name="DeleteGroup" xml:space="preserve"><value>Gruppe löschen</value></data>

@@ -47,6 +47,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _saveGroupCommand;
     private readonly AsyncCommand _cancelGroupEditCommand;
     private readonly AsyncCommand _clearGroupFilterCommand;
+    private readonly AsyncCommand _toggleFavoritesFilterCommand;
     private CancellationTokenSource? _rowCodeLifetime;
     private CancellationTokenSource? _recentHighlightLifetime;
     private CancellationTokenSource? _copyConfirmationLifetime;
@@ -56,6 +57,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private IReadOnlyList<AccountGroupListItemViewModel> _allGroups = [];
     private IReadOnlyList<AccountGroupListItemViewModel> _groups = [];
     private Guid? _selectedGroupId;
+    private bool _showFavoritesOnly;
     private string _searchText = string.Empty;
     private AccountListItemViewModel? _selectedAccount;
     private AccountListItemViewModel? _contextAccount;
@@ -76,6 +78,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _editorAccountName = string.Empty;
     private string _editorSecret = string.Empty;
     private int? _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+    private bool _editorIsFavorite;
     private bool _isAdvancedOptionsExpanded;
     private string _editorIssuerMessage = string.Empty;
     private string _editorSecretMessage = string.Empty;
@@ -170,6 +173,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             CancelGroupEditAsync,
             () => !IsBusy && IsGroupEditorVisible);
         _clearGroupFilterCommand = new AsyncCommand(ClearGroupFilterAsync, () => HasSelectedGroup);
+        _toggleFavoritesFilterCommand = new AsyncCommand(ToggleFavoritesFilterAsync, () => HasFavoriteAccounts);
         _localization.CultureChanged += LocalizationCultureChanged;
         RefreshBrandIconOptions(null);
         RefreshGroupColorOptions(null);
@@ -331,7 +335,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasSelectedGroup => _selectedGroupId.HasValue;
 
-    public bool HasActiveAccountFilter => HasSearchText || HasSelectedGroup;
+    public int FavoriteCount => _allAccounts.Count(account => account.IsFavorite);
+
+    public bool HasFavoriteAccounts => FavoriteCount > 0;
+
+    public bool IsFavoritesFilterSelected => _showFavoritesOnly;
+
+    public bool HasActiveAccountFilter => HasSearchText || HasSelectedGroup || IsFavoritesFilterSelected;
 
     public string SearchResultSummary => string.Format(
         _localization.GetString(AvaloniaStringKeys.SearchResultsFormat),
@@ -374,6 +384,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public ICommand SaveGroupCommand => _saveGroupCommand;
     public ICommand CancelGroupEditCommand => _cancelGroupEditCommand;
     public ICommand ClearGroupFilterCommand => _clearGroupFilterCommand;
+    public ICommand ToggleFavoritesFilterCommand => _toggleFavoritesFilterCommand;
 
     public bool IsGroupEditorVisible
     {
@@ -514,6 +525,12 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         private set => SetField(ref _editorMessage, value);
     }
 
+    public bool EditorIsFavorite
+    {
+        get => _editorIsFavorite;
+        set => SetField(ref _editorIsFavorite, value);
+    }
+
     public IReadOnlyList<BrandIconOption> EditorBrandIconOptions
     {
         get => _editorBrandIconOptions;
@@ -547,6 +564,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (result.IsFailed)
             {
                 _allAccounts = [];
+                RefreshFavoriteState();
                 RefreshGroups();
                 Accounts = [];
                 ShowError(_localization.GetString(AvaloniaStringKeys.AccountsLoadFailed));
@@ -570,9 +588,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                             account.ID,
                             account.Issuer,
                             account.AccountName),
-                        group);
+                        group,
+                        account.IsFavorite);
                 })
                 .ToArray();
+            RefreshFavoriteState();
             foreach (var account in _allAccounts)
                 account.UpdateLogoVisibility(_brandIconResolver.ShowIssuerLogo);
             RefreshGroups();
@@ -585,6 +605,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception)
         {
             _allAccounts = [];
+            RefreshFavoriteState();
             RefreshGroups();
             Accounts = [];
             ShowError(_localization.GetString(AvaloniaStringKeys.AccountsLoadFailedSafely));
@@ -848,6 +869,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             EditorAccountName = account.AccountName ?? string.Empty;
             EditorSecret = account.Secret;
             EditorPeriodSeconds = account.PeriodSeconds;
+            EditorIsFavorite = account.IsFavorite;
             RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
             IsEditorVisible = true;
         }
@@ -917,7 +939,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 normalizedSecret,
                 accountName.Length == 0 ? null : accountName,
                 periodSeconds,
-                selectedGroup);
+                selectedGroup,
+                EditorIsFavorite);
             var saved = _editingAccountId.HasValue
                 ? await UpdateExistingAsync(loaded.Value, updated)
                 : await _accountManager.AddNewAsync(updated);
@@ -986,7 +1009,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var revealed = _allAccounts.FirstOrDefault(account => account.Id == accountId);
         if (revealed is not null && Accounts.All(account => account.Id != accountId))
         {
+            _showFavoritesOnly = false;
             _selectedGroupId = revealed.Group?.Id;
+            RefreshFavoriteState();
             RefreshGroups();
             ApplyFilter();
         }
@@ -1247,9 +1272,25 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private Task SelectGroupAsync(Guid groupId)
     {
         _selectedGroupId = _selectedGroupId == groupId ? null : groupId;
+        _showFavoritesOnly = false;
         ClearRecentHighlight();
         RefreshGroups();
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        ApplyFilter();
+        return Task.CompletedTask;
+    }
+
+    private Task ToggleFavoritesFilterAsync()
+    {
+        if (!HasFavoriteAccounts) return Task.CompletedTask;
+        _showFavoritesOnly = !_showFavoritesOnly;
+        _selectedGroupId = null;
+        ClearRecentHighlight();
+        RefreshGroups();
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         ApplyFilter();
@@ -1298,7 +1339,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         Accounts = AccountListFilter.Apply(
             _allAccounts,
             SearchText,
-            _selectedGroupId);
+            _selectedGroupId,
+            _showFavoritesOnly);
         var selectionIsVisible = SelectedAccount is not null
             && Accounts.Any(account => account.Id == SelectedAccount.Id);
         if (selectionIsVisible) return;
@@ -1464,6 +1506,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         SearchText = string.Empty;
         _allAccounts = [];
         _selectedGroupId = null;
+        _showFavoritesOnly = false;
+        RefreshFavoriteState();
         RefreshGroups();
         Accounts = [];
         ClearQrImage();
@@ -1505,6 +1549,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorAccountName = string.Empty;
         EditorSecret = string.Empty;
         EditorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+        EditorIsFavorite = false;
         IsAdvancedOptionsExpanded = false;
         EditorIssuerMessage = string.Empty;
         EditorSecretMessage = string.Empty;
@@ -1581,6 +1626,17 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         _beginAddGroupCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RefreshFavoriteState()
+    {
+        if (_showFavoritesOnly && !HasFavoriteAccounts)
+            _showFavoritesOnly = false;
+        OnPropertyChanged(nameof(FavoriteCount));
+        OnPropertyChanged(nameof(HasFavoriteAccounts));
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
     }
 
     private void ApplyGroupSearch()

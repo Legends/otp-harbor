@@ -197,6 +197,8 @@
   <data name="ManageGroups" xml:space="preserve"><value>Manage groups</value></data>
   <data name="Groups" xml:space="preserve"><value>Groups</value></data>
   <data name="AllAccounts" xml:space="preserve"><value>All accounts</value></data>
+  <data name="FavoriteAccounts" xml:space="preserve"><value>Favorites</value></data>
+  <data name="FavoriteAccount" xml:space="preserve"><value>Favorite account</value></data>
   <data name="CreateGroup" xml:space="preserve"><value>Create group</value></data>
   <data name="EditGroup" xml:space="preserve"><value>Edit group</value></data>
   <data name="DeleteGroup" xml:space="preserve"><value>Delete group</value></data>

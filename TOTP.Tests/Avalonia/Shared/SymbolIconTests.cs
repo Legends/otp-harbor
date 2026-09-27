@@ -13,6 +13,7 @@ public sealed class SymbolIconTests
     [InlineData(SymbolIconKind.Copy)]
     [InlineData(SymbolIconKind.Delete)]
     [InlineData(SymbolIconKind.Edit)]
+    [InlineData(SymbolIconKind.Favorite)]
     [InlineData(SymbolIconKind.Folder)]
     [InlineData(SymbolIconKind.FolderAdd)]
     [InlineData(SymbolIconKind.Lock)]

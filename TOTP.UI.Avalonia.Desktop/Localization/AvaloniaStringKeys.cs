@@ -114,6 +114,8 @@ public static class AvaloniaStringKeys
     public const string ManageGroups = nameof(ManageGroups);
     public const string Groups = nameof(Groups);
     public const string AllAccounts = nameof(AllAccounts);
+    public const string FavoriteAccounts = nameof(FavoriteAccounts);
+    public const string FavoriteAccount = nameof(FavoriteAccount);
     public const string CreateGroup = nameof(CreateGroup);
     public const string EditGroup = nameof(EditGroup);
     public const string DeleteGroup = nameof(DeleteGroup);
@@ -414,7 +416,7 @@ public static class AvaloniaStringKeys
         Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
         IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
-        ManageGroups, Groups, AllAccounts, CreateGroup, EditGroup, DeleteGroup,
+        ManageGroups, Groups, AllAccounts, FavoriteAccounts, FavoriteAccount, CreateGroup, EditGroup, DeleteGroup,
         DeleteGroupPrompt, GroupName, GroupColor, GroupAccounts, GroupNameRequired,
         GroupNameDuplicate, GroupAccountRequired, GroupSaveFailed, GroupSaved,
         GroupDeleteFailed, GroupDeleted, GroupColorGreen, GroupColorTurquoise,
