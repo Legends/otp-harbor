@@ -28,8 +28,8 @@ license compliance take priority over convenience or distribution reach.
    retaining scan, import, and encrypted-restore guidance.
 6. **UI consistency — ongoing.** Continue reviewing spacing, dialogs, context menus, focus,
    confirmations, accessibility, and resizing behavior. Desktop transient messages use one
-   bottom-center overlay treatment outside layout flow, with theme-contrasting surfaces and longer
-   warning/error visibility.
+   bottom-center overlay treatment outside layout flow, with compact icon-led notification cards,
+   theme-specific contrast, and longer warning/error visibility.
 7. **Backup UX — implemented baseline, continue refinement.** Backup locations, encryption status,
    recovery requirements, and dedicated restore workflows are now explicit in the desktop settings
    flow. The last-backup location and folder action remain attached to export rather than restore;

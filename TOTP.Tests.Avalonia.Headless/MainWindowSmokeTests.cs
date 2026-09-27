@@ -3,6 +3,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -1089,8 +1090,29 @@ public sealed class MainWindowSmokeTests
             var banner = Assert.Single(
                 notification.GetVisualDescendants().OfType<Border>(),
                 border => border.Name == "PART_Banner");
-            Assert.Equal(new Thickness(5, 1, 1, 1), banner.BorderThickness);
+            Assert.Equal(new Thickness(1), banner.BorderThickness);
+            Assert.Equal(new CornerRadius(14), banner.CornerRadius);
             Assert.NotEqual(default, banner.BoxShadow);
+            var brandIcon = Assert.Single(
+                notification.GetVisualDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Lock);
+            Assert.Equal(13, brandIcon.IconSize);
+            var appTitle = Assert.Single(
+                notification.GetVisualDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.AppTitle]));
+            Assert.Equal(FontWeight.SemiBold, appTitle.FontWeight);
+            var severityIndicator = Assert.Single(
+                notification.GetVisualDescendants().OfType<Ellipse>(),
+                ellipse => ellipse.Name == "PART_SeverityIndicator");
+            Assert.True(notification.TryFindResource(
+                "BrushSuccess",
+                ThemeVariant.Dark,
+                out var successBrush));
+            Assert.Equal(
+                Assert.IsType<SolidColorBrush>(successBrush).Color,
+                Assert.IsType<SolidColorBrush>(severityIndicator.Fill).Color);
         }
         finally
         {
@@ -2070,7 +2092,7 @@ public sealed class MainWindowSmokeTests
                 ThemeVariant.Dark,
                 out var toastBackground));
             Assert.Equal(
-                Color.Parse("#F4F7FF"),
+                Color.Parse("#243C63"),
                 Assert.IsType<SolidColorBrush>(toastBackground).Color);
             Assert.NotEqual(
                 Assert.IsType<SolidColorBrush>(background).Color,
@@ -2115,6 +2137,16 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Color.Parse("#168AE0"),
                 Assert.IsType<SolidColorBrush>(accent).Color);
+            Assert.True(window.TryFindResource(
+                "BrushToastBackground",
+                ThemeVariant.Light,
+                out var toastBackground));
+            Assert.Equal(
+                Color.Parse("#F7F8FC"),
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
+            Assert.NotEqual(
+                Assert.IsType<SolidColorBrush>(background).Color,
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
         }
         finally
         {
