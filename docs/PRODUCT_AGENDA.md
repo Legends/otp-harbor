@@ -19,8 +19,9 @@ license compliance take priority over convenience or distribution reach.
    default list shows ungrouped accounts, while search also matches group names. Favorites are
    available on desktop and Android; on desktop the built-in Favorites group is first in the strip
    and can be edited to change its color and account membership without exposing a destructive
-   group-delete action. Counted All accounts and Ungrouped cards make the complete vault and default
-   bucket directly discoverable in grouped vaults. Continue with additional organization for vaults
+   group-delete action. Favorites remains visible and editable at a zero count so users can add its
+   first account through the group editor. Counted All accounts and Ungrouped cards make the complete
+   vault and default bucket directly discoverable. Continue with additional organization for vaults
    containing hundreds of accounts.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.

@@ -643,6 +643,44 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task EmptyFavorites_RemainsVisibleAndEditableSoAccountsCanBeAdded()
+    {
+        var first = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var second = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "bob");
+        IReadOnlyList<Account> accounts = [first, second];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(accounts));
+        manager.Setup(value => value.SaveFavoritesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Callback<IReadOnlyCollection<Guid>>(selectedIds =>
+            {
+                var ids = selectedIds.ToHashSet();
+                accounts = accounts.Select(account => account.WithFavorite(ids.Contains(account.ID))).ToArray();
+            })
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        Assert.True(sut.HasAccountNavigationCards);
+        Assert.False(sut.HasFavoriteAccounts);
+        Assert.Equal(0, sut.FavoriteCount);
+        Assert.True(sut.BeginEditFavoritesCommand.CanExecute(null));
+        Assert.True(sut.ToggleFavoritesFilterCommand.CanExecute(null));
+
+        await sut.BeginEditFavoritesAsync();
+        Assert.True(sut.IsEditingFavorites);
+        Assert.All(sut.GroupEditorAccounts, account => Assert.False(account.IsSelected));
+        sut.GroupEditorAccounts.Single(account => account.AccountId == second.ID).IsSelected = true;
+        await sut.SaveGroupAsync();
+
+        Assert.True(accounts.Single(account => account.ID == second.ID).IsFavorite);
+        Assert.True(sut.HasFavoriteAccounts);
+        Assert.Equal(1, sut.FavoriteCount);
+        Assert.True(sut.IsFavoritesFilterSelected);
+        Assert.Equal(second.ID, Assert.Single(sut.Accounts).Id);
+    }
+
+    [Fact]
     public async Task GroupEditorSearch_FiltersAccountsWithoutLosingHiddenSelectionsOrIcons()
     {
         IReadOnlyList<Account> accounts =

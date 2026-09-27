@@ -177,7 +177,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && _allAccounts.Count > 0);
         _beginEditFavoritesCommand = new AsyncCommand(
             BeginEditFavoritesAsync,
-            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && HasFavoriteAccounts);
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && _allAccounts.Count > 0);
         _saveGroupCommand = new AsyncCommand(
             SaveGroupAsync,
             () => !IsBusy && IsGroupEditorVisible);
@@ -187,7 +187,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _clearGroupFilterCommand = new AsyncCommand(
             ClearGroupFilterAsync,
             () => HasSelectedAccountNavigationCard);
-        _toggleFavoritesFilterCommand = new AsyncCommand(ToggleFavoritesFilterAsync, () => HasFavoriteAccounts);
+        _toggleFavoritesFilterCommand = new AsyncCommand(
+            ToggleFavoritesFilterAsync,
+            () => !IsBusy && _allAccounts.Count > 0);
         _selectUngroupedCommand = new AsyncCommand(
             SelectUngroupedAsync,
             () => !IsBusy && HasUngroupedAccounts);
@@ -354,7 +356,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasGroups => _allGroups.Count > 0;
 
-    public bool HasAccountNavigationCards => HasFavoriteAccounts || HasGroups;
+    public bool HasAccountNavigationCards => _allAccounts.Count > 0;
 
     public bool HasSelectedGroup => _selectedGroupId.HasValue;
 
@@ -1277,7 +1279,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public Task BeginEditFavoritesAsync()
     {
-        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || !HasFavoriteAccounts)
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || _allAccounts.Count == 0)
             return Task.CompletedTask;
 
         SetGroupEditorMode(null, isEditingFavorites: true);
@@ -1483,7 +1485,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private Task ToggleFavoritesFilterAsync()
     {
-        if (!HasFavoriteAccounts) return Task.CompletedTask;
+        if (IsBusy || _allAccounts.Count == 0) return Task.CompletedTask;
         _showFavoritesOnly = !_showFavoritesOnly;
         _selectedGroupId = null;
         _showAllAccounts = false;

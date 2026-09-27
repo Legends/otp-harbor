@@ -325,8 +325,7 @@
                                                                 Background="{Binding FavoriteGroupBackground}"
                                                                 Classes="group-card"
                                                                 Classes.selected="{Binding IsFavoritesFilterSelected}"
-                                                                CornerRadius="7"
-                                                                IsVisible="{Binding HasFavoriteAccounts}">
+                                                                CornerRadius="7">
                                                                 <Border.ContextMenu>
                                                                     <ContextMenu Classes="account-context-menu">
                                                                         <MenuItem Command="{Binding BeginEditFavoritesCommand}" Header="{DynamicResource EditFavorites}">
