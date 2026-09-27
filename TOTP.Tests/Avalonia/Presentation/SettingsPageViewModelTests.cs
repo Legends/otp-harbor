@@ -12,9 +12,21 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class SettingsPageViewModelTests
 {
     [Fact]
-    public void TransientNotices_UseFifteenHundredMillisecondsByDefault()
+    public void TransientNotices_UseReadableSeverityAwareDefaults()
     {
-        Assert.Equal(TimeSpan.FromMilliseconds(1500), TransientNotificationDefaults.Duration);
+        Assert.Equal(TimeSpan.FromSeconds(4), TransientNotificationDefaults.Duration);
+        Assert.Equal(
+            TimeSpan.FromSeconds(4),
+            TransientNotificationDefaults.ForSeverity(NotificationSeverity.Success));
+        Assert.Equal(
+            TimeSpan.FromSeconds(6),
+            TransientNotificationDefaults.ForSeverity(NotificationSeverity.Warning));
+        Assert.Equal(
+            TimeSpan.FromSeconds(6),
+            TransientNotificationDefaults.ForSeverity(NotificationSeverity.Error));
+        Assert.Equal(
+            TimeSpan.FromMilliseconds(1500),
+            TransientNotificationDefaults.CopyConfirmationDuration);
     }
 
     [Fact]

@@ -6,7 +6,7 @@ namespace TOTP.Avalonia.Desktop.Presentation;
 
 public sealed class NotificationState : INotifyPropertyChanged, IDisposable
 {
-    private readonly TimeSpan _defaultTransientDuration;
+    private readonly TimeSpan? _configuredTransientDuration;
     private CancellationTokenSource? _lifetime;
     private string _text = string.Empty;
     private NotificationSeverity _severity = NotificationSeverity.Information;
@@ -14,10 +14,10 @@ public sealed class NotificationState : INotifyPropertyChanged, IDisposable
 
     public NotificationState(TimeSpan? defaultTransientDuration = null)
     {
-        _defaultTransientDuration = defaultTransientDuration
-            ?? TransientNotificationDefaults.Duration;
-        if (_defaultTransientDuration <= TimeSpan.Zero)
+        if (defaultTransientDuration is { } configuredDuration
+            && configuredDuration <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(defaultTransientDuration));
+        _configuredTransientDuration = defaultTransientDuration;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -59,7 +59,9 @@ public sealed class NotificationState : INotifyPropertyChanged, IDisposable
         NotificationSeverity severity,
         TimeSpan? duration = null)
     {
-        var lifetimeDuration = duration ?? _defaultTransientDuration;
+        var lifetimeDuration = duration
+            ?? _configuredTransientDuration
+            ?? TransientNotificationDefaults.ForSeverity(severity);
         if (lifetimeDuration <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(duration));
 

@@ -1071,6 +1071,7 @@ public sealed class MainWindowSmokeTests
             Severity = NotificationSeverity.Success,
             Text = "Synthetic account saved"
         };
+        notification.Classes.Add("toast");
         var content = new Border { Height = 300 };
         var host = new Grid { Children = { content, notification } };
         var window = new Window { Content = host };
@@ -1084,6 +1085,12 @@ public sealed class MainWindowSmokeTests
             Assert.True(notification.IsVisible);
             Assert.False(notification.IsHitTestVisible);
             Assert.Equal(VerticalAlignment.Bottom, notification.VerticalAlignment);
+            Assert.Equal(HorizontalAlignment.Center, notification.HorizontalAlignment);
+            var banner = Assert.Single(
+                notification.GetVisualDescendants().OfType<Border>(),
+                border => border.Name == "PART_Banner");
+            Assert.Equal(new Thickness(5, 1, 1, 1), banner.BorderThickness);
+            Assert.NotEqual(default, banner.BoxShadow);
         }
         finally
         {
@@ -1892,8 +1899,7 @@ public sealed class MainWindowSmokeTests
             var importButtons = new[]
             {
                 Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtherFormatsImportButton"),
-                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton"),
-                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "BrandIconsImportButton")
+                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton")
             };
             var restoreConflictStrategy = Assert.Single(
                 content.GetLogicalDescendants().OfType<ComboBox>(),
@@ -1901,10 +1907,6 @@ public sealed class MainWindowSmokeTests
             var otherFormatsConflictStrategy = Assert.Single(
                 content.GetLogicalDescendants().OfType<ComboBox>(),
                 comboBox => comboBox.Name == "OtherFormatsConflictStrategyComboBox");
-            var resetBrandIconsButton = Assert.Single(
-                content.GetLogicalDescendants().OfType<Button>(),
-                button => button.Name == "BrandIconsResetButton");
-
             Assert.Contains("primary", exportButton.Classes);
             Assert.Contains("wide", exportButton.Classes);
             Assert.Contains("wide", restoreButton.Classes);
@@ -1913,8 +1915,44 @@ public sealed class MainWindowSmokeTests
             Assert.NotNull(restoreConflictStrategy);
             Assert.NotNull(otherFormatsConflictStrategy);
             Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));
-            Assert.Contains("secondary", resetBrandIconsButton.Classes);
-            Assert.Contains("wide", resetBrandIconsButton.Classes);
+            Assert.DoesNotContain(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void MiscellaneousAppearance_ContainsOptionalBrandIconManagement()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var host = window.FindControl<ContentControl>("MiscellaneousSettingsHost");
+            Assert.NotNull(host?.ContentTemplate);
+            var content = Assert.IsAssignableFrom<Control>(host.ContentTemplate.Build(null));
+            var panel = Assert.Single(
+                content.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "MiscellaneousSettingsPanel");
+            var importButton = Assert.Single(
+                panel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "BrandIconsImportButton");
+            var resetButton = Assert.Single(
+                panel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "BrandIconsResetButton");
+            Assert.Contains("wide", importButton.Classes);
+            Assert.Contains("secondary", resetButton.Classes);
+            Assert.Contains("wide", resetButton.Classes);
+            Assert.Contains(
+                panel.GetLogicalDescendants().OfType<CheckBox>(),
+                checkBox => Equals(
+                    checkBox.Content,
+                    Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo]));
         }
         finally
         {
@@ -1945,7 +1983,10 @@ public sealed class MainWindowSmokeTests
                 overlay ??= currentOverlay;
                 Assert.Same(overlay, currentOverlay);
                 Assert.Equal(VerticalAlignment.Bottom, currentOverlay.VerticalAlignment);
+                Assert.Equal(HorizontalAlignment.Center, currentOverlay.HorizontalAlignment);
                 Assert.False(currentOverlay.IsHitTestVisible);
+                Assert.Contains("toast", currentOverlay.Classes);
+                Assert.Equal(new Thickness(16, 16, 16, 18), currentOverlay.Margin);
                 Assert.DoesNotContain(
                     currentOverlay,
                     settingsTabs.GetVisualDescendants());
@@ -2016,6 +2057,16 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Color.Parse("#7D7FF4"),
                 Assert.IsType<SolidColorBrush>(accent).Color);
+            Assert.True(window.TryFindResource(
+                "BrushToastBackground",
+                ThemeVariant.Dark,
+                out var toastBackground));
+            Assert.Equal(
+                Color.Parse("#F4F7FF"),
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
+            Assert.NotEqual(
+                Assert.IsType<SolidColorBrush>(background).Color,
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
         }
         finally
         {

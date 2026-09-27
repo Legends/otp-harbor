@@ -45,7 +45,10 @@
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#E5EEF6" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#D6E4EF" />
                     <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushToastBackground" Color="#172033" />
+                    <SolidColorBrush x:Key="BrushToastForeground" Color="#FFFFFF" />
                     <BoxShadows x:Key="ElevationCard">0 2 8 0 #1A000000</BoxShadows>
+                    <BoxShadows x:Key="ElevationToast">0 6 20 0 #40000000</BoxShadows>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#FFFFFF" />
@@ -85,7 +88,10 @@
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#E5EEF6" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#D6E4EF" />
                     <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushToastBackground" Color="#172033" />
+                    <SolidColorBrush x:Key="BrushToastForeground" Color="#FFFFFF" />
                     <BoxShadows x:Key="ElevationCard">0 2 8 0 #1A000000</BoxShadows>
+                    <BoxShadows x:Key="ElevationToast">0 6 20 0 #40000000</BoxShadows>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#0C1C33" />
@@ -125,7 +131,10 @@
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#9193FF" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#6A6CDF" />
                     <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushToastBackground" Color="#F4F7FF" />
+                    <SolidColorBrush x:Key="BrushToastForeground" Color="#10213F" />
                     <BoxShadows x:Key="ElevationCard">0 2 8 0 #40000000</BoxShadows>
+                    <BoxShadows x:Key="ElevationToast">0 8 24 0 #A0000000</BoxShadows>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="{x:Static styles:AvaloniaThemeVariants.HighContrast}">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#000000" />
@@ -165,7 +174,10 @@
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#000000" />
                     <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushToastBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushToastForeground" Color="#000000" />
                     <BoxShadows x:Key="ElevationCard">0 0 0 0 #00000000</BoxShadows>
+                    <BoxShadows x:Key="ElevationToast">0 0 0 0 #00000000</BoxShadows>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
@@ -846,6 +858,32 @@
                     <TextBlock
                         Text="{TemplateBinding Text}"
                         TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="controls|NotificationBanner.toast">
+        <Setter Property="MinWidth" Value="220" />
+        <Setter Property="MaxWidth" Value="440" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border
+                    Name="PART_Banner"
+                    automation:AutomationProperties.LiveSetting="{TemplateBinding LiveSetting}"
+                    automation:AutomationProperties.Name="{TemplateBinding Text}"
+                    Background="{DynamicResource BrushToastBackground}"
+                    BorderThickness="5,1,1,1"
+                    BoxShadow="{DynamicResource ElevationToast}"
+                    CornerRadius="{DynamicResource RadiusMedium}"
+                    Padding="12,10,16,10">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Foreground="{DynamicResource BrushToastForeground}"
+                        Text="{TemplateBinding Text}"
+                        TextAlignment="Left"
                         TextWrapping="Wrap" />
                 </Border>
             </ControlTemplate>

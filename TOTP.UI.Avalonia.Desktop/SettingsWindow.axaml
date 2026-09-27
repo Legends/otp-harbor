@@ -248,37 +248,6 @@
                                                         Content="{DynamicResource ChooseGoogleAuthenticatorQrImage}" />
                                                 </StackPanel>
                                             </Border>
-                                            <Border Classes="panel">
-                                                <StackPanel Spacing="8">
-                                                    <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource BrandIconsHelp}"
-                                                        TextWrapping="Wrap" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource BrandIconsFormatHelp}"
-                                                        TextWrapping="Wrap" />
-                                                    <Button
-                                                        x:Name="BrandIconsImportButton"
-                                                        Classes="wide"
-                                                        Command="{Binding ImportBrandIconsCommand}"
-                                                        Content="{DynamicResource ImportSimpleIconsPack}" />
-                                                    <Button
-                                                        x:Name="BrandIconsResetButton"
-                                                        Classes="secondary wide"
-                                                        Command="{Binding ResetBrandIconsCommand}"
-                                                        Content="{DynamicResource ResetBrandIcons}"
-                                                        IsVisible="{Binding HasImportedBrandIcons}" />
-                                                    <CheckBox
-                                                        Content="{DynamicResource ShowIssuerLogo}"
-                                                        IsChecked="{Binding DataContext.SettingsPage.ShowIssuerLogo, ElementName=SettingsRoot, Mode=TwoWay}" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource ShowIssuerLogoHelp}"
-                                                        TextWrapping="Wrap" />
-                                                </StackPanel>
-                                            </Border>
                                         </StackPanel>
                                     </ScrollViewer>
                                 </Grid>
@@ -287,7 +256,7 @@
                     </ContentControl>
                 </TabItem>
                 <TabItem Header="{DynamicResource Miscellaneous}">
-                    <ContentControl Content="{Binding SettingsPage}">
+                    <ContentControl x:Name="MiscellaneousSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:SettingsPageViewModel">
                                 <Grid RowDefinitions="*,Auto">
@@ -334,6 +303,37 @@
                                                 </ComboBox>
                                                 <TextBlock Classes="secondary" Text="{DynamicResource InterfaceScaleHelp}" TextWrapping="Wrap" />
                                             </StackPanel>
+                                            <Border Margin="0,4,0,0" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
+                                                    <TextBlock
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource BrandIconsHelp}"
+                                                        TextWrapping="Wrap" />
+                                                    <TextBlock
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource BrandIconsFormatHelp}"
+                                                        TextWrapping="Wrap" />
+                                                    <Button
+                                                        x:Name="BrandIconsImportButton"
+                                                        Classes="wide"
+                                                        Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}"
+                                                        Content="{DynamicResource ImportSimpleIconsPack}" />
+                                                    <Button
+                                                        x:Name="BrandIconsResetButton"
+                                                        Classes="secondary wide"
+                                                        Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
+                                                        Content="{DynamicResource ResetBrandIcons}"
+                                                        IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}" />
+                                                    <CheckBox
+                                                        Content="{DynamicResource ShowIssuerLogo}"
+                                                        IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                                    <TextBlock
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource ShowIssuerLogoHelp}"
+                                                        TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
                                             <CheckBox Content="{DynamicResource OpenExportAfter}" IsChecked="{Binding OpenExportFileAfterExport, Mode=TwoWay}" />
                                             <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource LoggingLevel}" />
                                             <ComboBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
@@ -416,8 +416,9 @@
         <shared:NotificationBanner
             x:Name="SettingsNotificationToast"
             ZIndex="50"
-            Margin="20"
-            HorizontalAlignment="Stretch"
+            Margin="16,16,16,18"
+            Classes="toast"
+            HorizontalAlignment="Center"
             VerticalAlignment="Bottom"
             IsHitTestVisible="False"
             Severity="{Binding SettingsNotification.Severity}"

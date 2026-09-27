@@ -7,6 +7,7 @@ license compliance take priority over convenience or distribution reach.
    artwork outside OTP Harbor distributions. A versioned, logo-free local alias resolver improves
    matching for user-imported icon packs, manifest-free packs are indexed from canonical SVG
    filenames, and users can override automatic matching per account from the installed pack.
+   Optional local icon-pack management lives under Appearance rather than account import/export.
 2. **Import and export workflow — implemented baseline, continue hardening.** Keep migration from
    Aegis, Google Authenticator, 2FAS, URI lists, and OTP Harbor backups explicit, recoverable, and
    well-tested.
@@ -25,7 +26,9 @@ license compliance take priority over convenience or distribution reach.
    the empty account view now presents a focused first-account card with a direct add action while
    retaining scan, import, and encrypted-restore guidance.
 6. **UI consistency — ongoing.** Continue reviewing spacing, dialogs, context menus, focus,
-   confirmations, accessibility, and resizing behavior.
+   confirmations, accessibility, and resizing behavior. Desktop transient messages use one
+   bottom-center overlay treatment outside layout flow, with theme-contrasting surfaces and longer
+   warning/error visibility.
 7. **Backup UX — implemented baseline, continue refinement.** Backup locations, encryption status,
    recovery requirements, and dedicated restore workflows are now explicit in the desktop settings
    flow; continue refining platform-provider guidance and physical acceptance.

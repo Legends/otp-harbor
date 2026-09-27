@@ -127,7 +127,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         _countdownTickInterval = countdownTickInterval ?? TimeSpan.FromSeconds(1);
         _copyConfirmationDuration = transientMessageDuration
-            ?? TransientNotificationDefaults.Duration;
+            ?? TransientNotificationDefaults.CopyConfirmationDuration;
         _settingsService = settingsService;
         _qrPreviewDialogs = qrPreviewDialogs;
         Notification = new NotificationState(transientMessageDuration);
