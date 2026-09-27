@@ -50,6 +50,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _cancelGroupEditCommand;
     private readonly AsyncCommand _clearGroupFilterCommand;
     private readonly AsyncCommand _toggleFavoritesFilterCommand;
+    private readonly AsyncCommand _selectUngroupedCommand;
     private CancellationTokenSource? _rowCodeLifetime;
     private CancellationTokenSource? _recentHighlightLifetime;
     private CancellationTokenSource? _copyConfirmationLifetime;
@@ -185,6 +186,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             ClearGroupFilterAsync,
             () => HasSelectedAccountNavigationCard);
         _toggleFavoritesFilterCommand = new AsyncCommand(ToggleFavoritesFilterAsync, () => HasFavoriteAccounts);
+        _selectUngroupedCommand = new AsyncCommand(
+            SelectUngroupedAsync,
+            () => !IsBusy && HasUngroupedAccounts);
         _localization.CultureChanged += LocalizationCultureChanged;
         RefreshBrandIconOptions(null);
         RefreshGroupColorOptions(null);
@@ -317,6 +321,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!SetField(ref _searchText, value ?? string.Empty)) return;
             ClearRecentHighlight();
             OnPropertyChanged(nameof(HasSearchText));
+            OnPropertyChanged(nameof(IsUngroupedFilterSelected));
             if (HasSearchText && _selectedGroupId.HasValue)
             {
                 _selectedGroupId = null;
@@ -347,6 +352,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public bool HasAccountNavigationCards => HasFavoriteAccounts || HasGroups;
 
     public bool HasSelectedGroup => _selectedGroupId.HasValue;
+
+    public int UngroupedCount => _allAccounts.Count(account => account.Group is null);
+
+    public bool HasUngroupedAccounts => UngroupedCount > 0;
+
+    public bool IsUngroupedFilterSelected =>
+        !HasSearchText && !HasSelectedGroup && !IsFavoritesFilterSelected;
 
     public int FavoriteCount => _allAccounts.Count(account => account.IsFavorite);
 
@@ -384,6 +396,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             if (!SetField(ref _isBusy, value)) return;
             _loadCommand.NotifyCanExecuteChanged();
+            _selectUngroupedCommand.NotifyCanExecuteChanged();
             NotifyCrudCommands();
             OnPropertyChanged(nameof(HasNoAccounts));
             OnPropertyChanged(nameof(HasNoSearchResults));
@@ -415,6 +428,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public ICommand CancelGroupEditCommand => _cancelGroupEditCommand;
     public ICommand ClearGroupFilterCommand => _clearGroupFilterCommand;
     public ICommand ToggleFavoritesFilterCommand => _toggleFavoritesFilterCommand;
+    public ICommand SelectUngroupedCommand => _selectUngroupedCommand;
 
     public bool IsGroupEditorVisible
     {
@@ -1455,6 +1469,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ClearRecentHighlight();
         RefreshGroups();
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(IsUngroupedFilterSelected));
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
@@ -1470,6 +1485,31 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         RefreshGroups();
         OnPropertyChanged(nameof(HasSelectedGroup));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(IsUngroupedFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        ApplyFilter();
+        return Task.CompletedTask;
+    }
+
+    private Task SelectUngroupedAsync()
+    {
+        if (IsBusy || !HasUngroupedAccounts) return Task.CompletedTask;
+
+        _selectedGroupId = null;
+        _showFavoritesOnly = false;
+        ClearRecentHighlight();
+        if (HasSearchText)
+        {
+            SearchText = string.Empty;
+            return Task.CompletedTask;
+        }
+
+        RefreshGroups();
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(IsUngroupedFilterSelected));
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
@@ -1813,11 +1853,15 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ApplyGroupSearch();
         OnPropertyChanged(nameof(HasGroups));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
+        OnPropertyChanged(nameof(UngroupedCount));
+        OnPropertyChanged(nameof(HasUngroupedAccounts));
+        OnPropertyChanged(nameof(IsUngroupedFilterSelected));
         OnPropertyChanged(nameof(HasSelectedGroup));
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         _beginAddGroupCommand.NotifyCanExecuteChanged();
+        _selectUngroupedCommand.NotifyCanExecuteChanged();
     }
 
     private void RefreshFavoriteState()
@@ -1828,6 +1872,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(HasFavoriteAccounts));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(IsUngroupedFilterSelected));
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();

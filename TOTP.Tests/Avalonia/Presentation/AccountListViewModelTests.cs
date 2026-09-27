@@ -315,6 +315,9 @@ public sealed class AccountListViewModelTests
         Assert.Equal("Work", work.Name);
         Assert.Equal(2, work.AccountCount);
         Assert.True(sut.HasAccountNavigationCards);
+        Assert.Equal(1, sut.UngroupedCount);
+        Assert.True(sut.HasUngroupedAccounts);
+        Assert.True(sut.IsUngroupedFilterSelected);
         var ungrouped = Assert.Single(sut.Accounts);
         Assert.Equal("Microsoft", ungrouped.Issuer);
 
@@ -326,6 +329,7 @@ public sealed class AccountListViewModelTests
         work.SelectCommand.Execute(null);
 
         Assert.True(sut.HasSelectedGroup);
+        Assert.False(sut.IsUngroupedFilterSelected);
         Assert.True(sut.HasActiveAccountFilter);
         Assert.Equal(2, sut.Accounts.Count);
 
@@ -340,6 +344,35 @@ public sealed class AccountListViewModelTests
 
         sut.ClearGroupFilterCommand.Execute(null);
         Assert.Equal(2, sut.Accounts.Count);
+    }
+
+    [Fact]
+    public async Task UngroupedFilter_ClearsSearchAndSelectedNavigationCard()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice", group: group, isFavorite: true),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        sut.ToggleFavoritesFilterCommand.Execute(null);
+        sut.SearchText = "git";
+        Assert.True(sut.IsFavoritesFilterSelected);
+        Assert.False(sut.IsUngroupedFilterSelected);
+
+        sut.SelectUngroupedCommand.Execute(null);
+
+        Assert.Empty(sut.SearchText);
+        Assert.False(sut.IsFavoritesFilterSelected);
+        Assert.False(sut.HasSelectedGroup);
+        Assert.True(sut.IsUngroupedFilterSelected);
+        Assert.Equal("Microsoft", Assert.Single(sut.Accounts).Issuer);
     }
 
     [Fact]

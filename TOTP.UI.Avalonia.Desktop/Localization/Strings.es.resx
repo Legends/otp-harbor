@@ -197,6 +197,7 @@
   <data name="ManageGroups" xml:space="preserve"><value>Administrar grupos</value></data>
   <data name="Groups" xml:space="preserve"><value>Grupos</value></data>
   <data name="AllAccounts" xml:space="preserve"><value>Todas las cuentas</value></data>
+  <data name="UngroupedAccounts" xml:space="preserve"><value>Sin agrupar</value></data>
   <data name="FavoriteAccounts" xml:space="preserve"><value>Favoritos</value></data>
   <data name="FavoriteAccount" xml:space="preserve"><value>Cuenta favorita</value></data>
   <data name="AddToFavorites" xml:space="preserve"><value>Añadir a favoritos</value></data>

@@ -117,6 +117,7 @@ public static class AvaloniaStringKeys
     public const string ManageGroups = nameof(ManageGroups);
     public const string Groups = nameof(Groups);
     public const string AllAccounts = nameof(AllAccounts);
+    public const string UngroupedAccounts = nameof(UngroupedAccounts);
     public const string FavoriteAccounts = nameof(FavoriteAccounts);
     public const string FavoriteAccount = nameof(FavoriteAccount);
     public const string AddToFavorites = nameof(AddToFavorites);
@@ -430,7 +431,7 @@ public static class AvaloniaStringKeys
         Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
         IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
-        ManageGroups, Groups, AllAccounts, FavoriteAccounts, FavoriteAccount,
+        ManageGroups, Groups, AllAccounts, UngroupedAccounts, FavoriteAccounts, FavoriteAccount,
         AddToFavorites, RemoveFromFavorites, FavoriteAdded, FavoriteRemoved,
         FavoriteUpdateFailed, EditFavorites, FavoritesSaveFailed, FavoritesSaved,
         FavoriteColorSaveFailed, CreateGroup, EditGroup, DeleteGroup,

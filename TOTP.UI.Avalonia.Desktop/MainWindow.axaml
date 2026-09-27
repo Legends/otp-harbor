@@ -302,11 +302,11 @@
                                                         Padding="3,5"
                                                         VerticalAlignment="Center"
                                                         Width="20"
-                                                        automation:AutomationProperties.Name="{DynamicResource AllAccounts}"
+                                                        automation:AutomationProperties.Name="{DynamicResource UngroupedAccounts}"
                                                         Classes="icon"
                                                         Command="{Binding ClearGroupFilterCommand}"
                                                         IsVisible="{Binding HasSelectedAccountNavigationCard}"
-                                                        ToolTip.Tip="{DynamicResource AllAccounts}">
+                                                        ToolTip.Tip="{DynamicResource UngroupedAccounts}">
                                                         <shared:SymbolIcon IconSize="14" Kind="ArrowLeft" />
                                                     </Button>
                                                     <ScrollViewer
@@ -346,6 +346,30 @@
                                                                         <StackPanel>
                                                                             <TextBlock FontWeight="SemiBold" Text="{DynamicResource FavoriteAccounts}" />
                                                                             <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
+                                                                        </StackPanel>
+                                                                    </StackPanel>
+                                                                </Button>
+                                                            </Border>
+                                                            <Border
+                                                                x:Name="UngroupedGroupCard"
+                                                                Width="150"
+                                                                MinHeight="54"
+                                                                Margin="2"
+                                                                Background="{DynamicResource BrushSurfaceAlternate}"
+                                                                Classes="group-card"
+                                                                Classes.selected="{Binding IsUngroupedFilterSelected}"
+                                                                CornerRadius="7"
+                                                                IsVisible="{Binding HasUngroupedAccounts}">
+                                                                <Button
+                                                                    automation:AutomationProperties.Name="{DynamicResource UngroupedAccounts}"
+                                                                    Classes="group-card-hit-target"
+                                                                    Command="{Binding SelectUngroupedCommand}"
+                                                                    ToolTip.Tip="{DynamicResource UngroupedAccounts}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                                                        <shared:SymbolIcon IconSize="20" Kind="Folder" />
+                                                                        <StackPanel>
+                                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource UngroupedAccounts}" />
+                                                                            <TextBlock FontSize="11" Text="{Binding UngroupedCount}" />
                                                                         </StackPanel>
                                                                     </StackPanel>
                                                                 </Button>
