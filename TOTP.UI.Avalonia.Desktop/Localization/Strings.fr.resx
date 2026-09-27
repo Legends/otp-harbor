@@ -393,6 +393,7 @@
   <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} icônes locales installées (version {1}).</value></data>
   <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} icônes locales installées depuis une archive ZIP indexée par nom de fichier.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Supprimer les icônes importées</value></data>
+  <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>Supprimer le pack d’icônes importé ? Les données des comptes ne seront pas modifiées, mais les comptes utiliseront des icônes automatiques ou génériques jusqu’à l’importation d’un autre pack.</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Afficher le logo de l’émetteur</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Afficher une tuile de marque ou de remplacement à côté de chaque compte.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Apparence</value></data>

@@ -67,6 +67,7 @@ public static class AvaloniaStringKeys
     public const string BrandIconPackStatus = nameof(BrandIconPackStatus);
     public const string FilenameIndexedBrandIconPackStatus = nameof(FilenameIndexedBrandIconPackStatus);
     public const string ResetBrandIcons = nameof(ResetBrandIcons);
+    public const string ResetBrandIconsConfirmation = nameof(ResetBrandIconsConfirmation);
     public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
     public const string ShowIssuerLogoHelp = nameof(ShowIssuerLogoHelp);
     public const string OpenQrImage = nameof(OpenQrImage);
@@ -418,6 +419,7 @@ public static class AvaloniaStringKeys
         FilenameIndexedBrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
         BrandIconPackNotInstalled, BrandIconPackStatus, FilenameIndexedBrandIconPackStatus, ResetBrandIcons,
+        ResetBrandIconsConfirmation,
         ShowIssuerLogo, ShowIssuerLogoHelp,
         OpenQrImage, SelectQrImage, QrImageFiles,
         QrImageReading, QrImageNoCode, QrImageInvalid, QrImageTooLarge,

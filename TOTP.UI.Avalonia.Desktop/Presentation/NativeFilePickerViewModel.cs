@@ -200,6 +200,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         if (_brandIconPackService is null || !BeginOperation()) return;
         try
         {
+            var confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                Localized(AvaloniaStringKeys.ResetBrandIcons),
+                Localized(AvaloniaStringKeys.ResetBrandIconsConfirmation),
+                NotificationSeverity.Warning,
+                Localized(AvaloniaStringKeys.ResetBrandIcons),
+                Localized(AvaloniaStringKeys.Cancel),
+                IsDestructive: true));
+            if (!confirmed) return;
+
             var result = await _brandIconPackService.ResetAsync();
             SetMessage(
                 result.IsSuccess

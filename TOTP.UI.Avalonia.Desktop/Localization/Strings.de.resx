@@ -393,6 +393,7 @@
   <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole installiert (Version {1}).</value></data>
   <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole aus einer nach Dateinamen indizierten ZIP-Datei installiert.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Importierte Symbole entfernen</value></data>
+  <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>Das importierte Symbolpaket entfernen? Kontodaten werden nicht geändert, aber Konten verwenden automatische oder allgemeine Symbole, bis ein anderes Paket importiert wird.</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Ausstellerlogo anzeigen</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Ein Marken- oder Platzhalterfeld neben jedem Konto anzeigen.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Erscheinungsbild</value></data>

@@ -393,6 +393,7 @@
   <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} local icons installed (version {1}).</value></data>
   <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} local icons installed from a filename-indexed ZIP.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Remove imported icons</value></data>
+  <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>Remove the imported icon pack? Account data will not change, but accounts will use automatic or generic icons until another pack is imported.</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Show issuer logo</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Show a branded or placeholder tile beside each account.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>

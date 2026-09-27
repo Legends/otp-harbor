@@ -70,6 +70,63 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
+    public async Task ResetBrandIconsAsync_WhenCancelled_KeepsImportedPack()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.Is<ConfirmationDialogRequest>(request =>
+                    request.Title == "Remove imported icons"
+                    && request.Message.Contains("Account data will not change", StringComparison.Ordinal)
+                    && request.IsDestructive),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        using var sut = Create(
+            Mock.Of<IAvaloniaFilePicker>(),
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            dialogs.Object,
+            brandIconPackService: brandIcons.Object);
+
+        await sut.ResetBrandIconsAsync();
+
+        brandIcons.Verify(value => value.ResetAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(sut.Message);
+    }
+
+    [Theory]
+    [InlineData("en", "Imported brand icons were removed.")]
+    [InlineData("de", "Importierte Markensymbole wurden entfernt.")]
+    [InlineData("fr", "Les icônes de marque importées ont été supprimées.")]
+    [InlineData("es", "Se quitaron los iconos de marca importados.")]
+    public async Task ResetBrandIconsAsync_WhenConfirmed_RemovesPackInActiveLocale(
+        string cultureName,
+        string expected)
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.ResetAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        using var sut = Create(
+            Mock.Of<IAvaloniaFilePicker>(),
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            dialogs.Object,
+            brandIconPackService: brandIcons.Object,
+            localization: Localization(cultureName));
+
+        await sut.ResetBrandIconsAsync();
+
+        brandIcons.Verify(value => value.ResetAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(expected, sut.Message);
+        Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
+    }
+
+    [Fact]
     public async Task ImportGoogleQrAsync_OpensImagePickerDirectlyWithoutStartingCamera()
     {
         const string payload = "otpauth-migration://offline?data=synthetic";
