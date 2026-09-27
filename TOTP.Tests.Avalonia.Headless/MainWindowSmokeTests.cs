@@ -1588,6 +1588,45 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void FirstAccountOnboardingCard_ProvidesDirectLocalizedAddAction()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 540 };
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage?.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+
+            var card = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "FirstAccountOnboardingCard");
+            Assert.Equal(320, card.MaxWidth);
+            var addButton = Assert.Single(
+                card.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "AddFirstAccountButton");
+            var resources = Application.Current!.Resources;
+            Assert.Equal(resources[AvaloniaStringKeys.AddAccount], addButton.Content);
+            Assert.Equal(
+                resources[AvaloniaStringKeys.AddAccount],
+                AutomationProperties.GetName(addButton));
+            Assert.Contains(
+                card.GetLogicalDescendants().OfType<TextBlock>(),
+                text => Equals(
+                    text.Text,
+                    resources[AvaloniaStringKeys.SetUpFirstAccount]));
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void AccountEditorContent_KeepsNarrowClearanceFromOverlayScrollBar()
     {
         var mainWindow = new MainWindow();

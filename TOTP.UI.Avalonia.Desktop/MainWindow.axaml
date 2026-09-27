@@ -554,14 +554,40 @@
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
                                                 </controls:ContextPreservingAccountListBox>
-                                                <TextBlock
-                                                    Margin="0,28"
+                                                <Border
+                                                    x:Name="FirstAccountOnboardingCard"
+                                                    MaxWidth="320"
+                                                    Margin="8,20"
+                                                    Padding="16"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    Classes="secondary"
-                                                    IsHitTestVisible="False"
-                                                    IsVisible="{Binding HasNoAccounts}"
-                                                    Text="{DynamicResource NoEntriesYet}" />
+                                                    Classes="panel"
+                                                    IsVisible="{Binding HasNoAccounts}">
+                                                    <StackPanel Spacing="9">
+                                                        <shared:SymbolIcon
+                                                            HorizontalAlignment="Center"
+                                                            Foreground="#87CE3E"
+                                                            IconSize="28"
+                                                            Kind="Add" />
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            Classes="section-title"
+                                                            Text="{DynamicResource SetUpFirstAccount}"
+                                                            TextAlignment="Center"
+                                                            TextWrapping="Wrap" />
+                                                        <TextBlock
+                                                            Classes="secondary"
+                                                            Text="{DynamicResource NoEntriesYet}"
+                                                            TextAlignment="Center"
+                                                            TextWrapping="Wrap" />
+                                                        <Button
+                                                            x:Name="AddFirstAccountButton"
+                                                            automation:AutomationProperties.Name="{DynamicResource AddAccount}"
+                                                            Classes="primary wide"
+                                                            Command="{Binding BeginAddCommand}"
+                                                            Content="{DynamicResource AddAccount}" />
+                                                    </StackPanel>
+                                                </Border>
                                                 <TextBlock
                                                     Margin="0,28"
                                                     HorizontalAlignment="Center"

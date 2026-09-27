@@ -148,6 +148,7 @@ public static class AvaloniaStringKeys
     public const string Save = nameof(Save);
     public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string NoEntriesYet = nameof(NoEntriesYet);
+    public const string SetUpFirstAccount = nameof(SetUpFirstAccount);
     public const string NoMatchingEntries = nameof(NoMatchingEntries);
     public const string CloseSettings = nameof(CloseSettings);
     public const string GenerateCode = nameof(GenerateCode);
@@ -433,7 +434,7 @@ public static class AvaloniaStringKeys
         GroupNameDuplicate, GroupAccountRequired, GroupSaveFailed, GroupSaved,
         GroupDeleteFailed, GroupDeleted, GroupColorGreen, GroupColorTurquoise,
         GroupColorBlue, GroupColorOrange, GroupColorRed, GroupColorPurple, Save,
-        SearchResultsFormat, NoEntriesYet,
+        SearchResultsFormat, NoEntriesYet, SetUpFirstAccount,
         NoMatchingEntries, CloseSettings, GenerateCode,
         ShowQrCode, CopyTimedClear, CopyTimedClearShortcut, Password, PasswordAuthorizationHelp,
         ValidatingSecurely, NavAccounts, NavTools, NavSettings, AccountsList,

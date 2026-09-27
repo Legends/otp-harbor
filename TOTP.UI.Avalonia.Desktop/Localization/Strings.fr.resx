@@ -231,6 +231,7 @@
   <data name="Save" xml:space="preserve"><value>Enregistrer</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} comptes affichés sur {1}</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.</value></data>
+  <data name="SetUpFirstAccount" xml:space="preserve"><value>Configurez votre premier compte</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Aucune entrée correspondante.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Fermer les paramètres</value></data>
   <data name="GenerateCode" xml:space="preserve"><value>Générer un code</value></data>

@@ -21,7 +21,9 @@ license compliance take priority over convenience or distribution reach.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.
 5. **First-run and onboarding — implemented baseline, continue refinement.** Explain vault
-   creation, encryption, backups, and recovery without overwhelming new users.
+   creation, encryption, backups, and recovery without overwhelming new users. After vault setup,
+   the empty account view now presents a focused first-account card with a direct add action while
+   retaining scan, import, and encrypted-restore guidance.
 6. **UI consistency — ongoing.** Continue reviewing spacing, dialogs, context menus, focus,
    confirmations, accessibility, and resizing behavior.
 7. **Backup UX — implemented baseline, continue refinement.** Backup locations, encryption status,
