@@ -9,6 +9,7 @@ public sealed class AppSettings : IAppSettings
     public const int DefaultClearClipboardSeconds = 15;
     public const double DefaultQrPreviewScaleFactor = 1.5;
     public const int DefaultInterfaceScalePercent = 0;
+    public const string DefaultFavoriteGroupColor = "#F59E0B";
 
     public string CultureName { get; set; } = "en";
 
@@ -37,6 +38,8 @@ public sealed class AppSettings : IAppSettings
     public bool OpenExportFileAfterExport { get; set; } = true;
 
     public bool HideSecretsByDefault { get; set; } = true;
+
+    public string FavoriteGroupColor { get; set; } = DefaultFavoriteGroupColor;
 
     public static bool IsSupportedInterfaceScale(int percent) =>
         percent == DefaultInterfaceScalePercent

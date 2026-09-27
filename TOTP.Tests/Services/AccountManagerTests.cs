@@ -8,6 +8,33 @@ namespace TOTP.Tests.Services;
 public sealed class AccountManagerTests
 {
     [Fact]
+    public async Task SaveFavoritesAsync_WithSelections_DelegatesAtomicUpdate()
+    {
+        var selected = new[] { Guid.NewGuid(), Guid.NewGuid() };
+        var dal = new Mock<IAccountDAL>();
+        dal.Setup(value => value.SaveFavoritesAsync(selected))
+            .ReturnsAsync(FluentResults.Result.Ok());
+        var sut = new AccountManager(dal.Object);
+
+        var result = await sut.SaveFavoritesAsync(selected);
+
+        Assert.True(result.IsSuccess);
+        dal.Verify(value => value.SaveFavoritesAsync(selected), Times.Once);
+    }
+
+    [Fact]
+    public async Task SaveFavoritesAsync_WithoutSelections_RejectsWithoutWriting()
+    {
+        var dal = new Mock<IAccountDAL>();
+        var sut = new AccountManager(dal.Object);
+
+        var result = await sut.SaveFavoritesAsync([]);
+
+        Assert.True(result.IsFailed);
+        dal.Verify(value => value.SaveFavoritesAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
+    }
+
+    [Fact]
     public async Task UpdateAsync_PreservesExistingGroupForNonGroupAccountEdits()
     {
         var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");

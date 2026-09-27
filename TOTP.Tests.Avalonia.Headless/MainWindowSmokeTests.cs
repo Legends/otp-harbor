@@ -1666,6 +1666,11 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(Orientation.Horizontal, groupStrip.Orientation);
             var favorites = Assert.IsType<Border>(groupStrip.Children[0]);
             Assert.Equal("FavoritesGroupCard", favorites.Name);
+            var favoritesMenu = Assert.IsType<ContextMenu>(favorites.ContextMenu);
+            var favoriteEdit = Assert.Single(favoritesMenu.Items.Cast<MenuItem>());
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.EditFavorites],
+                favoriteEdit.Header);
             Assert.IsType<ItemsControl>(groupStrip.Children[1]);
             var groupBackButton = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Button>(),
@@ -1702,6 +1707,10 @@ public sealed class MainWindowSmokeTests
                 icon => icon.Kind == SymbolIconKind.Folder);
             Assert.Equal(SymbolIconKind.Folder, groupNameIcon.Kind);
             Assert.Equal(27, groupNameIcon.IconSize);
+            var favoritesIcon = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Favorite);
+            Assert.Equal(27, favoritesIcon.IconSize);
             Assert.Equal(SelectionMode.Single, colorList.SelectionMode);
             Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(colorList));
             Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetVerticalScrollBarVisibility(colorList));

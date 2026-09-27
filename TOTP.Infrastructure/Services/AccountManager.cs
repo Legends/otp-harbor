@@ -23,6 +23,14 @@ public class AccountManager(
         return await otpDal.UpdateAsync(updated.WithGroup(updated.Group ?? previous.Group));
     }
 
+    public Task<Result> SaveFavoritesAsync(IReadOnlyCollection<Guid> accountIds)
+    {
+        ArgumentNullException.ThrowIfNull(accountIds);
+        return accountIds.Count == 0
+            ? Task.FromResult(Result.Fail("At least one favorite account is required."))
+            : otpDal.SaveFavoritesAsync(accountIds);
+    }
+
     public Task<Result> SaveGroupAsync(AccountGroup group, IReadOnlyCollection<Guid> accountIds)
     {
         ArgumentNullException.ThrowIfNull(group);

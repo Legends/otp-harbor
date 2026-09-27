@@ -26,6 +26,7 @@ public sealed class AppPreferencesMapperTests
         Assert.False(preferences.ExportEncrypt);
         Assert.False(preferences.OpenExportFileAfterExport);
         Assert.False(preferences.HideSecretsByDefault);
+        Assert.Equal("#E45757", preferences.FavoriteGroupColor);
         Assert.DoesNotContain(
             typeof(AppPreferencesV1).GetProperties(),
             property => property.Name.Contains("Authorization", StringComparison.OrdinalIgnoreCase));
@@ -53,6 +54,7 @@ public sealed class AppPreferencesMapperTests
         Assert.False(settings.ExportEncrypt);
         Assert.False(settings.OpenExportFileAfterExport);
         Assert.False(settings.HideSecretsByDefault);
+        Assert.Equal("#B455C7", settings.FavoriteGroupColor);
     }
 
     [Fact]
@@ -95,6 +97,21 @@ public sealed class AppPreferencesMapperTests
         Assert.Equal(TimeSpan.Zero, target.IdleTimeout);
     }
 
+    [Fact]
+    public void RoundTrip_InvalidFavoriteColor_UsesSafePaletteDefault()
+    {
+        var preferences = AppPreferencesMapper.FromSettings(new AppSettings
+        {
+            FavoriteGroupColor = "not-a-color"
+        });
+        var target = new AppSettings { FavoriteGroupColor = "#E45757" };
+
+        AppPreferencesMapper.ApplyTo(preferences, target);
+
+        Assert.Equal(AppSettings.DefaultFavoriteGroupColor, preferences.FavoriteGroupColor);
+        Assert.Equal(AppSettings.DefaultFavoriteGroupColor, target.FavoriteGroupColor);
+    }
+
     private static AppSettings CreateSettings() => new()
     {
         CultureName = "de-DE",
@@ -110,6 +127,7 @@ public sealed class AppPreferencesMapperTests
         InterfaceScalePercent = 175,
         ExportEncrypt = false,
         OpenExportFileAfterExport = false,
-        HideSecretsByDefault = false
+        HideSecretsByDefault = false,
+        FavoriteGroupColor = "#E45757"
     };
 }

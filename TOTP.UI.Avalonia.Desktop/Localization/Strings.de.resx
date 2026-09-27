@@ -204,6 +204,10 @@
   <data name="FavoriteAdded" xml:space="preserve"><value>Zu Favoriten hinzugefügt.</value></data>
   <data name="FavoriteRemoved" xml:space="preserve"><value>Aus Favoriten entfernt.</value></data>
   <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Die Favoriteneinstellung konnte nicht gespeichert werden.</value></data>
+  <data name="EditFavorites" xml:space="preserve"><value>Favoriten bearbeiten</value></data>
+  <data name="FavoritesSaveFailed" xml:space="preserve"><value>Die Favoriten konnten nicht gespeichert werden.</value></data>
+  <data name="FavoritesSaved" xml:space="preserve"><value>Favoriten gespeichert.</value></data>
+  <data name="FavoriteColorSaveFailed" xml:space="preserve"><value>Die Favoritenkonten wurden gespeichert, aber die Farbeinstellung konnte nicht gespeichert werden.</value></data>
   <data name="CreateGroup" xml:space="preserve"><value>Gruppe erstellen</value></data>
   <data name="EditGroup" xml:space="preserve"><value>Gruppe bearbeiten</value></data>
   <data name="DeleteGroup" xml:space="preserve"><value>Gruppe löschen</value></data>

@@ -45,6 +45,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _generateContextQrCommand;
     private readonly AsyncCommand _deleteContextAccountCommand;
     private readonly AsyncCommand _beginAddGroupCommand;
+    private readonly AsyncCommand _beginEditFavoritesCommand;
     private readonly AsyncCommand _saveGroupCommand;
     private readonly AsyncCommand _cancelGroupEditCommand;
     private readonly AsyncCommand _clearGroupFilterCommand;
@@ -88,6 +89,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private IReadOnlyList<BrandIconOption> _editorBrandIconOptions = [];
     private BrandIconOption? _selectedEditorBrandIconOption;
     private bool _isGroupEditorVisible;
+    private bool _isEditingFavorites;
     private Guid? _editingGroupId;
     private string _groupEditorName = string.Empty;
     private string _groupEditorMessage = string.Empty;
@@ -170,6 +172,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _beginAddGroupCommand = new AsyncCommand(
             BeginAddGroupAsync,
             () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && _allAccounts.Count > 0);
+        _beginEditFavoritesCommand = new AsyncCommand(
+            BeginEditFavoritesAsync,
+            () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && HasFavoriteAccounts);
         _saveGroupCommand = new AsyncCommand(
             SaveGroupAsync,
             () => !IsBusy && IsGroupEditorVisible);
@@ -347,6 +352,20 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasFavoriteAccounts => FavoriteCount > 0;
 
+    public string FavoriteGroupColor => NormalizeFavoriteGroupColor(
+        _settingsService?.Current.FavoriteGroupColor);
+
+    public IBrush FavoriteGroupBackground
+    {
+        get
+        {
+            var color = Color.Parse(FavoriteGroupColor);
+            return new SolidColorBrush(Color.FromArgb(52, color.R, color.G, color.B));
+        }
+    }
+
+    public IBrush FavoriteGroupForeground => new SolidColorBrush(Color.Parse(FavoriteGroupColor));
+
     public bool IsFavoritesFilterSelected => _showFavoritesOnly;
 
     public bool HasSelectedAccountNavigationCard => HasSelectedGroup || IsFavoritesFilterSelected;
@@ -391,6 +410,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public ICommand GenerateContextQrCommand => _generateContextQrCommand;
     public ICommand DeleteContextAccountCommand => _deleteContextAccountCommand;
     public ICommand BeginAddGroupCommand => _beginAddGroupCommand;
+    public ICommand BeginEditFavoritesCommand => _beginEditFavoritesCommand;
     public ICommand SaveGroupCommand => _saveGroupCommand;
     public ICommand CancelGroupEditCommand => _cancelGroupEditCommand;
     public ICommand ClearGroupFilterCommand => _clearGroupFilterCommand;
@@ -410,6 +430,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool IsEditingExistingGroup => _editingGroupId.HasValue;
+
+    public bool IsEditingFavorites => _isEditingFavorites;
+
+    public bool IsCreatingGroup => !_isEditingFavorites && !_editingGroupId.HasValue;
 
     public string GroupEditorName
     {
@@ -1190,8 +1214,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         if (IsBusy || IsEditorVisible || IsGroupEditorVisible || _allAccounts.Count == 0)
             return Task.CompletedTask;
 
-        _editingGroupId = null;
-        OnPropertyChanged(nameof(IsEditingExistingGroup));
+        SetGroupEditorMode(null, isEditingFavorites: false);
         GroupEditorName = string.Empty;
         GroupEditorMessage = string.Empty;
         RefreshGroupColorOptions(null);
@@ -1210,8 +1233,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var group = _allGroups.FirstOrDefault(item => item.Id == groupId)?.Group;
         if (group is null) return Task.CompletedTask;
 
-        _editingGroupId = group.Id;
-        OnPropertyChanged(nameof(IsEditingExistingGroup));
+        SetGroupEditorMode(group.Id, isEditingFavorites: false);
         GroupEditorName = group.Name;
         GroupEditorMessage = string.Empty;
         RefreshGroupColorOptions(group.Color);
@@ -1222,19 +1244,36 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         return Task.CompletedTask;
     }
 
+    public Task BeginEditFavoritesAsync()
+    {
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || !HasFavoriteAccounts)
+            return Task.CompletedTask;
+
+        SetGroupEditorMode(null, isEditingFavorites: true);
+        GroupEditorName = _localization.GetString(AvaloniaStringKeys.FavoriteAccounts);
+        GroupEditorMessage = string.Empty;
+        RefreshGroupColorOptions(FavoriteGroupColor);
+        GroupEditorSearchText = string.Empty;
+        _allGroupEditorAccounts = CreateFavoriteAccountSelections();
+        ApplyGroupEditorSearch();
+        IsGroupEditorVisible = true;
+        return Task.CompletedTask;
+    }
+
     public async Task SaveGroupAsync()
     {
         if (IsBusy || !IsGroupEditorVisible) return;
 
         var name = GroupEditorName.Trim();
-        if (name.Length == 0)
+        if (!IsEditingFavorites && name.Length == 0)
         {
             GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupNameRequired);
             return;
         }
 
-        if (_allGroups.Any(group => group.Id != _editingGroupId
-            && string.Equals(group.Name, name, StringComparison.OrdinalIgnoreCase)))
+        if (!IsEditingFavorites
+            && _allGroups.Any(group => group.Id != _editingGroupId
+                && string.Equals(group.Name, name, StringComparison.OrdinalIgnoreCase)))
         {
             GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupNameDuplicate);
             return;
@@ -1251,6 +1290,12 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
 
         var color = SelectedGroupColor ?? GroupColorOptions.First();
+        if (IsEditingFavorites)
+        {
+            await SaveFavoritesAsync(selectedAccountIds, color);
+            return;
+        }
+
         var group = new AccountGroup(_editingGroupId ?? Guid.NewGuid(), name, color.Hex);
         IsBusy = true;
         try
@@ -1273,6 +1318,56 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception)
         {
             GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupSaveFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task SaveFavoritesAsync(
+        IReadOnlyCollection<Guid> selectedAccountIds,
+        GroupColorOption color)
+    {
+        IsBusy = true;
+        try
+        {
+            var result = await _accountManager.SaveFavoritesAsync(selectedAccountIds);
+            if (result.IsFailed)
+            {
+                GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.FavoritesSaveFailed);
+                return;
+            }
+
+            var colorSaved = true;
+            if (_settingsService is not null)
+            {
+                var previousColor = _settingsService.Current.FavoriteGroupColor;
+                _settingsService.Current.FavoriteGroupColor = color.Hex;
+                var settingsResult = await _settingsService.SaveAsync();
+                if (settingsResult.IsFailed)
+                {
+                    _settingsService.Current.FavoriteGroupColor = previousColor;
+                    colorSaved = false;
+                }
+            }
+
+            _showFavoritesOnly = true;
+            ClearGroupEditor();
+            IsBusy = false;
+            await LoadAsync();
+            OnPropertyChanged(nameof(FavoriteGroupColor));
+            OnPropertyChanged(nameof(FavoriteGroupBackground));
+            OnPropertyChanged(nameof(FavoriteGroupForeground));
+            ShowLocalizedTransientNotification(
+                colorSaved
+                    ? AvaloniaStringKeys.FavoritesSaved
+                    : AvaloniaStringKeys.FavoriteColorSaveFailed,
+                colorSaved ? NotificationSeverity.Success : NotificationSeverity.Error);
+        }
+        catch (Exception)
+        {
+            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.FavoritesSaveFailed);
         }
         finally
         {
@@ -1391,6 +1486,17 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 account.Brand,
                 account.ShowIssuerLogo,
                 account.Group?.Id == groupId && groupId.HasValue))
+            .ToArray();
+
+    private IReadOnlyList<GroupAccountSelectionViewModel> CreateFavoriteAccountSelections() =>
+        _allAccounts
+            .Select(account => new GroupAccountSelectionViewModel(
+                account.Id,
+                account.Issuer,
+                account.AccountName,
+                account.Brand,
+                account.ShowIssuerLogo,
+                account.IsFavorite))
             .ToArray();
 
     private void ApplyGroupEditorSearch()
@@ -1609,6 +1715,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public void NotifySettingsChanged()
     {
         OnPropertyChanged(nameof(QrPreviewSize));
+        OnPropertyChanged(nameof(FavoriteGroupColor));
+        OnPropertyChanged(nameof(FavoriteGroupBackground));
+        OnPropertyChanged(nameof(FavoriteGroupForeground));
         var visible = _brandIconResolver.ShowIssuerLogo;
         foreach (var account in _allAccounts)
             account.UpdateLogoVisibility(visible);
@@ -1634,8 +1743,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void ClearGroupEditor()
     {
-        _editingGroupId = null;
-        OnPropertyChanged(nameof(IsEditingExistingGroup));
+        SetGroupEditorMode(null, isEditingFavorites: false);
         GroupEditorName = string.Empty;
         GroupEditorMessage = string.Empty;
         GroupEditorSearchText = string.Empty;
@@ -1643,6 +1751,15 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         GroupEditorAccounts = [];
         RefreshGroupColorOptions(null);
         IsGroupEditorVisible = false;
+    }
+
+    private void SetGroupEditorMode(Guid? groupId, bool isEditingFavorites)
+    {
+        _editingGroupId = groupId;
+        _isEditingFavorites = isEditingFavorites;
+        OnPropertyChanged(nameof(IsEditingExistingGroup));
+        OnPropertyChanged(nameof(IsEditingFavorites));
+        OnPropertyChanged(nameof(IsCreatingGroup));
     }
 
     private void RefreshBrandIconOptions(string? selectedBrandId)
@@ -1714,6 +1831,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
+        _beginEditFavoritesCommand.NotifyCanExecuteChanged();
     }
 
     private void ApplyGroupSearch()
@@ -1752,6 +1870,15 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private static string NormalizeGroupColor(string? color)
         => AccountGroupPolicy.NormalizeColor(color);
 
+    private static string NormalizeFavoriteGroupColor(string? color)
+    {
+        var normalized = color?.Trim().ToUpperInvariant();
+        return normalized is not null
+            && AccountGroupPolicy.AllowedColors.Contains(normalized, StringComparer.Ordinal)
+                ? normalized
+                : AppSettings.DefaultFavoriteGroupColor;
+    }
+
     private void NotifyCrudCommands()
     {
         _beginAddCommand.NotifyCanExecuteChanged();
@@ -1765,6 +1892,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _generateContextQrCommand.NotifyCanExecuteChanged();
         _deleteContextAccountCommand.NotifyCanExecuteChanged();
         _beginAddGroupCommand.NotifyCanExecuteChanged();
+        _beginEditFavoritesCommand.NotifyCanExecuteChanged();
         _saveGroupCommand.NotifyCanExecuteChanged();
         _cancelGroupEditCommand.NotifyCanExecuteChanged();
     }

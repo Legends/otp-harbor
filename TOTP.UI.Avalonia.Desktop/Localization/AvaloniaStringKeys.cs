@@ -121,6 +121,10 @@ public static class AvaloniaStringKeys
     public const string FavoriteAdded = nameof(FavoriteAdded);
     public const string FavoriteRemoved = nameof(FavoriteRemoved);
     public const string FavoriteUpdateFailed = nameof(FavoriteUpdateFailed);
+    public const string EditFavorites = nameof(EditFavorites);
+    public const string FavoritesSaveFailed = nameof(FavoritesSaveFailed);
+    public const string FavoritesSaved = nameof(FavoritesSaved);
+    public const string FavoriteColorSaveFailed = nameof(FavoriteColorSaveFailed);
     public const string CreateGroup = nameof(CreateGroup);
     public const string EditGroup = nameof(EditGroup);
     public const string DeleteGroup = nameof(DeleteGroup);
@@ -423,7 +427,8 @@ public static class AvaloniaStringKeys
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
         ManageGroups, Groups, AllAccounts, FavoriteAccounts, FavoriteAccount,
         AddToFavorites, RemoveFromFavorites, FavoriteAdded, FavoriteRemoved,
-        FavoriteUpdateFailed, CreateGroup, EditGroup, DeleteGroup,
+        FavoriteUpdateFailed, EditFavorites, FavoritesSaveFailed, FavoritesSaved,
+        FavoriteColorSaveFailed, CreateGroup, EditGroup, DeleteGroup,
         DeleteGroupPrompt, GroupName, GroupColor, GroupAccounts, GroupNameRequired,
         GroupNameDuplicate, GroupAccountRequired, GroupSaveFailed, GroupSaved,
         GroupDeleteFailed, GroupDeleted, GroupColorGreen, GroupColorTurquoise,

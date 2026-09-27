@@ -24,7 +24,8 @@ public static class AppPreferencesMapper
             InterfaceScalePercent = settings.InterfaceScalePercent,
             ExportEncrypt = settings.ExportEncrypt,
             OpenExportFileAfterExport = settings.OpenExportFileAfterExport,
-            HideSecretsByDefault = settings.HideSecretsByDefault
+            HideSecretsByDefault = settings.HideSecretsByDefault,
+            FavoriteGroupColor = settings.FavoriteGroupColor
         });
     }
 
@@ -50,6 +51,7 @@ public static class AppPreferencesMapper
         settings.ExportEncrypt = normalized.ExportEncrypt;
         settings.OpenExportFileAfterExport = normalized.OpenExportFileAfterExport;
         settings.HideSecretsByDefault = normalized.HideSecretsByDefault;
+        settings.FavoriteGroupColor = normalized.FavoriteGroupColor;
     }
 
     private static AppPreferencesV1 Normalize(AppPreferencesV1 preferences) => preferences with
@@ -68,7 +70,8 @@ public static class AppPreferencesMapper
             ? Math.Clamp(preferences.ClearClipboardSeconds, 1, 300)
             : AppSettings.DefaultClearClipboardSeconds,
         QrPreviewScaleFactor = NormalizeQrScale(preferences.QrPreviewScaleFactor),
-        InterfaceScalePercent = NormalizeInterfaceScale(preferences.InterfaceScalePercent)
+        InterfaceScalePercent = NormalizeInterfaceScale(preferences.InterfaceScalePercent),
+        FavoriteGroupColor = NormalizeFavoriteGroupColor(preferences.FavoriteGroupColor)
     };
 
     private static int ToIdleTimeoutMinutes(TimeSpan timeout)
@@ -89,6 +92,15 @@ public static class AppPreferencesMapper
         return AppSettings.IsSupportedInterfaceScale(percent)
             ? percent
             : AppSettings.DefaultInterfaceScalePercent;
+    }
+
+    private static string NormalizeFavoriteGroupColor(string? color)
+    {
+        var normalized = color?.Trim().ToUpperInvariant();
+        return normalized is not null
+            && Validation.AccountGroupPolicy.AllowedColors.Contains(normalized, StringComparer.Ordinal)
+                ? normalized
+                : AppSettings.DefaultFavoriteGroupColor;
     }
 
     private static bool IsValidCulture(string? cultureName)

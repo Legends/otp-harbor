@@ -93,6 +93,30 @@ public sealed class AccountDalIntegrationTests
     }
 
     [Fact]
+    public async Task SaveFavorites_UpdatesEverySelectionWithoutChangingGroupMetadata()
+    {
+        using var temp = new TempDir();
+        var storagePath = Path.Combine(temp.Path, "master.totp");
+        var sut = CreateSut(storagePath, new EchoVaultService());
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var first = new Account(Guid.NewGuid(), "GitHub", "AAAA", "alice", group: group, isFavorite: true);
+        var second = new Account(Guid.NewGuid(), "Microsoft", "BBBB", "bob");
+        Assert.True((await sut.AddNewAsync(first)).IsSuccess);
+        Assert.True((await sut.AddNewAsync(second)).IsSuccess);
+
+        var result = await sut.SaveFavoritesAsync([second.ID]);
+
+        Assert.True(result.IsSuccess);
+        var stored = (await sut.GetAllAsync()).Value;
+        var storedFirst = stored.Single(account => account.ID == first.ID);
+        var storedSecond = stored.Single(account => account.ID == second.ID);
+        Assert.False(storedFirst.IsFavorite);
+        Assert.Equal(group, storedFirst.Group);
+        Assert.True(storedSecond.IsFavorite);
+        Assert.Null(storedSecond.Group);
+    }
+
+    [Fact]
     public async Task SaveGroup_WhenNoSelectedAccountExists_LeavesAssignmentsUnchanged()
     {
         using var temp = new TempDir();

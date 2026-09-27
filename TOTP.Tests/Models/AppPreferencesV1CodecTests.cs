@@ -130,6 +130,7 @@ public sealed class AppPreferencesV1CodecTests
         Assert.True(result.IsSuccess);
         Assert.Equal(PreferredUnlockMethod.Password, result.Value.PreferredUnlockMethod);
         Assert.True(result.Value.AppLockEnabled);
+        Assert.Equal(AppSettings.DefaultFavoriteGroupColor, result.Value.FavoriteGroupColor);
     }
 
     [Fact]
@@ -161,7 +162,8 @@ public sealed class AppPreferencesV1CodecTests
         InterfaceScalePercent = 175,
         ExportEncrypt = false,
         OpenExportFileAfterExport = false,
-        HideSecretsByDefault = false
+        HideSecretsByDefault = false,
+        FavoriteGroupColor = "#B455C7"
     };
 
     internal static AppPreferencesErrorCode ErrorCode(IEnumerable<FluentResults.IError> errors) =>

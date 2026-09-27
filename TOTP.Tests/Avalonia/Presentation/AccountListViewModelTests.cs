@@ -531,6 +531,50 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task EditFavorites_ChangesColorAndAssignmentsThroughBuiltInGroupEditor()
+    {
+        var first = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice", isFavorite: true);
+        var second = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "bob");
+        IReadOnlyList<Account> accounts = [first, second];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(accounts));
+        manager.Setup(value => value.SaveFavoritesAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Callback<IReadOnlyCollection<Guid>>(selectedIds =>
+            {
+                var ids = selectedIds.ToHashSet();
+                accounts = accounts.Select(account => account.WithFavorite(ids.Contains(account.ID))).ToArray();
+            })
+            .ReturnsAsync(Result.Ok());
+        var currentSettings = new AppSettings { FavoriteGroupColor = "#F59E0B" };
+        var settings = new Mock<ISettingsService>();
+        settings.SetupGet(value => value.Current).Returns(currentSettings);
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object, settingsService: settings.Object);
+        await sut.LoadAsync();
+
+        await sut.BeginEditFavoritesAsync();
+
+        Assert.True(sut.IsEditingFavorites);
+        Assert.False(sut.IsEditingExistingGroup);
+        Assert.False(sut.IsCreatingGroup);
+        Assert.True(sut.GroupEditorAccounts.Single(item => item.AccountId == first.ID).IsSelected);
+        Assert.False(sut.GroupEditorAccounts.Single(item => item.AccountId == second.ID).IsSelected);
+        sut.GroupEditorAccounts.Single(item => item.AccountId == first.ID).IsSelected = false;
+        sut.GroupEditorAccounts.Single(item => item.AccountId == second.ID).IsSelected = true;
+        sut.SelectedGroupColor = sut.GroupColorOptions.Single(color => color.Hex == "#E45757");
+        await sut.SaveGroupAsync();
+
+        Assert.False(accounts.Single(account => account.ID == first.ID).IsFavorite);
+        Assert.True(accounts.Single(account => account.ID == second.ID).IsFavorite);
+        Assert.Equal("#E45757", currentSettings.FavoriteGroupColor);
+        Assert.Equal("#E45757", sut.FavoriteGroupColor);
+        Assert.Equal("Favorites saved.", sut.Message);
+        Assert.False(sut.IsGroupEditorVisible);
+        settings.Verify(value => value.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
     public async Task GroupEditorSearch_FiltersAccountsWithoutLosingHiddenSelectionsOrIcons()
     {
         IReadOnlyList<Account> accounts =
@@ -1893,7 +1937,8 @@ public sealed class AccountListViewModelTests
         IAccountTotpService? accountTotpService = null,
         IAsyncClipboardService? clipboardService = null,
         IBrandIconResolver? brandIconResolver = null,
-        IBrandIconPackService? brandIconPackService = null) =>
+        IBrandIconPackService? brandIconPackService = null,
+        ISettingsService? settingsService = null) =>
         new(
             manager,
             accountTotpService ?? Mock.Of<IAccountTotpService>(),
@@ -1903,6 +1948,7 @@ public sealed class AccountListViewModelTests
             dialogs ?? Mock.Of<IAvaloniaDialogService>(),
             Localization(),
             transientMessageDuration: transientMessageDuration,
+            settingsService: settingsService,
             brandIconResolver: brandIconResolver,
             brandIconPackService: brandIconPackService);
 

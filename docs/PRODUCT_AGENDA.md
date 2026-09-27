@@ -13,8 +13,11 @@ license compliance take priority over convenience or distribution reach.
 3. **Large-vault navigation — in progress.** Search supports multiple terms. Desktop users can
    create color-coded groups, assign or move accounts, filter from horizontally scrollable group
    cards, and edit or delete groups from a right-click menu without deleting their accounts. The
-   default list shows ungrouped accounts, while search also matches group names. Continue with
-   favorites and additional organization for vaults containing hundreds of accounts.
+   default list shows ungrouped accounts, while search also matches group names. Favorites are
+   available on desktop and Android; on desktop the built-in Favorites group is first in the strip
+   and can be edited to change its color and account membership without exposing a destructive
+   group-delete action. Continue with additional organization for vaults containing hundreds of
+   accounts.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.
 5. **First-run and onboarding — implemented baseline, continue refinement.** Explain vault

@@ -113,6 +113,25 @@ public sealed class AccountDAL : IAccountDAL
             }
         }, AppErrorCode.OtpUpdateFailed, "Failed to update OTP entry.");
 
+    public async Task<Result> SaveFavoritesAsync(IReadOnlyCollection<Guid> accountIds)
+    {
+        ArgumentNullException.ThrowIfNull(accountIds);
+        var selectedIds = accountIds.ToHashSet();
+        return await ExecuteWriteAsync(list =>
+        {
+            if (!list.Any(account => selectedIds.Contains(account.ID)))
+                throw new InvalidOperationException("No selected favorite account is available.");
+
+            for (var index = 0; index < list.Count; index++)
+            {
+                var account = list[index];
+                var isFavorite = selectedIds.Contains(account.ID);
+                if (account.IsFavorite != isFavorite)
+                    list[index] = account.WithFavorite(isFavorite);
+            }
+        }, AppErrorCode.OtpUpdateFailed, "Failed to save favorite accounts.");
+    }
+
     public async Task<Result> SaveGroupAsync(
         AccountGroup group,
         IReadOnlyCollection<Guid> accountIds)

@@ -322,17 +322,27 @@
                                                                 Width="150"
                                                                 MinHeight="54"
                                                                 Margin="2"
+                                                                Background="{Binding FavoriteGroupBackground}"
                                                                 Classes="group-card"
                                                                 Classes.selected="{Binding IsFavoritesFilterSelected}"
                                                                 CornerRadius="7"
                                                                 IsVisible="{Binding HasFavoriteAccounts}">
+                                                                <Border.ContextMenu>
+                                                                    <ContextMenu Classes="account-context-menu">
+                                                                        <MenuItem Command="{Binding BeginEditFavoritesCommand}" Header="{DynamicResource EditFavorites}">
+                                                                            <MenuItem.Icon>
+                                                                                <shared:SymbolIcon IconSize="15" Kind="Edit" />
+                                                                            </MenuItem.Icon>
+                                                                        </MenuItem>
+                                                                    </ContextMenu>
+                                                                </Border.ContextMenu>
                                                                 <Button
                                                                     automation:AutomationProperties.Name="{DynamicResource FavoriteAccounts}"
                                                                     Classes="group-card-hit-target"
                                                                     Command="{Binding ToggleFavoritesFilterCommand}"
                                                                     ToolTip.Tip="{DynamicResource FavoriteAccounts}">
                                                                     <StackPanel Orientation="Horizontal" Spacing="7">
-                                                                        <shared:SymbolIcon IconSize="20" Kind="Favorite" />
+                                                                        <shared:SymbolIcon Foreground="{Binding FavoriteGroupForeground}" IconSize="20" Kind="Favorite" />
                                                                         <StackPanel>
                                                                             <TextBlock FontWeight="SemiBold" Text="{DynamicResource FavoriteAccounts}" />
                                                                             <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
@@ -741,8 +751,12 @@
                                                         Text="{DynamicResource EditGroup}" />
                                                     <TextBlock
                                                         Classes="section-title"
-                                                        IsVisible="{Binding !IsEditingExistingGroup}"
+                                                        IsVisible="{Binding IsCreatingGroup}"
                                                         Text="{DynamicResource CreateGroup}" />
+                                                    <TextBlock
+                                                        Classes="section-title"
+                                                        IsVisible="{Binding IsEditingFavorites}"
+                                                        Text="{DynamicResource EditFavorites}" />
                                                     <Button
                                                         Grid.Column="1"
                                                         Width="26"
@@ -752,7 +766,7 @@
                                                         Command="{Binding CancelGroupEditCommand}"
                                                         Content="✕" />
                                                 </Grid>
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <StackPanel IsVisible="{Binding !IsEditingFavorites}" Orientation="Horizontal" Spacing="6">
                                                     <shared:SymbolIcon
                                                         Foreground="{Binding SelectedGroupColor.Brush}"
                                                         IconSize="27"
@@ -762,10 +776,21 @@
                                                         Classes="field-label"
                                                         Text="{DynamicResource GroupName}" />
                                                 </StackPanel>
+                                                <StackPanel IsVisible="{Binding IsEditingFavorites}" Orientation="Horizontal" Spacing="6">
+                                                    <shared:SymbolIcon
+                                                        Foreground="{Binding SelectedGroupColor.Brush}"
+                                                        IconSize="27"
+                                                        Kind="Favorite" />
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        Classes="field-label"
+                                                        Text="{DynamicResource FavoriteAccounts}" />
+                                                </StackPanel>
                                                 <TextBox
                                                     x:Name="GroupNameBox"
                                                     MaxLength="64"
                                                     automation:AutomationProperties.Name="{DynamicResource GroupName}"
+                                                    IsVisible="{Binding !IsEditingFavorites}"
                                                     Text="{Binding GroupEditorName, Mode=TwoWay}" />
                                                 <TextBlock Classes="field-label" Text="{DynamicResource GroupColor}" />
                                                 <ListBox
