@@ -39,9 +39,10 @@ license compliance take priority over convenience or distribution reach.
 9. **Official F-Droid Android distribution — in progress.** The Android dependency graph and SDK are
    pinned, CI enforces locked restores and excludes known proprietary SDK families, localized
    Fastlane metadata is versioned, and an APK payload comparator has exposed remaining .NET Android
-   nondeterminism. Continue with toolchain acceptance, reproducibility, signing/update policy, and an
-   independently auditable publishing workflow. GPL-3.0-only satisfies the free-software licensing
-   requirement; toolchain, reproducibility, and maintainer-review requirements remain gates.
+   nondeterminism. Independent runs now have a standard evidence-record template. Continue with
+   toolchain acceptance, reproducibility, signing/update policy, and an independently auditable
+   publishing workflow. GPL-3.0-only satisfies the free-software licensing requirement; toolchain,
+   reproducibility, and maintainer-review requirements remain gates.
 
 ## F-Droid acceptance gate
 

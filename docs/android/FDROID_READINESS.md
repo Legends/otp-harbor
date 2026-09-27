@@ -57,6 +57,9 @@ The comparator requires identical entry names, uncompressed lengths, and SHA-256
 non-signature entry. Passing it demonstrates payload equivalence only. It does not prove that the
 toolchain is acceptable to F-Droid, that two independent environments reproduce the payload, or that
 signed APK bytes match. `Test-AndroidApkPayloadComparison.ps1` regression-tests these boundaries in CI.
+Record each independent run with the
+[F-Droid reproducibility evidence template](FDROID_REPRODUCIBILITY_RECORD_TEMPLATE.md); do not reuse
+build outputs, caches, or generated intermediates between the two environments.
 
 ### Current local baseline
 
