@@ -51,6 +51,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _clearGroupFilterCommand;
     private readonly AsyncCommand _toggleFavoritesFilterCommand;
     private readonly AsyncCommand _selectUngroupedCommand;
+    private readonly AsyncCommand _toggleAllAccountsFilterCommand;
     private CancellationTokenSource? _rowCodeLifetime;
     private CancellationTokenSource? _recentHighlightLifetime;
     private CancellationTokenSource? _copyConfirmationLifetime;
@@ -61,6 +62,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private IReadOnlyList<AccountGroupListItemViewModel> _groups = [];
     private Guid? _selectedGroupId;
     private bool _showFavoritesOnly;
+    private bool _showAllAccounts;
     private string _searchText = string.Empty;
     private AccountListItemViewModel? _selectedAccount;
     private AccountListItemViewModel? _contextAccount;
@@ -189,6 +191,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _selectUngroupedCommand = new AsyncCommand(
             SelectUngroupedAsync,
             () => !IsBusy && HasUngroupedAccounts);
+        _toggleAllAccountsFilterCommand = new AsyncCommand(
+            ToggleAllAccountsFilterAsync,
+            () => !IsBusy && _allAccounts.Count > 0);
         _localization.CultureChanged += LocalizationCultureChanged;
         RefreshBrandIconOptions(null);
         RefreshGroupColorOptions(null);
@@ -358,7 +363,14 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public bool HasUngroupedAccounts => UngroupedCount > 0;
 
     public bool IsUngroupedFilterSelected =>
-        !HasSearchText && !HasSelectedGroup && !IsFavoritesFilterSelected;
+        !HasSearchText
+        && !HasSelectedGroup
+        && !IsFavoritesFilterSelected
+        && !IsAllAccountsFilterSelected;
+
+    public int AllAccountCount => _allAccounts.Count;
+
+    public bool IsAllAccountsFilterSelected => _showAllAccounts;
 
     public int FavoriteCount => _allAccounts.Count(account => account.IsFavorite);
 
@@ -380,9 +392,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool IsFavoritesFilterSelected => _showFavoritesOnly;
 
-    public bool HasSelectedAccountNavigationCard => HasSelectedGroup || IsFavoritesFilterSelected;
+    public bool HasSelectedAccountNavigationCard =>
+        HasSelectedGroup || IsFavoritesFilterSelected || IsAllAccountsFilterSelected;
 
-    public bool HasActiveAccountFilter => HasSearchText || HasSelectedGroup || IsFavoritesFilterSelected;
+    public bool HasActiveAccountFilter =>
+        HasSearchText || HasSelectedGroup || IsFavoritesFilterSelected || IsAllAccountsFilterSelected;
 
     public string SearchResultSummary => string.Format(
         _localization.GetString(AvaloniaStringKeys.SearchResultsFormat),
@@ -397,6 +411,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!SetField(ref _isBusy, value)) return;
             _loadCommand.NotifyCanExecuteChanged();
             _selectUngroupedCommand.NotifyCanExecuteChanged();
+            _toggleAllAccountsFilterCommand.NotifyCanExecuteChanged();
             NotifyCrudCommands();
             OnPropertyChanged(nameof(HasNoAccounts));
             OnPropertyChanged(nameof(HasNoSearchResults));
@@ -429,6 +444,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public ICommand ClearGroupFilterCommand => _clearGroupFilterCommand;
     public ICommand ToggleFavoritesFilterCommand => _toggleFavoritesFilterCommand;
     public ICommand SelectUngroupedCommand => _selectUngroupedCommand;
+    public ICommand ToggleAllAccountsFilterCommand => _toggleAllAccountsFilterCommand;
 
     public bool IsGroupEditorVisible
     {
@@ -1116,6 +1132,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         if (revealed is not null && Accounts.All(account => account.Id != accountId))
         {
             _showFavoritesOnly = false;
+            _showAllAccounts = false;
             _selectedGroupId = revealed.Group?.Id;
             RefreshFavoriteState();
             RefreshGroups();
@@ -1322,6 +1339,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             }
 
             _selectedGroupId = group.Id;
+            _showAllAccounts = false;
             ClearGroupEditor();
             IsBusy = false;
             await LoadAsync();
@@ -1367,6 +1385,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             }
 
             _showFavoritesOnly = true;
+            _showAllAccounts = false;
             ClearGroupEditor();
             IsBusy = false;
             await LoadAsync();
@@ -1450,6 +1469,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     {
         _selectedGroupId = _selectedGroupId == groupId ? null : groupId;
         _showFavoritesOnly = false;
+        _showAllAccounts = false;
         ClearRecentHighlight();
         RefreshGroups();
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
@@ -1466,6 +1486,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         if (!HasFavoriteAccounts) return Task.CompletedTask;
         _showFavoritesOnly = !_showFavoritesOnly;
         _selectedGroupId = null;
+        _showAllAccounts = false;
         ClearRecentHighlight();
         RefreshGroups();
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
@@ -1482,6 +1503,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         if (!HasSelectedAccountNavigationCard) return Task.CompletedTask;
         _selectedGroupId = null;
         _showFavoritesOnly = false;
+        _showAllAccounts = false;
         RefreshGroups();
         OnPropertyChanged(nameof(HasSelectedGroup));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
@@ -1499,6 +1521,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
         _selectedGroupId = null;
         _showFavoritesOnly = false;
+        _showAllAccounts = false;
         ClearRecentHighlight();
         if (HasSearchText)
         {
@@ -1508,6 +1531,25 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
         RefreshGroups();
         OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(IsUngroupedFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        ApplyFilter();
+        return Task.CompletedTask;
+    }
+
+    private Task ToggleAllAccountsFilterAsync()
+    {
+        if (IsBusy || _allAccounts.Count == 0) return Task.CompletedTask;
+
+        _showAllAccounts = !_showAllAccounts;
+        _selectedGroupId = null;
+        _showFavoritesOnly = false;
+        ClearRecentHighlight();
+        RefreshGroups();
+        OnPropertyChanged(nameof(IsAllAccountsFilterSelected));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(IsUngroupedFilterSelected));
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
@@ -1559,7 +1601,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             _allAccounts,
             SearchText,
             _selectedGroupId,
-            _showFavoritesOnly);
+            _showFavoritesOnly,
+            _showAllAccounts);
         var selectionIsVisible = SelectedAccount is not null
             && Accounts.Any(account => account.Id == SelectedAccount.Id);
         if (selectionIsVisible) return;
@@ -1726,6 +1769,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _allAccounts = [];
         _selectedGroupId = null;
         _showFavoritesOnly = false;
+        _showAllAccounts = false;
         RefreshFavoriteState();
         RefreshGroups();
         Accounts = [];
@@ -1853,6 +1897,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ApplyGroupSearch();
         OnPropertyChanged(nameof(HasGroups));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
+        OnPropertyChanged(nameof(AllAccountCount));
+        OnPropertyChanged(nameof(IsAllAccountsFilterSelected));
         OnPropertyChanged(nameof(UngroupedCount));
         OnPropertyChanged(nameof(HasUngroupedAccounts));
         OnPropertyChanged(nameof(IsUngroupedFilterSelected));
@@ -1862,6 +1908,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         _beginAddGroupCommand.NotifyCanExecuteChanged();
         _selectUngroupedCommand.NotifyCanExecuteChanged();
+        _toggleAllAccountsFilterCommand.NotifyCanExecuteChanged();
     }
 
     private void RefreshFavoriteState()

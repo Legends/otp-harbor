@@ -1739,14 +1739,21 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.EditFavorites],
                 favoriteEdit.Header);
-            var ungrouped = Assert.IsType<Border>(groupStrip.Children[1]);
+            var allAccounts = Assert.IsType<Border>(groupStrip.Children[1]);
+            Assert.Equal("AllAccountsGroupCard", allAccounts.Name);
+            var allAccountsButton = Assert.Single(
+                allAccounts.GetLogicalDescendants().OfType<Button>());
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.AllAccounts],
+                AutomationProperties.GetName(allAccountsButton));
+            var ungrouped = Assert.IsType<Border>(groupStrip.Children[2]);
             Assert.Equal("UngroupedGroupCard", ungrouped.Name);
             var ungroupedButton = Assert.Single(
                 ungrouped.GetLogicalDescendants().OfType<Button>());
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.UngroupedAccounts],
                 AutomationProperties.GetName(ungroupedButton));
-            Assert.IsType<ItemsControl>(groupStrip.Children[2]);
+            Assert.IsType<ItemsControl>(groupStrip.Children[3]);
             var groupBackButton = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "GroupBackButton");

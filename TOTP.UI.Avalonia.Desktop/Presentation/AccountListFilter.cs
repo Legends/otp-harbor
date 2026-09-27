@@ -6,12 +6,13 @@ internal static class AccountListFilter
         IReadOnlyList<AccountListItemViewModel> accounts,
         string? searchText,
         Guid? groupId = null,
-        bool favoritesOnly = false)
+        bool favoritesOnly = false,
+        bool allAccounts = false)
     {
         ArgumentNullException.ThrowIfNull(accounts);
         var terms = (searchText ?? string.Empty)
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (terms.Length == 0 && !favoritesOnly)
+        if (terms.Length == 0 && !favoritesOnly && !allAccounts)
             return groupId is null
                 ? accounts.Where(account => account.Group is null).ToArray()
                 : accounts.Where(account => account.Group?.Id == groupId).ToArray();
@@ -19,7 +20,7 @@ internal static class AccountListFilter
         return accounts
             .Where(account =>
                 (!favoritesOnly || account.IsFavorite)
-                && (favoritesOnly || groupId is null || account.Group?.Id == groupId)
+                && (favoritesOnly || allAccounts || groupId is null || account.Group?.Id == groupId)
                 && terms.All(term =>
                     account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)

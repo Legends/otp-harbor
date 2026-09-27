@@ -351,6 +351,29 @@
                                                                 </Button>
                                                             </Border>
                                                             <Border
+                                                                x:Name="AllAccountsGroupCard"
+                                                                Width="150"
+                                                                MinHeight="54"
+                                                                Margin="2"
+                                                                Background="{DynamicResource BrushSurfaceAlternate}"
+                                                                Classes="group-card"
+                                                                Classes.selected="{Binding IsAllAccountsFilterSelected}"
+                                                                CornerRadius="7">
+                                                                <Button
+                                                                    automation:AutomationProperties.Name="{DynamicResource AllAccounts}"
+                                                                    Classes="group-card-hit-target"
+                                                                    Command="{Binding ToggleAllAccountsFilterCommand}"
+                                                                    ToolTip.Tip="{DynamicResource AllAccounts}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                                                        <shared:SymbolIcon IconSize="20" Kind="Codes" />
+                                                                        <StackPanel>
+                                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource AllAccounts}" />
+                                                                            <TextBlock FontSize="11" Text="{Binding AllAccountCount}" />
+                                                                        </StackPanel>
+                                                                    </StackPanel>
+                                                                </Button>
+                                                            </Border>
+                                                            <Border
                                                                 x:Name="UngroupedGroupCard"
                                                                 Width="150"
                                                                 MinHeight="54"

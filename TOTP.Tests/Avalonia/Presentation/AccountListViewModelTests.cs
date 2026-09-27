@@ -376,6 +376,41 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task AllAccountsFilter_ShowsGroupedAndUngroupedAccountsAndTogglesBackToDefault()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice", group: group),
+            new(Guid.NewGuid(), "GitLab", ValidSecret, "bob", group: group),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "carol")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        Assert.Equal(3, sut.AllAccountCount);
+        Assert.Single(sut.Accounts);
+        Assert.True(sut.IsUngroupedFilterSelected);
+
+        sut.ToggleAllAccountsFilterCommand.Execute(null);
+
+        Assert.True(sut.IsAllAccountsFilterSelected);
+        Assert.False(sut.IsUngroupedFilterSelected);
+        Assert.True(sut.HasSelectedAccountNavigationCard);
+        Assert.Equal(3, sut.Accounts.Count);
+
+        sut.ToggleAllAccountsFilterCommand.Execute(null);
+
+        Assert.False(sut.IsAllAccountsFilterSelected);
+        Assert.True(sut.IsUngroupedFilterSelected);
+        Assert.False(sut.HasSelectedAccountNavigationCard);
+        Assert.Equal("Microsoft", Assert.Single(sut.Accounts).Issuer);
+    }
+
+    [Fact]
     public async Task FavoritesFilter_IncludesGroupedAccountsAndCanBeNarrowedBySearch()
     {
         var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
