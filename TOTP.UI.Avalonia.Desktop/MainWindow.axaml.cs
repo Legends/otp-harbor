@@ -141,7 +141,7 @@ public partial class MainWindow : Window
             && ShouldClearGroupFilterOnEscape(
                 e.Key,
                 groupFilterViewModel.IsAccountListVisible,
-                groupFilterViewModel.AccountList.HasSelectedGroup))
+                groupFilterViewModel.AccountList.HasSelectedAccountNavigationCard))
         {
             groupFilterViewModel.AccountList.ClearGroupFilterCommand.Execute(null);
             e.Handled = true;
@@ -291,10 +291,10 @@ public partial class MainWindow : Window
     private static bool ShouldClearGroupFilterOnEscape(
         Key key,
         bool isAccountListVisible,
-        bool hasSelectedGroup) =>
+        bool hasSelectedAccountNavigationCard) =>
         key == Key.Escape
         && isAccountListVisible
-        && hasSelectedGroup;
+        && hasSelectedAccountNavigationCard;
 
     private static bool ShouldHandleAccountCommandShortcut(
         Key key,

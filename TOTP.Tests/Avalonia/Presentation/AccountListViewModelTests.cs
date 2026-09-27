@@ -366,15 +366,28 @@ public sealed class AccountListViewModelTests
         sut.ToggleFavoritesFilterCommand.Execute(null);
 
         Assert.True(sut.IsFavoritesFilterSelected);
+        Assert.True(sut.HasSelectedAccountNavigationCard);
+        Assert.True(sut.ClearGroupFilterCommand.CanExecute(null));
         Assert.True(sut.HasActiveAccountFilter);
         Assert.Equal(2, sut.Accounts.Count);
         Assert.All(sut.Accounts, account => Assert.True(account.IsFavorite));
+        sut.ContextAccount = sut.Accounts[0];
+        Assert.True(sut.BeginContextEditCommand.CanExecute(null));
+        Assert.True(sut.DeleteContextAccountCommand.CanExecute(null));
 
         sut.SearchText = "git";
 
         var result = Assert.Single(sut.Accounts);
         Assert.Equal("GitHub", result.Issuer);
         Assert.True(sut.IsFavoritesFilterSelected);
+
+        sut.ClearGroupFilterCommand.Execute(null);
+
+        Assert.False(sut.IsFavoritesFilterSelected);
+        Assert.False(sut.HasSelectedAccountNavigationCard);
+        Assert.False(sut.ClearGroupFilterCommand.CanExecute(null));
+
+        sut.ToggleFavoritesFilterCommand.Execute(null);
 
         sut.Groups.Single().SelectCommand.Execute(null);
 

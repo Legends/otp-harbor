@@ -305,7 +305,7 @@
                                                         automation:AutomationProperties.Name="{DynamicResource AllAccounts}"
                                                         Classes="icon"
                                                         Command="{Binding ClearGroupFilterCommand}"
-                                                        IsVisible="{Binding HasSelectedGroup}"
+                                                        IsVisible="{Binding HasSelectedAccountNavigationCard}"
                                                         ToolTip.Tip="{DynamicResource AllAccounts}">
                                                         <shared:SymbolIcon IconSize="14" Kind="ArrowLeft" />
                                                     </Button>

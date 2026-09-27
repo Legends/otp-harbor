@@ -176,7 +176,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _cancelGroupEditCommand = new AsyncCommand(
             CancelGroupEditAsync,
             () => !IsBusy && IsGroupEditorVisible);
-        _clearGroupFilterCommand = new AsyncCommand(ClearGroupFilterAsync, () => HasSelectedGroup);
+        _clearGroupFilterCommand = new AsyncCommand(
+            ClearGroupFilterAsync,
+            () => HasSelectedAccountNavigationCard);
         _toggleFavoritesFilterCommand = new AsyncCommand(ToggleFavoritesFilterAsync, () => HasFavoriteAccounts);
         _localization.CultureChanged += LocalizationCultureChanged;
         RefreshBrandIconOptions(null);
@@ -346,6 +348,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public bool HasFavoriteAccounts => FavoriteCount > 0;
 
     public bool IsFavoritesFilterSelected => _showFavoritesOnly;
+
+    public bool HasSelectedAccountNavigationCard => HasSelectedGroup || IsFavoritesFilterSelected;
 
     public bool HasActiveAccountFilter => HasSearchText || HasSelectedGroup || IsFavoritesFilterSelected;
 
@@ -1341,6 +1345,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         RefreshGroups();
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         ApplyFilter();
@@ -1355,6 +1360,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ClearRecentHighlight();
         RefreshGroups();
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         ApplyFilter();
@@ -1363,10 +1369,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private Task ClearGroupFilterAsync()
     {
-        if (!_selectedGroupId.HasValue) return Task.CompletedTask;
+        if (!HasSelectedAccountNavigationCard) return Task.CompletedTask;
         _selectedGroupId = null;
+        _showFavoritesOnly = false;
         RefreshGroups();
         OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         ApplyFilter();
@@ -1688,6 +1697,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(HasGroups));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
         OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         _beginAddGroupCommand.NotifyCanExecuteChanged();
@@ -1701,6 +1711,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(HasFavoriteAccounts));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
     }
