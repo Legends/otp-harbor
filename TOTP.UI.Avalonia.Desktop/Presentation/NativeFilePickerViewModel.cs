@@ -133,6 +133,22 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
     public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
     public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
+    public string BrandIconPackStatusText
+    {
+        get
+        {
+            var status = _brandIconPackService?.Status;
+            if (status?.IsInstalled != true)
+                return Localized(AvaloniaStringKeys.BrandIconPackNotInstalled);
+
+            return string.Equals(status.Version, "filename-indexed", StringComparison.OrdinalIgnoreCase)
+                ? Localized(AvaloniaStringKeys.FilenameIndexedBrandIconPackStatus, status.BrandCount)
+                : Localized(
+                    AvaloniaStringKeys.BrandIconPackStatus,
+                    status.BrandCount,
+                    status.Version ?? string.Empty);
+        }
+    }
 
     public async Task ImportBrandIconsAsync()
     {
@@ -637,6 +653,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         OnPropertyChanged(nameof(ConflictStrategies));
         SelectedConflictStrategyOption = ConflictStrategies.First(option => option.Strategy == selectedStrategy);
         RefreshBackupLocationText();
+        OnPropertyChanged(nameof(BrandIconPackStatusText));
     }
 
     public void Dispose()
@@ -652,6 +669,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private void BrandCatalogChanged(object? sender, EventArgs args)
     {
         OnPropertyChanged(nameof(HasImportedBrandIcons));
+        OnPropertyChanged(nameof(BrandIconPackStatusText));
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
     }
 

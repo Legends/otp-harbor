@@ -7,7 +7,8 @@ license compliance take priority over convenience or distribution reach.
    artwork outside OTP Harbor distributions. A versioned, logo-free local alias resolver improves
    matching for user-imported icon packs, manifest-free packs are indexed from canonical SVG
    filenames, and users can override automatic matching per account from the installed pack.
-   Optional local icon-pack management lives under Appearance rather than account import/export.
+   Optional local icon-pack management lives under Appearance rather than account import/export and
+   persistently reports the installed pack version and icon count.
 2. **Import and export workflow — implemented baseline, continue hardening.** Keep migration from
    Aegis, Google Authenticator, 2FAS, URI lists, and OTP Harbor backups explicit, recoverable, and
    well-tested.

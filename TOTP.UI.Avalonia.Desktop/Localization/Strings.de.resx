@@ -388,6 +388,9 @@
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Das Symbolpaket ist ungültig oder konnte nicht sicher installiert werden.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Importierte Markensymbole wurden entfernt.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Importierte Markensymbole konnten nicht entfernt werden.</value></data>
+  <data name="BrandIconPackNotInstalled" xml:space="preserve"><value>Es ist kein lokales Symbolpaket installiert.</value></data>
+  <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole installiert (Version {1}).</value></data>
+  <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole aus einer nach Dateinamen indizierten ZIP-Datei installiert.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Importierte Symbole entfernen</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Ausstellerlogo anzeigen</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Ein Marken- oder Platzhalterfeld neben jedem Konto anzeigen.</value></data>

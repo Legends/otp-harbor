@@ -314,6 +314,10 @@
                                                         Classes="secondary"
                                                         Text="{DynamicResource BrandIconsFormatHelp}"
                                                         TextWrapping="Wrap" />
+                                                    <TextBlock
+                                                        Classes="settings-label"
+                                                        Text="{Binding DataContext.NativeFilePicker.BrandIconPackStatusText, ElementName=SettingsRoot}"
+                                                        TextWrapping="Wrap" />
                                                     <Button
                                                         x:Name="BrandIconsImportButton"
                                                         Classes="wide"

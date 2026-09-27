@@ -388,6 +388,9 @@
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Le pack d’icônes est invalide ou n’a pas pu être installé en toute sécurité.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Les icônes de marque importées ont été supprimées.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Impossible de supprimer les icônes de marque importées.</value></data>
+  <data name="BrandIconPackNotInstalled" xml:space="preserve"><value>Aucun pack d’icônes local n’est installé.</value></data>
+  <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} icônes locales installées (version {1}).</value></data>
+  <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} icônes locales installées depuis une archive ZIP indexée par nom de fichier.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Supprimer les icônes importées</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Afficher le logo de l’émetteur</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Afficher une tuile de marque ou de remplacement à côté de chaque compte.</value></data>

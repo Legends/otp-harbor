@@ -16,6 +16,29 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class NativeFilePickerViewModelTests
 {
+    [Theory]
+    [InlineData("en", "42 local icons installed (version 13.4.0).")]
+    [InlineData("de", "42 lokale Symbole installiert (Version 13.4.0).")]
+    [InlineData("fr", "42 icônes locales installées (version 13.4.0).")]
+    [InlineData("es", "42 iconos locales instalados (versión 13.4.0).")]
+    public void BrandIconPackStatusText_DescribesInstalledPackInActiveLocale(
+        string cultureName,
+        string expected)
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status)
+            .Returns(new BrandIconPackStatus(true, "13.4.0", 42));
+        using var sut = Create(
+            Mock.Of<IAvaloniaFilePicker>(),
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            brandIconPackService: brandIcons.Object,
+            localization: Localization(cultureName));
+
+        Assert.Equal(expected, sut.BrandIconPackStatusText);
+    }
+
     [Fact]
     public async Task ImportBrandIconsAsync_ReportsFilenameIndexedPackInActiveLocale()
     {
