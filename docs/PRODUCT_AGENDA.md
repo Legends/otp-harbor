@@ -31,7 +31,8 @@ license compliance take priority over convenience or distribution reach.
    warning/error visibility.
 7. **Backup UX — implemented baseline, continue refinement.** Backup locations, encryption status,
    recovery requirements, and dedicated restore workflows are now explicit in the desktop settings
-   flow; continue refining platform-provider guidance and physical acceptance.
+   flow. The last-backup location and folder action remain attached to export rather than restore;
+   continue refining platform-provider guidance and physical acceptance.
 8. **Cross-platform consistency — ongoing.** Keep Windows, Linux, Android, and eventually macOS
    behavior and appearance coherent; macOS implementation work is currently deferred.
 9. **Official F-Droid Android distribution — in progress.** The Android dependency graph and SDK are

@@ -1896,6 +1896,12 @@ public sealed class MainWindowSmokeTests
             var openFolderButton = Assert.Single(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "OpenLastBackupFolderButton");
+            var exportPanel = Assert.Single(
+                content.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "EncryptedBackupExportPanel");
+            var restorePanel = Assert.Single(
+                content.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "EncryptedBackupRestorePanel");
             var importButtons = new[]
             {
                 Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtherFormatsImportButton"),
@@ -1912,6 +1918,8 @@ public sealed class MainWindowSmokeTests
             Assert.Contains("wide", restoreButton.Classes);
             Assert.Contains("secondary", openFolderButton.Classes);
             Assert.Contains("wide", openFolderButton.Classes);
+            Assert.Contains(openFolderButton, exportPanel.GetLogicalDescendants());
+            Assert.DoesNotContain(openFolderButton, restorePanel.GetLogicalDescendants());
             Assert.NotNull(restoreConflictStrategy);
             Assert.NotNull(otherFormatsConflictStrategy);
             Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));

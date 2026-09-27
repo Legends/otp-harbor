@@ -151,6 +151,7 @@
                                                         Text="{DynamicResource BackupSecuritySummary}"
                                                         TextWrapping="Wrap" />
                                                     <Border
+                                                        x:Name="EncryptedBackupExportPanel"
                                                         Background="{DynamicResource BrushSurfaceAlternate}"
                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                         Padding="10">
@@ -169,9 +170,16 @@
                                                                 Classes="primary wide"
                                                                 Command="{Binding ExportCommand}"
                                                                 Content="{DynamicResource ExportEncryptedBackup}" />
+                                                            <Button
+                                                                x:Name="OpenLastBackupFolderButton"
+                                                                Classes="secondary wide"
+                                                                Command="{Binding OpenLastBackupFolderCommand}"
+                                                                Content="{DynamicResource OpenLastBackupFolder}"
+                                                                IsVisible="{Binding HasLastBackupFolder}" />
                                                         </StackPanel>
                                                     </Border>
                                                     <Border
+                                                        x:Name="EncryptedBackupRestorePanel"
                                                         Background="{DynamicResource BrushSurfaceAlternate}"
                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                         Padding="10">
@@ -192,19 +200,11 @@
                                                                     </DataTemplate>
                                                                 </ComboBox.ItemTemplate>
                                                             </ComboBox>
-                                                            <StackPanel Spacing="8">
-                                                                <Button
-                                                                    x:Name="EncryptedBackupRestoreButton"
-                                                                    Classes="wide"
-                                                                    Command="{Binding RestoreBackupCommand}"
-                                                                    Content="{DynamicResource RestoreEncryptedBackup}" />
-                                                                <Button
-                                                                    x:Name="OpenLastBackupFolderButton"
-                                                                    Classes="secondary wide"
-                                                                    Command="{Binding OpenLastBackupFolderCommand}"
-                                                                    Content="{DynamicResource OpenLastBackupFolder}"
-                                                                    IsVisible="{Binding HasLastBackupFolder}" />
-                                                            </StackPanel>
+                                                            <Button
+                                                                x:Name="EncryptedBackupRestoreButton"
+                                                                Classes="wide"
+                                                                Command="{Binding RestoreBackupCommand}"
+                                                                Content="{DynamicResource RestoreEncryptedBackup}" />
                                                         </StackPanel>
                                                     </Border>
                                                 </StackPanel>
