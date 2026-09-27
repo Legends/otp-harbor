@@ -149,6 +149,23 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en", "Issuer, then account", "Account, then issuer")]
+    [InlineData("de", "Anbieter, dann Konto", "Konto, dann Anbieter")]
+    [InlineData("fr", "Émetteur, puis compte", "Compte, puis émetteur")]
+    [InlineData("es", "Emisor y después cuenta", "Cuenta y después emisor")]
+    public void Catalog_AccountSortOptionsUseCompleteSelectedLocale(
+        string cultureName,
+        string expectedIssuerSort,
+        string expectedAccountSort)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        Assert.Equal(expectedIssuerSort, sut.Get(AvaloniaStringKeys.SortByIssuer, culture));
+        Assert.Equal(expectedAccountSort, sut.Get(AvaloniaStringKeys.SortByAccountName, culture));
+    }
+
+    [Theory]
     [InlineData("en", "Clear search")]
     [InlineData("de", "Suche löschen")]
     [InlineData("fr", "Effacer la recherche")]

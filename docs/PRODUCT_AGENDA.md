@@ -22,7 +22,10 @@ license compliance take priority over convenience or distribution reach.
    group-delete action. Favorites remains visible and editable at a zero count so users can add its
    first account through the group editor. Counted All accounts and Ungrouped cards make the complete
    vault and default bucket directly discoverable, while the back action names its search-aware
-   destination. Continue with additional organization for vaults containing hundreds of accounts.
+   destination. A lightweight desktop sorter switches between issuer-first and account-first order
+   across search, groups, Favorites, and the complete vault without changing stored account data.
+   Continue validating navigation with vaults containing hundreds of accounts before adding more
+   organizational concepts.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.
 5. **First-run and onboarding — implemented baseline, continue refinement.** Explain vault

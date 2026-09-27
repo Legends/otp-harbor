@@ -451,12 +451,29 @@
                                                     </ScrollViewer>
                                                 </Grid>
                                             </StackPanel>
-                                            <TextBlock
-                                                HorizontalAlignment="Right"
-                                                Classes="secondary"
-                                                FontSize="11"
-                                                IsVisible="{Binding HasActiveAccountFilter}"
-                                                Text="{Binding SearchResultSummary}" />
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Classes="secondary"
+                                                    FontSize="11"
+                                                    IsVisible="{Binding HasActiveAccountFilter}"
+                                                    Text="{Binding SearchResultSummary}" />
+                                                <ComboBox
+                                                    x:Name="AccountSortComboBox"
+                                                    Grid.Column="1"
+                                                    MinWidth="174"
+                                                    HorizontalAlignment="Right"
+                                                    automation:AutomationProperties.Name="{DynamicResource SortAccounts}"
+                                                    IsVisible="{Binding HasMultipleAccounts}"
+                                                    ItemsSource="{Binding SortOptions}"
+                                                    SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="presentation:AccountSortOption">
+                                                            <TextBlock Text="{Binding DisplayName}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </Grid>
                                             <Grid x:Name="AccountListRegion">
                                                 <controls:ContextPreservingAccountListBox
                                                     x:Name="AccountsListBox"

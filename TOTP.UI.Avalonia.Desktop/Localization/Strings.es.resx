@@ -231,6 +231,9 @@
   <data name="GroupColorPurple" xml:space="preserve"><value>Morado</value></data>
   <data name="Save" xml:space="preserve"><value>Guardar</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
+  <data name="SortAccounts" xml:space="preserve"><value>Ordenar cuentas</value></data>
+  <data name="SortByIssuer" xml:space="preserve"><value>Emisor y después cuenta</value></data>
+  <data name="SortByAccountName" xml:space="preserve"><value>Cuenta y después emisor</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Todavía no hay cuentas. Añade una manualmente, escanea el QR de una cuenta o exportación de Google Authenticator, o restaura una copia de seguridad cifrada desde Ajustes.</value></data>
   <data name="SetUpFirstAccount" xml:space="preserve"><value>Configura tu primera cuenta</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No hay entradas coincidentes.</value></data>

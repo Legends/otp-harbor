@@ -231,6 +231,9 @@
   <data name="GroupColorPurple" xml:space="preserve"><value>Lila</value></data>
   <data name="Save" xml:space="preserve"><value>Speichern</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} von {1} Konten angezeigt</value></data>
+  <data name="SortAccounts" xml:space="preserve"><value>Konten sortieren</value></data>
+  <data name="SortByIssuer" xml:space="preserve"><value>Anbieter, dann Konto</value></data>
+  <data name="SortByAccountName" xml:space="preserve"><value>Konto, dann Anbieter</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.</value></data>
   <data name="SetUpFirstAccount" xml:space="preserve"><value>Erstes Konto einrichten</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Keine passenden Einträge.</value></data>

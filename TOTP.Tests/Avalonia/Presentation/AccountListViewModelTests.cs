@@ -112,6 +112,36 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task SelectedSortOption_ReordersAccountsAndAppliesAfterFiltering()
+    {
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [
+                new(Guid.NewGuid(), "Zeta", ValidSecret, "alice"),
+                new(Guid.NewGuid(), "Alpha", ValidSecret, "zoe"),
+                new(Guid.NewGuid(), "Beta", ValidSecret, "alice")
+            ]));
+        using var sut = CreateSut(manager.Object);
+
+        await sut.LoadAsync();
+
+        Assert.True(sut.HasMultipleAccounts);
+        Assert.Equal(AccountSortMode.Issuer, sut.SelectedSortOption?.Mode);
+        Assert.Equal(["Alpha", "Beta", "Zeta"], sut.Accounts.Select(account => account.Issuer));
+
+        sut.SelectedSortOption = sut.SortOptions.Single(
+            option => option.Mode == AccountSortMode.AccountName);
+
+        Assert.Equal(["alice", "alice", "zoe"], sut.Accounts.Select(account => account.AccountName));
+        Assert.Equal(["Beta", "Zeta", "Alpha"], sut.Accounts.Select(account => account.Issuer));
+
+        sut.SearchText = "alice";
+
+        Assert.Equal(["Beta", "Zeta"], sut.Accounts.Select(account => account.Issuer));
+    }
+
+    [Fact]
     public async Task LoadAsync_WithFiveHundredSyntheticAccounts_ProjectsSecretFreeRows()
     {
         var accounts = Enumerable.Range(1, 500)
@@ -120,6 +150,7 @@ public sealed class AccountListViewModelTests
                 $"Issuer {index:D3}",
                 $"SYNTHETIC-SECRET-{index:D3}",
                 $"user{index:D3}@example.test"))
+            .Reverse()
             .ToArray();
         var manager = new Mock<IAccountManager>();
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())

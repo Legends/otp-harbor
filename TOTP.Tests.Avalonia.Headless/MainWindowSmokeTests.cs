@@ -1766,6 +1766,13 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(54, groupBackButton.Height);
             Assert.Equal(20, groupBackButton.Width);
             Assert.Empty(groupBackButton.GetLogicalDescendants().OfType<TextBlock>());
+            var accountSort = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "AccountSortComboBox");
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.SortAccounts],
+                AutomationProperties.GetName(accountSort));
+            Assert.Equal(174, accountSort.MinWidth);
             var flyout = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "GroupEditorFlyout");

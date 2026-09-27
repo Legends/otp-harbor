@@ -231,6 +231,9 @@
   <data name="GroupColorPurple" xml:space="preserve"><value>Purple</value></data>
   <data name="Save" xml:space="preserve"><value>Save</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
+  <data name="SortAccounts" xml:space="preserve"><value>Sort accounts</value></data>
+  <data name="SortByIssuer" xml:space="preserve"><value>Issuer, then account</value></data>
+  <data name="SortByAccountName" xml:space="preserve"><value>Account, then issuer</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.</value></data>
   <data name="SetUpFirstAccount" xml:space="preserve"><value>Set up your first account</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No matching entries.</value></data>

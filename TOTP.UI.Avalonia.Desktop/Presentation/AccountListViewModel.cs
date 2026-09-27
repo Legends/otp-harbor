@@ -58,6 +58,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private AccountListItemViewModel? _copyConfirmationAccount;
     private IReadOnlyList<AccountListItemViewModel> _allAccounts = [];
     private IReadOnlyList<AccountListItemViewModel> _accounts = [];
+    private IReadOnlyList<AccountSortOption> _sortOptions = [];
+    private AccountSortOption? _selectedSortOption;
     private IReadOnlyList<AccountGroupListItemViewModel> _allGroups = [];
     private IReadOnlyList<AccountGroupListItemViewModel> _groups = [];
     private Guid? _selectedGroupId;
@@ -197,6 +199,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             ToggleAllAccountsFilterAsync,
             () => !IsBusy && _allAccounts.Count > 0);
         _localization.CultureChanged += LocalizationCultureChanged;
+        RefreshSortOptions(AccountSortMode.Issuer);
         RefreshBrandIconOptions(null);
         RefreshGroupColorOptions(null);
     }
@@ -224,6 +227,25 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         && HasActiveAccountFilter
         && _allAccounts.Count > 0
         && Accounts.Count == 0;
+
+    public bool HasMultipleAccounts => _allAccounts.Count > 1;
+
+    public IReadOnlyList<AccountSortOption> SortOptions
+    {
+        get => _sortOptions;
+        private set => SetField(ref _sortOptions, value);
+    }
+
+    public AccountSortOption? SelectedSortOption
+    {
+        get => _selectedSortOption;
+        set
+        {
+            if (!SetField(ref _selectedSortOption, value) || value is null) return;
+            if (_allAccounts.Count > 0)
+                ApplyFilter();
+        }
+    }
 
     public NotificationState Notification { get; }
     public string Message => Notification.Text;
@@ -1605,17 +1627,37 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplyFilter()
     {
-        Accounts = AccountListFilter.Apply(
+        var filteredAccounts = AccountListFilter.Apply(
             _allAccounts,
             SearchText,
             _selectedGroupId,
             _showFavoritesOnly,
             _showAllAccounts);
+        Accounts = SortAccounts(filteredAccounts);
         var selectionIsVisible = SelectedAccount is not null
             && Accounts.Any(account => account.Id == SelectedAccount.Id);
         if (selectionIsVisible) return;
 
         SelectedAccount = null;
+    }
+
+    private IReadOnlyList<AccountListItemViewModel> SortAccounts(
+        IReadOnlyList<AccountListItemViewModel> accounts)
+    {
+        var comparer = StringComparer.CurrentCultureIgnoreCase;
+        return (SelectedSortOption?.Mode ?? AccountSortMode.Issuer) switch
+        {
+            AccountSortMode.AccountName => accounts
+                .OrderBy(account => account.AccountName, comparer)
+                .ThenBy(account => account.Issuer, comparer)
+                .ThenBy(account => account.Id)
+                .ToArray(),
+            _ => accounts
+                .OrderBy(account => account.Issuer, comparer)
+                .ThenBy(account => account.AccountName, comparer)
+                .ThenBy(account => account.Id)
+                .ToArray()
+        };
     }
 
     public void ResumeRowCodeGeneration()
@@ -1926,12 +1968,23 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(FavoriteCount));
         OnPropertyChanged(nameof(HasFavoriteAccounts));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
+        OnPropertyChanged(nameof(HasMultipleAccounts));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(IsUngroupedFilterSelected));
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
         _beginEditFavoritesCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RefreshSortOptions(AccountSortMode selectedMode)
+    {
+        SortOptions =
+        [
+            new(AccountSortMode.Issuer, _localization.GetString(AvaloniaStringKeys.SortByIssuer)),
+            new(AccountSortMode.AccountName, _localization.GetString(AvaloniaStringKeys.SortByAccountName))
+        ];
+        SelectedSortOption = SortOptions.First(option => option.Mode == selectedMode);
     }
 
     private void ApplyGroupSearch()
@@ -2007,6 +2060,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
+        RefreshSortOptions(SelectedSortOption?.Mode ?? AccountSortMode.Issuer);
         RefreshBrandIconOptions(SelectedEditorBrandIconOption?.Id);
         RefreshGroupColorOptions(SelectedGroupColor?.Hex);
         RefreshGroups();
