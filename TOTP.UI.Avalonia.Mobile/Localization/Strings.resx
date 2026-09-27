@@ -39,6 +39,9 @@
   <data name="ClearSearch" xml:space="preserve"><value>Clear search</value></data>
   <data name="Favorites" xml:space="preserve"><value>Favorites</value></data>
   <data name="FavoriteAccount" xml:space="preserve"><value>Favorite account</value></data>
+  <data name="AddToFavorites" xml:space="preserve"><value>Add to favorites</value></data>
+  <data name="RemoveFromFavorites" xml:space="preserve"><value>Remove from favorites</value></data>
+  <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Favorites could not be updated.</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No matching accounts.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Swipe right for QR and edit, or left to delete. The camera also imports Google Authenticator exports.</value></data>
@@ -144,7 +147,6 @@
   <data name="CodeUnavailable" xml:space="preserve"><value>A code could not be generated for this account.</value></data>
   <data name="CopyCode" xml:space="preserve"><value>Copy code</value></data>
   <data name="CodeCopied" xml:space="preserve"><value>Code copied.</value></data>
-  <data name="CodeCopiedWithClear" xml:space="preserve"><value>Code copied. Clipboard clearing is scheduled in {0} seconds.</value></data>
   <data name="CodeCopyFailed" xml:space="preserve"><value>The code could not be copied safely.</value></data>
   <data name="LoadingAccountsFailed" xml:space="preserve"><value>Your encrypted accounts could not be loaded.</value></data>
   <data name="EditorAddTitle" xml:space="preserve"><value>Add TOTP account</value></data>

@@ -39,6 +39,9 @@
   <data name="ClearSearch" xml:space="preserve"><value>Borrar búsqueda</value></data>
   <data name="Favorites" xml:space="preserve"><value>Favoritos</value></data>
   <data name="FavoriteAccount" xml:space="preserve"><value>Cuenta favorita</value></data>
+  <data name="AddToFavorites" xml:space="preserve"><value>Añadir a favoritos</value></data>
+  <data name="RemoveFromFavorites" xml:space="preserve"><value>Quitar de favoritos</value></data>
+  <data name="FavoriteUpdateFailed" xml:space="preserve"><value>No se pudieron actualizar los favoritos.</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No hay cuentas coincidentes.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Deslice a la derecha para QR y editar, o a la izquierda para eliminar. La cámara también importa exportaciones de Google Authenticator.</value></data>
@@ -144,7 +147,6 @@
   <data name="CodeUnavailable" xml:space="preserve"><value>No se pudo generar un código para esta cuenta.</value></data>
   <data name="CopyCode" xml:space="preserve"><value>Copiar código</value></data>
   <data name="CodeCopied" xml:space="preserve"><value>Código copiado.</value></data>
-  <data name="CodeCopiedWithClear" xml:space="preserve"><value>Código copiado. El borrado del portapapeles está programado en {0} segundos.</value></data>
   <data name="CodeCopyFailed" xml:space="preserve"><value>No se pudo copiar el código de forma segura.</value></data>
   <data name="LoadingAccountsFailed" xml:space="preserve"><value>No se pudieron cargar sus cuentas cifradas.</value></data>
   <data name="EditorAddTitle" xml:space="preserve"><value>Añadir cuenta TOTP</value></data>

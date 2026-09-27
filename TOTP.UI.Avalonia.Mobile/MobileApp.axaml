@@ -6,6 +6,13 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="BrushFavoriteFilterBackground" Color="#FFF4C2" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterBackgroundActive" Color="#FFE89A" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterBorder" Color="#D4B95D" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterForeground" Color="#9CA3AF" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterIcon" Color="#FABD62" />
+                </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#0C1C33" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#10213F" />
@@ -36,6 +43,11 @@
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#0078D4" />
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#45546A" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterBackground" Color="#40361F" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterBackgroundActive" Color="#514526" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterBorder" Color="#8A7139" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterForeground" Color="#E5E7EB" />
+                    <SolidColorBrush x:Key="BrushFavoriteFilterIcon" Color="#FFD58A" />
                     <BoxShadows x:Key="ElevationCard">0 2 8 0 #40000000</BoxShadows>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
@@ -62,6 +74,26 @@
         </Style>
         <Style Selector="Button.icon-action:pointerover /template/ Border#PART_Border">
             <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+        </Style>
+        <Style Selector="Button.icon-action:disabled">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="ToggleButton.favorites-filter">
+            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushFavoriteFilterBorder}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushFavoriteFilterForeground}" />
+        </Style>
+        <Style Selector="ToggleButton.favorites-filter:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+        </Style>
+        <Style Selector="ToggleButton.favorites-filter:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+        </Style>
+        <Style Selector="ToggleButton.favorites-filter:checked">
+            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+        </Style>
+        <Style Selector="ToggleButton.favorites-filter:disabled">
+            <Setter Property="Opacity" Value="1" />
         </Style>
         <Style Selector="Button.numeric-clear">
             <Setter Property="Width" Value="40" />

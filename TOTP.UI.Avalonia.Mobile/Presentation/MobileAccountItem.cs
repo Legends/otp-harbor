@@ -12,7 +12,9 @@ public sealed class MobileAccountItem(
     int configuredPeriodSeconds = TotpPeriodPolicy.DefaultSeconds,
     string customPeriodLabel = "",
     BrandInfo? brand = null,
-    bool isFavorite = false) : INotifyPropertyChanged
+    bool isFavorite = false,
+    string addToFavoritesText = "",
+    string removeFromFavoritesText = "") : INotifyPropertyChanged
 {
     private string _code = string.Empty;
     private int _remainingSeconds;
@@ -20,6 +22,10 @@ public sealed class MobileAccountItem(
     private string _customPeriodLabel = customPeriodLabel;
     private BrandInfo _brand = brand ?? BrandInfo.Generic(issuer);
     private bool _showIssuerLogo = true;
+    private bool _isFavorite = isFavorite;
+    private string _addToFavoritesText = addToFavoritesText;
+    private string _removeFromFavoritesText = removeFromFavoritesText;
+    private string _copyConfirmation = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -31,7 +37,12 @@ public sealed class MobileAccountItem(
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
-    public bool IsFavorite { get; } = isFavorite;
+    public bool IsFavorite => _isFavorite;
+    public string FavoriteActionText => IsFavorite
+        ? _removeFromFavoritesText
+        : _addToFavoritesText;
+    public string CopyConfirmation => _copyConfirmation;
+    public bool HasCopyConfirmation => CopyConfirmation.Length > 0;
     public bool HasAccountName => AccountName.Length > 0;
     public string Code => _code;
     public string DisplayCode => FormatCode(_code);
@@ -51,10 +62,19 @@ public sealed class MobileAccountItem(
         NotifyCodeChanged();
     }
 
-    internal void Tick()
+    internal void Tick(bool notifyBindings = true)
     {
         if (_remainingSeconds <= 0) return;
+        var wasExpiring = IsExpiring;
         _remainingSeconds--;
+        if (!notifyBindings) return;
+        OnPropertyChanged(nameof(RemainingSeconds));
+        if (wasExpiring != IsExpiring)
+            OnPropertyChanged(nameof(IsExpiring));
+    }
+
+    internal void RefreshCountdownBindings()
+    {
         OnPropertyChanged(nameof(RemainingSeconds));
         OnPropertyChanged(nameof(IsExpiring));
     }
@@ -80,6 +100,31 @@ public sealed class MobileAccountItem(
         _showIssuerLogo = visible;
         OnPropertyChanged(nameof(ShowIssuerLogo));
     }
+
+    internal void UpdateFavorite(bool isFavorite)
+    {
+        if (_isFavorite == isFavorite) return;
+        _isFavorite = isFavorite;
+        OnPropertyChanged(nameof(IsFavorite));
+        OnPropertyChanged(nameof(FavoriteActionText));
+    }
+
+    internal void UpdateFavoriteLocalization(string addText, string removeText)
+    {
+        _addToFavoritesText = addText;
+        _removeFromFavoritesText = removeText;
+        OnPropertyChanged(nameof(FavoriteActionText));
+    }
+
+    internal void ShowCopyConfirmation(string message)
+    {
+        if (_copyConfirmation == message) return;
+        _copyConfirmation = message;
+        OnPropertyChanged(nameof(CopyConfirmation));
+        OnPropertyChanged(nameof(HasCopyConfirmation));
+    }
+
+    internal void ClearCopyConfirmation() => ShowCopyConfirmation(string.Empty);
 
     internal void ClearCode()
     {

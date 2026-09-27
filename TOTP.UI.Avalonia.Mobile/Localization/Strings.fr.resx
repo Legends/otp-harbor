@@ -39,6 +39,9 @@
   <data name="ClearSearch" xml:space="preserve"><value>Effacer la recherche</value></data>
   <data name="Favorites" xml:space="preserve"><value>Favoris</value></data>
   <data name="FavoriteAccount" xml:space="preserve"><value>Compte favori</value></data>
+  <data name="AddToFavorites" xml:space="preserve"><value>Ajouter aux favoris</value></data>
+  <data name="RemoveFromFavorites" xml:space="preserve"><value>Retirer des favoris</value></data>
+  <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Les favoris n’ont pas pu être mis à jour.</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} comptes affichés sur {1}</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>Aucun compte correspondant.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Balayez vers la droite pour le QR et la modification, ou vers la gauche pour supprimer. La caméra importe aussi les exportations Google Authenticator.</value></data>
@@ -144,7 +147,6 @@
   <data name="CodeUnavailable" xml:space="preserve"><value>Impossible de générer un code pour ce compte.</value></data>
   <data name="CopyCode" xml:space="preserve"><value>Copier le code</value></data>
   <data name="CodeCopied" xml:space="preserve"><value>Code copié.</value></data>
-  <data name="CodeCopiedWithClear" xml:space="preserve"><value>Code copié. L’effacement du presse-papiers est prévu dans {0} secondes.</value></data>
   <data name="CodeCopyFailed" xml:space="preserve"><value>Le code n’a pas pu être copié de manière sécurisée.</value></data>
   <data name="LoadingAccountsFailed" xml:space="preserve"><value>Vos comptes chiffrés n’ont pas pu être chargés.</value></data>
   <data name="EditorAddTitle" xml:space="preserve"><value>Ajouter un compte TOTP</value></data>

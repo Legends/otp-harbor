@@ -26,6 +26,7 @@ public sealed class MobileShellViewModel :
 {
     private static readonly TimeSpan BackgroundLockGracePeriod = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan NotificationDuration = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan CopyConfirmationDuration = TimeSpan.FromMilliseconds(1500);
 
     private readonly IAuthorizationService _authorization;
     private readonly IPasswordValidationService _passwordValidation;
@@ -153,9 +154,13 @@ public sealed class MobileShellViewModel :
     private CancellationTokenSource? _sensitiveOperationLifetime;
     private CancellationTokenSource? _codeLifetime;
     private CancellationTokenSource? _notificationLifetime;
+    private CancellationTokenSource? _copyConfirmationLifetime;
+    private MobileAccountItem? _copyConfirmationAccount;
     private long? _backgroundedAtTimestamp;
     private ITimer? _backgroundLockTimer;
     private bool _automaticBiometricUnlockPending;
+    private bool _isAccountListScrolling;
+    private bool _isFavoriteUpdateInProgress;
     private bool _disposed;
 
     public MobileShellViewModel(
@@ -919,6 +924,8 @@ public sealed class MobileShellViewModel :
     public string ClearSearchText => Get(MobileStringKeys.ClearSearch);
     public string FavoritesText => Get(MobileStringKeys.Favorites);
     public string FavoriteAccountText => Get(MobileStringKeys.FavoriteAccount);
+    public string AddToFavoritesText => Get(MobileStringKeys.AddToFavorites);
+    public string RemoveFromFavoritesText => Get(MobileStringKeys.RemoveFromFavorites);
     public string NoSearchResultsText => Get(MobileStringKeys.NoSearchResults);
     public string AccountSwipeHintText => Get(MobileStringKeys.AccountSwipeHint);
     public string ScanQrText => Get(MobileStringKeys.ScanQr);
@@ -2405,7 +2412,8 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            await CopyCodeCoreAsync(code);
+            if (await CopyCodeCoreAsync(code))
+                ShowCopyConfirmation(account);
         }
         catch (Exception)
         {
@@ -2416,6 +2424,66 @@ public sealed class MobileShellViewModel :
             code = string.Empty;
             IsBusy = false;
         }
+    }
+
+    public async Task ToggleAccountFavoriteAsync(MobileAccountItem? account)
+    {
+        if (account is null
+            || !CanEditAccounts()
+            || _isFavoriteUpdateInProgress
+            || !_allAccounts.Contains(account))
+        {
+            return;
+        }
+
+        _isFavoriteUpdateInProgress = true;
+        ClearNotification();
+        try
+        {
+            var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+            var existing = loaded.IsSuccess
+                ? loaded.Value.FirstOrDefault(value => value.ID == account.Id)
+                : null;
+            if (existing is null)
+            {
+                SetError(MobileStringKeys.FavoriteUpdateFailed);
+                return;
+            }
+
+            var isFavorite = !account.IsFavorite;
+            var saved = await _accountManager.UpdateAsync(
+                existing,
+                existing.WithFavorite(isFavorite));
+            if (saved.IsFailed)
+            {
+                SetError(MobileStringKeys.FavoriteUpdateFailed);
+                return;
+            }
+
+            var wasFilteringFavorites = _showFavoritesOnly;
+            account.UpdateFavorite(isFavorite);
+            RefreshFavoriteState();
+            if (wasFilteringFavorites)
+                ApplyAccountFilter(account.Id);
+        }
+        catch (Exception)
+        {
+            SetError(MobileStringKeys.FavoriteUpdateFailed);
+        }
+        finally
+        {
+            _isFavoriteUpdateInProgress = false;
+        }
+    }
+
+    public void SetAccountListScrolling(bool isScrolling)
+    {
+        if (_isAccountListScrolling == isScrolling) return;
+        _isAccountListScrolling = isScrolling;
+        if (isScrolling) return;
+
+        foreach (var account in Accounts)
+            account.RefreshCountdownBindings();
     }
 
     public void OnEnteredBackground(bool lockImmediately)
@@ -2482,6 +2550,7 @@ public sealed class MobileShellViewModel :
         _brandIconResolver.CatalogChanged -= BrandCatalogChanged;
         _sensitiveOperationLifetime?.Cancel();
         CancelNotificationLifetime();
+        ClearCopyConfirmation();
         CancelBackgroundLockTimer();
         CancelCodeRefresh();
         ClearQrImage();
@@ -2513,7 +2582,9 @@ public sealed class MobileShellViewModel :
                 account.PeriodSeconds,
                 FormatCustomPeriod(account.PeriodSeconds),
                 _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
-                account.IsFavorite));
+                account.IsFavorite,
+                AddToFavoritesText,
+                RemoveFromFavoritesText));
             _allAccounts[^1].UpdateLogoVisibility(ShowIssuerLogo);
         }
 
@@ -2559,7 +2630,7 @@ public sealed class MobileShellViewModel :
         return true;
     }
 
-    private async Task CopyCodeCoreAsync(string code)
+    private async Task<bool> CopyCodeCoreAsync(string code)
     {
         try
         {
@@ -2570,27 +2641,15 @@ public sealed class MobileShellViewModel :
             if (result.IsFailed)
             {
                 SetError(MobileStringKeys.CodeCopyFailed);
-                return;
+                return false;
             }
 
-            if (_settings.Current.ClearClipboardEnabled)
-            {
-                SetTransientNotification(
-                    string.Format(Get(MobileStringKeys.CodeCopiedWithClear), seconds),
-                    NotificationSeverity.Success,
-                    NotificationDuration);
-            }
-            else
-            {
-                SetTransientNotification(
-                    Get(MobileStringKeys.CodeCopied),
-                    NotificationSeverity.Success,
-                    NotificationDuration);
-            }
+            return true;
         }
         catch (Exception)
         {
             SetError(MobileStringKeys.CodeCopyFailed);
+            return false;
         }
     }
 
@@ -2637,7 +2696,8 @@ public sealed class MobileShellViewModel :
                      second++)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(1), lifetime.Token);
-                    foreach (var account in visibleAccounts) account.Tick();
+                    foreach (var account in visibleAccounts)
+                        account.Tick(notifyBindings: !_isAccountListScrolling);
                 }
             }
         }
@@ -2663,6 +2723,7 @@ public sealed class MobileShellViewModel :
         CancelBackgroundLockTimer();
         _sensitiveOperationLifetime?.Cancel();
         CancelNotificationLifetime();
+        ClearCopyConfirmation();
         _authorization.Lock();
         CancelCodeRefresh();
         ClearEditor();
@@ -2785,6 +2846,7 @@ public sealed class MobileShellViewModel :
     private bool CanEditAccounts() =>
         IsAccountListVisible
         && !IsBusy
+        && !_isFavoriteUpdateInProgress
         && !IsDeleteConfirmationVisible
         && !IsQrConflictVisible;
 
@@ -3135,7 +3197,10 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(propertyName);
 
         foreach (var account in _allAccounts)
+        {
             account.UpdateCustomPeriodLabel(FormatCustomPeriod(account.ConfiguredPeriodSeconds));
+            account.UpdateFavoriteLocalization(AddToFavoritesText, RemoveFromFavoritesText);
+        }
 
         // Language buttons bind to these computed selection properties. They are
         // state, not localized text, but must refresh together with the catalog.
@@ -3235,6 +3300,49 @@ public sealed class MobileShellViewModel :
         var lifetime = _notificationLifetime;
         _notificationLifetime = null;
         lifetime?.Cancel();
+    }
+
+    private void ShowCopyConfirmation(MobileAccountItem account)
+    {
+        ClearCopyConfirmation();
+        account.ShowCopyConfirmation(Get(MobileStringKeys.CodeCopied));
+        _copyConfirmationAccount = account;
+        var lifetime = new CancellationTokenSource();
+        _copyConfirmationLifetime = lifetime;
+        _ = ClearCopyConfirmationAfterDelayAsync(account, lifetime);
+    }
+
+    private async Task ClearCopyConfirmationAfterDelayAsync(
+        MobileAccountItem account,
+        CancellationTokenSource lifetime)
+    {
+        try
+        {
+            await Task.Delay(CopyConfirmationDuration, lifetime.Token);
+            if (ReferenceEquals(_copyConfirmationLifetime, lifetime))
+            {
+                account.ClearCopyConfirmation();
+                _copyConfirmationAccount = null;
+            }
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_copyConfirmationLifetime, lifetime))
+                _copyConfirmationLifetime = null;
+            lifetime.Dispose();
+        }
+    }
+
+    private void ClearCopyConfirmation()
+    {
+        var lifetime = _copyConfirmationLifetime;
+        _copyConfirmationLifetime = null;
+        lifetime?.Cancel();
+        _copyConfirmationAccount?.ClearCopyConfirmation();
+        _copyConfirmationAccount = null;
     }
 
     private void ClearErrorNotification()
@@ -3389,6 +3497,8 @@ public sealed class MobileShellViewModel :
         nameof(ClearSearchText),
         nameof(FavoritesText),
         nameof(FavoriteAccountText),
+        nameof(AddToFavoritesText),
+        nameof(RemoveFromFavoritesText),
         nameof(SearchResultSummary),
         nameof(NoSearchResultsText),
         nameof(AccountSwipeHintText),

@@ -41,6 +41,17 @@ if (-not $manifest.Contains('android:authorities="${applicationId}.fileprovider"
     -not $installer.Contains("`$packageName = 'io.github.legends.otpharbor.debug'", [StringComparison]::Ordinal)) {
     throw "The Android manifest or development installer can collide with the production package."
 }
+foreach ($requiredInstallerControl in @(
+    '[int]$Port',
+    '--no-incremental',
+    '-t:SignAndroidPackage',
+    '& $adbPath connect $device',
+    '& $adbPath -s $device install -r $apkPath',
+    'shell am force-stop $packageName')) {
+    if (-not $installer.Contains($requiredInstallerControl, [StringComparison]::Ordinal)) {
+        throw "The Android development installer is missing a fresh-build or targeted-device control: $requiredInstallerControl"
+    }
+}
 
 $versionCases = @(
     @{ Tag = "android-v2.0.0"; Code = 20000099L; Name = "2.0.0" },

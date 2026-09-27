@@ -1124,6 +1124,101 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task ToggleAccountFavoriteAsync_PersistsAndUpdatesVisibleRow()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true, [account]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(
+                account,
+                It.Is<Account>(updated => updated.IsFavorite)))
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var row = Assert.Single(context.Sut.Accounts);
+        var changedProperties = new List<string?>();
+        context.Sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        Assert.Equal("Add to favorites", row.FavoriteActionText);
+
+        await context.Sut.ToggleAccountFavoriteAsync(row);
+
+        Assert.True(row.IsFavorite);
+        Assert.Equal("Remove from favorites", row.FavoriteActionText);
+        Assert.Equal(1, context.Sut.FavoriteCount);
+        Assert.True(context.Sut.HasFavoriteAccounts);
+        Assert.DoesNotContain(nameof(context.Sut.IsBusy), changedProperties);
+        Assert.False(context.Sut.IsBusy);
+        context.AccountManager.VerifyAll();
+    }
+
+    [Fact]
+    public async Task ToggleAccountFavoriteAsync_RemovingLastFilteredFavorite_RevealsAllAccounts()
+    {
+        var favorite = new Account(
+            Guid.NewGuid(),
+            "Favorite",
+            ValidSecret,
+            "user",
+            isFavorite: true);
+        var other = new Account(Guid.NewGuid(), "Other", ValidSecret, "other");
+        var context = CreateContext(isConfigured: true, [favorite, other]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(
+                favorite,
+                It.Is<Account>(updated => !updated.IsFavorite)))
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ToggleFavoritesFilterAsync();
+        var row = Assert.Single(context.Sut.Accounts);
+
+        await context.Sut.ToggleAccountFavoriteAsync(row);
+
+        Assert.False(context.Sut.IsFavoritesFilterSelected);
+        Assert.False(context.Sut.HasFavoriteAccounts);
+        Assert.Equal(2, context.Sut.Accounts.Count);
+        Assert.Contains(context.Sut.Accounts, account => account.Id == favorite.ID && !account.IsFavorite);
+    }
+
+    [Fact]
+    public async Task ToggleAccountFavoriteAsync_WhenUpdateFails_PreservesRowAndReportsLocalizedError()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true, [account], cultureName: "de");
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(account, It.IsAny<Account>()))
+            .ReturnsAsync(Result.Fail("synthetic failure"));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var row = Assert.Single(context.Sut.Accounts);
+
+        await context.Sut.ToggleAccountFavoriteAsync(row);
+
+        Assert.False(row.IsFavorite);
+        Assert.Equal("Zu Favoriten hinzufügen", row.FavoriteActionText);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.FavoriteUpdateFailed),
+            context.Sut.NotificationText);
+        Assert.Equal(NotificationSeverity.Error, context.Sut.NotificationSeverity);
+    }
+
+    [Fact]
     public async Task CopyAccountCodeAsync_CopiesCodeDisplayedInAccountRow()
     {
         var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
@@ -1139,25 +1234,23 @@ public sealed class MobileShellViewModelTests
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
         context.AccountTotp.Invocations.Clear();
+        var accountRow = Assert.Single(context.Sut.Accounts);
 
-        await context.Sut.CopyAccountCodeAsync(Assert.Single(context.Sut.Accounts));
+        await context.Sut.CopyAccountCodeAsync(accountRow);
 
         Assert.Equal(account.ID, context.Sut.SelectedAccount?.Id);
         context.AccountTotp.Verify(value => value.GenerateAsync(account.ID), Times.Never);
         context.Clipboard.Verify(value => value.CopyAndScheduleClearAsync(
             "123456",
             TimeSpan.FromSeconds(AppSettings.DefaultClearClipboardSeconds)), Times.Once);
-        Assert.Equal(
-            string.Format(
-                context.Strings.Get(MobileStringKeys.CodeCopiedWithClear),
-                AppSettings.DefaultClearClipboardSeconds),
-            context.Sut.NotificationText);
+        Assert.Empty(context.Sut.NotificationText);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.CodeCopied), accountRow.CopyConfirmation);
 
         await Task.Delay(
             TimeSpan.FromMilliseconds(1100),
             global::Xunit.TestContext.Current.CancellationToken);
 
-        Assert.NotEmpty(context.Sut.NotificationText);
+        Assert.Empty(context.Sut.NotificationText);
 
         await Task.Delay(
             TimeSpan.FromMilliseconds(1000),
@@ -1165,6 +1258,41 @@ public sealed class MobileShellViewModelTests
 
         Assert.Empty(context.Sut.NotificationText);
         Assert.Equal(NotificationSeverity.Information, context.Sut.NotificationSeverity);
+        Assert.Empty(accountRow.CopyConfirmation);
+    }
+
+    [Fact]
+    public async Task AccountCountdown_BatchesBindingUpdatesWhileListIsScrolling()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true, [account]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp
+            .Setup(value => value.GenerateAsync(account.ID))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var row = Assert.Single(context.Sut.Accounts);
+        var changedProperties = new List<string?>();
+        row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        context.Sut.SetAccountListScrolling(true);
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1100),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
+        Assert.DoesNotContain(nameof(MobileAccountItem.IsExpiring), changedProperties);
+
+        context.Sut.SetAccountListScrolling(false);
+
+        Assert.Contains(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
+        Assert.Contains(nameof(MobileAccountItem.IsExpiring), changedProperties);
+        context.Sut.Dispose();
     }
 
     [Fact]

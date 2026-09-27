@@ -39,6 +39,9 @@
   <data name="ClearSearch" xml:space="preserve"><value>Suche löschen</value></data>
   <data name="Favorites" xml:space="preserve"><value>Favoriten</value></data>
   <data name="FavoriteAccount" xml:space="preserve"><value>Favoritenkonto</value></data>
+  <data name="AddToFavorites" xml:space="preserve"><value>Zu Favoriten hinzufügen</value></data>
+  <data name="RemoveFromFavorites" xml:space="preserve"><value>Aus Favoriten entfernen</value></data>
+  <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Die Favoriten konnten nicht aktualisiert werden.</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} von {1} Konten angezeigt</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>Keine passenden Konten.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Nach rechts wischen für QR und Bearbeiten, nach links zum Löschen. Die Kamera importiert auch Google-Authenticator-Exporte.</value></data>
@@ -144,7 +147,6 @@
   <data name="CodeUnavailable" xml:space="preserve"><value>Für dieses Konto konnte kein Code erzeugt werden.</value></data>
   <data name="CopyCode" xml:space="preserve"><value>Code kopieren</value></data>
   <data name="CodeCopied" xml:space="preserve"><value>Code kopiert.</value></data>
-  <data name="CodeCopiedWithClear" xml:space="preserve"><value>Code kopiert. Die Zwischenablage wird planmäßig in {0} Sekunden geleert.</value></data>
   <data name="CodeCopyFailed" xml:space="preserve"><value>Der Code konnte nicht sicher kopiert werden.</value></data>
   <data name="LoadingAccountsFailed" xml:space="preserve"><value>Ihre verschlüsselten Konten konnten nicht geladen werden.</value></data>
   <data name="EditorAddTitle" xml:space="preserve"><value>TOTP-Konto hinzufügen</value></data>

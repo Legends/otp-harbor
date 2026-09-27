@@ -12,12 +12,24 @@ namespace TOTP.Avalonia.Mobile.Views;
 public partial class MainView : UserControl
 {
     private const string UnlockMethodAttentionClass = "unlock-method-attention";
+    private static readonly TimeSpan AccountListScrollIdleDelay = TimeSpan.FromMilliseconds(150);
     private Control? _openSwipeRow;
     private Control? _swipedRow;
+    private ScrollViewer? _accountListScrollViewer;
+    private readonly DispatcherTimer _accountListScrollIdleTimer;
 
     public MainView()
     {
         InitializeComponent();
+        _accountListScrollIdleTimer = new DispatcherTimer
+        {
+            Interval = AccountListScrollIdleDelay
+        };
+        _accountListScrollIdleTimer.Tick += AccountListScrollBecameIdle;
+        AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(
+            AttachAccountListScrollViewer,
+            DispatcherPriority.Loaded);
+        DetachedFromVisualTree += (_, _) => DetachAccountListScrollViewer();
     }
 
     private void RefocusAccountSearchAfterClear(object? sender, RoutedEventArgs e) =>
@@ -66,26 +78,42 @@ public partial class MainView : UserControl
         }, DispatcherPriority.Background);
     }
 
-    private void CopyAccountCode(object? sender, TappedEventArgs e)
+    private void CopyAccountCode(object? sender, RoutedEventArgs e)
     {
         if (sender is not Control
-            {
-                DataContext: MobileAccountItem account,
-                RenderTransform: TranslateTransform transform
+        {
+                DataContext: MobileAccountItem account
             } control
             || DataContext is not MobileShellViewModel viewModel)
         {
             return;
         }
 
-        if (ReferenceEquals(_swipedRow, control) || Math.Abs(transform.X) > 0)
+        var swipeRow = control.RenderTransform is TranslateTransform
+            ? control
+            : control.GetVisualAncestors()
+                .OfType<Control>()
+                .FirstOrDefault(candidate => candidate.RenderTransform is TranslateTransform);
+        if (swipeRow?.RenderTransform is TranslateTransform transform
+            && (ReferenceEquals(_swipedRow, swipeRow) || Math.Abs(transform.X) > 0))
         {
-            ResetSwipe(control);
+            ResetSwipe(swipeRow);
             e.Handled = true;
             return;
         }
 
         _ = viewModel.CopyAccountCodeAsync(account);
+        e.Handled = true;
+    }
+
+    private void ToggleAccountFavorite(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: MobileAccountItem account }
+            && DataContext is MobileShellViewModel viewModel)
+        {
+            _ = viewModel.ToggleAccountFavoriteAsync(account);
+        }
+
         e.Handled = true;
     }
 
@@ -174,6 +202,46 @@ public partial class MainView : UserControl
         viewModel = null!;
         account = null!;
         return false;
+    }
+
+    private void AttachAccountListScrollViewer()
+    {
+        AccountList.ApplyTemplate();
+        var scrollViewer = AccountList
+            .GetVisualDescendants()
+            .OfType<ScrollViewer>()
+            .FirstOrDefault();
+        if (ReferenceEquals(_accountListScrollViewer, scrollViewer)) return;
+
+        DetachAccountListScrollViewer();
+        _accountListScrollViewer = scrollViewer;
+        if (_accountListScrollViewer is not null)
+            _accountListScrollViewer.ScrollChanged += AccountListScrolled;
+    }
+
+    private void DetachAccountListScrollViewer()
+    {
+        _accountListScrollIdleTimer.Stop();
+        if (_accountListScrollViewer is not null)
+            _accountListScrollViewer.ScrollChanged -= AccountListScrolled;
+        _accountListScrollViewer = null;
+        if (DataContext is MobileShellViewModel viewModel)
+            viewModel.SetAccountListScrolling(false);
+    }
+
+    private void AccountListScrolled(object? sender, ScrollChangedEventArgs e)
+    {
+        if (DataContext is MobileShellViewModel viewModel)
+            viewModel.SetAccountListScrolling(true);
+        _accountListScrollIdleTimer.Stop();
+        _accountListScrollIdleTimer.Start();
+    }
+
+    private void AccountListScrollBecameIdle(object? sender, EventArgs e)
+    {
+        _accountListScrollIdleTimer.Stop();
+        if (DataContext is MobileShellViewModel viewModel)
+            viewModel.SetAccountListScrolling(false);
     }
 
     private void ResetSwipe(Control? control)

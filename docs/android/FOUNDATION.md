@@ -96,13 +96,14 @@ return to `--locked-mode` for validation and CI.
 To install on one authorized Android device and launch the app:
 
 ```powershell
-.\scripts\testing\Install-AndroidDevelopmentBuild.ps1
+.\scripts\testing\Install-AndroidDevelopmentBuild.ps1 -Port 43101
 ```
 
-The script runs the explicit `SignAndroidPackage` target, reports the exact APK timestamp and SHA-256,
-performs an in-place development APK install, and launches it without clearing app data. USB or paired
-wireless debugging must be enabled, exactly one device must be connected, and the computer must be
-authorized on that device. Prefer this command over passing a previously built APK to a separate
+The script runs a non-incremental `SignAndroidPackage` build, verifies that the APK is fresh, reports
+its exact timestamp and SHA-256, connects to `192.168.1.13:<Port>`, performs an in-place development
+APK install, and relaunches it without clearing app data. Pass `-DeviceAddress` when the phone uses a
+different address. Paired wireless debugging must be enabled and the computer must be authorized on
+the device. Prefer this command over passing a previously built APK to a separate
 installer, which can silently redeploy a stale package. Development APKs embed their managed
 assemblies and therefore do not depend on IDE-specific Android Fast Deployment state.
 

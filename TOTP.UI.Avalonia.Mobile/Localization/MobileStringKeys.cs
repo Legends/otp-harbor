@@ -55,6 +55,9 @@ public static class MobileStringKeys
     public const string ClearSearch = nameof(ClearSearch);
     public const string Favorites = nameof(Favorites);
     public const string FavoriteAccount = nameof(FavoriteAccount);
+    public const string AddToFavorites = nameof(AddToFavorites);
+    public const string RemoveFromFavorites = nameof(RemoveFromFavorites);
+    public const string FavoriteUpdateFailed = nameof(FavoriteUpdateFailed);
     public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string NoSearchResults = nameof(NoSearchResults);
     public const string AccountSwipeHint = nameof(AccountSwipeHint);
@@ -172,7 +175,6 @@ public static class MobileStringKeys
     public const string CodeUnavailable = nameof(CodeUnavailable);
     public const string CopyCode = nameof(CopyCode);
     public const string CodeCopied = nameof(CodeCopied);
-    public const string CodeCopiedWithClear = nameof(CodeCopiedWithClear);
     public const string CodeCopyFailed = nameof(CodeCopyFailed);
     public const string LoadingAccountsFailed = nameof(LoadingAccountsFailed);
     public const string EditorAddTitle = nameof(EditorAddTitle);
@@ -260,6 +262,9 @@ public static class MobileStringKeys
         ClearSearch,
         Favorites,
         FavoriteAccount,
+        AddToFavorites,
+        RemoveFromFavorites,
+        FavoriteUpdateFailed,
         SearchResultsFormat,
         NoSearchResults,
         AccountSwipeHint,
@@ -372,7 +377,6 @@ public static class MobileStringKeys
         CodeUnavailable,
         CopyCode,
         CodeCopied,
-        CodeCopiedWithClear,
         CodeCopyFailed,
         LoadingAccountsFailed,
         EditorAddTitle,

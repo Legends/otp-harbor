@@ -232,12 +232,16 @@
                                 Padding="10,5"
                                 HorizontalAlignment="Left"
                                 automation:AutomationProperties.Name="{Binding FavoritesText}"
+                                Classes="favorites-filter"
                                 Command="{Binding ToggleFavoritesFilterCommand}"
                                 IsChecked="{Binding IsFavoritesFilterSelected, Mode=OneWay}"
                                 IsVisible="{Binding HasFavoriteAccounts}"
                                 ToolTip.Tip="{Binding FavoritesText}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <controls:SymbolIcon IconSize="15" Kind="Favorite" />
+                                    <controls:SymbolIcon
+                                        Foreground="{DynamicResource BrushFavoriteFilterIcon}"
+                                        IconSize="15"
+                                        Kind="Favorite" />
                                     <TextBlock Text="{Binding FavoritesText}" />
                                     <TextBlock Text="{Binding FavoriteCount}" />
                                 </StackPanel>
@@ -323,6 +327,7 @@
                             TextWrapping="Wrap" />
 
                         <ListBox
+                            x:Name="AccountList"
                             Grid.Row="3"
                             Background="Transparent"
                             BorderThickness="0"
@@ -330,8 +335,16 @@
                             IsHitTestVisible="{Binding !IsDeleteConfirmationVisible}"
                             IsVisible="{Binding HasAccounts}"
                             ItemsSource="{Binding Accounts}"
+                            Margin="-14,0"
                             SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.IsScrollChainingEnabled="False"
                             ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="vm:MobileAccountItem">
                                     <Border
@@ -339,7 +352,7 @@
                                         BorderThickness="1"
                                         ClipToBounds="True"
                                         CornerRadius="{DynamicResource RadiusMedium}"
-                                        Margin="8,4">
+                                        Margin="2,4">
                                         <Grid MinHeight="76">
                                             <Grid
                                                 Width="120"
@@ -387,11 +400,11 @@
                                             </Border>
                                             <Border
                                                 Background="{DynamicResource BrushAccountItemBackground}"
-                                                Padding="16,10"
-                                                Tapped="CopyAccountCode"
-                                                ToolTip.Tip="{Binding DataContext.CopyCodeText, ElementName=Root}"
+                                                Padding="10,10"
                                                 SwipeGesture="TrackAccountSwipe"
-                                                SwipeGestureEnded="CompleteAccountSwipe">
+                                                SwipeGestureEnded="CompleteAccountSwipe"
+                                                Tapped="CopyAccountCode"
+                                                ToolTip.Tip="{Binding DataContext.CopyCodeText, ElementName=Root}">
                                                 <Border.RenderTransform>
                                                     <TranslateTransform />
                                                 </Border.RenderTransform>
@@ -402,36 +415,53 @@
                                                         Threshold="24" />
                                                 </Border.GestureRecognizers>
                                                 <Grid
-                                                    ColumnDefinitions="Auto,*,Auto"
+                                                    ColumnDefinitions="Auto,Auto,*,Auto"
                                                     RowDefinitions="*,Auto"
-                                                    ColumnSpacing="12">
+                                                    ColumnSpacing="6">
                                                     <controls:BrandTile
                                                         Grid.Row="0"
                                                         Grid.RowSpan="2"
                                                         Grid.Column="0"
                                                         IsVisible="{Binding ShowIssuerLogo}"
-                                                        Margin="0,0,12,0"
                                                         IconData="{Binding Brand.IconData}"
                                                         Initials="{Binding Brand.Initials}"
                                                         TileBackground="{Binding Brand.BackgroundBrush}" />
-                                                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="3">
-                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-                                                            <TextBlock
-                                                                Grid.Column="0"
-                                                                FontSize="17"
-                                                                FontWeight="SemiBold"
-                                                                Text="{Binding Issuer}"
-                                                                TextTrimming="CharacterEllipsis" />
+                                                    <Button
+                                                        x:Name="AccountFavoriteButton"
+                                                        Grid.Row="0"
+                                                        Grid.RowSpan="2"
+                                                        Grid.Column="1"
+                                                        Width="48"
+                                                        MinWidth="48"
+                                                        MinHeight="48"
+                                                        Padding="8"
+                                                        VerticalAlignment="Center"
+                                                        automation:AutomationProperties.Name="{Binding FavoriteActionText}"
+                                                        Background="Transparent"
+                                                        BorderBrush="Transparent"
+                                                        BorderThickness="0"
+                                                        Click="ToggleAccountFavorite"
+                                                        ToolTip.Tip="{Binding FavoriteActionText}">
+                                                        <Grid>
                                                             <controls:SymbolIcon
-                                                                Grid.Column="1"
-                                                                VerticalAlignment="Center"
-                                                                automation:AutomationProperties.Name="{Binding DataContext.FavoriteAccountText, ElementName=Root}"
                                                                 Foreground="{DynamicResource BrushAccent}"
-                                                                IconSize="14"
+                                                                IconSize="23"
                                                                 IsVisible="{Binding IsFavorite}"
+                                                                Kind="Favorite" />
+                                                            <controls:SymbolIcon
+                                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                                IconSize="23"
+                                                                IsVisible="{Binding !IsFavorite}"
                                                                 Kind="Favorite"
-                                                                ToolTip.Tip="{Binding DataContext.FavoriteAccountText, ElementName=Root}" />
+                                                                Opacity="0.55" />
                                                         </Grid>
+                                                    </Button>
+                                                    <StackPanel Grid.Row="0" Grid.Column="2" Spacing="3">
+                                                        <TextBlock
+                                                            FontSize="17"
+                                                            FontWeight="SemiBold"
+                                                            Text="{Binding Issuer}"
+                                                            TextTrimming="CharacterEllipsis" />
                                                         <TextBlock
                                                             Foreground="{DynamicResource BrushAccountName}"
                                                             IsVisible="{Binding HasAccountName}"
@@ -442,18 +472,34 @@
                                                             IsVisible="{Binding HasCustomPeriod}"
                                                             Text="{Binding CustomPeriodLabel}" />
                                                     </StackPanel>
-                                                    <TextBlock
+                                                    <StackPanel
+                                                        x:Name="AccountCodeDisplay"
                                                         Grid.Row="0"
-                                                        Grid.Column="2"
+                                                        Grid.Column="3"
+                                                        HorizontalAlignment="Right"
                                                         VerticalAlignment="Center"
-                                                        Foreground="{DynamicResource BrushTextSelection}"
-                                                        FontFamily="Consolas"
-                                                        FontSize="25"
-                                                        FontWeight="Bold"
-                                                        Text="{Binding DisplayCode}" />
+                                                        automation:AutomationProperties.Name="{Binding DataContext.CopyCodeText, ElementName=Root}"
+                                                        Spacing="1"
+                                                        ToolTip.Tip="{Binding DataContext.CopyCodeText, ElementName=Root}">
+                                                        <TextBlock
+                                                            HorizontalAlignment="Right"
+                                                            Foreground="{DynamicResource BrushTextSelection}"
+                                                            FontFamily="Consolas"
+                                                            FontSize="25"
+                                                            FontWeight="Bold"
+                                                            Text="{Binding DisplayCode}" />
+                                                        <TextBlock
+                                                            HorizontalAlignment="Right"
+                                                            Foreground="{DynamicResource BrushAccent}"
+                                                            FontSize="11"
+                                                            FontWeight="SemiBold"
+                                                            MinHeight="16"
+                                                            Text="{Binding CopyConfirmation}"
+                                                            TextWrapping="NoWrap" />
+                                                    </StackPanel>
                                                     <ProgressBar
                                                         Grid.Row="1"
-                                                        Grid.Column="1"
+                                                        Grid.Column="2"
                                                         Grid.ColumnSpan="2"
                                                         Classes="account-countdown"
                                                         Classes.expiring="{Binding IsExpiring}"
