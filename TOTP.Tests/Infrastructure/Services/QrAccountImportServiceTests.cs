@@ -74,7 +74,8 @@ public sealed class QrAccountImportServiceTests
             "Example",
             "JBSWY3DPEHPK3PXP",
             "alice",
-            30);
+            30,
+            isFavorite: true);
         var accounts = Manager([existing]);
         Account? updated = null;
         accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>()))
@@ -93,6 +94,7 @@ public sealed class QrAccountImportServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(QrAccountImportStatus.Updated, result.Value.Status);
         Assert.Equal(60, updated!.PeriodSeconds);
+        Assert.True(updated.IsFavorite);
     }
 
     [Fact]

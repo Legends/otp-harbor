@@ -80,7 +80,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     !SameIssuer(value.Existing, value.Incoming),
                     !SameAccountName(value.Existing, value.Incoming),
                     !SameSecret(value.Existing, value.Incoming),
-                    value.Existing.PeriodSeconds != value.Incoming.PeriodSeconds))
+                    value.Existing.PeriodSeconds != value.Incoming.PeriodSeconds,
+                    value.Incoming.IsFavorite && !value.Existing.IsFavorite))
                 .ToList();
             var newCount = validated.Count - unchanged - changedConflicts.Count;
             var conflicts = unchanged + changedConflicts.Count;
@@ -198,7 +199,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     incoming.Secret,
                     incoming.AccountName,
                     incoming.PeriodSeconds,
-                    incoming.Group);
+                    incoming.Group,
+                    incoming.IsFavorite || match.IsFavorite);
                 write = await accountManager.UpdateAsync(match, replacement);
                 if (write.IsSuccess)
                 {
@@ -216,7 +218,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                         incoming.Secret,
                         incoming.AccountName,
                         incoming.PeriodSeconds,
-                        incoming.Group)
+                        incoming.Group,
+                        incoming.IsFavorite)
                     : CreateKeepBoth(incoming, working);
                 write = await accountManager.AddNewAsync(added);
                 if (write.IsSuccess)
@@ -264,7 +267,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 SecretValidation.NormalizeBase32Secret(account.Secret),
                 string.IsNullOrWhiteSpace(accountName) ? null : accountName,
                 account.PeriodSeconds,
-                group));
+                group,
+                account.IsFavorite));
         }
 
         return true;
@@ -283,7 +287,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         SameIssuer(left, right)
         && SameAccountName(left, right)
         && SameSecret(left, right)
-        && left.PeriodSeconds == right.PeriodSeconds;
+        && left.PeriodSeconds == right.PeriodSeconds
+        && (!right.IsFavorite || left.IsFavorite);
 
     private static bool SameIssuer(Account left, Account right) =>
         string.Equals(
@@ -356,6 +361,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             incoming.Secret,
             incoming.AccountName,
             incoming.PeriodSeconds,
-            incoming.Group);
+            incoming.Group,
+            incoming.IsFavorite);
     }
 }

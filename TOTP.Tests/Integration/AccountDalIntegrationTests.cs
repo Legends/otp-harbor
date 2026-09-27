@@ -33,7 +33,7 @@ public sealed class AccountDalIntegrationTests
         var sut = CreateSut(storagePath, new EchoVaultService());
 
         var id = Guid.NewGuid();
-        var created = new Account(id, "GitHub", "AAAA", "john");
+        var created = new Account(id, "GitHub", "AAAA", "john", isFavorite: true);
 
         Assert.True((await sut.AddNewAsync(created)).IsSuccess);
 
@@ -41,6 +41,7 @@ public sealed class AccountDalIntegrationTests
         Assert.True(afterCreate.IsSuccess);
         var createdEntry = Assert.Single(afterCreate.Value);
         Assert.Equal("AAAA", createdEntry.Secret);
+        Assert.True(createdEntry.IsFavorite);
 
         var updated = new Account(id, "GitHub", "BBBB", "john.doe");
         Assert.True((await sut.UpdateAsync(updated)).IsSuccess);
@@ -50,6 +51,7 @@ public sealed class AccountDalIntegrationTests
         var updatedEntry = Assert.Single(afterUpdate.Value);
         Assert.Equal("BBBB", updatedEntry.Secret);
         Assert.Equal("john.doe", updatedEntry.AccountName);
+        Assert.False(updatedEntry.IsFavorite);
 
         Assert.True((await sut.DeleteAsync(updated)).IsSuccess);
 

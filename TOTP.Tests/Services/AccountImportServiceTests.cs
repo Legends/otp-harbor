@@ -72,6 +72,80 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
+    public async Task ImportWithConflictResolutionAsync_WhenBackupAddsFavorite_PresentsAndAppliesMetadataConflict()
+    {
+        var existing = new Account(
+            Guid.NewGuid(),
+            "Issuer",
+            "JBSWY3DPEHPK3PXP",
+            "user");
+        var incoming = existing.WithFavorite(true);
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            [incoming],
+            (preview, _) =>
+            {
+                var conflict = Assert.Single(preview.ChangedConflicts);
+                Assert.True(conflict.FavoriteChanged);
+                Assert.False(conflict.IssuerChanged);
+                Assert.False(conflict.AccountNameChanged);
+                Assert.False(conflict.SecretChanged);
+                Assert.False(conflict.PeriodChanged);
+                return Task.FromResult<AccountImportResolution?>(new AccountImportResolution(
+                    [new AccountImportConflictResolution(
+                        conflict.ImportIndex,
+                        AccountImportConflictAction.Replace)]));
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.Replaced);
+        accounts.Verify(value => value.UpdateAsync(
+            existing,
+            It.Is<Account>(replacement => replacement.IsFavorite)), Times.Once);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WhenReplacingFromFormatWithoutFavorite_PreservesExistingFavorite()
+    {
+        var existing = new Account(
+            Guid.NewGuid(),
+            "Issuer",
+            "JBSWY3DPEHPK3PXP",
+            "user",
+            isFavorite: true);
+        var incoming = new Account(
+            existing.ID,
+            existing.Issuer,
+            "KRSXG5DSNFXGOIDB",
+            existing.AccountName);
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            [incoming],
+            ImportConflictStrategy.ReplaceExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.Replaced);
+        accounts.Verify(value => value.UpdateAsync(
+            existing,
+            It.Is<Account>(replacement => replacement.IsFavorite)), Times.Once);
+    }
+
+    [Fact]
     public async Task ImportAsync_WithInvalidGroupMetadata_RejectsBeforeVaultRead()
     {
         var invalidGroup = new AccountGroup(Guid.NewGuid(), "Work", "#123456");

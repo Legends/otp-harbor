@@ -25,6 +25,10 @@ namespace TOTP.Core.Models
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public AccountGroup? Group { get; }
 
+        [JsonPropertyName("favorite")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool IsFavorite { get; }
+
         // JsonConstructor wird benötigt, da die Properties nur 'get' haben
         [JsonConstructor]
         public Account(
@@ -33,7 +37,8 @@ namespace TOTP.Core.Models
             string secret,
             string? accountName = null,
             int periodSeconds = TotpPeriodPolicy.DefaultSeconds,
-            AccountGroup? group = null)
+            AccountGroup? group = null,
+            bool isFavorite = false)
         {
             ID = id;
             Issuer = issuer;
@@ -41,10 +46,14 @@ namespace TOTP.Core.Models
             AccountName = accountName;
             PeriodSeconds = periodSeconds;
             Group = group;
+            IsFavorite = isFavorite;
         }
 
         public Account WithGroup(AccountGroup? group) =>
-            new(ID, Issuer, Secret, AccountName, PeriodSeconds, group);
+            new(ID, Issuer, Secret, AccountName, PeriodSeconds, group, IsFavorite);
+
+        public Account WithFavorite(bool isFavorite) =>
+            new(ID, Issuer, Secret, AccountName, PeriodSeconds, Group, isFavorite);
 
         public bool Equals(Account? other) => other is not null && ID == other.ID;
         public override bool Equals(object? obj) => Equals(obj as Account);

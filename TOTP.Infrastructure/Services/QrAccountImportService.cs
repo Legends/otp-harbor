@@ -115,7 +115,8 @@ public sealed class QrAccountImportService(IAccountManager accounts) : IQrAccoun
                 issuer,
                 incoming.Secret,
                 EmptyToNull(accountName),
-                incoming.PeriodSeconds);
+                incoming.PeriodSeconds,
+                isFavorite: existing.IsFavorite);
             saved = await accounts.UpdateAsync(existing, updated);
             status = QrAccountImportStatus.Updated;
             affectedAccountId = existing.ID;
@@ -213,7 +214,8 @@ public sealed class QrAccountImportService(IAccountManager accounts) : IQrAccoun
                     incoming.Issuer,
                     incoming.Secret,
                     incoming.AccountName,
-                    incoming.PeriodSeconds);
+                    incoming.PeriodSeconds,
+                    isFavorite: existing.IsFavorite);
                 writes.Add(new PlannedWrite(PlannedWriteKind.Update, updated, existing));
                 working.Remove(existing);
                 working.Add(updated);

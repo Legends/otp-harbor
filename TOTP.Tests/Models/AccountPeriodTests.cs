@@ -23,6 +23,7 @@ public sealed class AccountPeriodTests
 
         Assert.NotNull(account);
         Assert.Equal(TotpPeriodPolicy.DefaultSeconds, account.PeriodSeconds);
+        Assert.False(account.IsFavorite);
     }
 
     [Fact]
@@ -60,6 +61,48 @@ public sealed class AccountPeriodTests
         Assert.NotNull(account);
         Assert.Equal(group, account.Group);
         Assert.Contains("\"group\":", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SerializeAndDeserialize_WithFavorite_PreservesEncryptedPayloadMetadata()
+    {
+        var source = new Account(
+            Guid.NewGuid(),
+            "Example",
+            "JBSWY3DPEHPK3PXP",
+            "alice",
+            isFavorite: true);
+
+        var json = JsonSerializer.Serialize(source);
+        var account = JsonSerializer.Deserialize<Account>(json);
+
+        Assert.NotNull(account);
+        Assert.True(account.IsFavorite);
+        Assert.Contains("\"favorite\":true", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Serialize_WhenNotFavorite_OmitsDefaultMetadata()
+    {
+        var source = new Account(Guid.NewGuid(), "Example", "JBSWY3DPEHPK3PXP");
+
+        var json = JsonSerializer.Serialize(source);
+
+        Assert.DoesNotContain("\"favorite\"", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WithGroup_PreservesFavoriteMetadata()
+    {
+        var source = new Account(
+            Guid.NewGuid(),
+            "Example",
+            "JBSWY3DPEHPK3PXP",
+            isFavorite: true);
+
+        var updated = source.WithGroup(new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED"));
+
+        Assert.True(updated.IsFavorite);
     }
 
     [Theory]

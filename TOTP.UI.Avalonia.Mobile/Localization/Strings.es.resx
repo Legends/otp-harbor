@@ -107,6 +107,7 @@
   <data name="AccountNameField" xml:space="preserve"><value>nombre de cuenta</value></data>
   <data name="SecretField" xml:space="preserve"><value>secreto</value></data>
   <data name="PeriodField" xml:space="preserve"><value>período</value></data>
+  <data name="FavoriteField" xml:space="preserve"><value>favorito</value></data>
   <data name="ApplyToAll" xml:space="preserve"><value>Aplicar a todas</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Conservar la versión actual de {0}</value></data>
   <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Usar la versión importada de {0}</value></data>

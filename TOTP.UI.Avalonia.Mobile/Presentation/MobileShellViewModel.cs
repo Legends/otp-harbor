@@ -970,6 +970,7 @@ public sealed class MobileShellViewModel :
     public string AccountNameFieldText => Get(MobileStringKeys.AccountNameField);
     public string SecretFieldText => Get(MobileStringKeys.SecretField);
     public string PeriodFieldText => Get(MobileStringKeys.PeriodField);
+    public string FavoriteFieldText => Get(MobileStringKeys.FavoriteField);
     public string KeepAccountAutomationFormat =>
         Get(MobileStringKeys.KeepAccountAutomationFormat);
     public string RestoreAccountAutomationFormat =>
@@ -2810,6 +2811,7 @@ public sealed class MobileShellViewModel :
                 AccountNameFieldText,
                 SecretFieldText,
                 PeriodFieldText,
+                FavoriteFieldText,
                 KeepAccountAutomationFormat,
                 RestoreAccountAutomationFormat);
             item.PropertyChanged += OnBackupConflictSelectionChanged;
@@ -3376,6 +3378,7 @@ public sealed class MobileShellViewModel :
         nameof(AccountNameFieldText),
         nameof(SecretFieldText),
         nameof(PeriodFieldText),
+        nameof(FavoriteFieldText),
         nameof(KeepAccountAutomationFormat),
         nameof(RestoreAccountAutomationFormat),
         nameof(EditorTitle),

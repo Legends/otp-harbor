@@ -17,6 +17,7 @@ public sealed class BackupImportConflictItem : INotifyPropertyChanged
         string accountNameField,
         string secretField,
         string periodField,
+        string favoriteField,
         string keepAccountAutomationFormat,
         string restoreAccountAutomationFormat)
     {
@@ -31,11 +32,12 @@ public sealed class BackupImportConflictItem : INotifyPropertyChanged
         BackupDisplayName = string.Format(
             backupAccountFormat,
             FormatDisplayName(conflict.BackupIssuer, conflict.BackupAccountName));
-        var changedFields = new List<string>(4);
+        var changedFields = new List<string>(5);
         if (conflict.IssuerChanged) changedFields.Add(issuerField);
         if (conflict.AccountNameChanged) changedFields.Add(accountNameField);
         if (conflict.SecretChanged) changedFields.Add(secretField);
         if (conflict.PeriodChanged) changedFields.Add(periodField);
+        if (conflict.FavoriteChanged) changedFields.Add(favoriteField);
         ChangedFieldsText = string.Format(
             changedFieldsFormat,
             string.Join(", ", changedFields));
