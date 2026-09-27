@@ -1075,6 +1075,55 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task FavoritesFilter_ShowsFavoritesAndCanBeNarrowedBySearch()
+    {
+        var github = new Account(
+            Guid.NewGuid(),
+            "GitHub",
+            ValidSecret,
+            "alice",
+            isFavorite: true);
+        var microsoft = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "bob");
+        var gitlab = new Account(
+            Guid.NewGuid(),
+            "GitLab",
+            ValidSecret,
+            "carol",
+            isFavorite: true);
+        var context = CreateContext(isConfigured: true, [github, microsoft, gitlab]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp
+            .Setup(value => value.GenerateAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.True(context.Sut.HasFavoriteAccounts);
+        Assert.Equal(2, context.Sut.FavoriteCount);
+        Assert.True(context.Sut.ToggleFavoritesFilterCommand.CanExecute(null));
+        await context.Sut.ToggleFavoritesFilterAsync();
+
+        Assert.True(context.Sut.IsFavoritesFilterSelected);
+        Assert.Equal(2, context.Sut.Accounts.Count);
+        Assert.All(context.Sut.Accounts, account => Assert.True(account.IsFavorite));
+
+        context.Sut.SearchText = "hub";
+
+        Assert.Equal(github.ID, Assert.Single(context.Sut.Accounts).Id);
+        Assert.Equal("Showing 1 of 3 accounts", context.Sut.SearchResultSummary);
+        await context.Sut.ClearSearchAsync();
+        Assert.Equal(2, context.Sut.Accounts.Count);
+
+        await context.Sut.ToggleFavoritesFilterAsync();
+
+        Assert.False(context.Sut.IsFavoritesFilterSelected);
+        Assert.Equal(3, context.Sut.Accounts.Count);
+    }
+
+    [Fact]
     public async Task CopyAccountCodeAsync_CopiesCodeDisplayedInAccountRow()
     {
         var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
@@ -1855,6 +1904,98 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(600, persisted.PeriodSeconds);
         Assert.Empty(context.Sut.EditorSecret);
         Assert.False(context.Sut.IsEditorVisible);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_PersistsFavoriteSelection()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        Account? persisted = null;
+        context.AccountManager
+            .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => persisted = account)
+            .ReturnsAsync(Result.Ok());
+        await ConfigureAndBeginAddAsync(context);
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = ValidSecret;
+        context.Sut.EditorIsFavorite = true;
+
+        await context.Sut.SaveAccountAsync();
+
+        Assert.NotNull(persisted);
+        Assert.True(persisted.IsFavorite);
+        Assert.False(context.Sut.EditorIsFavorite);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_LeavesFavoritesFilterToRevealNewNonFavorite()
+    {
+        var stored = new List<Account>
+        {
+            new(
+                Guid.NewGuid(),
+                "Favorite",
+                ValidSecret,
+                "alice",
+                isFavorite: true)
+        };
+        var context = CreateContext(isConfigured: true, stored);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(stored.Add)
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ToggleFavoritesFilterAsync();
+        Assert.True(context.Sut.IsFavoritesFilterSelected);
+        await context.Sut.BeginAddAsync();
+        context.Sut.EditorIssuer = "New account";
+        context.Sut.EditorSecret = ValidSecret;
+
+        await context.Sut.SaveAccountAsync();
+
+        Assert.False(context.Sut.IsFavoritesFilterSelected);
+        Assert.Equal("New account", context.Sut.SelectedAccount?.Issuer);
+        Assert.Equal(2, context.Sut.Accounts.Count);
+    }
+
+    [Fact]
+    public async Task BeginEditAndSave_CanRemoveFavorite()
+    {
+        var original = new Account(
+            Guid.NewGuid(),
+            "Example",
+            ValidSecret,
+            "user",
+            isFavorite: true);
+        var context = CreateContext(isConfigured: true, [original]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        Account? updated = null;
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(original, It.IsAny<Account>()))
+            .Callback<Account, Account>((_, account) => updated = account)
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+
+        await context.Sut.BeginEditAsync();
+        Assert.True(context.Sut.EditorIsFavorite);
+        context.Sut.EditorIsFavorite = false;
+        await context.Sut.SaveAccountAsync();
+
+        Assert.NotNull(updated);
+        Assert.False(updated.IsFavorite);
     }
 
     [Fact]

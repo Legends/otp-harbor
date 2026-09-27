@@ -65,6 +65,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _showAccountsCommand;
     private readonly MobileAsyncCommand _showSettingsCommand;
     private readonly MobileAsyncCommand _clearSearchCommand;
+    private readonly MobileAsyncCommand _toggleFavoritesFilterCommand;
     private readonly MobileAsyncCommand _beginAddCommand;
     private readonly MobileAsyncCommand _saveAccountCommand;
     private readonly MobileAsyncCommand _cancelEditCommand;
@@ -118,6 +119,7 @@ public sealed class MobileShellViewModel :
     private bool _showIssuerLogo = true;
     private long _showIssuerLogoRevision;
     private string _searchText = string.Empty;
+    private bool _showFavoritesOnly;
     private readonly List<MobileAccountItem> _allAccounts = [];
     private MobileAccountItem? _selectedAccount;
     private bool _isEditorVisible;
@@ -129,6 +131,7 @@ public sealed class MobileShellViewModel :
     private string _editorAccountName = string.Empty;
     private string _editorSecret = string.Empty;
     private int? _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+    private bool _editorIsFavorite;
     private bool _isAdvancedOptionsExpanded;
     private string _editorIssuerMessage = string.Empty;
     private string _editorSecretMessage = string.Empty;
@@ -256,6 +259,9 @@ public sealed class MobileShellViewModel :
         _clearSearchCommand = new MobileAsyncCommand(
             ClearSearchAsync,
             () => HasSearchText && IsAccountListVisible && !IsBusy);
+        _toggleFavoritesFilterCommand = new MobileAsyncCommand(
+            ToggleFavoritesFilterAsync,
+            () => HasFavoriteAccounts && IsAccountListVisible && !IsBusy);
         _beginAddCommand = new MobileAsyncCommand(BeginAddAsync, CanEditAccounts);
         _saveAccountCommand = new MobileAsyncCommand(
             SaveAccountAsync,
@@ -370,6 +376,7 @@ public sealed class MobileShellViewModel :
     public ICommand ShowAccountsCommand => _showAccountsCommand;
     public ICommand ShowSettingsCommand => _showSettingsCommand;
     public ICommand ClearSearchCommand => _clearSearchCommand;
+    public ICommand ToggleFavoritesFilterCommand => _toggleFavoritesFilterCommand;
     public ICommand BeginAddCommand => _beginAddCommand;
     public ICommand SaveAccountCommand => _saveAccountCommand;
     public ICommand CancelEditCommand => _cancelEditCommand;
@@ -428,6 +435,10 @@ public sealed class MobileShellViewModel :
     public bool HasNoAccounts => _allAccounts.Count == 0;
     public bool HasNoSearchResults => _allAccounts.Count > 0 && Accounts.Count == 0;
     public bool HasSearchText => SearchText.Length > 0;
+    public int FavoriteCount => _allAccounts.Count(account => account.IsFavorite);
+    public bool HasFavoriteAccounts => FavoriteCount > 0;
+    public bool IsFavoritesFilterSelected => _showFavoritesOnly;
+    public bool HasActiveAccountFilter => HasSearchText || IsFavoritesFilterSelected;
     public string SearchResultSummary => string.Format(
         Get(MobileStringKeys.SearchResultsFormat),
         Accounts.Count,
@@ -644,6 +655,7 @@ public sealed class MobileShellViewModel :
         {
             if (!SetField(ref _searchText, value ?? string.Empty)) return;
             OnPropertyChanged(nameof(HasSearchText));
+            OnPropertyChanged(nameof(HasActiveAccountFilter));
             _clearSearchCommand.NotifyCanExecuteChanged();
             ApplyAccountFilter();
         }
@@ -652,6 +664,16 @@ public sealed class MobileShellViewModel :
     public Task ClearSearchAsync()
     {
         if (HasSearchText) SearchText = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    public Task ToggleFavoritesFilterAsync()
+    {
+        if (!HasFavoriteAccounts) return Task.CompletedTask;
+        _showFavoritesOnly = !_showFavoritesOnly;
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        ApplyAccountFilter();
         return Task.CompletedTask;
     }
 
@@ -774,6 +796,12 @@ public sealed class MobileShellViewModel :
 
     public bool HasEditorPeriodSeconds => EditorPeriodSeconds.HasValue;
 
+    public bool EditorIsFavorite
+    {
+        get => _editorIsFavorite;
+        set => SetField(ref _editorIsFavorite, value);
+    }
+
     public Task ClearEditorPeriodAsync()
     {
         EditorPeriodSeconds = null;
@@ -888,6 +916,8 @@ public sealed class MobileShellViewModel :
     public string DisableAppLockWarningText => Get(MobileStringKeys.DisableAppLockWarning);
     public string SearchAccountsText => Get(MobileStringKeys.SearchAccounts);
     public string ClearSearchText => Get(MobileStringKeys.ClearSearch);
+    public string FavoritesText => Get(MobileStringKeys.Favorites);
+    public string FavoriteAccountText => Get(MobileStringKeys.FavoriteAccount);
     public string NoSearchResultsText => Get(MobileStringKeys.NoSearchResults);
     public string AccountSwipeHintText => Get(MobileStringKeys.AccountSwipeHint);
     public string ScanQrText => Get(MobileStringKeys.ScanQr);
@@ -2173,6 +2203,7 @@ public sealed class MobileShellViewModel :
         EditorAccountName = SelectedAccount.AccountName;
         EditorSecret = string.Empty;
         EditorPeriodSeconds = SelectedAccount.ConfiguredPeriodSeconds;
+        EditorIsFavorite = SelectedAccount.IsFavorite;
         IsDeleteConfirmationVisible = false;
         CancelCodeRefresh();
         IsEditorVisible = true;
@@ -2261,7 +2292,8 @@ public sealed class MobileShellViewModel :
                 issuer,
                 secret,
                 accountName.Length == 0 ? null : accountName,
-                periodSeconds);
+                periodSeconds,
+                isFavorite: EditorIsFavorite);
             var saved = existing is null
                 ? await _accountManager.AddNewAsync(updated)
                 : await _accountManager.UpdateAsync(existing, updated);
@@ -2479,10 +2511,18 @@ public sealed class MobileShellViewModel :
                 account.AccountName ?? string.Empty,
                 account.PeriodSeconds,
                 FormatCustomPeriod(account.PeriodSeconds),
-                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName)));
+                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
+                account.IsFavorite));
             _allAccounts[^1].UpdateLogoVisibility(ShowIssuerLogo);
         }
 
+        if (_showFavoritesOnly
+            && selectedId.HasValue
+            && _allAccounts.FirstOrDefault(account => account.Id == selectedId.Value)?.IsFavorite != true)
+        {
+            _showFavoritesOnly = false;
+        }
+        RefreshFavoriteState();
         ApplyAccountFilter(selectedId);
     }
 
@@ -2490,11 +2530,11 @@ public sealed class MobileShellViewModel :
     {
         var selectedId = preferredSelection ?? SelectedAccount?.Id;
         var query = SearchText.Trim();
-        var matches = query.Length == 0
-            ? _allAccounts
-            : _allAccounts.Where(account =>
-                account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase));
+        var matches = _allAccounts.Where(account =>
+            (!_showFavoritesOnly || account.IsFavorite)
+            && (query.Length == 0
+                || account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
 
         Accounts.Clear();
         foreach (var account in matches) Accounts.Add(account);
@@ -2632,6 +2672,8 @@ public sealed class MobileShellViewModel :
         Accounts.Clear();
         _allAccounts.Clear();
         SearchText = string.Empty;
+        _showFavoritesOnly = false;
+        RefreshFavoriteState();
         _isSettingsVisible = false;
         OnPropertyChanged(nameof(HasAccounts));
         OnPropertyChanged(nameof(HasNoAccounts));
@@ -2697,12 +2739,24 @@ public sealed class MobileShellViewModel :
         EditorAccountName = string.Empty;
         EditorSecret = string.Empty;
         EditorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+        EditorIsFavorite = false;
         IsAdvancedOptionsExpanded = false;
         EditorIssuerMessage = string.Empty;
         EditorSecretMessage = string.Empty;
         EditorPeriodMessage = string.Empty;
         OnPropertyChanged(nameof(EditorTitle));
         OnPropertyChanged(nameof(EditorSecretPlaceholder));
+    }
+
+    private void RefreshFavoriteState()
+    {
+        if (_showFavoritesOnly && !HasFavoriteAccounts)
+            _showFavoritesOnly = false;
+        OnPropertyChanged(nameof(FavoriteCount));
+        OnPropertyChanged(nameof(HasFavoriteAccounts));
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
     }
 
     private void ClearPasswordInputs()
@@ -3209,6 +3263,7 @@ public sealed class MobileShellViewModel :
         _showAccountsCommand.NotifyCanExecuteChanged();
         _showSettingsCommand.NotifyCanExecuteChanged();
         _clearSearchCommand.NotifyCanExecuteChanged();
+        _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
         _beginAddCommand.NotifyCanExecuteChanged();
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
@@ -3330,6 +3385,8 @@ public sealed class MobileShellViewModel :
         nameof(DisableAppLockWarningText),
         nameof(SearchAccountsText),
         nameof(ClearSearchText),
+        nameof(FavoritesText),
+        nameof(FavoriteAccountText),
         nameof(SearchResultSummary),
         nameof(NoSearchResultsText),
         nameof(AccountSwipeHintText),

@@ -11,7 +11,8 @@ public sealed class MobileAccountItem(
     string accountName,
     int configuredPeriodSeconds = TotpPeriodPolicy.DefaultSeconds,
     string customPeriodLabel = "",
-    BrandInfo? brand = null) : INotifyPropertyChanged
+    BrandInfo? brand = null,
+    bool isFavorite = false) : INotifyPropertyChanged
 {
     private string _code = string.Empty;
     private int _remainingSeconds;
@@ -30,6 +31,7 @@ public sealed class MobileAccountItem(
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
+    public bool IsFavorite { get; } = isFavorite;
     public bool HasAccountName => AccountName.Length > 0;
     public string Code => _code;
     public string DisplayCode => FormatCode(_code);

@@ -218,13 +218,30 @@
                                 ToolTip.Tip="{Binding ClearSearchText}" />
                             <TextBlock
                                 Grid.Row="1"
-                                Grid.ColumnSpan="2"
+                                Grid.Column="1"
                                 Margin="0,5,0,0"
                                 HorizontalAlignment="Right"
                                 Foreground="{DynamicResource BrushTextSecondary}"
                                 FontSize="12"
-                                IsVisible="{Binding HasSearchText}"
+                                IsVisible="{Binding HasActiveAccountFilter}"
                                 Text="{Binding SearchResultSummary}" />
+                            <ToggleButton
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="0,5,8,0"
+                                Padding="10,5"
+                                HorizontalAlignment="Left"
+                                automation:AutomationProperties.Name="{Binding FavoritesText}"
+                                Command="{Binding ToggleFavoritesFilterCommand}"
+                                IsChecked="{Binding IsFavoritesFilterSelected, Mode=OneWay}"
+                                IsVisible="{Binding HasFavoriteAccounts}"
+                                ToolTip.Tip="{Binding FavoritesText}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <controls:SymbolIcon IconSize="15" Kind="Favorite" />
+                                    <TextBlock Text="{Binding FavoritesText}" />
+                                    <TextBlock Text="{Binding FavoriteCount}" />
+                                </StackPanel>
+                            </ToggleButton>
                         </Grid>
 
                         <Border
@@ -364,11 +381,23 @@
                                                         Initials="{Binding Brand.Initials}"
                                                         TileBackground="{Binding Brand.BackgroundBrush}" />
                                                     <StackPanel Grid.Row="0" Grid.Column="1" Spacing="3">
-                                                        <TextBlock
-                                                            FontSize="17"
-                                                            FontWeight="SemiBold"
-                                                            Text="{Binding Issuer}"
-                                                            TextTrimming="CharacterEllipsis" />
+                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                                            <TextBlock
+                                                                Grid.Column="0"
+                                                                FontSize="17"
+                                                                FontWeight="SemiBold"
+                                                                Text="{Binding Issuer}"
+                                                                TextTrimming="CharacterEllipsis" />
+                                                            <controls:SymbolIcon
+                                                                Grid.Column="1"
+                                                                VerticalAlignment="Center"
+                                                                automation:AutomationProperties.Name="{Binding DataContext.FavoriteAccountText, ElementName=Root}"
+                                                                Foreground="{DynamicResource BrushAccent}"
+                                                                IconSize="14"
+                                                                IsVisible="{Binding IsFavorite}"
+                                                                Kind="Favorite"
+                                                                ToolTip.Tip="{Binding DataContext.FavoriteAccountText, ElementName=Root}" />
+                                                        </Grid>
                                                         <TextBlock
                                                             Foreground="{DynamicResource BrushAccountName}"
                                                             IsVisible="{Binding HasAccountName}"
@@ -799,6 +828,10 @@
                             automation:AutomationProperties.Name="{Binding AccountNameText}"
                             PlaceholderText="{Binding AccountNameText}"
                             Text="{Binding EditorAccountName, Mode=TwoWay}" />
+                        <CheckBox
+                            automation:AutomationProperties.Name="{Binding FavoriteAccountText}"
+                            Content="{Binding FavoriteAccountText}"
+                            IsChecked="{Binding EditorIsFavorite, Mode=TwoWay}" />
                         <controls:RevealableSecretInput
                             AccessibleName="{Binding EditorSecretPlaceholder}"
                             PlaceholderText="{Binding EditorSecretPlaceholder}"
