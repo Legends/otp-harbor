@@ -199,6 +199,11 @@
   <data name="AllAccounts" xml:space="preserve"><value>Alle Konten</value></data>
   <data name="FavoriteAccounts" xml:space="preserve"><value>Favoriten</value></data>
   <data name="FavoriteAccount" xml:space="preserve"><value>Favoritenkonto</value></data>
+  <data name="AddToFavorites" xml:space="preserve"><value>Zu Favoriten hinzufügen</value></data>
+  <data name="RemoveFromFavorites" xml:space="preserve"><value>Aus Favoriten entfernen</value></data>
+  <data name="FavoriteAdded" xml:space="preserve"><value>Zu Favoriten hinzugefügt.</value></data>
+  <data name="FavoriteRemoved" xml:space="preserve"><value>Aus Favoriten entfernt.</value></data>
+  <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Die Favoriteneinstellung konnte nicht gespeichert werden.</value></data>
   <data name="CreateGroup" xml:space="preserve"><value>Gruppe erstellen</value></data>
   <data name="EditGroup" xml:space="preserve"><value>Gruppe bearbeiten</value></data>
   <data name="DeleteGroup" xml:space="preserve"><value>Gruppe löschen</value></data>

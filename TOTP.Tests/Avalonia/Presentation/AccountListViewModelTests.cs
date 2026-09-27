@@ -381,6 +381,64 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task ToggleAccountFavoriteAsync_AddsAndRemovesFavoriteFromVisibleRow()
+    {
+        var stored = new List<Account>
+        {
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice")
+        };
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(stored));
+        manager.Setup(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()))
+            .Callback<Account, Account>((_, updated) => stored[0] = updated)
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        var row = Assert.Single(sut.Accounts);
+
+        Assert.NotNull(row.ToggleFavoriteCommand);
+        await sut.ToggleAccountFavoriteAsync(row);
+
+        Assert.True(stored[0].IsFavorite);
+        row = Assert.Single(sut.Accounts);
+        Assert.True(row.IsFavorite);
+        Assert.Equal("Added to favorites.", sut.Message);
+
+        sut.ToggleFavoritesFilterCommand.Execute(null);
+        Assert.True(sut.IsFavoritesFilterSelected);
+        await sut.ToggleAccountFavoriteAsync(row);
+
+        Assert.False(stored[0].IsFavorite);
+        Assert.False(sut.IsFavoritesFilterSelected);
+        Assert.False(Assert.Single(sut.Accounts).IsFavorite);
+        Assert.Equal("Removed from favorites.", sut.Message);
+        manager.Verify(value => value.UpdateAsync(
+            It.IsAny<Account>(),
+            It.IsAny<Account>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ToggleAccountFavoriteAsync_WhenSaveFails_KeepsCurrentStateAndReportsError()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        manager.Setup(value => value.UpdateAsync(account, It.IsAny<Account>()))
+            .ReturnsAsync(Result.Fail("synthetic failure"));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        var row = Assert.Single(sut.Accounts);
+
+        await sut.ToggleAccountFavoriteAsync(row);
+
+        Assert.False(row.IsFavorite);
+        Assert.Equal("The favorite setting could not be saved.", sut.Message);
+        Assert.Equal(NotificationSeverity.Error, sut.Notification.Severity);
+    }
+
+    [Fact]
     public async Task LoadAsync_WithStoredLegacyGroupColor_RestoresVisibleGroupAndColor()
     {
         var storedGroup = new AccountGroup(Guid.NewGuid(), "Personal", "#7c3aed");

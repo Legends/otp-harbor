@@ -33,6 +33,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _generateCommand;
     private readonly AsyncCommand _copyCommand;
     private readonly AsyncCommand<AccountListItemViewModel> _copyAccountCodeCommand;
+    private readonly AsyncCommand<AccountListItemViewModel> _toggleAccountFavoriteCommand;
     private readonly AsyncCommand _generateQrCommand;
     private readonly AsyncCommand _beginAddCommand;
     private readonly AsyncCommand _beginEditCommand;
@@ -139,6 +140,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _copyAccountCodeCommand = new AsyncCommand<AccountListItemViewModel>(
             CopyAccountCodeAsync,
             _ => true);
+        _toggleAccountFavoriteCommand = new AsyncCommand<AccountListItemViewModel>(
+            ToggleAccountFavoriteAsync,
+            _ => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible);
         _generateQrCommand = new AsyncCommand(GenerateQrAsync, () => _selectedAccount is not null);
         _beginAddCommand = new AsyncCommand(
             BeginAddAsync,
@@ -589,7 +593,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                             account.Issuer,
                             account.AccountName),
                         group,
-                        account.IsFavorite);
+                        account.IsFavorite,
+                        _toggleAccountFavoriteCommand);
                 })
                 .ToArray();
             RefreshFavoriteState();
@@ -770,6 +775,63 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ShowLocalizedTransientNotification(
             AvaloniaStringKeys.ClipboardCopyUnavailable,
             NotificationSeverity.Error);
+    }
+
+    public async Task ToggleAccountFavoriteAsync(AccountListItemViewModel account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || !_allAccounts.Contains(account))
+            return;
+
+        var makeFavorite = !account.IsFavorite;
+        IsBusy = true;
+        try
+        {
+            var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+            var existing = loaded.IsSuccess
+                ? loaded.Value.FirstOrDefault(value => value.ID == account.Id)
+                : null;
+            if (existing is null)
+            {
+                ShowLocalizedTransientNotification(
+                    AvaloniaStringKeys.FavoriteUpdateFailed,
+                    NotificationSeverity.Error);
+                return;
+            }
+
+            var saved = await _accountManager.UpdateAsync(
+                existing,
+                existing.WithFavorite(makeFavorite));
+            if (saved.IsFailed)
+            {
+                ShowLocalizedTransientNotification(
+                    AvaloniaStringKeys.FavoriteUpdateFailed,
+                    NotificationSeverity.Error);
+                return;
+            }
+
+            IsBusy = false;
+            await LoadAsync();
+            if (HasMessage) return;
+            SetSelectedAccount(
+                Accounts.FirstOrDefault(value => value.Id == account.Id),
+                generateAndCopyCode: false);
+            ShowLocalizedTransientNotification(
+                makeFavorite
+                    ? AvaloniaStringKeys.FavoriteAdded
+                    : AvaloniaStringKeys.FavoriteRemoved,
+                NotificationSeverity.Success);
+        }
+        catch (Exception)
+        {
+            ShowLocalizedTransientNotification(
+                AvaloniaStringKeys.FavoriteUpdateFailed,
+                NotificationSeverity.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     public Task GenerateQrAsync() => GenerateQrAsync(_selectedAccount);
@@ -1678,6 +1740,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private void NotifyCrudCommands()
     {
         _beginAddCommand.NotifyCanExecuteChanged();
+        _toggleAccountFavoriteCommand.NotifyCanExecuteChanged();
         _beginEditCommand.NotifyCanExecuteChanged();
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();

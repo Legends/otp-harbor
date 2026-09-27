@@ -16,7 +16,8 @@ public sealed class AccountListItemViewModel(
     string customPeriodLabel = "",
     BrandInfo? brand = null,
     AccountGroup? group = null,
-    bool isFavorite = false) : INotifyPropertyChanged
+    bool isFavorite = false,
+    ICommand? toggleFavoriteCommand = null) : INotifyPropertyChanged
 {
     private bool _isRecentlyAdded = isRecentlyAdded;
     private string _code = string.Empty;
@@ -40,6 +41,7 @@ public sealed class AccountListItemViewModel(
     public bool ShowIssuerLogo => _showIssuerLogo;
     public AccountGroup? Group { get; } = group;
     public bool IsFavorite { get; } = isFavorite;
+    public ICommand? ToggleFavoriteCommand { get; } = toggleFavoriteCommand;
 
     public string CopyConfirmation
     {

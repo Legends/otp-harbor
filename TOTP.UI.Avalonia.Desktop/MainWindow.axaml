@@ -489,16 +489,42 @@
                                                                         Classes="secondary"
                                                                         IsVisible="{Binding !HasCopyConfirmation}"
                                                                         Text="{Binding CustomPeriodLabel}" />
-                                                                    <shared:SymbolIcon
+                                                                    <Button
                                                                         Grid.Row="0"
                                                                         Grid.Column="2"
+                                                                        Width="28"
+                                                                        Height="28"
+                                                                        MinHeight="28"
+                                                                        Padding="5"
                                                                         VerticalAlignment="Center"
-                                                                        automation:AutomationProperties.Name="{DynamicResource FavoriteAccount}"
-                                                                        Foreground="{DynamicResource BrushAccent}"
-                                                                        IconSize="13"
+                                                                        automation:AutomationProperties.Name="{DynamicResource RemoveFromFavorites}"
+                                                                        Classes="icon"
+                                                                        Command="{Binding ToggleFavoriteCommand}"
+                                                                        CommandParameter="{Binding}"
                                                                         IsVisible="{Binding IsFavorite}"
-                                                                        Kind="Favorite"
-                                                                        ToolTip.Tip="{DynamicResource FavoriteAccount}" />
+                                                                        ToolTip.Tip="{DynamicResource RemoveFromFavorites}">
+                                                                        <shared:SymbolIcon
+                                                                            Foreground="{DynamicResource BrushAccent}"
+                                                                            IconSize="15"
+                                                                            Kind="Favorite" />
+                                                                    </Button>
+                                                                    <Button
+                                                                        Grid.Row="0"
+                                                                        Grid.Column="2"
+                                                                        Width="28"
+                                                                        Height="28"
+                                                                        MinHeight="28"
+                                                                        Padding="5"
+                                                                        VerticalAlignment="Center"
+                                                                        automation:AutomationProperties.Name="{DynamicResource AddToFavorites}"
+                                                                        Classes="icon"
+                                                                        Command="{Binding ToggleFavoriteCommand}"
+                                                                        CommandParameter="{Binding}"
+                                                                        IsVisible="{Binding !IsFavorite}"
+                                                                        Opacity="0.55"
+                                                                        ToolTip.Tip="{DynamicResource AddToFavorites}">
+                                                                        <shared:SymbolIcon IconSize="15" Kind="Favorite" />
+                                                                    </Button>
                                                                     <ProgressBar
                                                                         Grid.Row="1"
                                                                         Grid.Column="1"
