@@ -291,30 +291,7 @@
                                             Margin="10,8,10,12"
                                             VerticalAlignment="Top"
                                             Spacing="8">
-                                            <Border
-                                                Width="150"
-                                                MinHeight="54"
-                                                HorizontalAlignment="Left"
-                                                Margin="2"
-                                                Classes="group-card"
-                                                Classes.selected="{Binding IsFavoritesFilterSelected}"
-                                                CornerRadius="7"
-                                                IsVisible="{Binding HasFavoriteAccounts}">
-                                                <Button
-                                                    automation:AutomationProperties.Name="{DynamicResource FavoriteAccounts}"
-                                                    Classes="group-card-hit-target"
-                                                    Command="{Binding ToggleFavoritesFilterCommand}"
-                                                    ToolTip.Tip="{DynamicResource FavoriteAccounts}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                                        <shared:SymbolIcon IconSize="20" Kind="Favorite" />
-                                                        <StackPanel>
-                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource FavoriteAccounts}" />
-                                                            <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </Button>
-                                            </Border>
-                                            <StackPanel IsVisible="{Binding HasGroups}" Spacing="6">
+                                            <StackPanel IsVisible="{Binding HasAccountNavigationCards}" Spacing="6">
                                                 <Grid ColumnDefinitions="10,*">
                                                     <Button
                                                         x:Name="GroupBackButton"
@@ -339,7 +316,31 @@
                                                         HorizontalScrollBarVisibility="Hidden"
                                                         PointerWheelChanged="ScrollGroupsHorizontally"
                                                         VerticalScrollBarVisibility="Disabled">
-                                                        <ItemsControl ItemsSource="{Binding Groups}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Border
+                                                                x:Name="FavoritesGroupCard"
+                                                                Width="150"
+                                                                MinHeight="54"
+                                                                Margin="2"
+                                                                Classes="group-card"
+                                                                Classes.selected="{Binding IsFavoritesFilterSelected}"
+                                                                CornerRadius="7"
+                                                                IsVisible="{Binding HasFavoriteAccounts}">
+                                                                <Button
+                                                                    automation:AutomationProperties.Name="{DynamicResource FavoriteAccounts}"
+                                                                    Classes="group-card-hit-target"
+                                                                    Command="{Binding ToggleFavoritesFilterCommand}"
+                                                                    ToolTip.Tip="{DynamicResource FavoriteAccounts}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                                                        <shared:SymbolIcon IconSize="20" Kind="Favorite" />
+                                                                        <StackPanel>
+                                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource FavoriteAccounts}" />
+                                                                            <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
+                                                                        </StackPanel>
+                                                                    </StackPanel>
+                                                                </Button>
+                                                            </Border>
+                                                            <ItemsControl ItemsSource="{Binding Groups}">
                                                             <ItemsControl.ItemsPanel>
                                                                 <ItemsPanelTemplate>
                                                                     <StackPanel Orientation="Horizontal" />
@@ -389,7 +390,8 @@
                                                                     </Border>
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
+                                                            </ItemsControl>
+                                                        </StackPanel>
                                                     </ScrollViewer>
                                                 </Grid>
                                             </StackPanel>

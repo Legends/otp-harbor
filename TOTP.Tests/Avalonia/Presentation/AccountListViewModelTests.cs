@@ -32,6 +32,7 @@ public sealed class AccountListViewModelTests
 
         Assert.True(sut.HasNoAccounts);
         Assert.False(sut.HasNoSearchResults);
+        Assert.False(sut.HasAccountNavigationCards);
         Assert.False(sut.HasMessage);
     }
 
@@ -313,6 +314,7 @@ public sealed class AccountListViewModelTests
         var work = Assert.Single(sut.Groups);
         Assert.Equal("Work", work.Name);
         Assert.Equal(2, work.AccountCount);
+        Assert.True(sut.HasAccountNavigationCards);
         var ungrouped = Assert.Single(sut.Accounts);
         Assert.Equal("Microsoft", ungrouped.Issuer);
 
@@ -358,6 +360,7 @@ public sealed class AccountListViewModelTests
         await sut.LoadAsync();
 
         Assert.True(sut.HasFavoriteAccounts);
+        Assert.True(sut.HasAccountNavigationCards);
         Assert.Equal(2, sut.FavoriteCount);
         Assert.Equal(2, sut.Accounts.Count);
         sut.ToggleFavoritesFilterCommand.Execute(null);

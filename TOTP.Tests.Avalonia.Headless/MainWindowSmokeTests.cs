@@ -1662,6 +1662,11 @@ public sealed class MainWindowSmokeTests
                 templateHost.GetLogicalDescendants().OfType<ScrollViewer>(),
                 viewer => viewer.Name == "GroupCardsScrollViewer");
             Assert.Equal(ScrollBarVisibility.Hidden, groupScroller.HorizontalScrollBarVisibility);
+            var groupStrip = Assert.IsType<StackPanel>(groupScroller.Content);
+            Assert.Equal(Orientation.Horizontal, groupStrip.Orientation);
+            var favorites = Assert.IsType<Border>(groupStrip.Children[0]);
+            Assert.Equal("FavoritesGroupCard", favorites.Name);
+            Assert.IsType<ItemsControl>(groupStrip.Children[1]);
             var groupBackButton = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "GroupBackButton");

@@ -337,6 +337,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasGroups => _allGroups.Count > 0;
 
+    public bool HasAccountNavigationCards => HasFavoriteAccounts || HasGroups;
+
     public bool HasSelectedGroup => _selectedGroupId.HasValue;
 
     public int FavoriteCount => _allAccounts.Count(account => account.IsFavorite);
@@ -1684,6 +1686,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             _selectedGroupId = null;
         ApplyGroupSearch();
         OnPropertyChanged(nameof(HasGroups));
+        OnPropertyChanged(nameof(HasAccountNavigationCards));
         OnPropertyChanged(nameof(HasSelectedGroup));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
@@ -1696,6 +1699,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             _showFavoritesOnly = false;
         OnPropertyChanged(nameof(FavoriteCount));
         OnPropertyChanged(nameof(HasFavoriteAccounts));
+        OnPropertyChanged(nameof(HasAccountNavigationCards));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
