@@ -50,13 +50,17 @@ records, or APK signing blocks as application payload differences:
 ```powershell
 ./scripts/validation/Compare-AndroidApkPayload.ps1 `
   -ReferenceApk path/to/first.apk `
-  -CandidateApk path/to/second.apk
+  -CandidateApk path/to/second.apk `
+  -ReportPath path/to/payload-comparison.json
 ```
 
 The comparator requires identical entry names, uncompressed lengths, and SHA-256 hashes for every
-non-signature entry. Passing it demonstrates payload equivalence only. It does not prove that the
-toolchain is acceptable to F-Droid, that two independent environments reproduce the payload, or that
-signed APK bytes match. `Test-AndroidApkPayloadComparison.ps1` regression-tests these boundaries in CI.
+non-signature entry. The optional JSON report records only artifact filenames, lengths, SHA-256
+hashes, entry counts, and a bounded difference list; it never records source paths. Passing it
+demonstrates payload equivalence only. It does not prove that the toolchain is acceptable to F-Droid,
+that two independent environments reproduce the payload, or that signed APK bytes match.
+`Test-AndroidApkPayloadComparison.ps1` regression-tests these boundaries and the evidence-report
+schema in CI.
 Record each independent run with the
 [F-Droid reproducibility evidence template](FDROID_REPRODUCIBILITY_RECORD_TEMPLATE.md); do not reuse
 build outputs, caches, or generated intermediates between the two environments.

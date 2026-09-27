@@ -43,9 +43,17 @@ function New-TestApk(
     }
 }
 
-function Assert-ComparisonFails([string]$Reference, [string]$Candidate, [string]$ExpectedText) {
+function Assert-ComparisonFails(
+    [string]$Reference,
+    [string]$Candidate,
+    [string]$ExpectedText,
+    [string]$ReportPath = '') {
     try {
-        & $comparisonScript -ReferenceApk $Reference -CandidateApk $Candidate | Out-Null
+        if ([string]::IsNullOrWhiteSpace($ReportPath)) {
+            & $comparisonScript -ReferenceApk $Reference -CandidateApk $Candidate | Out-Null
+        } else {
+            & $comparisonScript -ReferenceApk $Reference -CandidateApk $Candidate -ReportPath $ReportPath | Out-Null
+        }
     }
     catch {
         if ($_.Exception.Message.Contains($ExpectedText, [StringComparison]::Ordinal)) { return }
@@ -90,6 +98,8 @@ try {
     $different = Join-Path $testRoot 'different.apk'
     $missing = Join-Path $testRoot 'missing.apk'
     $duplicate = Join-Path $testRoot 'duplicate.apk'
+    $matchReport = Join-Path $testRoot 'match-report.json'
+    $differenceReport = Join-Path $testRoot 'difference-report.json'
 
     New-TestApk $reference ([ordered]@{
         'AndroidManifest.xml' = 'manifest'
@@ -112,10 +122,31 @@ try {
     }) ([DateTimeOffset]'2024-01-01T00:00:00Z') ([IO.Compression.CompressionLevel]::Optimal)
     New-DuplicateEntryApk $duplicate
 
-    & $comparisonScript -ReferenceApk $reference -CandidateApk $equivalent | Out-Null
-    Assert-ComparisonFails $reference $different 'content differs: classes.dex'
+    & $comparisonScript -ReferenceApk $reference -CandidateApk $equivalent -ReportPath $matchReport | Out-Null
+    $matchEvidence = Get-Content -LiteralPath $matchReport -Raw | ConvertFrom-Json
+    if ($matchEvidence.schemaVersion -ne 1 -or -not $matchEvidence.payloadMatch -or
+        $matchEvidence.differenceCount -ne 0 -or $matchEvidence.differencesTruncated) {
+        throw 'APK comparator match report did not record the expected result.'
+    }
+    if ($matchEvidence.referenceArtifact.fileName -ne 'reference.apk' -or
+        $matchEvidence.candidateArtifact.fileName -ne 'equivalent.apk' -or
+        $matchEvidence.referenceArtifact.payloadEntryCount -ne 2 -or
+        $matchEvidence.referenceArtifact.sha256 -notmatch '^[0-9A-F]{64}$') {
+        throw 'APK comparator match report did not record bounded artifact identity.'
+    }
+    if ((Get-Content -LiteralPath $matchReport -Raw).Contains($testRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'APK comparator report leaked an artifact path.'
+    }
+
+    Assert-ComparisonFails $reference $different 'content differs: classes.dex' $differenceReport
+    $differenceEvidence = Get-Content -LiteralPath $differenceReport -Raw | ConvertFrom-Json
+    if ($differenceEvidence.payloadMatch -or $differenceEvidence.differenceCount -ne 1 -or
+        $differenceEvidence.reportedDifferences[0] -ne 'content differs: classes.dex') {
+        throw 'APK comparator difference report did not record the payload drift.'
+    }
     Assert-ComparisonFails $reference $missing 'missing from candidate: classes.dex'
     Assert-ComparisonFails $reference $duplicate 'duplicate payload entry: classes.dex'
+    Assert-ComparisonFails $reference $equivalent 'must not overwrite an APK input' $reference
 }
 finally {
     $resolvedTestRoot = [IO.Path]::GetFullPath($testRoot)

@@ -13,7 +13,9 @@ param(
     [string]$ReferenceApk,
 
     [Parameter(Mandatory)]
-    [string]$CandidateApk
+    [string]$CandidateApk,
+
+    [string]$ReportPath
 )
 
 Set-StrictMode -Version Latest
@@ -85,6 +87,58 @@ function Get-ApkPayload([string]$ApkPath) {
     return $payload
 }
 
+function Get-ArtifactRecord([string]$ApkPath, [int]$PayloadEntryCount) {
+    $resolvedPath = [IO.Path]::GetFullPath($ApkPath)
+    $stream = [IO.File]::OpenRead($resolvedPath)
+    try {
+        $sha256 = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($stream))
+    }
+    finally {
+        $stream.Dispose()
+    }
+
+    $file = [IO.FileInfo]::new($resolvedPath)
+    return [ordered]@{
+        fileName = $file.Name
+        byteLength = $file.Length
+        sha256 = $sha256
+        payloadEntryCount = $PayloadEntryCount
+    }
+}
+
+function Write-ComparisonReport(
+    [string]$Path,
+    [Collections.Generic.Dictionary[string, object]]$ReferencePayload,
+    [Collections.Generic.Dictionary[string, object]]$CandidatePayload,
+    [string[]]$SortedDifferences) {
+    $resolvedPath = [IO.Path]::GetFullPath($Path)
+    $resolvedReference = [IO.Path]::GetFullPath($ReferenceApk)
+    $resolvedCandidate = [IO.Path]::GetFullPath($CandidateApk)
+    if ($resolvedPath.Equals($resolvedReference, [StringComparison]::OrdinalIgnoreCase) -or
+        $resolvedPath.Equals($resolvedCandidate, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'The comparison report must not overwrite an APK input.'
+    }
+
+    $parent = [IO.Path]::GetDirectoryName($resolvedPath)
+    if ([string]::IsNullOrWhiteSpace($parent) -or -not [IO.Directory]::Exists($parent)) {
+        throw "Comparison report directory does not exist: $parent"
+    }
+
+    $maximumReportedDifferences = 200
+    $reportedDifferences = @($SortedDifferences | Select-Object -First $maximumReportedDifferences)
+    $report = [ordered]@{
+        schemaVersion = 1
+        referenceArtifact = Get-ArtifactRecord $ReferenceApk $ReferencePayload.Count
+        candidateArtifact = Get-ArtifactRecord $CandidateApk $CandidatePayload.Count
+        payloadMatch = $SortedDifferences.Count -eq 0
+        differenceCount = $SortedDifferences.Count
+        reportedDifferences = $reportedDifferences
+        differencesTruncated = $SortedDifferences.Count -gt $reportedDifferences.Count
+    }
+    $json = $report | ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText($resolvedPath, $json, [Text.UTF8Encoding]::new($false))
+}
+
 $referencePayload = Get-ApkPayload $ReferenceApk
 $candidatePayload = Get-ApkPayload $CandidateApk
 $differences = [Collections.Generic.List[string]]::new()
@@ -107,9 +161,14 @@ foreach ($entryName in $candidatePayload.Keys) {
         $differences.Add("unexpected in candidate: $entryName")
     }
 }
+$sortedDifferences = @($differences | Sort-Object)
+
+if (-not [string]::IsNullOrWhiteSpace($ReportPath)) {
+    Write-ComparisonReport $ReportPath $referencePayload $candidatePayload $sortedDifferences
+}
 
 if ($differences.Count -gt 0) {
-    $reported = @($differences | Sort-Object | Select-Object -First 20)
+    $reported = @($sortedDifferences | Select-Object -First 20)
     $suffix = if ($differences.Count -gt $reported.Count) {
         "`n... and $($differences.Count - $reported.Count) more difference(s)."
     } else { '' }

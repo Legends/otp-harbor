@@ -74,7 +74,8 @@ After both artifacts are retained, run the repository comparator without adding 
 ```powershell
 ./scripts/validation/Compare-AndroidApkPayload.ps1 `
   -ReferenceApk path/to/environment-a.apk `
-  -CandidateApk path/to/environment-b.apk
+  -CandidateApk path/to/environment-b.apk `
+  -ReportPath path/to/payload-comparison.json
 ```
 
 | Field | Value |
@@ -84,6 +85,7 @@ After both artifacts are retained, run the repository comparator without adding 
 | Comparator exit code | |
 | Non-signature payload match | Pass / Fail |
 | Sanitized comparator output | |
+| JSON comparison report and SHA-256 | |
 | Differing entries, if any | |
 
 ## Review conclusion
