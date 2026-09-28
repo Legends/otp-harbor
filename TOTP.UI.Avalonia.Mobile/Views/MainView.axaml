@@ -152,7 +152,6 @@
                             ColumnSpacing="4">
                             <TextBlock
                                 Grid.Column="0"
-                                Margin="0,0,4,0"
                                 VerticalAlignment="Center"
                                 FontSize="26"
                                 FontWeight="SemiBold"
