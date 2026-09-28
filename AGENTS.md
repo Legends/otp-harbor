@@ -61,6 +61,31 @@ Priorities:
 - smooth QR workflows
 - safe update/install flow
 
+### 2.1 Responsive layout is a release requirement
+
+Desktop and mobile views must adapt to the available logical viewport instead of
+assuming one development-machine or phone size. Android is the primary responsive
+design target, while desktop windows must remain usable at their supported minimum
+size and under common display scaling.
+
+Required posture:
+
+- keep every primary workflow usable without clipped text, inaccessible actions,
+  unintended horizontal page scrolling, or content hidden behind system insets
+- prioritize the common 360-430 logical-pixel phone range, tablets, and resizable
+  desktop windows; support narrower legacy viewports when it is low-cost or an
+  actual product requirement rather than distorting common-device layouts
+- prefer container queries, reflowing panels, star sizing, bounded maximum widths,
+  and scrollable content over device-model checks or fixed screen coordinates
+- preserve accessible touch targets and readable text when compacting a layout;
+  reflow controls before making them too small
+- treat fixed widths as exceptional and use them only for intentionally bounded
+  elements such as icons, QR images, or horizontally scrollable cards
+- verify important views at compact and regular widths and at constrained heights;
+  add regression coverage for breakpoint behavior when layouts change
+- keep responsive behavior presentation-only unless product behavior genuinely
+  differs by form factor
+
 ### 3. Architecture remains intentional
 
 The repository already points toward strict layering, MVVM, DI, and testable workflows. Preserve those boundaries.

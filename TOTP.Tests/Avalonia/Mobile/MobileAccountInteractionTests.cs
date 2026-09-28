@@ -5,6 +5,47 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void MainShell_DefinesCompactPhoneBreakpointsWithoutShrinkingTouchHeight()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var shell = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute("Container.Name")?.Value == "MobileShell");
+        Assert.Equal("Width", shell.Attribute("Container.Sizing")?.Value);
+
+        var compactQuery = document
+            .Descendants(avalonia + "ContainerQuery")
+            .Single(element => element.Attribute("Query")?.Value == "max-width:380");
+        Assert.Contains(
+            compactQuery.Descendants(avalonia + "Style"),
+            style => style.Attribute("Selector")?.Value == "Grid#MobileMainContent");
+        var compactActionStyle = compactQuery
+            .Descendants(avalonia + "Style")
+            .Single(style => style.Attribute("Selector")?.Value == "Button.account-toolbar-action");
+        Assert.Contains(
+            compactActionStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "MinWidth"
+                && setter.Attribute("Value")?.Value == "48");
+
+        var toolbar = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountToolbar");
+        Assert.Equal(
+            4,
+            toolbar.Elements(avalonia + "Button").Count(button =>
+                button.Attribute("Classes")?.Value.Contains(
+                    "account-toolbar-action",
+                    StringComparison.Ordinal) == true));
+    }
+
+    [Fact]
     public void AccountRows_ExposeFavoriteActionAndCopyOnRowTap()
     {
         var document = XDocument.Load(Path.Combine(
