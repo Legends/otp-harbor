@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -13,17 +14,20 @@ public partial class MainView : UserControl
 {
     private const string UnlockMethodAttentionClass = "unlock-method-attention";
     private static readonly TimeSpan AccountListScrollIdleDelay = TimeSpan.FromMilliseconds(150);
+    private static readonly TimeSpan AccountListScrollStateCheckInterval = TimeSpan.FromMilliseconds(50);
     private Control? _openSwipeRow;
     private Control? _swipedRow;
     private ScrollViewer? _accountListScrollViewer;
     private readonly DispatcherTimer _accountListScrollIdleTimer;
+    private long _lastAccountListScrollTimestamp;
+    private bool _isAccountListScrollActive;
 
     public MainView()
     {
         InitializeComponent();
         _accountListScrollIdleTimer = new DispatcherTimer
         {
-            Interval = AccountListScrollIdleDelay
+            Interval = AccountListScrollStateCheckInterval
         };
         _accountListScrollIdleTimer.Tick += AccountListScrollBecameIdle;
         AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(
@@ -222,6 +226,7 @@ public partial class MainView : UserControl
     private void DetachAccountListScrollViewer()
     {
         _accountListScrollIdleTimer.Stop();
+        _isAccountListScrollActive = false;
         if (_accountListScrollViewer is not null)
             _accountListScrollViewer.ScrollChanged -= AccountListScrolled;
         _accountListScrollViewer = null;
@@ -231,15 +236,22 @@ public partial class MainView : UserControl
 
     private void AccountListScrolled(object? sender, ScrollChangedEventArgs e)
     {
+        _lastAccountListScrollTimestamp = Stopwatch.GetTimestamp();
+        if (_isAccountListScrollActive) return;
+
+        _isAccountListScrollActive = true;
         if (DataContext is MobileShellViewModel viewModel)
             viewModel.SetAccountListScrolling(true);
-        _accountListScrollIdleTimer.Stop();
         _accountListScrollIdleTimer.Start();
     }
 
     private void AccountListScrollBecameIdle(object? sender, EventArgs e)
     {
+        if (Stopwatch.GetElapsedTime(_lastAccountListScrollTimestamp) < AccountListScrollIdleDelay)
+            return;
+
         _accountListScrollIdleTimer.Stop();
+        _isAccountListScrollActive = false;
         if (DataContext is MobileShellViewModel viewModel)
             viewModel.SetAccountListScrolling(false);
     }

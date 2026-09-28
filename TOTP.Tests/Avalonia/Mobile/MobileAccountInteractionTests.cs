@@ -5,6 +5,27 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void AccountList_BuffersVirtualizedRowsForSmoothMobileScrolling()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var accountList = document
+            .Descendants(avalonia + "ListBox")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountList");
+        var itemsPanel = accountList
+            .Descendants(avalonia + "VirtualizingStackPanel")
+            .Single();
+
+        Assert.Equal("0.5", itemsPanel.Attribute("CacheLength")?.Value);
+    }
+
+    [Fact]
     public void MainShell_DefinesCompactPhoneBreakpointsWithoutShrinkingTouchHeight()
     {
         var document = XDocument.Load(Path.Combine(
