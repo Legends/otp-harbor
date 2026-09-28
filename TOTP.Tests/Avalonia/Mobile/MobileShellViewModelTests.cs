@@ -12,6 +12,7 @@ using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
+using TOTP.Core.Validation;
 
 namespace TOTP.Tests.Avalonia.Mobile;
 
@@ -429,11 +430,15 @@ public sealed class MobileShellViewModelTests
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
         context.AccountTotp
-            .Setup(value => value.GenerateAsync(first.ID))
-            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
-        context.AccountTotp
-            .Setup(value => value.GenerateAsync(second.ID))
-            .ReturnsAsync(Result.Ok(new TotpGenerationResult("654321", 20, 30)));
+            .Setup(value => value.GenerateManyAsync(It.Is<IReadOnlyCollection<Guid>>(ids =>
+                ids.Count == 2 && ids.Contains(first.ID) && ids.Contains(second.ID))))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult>
+                {
+                    [first.ID] = new("123456", 20, 30),
+                    [second.ID] = new("654321", 20, 30)
+                },
+                new HashSet<Guid>())));
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
 
@@ -443,6 +448,12 @@ public sealed class MobileShellViewModelTests
             context.Sut.Accounts,
             account => Assert.Equal("123 456", account.DisplayCode),
             account => Assert.Equal("654 321", account.DisplayCode));
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(
+            It.Is<IReadOnlyCollection<Guid>>(ids =>
+                ids.Count == 2 && ids.Contains(first.ID) && ids.Contains(second.ID))), Times.Once);
+        context.AccountTotp.Verify(
+            value => value.GenerateAsync(It.IsAny<Guid>()),
+            Times.Never);
     }
 
     [Fact]
@@ -1473,8 +1484,89 @@ public sealed class MobileShellViewModelTests
 
         context.Sut.SetAccountListScrolling(false);
 
+        Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
+        Assert.DoesNotContain(nameof(MobileAccountItem.IsExpiring), changedProperties);
+
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1100),
+            global::Xunit.TestContext.Current.CancellationToken);
+
         Assert.Contains(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
         Assert.Contains(nameof(MobileAccountItem.IsExpiring), changedProperties);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AccountCodeRefresh_BatchesLargeAccountListsIntoOneStorageRead()
+    {
+        var accounts = Enumerable.Range(1, 500)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                $"Issuer {index}",
+                ValidSecret,
+                $"account-{index}"))
+            .ToArray();
+        var context = CreateContext(isConfigured: true, accounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+
+        await context.Sut.UnlockAsync();
+        await WaitUntilAsync(() => context.Sut.Accounts.All(account => account.Code.Length > 0));
+
+        Assert.Equal(500, context.Sut.Accounts.Count);
+        context.AccountTotp.Verify(
+            value => value.GenerateManyAsync(It.Is<IReadOnlyCollection<Guid>>(ids => ids.Count == 500)),
+            Times.Once);
+        context.AccountTotp.Verify(
+            value => value.GenerateAsync(It.IsAny<Guid>()),
+            Times.Never);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AccountCodeRefresh_RegeneratesOnlyRowsWhoseCodesExpire()
+    {
+        var first = new Account(Guid.NewGuid(), "First", ValidSecret, "one");
+        var second = new Account(Guid.NewGuid(), "Second", ValidSecret, "two");
+        var context = CreateContext(isConfigured: true, [first, second]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        var refreshCount = 0;
+        context.AccountTotp
+            .Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Returns((IReadOnlyCollection<Guid> accountIds) =>
+            {
+                var refresh = Interlocked.Increment(ref refreshCount);
+                var codes = accountIds.ToDictionary(
+                    accountId => accountId,
+                    accountId => new TotpGenerationResult(
+                        accountId == first.ID ? "111111" : "222222",
+                        refresh == 1 && accountId == first.ID ? 1 : 20,
+                        30));
+                return Task.FromResult(Result.Ok(new AccountTotpGenerationBatch(
+                    codes,
+                    new HashSet<Guid>())));
+            });
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+
+        await context.Sut.UnlockAsync();
+        await WaitUntilAsync(() => Volatile.Read(ref refreshCount) >= 2);
+
+        context.AccountTotp.Verify(
+            value => value.GenerateManyAsync(It.Is<IReadOnlyCollection<Guid>>(ids =>
+                ids.Count == 1 && ids.Contains(first.ID))),
+            Times.Once);
+        context.AccountTotp.Verify(
+            value => value.GenerateManyAsync(It.Is<IReadOnlyCollection<Guid>>(ids =>
+                ids.Count == 1 && ids.Contains(second.ID))),
+            Times.Never);
         context.Sut.Dispose();
     }
 
@@ -2520,6 +2612,25 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(() => Result.Ok(accounts));
 
         var accountTotp = new Mock<IAccountTotpService>();
+        accountTotp
+            .Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Returns((IReadOnlyCollection<Guid> accountIds) =>
+            {
+                var periods = accounts.ToDictionary(
+                    account => account.ID,
+                    account => account.PeriodSeconds);
+                var codes = accountIds
+                    .Distinct()
+                    .ToDictionary(
+                        accountId => accountId,
+                        accountId => new TotpGenerationResult(
+                            "123456",
+                            20,
+                            periods.GetValueOrDefault(accountId, TotpPeriodPolicy.DefaultSeconds)));
+                return Task.FromResult(Result.Ok(new AccountTotpGenerationBatch(
+                    codes,
+                    new HashSet<Guid>())));
+            });
         var clipboard = new Mock<IAsyncClipboardService>();
         clipboard.SetupGet(value => value.Capabilities)
             .Returns(ClipboardCapabilities.WriteText | ClipboardCapabilities.ConditionalClear);

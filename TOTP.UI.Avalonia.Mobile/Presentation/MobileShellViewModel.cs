@@ -2795,10 +2795,6 @@ public sealed class MobileShellViewModel :
     {
         if (_isAccountListScrolling == isScrolling) return;
         _isAccountListScrolling = isScrolling;
-        if (isScrolling) return;
-
-        foreach (var account in Accounts)
-            account.RefreshCountdownBindings();
     }
 
     public void OnEnteredBackground(bool lockImmediately)
@@ -3042,37 +3038,26 @@ public sealed class MobileShellViewModel :
     {
         try
         {
+            var visibleAccounts = Accounts.ToArray();
+            if (!await RefreshAccountCodesAsync(visibleAccounts, lifetime.Token)) return;
+            var expiringAccounts = new List<MobileAccountItem>(visibleAccounts.Length);
+
             while (!lifetime.IsCancellationRequested)
             {
-                var visibleAccounts = Accounts.ToArray();
-                var secondsUntilRefresh = int.MaxValue;
+                await Task.Delay(TimeSpan.FromSeconds(1), lifetime.Token);
+                expiringAccounts.Clear();
                 foreach (var account in visibleAccounts)
                 {
-                    var generated = await _accountTotp.GenerateAsync(account.Id);
-                    if (lifetime.IsCancellationRequested) return;
-                    if (generated.IsFailed)
-                    {
-                        account.ClearCode();
-                        SetError(MobileStringKeys.CodeUnavailable);
-                        continue;
-                    }
-
-                    var remaining = Math.Max(1, generated.Value.RemainingSeconds);
-                    account.UpdateCode(
-                        generated.Value.Code,
-                        remaining,
-                        generated.Value.PeriodSeconds);
-                    secondsUntilRefresh = Math.Min(secondsUntilRefresh, remaining);
+                    if (account.RemainingSeconds <= 1)
+                        expiringAccounts.Add(account);
+                    else
+                        account.Tick(notifyBindings: !_isAccountListScrolling);
                 }
 
-                if (secondsUntilRefresh == int.MaxValue) return;
-                for (var second = 0;
-                     second < secondsUntilRefresh && !lifetime.IsCancellationRequested;
-                     second++)
+                if (expiringAccounts.Count > 0
+                    && !await RefreshAccountCodesAsync(expiringAccounts, lifetime.Token))
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(1), lifetime.Token);
-                    foreach (var account in visibleAccounts)
-                        account.Tick(notifyBindings: !_isAccountListScrolling);
+                    return;
                 }
             }
         }
@@ -3081,7 +3066,8 @@ public sealed class MobileShellViewModel :
         }
         catch (Exception)
         {
-            foreach (var account in Accounts) account.ClearCode();
+            foreach (var account in Accounts)
+                account.ClearCode(notifyBindings: !_isAccountListScrolling);
             SetError(MobileStringKeys.CodeUnavailable);
         }
         finally
@@ -3089,6 +3075,57 @@ public sealed class MobileShellViewModel :
             if (ReferenceEquals(_codeLifetime, lifetime)) _codeLifetime = null;
             lifetime.Dispose();
         }
+    }
+
+    private async Task<bool> RefreshAccountCodesAsync(
+        IReadOnlyList<MobileAccountItem> accounts,
+        CancellationToken cancellationToken)
+    {
+        if (accounts.Count == 0) return false;
+
+        FluentResults.Result<AccountTotpGenerationBatch> refreshed;
+        try
+        {
+            refreshed = await _accountTotp.GenerateManyAsync(
+                accounts.Select(account => account.Id).ToArray());
+        }
+        catch (Exception)
+        {
+            foreach (var account in accounts)
+                account.ClearCode(notifyBindings: !_isAccountListScrolling);
+            SetError(MobileStringKeys.CodeUnavailable);
+            return false;
+        }
+
+        if (cancellationToken.IsCancellationRequested) return false;
+        if (refreshed.IsFailed)
+        {
+            foreach (var account in accounts)
+                account.ClearCode(notifyBindings: !_isAccountListScrolling);
+            SetError(MobileStringKeys.CodeUnavailable);
+            return false;
+        }
+
+        var refreshFailed = refreshed.Value.FailedAccountIds.Count > 0;
+        foreach (var account in accounts)
+        {
+            if (!refreshed.Value.Codes.TryGetValue(account.Id, out var generated))
+            {
+                account.ClearCode(notifyBindings: !_isAccountListScrolling);
+                refreshFailed = true;
+                continue;
+            }
+
+            account.UpdateCode(
+                generated.Code,
+                Math.Max(1, generated.RemainingSeconds),
+                generated.PeriodSeconds,
+                notifyBindings: !_isAccountListScrolling);
+        }
+
+        if (refreshFailed)
+            SetError(MobileStringKeys.CodeUnavailable);
+        return true;
     }
 
     private void LockCore()

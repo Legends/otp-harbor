@@ -28,6 +28,7 @@ public sealed class MobileAccountItem(
     private string _addToFavoritesText = addToFavoritesText;
     private string _removeFromFavoritesText = removeFromFavoritesText;
     private string _copyConfirmation = string.Empty;
+    private bool _codeBindingsDirty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -57,12 +58,24 @@ public sealed class MobileAccountItem(
         ? $"{Issuer} · {AccountName}"
         : Issuer;
 
-    internal void UpdateCode(string code, int remainingSeconds, int periodSeconds)
+    internal void UpdateCode(
+        string code,
+        int remainingSeconds,
+        int periodSeconds,
+        bool notifyBindings = true)
     {
         _code = code;
         _remainingSeconds = Math.Max(1, remainingSeconds);
         _periodSeconds = Math.Max(_remainingSeconds, periodSeconds);
-        NotifyCodeChanged();
+        if (notifyBindings)
+        {
+            _codeBindingsDirty = false;
+            NotifyCodeChanged();
+        }
+        else
+        {
+            _codeBindingsDirty = true;
+        }
     }
 
     internal void Tick(bool notifyBindings = true)
@@ -70,16 +83,20 @@ public sealed class MobileAccountItem(
         if (_remainingSeconds <= 0) return;
         var wasExpiring = IsExpiring;
         _remainingSeconds--;
-        if (!notifyBindings) return;
+        if (!notifyBindings)
+        {
+            _codeBindingsDirty = true;
+            return;
+        }
+        if (_codeBindingsDirty)
+        {
+            _codeBindingsDirty = false;
+            NotifyCodeChanged();
+            return;
+        }
         OnPropertyChanged(nameof(RemainingSeconds));
         if (wasExpiring != IsExpiring)
             OnPropertyChanged(nameof(IsExpiring));
-    }
-
-    internal void RefreshCountdownBindings()
-    {
-        OnPropertyChanged(nameof(RemainingSeconds));
-        OnPropertyChanged(nameof(IsExpiring));
     }
 
     internal void UpdateCustomPeriodLabel(string label)
@@ -129,12 +146,20 @@ public sealed class MobileAccountItem(
 
     internal void ClearCopyConfirmation() => ShowCopyConfirmation(string.Empty);
 
-    internal void ClearCode()
+    internal void ClearCode(bool notifyBindings = true)
     {
         _code = string.Empty;
         _remainingSeconds = 0;
         _periodSeconds = ConfiguredPeriodSeconds;
-        NotifyCodeChanged();
+        if (notifyBindings)
+        {
+            _codeBindingsDirty = false;
+            NotifyCodeChanged();
+        }
+        else
+        {
+            _codeBindingsDirty = true;
+        }
     }
 
     private static string FormatCode(string code)
