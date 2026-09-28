@@ -4,26 +4,55 @@ namespace TOTP.Tests.Avalonia.Mobile;
 
 public sealed class MobileAccountSwipeBehaviorTests
 {
-    [Fact]
-    public void ApplyAvaloniaDelta_LeftSwipeMovesRowTowardDeleteAction()
+    [Theory]
+    [InlineData(0, 9)]
+    [InlineData(7, 7)]
+    public void ResolveIntent_BelowDirectionThresholdWaitsForMoreMovement(
+        double deltaX,
+        double deltaY)
     {
-        var offset = MobileAccountSwipeBehavior.ApplyAvaloniaDelta(0, 60);
-
-        Assert.Equal(MobileAccountSwipeBehavior.DeleteRevealOffset, offset);
         Assert.Equal(
-            MobileAccountSwipeCompletion.ConfirmDelete,
-            MobileAccountSwipeBehavior.Complete(offset));
+            MobileAccountGestureIntent.Undetermined,
+            MobileAccountSwipeBehavior.ResolveIntent(deltaX, deltaY));
     }
 
-    [Fact]
-    public void ApplyAvaloniaDelta_RightSwipeMovesRowTowardQrAndEditActions()
+    [Theory]
+    [InlineData(2, 12)]
+    [InlineData(10, 20)]
+    [InlineData(-8, -18)]
+    public void ResolveIntent_VerticalMovementRemainsNativeScrolling(
+        double deltaX,
+        double deltaY)
     {
-        var offset = MobileAccountSwipeBehavior.ApplyAvaloniaDelta(0, -120);
-
-        Assert.Equal(MobileAccountSwipeBehavior.QrAndEditRevealOffset, offset);
         Assert.Equal(
-            MobileAccountSwipeCompletion.RevealQrAndEdit,
-            MobileAccountSwipeBehavior.Complete(offset));
+            MobileAccountGestureIntent.VerticalScroll,
+            MobileAccountSwipeBehavior.ResolveIntent(deltaX, deltaY));
+    }
+
+    [Theory]
+    [InlineData(15, 2)]
+    [InlineData(-20, 5)]
+    public void ResolveIntent_HorizontalMovementActivatesAccountSwipe(
+        double deltaX,
+        double deltaY)
+    {
+        Assert.Equal(
+            MobileAccountGestureIntent.HorizontalSwipe,
+            MobileAccountSwipeBehavior.ResolveIntent(deltaX, deltaY));
+    }
+
+    [Theory]
+    [InlineData(120, 120, MobileAccountSwipeCompletion.RevealQrAndEdit)]
+    [InlineData(-60, -60, MobileAccountSwipeCompletion.ConfirmDelete)]
+    public void ApplyPointerDelta_TracksFingerDirectionAndClamps(
+        double pointerDeltaX,
+        double expectedOffset,
+        MobileAccountSwipeCompletion expectedCompletion)
+    {
+        var offset = MobileAccountSwipeBehavior.ApplyPointerDelta(0, pointerDeltaX);
+
+        Assert.Equal(expectedOffset, offset);
+        Assert.Equal(expectedCompletion, MobileAccountSwipeBehavior.Complete(offset));
     }
 
     [Theory]
