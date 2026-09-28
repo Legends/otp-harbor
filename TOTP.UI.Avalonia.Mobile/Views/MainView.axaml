@@ -144,14 +144,15 @@
                     <Grid
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsAccountListVisible}"
-                        RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+                        RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
                         <Grid
                             Grid.Row="0"
                             Margin="0,0,0,14"
-                            ColumnDefinitions="*,Auto,Auto,Auto"
-                            ColumnSpacing="8">
+                            ColumnDefinitions="*,Auto,Auto,Auto,Auto"
+                            ColumnSpacing="4">
                             <TextBlock
                                 Grid.Column="0"
+                                Margin="0,0,4,0"
                                 VerticalAlignment="Center"
                                 FontSize="26"
                                 FontWeight="SemiBold"
@@ -165,11 +166,20 @@
                                 <controls:SymbolIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
+                                    Margin="0,2,0,0"
                                     IconSize="24"
                                     Kind="Camera" />
                             </Button>
                             <Button
                                 Grid.Column="2"
+                                automation:AutomationProperties.Name="{Binding CreateGroupText}"
+                                Classes="icon-action"
+                                Command="{Binding BeginAddGroupCommand}"
+                                ToolTip.Tip="{Binding CreateGroupText}">
+                                <controls:SymbolIcon IconSize="24" Kind="FolderAdd" />
+                            </Button>
+                            <Button
+                                Grid.Column="3"
                                 automation:AutomationProperties.Name="{Binding AddAccountText}"
                                 Classes="icon-action"
                                 Command="{Binding BeginAddCommand}"
@@ -177,7 +187,7 @@
                                 <controls:SymbolIcon IconSize="24" Kind="Add" />
                             </Button>
                             <Button
-                                Grid.Column="3"
+                                Grid.Column="4"
                                 automation:AutomationProperties.Name="{Binding SettingsText}"
                                 Classes="icon-action"
                                 Command="{Binding ShowSettingsCommand}"
@@ -188,9 +198,8 @@
 
                         <Grid
                             Grid.Row="1"
-                            Margin="0,0,0,14"
                             ColumnDefinitions="*,Auto"
-                            RowDefinitions="Auto,Auto">
+                            RowDefinitions="Auto">
                             <TextBox
                                 x:Name="AccountSearchBox"
                                 Grid.Row="0"
@@ -216,40 +225,118 @@
                                 FontSize="26"
                                 IsVisible="{Binding HasSearchText}"
                                 ToolTip.Tip="{Binding ClearSearchText}" />
-                            <TextBlock
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                Margin="0,5,0,0"
-                                HorizontalAlignment="Right"
-                                Foreground="{DynamicResource BrushTextSecondary}"
-                                FontSize="12"
-                                IsVisible="{Binding HasActiveAccountFilter}"
-                                Text="{Binding SearchResultSummary}" />
-                            <ToggleButton
-                                Grid.Row="1"
+                        </Grid>
+
+                        <Grid
+                            x:Name="AccountGroupsStrip"
+                            Grid.Row="2"
+                            MinHeight="64"
+                            Margin="0,4,0,6"
+                            ColumnDefinitions="*"
+                            IsVisible="{Binding HasAccountNavigationCards}"
+                            VerticalAlignment="Center">
+                            <ScrollViewer
                                 Grid.Column="0"
-                                Margin="0,5,8,0"
-                                Padding="10,5"
-                                HorizontalAlignment="Left"
-                                automation:AutomationProperties.Name="{Binding FavoritesText}"
-                                Classes="favorites-filter"
-                                Command="{Binding ToggleFavoritesFilterCommand}"
-                                IsChecked="{Binding IsFavoritesFilterSelected, Mode=OneWay}"
-                                IsVisible="{Binding HasFavoriteAccounts}"
-                                ToolTip.Tip="{Binding FavoritesText}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <controls:SymbolIcon
-                                        Foreground="{DynamicResource BrushFavoriteFilterIcon}"
-                                        IconSize="15"
-                                        Kind="Favorite" />
-                                    <TextBlock Text="{Binding FavoritesText}" />
-                                    <TextBlock Text="{Binding FavoriteCount}" />
+                                HorizontalScrollBarVisibility="Hidden"
+                                VerticalAlignment="Center"
+                                VerticalScrollBarVisibility="Disabled">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border
+                                        Width="160"
+                                        Height="52"
+                                        Margin="2"
+                                        Background="{DynamicResource BrushFavoriteFilterBackground}"
+                                        Classes="favorite-group-card group-card"
+                                        Classes.selected="{Binding IsFavoritesFilterSelected}"
+                                        CornerRadius="7"
+                                        IsVisible="{Binding HasFavoriteAccounts}">
+                                        <ToggleButton
+                                            automation:AutomationProperties.Name="{Binding FavoritesText}"
+                                            Classes="favorites-filter"
+                                            Command="{Binding ToggleFavoritesFilterCommand}"
+                                            IsChecked="{Binding IsFavoritesFilterSelected, Mode=OneWay}"
+                                            ToolTip.Tip="{Binding FavoritesText}">
+                                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                                <controls:SymbolIcon
+                                                    Foreground="{DynamicResource BrushFavoriteFilterIcon}"
+                                                    IconSize="20"
+                                                    Kind="Favorite" />
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontWeight="SemiBold"
+                                                    Text="{Binding FavoritesText}" />
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontSize="12"
+                                                    Text="{Binding FavoriteCount}" />
+                                            </StackPanel>
+                                        </ToggleButton>
+                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding Groups}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:MobileAccountGroupItem">
+                                                <Border
+                                                    Width="180"
+                                                    Height="52"
+                                                    Margin="2"
+                                                    Background="{Binding Background}"
+                                                    Classes="group-card"
+                                                    Classes.selected="{Binding IsSelected}"
+                                                    CornerRadius="7">
+                                                    <Grid ColumnDefinitions="*,40">
+                                                        <Button
+                                                            Grid.Column="0"
+                                                            automation:AutomationProperties.Name="{Binding Name}"
+                                                            Classes="account-group group-card-hit-target"
+                                                            Command="{Binding SelectCommand}"
+                                                            ToolTip.Tip="{Binding Name}">
+                                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="7">
+                                                                <controls:SymbolIcon
+                                                                    Grid.Column="0"
+                                                                    Foreground="{Binding Foreground}"
+                                                                    IconSize="20"
+                                                                    Kind="Folder" />
+                                                                <TextBlock
+                                                                    Grid.Column="1"
+                                                                    VerticalAlignment="Center"
+                                                                    FontWeight="SemiBold"
+                                                                    Text="{Binding Name}"
+                                                                    TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock
+                                                                    Grid.Column="2"
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="12"
+                                                                    Text="{Binding AccountCount}" />
+                                                            </Grid>
+                                                        </Button>
+                                                        <Button
+                                                            Grid.Column="1"
+                                                            Width="40"
+                                                            MinWidth="40"
+                                                            Margin="0"
+                                                            Padding="8"
+                                                            automation:AutomationProperties.Name="{Binding DataContext.EditGroupText, ElementName=Root}"
+                                                            Classes="icon-action"
+                                                            Command="{Binding EditCommand}"
+                                                            ToolTip.Tip="{Binding DataContext.EditGroupText, ElementName=Root}">
+                                                            <controls:SymbolIcon IconSize="16" Kind="Edit" />
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
-                            </ToggleButton>
+                            </ScrollViewer>
                         </Grid>
 
                         <Border
-                            Grid.Row="2"
+                            Grid.Row="3"
                             Margin="0,0,0,14"
                             Background="{DynamicResource BrushSurfaceAlternate}"
                             CornerRadius="8"
@@ -280,7 +367,7 @@
 
                         <Border
                             x:Name="FirstAccountOnboardingCard"
-                            Grid.Row="3"
+                            Grid.Row="4"
                             Padding="18"
                             Background="{DynamicResource BrushSurfaceAlternate}"
                             BorderBrush="{DynamicResource BrushBorder}"
@@ -320,7 +407,7 @@
                         </Border>
 
                         <TextBlock
-                            Grid.Row="3"
+                            Grid.Row="4"
                             Foreground="{DynamicResource BrushTextSecondary}"
                             IsVisible="{Binding HasNoSearchResults}"
                             Text="{Binding NoSearchResultsText}"
@@ -328,7 +415,7 @@
 
                         <ListBox
                             x:Name="AccountList"
-                            Grid.Row="3"
+                            Grid.Row="4"
                             Background="Transparent"
                             BorderThickness="0"
                             Classes="accounts mobile-accounts"
@@ -513,15 +600,6 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-
-                        <TextBlock
-                            Grid.Row="4"
-                            Margin="0,14,0,0"
-                            Foreground="{DynamicResource BrushTextSecondary}"
-                            IsVisible="{Binding HasAccounts}"
-                            Text="{Binding AccountSwipeHintText}"
-                            TextAlignment="Center"
-                            TextWrapping="Wrap" />
 
                         <Border
                             Grid.Row="5"
@@ -887,6 +965,154 @@
                                     Classes="wide primary"
                                     Command="{Binding ExportBackupCommand}"
                                     Content="{Binding ExportBackupText}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel
+                        HorizontalAlignment="Stretch"
+                        IsVisible="{Binding IsGroupEditorVisible}"
+                        Spacing="14">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                FontSize="26"
+                                FontWeight="SemiBold"
+                                Text="{Binding GroupEditorTitle}" />
+                            <Button
+                                Grid.Column="1"
+                                Width="48"
+                                MinWidth="48"
+                                Padding="8"
+                                automation:AutomationProperties.Name="{Binding CancelText}"
+                                Classes="icon-action"
+                                Command="{Binding CancelGroupEditCommand}"
+                                Content="×"
+                                FontSize="26"
+                                ToolTip.Tip="{Binding CancelText}" />
+                        </Grid>
+                        <TextBox
+                            x:Name="GroupNameBox"
+                            MaxLength="64"
+                            automation:AutomationProperties.Name="{Binding GroupNameText}"
+                            PlaceholderText="{Binding GroupNameText}"
+                            Text="{Binding GroupEditorName, Mode=TwoWay}" />
+                        <TextBlock Classes="field-label" Text="{Binding GroupColorText}" />
+                        <ListBox
+                            x:Name="GroupColorPicker"
+                            Height="62"
+                            Padding="4"
+                            automation:AutomationProperties.Name="{Binding GroupColorText}"
+                            ItemsSource="{Binding GroupColorOptions}"
+                            SelectedItem="{Binding SelectedGroupColor, Mode=TwoWay}"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                            SelectionMode="Single">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="6" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:MobileGroupColorOption">
+                                    <Border
+                                        Width="34"
+                                        Height="34"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="{Binding Brush}"
+                                        CornerRadius="17"
+                                        ToolTip.Tip="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Classes="field-label" Text="{Binding GroupAccountsText}" />
+                        <TextBox
+                            x:Name="GroupAccountSearchBox"
+                            automation:AutomationProperties.Name="{Binding SearchAccountsText}"
+                            PlaceholderText="{Binding SearchAccountsText}"
+                            Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
+                        <Border Classes="card" Padding="6">
+                            <ScrollViewer
+                                MaxHeight="220"
+                                HorizontalScrollBarVisibility="Disabled"
+                                IsScrollChainingEnabled="False"
+                                VerticalScrollBarVisibility="Hidden">
+                                <ItemsControl ItemsSource="{Binding GroupEditorAccounts}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:MobileGroupAccountSelection">
+                                            <CheckBox
+                                                MinHeight="54"
+                                                Padding="6,3"
+                                                VerticalAlignment="Stretch"
+                                                VerticalContentAlignment="Center"
+                                                IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                    <controls:BrandTile
+                                                        Grid.Column="0"
+                                                        IsVisible="{Binding ShowIssuerLogo}"
+                                                        IconData="{Binding Brand.IconData}"
+                                                        Initials="{Binding Brand.Initials}"
+                                                        TileBackground="{Binding Brand.BackgroundBrush}" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock
+                                                            FontWeight="SemiBold"
+                                                            Text="{Binding Issuer}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock
+                                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                                            FontSize="12"
+                                                            Text="{Binding AccountName}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                        <controls:ValidationMessage Severity="Error" Text="{Binding GroupEditorMessage}" />
+                        <Grid ColumnDefinitions="Auto,*,*" ColumnSpacing="10">
+                            <Button
+                                Grid.Column="0"
+                                Classes="danger"
+                                Command="{Binding BeginDeleteGroupCommand}"
+                                Content="{Binding DeleteGroupText}"
+                                IsVisible="{Binding IsEditingGroup}" />
+                            <Button
+                                Grid.Column="1"
+                                Classes="wide secondary"
+                                Command="{Binding CancelGroupEditCommand}"
+                                Content="{Binding CancelText}" />
+                            <Button
+                                Grid.Column="2"
+                                Classes="wide primary"
+                                Command="{Binding SaveGroupCommand}"
+                                Content="{Binding SaveText}" />
+                        </Grid>
+                        <Border
+                            Background="{DynamicResource BrushSurfaceAlternate}"
+                            BorderBrush="{DynamicResource BrushDanger}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            IsVisible="{Binding IsDeleteGroupConfirmationVisible}"
+                            Padding="12">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{Binding GroupDeletePrompt}" TextWrapping="Wrap" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                    <Button
+                                        Grid.Column="0"
+                                        Classes="wide secondary"
+                                        Command="{Binding CancelDeleteGroupCommand}"
+                                        Content="{Binding CancelText}" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Classes="wide danger"
+                                        Command="{Binding ConfirmDeleteGroupCommand}"
+                                        Content="{Binding DeleteText}" />
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>

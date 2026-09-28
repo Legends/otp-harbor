@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using System.Windows.Input;
 
 namespace TOTP.Avalonia.Desktop.Controls;
 
@@ -18,6 +19,12 @@ public partial class ProductTitleBar : UserControl
 
     public static readonly StyledProperty<bool> ShowMinimizeButtonProperty =
         AvaloniaProperty.Register<ProductTitleBar, bool>(nameof(ShowMinimizeButton));
+
+    public static readonly StyledProperty<bool> ShowLockButtonProperty =
+        AvaloniaProperty.Register<ProductTitleBar, bool>(nameof(ShowLockButton));
+
+    public static readonly StyledProperty<ICommand?> LockCommandProperty =
+        AvaloniaProperty.Register<ProductTitleBar, ICommand?>(nameof(LockCommand));
 
     public static readonly StyledProperty<Thickness> TitlePaddingProperty =
         AvaloniaProperty.Register<ProductTitleBar, Thickness>(nameof(TitlePadding));
@@ -68,6 +75,18 @@ public partial class ProductTitleBar : UserControl
             window.BeginMoveDrag(e);
             e.Handled = true;
         }
+    }
+
+    public bool ShowLockButton
+    {
+        get => GetValue(ShowLockButtonProperty);
+        set => SetValue(ShowLockButtonProperty, value);
+    }
+
+    public ICommand? LockCommand
+    {
+        get => GetValue(LockCommandProperty);
+        set => SetValue(LockCommandProperty, value);
     }
 
     private void ToggleMaximizedState(Window window)

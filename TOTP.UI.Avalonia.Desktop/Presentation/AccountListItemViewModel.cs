@@ -26,6 +26,7 @@ public sealed class AccountListItemViewModel(
     private string _customPeriodLabel = customPeriodLabel;
     private BrandInfo _brand = brand ?? BrandInfo.Generic(issuer);
     private bool _showIssuerLogo = true;
+    private bool _isFavorite = isFavorite;
     private string _copyConfirmation = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -40,7 +41,7 @@ public sealed class AccountListItemViewModel(
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
     public AccountGroup? Group { get; } = group;
-    public bool IsFavorite { get; } = isFavorite;
+    public bool IsFavorite => _isFavorite;
     public ICommand? ToggleFavoriteCommand { get; } = toggleFavoriteCommand;
 
     public string CopyConfirmation
@@ -120,6 +121,13 @@ public sealed class AccountListItemViewModel(
         CopyConfirmation = message ?? string.Empty;
 
     public void ClearCopyConfirmation() => CopyConfirmation = string.Empty;
+
+    public void UpdateFavorite(bool isFavorite)
+    {
+        if (_isFavorite == isFavorite) return;
+        _isFavorite = isFavorite;
+        OnPropertyChanged(nameof(IsFavorite));
+    }
 
     public void UpdateBrand(BrandInfo brand)
     {

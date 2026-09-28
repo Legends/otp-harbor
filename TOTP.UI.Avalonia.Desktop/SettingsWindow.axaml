@@ -170,6 +170,10 @@
                                                                 Classes="primary wide"
                                                                 Command="{Binding ExportCommand}"
                                                                 Content="{DynamicResource ExportEncryptedBackup}" />
+                                                            <CheckBox
+                                                                x:Name="OpenExportAfterCheckBox"
+                                                                Content="{DynamicResource OpenExportAfter}"
+                                                                IsChecked="{Binding DataContext.SettingsPage.OpenExportFileAfterExport, ElementName=SettingsRoot, Mode=TwoWay}" />
                                                             <Button
                                                                 x:Name="OpenLastBackupFolderButton"
                                                                 Classes="secondary wide"
@@ -338,10 +342,8 @@
                                                         TextWrapping="Wrap" />
                                                 </StackPanel>
                                             </Border>
-                                            <CheckBox Content="{DynamicResource OpenExportAfter}" IsChecked="{Binding OpenExportFileAfterExport, Mode=TwoWay}" />
                                             <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource LoggingLevel}" />
                                             <ComboBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
-                                            <TextBlock Classes="secondary" Text="{DynamicResource SettingsAutoSaveHint}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>
                                     </ScrollViewer>

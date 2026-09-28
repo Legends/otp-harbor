@@ -1075,6 +1075,189 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task Groups_FilterAccountsAndSearchReturnsToAllAccounts()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var first = new Account(
+            Guid.NewGuid(),
+            "GitHub",
+            ValidSecret,
+            "alice",
+            group: group);
+        var second = new Account(
+            Guid.NewGuid(),
+            "GitLab",
+            ValidSecret,
+            "bob",
+            group: group);
+        var ungrouped = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "private");
+        var context = CreateContext(isConfigured: true, [first, second, ungrouped]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp
+            .Setup(value => value.GenerateAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        var work = Assert.Single(context.Sut.Groups);
+        Assert.Equal("Work", work.Name);
+        Assert.Equal(2, work.AccountCount);
+        Assert.True(context.Sut.HasGroups);
+        Assert.True(context.Sut.HasAccountNavigationCards);
+        Assert.Equal(3, context.Sut.Accounts.Count);
+
+        work.SelectCommand.Execute(null);
+
+        Assert.True(context.Sut.HasSelectedGroup);
+        Assert.Equal(2, context.Sut.Accounts.Count);
+        Assert.All(context.Sut.Accounts, account => Assert.Equal(group.Id, account.Group?.Id));
+
+        context.Sut.SearchText = "private";
+
+        Assert.False(context.Sut.HasSelectedGroup);
+        Assert.Equal(ungrouped.ID, Assert.Single(context.Sut.Accounts).Id);
+
+        await context.Sut.ClearSearchAsync();
+        Assert.Equal(3, context.Sut.Accounts.Count);
+    }
+
+    [Fact]
+    public async Task GroupEditor_CreatesAndEditsPersistedGroup()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var secondAccount = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "bob");
+        IReadOnlyList<Account> storedAccounts = [account, secondAccount];
+        var context = CreateContext(isConfigured: true, storedAccounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(storedAccounts));
+        context.AccountManager
+            .Setup(value => value.SaveGroupAsync(
+                It.IsAny<AccountGroup>(),
+                It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Callback<AccountGroup, IReadOnlyCollection<Guid>>((group, accountIds) =>
+                storedAccounts = storedAccounts
+                    .Select(value => accountIds.Contains(value.ID)
+                        ? value.WithGroup(group)
+                        : value)
+                    .ToArray())
+            .ReturnsAsync(Result.Ok());
+        context.AccountTotp
+            .Setup(value => value.GenerateAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        await context.Sut.BeginAddGroupAsync();
+
+        Assert.True(context.Sut.IsGroupEditorVisible);
+        Assert.True(context.Sut.IsCreatingGroup);
+        Assert.Equal(6, context.Sut.GroupColorOptions.Count);
+        Assert.Equal(2, context.Sut.GroupEditorAccounts.Count);
+        context.Sut.GroupEditorSearchText = "micro";
+        Assert.Equal(secondAccount.ID, Assert.Single(context.Sut.GroupEditorAccounts).AccountId);
+        context.Sut.GroupEditorSearchText = string.Empty;
+        var selection = Assert.Single(
+            context.Sut.GroupEditorAccounts,
+            value => value.AccountId == account.ID);
+
+        await context.Sut.SaveGroupAsync();
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.GroupNameRequired),
+            context.Sut.GroupEditorMessage);
+        context.Sut.GroupEditorName = "Work";
+        await context.Sut.SaveGroupAsync();
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.GroupAccountRequired),
+            context.Sut.GroupEditorMessage);
+        context.AccountManager.Verify(value => value.SaveGroupAsync(
+            It.IsAny<AccountGroup>(),
+            It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
+
+        selection.IsSelected = true;
+        context.Sut.SelectedGroupColor = context.Sut.GroupColorOptions[2];
+
+        await context.Sut.SaveGroupAsync();
+
+        var created = Assert.Single(context.Sut.Groups);
+        Assert.Equal("Work", created.Name);
+        Assert.Equal("#4F6BED", created.Group.Color);
+        Assert.False(context.Sut.IsGroupEditorVisible);
+        context.AccountManager.Verify(value => value.SaveGroupAsync(
+            It.Is<AccountGroup>(group => group.Name == "Work" && group.Color == "#4F6BED"),
+            It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(new[] { account.ID }))));
+
+        await context.Sut.BeginEditGroupAsync(created.Id);
+        Assert.True(context.Sut.IsEditingGroup);
+        Assert.Equal("Work", context.Sut.GroupEditorName);
+        Assert.True(Assert.Single(
+            context.Sut.GroupEditorAccounts,
+            value => value.AccountId == account.ID).IsSelected);
+        context.Sut.GroupEditorName = "Projects";
+        context.Sut.SelectedGroupColor = context.Sut.GroupColorOptions[0];
+
+        await context.Sut.SaveGroupAsync();
+
+        var edited = Assert.Single(context.Sut.Groups);
+        Assert.Equal(created.Id, edited.Id);
+        Assert.Equal("Projects", edited.Name);
+        Assert.Equal("#4C956C", edited.Group.Color);
+    }
+
+    [Fact]
+    public async Task GroupEditor_DeletesGroupAfterConfirmationWithoutDeletingAccounts()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var account = new Account(
+            Guid.NewGuid(),
+            "GitHub",
+            ValidSecret,
+            "alice",
+            group: group);
+        IReadOnlyList<Account> storedAccounts = [account];
+        var context = CreateContext(isConfigured: true, storedAccounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(storedAccounts));
+        context.AccountManager
+            .Setup(value => value.DeleteGroupAsync(group.Id))
+            .Callback(() => storedAccounts = [account.WithGroup(null)])
+            .ReturnsAsync(Result.Ok());
+        context.AccountTotp
+            .Setup(value => value.GenerateAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        await context.Sut.BeginEditGroupAsync(group.Id);
+        await context.Sut.BeginDeleteGroupAsync();
+
+        Assert.True(context.Sut.IsDeleteGroupConfirmationVisible);
+        Assert.Contains("Work", context.Sut.GroupDeletePrompt);
+
+        await context.Sut.ConfirmDeleteGroupAsync();
+
+        Assert.False(context.Sut.IsGroupEditorVisible);
+        Assert.False(context.Sut.HasGroups);
+        Assert.Null(Assert.Single(context.Sut.Accounts).Group);
+        context.AccountManager.Verify(value => value.DeleteGroupAsync(group.Id), Times.Once);
+        context.AccountManager.Verify(
+            value => value.DeleteAsync(It.IsAny<Account>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task FavoritesFilter_ShowsFavoritesAndCanBeNarrowedBySearch()
     {
         var github = new Account(

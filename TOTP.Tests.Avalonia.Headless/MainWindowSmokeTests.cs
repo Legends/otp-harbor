@@ -1502,7 +1502,22 @@ public sealed class MainWindowSmokeTests
                 Assert.IsType<SymbolIcon>(manageGroupsButton.Content).Kind);
             AssertToolbarAutomationName(window, "ClearSearchButton", AvaloniaStringKeys.ClearSearch);
             AssertToolbarAutomationName(window, "OpenSettingsButton", AvaloniaStringKeys.Settings);
-            AssertToolbarAutomationName(window, "LockButton", AvaloniaStringKeys.Lock);
+            AssertToolbarAutomationName(window, "AccountSortButton", AvaloniaStringKeys.SortAccounts);
+            var settingsButton = window.FindControl<Button>("OpenSettingsButton")!;
+            var sortButton = window.FindControl<Button>("AccountSortButton")!;
+            var trailingActions = window.FindControl<StackPanel>("ToolbarTrailingActions")!;
+            Assert.Equal(4, trailingActions.Spacing);
+            Assert.Same(trailingActions, languageSelector.Parent);
+            Assert.Same(trailingActions, settingsButton.Parent);
+            Assert.Same(trailingActions, sortButton.Parent);
+            Assert.All(
+                new Control[] { languageSelector, settingsButton, sortButton },
+                control => Assert.Equal(new Thickness(0), control.Margin));
+            var titleBarLockButton = titleBar.FindControl<Button>("TitleBarLockButton");
+            Assert.NotNull(titleBarLockButton);
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Lock],
+                AutomationProperties.GetName(titleBarLockButton));
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.Language],
                 AutomationProperties.GetName(languageSelector));
@@ -1535,6 +1550,57 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void AccountSortMenu_UsesFullWidthStructuredRows()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+            var menu = window.FindControl<Border>("AccountSortMenu");
+            Assert.NotNull(menu);
+            menu.IsVisible = true;
+            window.UpdateLayout();
+
+            Assert.Equal(176, menu.Width);
+            Assert.Equal(new Thickness(0), menu.Padding);
+            Assert.True(menu.ClipToBounds);
+
+            var rows = menu.GetLogicalDescendants()
+                .OfType<Button>()
+                .Where(button => button.Classes.Contains("sort-option"))
+                .ToArray();
+            Assert.Equal(4, rows.Length);
+            Assert.All(rows, row =>
+            {
+                Assert.Equal(50, row.MinHeight);
+                Assert.Equal(new Thickness(14, 0, 10, 0), row.Padding);
+                Assert.Equal(HorizontalAlignment.Stretch, row.HorizontalContentAlignment);
+                Assert.Equal(new CornerRadius(0), row.CornerRadius);
+                Assert.Equal(menu.Background, row.Background);
+
+                var checkmark = Assert.Single(
+                    row.GetLogicalDescendants().OfType<TextBlock>(),
+                    text => text.Text == "✓");
+                var label = Assert.Single(
+                    row.GetLogicalDescendants().OfType<TextBlock>(),
+                    text => text.Text != "✓");
+                Assert.Equal(14, label.FontSize);
+                Assert.Equal(16, checkmark.FontSize);
+                Assert.Equal(HorizontalAlignment.Right, checkmark.HorizontalAlignment);
+                Assert.Equal(1, Grid.GetColumn(checkmark));
+            });
+            Assert.All(rows[..^1], row =>
+                Assert.Equal(new Thickness(0, 0, 0, 1), row.BorderThickness));
+            Assert.Equal(new Thickness(0), rows[^1].BorderThickness);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void MainToolbar_TabAndShiftTabFollowVisualWorkflowOrder()
     {
         var window = new MainWindow();
@@ -1546,6 +1612,7 @@ public sealed class MainWindowSmokeTests
             window.FindControl<Border>("MainToolbar")!.IsEnabled = true;
             window.FindControl<Grid>("AccountSearchHost")!.IsVisible = true;
             window.FindControl<Button>("ClearSearchButton")!.IsVisible = true;
+            window.FindControl<Button>("AccountSortButton")!.IsVisible = true;
             window.UpdateLayout();
 
             Control[] expectedOrder =
@@ -1558,7 +1625,7 @@ public sealed class MainWindowSmokeTests
                 window.FindControl<Button>("ClearSearchButton")!,
                 window.FindControl<ComboBox>("LanguageSelector")!,
                 window.FindControl<Button>("OpenSettingsButton")!,
-                window.FindControl<Button>("LockButton")!
+                window.FindControl<Button>("AccountSortButton")!
             ];
             foreach (var button in expectedOrder.OfType<Button>())
                 button.Command = new TestCommand(static () => { });
@@ -1656,6 +1723,42 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void ProductTitleBar_LockButtonExecutesBeforeMinimizeControl()
+    {
+        var executed = false;
+        var titleBar = new ProductTitleBar
+        {
+            ShowLockButton = true,
+            ShowMinimizeButton = true,
+            LockCommand = new TestCommand(() => executed = true)
+        };
+        var window = new Window { Content = titleBar };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var lockButton = titleBar.FindControl<Button>("TitleBarLockButton");
+            var minimizeButton = Assert.Single(
+                titleBar.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("titlebar-minimize"));
+            Assert.NotNull(lockButton);
+            Assert.True(lockButton.IsVisible);
+            Assert.True(Grid.GetColumn(lockButton) < Grid.GetColumn(minimizeButton));
+
+            Assert.Same(titleBar.LockCommand, lockButton.Command);
+            lockButton.Command!.Execute(null);
+
+            Assert.True(executed);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void AccountEditorContent_KeepsNarrowClearanceFromOverlayScrollBar()
     {
         var mainWindow = new MainWindow();
@@ -1714,6 +1817,72 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void AccountRow_ReservesCopyConfirmationDirectlyBelowGeneratedCode()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 160 };
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            var accountPageTemplate = accountPage?.ContentTemplate
+                ?? throw new InvalidOperationException("The account page template is unavailable.");
+            var accountPageContent = accountPageTemplate.Build(null)
+                ?? throw new InvalidOperationException("The account page could not be built.");
+            var accountList = Assert.Single(
+                accountPageContent.GetLogicalDescendants().OfType<ListBox>(),
+                list => list.Name == "AccountsListBox");
+            var accountRowTemplate = accountList.ItemTemplate
+                ?? throw new InvalidOperationException("The account row template is unavailable.");
+
+            var account = new AccountListItemViewModel(
+                Guid.NewGuid(),
+                "Issuer",
+                "account");
+            account.UpdateCustomPeriodLabel("60 s");
+            account.UpdateCode("123456", 20, 60);
+            account.ShowCopyConfirmation("Copied");
+            var row = accountRowTemplate.Build(account)
+                ?? throw new InvalidOperationException("The account row could not be built.");
+            row.DataContext = account;
+            templateHost.Content = row;
+            templateHost.Show();
+            templateHost.UpdateLayout();
+
+            var codeButton = Assert.Single(
+                row.GetLogicalDescendants().OfType<Button>(),
+                button => button.Classes.Contains("row-code"));
+            var codeStack = Assert.IsType<StackPanel>(codeButton.Content);
+            Assert.Equal(Orientation.Vertical, codeStack.Orientation);
+            Assert.Equal(2, codeStack.Children.Count);
+            Assert.Equal(
+                Orientation.Horizontal,
+                Assert.IsType<StackPanel>(codeStack.Children[0]).Orientation);
+            var confirmation = Assert.IsType<TextBlock>(codeStack.Children[1]);
+            Assert.Equal("Copied", confirmation.Text);
+            Assert.Equal(12, confirmation.MinHeight);
+            var periodLabel = Assert.Single(
+                row.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => textBlock.Text == "60 s");
+            var favoriteButtons = row.GetLogicalDescendants()
+                .OfType<Button>()
+                .Where(button => button.GetLogicalDescendants()
+                    .OfType<SymbolIcon>()
+                    .Any(icon => icon.Kind == SymbolIconKind.Favorite))
+                .ToArray();
+            Assert.Equal(2, Grid.GetColumn(periodLabel));
+            Assert.NotEmpty(favoriteButtons);
+            Assert.All(favoriteButtons, button => Assert.Equal(3, Grid.GetColumn(button)));
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void GroupEditorFlyout_ProvidesBoundedNameColorAndAccountSelection()
     {
         var mainWindow = new MainWindow();
@@ -1739,21 +1908,11 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.EditFavorites],
                 favoriteEdit.Header);
-            var allAccounts = Assert.IsType<Border>(groupStrip.Children[1]);
-            Assert.Equal("AllAccountsGroupCard", allAccounts.Name);
-            var allAccountsButton = Assert.Single(
-                allAccounts.GetLogicalDescendants().OfType<Button>());
-            Assert.Equal(
-                Application.Current!.Resources[AvaloniaStringKeys.AllAccounts],
-                AutomationProperties.GetName(allAccountsButton));
-            var ungrouped = Assert.IsType<Border>(groupStrip.Children[2]);
-            Assert.Equal("UngroupedGroupCard", ungrouped.Name);
-            var ungroupedButton = Assert.Single(
-                ungrouped.GetLogicalDescendants().OfType<Button>());
-            Assert.Equal(
-                Application.Current!.Resources[AvaloniaStringKeys.UngroupedAccounts],
-                AutomationProperties.GetName(ungroupedButton));
-            Assert.IsType<ItemsControl>(groupStrip.Children[3]);
+            Assert.IsType<ItemsControl>(groupStrip.Children[1]);
+            Assert.Equal(2, groupStrip.Children.Count);
+            Assert.DoesNotContain(
+                templateHost.GetLogicalDescendants().OfType<Control>(),
+                control => control.Name is "AllAccountsGroupCard" or "UngroupedGroupCard");
             var groupBackButton = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "GroupBackButton");
@@ -1762,17 +1921,21 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(1, Grid.GetColumn(groupScroller));
             var groupNavigationGrid = Assert.IsType<Grid>(groupScroller.Parent);
             Assert.Equal(new GridLength(10), groupNavigationGrid.ColumnDefinitions[0].Width);
-            Assert.Equal(new Thickness(-10, 0, 0, 0), groupBackButton.Margin);
-            Assert.Equal(54, groupBackButton.Height);
-            Assert.Equal(20, groupBackButton.Width);
+            Assert.Equal(new Thickness(-7, 2, 1, 2), groupBackButton.Margin);
+            Assert.Equal(50, groupBackButton.Height);
+            Assert.Equal(16, groupBackButton.Width);
             Assert.Empty(groupBackButton.GetLogicalDescendants().OfType<TextBlock>());
-            var accountSort = Assert.Single(
-                templateHost.GetLogicalDescendants().OfType<ComboBox>(),
-                comboBox => comboBox.Name == "AccountSortComboBox");
+            Assert.Equal(
+                12,
+                Assert.Single(groupBackButton.GetLogicalDescendants().OfType<SymbolIcon>()).IconSize);
+            var accountSort = mainWindow.FindControl<Button>("AccountSortButton");
+            Assert.NotNull(accountSort);
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.SortAccounts],
                 AutomationProperties.GetName(accountSort));
-            Assert.Equal(174, accountSort.MinWidth);
+            Assert.Equal(
+                SymbolIconKind.Sort,
+                Assert.IsType<SymbolIcon>(accountSort.Content).Kind);
             var flyout = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "GroupEditorFlyout");
@@ -1936,6 +2099,9 @@ public sealed class MainWindowSmokeTests
             var openFolderButton = Assert.Single(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "OpenLastBackupFolderButton");
+            var openExportAfterCheckBox = Assert.Single(
+                content.GetLogicalDescendants().OfType<CheckBox>(),
+                checkBox => checkBox.Name == "OpenExportAfterCheckBox");
             var exportPanel = Assert.Single(
                 content.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "EncryptedBackupExportPanel");
@@ -1959,6 +2125,7 @@ public sealed class MainWindowSmokeTests
             Assert.Contains("secondary", openFolderButton.Classes);
             Assert.Contains("wide", openFolderButton.Classes);
             Assert.Contains(openFolderButton, exportPanel.GetLogicalDescendants());
+            Assert.Contains(openExportAfterCheckBox, exportPanel.GetLogicalDescendants());
             Assert.DoesNotContain(openFolderButton, restorePanel.GetLogicalDescendants());
             Assert.NotNull(restoreConflictStrategy);
             Assert.NotNull(otherFormatsConflictStrategy);
@@ -2001,6 +2168,15 @@ public sealed class MainWindowSmokeTests
                 checkBox => Equals(
                     checkBox.Content,
                     Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo]));
+            Assert.DoesNotContain(
+                panel.GetLogicalDescendants().OfType<CheckBox>(),
+                checkBox => checkBox.Name == "OpenExportAfterCheckBox");
+            Assert.DoesNotContain(
+                panel.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => textBlock.Text is not null
+                    && Equals(
+                        textBlock.Text,
+                        Application.Current!.Resources[AvaloniaStringKeys.SettingsAutoSaveHint]));
         }
         finally
         {

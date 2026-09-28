@@ -48,6 +48,37 @@ public partial class MainWindow : Window
         ScalingChanged += MainWindowScalingChanged;
     }
 
+    private void SelectIssuerSort(object? sender, RoutedEventArgs e) =>
+        SelectAccountSort(static viewModel => viewModel.SelectIssuerSortAsync());
+
+    private void SelectIssuerDescendingSort(object? sender, RoutedEventArgs e) =>
+        SelectAccountSort(static viewModel => viewModel.SelectIssuerDescendingSortAsync());
+
+    private void SelectAccountNameSort(object? sender, RoutedEventArgs e) =>
+        SelectAccountSort(static viewModel => viewModel.SelectAccountNameSortAsync());
+
+    private void SelectAccountNameDescendingSort(object? sender, RoutedEventArgs e) =>
+        SelectAccountSort(static viewModel => viewModel.SelectAccountNameDescendingSortAsync());
+
+    private void SelectAccountSort(Func<AccountListViewModel, Task> select)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+            _ = select(viewModel.AccountList);
+        SetAccountSortMenuVisible(false);
+    }
+
+    private void ToggleAccountSortMenu(object? sender, RoutedEventArgs e) =>
+        SetAccountSortMenuVisible(!AccountSortMenu.IsVisible);
+
+    private void CloseAccountSortMenu(object? sender, RoutedEventArgs e) =>
+        SetAccountSortMenuVisible(false);
+
+    private void SetAccountSortMenuVisible(bool visible)
+    {
+        AccountSortMenu.IsVisible = visible;
+        AccountSortMenuDismissLayer.IsVisible = visible;
+    }
+
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
@@ -104,6 +135,14 @@ public partial class MainWindow : Window
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && AccountSortMenu.IsVisible)
+        {
+            SetAccountSortMenuVisible(false);
+            e.Handled = true;
+            base.OnKeyDown(e);
+            return;
+        }
+
         if (DataContext is MainWindowViewModel settingsViewModel
             && settingsViewModel.IsSettingsVisible
             && e.Key == Key.Escape)

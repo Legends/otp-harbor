@@ -12,15 +12,15 @@ internal static class AccountListFilter
         ArgumentNullException.ThrowIfNull(accounts);
         var terms = (searchText ?? string.Empty)
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (terms.Length == 0 && !favoritesOnly && !allAccounts)
+        if (terms.Length == 0 && !favoritesOnly)
             return groupId is null
-                ? accounts.Where(account => account.Group is null).ToArray()
+                ? accounts.ToArray()
                 : accounts.Where(account => account.Group?.Id == groupId).ToArray();
 
         return accounts
             .Where(account =>
                 (!favoritesOnly || account.IsFavorite)
-                && (favoritesOnly || allAccounts || groupId is null || account.Group?.Id == groupId)
+                && (favoritesOnly || groupId is null || account.Group?.Id == groupId)
                 && terms.All(term =>
                     account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)

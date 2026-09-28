@@ -42,6 +42,24 @@
   <data name="AddToFavorites" xml:space="preserve"><value>Zu Favoriten hinzufügen</value></data>
   <data name="RemoveFromFavorites" xml:space="preserve"><value>Aus Favoriten entfernen</value></data>
   <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Die Favoriten konnten nicht aktualisiert werden.</value></data>
+  <data name="CreateGroup" xml:space="preserve"><value>Gruppe erstellen</value></data>
+  <data name="EditGroup" xml:space="preserve"><value>Gruppe bearbeiten</value></data>
+  <data name="DeleteGroup" xml:space="preserve"><value>Gruppe löschen</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>Die Gruppe „{0}“ löschen? Ihre Konten bleiben im Tresor erhalten.</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Gruppenname</value></data>
+  <data name="GroupColor" xml:space="preserve"><value>Farbe</value></data>
+  <data name="GroupAccounts" xml:space="preserve"><value>Konten</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Gib einen Gruppennamen ein.</value></data>
+  <data name="GroupNameDuplicate" xml:space="preserve"><value>Eine Gruppe mit diesem Namen ist bereits vorhanden.</value></data>
+  <data name="GroupAccountRequired" xml:space="preserve"><value>Wähle mindestens ein Konto aus.</value></data>
+  <data name="GroupSaveFailed" xml:space="preserve"><value>Die Gruppe konnte nicht gespeichert werden.</value></data>
+  <data name="GroupDeleteFailed" xml:space="preserve"><value>Die Gruppe konnte nicht gelöscht werden.</value></data>
+  <data name="GroupColorGreen" xml:space="preserve"><value>Grün</value></data>
+  <data name="GroupColorTurquoise" xml:space="preserve"><value>Türkis</value></data>
+  <data name="GroupColorBlue" xml:space="preserve"><value>Blau</value></data>
+  <data name="GroupColorOrange" xml:space="preserve"><value>Orange</value></data>
+  <data name="GroupColorRed" xml:space="preserve"><value>Rot</value></data>
+  <data name="GroupColorPurple" xml:space="preserve"><value>Lila</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} von {1} Konten angezeigt</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>Keine passenden Konten.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Nach rechts wischen für QR und Bearbeiten, nach links zum Löschen. Die Kamera importiert auch Google-Authenticator-Exporte.</value></data>

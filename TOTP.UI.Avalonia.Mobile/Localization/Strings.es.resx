@@ -42,6 +42,24 @@
   <data name="AddToFavorites" xml:space="preserve"><value>Añadir a favoritos</value></data>
   <data name="RemoveFromFavorites" xml:space="preserve"><value>Quitar de favoritos</value></data>
   <data name="FavoriteUpdateFailed" xml:space="preserve"><value>No se pudieron actualizar los favoritos.</value></data>
+  <data name="CreateGroup" xml:space="preserve"><value>Crear grupo</value></data>
+  <data name="EditGroup" xml:space="preserve"><value>Editar grupo</value></data>
+  <data name="DeleteGroup" xml:space="preserve"><value>Eliminar grupo</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>¿Eliminar el grupo «{0}»? Sus cuentas permanecerán en la bóveda.</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Nombre del grupo</value></data>
+  <data name="GroupColor" xml:space="preserve"><value>Color</value></data>
+  <data name="GroupAccounts" xml:space="preserve"><value>Cuentas</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Introduce un nombre para el grupo.</value></data>
+  <data name="GroupNameDuplicate" xml:space="preserve"><value>Ya existe un grupo con este nombre.</value></data>
+  <data name="GroupAccountRequired" xml:space="preserve"><value>Selecciona al menos una cuenta.</value></data>
+  <data name="GroupSaveFailed" xml:space="preserve"><value>No se pudo guardar el grupo.</value></data>
+  <data name="GroupDeleteFailed" xml:space="preserve"><value>No se pudo eliminar el grupo.</value></data>
+  <data name="GroupColorGreen" xml:space="preserve"><value>Verde</value></data>
+  <data name="GroupColorTurquoise" xml:space="preserve"><value>Turquesa</value></data>
+  <data name="GroupColorBlue" xml:space="preserve"><value>Azul</value></data>
+  <data name="GroupColorOrange" xml:space="preserve"><value>Naranja</value></data>
+  <data name="GroupColorRed" xml:space="preserve"><value>Rojo</value></data>
+  <data name="GroupColorPurple" xml:space="preserve"><value>Morado</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No hay cuentas coincidentes.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Deslice a la derecha para QR y editar, o a la izquierda para eliminar. La cámara también importa exportaciones de Google Authenticator.</value></data>

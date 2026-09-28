@@ -17,5 +17,6 @@ public enum SymbolIconKind
     QrCode,
     Reveal,
     Search,
-    Settings
+    Settings,
+    Sort
 }

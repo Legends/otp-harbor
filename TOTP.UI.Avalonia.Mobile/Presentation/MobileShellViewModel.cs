@@ -67,6 +67,13 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _showSettingsCommand;
     private readonly MobileAsyncCommand _clearSearchCommand;
     private readonly MobileAsyncCommand _toggleFavoritesFilterCommand;
+    private readonly MobileAsyncCommand _clearGroupFilterCommand;
+    private readonly MobileAsyncCommand _beginAddGroupCommand;
+    private readonly MobileAsyncCommand _saveGroupCommand;
+    private readonly MobileAsyncCommand _cancelGroupEditCommand;
+    private readonly MobileAsyncCommand _beginDeleteGroupCommand;
+    private readonly MobileAsyncCommand _confirmDeleteGroupCommand;
+    private readonly MobileAsyncCommand _cancelDeleteGroupCommand;
     private readonly MobileAsyncCommand _beginAddCommand;
     private readonly MobileAsyncCommand _saveAccountCommand;
     private readonly MobileAsyncCommand _cancelEditCommand;
@@ -121,7 +128,17 @@ public sealed class MobileShellViewModel :
     private long _showIssuerLogoRevision;
     private string _searchText = string.Empty;
     private bool _showFavoritesOnly;
+    private Guid? _selectedGroupId;
     private readonly List<MobileAccountItem> _allAccounts = [];
+    private bool _isGroupEditorVisible;
+    private bool _isDeleteGroupConfirmationVisible;
+    private Guid? _editingGroupId;
+    private string _groupEditorName = string.Empty;
+    private string _groupEditorSearchText = string.Empty;
+    private string _groupEditorMessage = string.Empty;
+    private readonly List<MobileGroupAccountSelection> _allGroupEditorAccounts = [];
+    private IReadOnlyList<MobileGroupColorOption> _groupColorOptions = [];
+    private MobileGroupColorOption? _selectedGroupColor;
     private MobileAccountItem? _selectedAccount;
     private bool _isEditorVisible;
     private bool _isDeleteConfirmationVisible;
@@ -260,13 +277,38 @@ public sealed class MobileShellViewModel :
             () => IsAccountsVisible && IsSettingsVisible && !IsBusy);
         _showSettingsCommand = new MobileAsyncCommand(
             ShowSettingsAsync,
-            () => IsAccountsVisible && !IsSettingsVisible && !IsEditorVisible && !IsBusy);
+            () => IsAccountsVisible
+                && !IsSettingsVisible
+                && !IsEditorVisible
+                && !IsGroupEditorVisible
+                && !IsBusy);
         _clearSearchCommand = new MobileAsyncCommand(
             ClearSearchAsync,
             () => HasSearchText && IsAccountListVisible && !IsBusy);
         _toggleFavoritesFilterCommand = new MobileAsyncCommand(
             ToggleFavoritesFilterAsync,
             () => HasFavoriteAccounts && IsAccountListVisible && !IsBusy);
+        _clearGroupFilterCommand = new MobileAsyncCommand(
+            ClearGroupFilterAsync,
+            () => HasSelectedGroup && IsAccountListVisible && !IsBusy);
+        _beginAddGroupCommand = new MobileAsyncCommand(
+            BeginAddGroupAsync,
+            () => IsAccountListVisible && _allAccounts.Count > 0 && !IsBusy);
+        _saveGroupCommand = new MobileAsyncCommand(
+            SaveGroupAsync,
+            () => IsGroupEditorVisible && !IsBusy);
+        _cancelGroupEditCommand = new MobileAsyncCommand(
+            CancelGroupEditAsync,
+            () => IsGroupEditorVisible && !IsBusy);
+        _beginDeleteGroupCommand = new MobileAsyncCommand(
+            BeginDeleteGroupAsync,
+            () => IsGroupEditorVisible && IsEditingGroup && !IsBusy);
+        _confirmDeleteGroupCommand = new MobileAsyncCommand(
+            ConfirmDeleteGroupAsync,
+            () => IsDeleteGroupConfirmationVisible && !IsBusy);
+        _cancelDeleteGroupCommand = new MobileAsyncCommand(
+            CancelDeleteGroupAsync,
+            () => IsDeleteGroupConfirmationVisible && !IsBusy);
         _beginAddCommand = new MobileAsyncCommand(BeginAddAsync, CanEditAccounts);
         _saveAccountCommand = new MobileAsyncCommand(
             SaveAccountAsync,
@@ -359,6 +401,8 @@ public sealed class MobileShellViewModel :
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<MobileAccountItem> Accounts { get; } = [];
+    public ObservableCollection<MobileAccountGroupItem> Groups { get; } = [];
+    public ObservableCollection<MobileGroupAccountSelection> GroupEditorAccounts { get; } = [];
 
     public ObservableCollection<BackupImportConflictItem> BackupImportConflicts { get; } = [];
 
@@ -382,6 +426,13 @@ public sealed class MobileShellViewModel :
     public ICommand ShowSettingsCommand => _showSettingsCommand;
     public ICommand ClearSearchCommand => _clearSearchCommand;
     public ICommand ToggleFavoritesFilterCommand => _toggleFavoritesFilterCommand;
+    public ICommand ClearGroupFilterCommand => _clearGroupFilterCommand;
+    public ICommand BeginAddGroupCommand => _beginAddGroupCommand;
+    public ICommand SaveGroupCommand => _saveGroupCommand;
+    public ICommand CancelGroupEditCommand => _cancelGroupEditCommand;
+    public ICommand BeginDeleteGroupCommand => _beginDeleteGroupCommand;
+    public ICommand ConfirmDeleteGroupCommand => _confirmDeleteGroupCommand;
+    public ICommand CancelDeleteGroupCommand => _cancelDeleteGroupCommand;
     public ICommand BeginAddCommand => _beginAddCommand;
     public ICommand SaveAccountCommand => _saveAccountCommand;
     public ICommand CancelEditCommand => _cancelEditCommand;
@@ -433,8 +484,11 @@ public sealed class MobileShellViewModel :
     public bool IsSetupVisible => _screen == MobileScreen.Setup;
     public bool IsUnlockVisible => _screen == MobileScreen.Unlock;
     public bool IsAccountsVisible => _screen == MobileScreen.Accounts;
-    public bool IsAccountListVisible => IsAccountsVisible && !IsSettingsVisible && !IsEditorVisible;
-    public bool IsScreenCaptureProtectionRequired => IsAccountListVisible;
+    public bool IsAccountListVisible => IsAccountsVisible
+        && !IsSettingsVisible
+        && !IsEditorVisible
+        && !IsGroupEditorVisible;
+    public bool IsScreenCaptureProtectionRequired => IsAccountListVisible || IsGroupEditorVisible;
     public bool IsSettingsVisible => IsAccountsVisible && _isSettingsVisible;
     public bool HasAccounts => Accounts.Count > 0;
     public bool HasNoAccounts => _allAccounts.Count == 0;
@@ -443,7 +497,11 @@ public sealed class MobileShellViewModel :
     public int FavoriteCount => _allAccounts.Count(account => account.IsFavorite);
     public bool HasFavoriteAccounts => FavoriteCount > 0;
     public bool IsFavoritesFilterSelected => _showFavoritesOnly;
-    public bool HasActiveAccountFilter => HasSearchText || IsFavoritesFilterSelected;
+    public bool HasGroups => Groups.Count > 0;
+    public bool HasAccountNavigationCards => HasFavoriteAccounts || HasGroups;
+    public bool HasSelectedGroup => _selectedGroupId.HasValue;
+    public bool HasActiveAccountFilter =>
+        HasSearchText || IsFavoritesFilterSelected || HasSelectedGroup;
     public string SearchResultSummary => string.Format(
         Get(MobileStringKeys.SearchResultsFormat),
         Accounts.Count,
@@ -659,6 +717,13 @@ public sealed class MobileShellViewModel :
         set
         {
             if (!SetField(ref _searchText, value ?? string.Empty)) return;
+            if (_searchText.Length > 0 && _selectedGroupId.HasValue)
+            {
+                _selectedGroupId = null;
+                RefreshGroups();
+                OnPropertyChanged(nameof(HasSelectedGroup));
+                _clearGroupFilterCommand.NotifyCanExecuteChanged();
+            }
             OnPropertyChanged(nameof(HasSearchText));
             OnPropertyChanged(nameof(HasActiveAccountFilter));
             _clearSearchCommand.NotifyCanExecuteChanged();
@@ -676,8 +741,24 @@ public sealed class MobileShellViewModel :
     {
         if (!HasFavoriteAccounts) return Task.CompletedTask;
         _showFavoritesOnly = !_showFavoritesOnly;
+        _selectedGroupId = null;
+        RefreshGroups();
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedGroup));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        ApplyAccountFilter();
+        return Task.CompletedTask;
+    }
+
+    public Task ClearGroupFilterAsync()
+    {
+        if (!_selectedGroupId.HasValue) return Task.CompletedTask;
+        _selectedGroupId = null;
+        RefreshGroups();
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
         ApplyAccountFilter();
         return Task.CompletedTask;
     }
@@ -723,6 +804,82 @@ public sealed class MobileShellViewModel :
             NotifyCommands();
         }
     }
+
+    public bool IsGroupEditorVisible
+    {
+        get => _isGroupEditorVisible;
+        private set
+        {
+            if (!SetField(ref _isGroupEditorVisible, value)) return;
+            OnPropertyChanged(nameof(IsAccountListVisible));
+            OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
+            OnPropertyChanged(nameof(GroupEditorTitle));
+            OnPropertyChanged(nameof(IsCreatingGroup));
+            OnPropertyChanged(nameof(IsEditingGroup));
+            NotifyCommands();
+        }
+    }
+
+    public bool IsCreatingGroup => IsGroupEditorVisible && !_editingGroupId.HasValue;
+    public bool IsEditingGroup => IsGroupEditorVisible && _editingGroupId.HasValue;
+
+    public bool IsDeleteGroupConfirmationVisible
+    {
+        get => _isDeleteGroupConfirmationVisible;
+        private set
+        {
+            if (!SetField(ref _isDeleteGroupConfirmationVisible, value)) return;
+            OnPropertyChanged(nameof(GroupDeletePrompt));
+            NotifyCommands();
+        }
+    }
+
+    public string GroupEditorName
+    {
+        get => _groupEditorName;
+        set
+        {
+            if (!SetField(ref _groupEditorName, value ?? string.Empty)) return;
+            GroupEditorMessage = string.Empty;
+            ClearErrorNotification();
+        }
+    }
+
+    public string GroupEditorSearchText
+    {
+        get => _groupEditorSearchText;
+        set
+        {
+            if (!SetField(ref _groupEditorSearchText, value ?? string.Empty)) return;
+            ApplyGroupEditorSearch();
+        }
+    }
+
+    public string GroupEditorMessage
+    {
+        get => _groupEditorMessage;
+        private set => SetField(ref _groupEditorMessage, value);
+    }
+
+    public IReadOnlyList<MobileGroupColorOption> GroupColorOptions
+    {
+        get => _groupColorOptions;
+        private set => SetField(ref _groupColorOptions, value);
+    }
+
+    public MobileGroupColorOption? SelectedGroupColor
+    {
+        get => _selectedGroupColor;
+        set => SetField(ref _selectedGroupColor, value);
+    }
+
+    public string GroupEditorTitle => Get(IsEditingGroup
+        ? MobileStringKeys.EditGroup
+        : MobileStringKeys.CreateGroup);
+
+    public string GroupDeletePrompt => string.Format(
+        Get(MobileStringKeys.DeleteGroupPrompt),
+        GroupEditorName);
 
     public bool IsEditorVisible
     {
@@ -926,6 +1083,12 @@ public sealed class MobileShellViewModel :
     public string FavoriteAccountText => Get(MobileStringKeys.FavoriteAccount);
     public string AddToFavoritesText => Get(MobileStringKeys.AddToFavorites);
     public string RemoveFromFavoritesText => Get(MobileStringKeys.RemoveFromFavorites);
+    public string CreateGroupText => Get(MobileStringKeys.CreateGroup);
+    public string EditGroupText => Get(MobileStringKeys.EditGroup);
+    public string DeleteGroupText => Get(MobileStringKeys.DeleteGroup);
+    public string GroupNameText => Get(MobileStringKeys.GroupName);
+    public string GroupColorText => Get(MobileStringKeys.GroupColor);
+    public string GroupAccountsText => Get(MobileStringKeys.GroupAccounts);
     public string NoSearchResultsText => Get(MobileStringKeys.NoSearchResults);
     public string AccountSwipeHintText => Get(MobileStringKeys.AccountSwipeHint);
     public string ScanQrText => Get(MobileStringKeys.ScanQr);
@@ -2191,6 +2354,158 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
+    public Task BeginAddGroupAsync()
+    {
+        if (!IsAccountListVisible || IsBusy || _allAccounts.Count == 0)
+            return Task.CompletedTask;
+
+        ClearGroupEditor();
+        RefreshGroupColorOptions(null);
+        PopulateGroupEditorAccounts(null);
+        CancelCodeRefresh();
+        IsGroupEditorVisible = true;
+        ClearNotification();
+        return Task.CompletedTask;
+    }
+
+    public Task BeginEditGroupAsync(Guid groupId)
+    {
+        if (!IsAccountListVisible || IsBusy) return Task.CompletedTask;
+
+        var group = Groups.FirstOrDefault(item => item.Id == groupId)?.Group;
+        if (group is null) return Task.CompletedTask;
+
+        ClearGroupEditor();
+        _editingGroupId = group.Id;
+        GroupEditorName = group.Name;
+        RefreshGroupColorOptions(group.Color);
+        PopulateGroupEditorAccounts(group.Id);
+        CancelCodeRefresh();
+        IsGroupEditorVisible = true;
+        ClearNotification();
+        return Task.CompletedTask;
+    }
+
+    public async Task SaveGroupAsync()
+    {
+        if (!IsGroupEditorVisible || IsBusy) return;
+
+        var name = GroupEditorName.Trim();
+        if (name.Length == 0)
+        {
+            GroupEditorMessage = Get(MobileStringKeys.GroupNameRequired);
+            return;
+        }
+
+        if (Groups.Any(group => group.Id != _editingGroupId
+                && string.Equals(group.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            GroupEditorMessage = Get(MobileStringKeys.GroupNameDuplicate);
+            return;
+        }
+
+        var selectedAccountIds = _allGroupEditorAccounts
+            .Where(account => account.IsSelected)
+            .Select(account => account.AccountId)
+            .ToArray();
+        if (selectedAccountIds.Length == 0)
+        {
+            GroupEditorMessage = Get(MobileStringKeys.GroupAccountRequired);
+            return;
+        }
+
+        var color = SelectedGroupColor ?? GroupColorOptions.FirstOrDefault();
+        if (color is null)
+        {
+            GroupEditorMessage = Get(MobileStringKeys.GroupSaveFailed);
+            return;
+        }
+
+        var group = new AccountGroup(_editingGroupId ?? Guid.NewGuid(), name, color.Hex);
+        IsBusy = true;
+        try
+        {
+            var result = await _accountManager.SaveGroupAsync(group, selectedAccountIds);
+            if (result.IsFailed)
+            {
+                GroupEditorMessage = Get(MobileStringKeys.GroupSaveFailed);
+                return;
+            }
+
+            _selectedGroupId = group.Id;
+            _showFavoritesOnly = false;
+            ClearGroupEditor();
+            IsGroupEditorVisible = false;
+            await LoadAccountsAsync();
+        }
+        catch (Exception)
+        {
+            GroupEditorMessage = Get(MobileStringKeys.GroupSaveFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public Task CancelGroupEditAsync()
+    {
+        if (!IsGroupEditorVisible || IsBusy) return Task.CompletedTask;
+        ClearGroupEditor();
+        IsGroupEditorVisible = false;
+        ClearNotification();
+        StartCodeRefresh();
+        return Task.CompletedTask;
+    }
+
+    public Task BeginDeleteGroupAsync()
+    {
+        if (!IsGroupEditorVisible || !IsEditingGroup || IsBusy)
+            return Task.CompletedTask;
+
+        IsDeleteGroupConfirmationVisible = true;
+        return Task.CompletedTask;
+    }
+
+    public async Task ConfirmDeleteGroupAsync()
+    {
+        if (!IsDeleteGroupConfirmationVisible || !_editingGroupId.HasValue || IsBusy)
+            return;
+
+        var groupId = _editingGroupId.Value;
+        IsBusy = true;
+        try
+        {
+            var result = await _accountManager.DeleteGroupAsync(groupId);
+            if (result.IsFailed)
+            {
+                GroupEditorMessage = Get(MobileStringKeys.GroupDeleteFailed);
+                IsDeleteGroupConfirmationVisible = false;
+                return;
+            }
+
+            if (_selectedGroupId == groupId) _selectedGroupId = null;
+            ClearGroupEditor();
+            IsGroupEditorVisible = false;
+            await LoadAccountsAsync();
+        }
+        catch (Exception)
+        {
+            GroupEditorMessage = Get(MobileStringKeys.GroupDeleteFailed);
+            IsDeleteGroupConfirmationVisible = false;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public Task CancelDeleteGroupAsync()
+    {
+        if (!IsBusy) IsDeleteGroupConfirmationVisible = false;
+        return Task.CompletedTask;
+    }
+
     public Task BeginAddAsync()
     {
         if (!CanEditAccounts()) return Task.CompletedTask;
@@ -2555,8 +2870,10 @@ public sealed class MobileShellViewModel :
         CancelCodeRefresh();
         ClearQrImage();
         ClearEditor();
+        ClearGroupEditor();
         ClearPasswordInputs();
         Accounts.Clear();
+        Groups.Clear();
         _authorization.Lock();
         CompleteQrConflict(QrAccountConflictDecision.Cancel);
         CompleteImportConfirmation(false);
@@ -2575,6 +2892,7 @@ public sealed class MobileShellViewModel :
         _allAccounts.Clear();
         foreach (var account in loaded.Value)
         {
+            AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
             _allAccounts.Add(new MobileAccountItem(
                 account.ID,
                 account.Issuer,
@@ -2584,7 +2902,8 @@ public sealed class MobileShellViewModel :
                 _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
                 account.IsFavorite,
                 AddToFavoritesText,
-                RemoveFromFavoritesText));
+                RemoveFromFavoritesText,
+                group));
             _allAccounts[^1].UpdateLogoVisibility(ShowIssuerLogo);
         }
 
@@ -2595,6 +2914,7 @@ public sealed class MobileShellViewModel :
             _showFavoritesOnly = false;
         }
         RefreshFavoriteState();
+        RefreshGroups();
         ApplyAccountFilter(selectedId);
     }
 
@@ -2604,9 +2924,13 @@ public sealed class MobileShellViewModel :
         var query = SearchText.Trim();
         var matches = _allAccounts.Where(account =>
             (!_showFavoritesOnly || account.IsFavorite)
+            && (!_selectedGroupId.HasValue || account.Group?.Id == _selectedGroupId)
             && (query.Length == 0
                 || account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
+                || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                || (account.Group?.Name.Contains(
+                    query,
+                    StringComparison.CurrentCultureIgnoreCase) ?? false)));
 
         Accounts.Clear();
         foreach (var account in matches) Accounts.Add(account);
@@ -2621,6 +2945,57 @@ public sealed class MobileShellViewModel :
             : Accounts.FirstOrDefault();
         NotifyCommands();
         StartCodeRefresh();
+    }
+
+    private Task SelectGroupAsync(Guid groupId)
+    {
+        _selectedGroupId = _selectedGroupId == groupId ? null : groupId;
+        _showFavoritesOnly = false;
+        RefreshGroups();
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        ApplyAccountFilter();
+        return Task.CompletedTask;
+    }
+
+    private void RefreshGroups()
+    {
+        var groups = _allAccounts
+            .Where(account => account.Group is not null)
+            .GroupBy(account => account.Group!.Id)
+            .Select(group =>
+            {
+                var stored = group.First().Group!;
+                var normalized = new AccountGroup(
+                    stored.Id,
+                    stored.Name,
+                    AccountGroupPolicy.NormalizeColor(stored.Color));
+                return new MobileAccountGroupItem(
+                    normalized,
+                    group.Count(),
+                    normalized.Id == _selectedGroupId,
+                    new MobileAsyncCommand(
+                        () => SelectGroupAsync(normalized.Id),
+                        () => IsAccountListVisible && !IsBusy),
+                    new MobileAsyncCommand(
+                        () => BeginEditGroupAsync(normalized.Id),
+                        () => IsAccountListVisible && !IsBusy));
+            })
+            .OrderBy(group => group.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+
+        if (_selectedGroupId.HasValue && groups.All(group => group.Id != _selectedGroupId))
+            _selectedGroupId = null;
+
+        Groups.Clear();
+        foreach (var group in groups) Groups.Add(group);
+        OnPropertyChanged(nameof(HasGroups));
+        OnPropertyChanged(nameof(HasAccountNavigationCards));
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
     }
 
     private bool TrySelectAccount(MobileAccountItem account)
@@ -2728,13 +3103,17 @@ public sealed class MobileShellViewModel :
         CancelCodeRefresh();
         ClearEditor();
         IsEditorVisible = false;
+        ClearGroupEditor();
+        IsGroupEditorVisible = false;
         IsDeleteConfirmationVisible = false;
         ClearPasswordInputs();
         SelectedAccount = null;
         Accounts.Clear();
         _allAccounts.Clear();
+        Groups.Clear();
         SearchText = string.Empty;
         _showFavoritesOnly = false;
+        _selectedGroupId = null;
         RefreshFavoriteState();
         _isSettingsVisible = false;
         OnPropertyChanged(nameof(HasAccounts));
@@ -2810,6 +3189,67 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(EditorSecretPlaceholder));
     }
 
+    private void ClearGroupEditor()
+    {
+        _editingGroupId = null;
+        GroupEditorName = string.Empty;
+        GroupEditorSearchText = string.Empty;
+        GroupEditorMessage = string.Empty;
+        GroupColorOptions = [];
+        SelectedGroupColor = null;
+        _allGroupEditorAccounts.Clear();
+        GroupEditorAccounts.Clear();
+        IsDeleteGroupConfirmationVisible = false;
+        OnPropertyChanged(nameof(GroupEditorTitle));
+        OnPropertyChanged(nameof(IsCreatingGroup));
+        OnPropertyChanged(nameof(IsEditingGroup));
+    }
+
+    private void PopulateGroupEditorAccounts(Guid? groupId)
+    {
+        _allGroupEditorAccounts.Clear();
+        foreach (var account in _allAccounts)
+        {
+            _allGroupEditorAccounts.Add(new MobileGroupAccountSelection(
+                account.Id,
+                account.Issuer,
+                account.AccountName,
+                account.Brand,
+                account.ShowIssuerLogo,
+                groupId.HasValue && account.Group?.Id == groupId));
+        }
+
+        ApplyGroupEditorSearch();
+    }
+
+    private void ApplyGroupEditorSearch()
+    {
+        var query = GroupEditorSearchText.Trim();
+        var matches = _allGroupEditorAccounts.Where(account =>
+            query.Length == 0
+            || account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+            || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase));
+
+        GroupEditorAccounts.Clear();
+        foreach (var account in matches) GroupEditorAccounts.Add(account);
+    }
+
+    private void RefreshGroupColorOptions(string? selectedColor)
+    {
+        GroupColorOptions =
+        [
+            new("#4C956C", Get(MobileStringKeys.GroupColorGreen)),
+            new("#18A999", Get(MobileStringKeys.GroupColorTurquoise)),
+            new("#4F6BED", Get(MobileStringKeys.GroupColorBlue)),
+            new("#F59E0B", Get(MobileStringKeys.GroupColorOrange)),
+            new("#E45757", Get(MobileStringKeys.GroupColorRed)),
+            new("#B455C7", Get(MobileStringKeys.GroupColorPurple))
+        ];
+        SelectedGroupColor = GroupColorOptions.FirstOrDefault(option =>
+            string.Equals(option.Hex, selectedColor, StringComparison.OrdinalIgnoreCase))
+            ?? GroupColorOptions[0];
+    }
+
     private void RefreshFavoriteState()
     {
         if (_showFavoritesOnly && !HasFavoriteAccounts)
@@ -2817,6 +3257,7 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(FavoriteCount));
         OnPropertyChanged(nameof(HasFavoriteAccounts));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasAccountNavigationCards));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
     }
@@ -3202,6 +3643,9 @@ public sealed class MobileShellViewModel :
             account.UpdateFavoriteLocalization(AddToFavoritesText, RemoveFromFavoritesText);
         }
 
+        if (IsGroupEditorVisible)
+            RefreshGroupColorOptions(SelectedGroupColor?.Hex);
+
         // Language buttons bind to these computed selection properties. They are
         // state, not localized text, but must refresh together with the catalog.
         OnPropertyChanged(nameof(IsEnglishLanguageSelected));
@@ -3373,6 +3817,13 @@ public sealed class MobileShellViewModel :
         _showSettingsCommand.NotifyCanExecuteChanged();
         _clearSearchCommand.NotifyCanExecuteChanged();
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+        _beginAddGroupCommand.NotifyCanExecuteChanged();
+        _saveGroupCommand.NotifyCanExecuteChanged();
+        _cancelGroupEditCommand.NotifyCanExecuteChanged();
+        _beginDeleteGroupCommand.NotifyCanExecuteChanged();
+        _confirmDeleteGroupCommand.NotifyCanExecuteChanged();
+        _cancelDeleteGroupCommand.NotifyCanExecuteChanged();
         _beginAddCommand.NotifyCanExecuteChanged();
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
@@ -3499,6 +3950,14 @@ public sealed class MobileShellViewModel :
         nameof(FavoriteAccountText),
         nameof(AddToFavoritesText),
         nameof(RemoveFromFavoritesText),
+        nameof(CreateGroupText),
+        nameof(EditGroupText),
+        nameof(DeleteGroupText),
+        nameof(GroupNameText),
+        nameof(GroupColorText),
+        nameof(GroupAccountsText),
+        nameof(GroupEditorTitle),
+        nameof(GroupDeletePrompt),
         nameof(SearchResultSummary),
         nameof(NoSearchResultsText),
         nameof(AccountSwipeHintText),

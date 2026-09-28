@@ -3,7 +3,12 @@ namespace TOTP.Avalonia.Desktop.Presentation;
 public enum AccountSortMode
 {
     Issuer,
-    AccountName
+    IssuerDescending,
+    AccountName,
+    AccountNameDescending
 }
 
-public sealed record AccountSortOption(AccountSortMode Mode, string DisplayName);
+public sealed record AccountSortOption(
+    AccountSortMode Mode,
+    string DisplayName,
+    bool IsSelected);

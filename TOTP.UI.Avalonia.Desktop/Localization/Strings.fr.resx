@@ -202,8 +202,6 @@
   <data name="FavoriteAccount" xml:space="preserve"><value>Compte favori</value></data>
   <data name="AddToFavorites" xml:space="preserve"><value>Ajouter aux favoris</value></data>
   <data name="RemoveFromFavorites" xml:space="preserve"><value>Retirer des favoris</value></data>
-  <data name="FavoriteAdded" xml:space="preserve"><value>Ajouté aux favoris.</value></data>
-  <data name="FavoriteRemoved" xml:space="preserve"><value>Retiré des favoris.</value></data>
   <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Le réglage des favoris n’a pas pu être enregistré.</value></data>
   <data name="EditFavorites" xml:space="preserve"><value>Modifier les favoris</value></data>
   <data name="FavoritesSaveFailed" xml:space="preserve"><value>Les favoris n’ont pas pu être enregistrés.</value></data>
@@ -232,8 +230,10 @@
   <data name="Save" xml:space="preserve"><value>Enregistrer</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} comptes affichés sur {1}</value></data>
   <data name="SortAccounts" xml:space="preserve"><value>Trier les comptes</value></data>
-  <data name="SortByIssuer" xml:space="preserve"><value>Émetteur, puis compte</value></data>
-  <data name="SortByAccountName" xml:space="preserve"><value>Compte, puis émetteur</value></data>
+  <data name="SortByIssuer" xml:space="preserve"><value>Émetteur ↑</value></data>
+  <data name="SortByIssuerDescending" xml:space="preserve"><value>Émetteur ↓</value></data>
+  <data name="SortByAccountName" xml:space="preserve"><value>Compte ↑</value></data>
+  <data name="SortByAccountNameDescending" xml:space="preserve"><value>Compte ↓</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.</value></data>
   <data name="SetUpFirstAccount" xml:space="preserve"><value>Configurez votre premier compte</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Aucune entrée correspondante.</value></data>

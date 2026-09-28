@@ -79,21 +79,50 @@
             <Setter Property="Opacity" Value="1" />
         </Style>
         <Style Selector="ToggleButton.favorites-filter">
-            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackground}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushFavoriteFilterBorder}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="MinHeight" Value="48" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Foreground" Value="{DynamicResource BrushFavoriteFilterForeground}" />
         </Style>
         <Style Selector="ToggleButton.favorites-filter:pointerover">
-            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
         <Style Selector="ToggleButton.favorites-filter:pressed">
-            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
         <Style Selector="ToggleButton.favorites-filter:checked">
-            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
         <Style Selector="ToggleButton.favorites-filter:disabled">
             <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Border.favorite-group-card">
+            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackground}" />
+        </Style>
+        <Style Selector="Border.favorite-group-card:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+        </Style>
+        <Style Selector="Border.favorite-group-card.selected">
+            <Setter Property="Background" Value="{DynamicResource BrushFavoriteFilterBackgroundActive}" />
+        </Style>
+        <Style Selector="Border.group-card">
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Border.group-card.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.account-group.selected">
+            <Setter Property="BorderThickness" Value="2" />
         </Style>
         <Style Selector="Button.numeric-clear">
             <Setter Property="Width" Value="40" />

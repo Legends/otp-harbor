@@ -58,6 +58,24 @@ public static class MobileStringKeys
     public const string AddToFavorites = nameof(AddToFavorites);
     public const string RemoveFromFavorites = nameof(RemoveFromFavorites);
     public const string FavoriteUpdateFailed = nameof(FavoriteUpdateFailed);
+    public const string CreateGroup = nameof(CreateGroup);
+    public const string EditGroup = nameof(EditGroup);
+    public const string DeleteGroup = nameof(DeleteGroup);
+    public const string DeleteGroupPrompt = nameof(DeleteGroupPrompt);
+    public const string GroupName = nameof(GroupName);
+    public const string GroupColor = nameof(GroupColor);
+    public const string GroupAccounts = nameof(GroupAccounts);
+    public const string GroupNameRequired = nameof(GroupNameRequired);
+    public const string GroupNameDuplicate = nameof(GroupNameDuplicate);
+    public const string GroupAccountRequired = nameof(GroupAccountRequired);
+    public const string GroupSaveFailed = nameof(GroupSaveFailed);
+    public const string GroupDeleteFailed = nameof(GroupDeleteFailed);
+    public const string GroupColorGreen = nameof(GroupColorGreen);
+    public const string GroupColorTurquoise = nameof(GroupColorTurquoise);
+    public const string GroupColorBlue = nameof(GroupColorBlue);
+    public const string GroupColorOrange = nameof(GroupColorOrange);
+    public const string GroupColorRed = nameof(GroupColorRed);
+    public const string GroupColorPurple = nameof(GroupColorPurple);
     public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string NoSearchResults = nameof(NoSearchResults);
     public const string AccountSwipeHint = nameof(AccountSwipeHint);
@@ -265,6 +283,24 @@ public static class MobileStringKeys
         AddToFavorites,
         RemoveFromFavorites,
         FavoriteUpdateFailed,
+        CreateGroup,
+        EditGroup,
+        DeleteGroup,
+        DeleteGroupPrompt,
+        GroupName,
+        GroupColor,
+        GroupAccounts,
+        GroupNameRequired,
+        GroupNameDuplicate,
+        GroupAccountRequired,
+        GroupSaveFailed,
+        GroupDeleteFailed,
+        GroupColorGreen,
+        GroupColorTurquoise,
+        GroupColorBlue,
+        GroupColorOrange,
+        GroupColorRed,
+        GroupColorPurple,
         SearchResultsFormat,
         NoSearchResults,
         AccountSwipeHint,

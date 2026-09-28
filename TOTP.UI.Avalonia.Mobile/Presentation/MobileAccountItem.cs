@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using TOTP.Core.Validation;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Core.Models;
 
 namespace TOTP.Avalonia.Mobile.Presentation;
 
@@ -14,7 +15,8 @@ public sealed class MobileAccountItem(
     BrandInfo? brand = null,
     bool isFavorite = false,
     string addToFavoritesText = "",
-    string removeFromFavoritesText = "") : INotifyPropertyChanged
+    string removeFromFavoritesText = "",
+    AccountGroup? group = null) : INotifyPropertyChanged
 {
     private string _code = string.Empty;
     private int _remainingSeconds;
@@ -37,6 +39,7 @@ public sealed class MobileAccountItem(
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
+    public AccountGroup? Group { get; } = group;
     public bool IsFavorite => _isFavorite;
     public string FavoriteActionText => IsFavorite
         ? _removeFromFavoritesText

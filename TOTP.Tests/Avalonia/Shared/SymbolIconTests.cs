@@ -21,6 +21,7 @@ public sealed class SymbolIconTests
     [InlineData(SymbolIconKind.Reveal)]
     [InlineData(SymbolIconKind.Search)]
     [InlineData(SymbolIconKind.Settings)]
+    [InlineData(SymbolIconKind.Sort)]
     public void Kind_ProvidesScalableVectorGeometry(SymbolIconKind kind)
     {
         var sut = new SymbolIcon { Kind = kind };

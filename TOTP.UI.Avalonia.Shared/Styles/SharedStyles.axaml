@@ -516,6 +516,10 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
+    <Style Selector="Button.group-card-hit-target:disabled">
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+        <Setter Property="Opacity" Value="1" />
+    </Style>
     <Style Selector="ListBox.desktop-accounts Border.account-row-container">
         <Setter Property="Background" Value="{DynamicResource BrushDesktopAccountItemBackground}" />
     </Style>

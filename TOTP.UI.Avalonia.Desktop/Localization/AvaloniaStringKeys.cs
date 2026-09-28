@@ -123,8 +123,6 @@ public static class AvaloniaStringKeys
     public const string FavoriteAccount = nameof(FavoriteAccount);
     public const string AddToFavorites = nameof(AddToFavorites);
     public const string RemoveFromFavorites = nameof(RemoveFromFavorites);
-    public const string FavoriteAdded = nameof(FavoriteAdded);
-    public const string FavoriteRemoved = nameof(FavoriteRemoved);
     public const string FavoriteUpdateFailed = nameof(FavoriteUpdateFailed);
     public const string EditFavorites = nameof(EditFavorites);
     public const string FavoritesSaveFailed = nameof(FavoritesSaveFailed);
@@ -154,7 +152,9 @@ public static class AvaloniaStringKeys
     public const string SearchResultsFormat = nameof(SearchResultsFormat);
     public const string SortAccounts = nameof(SortAccounts);
     public const string SortByIssuer = nameof(SortByIssuer);
+    public const string SortByIssuerDescending = nameof(SortByIssuerDescending);
     public const string SortByAccountName = nameof(SortByAccountName);
+    public const string SortByAccountNameDescending = nameof(SortByAccountNameDescending);
     public const string NoEntriesYet = nameof(NoEntriesYet);
     public const string SetUpFirstAccount = nameof(SetUpFirstAccount);
     public const string NoMatchingEntries = nameof(NoMatchingEntries);
@@ -437,14 +437,15 @@ public static class AvaloniaStringKeys
         IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
         ManageGroups, Groups, AllAccounts, UngroupedAccounts, FavoriteAccounts, FavoriteAccount,
-        AddToFavorites, RemoveFromFavorites, FavoriteAdded, FavoriteRemoved,
-        FavoriteUpdateFailed, EditFavorites, FavoritesSaveFailed, FavoritesSaved,
+        AddToFavorites, RemoveFromFavorites, FavoriteUpdateFailed, EditFavorites,
+        FavoritesSaveFailed, FavoritesSaved,
         FavoriteColorSaveFailed, CreateGroup, EditGroup, DeleteGroup,
         DeleteGroupPrompt, GroupName, GroupColor, GroupAccounts, GroupNameRequired,
         GroupNameDuplicate, GroupAccountRequired, GroupSaveFailed, GroupSaved,
         GroupDeleteFailed, GroupDeleted, GroupColorGreen, GroupColorTurquoise,
         GroupColorBlue, GroupColorOrange, GroupColorRed, GroupColorPurple, Save,
-        SearchResultsFormat, SortAccounts, SortByIssuer, SortByAccountName,
+        SearchResultsFormat, SortAccounts, SortByIssuer, SortByIssuerDescending,
+        SortByAccountName, SortByAccountNameDescending,
         NoEntriesYet, SetUpFirstAccount,
         NoMatchingEntries, CloseSettings, GenerateCode,
         ShowQrCode, CopyTimedClear, CopyTimedClearShortcut, Password, PasswordAuthorizationHelp,

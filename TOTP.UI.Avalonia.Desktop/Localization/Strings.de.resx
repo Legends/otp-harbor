@@ -202,8 +202,6 @@
   <data name="FavoriteAccount" xml:space="preserve"><value>Favoritenkonto</value></data>
   <data name="AddToFavorites" xml:space="preserve"><value>Zu Favoriten hinzufügen</value></data>
   <data name="RemoveFromFavorites" xml:space="preserve"><value>Aus Favoriten entfernen</value></data>
-  <data name="FavoriteAdded" xml:space="preserve"><value>Zu Favoriten hinzugefügt.</value></data>
-  <data name="FavoriteRemoved" xml:space="preserve"><value>Aus Favoriten entfernt.</value></data>
   <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Die Favoriteneinstellung konnte nicht gespeichert werden.</value></data>
   <data name="EditFavorites" xml:space="preserve"><value>Favoriten bearbeiten</value></data>
   <data name="FavoritesSaveFailed" xml:space="preserve"><value>Die Favoriten konnten nicht gespeichert werden.</value></data>
@@ -232,8 +230,10 @@
   <data name="Save" xml:space="preserve"><value>Speichern</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>{0} von {1} Konten angezeigt</value></data>
   <data name="SortAccounts" xml:space="preserve"><value>Konten sortieren</value></data>
-  <data name="SortByIssuer" xml:space="preserve"><value>Anbieter, dann Konto</value></data>
-  <data name="SortByAccountName" xml:space="preserve"><value>Konto, dann Anbieter</value></data>
+  <data name="SortByIssuer" xml:space="preserve"><value>Anbieter ↑</value></data>
+  <data name="SortByIssuerDescending" xml:space="preserve"><value>Anbieter ↓</value></data>
+  <data name="SortByAccountName" xml:space="preserve"><value>Konto ↑</value></data>
+  <data name="SortByAccountNameDescending" xml:space="preserve"><value>Konto ↓</value></data>
   <data name="NoEntriesYet" xml:space="preserve"><value>Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.</value></data>
   <data name="SetUpFirstAccount" xml:space="preserve"><value>Erstes Konto einrichten</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Keine passenden Einträge.</value></data>

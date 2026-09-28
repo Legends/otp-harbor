@@ -149,20 +149,28 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
-    [InlineData("en", "Issuer, then account", "Account, then issuer")]
-    [InlineData("de", "Anbieter, dann Konto", "Konto, dann Anbieter")]
-    [InlineData("fr", "Émetteur, puis compte", "Compte, puis émetteur")]
-    [InlineData("es", "Emisor y después cuenta", "Cuenta y después emisor")]
+    [InlineData("en", "Issuer ↑", "Issuer ↓", "Account ↑", "Account ↓")]
+    [InlineData("de", "Anbieter ↑", "Anbieter ↓", "Konto ↑", "Konto ↓")]
+    [InlineData("fr", "Émetteur ↑", "Émetteur ↓", "Compte ↑", "Compte ↓")]
+    [InlineData("es", "Emisor ↑", "Emisor ↓", "Cuenta ↑", "Cuenta ↓")]
     public void Catalog_AccountSortOptionsUseCompleteSelectedLocale(
         string cultureName,
         string expectedIssuerSort,
-        string expectedAccountSort)
+        string expectedIssuerDescendingSort,
+        string expectedAccountSort,
+        string expectedAccountDescendingSort)
     {
         var sut = new AvaloniaStringCatalog();
         var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
 
         Assert.Equal(expectedIssuerSort, sut.Get(AvaloniaStringKeys.SortByIssuer, culture));
+        Assert.Equal(
+            expectedIssuerDescendingSort,
+            sut.Get(AvaloniaStringKeys.SortByIssuerDescending, culture));
         Assert.Equal(expectedAccountSort, sut.Get(AvaloniaStringKeys.SortByAccountName, culture));
+        Assert.Equal(
+            expectedAccountDescendingSort,
+            sut.Get(AvaloniaStringKeys.SortByAccountNameDescending, culture));
     }
 
     [Theory]

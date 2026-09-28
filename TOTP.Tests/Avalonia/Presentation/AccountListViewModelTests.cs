@@ -127,6 +127,7 @@ public sealed class AccountListViewModelTests
         await sut.LoadAsync();
 
         Assert.True(sut.HasMultipleAccounts);
+        Assert.Equal(4, sut.SortOptions.Count);
         Assert.Equal(AccountSortMode.Issuer, sut.SelectedSortOption?.Mode);
         Assert.Equal(["Alpha", "Beta", "Zeta"], sut.Accounts.Select(account => account.Issuer));
 
@@ -139,6 +140,10 @@ public sealed class AccountListViewModelTests
         sut.SearchText = "alice";
 
         Assert.Equal(["Beta", "Zeta"], sut.Accounts.Select(account => account.Issuer));
+
+        await sut.SelectIssuerDescendingSortAsync();
+
+        Assert.Equal(["Zeta", "Beta"], sut.Accounts.Select(account => account.Issuer));
     }
 
     [Fact]
@@ -348,9 +353,8 @@ public sealed class AccountListViewModelTests
         Assert.True(sut.HasAccountNavigationCards);
         Assert.Equal(1, sut.UngroupedCount);
         Assert.True(sut.HasUngroupedAccounts);
-        Assert.True(sut.IsUngroupedFilterSelected);
-        var ungrouped = Assert.Single(sut.Accounts);
-        Assert.Equal("Microsoft", ungrouped.Issuer);
+        Assert.False(sut.IsUngroupedFilterSelected);
+        Assert.Equal(3, sut.Accounts.Count);
 
         sut.SearchText = "work";
         Assert.Equal(2, sut.Accounts.Count);
@@ -378,7 +382,7 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
-    public async Task UngroupedFilter_ClearsSearchAndSelectedNavigationCard()
+    public async Task ClearGroupFilter_ReturnsToAllAccounts()
     {
         var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
         IReadOnlyList<Account> accounts =
@@ -392,22 +396,20 @@ public sealed class AccountListViewModelTests
         using var sut = CreateSut(manager.Object);
         await sut.LoadAsync();
 
-        sut.ToggleFavoritesFilterCommand.Execute(null);
-        sut.SearchText = "git";
-        Assert.True(sut.IsFavoritesFilterSelected);
-        Assert.False(sut.IsUngroupedFilterSelected);
+        sut.Groups.Single().SelectCommand.Execute(null);
+        Assert.True(sut.HasSelectedGroup);
+        Assert.Equal("GitHub", Assert.Single(sut.Accounts).Issuer);
 
-        sut.SelectUngroupedCommand.Execute(null);
+        sut.ClearGroupFilterCommand.Execute(null);
 
-        Assert.Empty(sut.SearchText);
         Assert.False(sut.IsFavoritesFilterSelected);
         Assert.False(sut.HasSelectedGroup);
-        Assert.True(sut.IsUngroupedFilterSelected);
-        Assert.Equal("Microsoft", Assert.Single(sut.Accounts).Issuer);
+        Assert.False(sut.IsUngroupedFilterSelected);
+        Assert.Equal(2, sut.Accounts.Count);
     }
 
     [Fact]
-    public async Task AllAccountsFilter_ShowsGroupedAndUngroupedAccountsAndTogglesBackToDefault()
+    public async Task DefaultView_ShowsGroupedAndUngroupedAccounts()
     {
         var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
         IReadOnlyList<Account> accounts =
@@ -423,33 +425,21 @@ public sealed class AccountListViewModelTests
         await sut.LoadAsync();
 
         Assert.Equal(3, sut.AllAccountCount);
-        Assert.Single(sut.Accounts);
-        Assert.True(sut.IsUngroupedFilterSelected);
-
-        sut.ToggleAllAccountsFilterCommand.Execute(null);
-
-        Assert.True(sut.IsAllAccountsFilterSelected);
-        Assert.False(sut.IsUngroupedFilterSelected);
-        Assert.True(sut.HasSelectedAccountNavigationCard);
         Assert.Equal(3, sut.Accounts.Count);
-
-        sut.ToggleAllAccountsFilterCommand.Execute(null);
-
+        Assert.False(sut.IsUngroupedFilterSelected);
         Assert.False(sut.IsAllAccountsFilterSelected);
-        Assert.True(sut.IsUngroupedFilterSelected);
         Assert.False(sut.HasSelectedAccountNavigationCard);
-        Assert.Equal("Microsoft", Assert.Single(sut.Accounts).Issuer);
+        Assert.Contains(sut.Accounts, account => account.Issuer == "Microsoft");
     }
 
     [Theory]
-    [InlineData("en", "Ungrouped", "All accounts")]
-    [InlineData("de", "Nicht gruppiert", "Alle Konten")]
-    [InlineData("fr", "Non groupés", "Tous les comptes")]
-    [InlineData("es", "Sin agrupar", "Todas las cuentas")]
-    public async Task AccountNavigationBackLabel_DescribesItsSearchAwareDestination(
+    [InlineData("en", "All accounts")]
+    [InlineData("de", "Alle Konten")]
+    [InlineData("fr", "Tous les comptes")]
+    [InlineData("es", "Todas las cuentas")]
+    public async Task AccountNavigationBackLabel_AlwaysReturnsToAllAccounts(
         string cultureName,
-        string expectedDefault,
-        string expectedSearch)
+        string expected)
     {
         var manager = new Mock<IAccountManager>();
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
@@ -462,11 +452,11 @@ public sealed class AccountListViewModelTests
         await sut.LoadAsync();
         sut.ToggleFavoritesFilterCommand.Execute(null);
 
-        Assert.Equal(expectedDefault, sut.AccountNavigationBackLabel);
+        Assert.Equal(expected, sut.AccountNavigationBackLabel);
 
         sut.SearchText = "git";
 
-        Assert.Equal(expectedSearch, sut.AccountNavigationBackLabel);
+        Assert.Equal(expected, sut.AccountNavigationBackLabel);
     }
 
     [Fact]
@@ -489,7 +479,7 @@ public sealed class AccountListViewModelTests
         Assert.True(sut.HasFavoriteAccounts);
         Assert.True(sut.HasAccountNavigationCards);
         Assert.Equal(2, sut.FavoriteCount);
-        Assert.Equal(2, sut.Accounts.Count);
+        Assert.Equal(3, sut.Accounts.Count);
         sut.ToggleFavoritesFilterCommand.Execute(null);
 
         Assert.True(sut.IsFavoritesFilterSelected);
@@ -544,9 +534,9 @@ public sealed class AccountListViewModelTests
         await sut.ToggleAccountFavoriteAsync(row);
 
         Assert.True(stored[0].IsFavorite);
-        row = Assert.Single(sut.Accounts);
+        Assert.Same(row, Assert.Single(sut.Accounts));
         Assert.True(row.IsFavorite);
-        Assert.Equal("Added to favorites.", sut.Message);
+        Assert.False(sut.HasMessage);
 
         sut.ToggleFavoritesFilterCommand.Execute(null);
         Assert.True(sut.IsFavoritesFilterSelected);
@@ -555,10 +545,62 @@ public sealed class AccountListViewModelTests
         Assert.False(stored[0].IsFavorite);
         Assert.False(sut.IsFavoritesFilterSelected);
         Assert.False(Assert.Single(sut.Accounts).IsFavorite);
-        Assert.Equal("Removed from favorites.", sut.Message);
+        Assert.False(sut.HasMessage);
         manager.Verify(value => value.UpdateAsync(
             It.IsAny<Account>(),
             It.IsAny<Account>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ToggleAccountFavoriteAsync_RemovingOneFavoriteKeepsFavoritesCardEnabledAfterExit()
+    {
+        var stored = new List<Account>
+        {
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "alice", isFavorite: true),
+            new(Guid.NewGuid(), "Microsoft", ValidSecret, "bob", isFavorite: true)
+        };
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(stored));
+        manager.Setup(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()))
+            .Callback<Account, Account>((_, updated) =>
+            {
+                var index = stored.FindIndex(account => account.ID == updated.ID);
+                stored[index] = updated;
+            })
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        sut.ToggleFavoritesFilterCommand.Execute(null);
+        var row = sut.Accounts[0];
+        var starCommandStateChanges = 0;
+        var favoriteGroupCommandStateChanges = 0;
+        var addGroupCommandStateChanges = 0;
+        var busyStateChanges = 0;
+        row.ToggleFavoriteCommand!.CanExecuteChanged += (_, _) => starCommandStateChanges++;
+        sut.ToggleFavoritesFilterCommand.CanExecuteChanged +=
+            (_, _) => favoriteGroupCommandStateChanges++;
+        sut.BeginAddGroupCommand.CanExecuteChanged += (_, _) => addGroupCommandStateChanges++;
+        sut.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AccountListViewModel.IsBusy)) busyStateChanges++;
+        };
+
+        await sut.ToggleAccountFavoriteAsync(row);
+        Assert.Equal(0, starCommandStateChanges);
+        Assert.Equal(0, favoriteGroupCommandStateChanges);
+        Assert.Equal(0, addGroupCommandStateChanges);
+        Assert.Equal(0, busyStateChanges);
+
+        sut.ClearGroupFilterCommand.Execute(null);
+
+        Assert.Equal(1, sut.FavoriteCount);
+        Assert.False(sut.IsFavoritesFilterSelected);
+        Assert.True(sut.ToggleFavoritesFilterCommand.CanExecute(null));
+        manager.Verify(
+            value => value.GetAllOtpEntriesSortedAsync(),
+            Times.Exactly(2));
     }
 
     [Fact]
@@ -720,7 +762,7 @@ public sealed class AccountListViewModelTests
         using var sut = CreateSut(manager.Object);
         await sut.LoadAsync();
 
-        Assert.True(sut.HasAccountNavigationCards);
+        Assert.False(sut.HasAccountNavigationCards);
         Assert.False(sut.HasFavoriteAccounts);
         Assert.Equal(0, sut.FavoriteCount);
         Assert.True(sut.BeginEditFavoritesCommand.CanExecute(null));

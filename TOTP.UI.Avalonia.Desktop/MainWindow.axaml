@@ -19,6 +19,8 @@
 
     <Grid RowDefinitions="Auto,*">
         <controls:ProductTitleBar
+            LockCommand="{Binding LockCommand}"
+            ShowLockButton="{Binding IsShellVisible}"
             ShowMinimizeButton="True"
             Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
         <shared:BusyOverlay
@@ -158,7 +160,7 @@
                     Grid.Row="0"
                     Classes="toolbar"
                     IsEnabled="{Binding !IsSettingsVisible}">
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,64,Auto,Auto">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
                         <Button
                             x:Name="ScanQrButton"
                             Grid.Column="0"
@@ -227,48 +229,55 @@
                                 Content="×"
                                 IsVisible="{Binding AccountList.HasSearchText}" />
                         </Grid>
-                        <ComboBox
-                            x:Name="LanguageSelector"
+                        <StackPanel
+                            x:Name="ToolbarTrailingActions"
                             Grid.Column="5"
-                            Width="64"
-                            MinHeight="28"
-                            Padding="2"
-                            HorizontalContentAlignment="Center"
-                            automation:AutomationProperties.Name="{DynamicResource Language}"
-                            ItemsSource="{Binding SettingsPage.Languages}"
-                            SelectedItem="{Binding SettingsPage.SelectedLanguage, Mode=TwoWay}"
-                            ToolTip.Tip="{DynamicResource Language}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="localization:LanguageOption">
-                                    <Image
-                                        Width="24"
-                                        Height="18"
-                                        Margin="8,0,0,0"
-                                        HorizontalAlignment="Center"
-                                        Source="{Binding Icon}"
-                                        Stretch="Uniform"
-                                        ToolTip.Tip="{Binding DisplayName}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                        <Button
-                            x:Name="OpenSettingsButton"
-                            Grid.Column="6"
-                            automation:AutomationProperties.Name="{DynamicResource Settings}"
-                            Classes="icon"
-                            Command="{Binding ShowSettingsCommand}"
-                            ToolTip.Tip="{DynamicResource Settings}">
-                            <shared:SymbolIcon Foreground="#787373" IconSize="16" Kind="Settings" />
-                        </Button>
-                        <Button
-                            x:Name="LockButton"
-                            Grid.Column="7"
-                            automation:AutomationProperties.Name="{DynamicResource Lock}"
-                            Classes="icon"
-                            Command="{Binding LockCommand}"
-                            ToolTip.Tip="{DynamicResource LockShortcut}">
-                            <shared:SymbolIcon IconSize="16" Kind="Lock" />
-                        </Button>
+                            Orientation="Horizontal"
+                            Spacing="4">
+                            <ComboBox
+                                x:Name="LanguageSelector"
+                                Width="64"
+                                MinHeight="28"
+                                Margin="0"
+                                Padding="2"
+                                HorizontalContentAlignment="Center"
+                                automation:AutomationProperties.Name="{DynamicResource Language}"
+                                ItemsSource="{Binding SettingsPage.Languages}"
+                                SelectedItem="{Binding SettingsPage.SelectedLanguage, Mode=TwoWay}"
+                                ToolTip.Tip="{DynamicResource Language}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="localization:LanguageOption">
+                                        <Image
+                                            Width="24"
+                                            Height="18"
+                                            Margin="8,0,0,0"
+                                            HorizontalAlignment="Center"
+                                            Source="{Binding Icon}"
+                                            Stretch="Uniform"
+                                            ToolTip.Tip="{Binding DisplayName}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button
+                                x:Name="OpenSettingsButton"
+                                Margin="0"
+                                automation:AutomationProperties.Name="{DynamicResource Settings}"
+                                Classes="icon"
+                                Command="{Binding ShowSettingsCommand}"
+                                ToolTip.Tip="{DynamicResource Settings}">
+                                <shared:SymbolIcon Foreground="#787373" IconSize="16" Kind="Settings" />
+                            </Button>
+                            <Button
+                                x:Name="AccountSortButton"
+                                Margin="0"
+                                automation:AutomationProperties.Name="{DynamicResource SortAccounts}"
+                                Classes="icon"
+                                Click="ToggleAccountSortMenu"
+                                IsVisible="{Binding AccountList.HasMultipleAccounts}"
+                                ToolTip.Tip="{DynamicResource SortAccounts}">
+                                <shared:SymbolIcon IconSize="20" Kind="Sort" />
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -296,18 +305,18 @@
                                                     <Button
                                                         x:Name="GroupBackButton"
                                                         Grid.Column="0"
-                                                        Height="54"
+                                                        Height="50"
                                                         HorizontalAlignment="Left"
-                                                        Margin="-10,0,0,0"
-                                                        Padding="3,5"
+                                                        Margin="-7,2,1,2"
+                                                        Padding="2"
                                                         VerticalAlignment="Center"
-                                                        Width="20"
+                                                        Width="16"
                                                         automation:AutomationProperties.Name="{Binding AccountNavigationBackLabel}"
                                                         Classes="icon"
                                                         Command="{Binding ClearGroupFilterCommand}"
                                                         IsVisible="{Binding HasSelectedAccountNavigationCard}"
                                                         ToolTip.Tip="{Binding AccountNavigationBackLabel}">
-                                                        <shared:SymbolIcon IconSize="14" Kind="ArrowLeft" />
+                                                        <shared:SymbolIcon IconSize="12" Kind="ArrowLeft" />
                                                     </Button>
                                                     <ScrollViewer
                                                         x:Name="GroupCardsScrollViewer"
@@ -339,59 +348,13 @@
                                                                     automation:AutomationProperties.Name="{DynamicResource FavoriteAccounts}"
                                                                     Classes="group-card-hit-target"
                                                                     Command="{Binding ToggleFavoritesFilterCommand}"
+                                                                    Foreground="{DynamicResource BrushTextPrimary}"
                                                                     ToolTip.Tip="{DynamicResource FavoriteAccounts}">
                                                                     <StackPanel Orientation="Horizontal" Spacing="7">
                                                                         <shared:SymbolIcon Foreground="{Binding FavoriteGroupForeground}" IconSize="20" Kind="Favorite" />
                                                                         <StackPanel>
                                                                             <TextBlock FontWeight="SemiBold" Text="{DynamicResource FavoriteAccounts}" />
                                                                             <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
-                                                                        </StackPanel>
-                                                                    </StackPanel>
-                                                                </Button>
-                                                            </Border>
-                                                            <Border
-                                                                x:Name="AllAccountsGroupCard"
-                                                                Width="150"
-                                                                MinHeight="54"
-                                                                Margin="2"
-                                                                Background="{DynamicResource BrushSurfaceAlternate}"
-                                                                Classes="group-card"
-                                                                Classes.selected="{Binding IsAllAccountsFilterSelected}"
-                                                                CornerRadius="7">
-                                                                <Button
-                                                                    automation:AutomationProperties.Name="{DynamicResource AllAccounts}"
-                                                                    Classes="group-card-hit-target"
-                                                                    Command="{Binding ToggleAllAccountsFilterCommand}"
-                                                                    ToolTip.Tip="{DynamicResource AllAccounts}">
-                                                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                                                        <shared:SymbolIcon IconSize="20" Kind="Codes" />
-                                                                        <StackPanel>
-                                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource AllAccounts}" />
-                                                                            <TextBlock FontSize="11" Text="{Binding AllAccountCount}" />
-                                                                        </StackPanel>
-                                                                    </StackPanel>
-                                                                </Button>
-                                                            </Border>
-                                                            <Border
-                                                                x:Name="UngroupedGroupCard"
-                                                                Width="150"
-                                                                MinHeight="54"
-                                                                Margin="2"
-                                                                Background="{DynamicResource BrushSurfaceAlternate}"
-                                                                Classes="group-card"
-                                                                Classes.selected="{Binding IsUngroupedFilterSelected}"
-                                                                CornerRadius="7"
-                                                                IsVisible="{Binding HasUngroupedAccounts}">
-                                                                <Button
-                                                                    automation:AutomationProperties.Name="{DynamicResource UngroupedAccounts}"
-                                                                    Classes="group-card-hit-target"
-                                                                    Command="{Binding SelectUngroupedCommand}"
-                                                                    ToolTip.Tip="{DynamicResource UngroupedAccounts}">
-                                                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                                                        <shared:SymbolIcon IconSize="20" Kind="Folder" />
-                                                                        <StackPanel>
-                                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource UngroupedAccounts}" />
-                                                                            <TextBlock FontSize="11" Text="{Binding UngroupedCount}" />
                                                                         </StackPanel>
                                                                     </StackPanel>
                                                                 </Button>
@@ -451,28 +414,13 @@
                                                     </ScrollViewer>
                                                 </Grid>
                                             </StackPanel>
-                                            <Grid ColumnDefinitions="*,Auto">
+                                            <Grid>
                                                 <TextBlock
                                                     VerticalAlignment="Center"
                                                     Classes="secondary"
                                                     FontSize="11"
                                                     IsVisible="{Binding HasActiveAccountFilter}"
                                                     Text="{Binding SearchResultSummary}" />
-                                                <ComboBox
-                                                    x:Name="AccountSortComboBox"
-                                                    Grid.Column="1"
-                                                    MinWidth="174"
-                                                    HorizontalAlignment="Right"
-                                                    automation:AutomationProperties.Name="{DynamicResource SortAccounts}"
-                                                    IsVisible="{Binding HasMultipleAccounts}"
-                                                    ItemsSource="{Binding SortOptions}"
-                                                    SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="presentation:AccountSortOption">
-                                                            <TextBlock Text="{Binding DisplayName}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
                                             </Grid>
                                             <Grid x:Name="AccountListRegion">
                                                 <controls:ContextPreservingAccountListBox
@@ -543,30 +491,30 @@
                                                                         CommandParameter="{Binding}"
                                                                         IsVisible="{Binding HasCode}"
                                                                         ToolTip.Tip="{DynamicResource CopyTimedClearShortcut}">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                            <shared:SymbolIcon IconSize="10" Kind="Copy" />
-                                                                            <TextBlock Text="{Binding DisplayCode}" />
+                                                                        <StackPanel HorizontalAlignment="Right" Spacing="1">
+                                                                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="4">
+                                                                                <shared:SymbolIcon IconSize="10" Kind="Copy" />
+                                                                                <TextBlock Text="{Binding DisplayCode}" />
+                                                                            </StackPanel>
+                                                                            <TextBlock
+                                                                                MinHeight="12"
+                                                                                HorizontalAlignment="Right"
+                                                                                FontSize="9"
+                                                                                FontWeight="SemiBold"
+                                                                                Foreground="{DynamicResource BrushSuccess}"
+                                                                                Text="{Binding CopyConfirmation}" />
                                                                         </StackPanel>
                                                                     </Button>
                                                                     <TextBlock
                                                                         Grid.Row="0"
-                                                                        Grid.Column="3"
-                                                                        VerticalAlignment="Center"
-                                                                        FontSize="10"
-                                                                        FontWeight="SemiBold"
-                                                                        Foreground="{DynamicResource BrushSuccess}"
-                                                                        IsVisible="{Binding HasCopyConfirmation}"
-                                                                        Text="{Binding CopyConfirmation}" />
-                                                                    <TextBlock
-                                                                        Grid.Row="0"
-                                                                        Grid.Column="3"
+                                                                        Grid.Column="2"
                                                                         VerticalAlignment="Center"
                                                                         Classes="secondary"
-                                                                        IsVisible="{Binding !HasCopyConfirmation}"
+                                                                        IsVisible="{Binding HasCustomPeriod}"
                                                                         Text="{Binding CustomPeriodLabel}" />
                                                                     <Button
                                                                         Grid.Row="0"
-                                                                        Grid.Column="2"
+                                                                        Grid.Column="3"
                                                                         Width="28"
                                                                         Height="28"
                                                                         MinHeight="28"
@@ -585,7 +533,7 @@
                                                                     </Button>
                                                                     <Button
                                                                         Grid.Row="0"
-                                                                        Grid.Column="2"
+                                                                        Grid.Column="3"
                                                                         Width="28"
                                                                         Height="28"
                                                                         MinHeight="28"
@@ -1001,6 +949,136 @@
 
                 </Grid>
             </Grid>
+
+            <Border
+                x:Name="AccountSortMenuDismissLayer"
+                ZIndex="90"
+                Background="Transparent"
+                IsVisible="False"
+                PointerPressed="CloseAccountSortMenu" />
+            <Border
+                x:Name="AccountSortMenu"
+                ZIndex="91"
+                Width="176"
+                Margin="0,48,8,0"
+                Padding="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushControlBorder}"
+                BorderThickness="1"
+                BoxShadow="{DynamicResource ElevationToast}"
+                Classes="sort-menu"
+                ClipToBounds="True"
+                CornerRadius="8"
+                IsVisible="False">
+                <Border.Styles>
+                    <Style Selector="Border.sort-menu">
+                        <Style.Animations>
+                            <Animation
+                                Duration="0:0:0.16"
+                                Easing="CubicEaseOut"
+                                FillMode="Forward"
+                                PlaybackBehavior="OnlyIfVisible">
+                                <KeyFrame Cue="0%">
+                                    <Setter Property="Opacity" Value="0" />
+                                    <Setter Property="TranslateTransform.Y" Value="-6" />
+                                </KeyFrame>
+                                <KeyFrame Cue="100%">
+                                    <Setter Property="Opacity" Value="1" />
+                                    <Setter Property="TranslateTransform.Y" Value="0" />
+                                </KeyFrame>
+                            </Animation>
+                        </Style.Animations>
+                    </Style>
+                    <Style Selector="Button.sort-option">
+                        <Setter Property="MinHeight" Value="50" />
+                        <Setter Property="Padding" Value="14,0,10,0" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+                        <Setter Property="BorderThickness" Value="0,0,0,1" />
+                        <Setter Property="CornerRadius" Value="0" />
+                    </Style>
+                    <Style Selector="Button.sort-option:pointerover">
+                        <Setter Property="Background" Value="{DynamicResource BrushDesktopAccountItemBackground}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+                    </Style>
+                    <Style Selector="Button.sort-option:pressed">
+                        <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+                    </Style>
+                    <Style Selector="Button.sort-option.last">
+                        <Setter Property="BorderThickness" Value="0" />
+                    </Style>
+                </Border.Styles>
+                <StackPanel Spacing="0">
+                    <Button
+                        Classes="sort-option"
+                        automation:AutomationProperties.Name="{DynamicResource SortByIssuer}"
+                        Click="SelectIssuerSort">
+                        <Grid ColumnDefinitions="*,28">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="{DynamicResource SortByIssuer}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Foreground="{DynamicResource BrushTextSecondary}"
+                                IsVisible="{Binding AccountList.IsIssuerSortSelected}"
+                                Text="✓" />
+                        </Grid>
+                    </Button>
+                    <Button
+                        Classes="sort-option"
+                        automation:AutomationProperties.Name="{DynamicResource SortByIssuerDescending}"
+                        Click="SelectIssuerDescendingSort">
+                        <Grid ColumnDefinitions="*,28">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="{DynamicResource SortByIssuerDescending}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Foreground="{DynamicResource BrushTextSecondary}"
+                                IsVisible="{Binding AccountList.IsIssuerDescendingSortSelected}"
+                                Text="✓" />
+                        </Grid>
+                    </Button>
+                    <Button
+                        Classes="sort-option"
+                        automation:AutomationProperties.Name="{DynamicResource SortByAccountName}"
+                        Click="SelectAccountNameSort">
+                        <Grid ColumnDefinitions="*,28">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="{DynamicResource SortByAccountName}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Foreground="{DynamicResource BrushTextSecondary}"
+                                IsVisible="{Binding AccountList.IsAccountNameSortSelected}"
+                                Text="✓" />
+                        </Grid>
+                    </Button>
+                    <Button
+                        Classes="sort-option last"
+                        automation:AutomationProperties.Name="{DynamicResource SortByAccountNameDescending}"
+                        Click="SelectAccountNameDescendingSort">
+                        <Grid ColumnDefinitions="*,28">
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="{DynamicResource SortByAccountNameDescending}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Foreground="{DynamicResource BrushTextSecondary}"
+                                IsVisible="{Binding AccountList.IsAccountNameDescendingSortSelected}"
+                                Text="✓" />
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Border>
         </Grid>
         </shared:BusyOverlay>
     </Grid>

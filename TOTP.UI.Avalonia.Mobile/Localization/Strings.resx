@@ -42,6 +42,24 @@
   <data name="AddToFavorites" xml:space="preserve"><value>Add to favorites</value></data>
   <data name="RemoveFromFavorites" xml:space="preserve"><value>Remove from favorites</value></data>
   <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Favorites could not be updated.</value></data>
+  <data name="CreateGroup" xml:space="preserve"><value>Create group</value></data>
+  <data name="EditGroup" xml:space="preserve"><value>Edit group</value></data>
+  <data name="DeleteGroup" xml:space="preserve"><value>Delete group</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>Delete the group “{0}”? Its accounts will remain in the vault.</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Group name</value></data>
+  <data name="GroupColor" xml:space="preserve"><value>Color</value></data>
+  <data name="GroupAccounts" xml:space="preserve"><value>Accounts</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Enter a group name.</value></data>
+  <data name="GroupNameDuplicate" xml:space="preserve"><value>A group with this name already exists.</value></data>
+  <data name="GroupAccountRequired" xml:space="preserve"><value>Select at least one account.</value></data>
+  <data name="GroupSaveFailed" xml:space="preserve"><value>The group could not be saved.</value></data>
+  <data name="GroupDeleteFailed" xml:space="preserve"><value>The group could not be deleted.</value></data>
+  <data name="GroupColorGreen" xml:space="preserve"><value>Green</value></data>
+  <data name="GroupColorTurquoise" xml:space="preserve"><value>Turquoise</value></data>
+  <data name="GroupColorBlue" xml:space="preserve"><value>Blue</value></data>
+  <data name="GroupColorOrange" xml:space="preserve"><value>Orange</value></data>
+  <data name="GroupColorRed" xml:space="preserve"><value>Red</value></data>
+  <data name="GroupColorPurple" xml:space="preserve"><value>Purple</value></data>
   <data name="SearchResultsFormat" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No matching accounts.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Swipe right for QR and edit, or left to delete. The camera also imports Google Authenticator exports.</value></data>

@@ -75,6 +75,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string? _notificationLocalizationKey;
     private object[] _notificationLocalizationArguments = [];
     private bool _isBusy;
+    private bool _isFavoriteUpdateInProgress;
     private bool _isGenerating;
     private int _remainingSeconds;
     private int _periodSeconds;
@@ -241,11 +242,36 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         get => _selectedSortOption;
         set
         {
-            if (!SetField(ref _selectedSortOption, value) || value is null) return;
+            if (value is null || _selectedSortOption?.Mode == value.Mode) return;
+            SortOptions = SortOptions
+                .Select(option => option with { IsSelected = option.Mode == value.Mode })
+                .ToArray();
+            SetField(
+                ref _selectedSortOption,
+                SortOptions.First(option => option.Mode == value.Mode));
+            OnPropertyChanged(nameof(IsIssuerSortSelected));
+            OnPropertyChanged(nameof(IsIssuerDescendingSortSelected));
+            OnPropertyChanged(nameof(IsAccountNameSortSelected));
+            OnPropertyChanged(nameof(IsAccountNameDescendingSortSelected));
             if (_allAccounts.Count > 0)
                 ApplyFilter();
         }
     }
+
+    public bool IsIssuerSortSelected => SelectedSortOption?.Mode == AccountSortMode.Issuer;
+    public bool IsIssuerDescendingSortSelected =>
+        SelectedSortOption?.Mode == AccountSortMode.IssuerDescending;
+    public bool IsAccountNameSortSelected =>
+        SelectedSortOption?.Mode == AccountSortMode.AccountName;
+    public bool IsAccountNameDescendingSortSelected =>
+        SelectedSortOption?.Mode == AccountSortMode.AccountNameDescending;
+
+    public Task SelectIssuerSortAsync() => SelectSortAsync(AccountSortMode.Issuer);
+    public Task SelectIssuerDescendingSortAsync() =>
+        SelectSortAsync(AccountSortMode.IssuerDescending);
+    public Task SelectAccountNameSortAsync() => SelectSortAsync(AccountSortMode.AccountName);
+    public Task SelectAccountNameDescendingSortAsync() =>
+        SelectSortAsync(AccountSortMode.AccountNameDescending);
 
     public NotificationState Notification { get; }
     public string Message => Notification.Text;
@@ -379,7 +405,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasGroups => _allGroups.Count > 0;
 
-    public bool HasAccountNavigationCards => _allAccounts.Count > 0;
+    public bool HasAccountNavigationCards => HasFavoriteAccounts || HasGroups;
 
     public bool HasSelectedGroup => _selectedGroupId.HasValue;
 
@@ -387,11 +413,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasUngroupedAccounts => UngroupedCount > 0;
 
-    public bool IsUngroupedFilterSelected =>
-        !HasSearchText
-        && !HasSelectedGroup
-        && !IsFavoritesFilterSelected
-        && !IsAllAccountsFilterSelected;
+    public bool IsUngroupedFilterSelected => false;
 
     public int AllAccountCount => _allAccounts.Count;
 
@@ -418,15 +440,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public bool IsFavoritesFilterSelected => _showFavoritesOnly;
 
     public bool HasSelectedAccountNavigationCard =>
-        HasSelectedGroup || IsFavoritesFilterSelected || IsAllAccountsFilterSelected;
+        HasSelectedGroup || IsFavoritesFilterSelected;
 
     public bool HasActiveAccountFilter =>
-        HasSearchText || HasSelectedGroup || IsFavoritesFilterSelected || IsAllAccountsFilterSelected;
+        HasSearchText || HasSelectedGroup || IsFavoritesFilterSelected;
 
-    public string AccountNavigationBackLabel => _localization.GetString(
-        HasSearchText
-            ? AvaloniaStringKeys.AllAccounts
-            : AvaloniaStringKeys.UngroupedAccounts);
+    public string AccountNavigationBackLabel =>
+        _localization.GetString(AvaloniaStringKeys.AllAccounts);
 
     public string SearchResultSummary => string.Format(
         _localization.GetString(AvaloniaStringKeys.SearchResultsFormat),
@@ -440,6 +460,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             if (!SetField(ref _isBusy, value)) return;
             _loadCommand.NotifyCanExecuteChanged();
+            _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
             _selectUngroupedCommand.NotifyCanExecuteChanged();
             _toggleAllAccountsFilterCommand.NotifyCanExecuteChanged();
             NotifyCrudCommands();
@@ -870,11 +891,15 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public async Task ToggleAccountFavoriteAsync(AccountListItemViewModel account)
     {
         ArgumentNullException.ThrowIfNull(account);
-        if (IsBusy || IsEditorVisible || IsGroupEditorVisible || !_allAccounts.Contains(account))
+        if (IsBusy
+            || _isFavoriteUpdateInProgress
+            || IsEditorVisible
+            || IsGroupEditorVisible
+            || !_allAccounts.Contains(account))
             return;
 
         var makeFavorite = !account.IsFavorite;
-        IsBusy = true;
+        _isFavoriteUpdateInProgress = true;
         try
         {
             var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
@@ -900,17 +925,12 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            IsBusy = false;
-            await LoadAsync();
-            if (HasMessage) return;
-            SetSelectedAccount(
-                Accounts.FirstOrDefault(value => value.Id == account.Id),
-                generateAndCopyCode: false);
-            ShowLocalizedTransientNotification(
-                makeFavorite
-                    ? AvaloniaStringKeys.FavoriteAdded
-                    : AvaloniaStringKeys.FavoriteRemoved,
-                NotificationSeverity.Success);
+            var hadFavoriteAccounts = HasFavoriteAccounts;
+            var wasFilteringFavorites = _showFavoritesOnly;
+            account.UpdateFavorite(makeFavorite);
+            RefreshFavoriteState(hadFavoriteAccounts != HasFavoriteAccounts);
+            if (wasFilteringFavorites)
+                ApplyFilter();
         }
         catch (Exception)
         {
@@ -920,7 +940,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
         finally
         {
-            IsBusy = false;
+            _isFavoriteUpdateInProgress = false;
         }
     }
 
@@ -1647,9 +1667,19 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var comparer = StringComparer.CurrentCultureIgnoreCase;
         return (SelectedSortOption?.Mode ?? AccountSortMode.Issuer) switch
         {
+            AccountSortMode.IssuerDescending => accounts
+                .OrderByDescending(account => account.Issuer, comparer)
+                .ThenByDescending(account => account.AccountName, comparer)
+                .ThenBy(account => account.Id)
+                .ToArray(),
             AccountSortMode.AccountName => accounts
                 .OrderBy(account => account.AccountName, comparer)
                 .ThenBy(account => account.Issuer, comparer)
+                .ThenBy(account => account.Id)
+                .ToArray(),
+            AccountSortMode.AccountNameDescending => accounts
+                .OrderByDescending(account => account.AccountName, comparer)
+                .ThenByDescending(account => account.Issuer, comparer)
                 .ThenBy(account => account.Id)
                 .ToArray(),
             _ => accounts
@@ -1961,30 +1991,57 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _toggleAllAccountsFilterCommand.NotifyCanExecuteChanged();
     }
 
-    private void RefreshFavoriteState()
+    private void RefreshFavoriteState(bool favoriteAvailabilityChanged = true)
     {
         if (_showFavoritesOnly && !HasFavoriteAccounts)
             _showFavoritesOnly = false;
         OnPropertyChanged(nameof(FavoriteCount));
-        OnPropertyChanged(nameof(HasFavoriteAccounts));
-        OnPropertyChanged(nameof(HasAccountNavigationCards));
+        if (favoriteAvailabilityChanged)
+        {
+            OnPropertyChanged(nameof(HasFavoriteAccounts));
+            OnPropertyChanged(nameof(HasAccountNavigationCards));
+        }
         OnPropertyChanged(nameof(HasMultipleAccounts));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(IsUngroupedFilterSelected));
         OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
-        _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
-        _beginEditFavoritesCommand.NotifyCanExecuteChanged();
+        if (favoriteAvailabilityChanged)
+        {
+            _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
+            _beginEditFavoritesCommand.NotifyCanExecuteChanged();
+        }
     }
 
     private void RefreshSortOptions(AccountSortMode selectedMode)
     {
         SortOptions =
         [
-            new(AccountSortMode.Issuer, _localization.GetString(AvaloniaStringKeys.SortByIssuer)),
-            new(AccountSortMode.AccountName, _localization.GetString(AvaloniaStringKeys.SortByAccountName))
+            new(
+                AccountSortMode.Issuer,
+                _localization.GetString(AvaloniaStringKeys.SortByIssuer),
+                selectedMode == AccountSortMode.Issuer),
+            new(
+                AccountSortMode.IssuerDescending,
+                _localization.GetString(AvaloniaStringKeys.SortByIssuerDescending),
+                selectedMode == AccountSortMode.IssuerDescending),
+            new(
+                AccountSortMode.AccountName,
+                _localization.GetString(AvaloniaStringKeys.SortByAccountName),
+                selectedMode == AccountSortMode.AccountName),
+            new(
+                AccountSortMode.AccountNameDescending,
+                _localization.GetString(AvaloniaStringKeys.SortByAccountNameDescending),
+                selectedMode == AccountSortMode.AccountNameDescending)
         ];
+        _selectedSortOption = null;
         SelectedSortOption = SortOptions.First(option => option.Mode == selectedMode);
+    }
+
+    private Task SelectSortAsync(AccountSortMode mode)
+    {
+        SelectedSortOption = SortOptions.First(option => option.Mode == mode);
+        return Task.CompletedTask;
     }
 
     private void ApplyGroupSearch()
