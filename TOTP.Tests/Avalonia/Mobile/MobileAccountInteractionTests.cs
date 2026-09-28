@@ -150,14 +150,14 @@ public sealed class MobileAccountInteractionTests
 
         var swipeRow = document
             .Descendants(avalonia + "Border")
-            .Single(element => element.Attribute("PointerPressed")?.Value == "BeginAccountPointerGesture");
-        Assert.Equal("TrackAccountPointerGesture", swipeRow.Attribute("PointerMoved")?.Value);
-        Assert.Equal("EndAccountPointerGesture", swipeRow.Attribute("PointerReleased")?.Value);
-        Assert.Equal("CancelAccountPointerGesture", swipeRow.Attribute("PointerCaptureLost")?.Value);
+            .Single(element => element.Attribute("SwipeGesture")?.Value == "TrackAccountSwipe");
+        Assert.Equal("CompleteAccountSwipe", swipeRow.Attribute("SwipeGestureEnded")?.Value);
         Assert.Equal("CopyAccountCode", swipeRow.Attribute("Tapped")?.Value);
-        Assert.DoesNotContain(
-            document.Descendants(),
-            element => element.Name.LocalName == "SwipeGestureRecognizer");
+        Assert.Contains(
+            swipeRow.Descendants(),
+            element => element.Name.LocalName == "SwipeGestureRecognizer"
+                && element.Attribute("CanHorizontallySwipe")?.Value == "True"
+                && element.Attribute("Threshold")?.Value == "24");
     }
 
     [Fact]

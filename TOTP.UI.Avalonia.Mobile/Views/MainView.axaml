@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:automation="using:Avalonia.Automation"
     xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:input="using:Avalonia.Input.GestureRecognizers"
     xmlns:vm="using:TOTP.Avalonia.Mobile.Presentation"
     x:Name="Root"
     x:DataType="vm:MobileShellViewModel"
@@ -520,15 +521,19 @@
                                             <Border
                                                 Background="{DynamicResource BrushAccountItemBackground}"
                                                 Padding="10,10"
-                                                PointerPressed="BeginAccountPointerGesture"
-                                                PointerMoved="TrackAccountPointerGesture"
-                                                PointerReleased="EndAccountPointerGesture"
-                                                PointerCaptureLost="CancelAccountPointerGesture"
+                                                SwipeGesture="TrackAccountSwipe"
+                                                SwipeGestureEnded="CompleteAccountSwipe"
                                                 Tapped="CopyAccountCode"
                                                 ToolTip.Tip="{Binding DataContext.CopyCodeText, ElementName=Root}">
                                                 <Border.RenderTransform>
                                                     <TranslateTransform />
                                                 </Border.RenderTransform>
+                                                <Border.GestureRecognizers>
+                                                    <input:SwipeGestureRecognizer
+                                                        CanHorizontallySwipe="True"
+                                                        IsMouseEnabled="True"
+                                                        Threshold="24" />
+                                                </Border.GestureRecognizers>
                                                 <Grid
                                                     ColumnDefinitions="Auto,Auto,*,Auto"
                                                     RowDefinitions="*,Auto"

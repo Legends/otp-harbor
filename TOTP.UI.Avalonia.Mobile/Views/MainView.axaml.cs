@@ -15,12 +15,6 @@ public partial class MainView : UserControl
     private static readonly TimeSpan AccountListScrollIdleDelay = TimeSpan.FromMilliseconds(150);
     private Control? _openSwipeRow;
     private Control? _swipedRow;
-    private Control? _trackedSwipeRow;
-    private IPointer? _trackedSwipePointer;
-    private Visual? _swipeCoordinateRoot;
-    private Point _swipeStartPoint;
-    private double _swipeStartOffset;
-    private bool _isHorizontalSwipe;
     private ScrollViewer? _accountListScrollViewer;
     private readonly DispatcherTimer _accountListScrollIdleTimer;
 
@@ -123,87 +117,32 @@ public partial class MainView : UserControl
         e.Handled = true;
     }
 
-    private void BeginAccountPointerGesture(object? sender, PointerPressedEventArgs e)
+    private void TrackAccountSwipe(object? sender, SwipeGestureEventArgs e)
     {
-        if (sender is not Control
-            {
-                DataContext: MobileAccountItem,
-                RenderTransform: TranslateTransform transform
-            } control
-            || (e.Pointer.Type == PointerType.Mouse
-                && !e.GetCurrentPoint(control).Properties.IsLeftButtonPressed))
+        if (sender is not Control { RenderTransform: TranslateTransform transform } control)
         {
             return;
         }
 
-        _trackedSwipeRow = control;
-        _trackedSwipePointer = e.Pointer;
-        _swipeCoordinateRoot = TopLevel.GetTopLevel(control) ?? control;
-        _swipeStartPoint = e.GetPosition(_swipeCoordinateRoot);
-        _swipeStartOffset = transform.X;
-        _isHorizontalSwipe = false;
-    }
-
-    private void TrackAccountPointerGesture(object? sender, PointerEventArgs e)
-    {
-        if (sender is not Control { RenderTransform: TranslateTransform transform } control
-            || !ReferenceEquals(control, _trackedSwipeRow)
-            || !ReferenceEquals(e.Pointer, _trackedSwipePointer)
-            || _swipeCoordinateRoot is null)
+        if (_openSwipeRow is not null && !ReferenceEquals(_openSwipeRow, control))
         {
-            return;
+            ResetSwipe(_openSwipeRow);
         }
 
-        var pointerDelta = e.GetPosition(_swipeCoordinateRoot) - _swipeStartPoint;
-        if (!_isHorizontalSwipe)
-        {
-            var intent = MobileAccountSwipeBehavior.ResolveIntent(pointerDelta.X, pointerDelta.Y);
-            if (intent == MobileAccountGestureIntent.Undetermined)
-            {
-                return;
-            }
-
-            if (intent == MobileAccountGestureIntent.VerticalScroll)
-            {
-                ClearPointerGestureTracking();
-                return;
-            }
-
-            if (_openSwipeRow is not null && !ReferenceEquals(_openSwipeRow, control))
-            {
-                ResetSwipe(_openSwipeRow);
-            }
-
-            _isHorizontalSwipe = true;
-            _swipedRow = control;
-            e.Pointer.Capture(control);
-        }
-
-        transform.X = MobileAccountSwipeBehavior.ApplyPointerDelta(
-            _swipeStartOffset,
-            pointerDelta.X);
+        _swipedRow = control;
+        transform.X = MobileAccountSwipeBehavior.ApplyAvaloniaDelta(
+            transform.X,
+            e.Delta.X);
         e.Handled = true;
     }
 
-    private void EndAccountPointerGesture(object? sender, PointerReleasedEventArgs e)
+    private void CompleteAccountSwipe(object? sender, SwipeGestureEndedEventArgs e)
     {
         if (sender is not Control
             {
                 DataContext: MobileAccountItem account,
                 RenderTransform: TranslateTransform transform
             } control)
-            return;
-
-        if (!ReferenceEquals(control, _trackedSwipeRow)
-            || !ReferenceEquals(e.Pointer, _trackedSwipePointer))
-        {
-            return;
-        }
-
-        var wasHorizontalSwipe = _isHorizontalSwipe;
-        ClearPointerGestureTracking();
-        e.Pointer.Capture(null);
-        if (!wasHorizontalSwipe)
         {
             return;
         }
@@ -230,34 +169,6 @@ public partial class MainView : UserControl
             if (ReferenceEquals(_swipedRow, control)) _swipedRow = null;
         });
         e.Handled = true;
-    }
-
-    private void CancelAccountPointerGesture(object? sender, PointerCaptureLostEventArgs e)
-    {
-        if (sender is not Control { RenderTransform: TranslateTransform transform } control
-            || !ReferenceEquals(control, _trackedSwipeRow))
-        {
-            return;
-        }
-
-        var wasHorizontalSwipe = _isHorizontalSwipe;
-        ClearPointerGestureTracking();
-        if (wasHorizontalSwipe)
-        {
-            transform.X = _openSwipeRow == control
-                ? MobileAccountSwipeBehavior.QrAndEditRevealOffset
-                : 0d;
-            _swipedRow = null;
-        }
-    }
-
-    private void ClearPointerGestureTracking()
-    {
-        _trackedSwipeRow = null;
-        _trackedSwipePointer = null;
-        _swipeCoordinateRoot = null;
-        _swipeStartOffset = 0d;
-        _isHorizontalSwipe = false;
     }
 
     private void ShowQrForAccount(object? sender, RoutedEventArgs e)
