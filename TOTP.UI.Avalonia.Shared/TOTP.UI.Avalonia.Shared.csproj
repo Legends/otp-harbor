@@ -18,4 +18,8 @@
     <ProjectReference Include="..\TOTP.Core\TOTP.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\Biometric\*.png" />
+  </ItemGroup>
+
 </Project>

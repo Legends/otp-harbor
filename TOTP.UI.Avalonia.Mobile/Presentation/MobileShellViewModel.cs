@@ -109,6 +109,7 @@ public sealed class MobileShellViewModel :
 
     private MobileScreen _screen = MobileScreen.Starting;
     private bool _isBusy;
+    private bool _hasLoadedAccounts;
     private bool _startupFailed;
     private string _notificationText = string.Empty;
     private NotificationSeverity _notificationSeverity = NotificationSeverity.Information;
@@ -510,7 +511,7 @@ public sealed class MobileShellViewModel :
     public bool IsScreenCaptureProtectionRequired => IsAccountListVisible || IsGroupEditorVisible;
     public bool IsSettingsVisible => IsAccountsVisible && _isSettingsVisible;
     public bool HasAccounts => Accounts.Count > 0;
-    public bool HasNoAccounts => _allAccounts.Count == 0;
+    public bool HasNoAccounts => _hasLoadedAccounts && _allAccounts.Count == 0;
     public bool HasNoSearchResults => _allAccounts.Count > 0 && Accounts.Count == 0;
     public bool HasSearchText => SearchText.Length > 0;
     public int FavoriteCount => _favoriteCount;
@@ -531,6 +532,10 @@ public sealed class MobileShellViewModel :
     public bool IsBiometricUnlockVisible => IsUnlockVisible
         && IsSelectedPlatformUnlockAvailable
         && (IsBiometricEnabled || IsDeviceCredentialEnabled);
+    public bool IsFingerprintUnlockVisible =>
+        IsBiometricUnlockVisible && IsBiometricUnlockSelected;
+    public bool IsDeviceCredentialUnlockVisible =>
+        IsBiometricUnlockVisible && IsDeviceCredentialUnlockSelected;
     public bool IsBiometricSetupAvailable =>
         IsSettingsVisible && IsAppLockEnabled && IsBiometricAvailable && !IsBiometricEnabled;
     public bool IsBiometricUnavailable => IsSettingsVisible && !IsBiometricAvailable;
@@ -699,6 +704,8 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(IsBiometricEnrollmentStartVisible));
             OnPropertyChanged(nameof(IsBiometricUnavailable));
             OnPropertyChanged(nameof(IsBiometricUnlockOptionEnabled));
+            OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
+            NotifyPlatformUnlockVisibilityChanged();
             NotifyCommands();
         }
     }
@@ -709,7 +716,7 @@ public sealed class MobileShellViewModel :
         private set
         {
             if (!SetField(ref _isBiometricEnabled, value)) return;
-            OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+            NotifyPlatformUnlockVisibilityChanged();
             OnPropertyChanged(nameof(IsBiometricSetupAvailable));
             OnPropertyChanged(nameof(IsBiometricEnrollmentStartVisible));
             NotifyCommands();
@@ -1282,7 +1289,7 @@ public sealed class MobileShellViewModel :
             if (!SetField(ref _isDeviceCredentialAvailable, value)) return;
             OnPropertyChanged(nameof(IsDeviceCredentialUnavailable));
             OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
-            OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+            NotifyPlatformUnlockVisibilityChanged();
             OnPropertyChanged(nameof(IsDeviceCredentialUnlockOptionEnabled));
             NotifyCommands();
         }
@@ -3059,6 +3066,7 @@ public sealed class MobileShellViewModel :
             return;
         }
 
+        _hasLoadedAccounts = true;
         _allAccounts.Clear();
         foreach (var account in loaded.Value)
         {
@@ -3329,6 +3337,7 @@ public sealed class MobileShellViewModel :
         SelectedAccount = null;
         Accounts.Clear();
         _allAccounts.Clear();
+        _hasLoadedAccounts = false;
         Groups.Clear();
         SearchText = string.Empty;
         _showFavoritesOnly = false;
@@ -3851,9 +3860,16 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(IsBiometricUnlockOptionEnabled));
         OnPropertyChanged(nameof(IsDeviceCredentialUnlockOptionEnabled));
         OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
-        OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+        NotifyPlatformUnlockVisibilityChanged();
         OnPropertyChanged(nameof(BiometricUnlockText));
         NotifyCommands();
+    }
+
+    private void NotifyPlatformUnlockVisibilityChanged()
+    {
+        OnPropertyChanged(nameof(IsBiometricUnlockVisible));
+        OnPropertyChanged(nameof(IsFingerprintUnlockVisible));
+        OnPropertyChanged(nameof(IsDeviceCredentialUnlockVisible));
     }
 
     private void ResetPendingUnlockMethodChange()
@@ -3916,8 +3932,8 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(IsAccountsVisible));
         OnPropertyChanged(nameof(IsManualLockVisible));
         NotifyUnlockedSectionChanged();
-            OnPropertyChanged(nameof(IsBiometricUnlockVisible));
-            OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
+        NotifyPlatformUnlockVisibilityChanged();
+        OnPropertyChanged(nameof(IsSelectedPlatformUnlockAvailable));
     }
 
     private void SetError(string key) =>

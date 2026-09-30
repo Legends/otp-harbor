@@ -5,6 +5,58 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void LockScreen_UsesAccessibleFingerprintButtonForBiometricUnlock()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var button = document
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "FingerprintUnlockButton");
+
+        Assert.Equal("{Binding BiometricUnlockCommand}", button.Attribute("Command")?.Value);
+        Assert.Null(button.Attribute("Content"));
+        Assert.Contains(
+            "BiometricUnlockText",
+            button.Attributes().Single(attribute =>
+                attribute.Name.LocalName == "AutomationProperties.Name").Value);
+        Assert.Equal("92", button.Attribute("Width")?.Value);
+        Assert.Equal("primary biometric-unlock", button.Attribute("Classes")?.Value);
+        Assert.Equal("1", button.Attribute("Grid.Row")?.Value);
+        Assert.Equal("Center", button.Attribute("VerticalAlignment")?.Value);
+        var fingerprint = button
+            .Descendants()
+            .Single(element => element.Name.LocalName == "FingerprintIcon");
+        Assert.Equal("72", fingerprint.Attribute("IconSize")?.Value);
+
+        var anchor = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "FingerprintUnlockAnchor");
+        Assert.Equal("1", anchor.Attribute("Grid.Row")?.Value);
+        Assert.Equal("5*,0,*", anchor.Attribute("RowDefinitions")?.Value);
+        Assert.Equal(
+            "{Binding IsFingerprintUnlockVisible}",
+            anchor.Attribute("IsVisible")?.Value);
+        Assert.Same(anchor, button.Parent);
+
+        var artwork = document
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "MobileLockScreenArtwork");
+        Assert.Equal(
+            "{DynamicResource BrushBiometricLockScreenArtwork}",
+            artwork.Attribute("Background")?.Value);
+        Assert.Equal("{Binding IsUnlockVisible}", artwork.Attribute("IsVisible")?.Value);
+    }
+
+    [Fact]
     public void LongImports_ShowAnIndeterminateProgressOverlay()
     {
         var document = XDocument.Load(Path.Combine(

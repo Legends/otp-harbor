@@ -84,6 +84,18 @@
             </Grid>
         </Border>
 
+        <Border
+            x:Name="MobileLockScreenArtwork"
+            Grid.Row="1"
+            Background="{DynamicResource BrushBiometricLockScreenArtwork}"
+            IsHitTestVisible="False"
+            IsVisible="{Binding IsUnlockVisible}" />
+        <Border
+            Grid.Row="1"
+            Background="{DynamicResource BrushBiometricLockScreenOverlay}"
+            IsHitTestVisible="False"
+            IsVisible="{Binding IsUnlockVisible}" />
+
         <ScrollViewer
             Grid.Row="1"
             Classes.account-list="{Binding IsAccountListVisible}">
@@ -171,7 +183,7 @@
                         Classes="wide secondary"
                         Command="{Binding BiometricUnlockCommand}"
                         Content="{Binding BiometricUnlockText}"
-                        IsVisible="{Binding IsBiometricUnlockVisible}" />
+                        IsVisible="{Binding IsDeviceCredentialUnlockVisible}" />
                 </StackPanel>
 
                 <Grid IsVisible="{Binding IsAccountsVisible}">
@@ -1247,6 +1259,31 @@
                 </Grid>
             </Grid>
         </ScrollViewer>
+
+        <!-- Keep the biometric action responsive: its center is exactly in the
+             middle of the lower third of the content area. -->
+        <Grid
+            x:Name="FingerprintUnlockAnchor"
+            Grid.Row="1"
+            Panel.ZIndex="10"
+            IsVisible="{Binding IsFingerprintUnlockVisible}"
+            RowDefinitions="5*,0,*">
+            <Button
+                x:Name="FingerprintUnlockButton"
+                Grid.Row="1"
+                Width="92"
+                Height="92"
+                MinHeight="92"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Padding="10"
+                automation:AutomationProperties.Name="{Binding BiometricUnlockText}"
+                Classes="primary biometric-unlock"
+                Command="{Binding BiometricUnlockCommand}"
+                ToolTip.Tip="{Binding BiometricUnlockText}">
+                <controls:FingerprintIcon IconSize="72" />
+            </Button>
+        </Grid>
 
         <Border
             x:Name="AccountCountFooter"

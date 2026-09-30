@@ -27,13 +27,16 @@ license compliance take priority over convenience or distribution reach.
    without changing stored account data. Android uses buffered row virtualization and suppresses
    high-frequency countdown binding work during scrolling. Automated mobile regression coverage
    validates search, groups, Favorites, and code generation with hundreds of accounts; continue
-   physical-device validation before adding more organizational concepts.
+   physical-device validation as the final acceptance step. No additional organizational concepts
+   are currently planned.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.
-5. **First-run and onboarding — implemented baseline, continue refinement.** Explain vault
-   creation, encryption, backups, and recovery without overwhelming new users. After vault setup,
-   the empty account view now presents a focused first-account card with a direct add action while
-   retaining scan, import, and encrypted-restore guidance.
+5. **First-run and onboarding — implemented baseline, next after large-vault acceptance.** Explain
+   vault creation, encryption, backups, and recovery without overwhelming new users. After vault
+   setup, the empty account view now presents a focused first-account card with a direct add action
+   while retaining scan, import, and encrypted-restore guidance. Before expanding this flow, define
+   a concise, visually polished illustration set that communicates the core workflow at a glance;
+   refine onboarding copy and layout around the approved visuals.
 6. **UI consistency — ongoing.** Continue reviewing spacing, dialogs, context menus, focus,
    confirmations, accessibility, and resizing behavior. Desktop transient messages use one
    bottom-center overlay treatment outside layout flow, with compact icon-led notification cards,
@@ -53,6 +56,11 @@ license compliance take priority over convenience or distribution reach.
    toolchain acceptance, reproducibility, signing/update policy, and an independently auditable
    publishing workflow. GPL-3.0-only satisfies the free-software licensing requirement; toolchain,
    reproducibility, and maintainer-review requirements remain gates.
+
+Product positioning and commercialization remain explicit decisions rather than implementation
+assumptions. Preserve the existing F-Droid readiness work, but do not change licensing or release
+policy implicitly; large-vault acceptance and onboarding visuals take priority while distribution
+and commercial positioning are evaluated.
 
 ## F-Droid acceptance gate
 

@@ -136,6 +136,86 @@ public sealed class SharedStylesTests
     }
 
     [Fact]
+    public void FingerprintUnlock_UsesDistinctThemeAwareSharedArtwork()
+    {
+        var styles = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        var light = styles
+            .Descendants(avalonia + "ResourceDictionary")
+            .Single(element => GetResourceKeyOrDefault(element) == "Light");
+        var dark = styles
+            .Descendants(avalonia + "ResourceDictionary")
+            .Single(element => GetResourceKeyOrDefault(element) == "Dark");
+
+        Assert.Equal("#087FC1", BrushColor(light, avalonia, "BrushBiometricIconPrimary"));
+        Assert.Equal("#6859E8", BrushColor(light, avalonia, "BrushBiometricIconSecondary"));
+        Assert.Equal("#07162F", BrushColor(dark, avalonia, "BrushBiometricButtonBackground"));
+        Assert.Equal("#48DAFF", BrushColor(dark, avalonia, "BrushBiometricIconPrimary"));
+        Assert.Equal("#8587FF", BrushColor(dark, avalonia, "BrushBiometricIconSecondary"));
+        Assert.Equal("#2DD9FF", BrushColor(dark, avalonia, "BrushBiometricButtonBorder"));
+
+        var fingerprintStyle = styles
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value == "controls|FingerprintIcon");
+        Assert.Empty(fingerprintStyle.Descendants(avalonia + "Path"));
+        Assert.True(fingerprintStyle.Descendants(avalonia + "Ellipse").Count() >= 3);
+        var fingerprintImage = fingerprintStyle
+            .Descendants(avalonia + "Image")
+            .Single(image => image.Attribute("Source")?.Value.EndsWith(
+                "/fingerprint.png",
+                StringComparison.Ordinal) == true);
+        Assert.Equal("36", fingerprintImage.Attribute("Width")?.Value);
+        Assert.Equal("42", fingerprintImage.Attribute("Height")?.Value);
+        Assert.Equal("Fill", fingerprintImage.Attribute("Stretch")?.Value);
+        Assert.Contains(
+            fingerprintStyle.Descendants(avalonia + "Image"),
+            image => image.Attribute("Source")?.Value.EndsWith(
+                "/otp-harbor-mark.png",
+                StringComparison.Ordinal) == true);
+
+        var buttonStyle = styles
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value == "Button.biometric-unlock");
+        Assert.Contains(
+            buttonStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "CornerRadius"
+                && setter.Attribute("Value")?.Value == "48");
+        Assert.Contains(
+            buttonStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "BorderThickness"
+                && setter.Attribute("Value")?.Value == "2");
+
+        var hoverStyle = styles
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value
+                == "Button.biometric-unlock:pointerover");
+        Assert.Contains(
+            hoverStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "Background"
+                && setter.Attribute("Value")?.Value
+                == "{DynamicResource BrushBiometricButtonBackground}");
+        Assert.Contains(
+            hoverStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "BorderBrush"
+                && setter.Attribute("Value")?.Value
+                == "{DynamicResource BrushBiometricButtonBorder}");
+
+        var rippleStyle = styles
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value.Contains(
+                "PART_FingerprintRipple",
+                StringComparison.Ordinal) == true);
+        Assert.Contains(":pressed", rippleStyle.Attribute("Selector")?.Value);
+        var rippleAnimation = rippleStyle.Descendants(avalonia + "Animation").Single();
+        Assert.Equal("0:0:0.5", rippleAnimation.Attribute("Duration")?.Value);
+        Assert.Equal(2, rippleAnimation.Descendants(avalonia + "KeyFrame").Count());
+    }
+
+    [Fact]
     public void MobileAccountPresentation_UsesStableSelectionColorAndHairlineCountdown()
     {
         var viewPath = Path.Combine(
@@ -208,7 +288,11 @@ public sealed class SharedStylesTests
             "Fixtures",
             "Avalonia");
 
-        foreach (var fixtureName in new[] { "DesktopMainWindow.axaml", "MobileMainView.axaml" })
+        foreach (var (fixtureName, listClass) in new[]
+                 {
+                     ("DesktopMainWindow.axaml", "desktop-accounts"),
+                     ("MobileMainView.axaml", "mobile-accounts"),
+                 })
         {
             var document = XDocument.Load(Path.Combine(fixtureDirectory, fixtureName));
             var accountList = document
@@ -216,7 +300,7 @@ public sealed class SharedStylesTests
                 .Single(element =>
                     element.Name.LocalName.EndsWith("ListBox", StringComparison.Ordinal)
                     && element.Attribute("Classes")?.Value.Contains(
-                        "accounts",
+                        listClass,
                         StringComparison.Ordinal) == true);
 
             Assert.Equal(

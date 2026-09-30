@@ -10,6 +10,7 @@
                 <ResourceDictionary x:Key="Default">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushBiometricCardBackground" Color="#E6FFFFFF" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#F2F4FB" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#E4ECF5" />
@@ -32,6 +33,19 @@
                     <SolidColorBrush x:Key="BrushAccentHover" Color="#2999EA" />
                     <SolidColorBrush x:Key="BrushAccentPressed" Color="#0F70BB" />
                     <SolidColorBrush x:Key="BrushOnAccent" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBackground" Color="#F1FAFF" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonPressed" Color="#CDEEFF" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushBiometricIconPrimary" Color="#087FC1" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSecondary" Color="#6859E8" />
+                    <SolidColorBrush x:Key="BrushBiometricIconHalo" Color="#40168AE0" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBorder" Color="#168AE0" />
+                    <ImageBrush
+                        x:Key="BrushBiometricLockScreenArtwork"
+                        Opacity="0.72"
+                        Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png"
+                        Stretch="UniformToFill" />
+                    <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
@@ -62,6 +76,7 @@
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushBiometricCardBackground" Color="#E6FFFFFF" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#F2F4FB" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#E4ECF5" />
@@ -84,6 +99,19 @@
                     <SolidColorBrush x:Key="BrushAccentHover" Color="#2999EA" />
                     <SolidColorBrush x:Key="BrushAccentPressed" Color="#0F70BB" />
                     <SolidColorBrush x:Key="BrushOnAccent" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBackground" Color="#F1FAFF" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonPressed" Color="#CDEEFF" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSurface" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushBiometricIconPrimary" Color="#087FC1" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSecondary" Color="#6859E8" />
+                    <SolidColorBrush x:Key="BrushBiometricIconHalo" Color="#40168AE0" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBorder" Color="#168AE0" />
+                    <ImageBrush
+                        x:Key="BrushBiometricLockScreenArtwork"
+                        Opacity="0.72"
+                        Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png"
+                        Stretch="UniformToFill" />
+                    <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
@@ -114,6 +142,7 @@
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#0C1C33" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#10213F" />
+                    <SolidColorBrush x:Key="BrushBiometricCardBackground" Color="#D610213F" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#1A2E4E" />
@@ -136,6 +165,19 @@
                     <SolidColorBrush x:Key="BrushAccentHover" Color="#9193FF" />
                     <SolidColorBrush x:Key="BrushAccentPressed" Color="#6A6CDF" />
                     <SolidColorBrush x:Key="BrushOnAccent" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBackground" Color="#07162F" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonPressed" Color="#061127" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSurface" Color="#081B3A" />
+                    <SolidColorBrush x:Key="BrushBiometricIconPrimary" Color="#48DAFF" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSecondary" Color="#8587FF" />
+                    <SolidColorBrush x:Key="BrushBiometricIconHalo" Color="#6629D8FF" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBorder" Color="#2DD9FF" />
+                    <ImageBrush
+                        x:Key="BrushBiometricLockScreenArtwork"
+                        Opacity="0.72"
+                        Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-dark.png"
+                        Stretch="UniformToFill" />
+                    <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#59071C33" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#EF5350" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFD166" />
@@ -166,6 +208,7 @@
                 <ResourceDictionary x:Key="{x:Static styles:AvaloniaThemeVariants.HighContrast}">
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushBiometricCardBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountItemBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#000000" />
@@ -188,6 +231,15 @@
                     <SolidColorBrush x:Key="BrushAccentHover" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushAccentPressed" Color="#FFFF00" />
                     <SolidColorBrush x:Key="BrushOnAccent" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBackground" Color="#FFFF00" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonPressed" Color="#FFFF00" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSurface" Color="#FFFF00" />
+                    <SolidColorBrush x:Key="BrushBiometricIconPrimary" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushBiometricIconSecondary" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushBiometricIconHalo" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushBiometricButtonBorder" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushBiometricLockScreenArtwork" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="Transparent" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#FF8080" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#000000" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFFF00" />
@@ -366,6 +418,23 @@
     <Style Selector="Button.primary:pressed">
         <Setter Property="Background" Value="{DynamicResource BrushAccentPressed}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />
+    </Style>
+    <Style Selector="Button.biometric-unlock">
+        <Setter Property="CornerRadius" Value="48" />
+        <Setter Property="Background" Value="{DynamicResource BrushBiometricButtonBackground}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBiometricButtonBorder}" />
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.biometric-unlock:pointerover">
+        <Setter Property="Background" Value="{DynamicResource BrushBiometricButtonBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBiometricButtonBorder}" />
+    </Style>
+    <Style Selector="Button.biometric-unlock:pressed">
+        <Setter Property="Background" Value="{DynamicResource BrushBiometricButtonPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBiometricButtonBorder}" />
     </Style>
     <Style Selector="Button.wide">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -1022,6 +1091,73 @@
                 </Viewbox>
             </ControlTemplate>
         </Setter>
+    </Style>
+    <Style Selector="controls|FingerprintIcon">
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Viewbox
+                    Width="{TemplateBinding IconSize}"
+                    Height="{TemplateBinding IconSize}"
+                    Stretch="Uniform">
+                    <Grid Width="48" Height="48">
+                        <Ellipse
+                            x:Name="PART_FingerprintRipple"
+                            Width="46"
+                            Height="46"
+                            Opacity="0"
+                            Stroke="{DynamicResource BrushBiometricIconPrimary}"
+                            StrokeThickness="2"
+                            RenderTransformOrigin="50%,50%">
+                            <Ellipse.RenderTransform>
+                                <ScaleTransform ScaleX="0.72" ScaleY="0.72" />
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
+                        <Ellipse
+                            Width="44"
+                            Height="44"
+                            Fill="{DynamicResource BrushBiometricIconSurface}"
+                            Stroke="{DynamicResource BrushBiometricIconHalo}"
+                            StrokeThickness="4" />
+                        <Ellipse
+                            Width="41"
+                            Height="41"
+                            Stroke="{DynamicResource BrushBiometricButtonBorder}"
+                            StrokeThickness="1.4" />
+                        <Image
+                            Width="36"
+                            Height="42"
+                            Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/fingerprint.png"
+                            Stretch="Fill" />
+                        <Image
+                            Width="12"
+                            Height="12"
+                            Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png"
+                            Stretch="Uniform" />
+                    </Grid>
+                </Viewbox>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="Button.biometric-unlock:pressed controls|FingerprintIcon /template/ Ellipse#PART_FingerprintRipple">
+        <Style.Animations>
+            <Animation
+                Duration="0:0:0.5"
+                Easing="CubicEaseOut"
+                FillMode="Forward"
+                PlaybackBehavior="OnlyIfVisible">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0.75" />
+                    <Setter Property="ScaleTransform.ScaleX" Value="0.72" />
+                    <Setter Property="ScaleTransform.ScaleY" Value="0.72" />
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="0" />
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.12" />
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.12" />
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
     </Style>
     <Style Selector="Window.dialog">
         <Setter Property="Width" Value="460" />

@@ -606,9 +606,27 @@ public sealed class MobileShellViewModelTests
         await context.Sut.InitializeAsync();
 
         Assert.True(context.Sut.IsBiometricUnlockVisible);
+        Assert.True(context.Sut.IsFingerprintUnlockVisible);
+        Assert.False(context.Sut.IsDeviceCredentialUnlockVisible);
         Assert.True(context.Sut.IsUnlockVisible);
         Assert.False(context.Sut.UnlockCommand.CanExecute(null));
         Assert.True(context.Sut.BiometricUnlockCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WithDeviceCredential_KeepsTextUnlockAction()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            deviceCredentialAvailable: true,
+            preferredUnlockMethod:
+                TOTP.Core.Enums.PreferredUnlockMethod.PlatformDeviceCredential);
+
+        await context.Sut.InitializeAsync();
+
+        Assert.True(context.Sut.IsBiometricUnlockVisible);
+        Assert.False(context.Sut.IsFingerprintUnlockVisible);
+        Assert.True(context.Sut.IsDeviceCredentialUnlockVisible);
     }
 
     [Fact]
@@ -673,6 +691,38 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsAccountsVisible);
         Assert.Single(context.Sut.Accounts);
         context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task BiometricUnlockAsync_WhileAccountsAreLoading_DoesNotShowFirstAccountOnboarding()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user@example.test");
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            biometricAvailable: true,
+            preferredUnlockMethod: TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithHelloAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        var accountLoad = new TaskCompletionSource<Result<IReadOnlyList<Account>>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        context.AccountManager
+            .Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .Returns(accountLoad.Task);
+
+        var unlock = context.Sut.BiometricUnlockAsync();
+        await WaitUntilAsync(() => context.Sut.IsAccountsVisible);
+
+        Assert.True(context.Sut.IsBusy);
+        Assert.False(context.Sut.HasNoAccounts);
+
+        accountLoad.SetResult(Result.Ok<IReadOnlyList<Account>>([account]));
+        await unlock;
+        Assert.Single(context.Sut.Accounts);
+        Assert.False(context.Sut.HasNoAccounts);
     }
 
     [Fact]
