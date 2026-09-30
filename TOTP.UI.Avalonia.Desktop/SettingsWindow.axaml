@@ -112,7 +112,16 @@
                                         <Border x:Name="SecurityBehaviorSettings" Classes="panel">
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="settings-label" Text="{DynamicResource IdleTimeout}" />
-                                                <NumericUpDown Maximum="1440" Minimum="0" Value="{Binding IdleTimeoutMinutes, Mode=TwoWay}" />
+                                                <ComboBox
+                                                    x:Name="AutoLockSelector"
+                                                    ItemsSource="{Binding AutoLockOptions}"
+                                                    SelectedItem="{Binding SelectedAutoLock, Mode=TwoWay}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="presentation:SettingsPageViewModel+AutoLockOption">
+                                                            <TextBlock Text="{Binding Label}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
                                                 <CheckBox Content="{DynamicResource LockWhenMinimized}" IsChecked="{Binding LockOnMinimize, Mode=TwoWay}" />
                                                 <CheckBox Content="{DynamicResource LockOnSessionLock}" IsChecked="{Binding LockOnSessionLock, Mode=TwoWay}" />
                                                 <CheckBox Content="{DynamicResource ClearClipboard}" IsChecked="{Binding ClearClipboardEnabled, Mode=TwoWay}" />

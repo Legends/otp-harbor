@@ -19,18 +19,18 @@
   <data name="Unlock" xml:space="preserve"><value>Déverrouiller</value></data>
   <data name="VaultUnlocked" xml:space="preserve"><value>Coffre-fort déverrouillé.</value></data>
   <data name="QuickUnlockFallback" xml:space="preserve"><value>Le déverrouillage rapide n’a pas abouti. Saisissez votre mot de passe principal pour récupérer l’accès.</value></data>
-  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Déverrouiller avec le déverrouillage rapide</value></data>
+  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Déverrouiller avec l’identification biométrique</value></data>
   <data name="UseMasterPassword" xml:space="preserve"><value>Utiliser le mot de passe principal</value></data>
   <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Coffre-fort verrouillé. Utilisez le déverrouillage rapide ou votre mot de passe principal pour continuer.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Coffre-fort verrouillé. Saisissez votre mot de passe principal pour continuer.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Le déverrouillage rapide a été annulé. Votre coffre-fort reste verrouillé.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>Le déverrouillage rapide n’a pas pu aboutir. Utilisez votre mot de passe principal pour récupérer l’accès.</value></data>
-  <data name="QuickUnlock" xml:space="preserve"><value>Déverrouillage rapide</value></data>
-  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Le déverrouillage rapide est facultatif. Votre mot de passe principal reste la méthode de récupération et est requis pour activer ou modifier les paramètres de sécurité.</value></data>
+  <data name="QuickUnlock" xml:space="preserve"><value>Déverrouiller avec l’identification biométrique</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Le déverrouillage biométrique est facultatif. Votre mot de passe principal reste la méthode de récupération et est requis pour activer ou modifier les paramètres de sécurité.</value></data>
   <data name="QuickUnlockAvailable" xml:space="preserve"><value>Le déverrouillage rapide est disponible sur ce système.</value></data>
   <data name="QuickUnlockUnavailable" xml:space="preserve"><value>Le déverrouillage rapide n’est pas disponible sur ce système. Le déverrouillage par mot de passe principal reste disponible.</value></data>
   <data name="EnableQuickUnlock" xml:space="preserve"><value>Activer le déverrouillage rapide</value></data>
-  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Déverrouillage rapide au démarrage</value></data>
+  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Utiliser l’identification biométrique au démarrage</value></data>
   <data name="QuickUnlockRecoveryPrompt" xml:space="preserve"><value>Saisissez votre mot de passe principal pour vérifier l’accès de récupération avant d’activer le déverrouillage rapide de la plateforme.</value></data>
   <data name="QuickUnlockEnrollmentCancelled" xml:space="preserve"><value>Le déverrouillage rapide n’a pas été activé. Le déverrouillage par mot de passe principal reste inchangé.</value></data>
   <data name="QuickUnlockEnrollmentFailed" xml:space="preserve"><value>Le déverrouillage rapide n’a pas pu être activé. Le déverrouillage par mot de passe principal reste disponible.</value></data>
@@ -185,8 +185,11 @@
   <data name="GermanLanguage" xml:space="preserve"><value>Allemand</value></data>
   <data name="FrenchLanguage" xml:space="preserve"><value>Français</value></data>
   <data name="SpanishLanguage" xml:space="preserve"><value>Espagnol</value></data>
-  <data name="IdleTimeout" xml:space="preserve"><value>Délai d’inactivité en minutes (0 désactive le verrouillage)</value></data>
-  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Saisissez zéro pour désactiver le verrouillage en cas d’inactivité.</value></data>
+  <data name="IdleTimeout" xml:space="preserve"><value>Verrouillage automatique</value></data>
+  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Verrouiller automatiquement l’application après la période d’inactivité sélectionnée.</value></data>
+  <data name="AutoLockDisabled" xml:space="preserve"><value>Désactivé</value></data>
+  <data name="AutoLockSecondsFormat" xml:space="preserve"><value>{0} s</value></data>
+  <data name="AutoLockMinutesFormat" xml:space="preserve"><value>{0} min</value></data>
   <data name="LockWhenMinimized" xml:space="preserve"><value>Verrouiller lorsque l’application est réduite</value></data>
   <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Les modifications sont enregistrées automatiquement.</value></data>
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Paramètres enregistrés automatiquement.</value></data>

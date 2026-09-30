@@ -13,19 +13,21 @@ license compliance take priority over convenience or distribution reach.
 2. **Import and export workflow — implemented baseline, continue hardening.** Keep migration from
    Aegis, Google Authenticator, 2FAS, URI lists, and OTP Harbor backups explicit, recoverable, and
    well-tested.
-3. **Large-vault navigation — in progress.** Search supports multiple terms. Desktop users can
-   create color-coded groups, assign or move accounts, filter from horizontally scrollable group
-   cards, and edit or delete groups from a right-click menu without deleting their accounts. The
-   default list shows ungrouped accounts, while search also matches group names. Favorites are
-   available on desktop and Android; on desktop the built-in Favorites group is first in the strip
-   and can be edited to change its color and account membership without exposing a destructive
+3. **Large-vault navigation — in progress.** Desktop search supports multiple terms, while both
+   platforms match issuer, account, and group names. Desktop and Android users can create
+   color-coded groups, assign or move accounts, and filter from horizontally scrollable group cards
+   without deleting grouped accounts. Desktop additionally provides group editing and deletion
+   from a right-click menu. The default list shows all accounts without dedicated All accounts or
+   Ungrouped cards. Favorites are available on both platforms; on desktop the built-in Favorites
+   group is first in the strip and
+   can be edited to change its color and account membership without exposing a destructive
    group-delete action. Favorites remains visible and editable at a zero count so users can add its
-   first account through the group editor. Counted All accounts and Ungrouped cards make the complete
-   vault and default bucket directly discoverable, while the back action names its search-aware
-   destination. A lightweight desktop sorter switches between issuer-first and account-first order
-   across search, groups, Favorites, and the complete vault without changing stored account data.
-   Continue validating navigation with vaults containing hundreds of accounts before adding more
-   organizational concepts.
+   first account through the group editor. A lightweight desktop sorter switches between
+   issuer-first and account-first order across search, groups, Favorites, and the complete vault
+   without changing stored account data. Android uses buffered row virtualization and suppresses
+   high-frequency countdown binding work during scrolling. Automated mobile regression coverage
+   validates search, groups, Favorites, and code generation with hundreds of accounts; continue
+   physical-device validation before adding more organizational concepts.
 4. **Keyboard shortcuts — implemented baseline.** Preserve fast search, code copying, accessible
    focus order, and near mouse-free desktop operation.
 5. **First-run and onboarding — implemented baseline, continue refinement.** Explain vault

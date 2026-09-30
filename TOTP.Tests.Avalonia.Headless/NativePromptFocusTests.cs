@@ -57,10 +57,10 @@ public sealed class NativePromptFocusTests
     }
 
     [AvaloniaTheory]
-    [InlineData("en", "Unlock with quick unlock")]
-    [InlineData("de", "Mit Schnellentsperrung entsperren")]
-    [InlineData("fr", "Déverrouiller avec le déverrouillage rapide")]
-    [InlineData("es", "Desbloquear con desbloqueo rápido")]
+    [InlineData("en", "Unlock using Biometric ID")]
+    [InlineData("de", "Mit biometrischer ID entsperren")]
+    [InlineData("fr", "Déverrouiller avec l’identification biométrique")]
+    [InlineData("es", "Desbloquear con identificación biométrica")]
     public void NativePrompt_MessageComesFromActiveLocale(string culture, string expected)
     {
         var localization = new AvaloniaLocalizationService(new ResourceDictionary(), new AvaloniaStringCatalog());

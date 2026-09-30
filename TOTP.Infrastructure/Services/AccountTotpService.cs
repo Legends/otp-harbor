@@ -13,7 +13,7 @@ public sealed class AccountTotpService(
         if (accountId == Guid.Empty)
             return Result.Fail<TotpGenerationResult>("An account must be selected.");
 
-        var accounts = await accountManager.GetAllOtpEntriesSortedAsync();
+        var accounts = await accountManager.GetAllOtpEntriesSortedAsync().ConfigureAwait(false);
         if (accounts.IsFailed)
             return Result.Fail<TotpGenerationResult>(accounts.Errors);
 
@@ -47,7 +47,7 @@ public sealed class AccountTotpService(
                 new HashSet<Guid>()));
         }
 
-        var accounts = await accountManager.GetAllOtpEntriesSortedAsync();
+        var accounts = await accountManager.GetAllOtpEntriesSortedAsync().ConfigureAwait(false);
         if (accounts.IsFailed)
             return Result.Fail<AccountTotpGenerationBatch>(accounts.Errors);
 

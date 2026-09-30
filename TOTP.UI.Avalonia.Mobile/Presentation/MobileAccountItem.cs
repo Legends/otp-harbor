@@ -29,6 +29,8 @@ public sealed class MobileAccountItem(
     private string _removeFromFavoritesText = removeFromFavoritesText;
     private string _copyConfirmation = string.Empty;
     private bool _codeBindingsDirty;
+    private bool _isCodeLoading = true;
+    private AccountGroup? _group = group;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -40,7 +42,7 @@ public sealed class MobileAccountItem(
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
-    public AccountGroup? Group { get; } = group;
+    public AccountGroup? Group => _group;
     public bool IsFavorite => _isFavorite;
     public string FavoriteActionText => IsFavorite
         ? _removeFromFavoritesText
@@ -53,6 +55,7 @@ public sealed class MobileAccountItem(
     public int RemainingSeconds => _remainingSeconds;
     public int PeriodSeconds => _periodSeconds;
     public bool IsExpiring => Code.Length > 0 && RemainingSeconds is > 0 and <= 10;
+    public bool IsCodeLoading => _isCodeLoading;
 
     public string DisplayName => HasAccountName
         ? $"{Issuer} · {AccountName}"
@@ -64,6 +67,8 @@ public sealed class MobileAccountItem(
         int periodSeconds,
         bool notifyBindings = true)
     {
+        var wasLoading = _isCodeLoading;
+        _isCodeLoading = false;
         _code = code;
         _remainingSeconds = Math.Max(1, remainingSeconds);
         _periodSeconds = Math.Max(_remainingSeconds, periodSeconds);
@@ -71,6 +76,7 @@ public sealed class MobileAccountItem(
         {
             _codeBindingsDirty = false;
             NotifyCodeChanged();
+            if (wasLoading) OnPropertyChanged(nameof(IsCodeLoading));
         }
         else
         {
@@ -97,6 +103,24 @@ public sealed class MobileAccountItem(
         OnPropertyChanged(nameof(RemainingSeconds));
         if (wasExpiring != IsExpiring)
             OnPropertyChanged(nameof(IsExpiring));
+    }
+
+    internal void BeginCodeRefresh(bool notifyBindings = true)
+    {
+        if (_code.Length > 0 || _isCodeLoading) return;
+        _isCodeLoading = true;
+        if (notifyBindings)
+            OnPropertyChanged(nameof(IsCodeLoading));
+        else
+            _codeBindingsDirty = true;
+    }
+
+    internal void RefreshCodeBindings()
+    {
+        if (!_codeBindingsDirty) return;
+        _codeBindingsDirty = false;
+        NotifyCodeChanged();
+        OnPropertyChanged(nameof(IsCodeLoading));
     }
 
     internal void UpdateCustomPeriodLabel(string label)
@@ -129,6 +153,13 @@ public sealed class MobileAccountItem(
         OnPropertyChanged(nameof(FavoriteActionText));
     }
 
+    internal void UpdateGroup(AccountGroup? group)
+    {
+        if (Equals(_group, group)) return;
+        _group = group;
+        OnPropertyChanged(nameof(Group));
+    }
+
     internal void UpdateFavoriteLocalization(string addText, string removeText)
     {
         _addToFavoritesText = addText;
@@ -148,6 +179,17 @@ public sealed class MobileAccountItem(
 
     internal void ClearCode(bool notifyBindings = true)
     {
+        if (_code.Length == 0
+            && _remainingSeconds == 0
+            && _periodSeconds == ConfiguredPeriodSeconds
+            && !_isCodeLoading)
+        {
+            _codeBindingsDirty = false;
+            return;
+        }
+
+        var wasLoading = _isCodeLoading;
+        _isCodeLoading = false;
         _code = string.Empty;
         _remainingSeconds = 0;
         _periodSeconds = ConfiguredPeriodSeconds;
@@ -155,6 +197,7 @@ public sealed class MobileAccountItem(
         {
             _codeBindingsDirty = false;
             NotifyCodeChanged();
+            if (wasLoading) OnPropertyChanged(nameof(IsCodeLoading));
         }
         else
         {

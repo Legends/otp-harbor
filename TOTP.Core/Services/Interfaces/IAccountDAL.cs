@@ -10,6 +10,7 @@ public interface IAccountDAL : IDisposable
 {
     Task<Result<List<Account>>> GetAllAsync();
     Task<Result> AddNewAsync(Account newItem);
+    Task<Result> CommitImportAsync(IReadOnlyCollection<Account> accounts);
     Task<Result> UpdateAsync(Account updated);
     Task<Result> SaveFavoritesAsync(IReadOnlyCollection<Guid> accountIds);
     Task<Result> SaveGroupAsync(AccountGroup group, IReadOnlyCollection<Guid> accountIds);

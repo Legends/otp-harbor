@@ -87,6 +87,55 @@ public sealed class SharedStylesTests
     }
 
     [Fact]
+    public void CopyConfirmationAndSelectedFavorite_UseDarkOnlyEmphasis()
+    {
+        var fixtureDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia");
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        var styles = XDocument.Load(Path.Combine(fixtureDirectory, "SharedStyles.axaml"));
+        var light = styles
+            .Descendants(avalonia + "ResourceDictionary")
+            .Single(element => GetResourceKeyOrDefault(element) == "Light");
+        var dark = styles
+            .Descendants(avalonia + "ResourceDictionary")
+            .Single(element => GetResourceKeyOrDefault(element) == "Dark");
+
+        Assert.Equal("#137333", BrushColor(light, avalonia, "BrushCopyConfirmation"));
+        Assert.Equal("#168AE0", BrushColor(light, avalonia, "BrushFavoriteStarFill"));
+        Assert.Equal("Transparent", BrushColor(light, avalonia, "BrushFavoriteStarOutline"));
+        Assert.Equal("#B7FF4A", BrushColor(dark, avalonia, "BrushCopyConfirmation"));
+        Assert.Equal("Transparent", BrushColor(dark, avalonia, "BrushFavoriteStarFill"));
+        Assert.Equal("#FFD166", BrushColor(dark, avalonia, "BrushFavoriteStarOutline"));
+        Assert.Equal("Transparent", BrushColor(dark, avalonia, "BrushFavoriteButtonInteractiveBackground"));
+        Assert.Equal("Transparent", BrushColor(dark, avalonia, "BrushFavoriteButtonPressedBackground"));
+        Assert.Equal("Transparent", BrushColor(dark, avalonia, "BrushFavoriteButtonInteractiveBorder"));
+        Assert.Equal("Transparent", BrushColor(dark, avalonia, "BrushFavoriteButtonFocusBorder"));
+
+        var mainWindow = XDocument.Load(Path.Combine(fixtureDirectory, "DesktopMainWindow.axaml"));
+        var confirmation = mainWindow
+            .Descendants(avalonia + "TextBlock")
+            .Single(element => element.Attribute("Text")?.Value == "{Binding CopyConfirmation}");
+        Assert.Equal(
+            "{DynamicResource BrushCopyConfirmation}",
+            confirmation.Attribute("Foreground")?.Value);
+
+        var selectedFavoriteButton = mainWindow
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute("Classes")?.Value == "icon account-favorite-selected");
+        var selectedFavoritePath = selectedFavoriteButton
+            .Descendants(avalonia + "Path")
+            .Single();
+        Assert.Equal(
+            "{DynamicResource BrushFavoriteStarFill}",
+            selectedFavoritePath.Attribute("Fill")?.Value);
+        Assert.Equal(
+            "{DynamicResource BrushFavoriteStarOutline}",
+            selectedFavoritePath.Attribute("Stroke")?.Value);
+    }
+
+    [Fact]
     public void MobileAccountPresentation_UsesStableSelectionColorAndHairlineCountdown()
     {
         var viewPath = Path.Combine(

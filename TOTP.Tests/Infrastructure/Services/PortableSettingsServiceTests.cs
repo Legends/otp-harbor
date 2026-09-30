@@ -153,12 +153,14 @@ public sealed class PortableSettingsServiceTests
         using var sut = CreateSut(store);
         sut.Current.CultureName = "de-DE";
         sut.Current.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+        sut.Current.IdleTimeout = TimeSpan.FromSeconds(30);
         var result = await sut.SaveAsync();
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(savedPreferences);
         Assert.Equal("de-DE", savedPreferences.CultureName);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, savedPreferences.PreferredUnlockMethod);
+        Assert.Equal(30, savedPreferences.IdleTimeoutSeconds);
         Assert.DoesNotContain(
             typeof(AppPreferencesV1).GetProperties(),
             property => property.Name.Contains("Authorization", StringComparison.OrdinalIgnoreCase)

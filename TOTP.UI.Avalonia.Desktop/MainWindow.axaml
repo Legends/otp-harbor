@@ -71,9 +71,34 @@
                                 Text="{Binding QuickUnlockMessage}" />
                             <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsQuickUnlockBusy}" />
                             <Button
-                                Classes="primary wide"
+                                x:Name="BiometricUnlockButton"
+                                Width="56"
+                                Height="56"
+                                MinHeight="56"
+                                HorizontalAlignment="Center"
+                                Padding="10"
+                                automation:AutomationProperties.Name="{DynamicResource UnlockWithQuickUnlock}"
+                                Classes="primary"
                                 Command="{Binding QuickUnlockCommand}"
-                                Content="{DynamicResource UnlockWithQuickUnlock}" />
+                                ToolTip.Tip="{DynamicResource UnlockWithQuickUnlock}">
+                                <Viewbox Width="30" Height="30" Stretch="Uniform">
+                                    <Canvas Width="24" Height="24">
+                                        <Canvas.Styles>
+                                            <Style Selector="Path">
+                                                <Setter Property="Fill" Value="Transparent" />
+                                                <Setter Property="Stroke" Value="{DynamicResource BrushOnAccent}" />
+                                                <Setter Property="StrokeThickness" Value="1.8" />
+                                                <Setter Property="StrokeLineCap" Value="Round" />
+                                            </Style>
+                                        </Canvas.Styles>
+                                        <Path Data="M4,11 C4,6.6 7.6,3 12,3 C16.4,3 20,6.6 20,11" />
+                                        <Path Data="M7,12 C7,9.2 9.2,7 12,7 C14.8,7 17,9.2 17,12 C17,17 15.2,20.4 13,22" />
+                                        <Path Data="M10,13 C10,11.9 10.9,11 12,11 C13.1,11 14,11.9 14,13 C14,16.5 12.7,19 11,21" />
+                                        <Path Data="M4,14 C4.3,17.8 5.6,20.4 7.4,22" />
+                                        <Path Data="M7,14 C7.2,17.1 8.2,19.1 9.4,20.5" />
+                                    </Canvas>
+                                </Viewbox>
+                            </Button>
                             <Button
                                 Classes="link wide"
                                 Command="{Binding UsePasswordFallbackCommand}"
@@ -82,32 +107,39 @@
                     </Border>
 
                     <Border Classes="unlock-card" IsVisible="{Binding IsPasswordUnlockVisible}">
-                        <ContentControl Content="{Binding PasswordUnlock}">
-                            <ContentControl.ContentTemplate>
-                                <DataTemplate x:DataType="presentation:PasswordUnlockViewModel">
-                                    <StackPanel Spacing="10">
-                                        <TextBlock
-                                            Classes="section-title"
-                                            Text="{DynamicResource MasterPassword}" />
-                                        <shared:ValidationMessage
-                                            Severity="Error"
-                                            Text="{Binding Message}" />
-                                        <shared:RevealableSecretInput
-                                            x:Name="PasswordUnlockInput"
-                                            AccessibleName="{DynamicResource MasterPassword}"
-                                            HelpText="{DynamicResource MasterPasswordHelp}"
-                                            IsRequired="True"
-                                            PlaceholderText="{DynamicResource MasterPassword}"
-                                            Text="{Binding Password, Mode=TwoWay}" />
-                                        <Button
-                                            Classes="primary wide"
-                                            Command="{Binding UnlockCommand}"
-                                            Content="{DynamicResource Unlock}"
-                                            IsDefault="True" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ContentControl.ContentTemplate>
-                        </ContentControl>
+                        <StackPanel Spacing="10">
+                            <ContentControl Content="{Binding PasswordUnlock}">
+                                <ContentControl.ContentTemplate>
+                                    <DataTemplate x:DataType="presentation:PasswordUnlockViewModel">
+                                        <StackPanel Spacing="10">
+                                            <TextBlock
+                                                Classes="section-title"
+                                                Text="{DynamicResource MasterPassword}" />
+                                            <shared:ValidationMessage
+                                                Severity="Error"
+                                                Text="{Binding Message}" />
+                                            <shared:RevealableSecretInput
+                                                x:Name="PasswordUnlockInput"
+                                                AccessibleName="{DynamicResource MasterPassword}"
+                                                HelpText="{DynamicResource MasterPasswordHelp}"
+                                                IsRequired="True"
+                                                PlaceholderText="{DynamicResource MasterPassword}"
+                                                Text="{Binding Password, Mode=TwoWay}" />
+                                            <Button
+                                                Classes="primary wide"
+                                                Command="{Binding UnlockCommand}"
+                                                Content="{DynamicResource Unlock}"
+                                                IsDefault="True" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ContentControl.ContentTemplate>
+                            </ContentControl>
+                            <Button
+                                Classes="link wide"
+                                Command="{Binding ReturnToQuickUnlockCommand}"
+                                Content="{DynamicResource UnlockWithQuickUnlock}"
+                                IsVisible="{Binding IsReturnToQuickUnlockVisible}" />
+                        </StackPanel>
                     </Border>
 
                     <Border Classes="unlock-card" IsVisible="{Binding IsPasswordSetupVisible}">
@@ -501,7 +533,7 @@
                                                                                 HorizontalAlignment="Right"
                                                                                 FontSize="9"
                                                                                 FontWeight="SemiBold"
-                                                                                Foreground="{DynamicResource BrushSuccess}"
+                                                                                Foreground="{DynamicResource BrushCopyConfirmation}"
                                                                                 Text="{Binding CopyConfirmation}" />
                                                                         </StackPanel>
                                                                     </Button>
@@ -521,15 +553,23 @@
                                                                         Padding="5"
                                                                         VerticalAlignment="Center"
                                                                         automation:AutomationProperties.Name="{DynamicResource RemoveFromFavorites}"
-                                                                        Classes="icon"
+                                                                        Classes="icon account-favorite-selected"
                                                                         Command="{Binding ToggleFavoriteCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         IsVisible="{Binding IsFavorite}"
                                                                         ToolTip.Tip="{DynamicResource RemoveFromFavorites}">
-                                                                        <shared:SymbolIcon
-                                                                            Foreground="{DynamicResource BrushAccent}"
-                                                                            IconSize="15"
-                                                                            Kind="Favorite" />
+                                                                        <Viewbox
+                                                                            Width="15"
+                                                                            Height="15"
+                                                                            Stretch="Uniform">
+                                                                            <Path
+                                                                                Width="24"
+                                                                                Height="24"
+                                                                                Data="M12,2 L15.1,8.3 L22,9.3 L17,14.2 L18.2,21 L12,17.8 L5.8,21 L7,14.2 L2,9.3 L8.9,8.3 Z"
+                                                                                Fill="{DynamicResource BrushFavoriteStarFill}"
+                                                                                Stroke="{DynamicResource BrushFavoriteStarOutline}"
+                                                                                StrokeThickness="1.6" />
+                                                                        </Viewbox>
                                                                     </Button>
                                                                     <Button
                                                                         Grid.Row="0"

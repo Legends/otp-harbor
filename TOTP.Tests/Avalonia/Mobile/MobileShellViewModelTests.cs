@@ -1136,6 +1136,77 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task LargeVault_NavigatesGroupsFavoritesAndSearchWithoutLosingAccounts()
+    {
+        var groups = new[]
+        {
+            new AccountGroup(Guid.NewGuid(), "Group Alpha", "#4C956C"),
+            new AccountGroup(Guid.NewGuid(), "Group Beta", "#4F6BED"),
+            new AccountGroup(Guid.NewGuid(), "Group Gamma", "#9C6ADE"),
+            new AccountGroup(Guid.NewGuid(), "Group Delta", "#D97706")
+        };
+        var accounts = Enumerable.Range(0, 600)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                index == 427 ? "Needle Service" : $"Issuer {index:D3}",
+                ValidSecret,
+                $"user-{index:D3}@example.test",
+                isFavorite: index % 7 == 0,
+                group: index % 5 < groups.Length ? groups[index % 5] : null))
+            .ToArray();
+        var context = CreateContext(isConfigured: true, accounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+
+        await context.Sut.UnlockAsync();
+
+        Assert.Equal(accounts.Length, context.Sut.Accounts.Count);
+        Assert.Equal(groups.Length, context.Sut.Groups.Count);
+        Assert.All(
+            context.Sut.Groups,
+            item => Assert.Equal(
+                accounts.Count(account => account.Group?.Id == item.Id),
+                item.AccountCount));
+
+        var beta = Assert.Single(context.Sut.Groups, item => item.Id == groups[1].Id);
+        beta.SelectCommand.Execute(null);
+
+        Assert.True(context.Sut.HasSelectedGroup);
+        Assert.Equal(beta.AccountCount, context.Sut.Accounts.Count);
+        Assert.All(context.Sut.Accounts, account => Assert.Equal(beta.Id, account.Group?.Id));
+
+        context.Sut.SearchText = "needle";
+
+        Assert.False(context.Sut.HasSelectedGroup);
+        Assert.Equal(accounts[427].ID, Assert.Single(context.Sut.Accounts).Id);
+
+        await context.Sut.ClearSearchAsync();
+        await context.Sut.ToggleFavoritesFilterAsync();
+
+        var favoriteCount = accounts.Count(account => account.IsFavorite);
+        Assert.Equal(favoriteCount, context.Sut.Accounts.Count);
+        Assert.All(context.Sut.Accounts, account => Assert.True(account.IsFavorite));
+
+        context.Sut.SearchText = groups[3].Name;
+
+        var favoriteDeltaCount = accounts.Count(account =>
+            account.IsFavorite && account.Group?.Id == groups[3].Id);
+        Assert.Equal(favoriteDeltaCount, context.Sut.Accounts.Count);
+        Assert.All(context.Sut.Accounts, account => Assert.Equal(groups[3].Id, account.Group?.Id));
+
+        await context.Sut.ClearSearchAsync();
+        await context.Sut.ToggleFavoritesFilterAsync();
+
+        Assert.False(context.Sut.HasActiveAccountFilter);
+        Assert.Equal(accounts.Length, context.Sut.Accounts.Count);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
     public async Task GroupEditor_CreatesAndEditsPersistedGroup()
     {
         var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
@@ -1201,12 +1272,14 @@ public sealed class MobileShellViewModelTests
         Assert.Equal("Work", created.Name);
         Assert.Equal("#4F6BED", created.Group.Color);
         Assert.False(context.Sut.IsGroupEditorVisible);
+        Assert.True(context.Sut.IsNativeAccountGroupsVisible);
         context.AccountManager.Verify(value => value.SaveGroupAsync(
             It.Is<AccountGroup>(group => group.Name == "Work" && group.Color == "#4F6BED"),
             It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(new[] { account.ID }))));
 
         await context.Sut.BeginEditGroupAsync(created.Id);
         Assert.True(context.Sut.IsEditingGroup);
+        Assert.False(context.Sut.IsNativeAccountGroupsVisible);
         Assert.Equal("Work", context.Sut.GroupEditorName);
         Assert.True(Assert.Single(
             context.Sut.GroupEditorAccounts,
@@ -1220,7 +1293,77 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(created.Id, edited.Id);
         Assert.Equal("Projects", edited.Name);
         Assert.Equal("#4C956C", edited.Group.Color);
+        Assert.All(context.Sut.Accounts, item => Assert.Equal(edited.Group, item.Group));
+        context.AccountManager.Verify(
+            value => value.GetAllOtpEntriesSortedAsync(),
+            Times.Once);
     }
+
+    [Fact]
+    public async Task GroupEditor_LargeAccountListPublishesOneVirtualizedCollectionReset()
+    {
+        var accounts = Enumerable.Range(1, 600)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                $"Issuer {index}",
+                ValidSecret,
+                $"account-{index}"))
+            .ToArray();
+        var context = CreateContext(isConfigured: true, accounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(accounts));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var collectionEvents = 0;
+        context.Sut.GroupEditorAccounts.CollectionChanged += (_, _) => collectionEvents++;
+
+        await context.Sut.BeginAddGroupAsync();
+
+        Assert.Equal(600, context.Sut.GroupEditorAccounts.Count);
+        Assert.Equal(1, collectionEvents);
+        context.Sut.Dispose();
+    }
+
+#if DEBUG
+    [Fact]
+    public async Task DebugSyntheticAccounts_UseSingleBatchCommitAndDeleteOnlyMarkedAccounts()
+    {
+        var normal = new Account(Guid.NewGuid(), "Personal", ValidSecret, "user@example.test");
+        IReadOnlyList<Account> storedAccounts = [normal];
+        var context = CreateContext(isConfigured: true, storedAccounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(() => context.Authorization.Object.State.Unlock())
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(storedAccounts));
+        context.AccountManager
+            .Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(accounts => storedAccounts = accounts.ToArray())
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.True(await context.Sut.AddDebugSyntheticAccountsAsync(600));
+
+        Assert.Equal(601, storedAccounts.Count);
+        Assert.Equal(600, storedAccounts.Count(account =>
+            account.AccountName?.StartsWith("otp-harbor-debug-load-test:", StringComparison.Ordinal) == true));
+        Assert.True(await context.Sut.DeleteDebugSyntheticAccountsAsync());
+        Assert.Equal(normal, Assert.Single(storedAccounts));
+        context.AccountManager.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Exactly(2));
+        context.Sut.Dispose();
+    }
+#endif
 
     [Fact]
     public async Task GroupEditor_DeletesGroupAfterConfirmationWithoutDeletingAccounts()
@@ -1497,7 +1640,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task AccountCodeRefresh_BatchesLargeAccountListsIntoOneStorageRead()
+    public async Task AccountCodeRefresh_LargeListsPrecomputeAllRowsInOneStorageRead()
     {
         var accounts = Enumerable.Range(1, 500)
             .Select(index => new Account(
@@ -1524,6 +1667,52 @@ public sealed class MobileShellViewModelTests
         context.AccountTotp.Verify(
             value => value.GenerateAsync(It.IsAny<Guid>()),
             Times.Never);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AccountCodeRefresh_LargeListsNotifyOnlyRealizedRows()
+    {
+        var accounts = Enumerable.Range(1, 100)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                $"Issuer {index}",
+                ValidSecret,
+                $"account-{index}"))
+            .ToArray();
+        var context = CreateContext(isConfigured: true, accounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        var generated = new TaskCompletionSource<Result<AccountTotpGenerationBatch>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        context.AccountTotp
+            .Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Returns(generated.Task);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var realized = context.Sut.Accounts.Take(10).ToArray();
+        var realizedChanges = new List<string?>();
+        var offscreenChanges = new List<string?>();
+        realized[0].PropertyChanged += (_, args) => realizedChanges.Add(args.PropertyName);
+        context.Sut.Accounts[50].PropertyChanged += (_, args) =>
+            offscreenChanges.Add(args.PropertyName);
+        context.Sut.SetRealizedAccounts(realized);
+
+        generated.SetResult(Result.Ok(new AccountTotpGenerationBatch(
+            accounts.ToDictionary(
+                account => account.ID,
+                _ => new TotpGenerationResult("123456", 20, 30)),
+            new HashSet<Guid>())));
+        await WaitUntilAsync(() => context.Sut.Accounts.All(account => account.Code.Length > 0));
+
+        Assert.Contains(nameof(MobileAccountItem.DisplayCode), realizedChanges);
+        Assert.Contains(nameof(MobileAccountItem.RemainingSeconds), realizedChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.DisplayCode), offscreenChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), offscreenChanges);
+        Assert.Equal("123 456", context.Sut.Accounts[50].DisplayCode);
         context.Sut.Dispose();
     }
 
@@ -1586,17 +1775,23 @@ public sealed class MobileShellViewModelTests
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
         var item = Assert.Single(context.Sut.Accounts);
+        Assert.True(context.Sut.IsNativeAccountListVisible);
 
         await context.Sut.BeginEditForAccountAsync(item);
 
         Assert.True(context.Sut.IsEditorVisible);
+        Assert.False(context.Sut.IsNativeAccountListVisible);
         Assert.Equal(account.Issuer, context.Sut.EditorIssuer);
         await context.Sut.CancelEditAsync();
+        Assert.True(context.Sut.IsNativeAccountListVisible);
 
         await context.Sut.BeginDeleteForAccountAsync(item);
 
         Assert.True(context.Sut.IsDeleteConfirmationVisible);
+        Assert.False(context.Sut.IsNativeAccountListVisible);
         Assert.Equal(account.ID, context.Sut.SelectedAccount?.Id);
+        await context.Sut.CancelDeleteAsync();
+        Assert.True(context.Sut.IsNativeAccountListVisible);
     }
 
     [Fact]
@@ -2152,6 +2347,96 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task ImportAccountFileAsync_WhenParsingTakesLong_ShowsLocalizedProgressAfterDelay()
+    {
+        var context = CreateContext(isConfigured: true, cultureName: "de");
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "large-import.json"));
+        var parsing = new TaskCompletionSource<Result<List<Account>>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(),
+                "large-import.json",
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(parsing.Task);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        var importTask = context.Sut.ImportAccountFileAsync();
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1650),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.True(context.Sut.IsImportProgressVisible);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.ImportingAccounts),
+            context.Sut.ImportProgressText);
+
+        parsing.SetResult(Result.Fail("synthetic parse failure"));
+        await importTask;
+
+        Assert.False(context.Sut.IsImportProgressVisible);
+        Assert.Empty(context.Sut.ImportProgressText);
+    }
+
+    [Fact]
+    public async Task ImportBrandIconsAsync_WhenImportTakesLong_ShowsIconPackProgressAfterDelay()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status)
+            .Returns(new BrandIconPackStatus(false, null, 0));
+        var context = CreateContext(
+            isConfigured: true,
+            cultureName: "en",
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenBrandIconPackAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "simple-icons.zip"));
+        var importing = new TaskCompletionSource<Result<BrandIconPackImportResult>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        brandIcons.Setup(value => value.ImportAsync(
+                It.IsAny<Stream>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(importing.Task);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        var importTask = context.Sut.ImportBrandIconsAsync();
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1650),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.True(context.Sut.IsImportProgressVisible);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.ImportingBrandIcons),
+            context.Sut.ImportProgressText);
+
+        importing.SetResult(Result.Fail("synthetic icon import failure"));
+        await importTask;
+
+        Assert.False(context.Sut.IsImportProgressVisible);
+        Assert.Empty(context.Sut.ImportProgressText);
+    }
+
+    [Fact]
     public async Task SelectThemeAsync_PersistsAndUpdatesVisibleSelection()
     {
         var context = CreateContext(isConfigured: true);
@@ -2590,7 +2875,8 @@ public sealed class MobileShellViewModelTests
         TOTP.Core.Enums.PreferredUnlockMethod preferredUnlockMethod =
             TOTP.Core.Enums.PreferredUnlockMethod.Password,
         string cultureName = "en",
-        bool appLockEnabled = true)
+        bool appLockEnabled = true,
+        IBrandIconPackService? brandIconPackService = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -2697,6 +2983,7 @@ public sealed class MobileShellViewModelTests
             paths.Object,
             strings,
             time,
+            brandIconPackService: brandIconPackService,
             appearanceSettingsService: appearance.Object);
         return new TestContext(
             sut,

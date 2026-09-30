@@ -21,6 +21,8 @@ public partial class MainView : UserControl
     private readonly DispatcherTimer _accountListScrollIdleTimer;
     private long _lastAccountListScrollTimestamp;
     private bool _isAccountListScrollActive;
+    private bool _realizedAccountReportPending;
+    private bool _usesNativeAccountList;
 
     public MainView()
     {
@@ -34,6 +36,26 @@ public partial class MainView : UserControl
             AttachAccountListScrollViewer,
             DispatcherPriority.Loaded);
         DetachedFromVisualTree += (_, _) => DetachAccountListScrollViewer();
+    }
+
+    public void UseNativeAccountList(Control nativeAccountList)
+    {
+        ArgumentNullException.ThrowIfNull(nativeAccountList);
+        _usesNativeAccountList = true;
+        DetachAccountListScrollViewer();
+        AccountList.IsVisible = false;
+        AccountList.ItemsSource = null;
+        NativeAccountListPresenter.Content = nativeAccountList;
+        NativeAccountListPresenter.IsHitTestVisible = true;
+    }
+
+    public void UseNativeAccountGroupStrip(Control nativeAccountGroupStrip)
+    {
+        ArgumentNullException.ThrowIfNull(nativeAccountGroupStrip);
+        if (AccountGroupsStrip.Parent is Panel parent)
+            parent.Children.Remove(AccountGroupsStrip);
+        NativeAccountGroupsPresenter.Content = nativeAccountGroupStrip;
+        NativeAccountGroupsPresenter.IsHitTestVisible = true;
     }
 
     private void RefocusAccountSearchAfterClear(object? sender, RoutedEventArgs e) =>
@@ -210,6 +232,7 @@ public partial class MainView : UserControl
 
     private void AttachAccountListScrollViewer()
     {
+        if (_usesNativeAccountList) return;
         AccountList.ApplyTemplate();
         var scrollViewer = AccountList
             .GetVisualDescendants()
@@ -221,6 +244,9 @@ public partial class MainView : UserControl
         _accountListScrollViewer = scrollViewer;
         if (_accountListScrollViewer is not null)
             _accountListScrollViewer.ScrollChanged += AccountListScrolled;
+        AccountList.ContainerPrepared += AccountContainerPrepared;
+        AccountList.ContainerClearing += AccountContainerClearing;
+        ScheduleRealizedAccountReport();
     }
 
     private void DetachAccountListScrollViewer()
@@ -229,9 +255,14 @@ public partial class MainView : UserControl
         _isAccountListScrollActive = false;
         if (_accountListScrollViewer is not null)
             _accountListScrollViewer.ScrollChanged -= AccountListScrolled;
+        AccountList.ContainerPrepared -= AccountContainerPrepared;
+        AccountList.ContainerClearing -= AccountContainerClearing;
         _accountListScrollViewer = null;
         if (DataContext is MobileShellViewModel viewModel)
+        {
             viewModel.SetAccountListScrolling(false);
+            viewModel.SetRealizedAccounts([]);
+        }
     }
 
     private void AccountListScrolled(object? sender, ScrollChangedEventArgs e)
@@ -254,6 +285,35 @@ public partial class MainView : UserControl
         _isAccountListScrollActive = false;
         if (DataContext is MobileShellViewModel viewModel)
             viewModel.SetAccountListScrolling(false);
+        ScheduleRealizedAccountReport();
+    }
+
+    private void AccountContainerPrepared(object? sender, ContainerPreparedEventArgs e) =>
+        ScheduleRealizedAccountReport();
+
+    private void AccountContainerClearing(object? sender, ContainerClearingEventArgs e) =>
+        ScheduleRealizedAccountReport();
+
+    private void ScheduleRealizedAccountReport()
+    {
+        if (_realizedAccountReportPending) return;
+        _realizedAccountReportPending = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _realizedAccountReportPending = false;
+            if (!_isAccountListScrollActive) ReportRealizedAccounts();
+        }, DispatcherPriority.Background);
+    }
+
+    private void ReportRealizedAccounts()
+    {
+        if (DataContext is not MobileShellViewModel viewModel) return;
+        var accounts = AccountList.GetRealizedContainers()
+            .Select(container => container.DataContext)
+            .OfType<MobileAccountItem>()
+            .DistinctBy(account => account.Id)
+            .ToArray();
+        viewModel.SetRealizedAccounts(accounts);
     }
 
     private void ResetSwipe(Control? control)

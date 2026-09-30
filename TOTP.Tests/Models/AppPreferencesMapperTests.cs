@@ -17,6 +17,7 @@ public sealed class AppPreferencesMapperTests
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, preferences.PreferredUnlockMethod);
         Assert.False(preferences.AppLockEnabled);
         Assert.Equal(7, preferences.IdleTimeoutMinutes);
+        Assert.Null(preferences.IdleTimeoutSeconds);
         Assert.False(preferences.LockOnSessionLock);
         Assert.False(preferences.LockOnMinimize);
         Assert.False(preferences.ClearClipboardEnabled);
@@ -78,6 +79,7 @@ public sealed class AppPreferencesMapperTests
         Assert.Equal(AppLogLevel.Information, preferences.MinimumLogLevel);
         Assert.Equal(PreferredUnlockMethod.Password, preferences.PreferredUnlockMethod);
         Assert.Equal(1, preferences.IdleTimeoutMinutes);
+        Assert.Equal(30, preferences.IdleTimeoutSeconds);
         Assert.Equal(AppSettings.DefaultClearClipboardSeconds, preferences.ClearClipboardSeconds);
         Assert.Equal(AppSettings.DefaultQrPreviewScaleFactor, preferences.QrPreviewScaleFactor);
         Assert.Equal(AppSettings.DefaultInterfaceScalePercent, preferences.InterfaceScalePercent);
@@ -95,6 +97,20 @@ public sealed class AppPreferencesMapperTests
 
         Assert.Equal(0, preferences.IdleTimeoutMinutes);
         Assert.Equal(TimeSpan.Zero, target.IdleTimeout);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesSubMinuteIdleTimeout()
+    {
+        var settings = new AppSettings { IdleTimeout = TimeSpan.FromSeconds(30) };
+
+        var preferences = AppPreferencesMapper.FromSettings(settings);
+        var target = new AppSettings();
+        AppPreferencesMapper.ApplyTo(preferences, target);
+
+        Assert.Equal(1, preferences.IdleTimeoutMinutes);
+        Assert.Equal(30, preferences.IdleTimeoutSeconds);
+        Assert.Equal(TimeSpan.FromSeconds(30), target.IdleTimeout);
     }
 
     [Fact]

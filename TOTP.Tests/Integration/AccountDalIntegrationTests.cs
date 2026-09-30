@@ -61,6 +61,34 @@ public sealed class AccountDalIntegrationTests
     }
 
     [Fact]
+    public async Task CommitImportAsync_ReplacesVaultWithOneEncryptionAndWrite()
+    {
+        using var temp = new TempDir();
+        var storagePath = Path.Combine(temp.Path, "master.totp");
+        var vault = new CountingVaultService();
+        var sut = CreateSut(storagePath, vault);
+        Assert.True((await sut.AddNewAsync(
+            new Account(Guid.NewGuid(), "Old", "JBSWY3DPEHPK3PXP"))).IsSuccess);
+        var encryptionsBeforeCommit = vault.EncryptionCount;
+        var imported = Enumerable.Range(1, 600)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                $"Issuer {index}",
+                "JBSWY3DPEHPK3PXP",
+                $"account-{index}"))
+            .ToArray();
+
+        var result = await sut.CommitImportAsync(imported);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(encryptionsBeforeCommit + 1, vault.EncryptionCount);
+        var stored = await sut.GetAllAsync();
+        Assert.True(stored.IsSuccess);
+        Assert.Equal(600, stored.Value.Count);
+        Assert.DoesNotContain(stored.Value, account => account.Issuer == "Old");
+    }
+
+    [Fact]
     public async Task SaveAndDeleteGroup_UpdatesEveryAssignmentInSingleVaultWrite()
     {
         using var temp = new TempDir();
@@ -639,6 +667,20 @@ public sealed class AccountDalIntegrationTests
     {
         public List<Account> DecryptVault(byte[] encryptedBlob) => throw exception;
         public byte[] EncryptVault(List<Account> entries) => throw exception;
+    }
+
+    private sealed class CountingVaultService : IVaultService
+    {
+        public int EncryptionCount { get; private set; }
+
+        public List<Account> DecryptVault(byte[] encryptedBlob) =>
+            System.Text.Json.JsonSerializer.Deserialize<List<Account>>(encryptedBlob) ?? [];
+
+        public byte[] EncryptVault(List<Account> entries)
+        {
+            EncryptionCount++;
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(entries);
+        }
     }
 
     private sealed class TrackingVaultService : IVaultService

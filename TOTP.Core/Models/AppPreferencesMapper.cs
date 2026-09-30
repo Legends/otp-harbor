@@ -16,6 +16,7 @@ public static class AppPreferencesMapper
             PreferredUnlockMethod = settings.PreferredUnlockMethod,
             AppLockEnabled = settings.AppLockEnabled,
             IdleTimeoutMinutes = ToIdleTimeoutMinutes(settings.IdleTimeout),
+            IdleTimeoutSeconds = ToIdleTimeoutSeconds(settings.IdleTimeout),
             LockOnSessionLock = settings.LockOnSessionLock,
             LockOnMinimize = settings.LockOnMinimize,
             ClearClipboardEnabled = settings.ClearClipboardEnabled,
@@ -39,9 +40,11 @@ public static class AppPreferencesMapper
         settings.MinimumLogLevel = normalized.MinimumLogLevel;
         settings.PreferredUnlockMethod = normalized.PreferredUnlockMethod;
         settings.AppLockEnabled = normalized.AppLockEnabled;
-        settings.IdleTimeout = normalized.IdleTimeoutMinutes == 0
-            ? TimeSpan.Zero
-            : TimeSpan.FromMinutes(normalized.IdleTimeoutMinutes);
+        settings.IdleTimeout = normalized.IdleTimeoutSeconds is { } idleTimeoutSeconds
+            ? TimeSpan.FromSeconds(idleTimeoutSeconds)
+            : normalized.IdleTimeoutMinutes == 0
+                ? TimeSpan.Zero
+                : TimeSpan.FromMinutes(normalized.IdleTimeoutMinutes);
         settings.LockOnSessionLock = normalized.LockOnSessionLock;
         settings.LockOnMinimize = normalized.LockOnMinimize;
         settings.ClearClipboardEnabled = normalized.ClearClipboardEnabled;
@@ -66,6 +69,9 @@ public static class AppPreferencesMapper
             ? preferences.PreferredUnlockMethod
             : PreferredUnlockMethod.Password,
         IdleTimeoutMinutes = Math.Clamp(preferences.IdleTimeoutMinutes, 0, 1440),
+        IdleTimeoutSeconds = preferences.IdleTimeoutSeconds is >= 1 and <= 86400
+            ? preferences.IdleTimeoutSeconds
+            : null,
         ClearClipboardSeconds = preferences.ClearClipboardSeconds > 0
             ? Math.Clamp(preferences.ClearClipboardSeconds, 1, 300)
             : AppSettings.DefaultClearClipboardSeconds,
@@ -92,6 +98,13 @@ public static class AppPreferencesMapper
         return AppSettings.IsSupportedInterfaceScale(percent)
             ? percent
             : AppSettings.DefaultInterfaceScalePercent;
+    }
+
+    private static int? ToIdleTimeoutSeconds(TimeSpan timeout)
+    {
+        if (timeout <= TimeSpan.Zero) return null;
+        var seconds = Math.Clamp((int)Math.Ceiling(timeout.TotalSeconds), 1, 86400);
+        return seconds % 60 == 0 ? null : seconds;
     }
 
     private static string NormalizeFavoriteGroupColor(string? color)

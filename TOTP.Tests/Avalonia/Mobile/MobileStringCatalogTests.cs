@@ -119,6 +119,18 @@ public sealed class MobileStringCatalogTests
         Assert.Equal(expected, catalog.Get(MobileStringKeys.SearchResultsFormat));
     }
 
+    [Theory]
+    [InlineData("en", "Copied")]
+    [InlineData("de", "Kopiert")]
+    [InlineData("fr", "Copié")]
+    [InlineData("es", "Copiado")]
+    public void Get_CodeCopiedUsesConciseSelectedLocale(string cultureName, string expected)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Equal(expected, catalog.Get(MobileStringKeys.CodeCopied));
+    }
+
     [Fact]
     public void Get_BiometricRecoveryMessage_UsesOnlyActiveGermanLocale()
     {

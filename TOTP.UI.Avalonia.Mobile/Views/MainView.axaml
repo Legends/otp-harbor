@@ -264,7 +264,7 @@
                             x:Name="AccountGroupsStrip"
                             Grid.Row="2"
                             MinHeight="64"
-                            Margin="0,4,0,6"
+                            Margin="0,6,0,6"
                             ColumnDefinitions="*"
                             IsVisible="{Binding HasAccountNavigationCards}"
                             VerticalAlignment="Center">
@@ -368,6 +368,14 @@
                             </ScrollViewer>
                         </Grid>
 
+                        <ContentControl
+                            x:Name="NativeAccountGroupsPresenter"
+                            Grid.Row="2"
+                            MinHeight="64"
+                            Margin="0,6,0,6"
+                            IsHitTestVisible="False"
+                            IsVisible="{Binding IsNativeAccountGroupsVisible}" />
+
                         <Border
                             Grid.Row="3"
                             Margin="0,0,0,14"
@@ -462,7 +470,7 @@
                             ScrollViewer.VerticalScrollBarVisibility="Hidden">
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel CacheLength="0.5" />
+                                    <VirtualizingStackPanel CacheLength="1" />
                                 </ItemsPanelTemplate>
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
@@ -623,6 +631,7 @@
                                                         Grid.ColumnSpan="2"
                                                         Classes="account-countdown"
                                                         Classes.expiring="{Binding IsExpiring}"
+                                                        IsIndeterminate="{Binding IsCodeLoading}"
                                                         Margin="0,7,0,0"
                                                         Maximum="{Binding PeriodSeconds}"
                                                         Value="{Binding RemainingSeconds}" />
@@ -633,6 +642,12 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                        <ContentControl
+                            x:Name="NativeAccountListPresenter"
+                            Grid.Row="4"
+                            IsHitTestVisible="False"
+                            IsVisible="{Binding IsNativeAccountListVisible}" />
 
                         <Border
                             Grid.Row="5"
@@ -1067,44 +1082,50 @@
                             PlaceholderText="{Binding SearchAccountsText}"
                             Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
                         <Border Classes="card" Padding="6">
-                            <ScrollViewer
+                            <ListBox
+                                x:Name="GroupAccountPicker"
+                                Classes="accounts group-account-picker"
                                 MaxHeight="220"
-                                HorizontalScrollBarVisibility="Disabled"
-                                IsScrollChainingEnabled="False"
-                                VerticalScrollBarVisibility="Hidden">
-                                <ItemsControl ItemsSource="{Binding GroupEditorAccounts}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:MobileGroupAccountSelection">
-                                            <CheckBox
-                                                MinHeight="54"
-                                                Padding="6,3"
-                                                VerticalAlignment="Stretch"
-                                                VerticalContentAlignment="Center"
-                                                IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                                    <controls:BrandTile
-                                                        Grid.Column="0"
-                                                        IsVisible="{Binding ShowIssuerLogo}"
-                                                        IconData="{Binding Brand.IconData}"
-                                                        Initials="{Binding Brand.Initials}"
-                                                        TileBackground="{Binding Brand.BackgroundBrush}" />
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock
-                                                            FontWeight="SemiBold"
-                                                            Text="{Binding Issuer}"
-                                                            TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock
-                                                            Foreground="{DynamicResource BrushTextSecondary}"
-                                                            FontSize="12"
-                                                            Text="{Binding AccountName}"
-                                                            TextTrimming="CharacterEllipsis" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </CheckBox>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
+                                ItemsSource="{Binding GroupEditorAccounts}"
+                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                ScrollViewer.IsScrollChainingEnabled="False"
+                                ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel CacheLength="0.5" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MobileGroupAccountSelection">
+                                        <CheckBox
+                                            MinHeight="54"
+                                            Padding="6,3"
+                                            VerticalAlignment="Stretch"
+                                            VerticalContentAlignment="Center"
+                                            IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                <controls:BrandTile
+                                                    Grid.Column="0"
+                                                    IsVisible="{Binding ShowIssuerLogo}"
+                                                    IconData="{Binding Brand.IconData}"
+                                                    Initials="{Binding Brand.Initials}"
+                                                    TileBackground="{Binding Brand.BackgroundBrush}" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock
+                                                        FontWeight="SemiBold"
+                                                        Text="{Binding Issuer}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                                        FontSize="12"
+                                                        Text="{Binding AccountName}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </Border>
                         <controls:ValidationMessage Severity="Error" Text="{Binding GroupEditorMessage}" />
                         <Grid ColumnDefinitions="Auto,*,*" ColumnSpacing="10">
@@ -1227,6 +1248,25 @@
             </Grid>
         </ScrollViewer>
 
+        <Border
+            x:Name="AccountCountFooter"
+            Grid.Row="2"
+            Height="18"
+            Background="{DynamicResource BrushSurface}"
+            BorderBrush="{DynamicResource BrushBorder}"
+            BorderThickness="0,1,0,0"
+            IsVisible="{Binding IsAccountListVisible}">
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="11"
+                Foreground="{DynamicResource BrushTextSecondary}"
+                IsHitTestVisible="False"
+                Text="{Binding SearchResultSummary}"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="NoWrap" />
+        </Border>
+
         <controls:NotificationBanner
             Grid.RowSpan="3"
             Margin="20,8,20,20"
@@ -1236,6 +1276,34 @@
             ZIndex="50"
             Severity="{Binding NotificationSeverity}"
             Text="{Binding NotificationText}" />
+
+        <Grid
+            Grid.RowSpan="3"
+            Panel.ZIndex="90"
+            Background="#66000000"
+            IsVisible="{Binding IsImportProgressVisible}">
+            <Border
+                MaxWidth="360"
+                Margin="24"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                automation:AutomationProperties.Name="{Binding ImportProgressText}"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="22">
+                <StackPanel Spacing="14">
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Text="{Binding ImportProgressText}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                    <ProgressBar IsIndeterminate="True" />
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <Grid
             Grid.RowSpan="3"

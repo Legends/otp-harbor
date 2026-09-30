@@ -18,6 +18,7 @@ public interface IAccountManager
 {
     Task<Result> BackupOtpEntriesStorageFileAsync();
     Task<Result> AddNewAsync(Account newItem);
+    Task<Result> CommitImportAsync(IReadOnlyCollection<Account> accounts);
     Task<Result<IReadOnlyList<Account>>> GetAllOtpEntriesSortedAsync();
 
     ///// <summary>

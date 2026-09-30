@@ -36,6 +36,13 @@
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#137333" />
+                    <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#137333" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="#168AE0" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarOutline" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBackground" Color="#EAF2F9" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonPressedBackground" Color="#CFDFEC" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBorder" Color="#D7E1EB" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
@@ -81,6 +88,13 @@
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#137333" />
+                    <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#137333" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="#168AE0" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarOutline" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBackground" Color="#EAF2F9" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonPressedBackground" Color="#CFDFEC" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBorder" Color="#D7E1EB" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
@@ -126,6 +140,13 @@
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFD166" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#87CE3E" />
+                    <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#B7FF4A" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarOutline" Color="#FFD166" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonPressedBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBorder" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="Transparent" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#9899FF" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#192B52" />
@@ -171,6 +192,13 @@
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#000000" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFFF00" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#00FF00" />
+                    <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#00FF00" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="#FFFF00" />
+                    <SolidColorBrush x:Key="BrushFavoriteStarOutline" Color="Transparent" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBackground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonPressedBackground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonInteractiveBorder" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="#00FFFF" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#00FFFF" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#000000" />
@@ -459,6 +487,14 @@
         <Setter Property="Background" Value="{DynamicResource BrushBorder}" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextHighlight}" />
     </Style>
+    <Style Selector="ListBox.group-account-picker ListBoxItem:selected">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+    </Style>
+    <Style Selector="ListBox.group-account-picker ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+    </Style>
     <Style Selector="ListBox.group-color-picker ListBoxItem">
         <Setter Property="Height" Value="30" />
         <Setter Property="Padding" Value="0" />
@@ -654,6 +690,17 @@
     <Style Selector="Button:focus-visible">
         <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />
         <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <Style Selector="Button.icon.account-favorite-selected:pointerover">
+        <Setter Property="Background" Value="{DynamicResource BrushFavoriteButtonInteractiveBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushFavoriteButtonInteractiveBorder}" />
+    </Style>
+    <Style Selector="Button.icon.account-favorite-selected:pressed">
+        <Setter Property="Background" Value="{DynamicResource BrushFavoriteButtonPressedBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushFavoriteButtonInteractiveBorder}" />
+    </Style>
+    <Style Selector="Button.icon.account-favorite-selected:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushFavoriteButtonFocusBorder}" />
     </Style>
     <Style Selector="TextBox:focus-visible">
         <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />

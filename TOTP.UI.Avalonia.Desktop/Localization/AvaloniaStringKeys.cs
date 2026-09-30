@@ -108,6 +108,9 @@ public static class AvaloniaStringKeys
     public const string SpanishLanguage = nameof(SpanishLanguage);
     public const string IdleTimeout = nameof(IdleTimeout);
     public const string IdleTimeoutHelp = nameof(IdleTimeoutHelp);
+    public const string AutoLockDisabled = nameof(AutoLockDisabled);
+    public const string AutoLockSecondsFormat = nameof(AutoLockSecondsFormat);
+    public const string AutoLockMinutesFormat = nameof(AutoLockMinutesFormat);
     public const string LockWhenMinimized = nameof(LockWhenMinimized);
     public const string SettingsAutoSaveHint = nameof(SettingsAutoSaveHint);
     public const string SettingsSavedAutomatically = nameof(SettingsSavedAutomatically);
@@ -434,7 +437,8 @@ public static class AvaloniaStringKeys
         SecuritySettings, Security, ImportExport, Miscellaneous,
         Language, EnglishLanguage, GermanLanguage, FrenchLanguage, SpanishLanguage,
         Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
-        IdleTimeoutHelp, LockWhenMinimized, SettingsAutoSaveHint,
+        IdleTimeoutHelp, AutoLockDisabled, AutoLockSecondsFormat, AutoLockMinutesFormat,
+        LockWhenMinimized, SettingsAutoSaveHint,
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
         ManageGroups, Groups, AllAccounts, UngroupedAccounts, FavoriteAccounts, FavoriteAccount,
         AddToFavorites, RemoveFromFavorites, FavoriteUpdateFailed, EditFavorites,

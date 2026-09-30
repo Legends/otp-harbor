@@ -30,7 +30,8 @@ public sealed class MainWindowViewModelTests
             .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(
                 ++accountReads < 3 ? [] : [imported]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
 
         var nativePicker = new Mock<IAvaloniaFilePicker>();
         nativePicker.Setup(value => value.PickImportFileAsync(It.IsAny<CancellationToken>()))
@@ -370,6 +371,31 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(sut.IsQuickUnlockVisible);
         Assert.True(sut.IsPasswordUnlockVisible);
+        Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, state.PreferredUnlockMethod);
+    }
+
+    [Fact]
+    public async Task ReturnToQuickUnlockAsync_FromPasswordFallback_RestoresBiometricGateAndClearsPassword()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var authorization = new Mock<IAuthorizationService>();
+        var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
+        authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        using var sut = CreateSut(coordinator.Object, authorization.Object);
+        await sut.InitializeAsync();
+        await sut.LockAsync();
+        await sut.UsePasswordFallbackAsync();
+        sut.PasswordUnlock.Password = "temporary-password";
+
+        await sut.ReturnToQuickUnlockAsync();
+
+        Assert.True(sut.IsQuickUnlockVisible);
+        Assert.False(sut.IsPasswordUnlockVisible);
+        Assert.False(sut.IsReturnToQuickUnlockVisible);
+        Assert.Empty(sut.PasswordUnlock.Password);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, state.PreferredUnlockMethod);
     }
 

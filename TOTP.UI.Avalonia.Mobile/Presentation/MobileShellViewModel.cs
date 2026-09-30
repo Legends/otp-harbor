@@ -27,6 +27,8 @@ public sealed class MobileShellViewModel :
     private static readonly TimeSpan BackgroundLockGracePeriod = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan NotificationDuration = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan CopyConfirmationDuration = TimeSpan.FromMilliseconds(1500);
+    private static readonly TimeSpan ImportProgressDelay = TimeSpan.FromMilliseconds(1500);
+    private const int FullListCodeRefreshLimit = 50;
 
     private readonly IAuthorizationService _authorization;
     private readonly IPasswordValidationService _passwordValidation;
@@ -128,8 +130,12 @@ public sealed class MobileShellViewModel :
     private long _showIssuerLogoRevision;
     private string _searchText = string.Empty;
     private bool _showFavoritesOnly;
+    private int _favoriteCount;
     private Guid? _selectedGroupId;
     private readonly List<MobileAccountItem> _allAccounts = [];
+    private readonly RangeObservableCollection<MobileAccountItem> _accounts = [];
+    private readonly RangeObservableCollection<MobileAccountGroupItem> _groups = [];
+    private readonly HashSet<Guid> _realizedAccountIds = [];
     private bool _isGroupEditorVisible;
     private bool _isDeleteGroupConfirmationVisible;
     private Guid? _editingGroupId;
@@ -137,6 +143,7 @@ public sealed class MobileShellViewModel :
     private string _groupEditorSearchText = string.Empty;
     private string _groupEditorMessage = string.Empty;
     private readonly List<MobileGroupAccountSelection> _allGroupEditorAccounts = [];
+    private readonly RangeObservableCollection<MobileGroupAccountSelection> _groupEditorAccounts = [];
     private IReadOnlyList<MobileGroupColorOption> _groupColorOptions = [];
     private MobileGroupColorOption? _selectedGroupColor;
     private MobileAccountItem? _selectedAccount;
@@ -164,6 +171,8 @@ public sealed class MobileShellViewModel :
     private bool _isImportConfirmationVisible;
     private string _importConfirmationText = string.Empty;
     private bool _isImportConfirmationAcknowledgementOnly;
+    private bool _isImportProgressVisible;
+    private string _importProgressText = string.Empty;
     private TaskCompletionSource<bool>? _importConfirmationCompletion;
     private bool _isBackupConflictResolutionVisible;
     private string _backupConflictResolutionText = string.Empty;
@@ -172,6 +181,7 @@ public sealed class MobileShellViewModel :
     private CancellationTokenSource? _codeLifetime;
     private CancellationTokenSource? _notificationLifetime;
     private CancellationTokenSource? _copyConfirmationLifetime;
+    private CancellationTokenSource? _importProgressLifetime;
     private MobileAccountItem? _copyConfirmationAccount;
     private long? _backgroundedAtTimestamp;
     private ITimer? _backgroundLockTimer;
@@ -400,9 +410,10 @@ public sealed class MobileShellViewModel :
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ObservableCollection<MobileAccountItem> Accounts { get; } = [];
-    public ObservableCollection<MobileAccountGroupItem> Groups { get; } = [];
-    public ObservableCollection<MobileGroupAccountSelection> GroupEditorAccounts { get; } = [];
+    public ObservableCollection<MobileAccountItem> Accounts => _accounts;
+    public ObservableCollection<MobileAccountGroupItem> Groups => _groups;
+    public ObservableCollection<MobileGroupAccountSelection> GroupEditorAccounts =>
+        _groupEditorAccounts;
 
     public ObservableCollection<BackupImportConflictItem> BackupImportConflicts { get; } = [];
 
@@ -488,13 +499,21 @@ public sealed class MobileShellViewModel :
         && !IsSettingsVisible
         && !IsEditorVisible
         && !IsGroupEditorVisible;
+    public bool IsNativeAccountListVisible => IsAccountListVisible
+        && HasAccounts
+        && !IsImportProgressVisible
+        && !IsImportConfirmationVisible
+        && !IsBackupConflictResolutionVisible
+        && !IsDeleteConfirmationVisible;
+    public bool IsNativeAccountGroupsVisible =>
+        IsNativeAccountListVisible && HasAccountNavigationCards;
     public bool IsScreenCaptureProtectionRequired => IsAccountListVisible || IsGroupEditorVisible;
     public bool IsSettingsVisible => IsAccountsVisible && _isSettingsVisible;
     public bool HasAccounts => Accounts.Count > 0;
     public bool HasNoAccounts => _allAccounts.Count == 0;
     public bool HasNoSearchResults => _allAccounts.Count > 0 && Accounts.Count == 0;
     public bool HasSearchText => SearchText.Length > 0;
-    public int FavoriteCount => _allAccounts.Count(account => account.IsFavorite);
+    public int FavoriteCount => _favoriteCount;
     public bool HasFavoriteAccounts => FavoriteCount > 0;
     public bool IsFavoritesFilterSelected => _showFavoritesOnly;
     public bool HasGroups => Groups.Count > 0;
@@ -549,6 +568,8 @@ public sealed class MobileShellViewModel :
         private set
         {
             if (!SetField(ref _isImportConfirmationVisible, value)) return;
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
             NotifyCommands();
         }
     }
@@ -556,12 +577,29 @@ public sealed class MobileShellViewModel :
         _isImportConfirmationAcknowledgementOnly;
     public bool IsImportConfirmationCancelVisible =>
         !_isImportConfirmationAcknowledgementOnly;
+    public bool IsImportProgressVisible
+    {
+        get => _isImportProgressVisible;
+        private set
+        {
+            if (!SetField(ref _isImportProgressVisible, value)) return;
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
+        }
+    }
+    public string ImportProgressText
+    {
+        get => _importProgressText;
+        private set => SetField(ref _importProgressText, value);
+    }
     public bool IsBackupConflictResolutionVisible
     {
         get => _isBackupConflictResolutionVisible;
         private set
         {
             if (!SetField(ref _isBackupConflictResolutionVisible, value)) return;
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
             NotifyCommands();
         }
     }
@@ -763,6 +801,101 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
+#if DEBUG
+    private const string DebugSyntheticAccountMarker = "otp-harbor-debug-load-test:";
+
+    public async Task<bool> AddDebugSyntheticAccountsAsync(int count = 600)
+    {
+        if (!_authorization.State.IsUnlocked || IsBusy || count is < 1 or > 5000)
+            return false;
+
+        IsBusy = true;
+        CancelCodeRefresh();
+        var completed = false;
+        try
+        {
+            var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+            if (loaded.IsFailed) return false;
+
+            var accounts = loaded.Value
+                .Where(account => !IsDebugSyntheticAccount(account))
+                .ToList();
+            var groups = new[]
+            {
+                new AccountGroup(new Guid("10000000-0000-0000-0000-000000000001"), "Load Test 1", "#4C956C"),
+                new AccountGroup(new Guid("10000000-0000-0000-0000-000000000002"), "Load Test 2", "#18A999"),
+                new AccountGroup(new Guid("10000000-0000-0000-0000-000000000003"), "Load Test 3", "#4F6BED"),
+                new AccountGroup(new Guid("10000000-0000-0000-0000-000000000004"), "Load Test 4", "#F59E0B"),
+                new AccountGroup(new Guid("10000000-0000-0000-0000-000000000005"), "Load Test 5", "#E45757"),
+                new AccountGroup(new Guid("10000000-0000-0000-0000-000000000006"), "Load Test 6", "#B455C7")
+            };
+            for (var index = 1; index <= count; index++)
+            {
+                accounts.Add(new Account(
+                    Guid.NewGuid(),
+                    $"Debug Service {index:0000}",
+                    "JBSWY3DPEHPK3PXP",
+                    $"{DebugSyntheticAccountMarker}{index:0000}",
+                    index % 10 == 0 ? 60 : TotpPeriodPolicy.DefaultSeconds,
+                    groups[(index - 1) % groups.Length],
+                    isFavorite: index % 8 == 0));
+            }
+
+            var saved = await _accountManager.CommitImportAsync(accounts);
+            if (saved.IsFailed) return false;
+            await LoadAccountsAsync();
+            completed = true;
+            return true;
+        }
+        finally
+        {
+            IsBusy = false;
+            if (!completed) StartCodeRefresh();
+        }
+    }
+
+    public async Task<bool> DeleteDebugSyntheticAccountsAsync()
+    {
+        if (!_authorization.State.IsUnlocked || IsBusy) return false;
+
+        IsBusy = true;
+        CancelCodeRefresh();
+        var completed = false;
+        try
+        {
+            var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+            if (loaded.IsFailed) return false;
+            var retained = loaded.Value
+                .Where(account => !IsDebugSyntheticAccount(account))
+                .ToArray();
+            if (retained.Length == loaded.Value.Count)
+            {
+                completed = true;
+                StartCodeRefresh();
+                return true;
+            }
+
+            var saved = await _accountManager.CommitImportAsync(retained);
+            if (saved.IsFailed) return false;
+            _showFavoritesOnly = false;
+            _selectedGroupId = null;
+            await LoadAccountsAsync();
+            completed = true;
+            return true;
+        }
+        finally
+        {
+            IsBusy = false;
+            if (!completed) StartCodeRefresh();
+        }
+    }
+
+    private static bool IsDebugSyntheticAccount(Account account) =>
+        account.AccountName?.StartsWith(
+            DebugSyntheticAccountMarker,
+            StringComparison.Ordinal) == true;
+#endif
+
     public string BackupPassword
     {
         get => _backupPassword;
@@ -812,6 +945,8 @@ public sealed class MobileShellViewModel :
         {
             if (!SetField(ref _isGroupEditorVisible, value)) return;
             OnPropertyChanged(nameof(IsAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
             OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             OnPropertyChanged(nameof(GroupEditorTitle));
             OnPropertyChanged(nameof(IsCreatingGroup));
@@ -888,6 +1023,8 @@ public sealed class MobileShellViewModel :
         {
             if (!SetField(ref _isEditorVisible, value)) return;
             OnPropertyChanged(nameof(IsAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
             OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             OnPropertyChanged(nameof(EditorTitle));
             OnPropertyChanged(nameof(EditorSecretPlaceholder));
@@ -901,6 +1038,8 @@ public sealed class MobileShellViewModel :
         private set
         {
             if (!SetField(ref _isDeleteConfirmationVisible, value)) return;
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
             if (!value)
             {
                 _pendingDeleteAccountId = null;
@@ -2062,6 +2201,7 @@ public sealed class MobileShellViewModel :
         {
             using var document = await _documents.OpenEncryptedBackupAsync(operation.Token);
             if (document is null) return;
+            BeginImportProgress(MobileStringKeys.ImportingAccounts);
             if (!_authorization.State.IsUnlocked || !IsSettingsVisible)
             {
                 SetError(MobileStringKeys.BackupRetryAfterUnlock);
@@ -2124,6 +2264,7 @@ public sealed class MobileShellViewModel :
         }
         finally
         {
+            EndImportProgress();
             EndSensitiveOperation(operation);
             password = string.Empty;
             CompleteImportConfirmation(false);
@@ -2143,6 +2284,7 @@ public sealed class MobileShellViewModel :
         {
             using var document = await _documents.OpenAccountImportAsync(operation.Token);
             if (document is null) return;
+            BeginImportProgress(MobileStringKeys.ImportingAccounts);
             if (!_authorization.State.IsUnlocked || !IsSettingsVisible)
             {
                 SetError(MobileStringKeys.BackupRetryAfterUnlock);
@@ -2210,6 +2352,7 @@ public sealed class MobileShellViewModel :
         }
         finally
         {
+            EndImportProgress();
             EndSensitiveOperation(operation);
             CompleteImportConfirmation(false);
             CompleteBackupConflictResolution(null);
@@ -2266,6 +2409,7 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
+            BeginImportProgress(MobileStringKeys.ImportingBrandIcons);
             var imported = await _brandIconPackService.ImportAsync(document.Stream);
             if (imported.IsFailed)
             {
@@ -2286,6 +2430,7 @@ public sealed class MobileShellViewModel :
         }
         finally
         {
+            EndImportProgress();
             IsBusy = false;
         }
     }
@@ -2434,9 +2579,20 @@ public sealed class MobileShellViewModel :
 
             _selectedGroupId = group.Id;
             _showFavoritesOnly = false;
+            var selectedIds = selectedAccountIds.ToHashSet();
+            foreach (var account in _allAccounts)
+            {
+                if (selectedIds.Contains(account.Id))
+                    account.UpdateGroup(group);
+                else if (account.Group?.Id == group.Id)
+                    account.UpdateGroup(null);
+            }
+
             ClearGroupEditor();
             IsGroupEditorVisible = false;
-            await LoadAccountsAsync();
+            RefreshGroups();
+            ApplyAccountFilter();
+            StartCodeRefresh();
         }
         catch (Exception)
         {
@@ -2797,6 +2953,23 @@ public sealed class MobileShellViewModel :
         _isAccountListScrolling = isScrolling;
     }
 
+    public void SetRealizedAccounts(IReadOnlyCollection<MobileAccountItem> realizedAccounts)
+    {
+        ArgumentNullException.ThrowIfNull(realizedAccounts);
+        if (_isAccountListScrolling || Accounts.Count <= FullListCodeRefreshLimit) return;
+
+        var realizedIds = realizedAccounts
+            .Where(Accounts.Contains)
+            .Select(account => account.Id)
+            .ToHashSet();
+        if (_realizedAccountIds.SetEquals(realizedIds)) return;
+
+        _realizedAccountIds.Clear();
+        _realizedAccountIds.UnionWith(realizedIds);
+        foreach (var account in realizedAccounts)
+            account.RefreshCodeBindings();
+    }
+
     public void OnEnteredBackground(bool lockImmediately)
     {
         if (!_authorization.State.IsUnlocked || _disposed) return;
@@ -2860,6 +3033,7 @@ public sealed class MobileShellViewModel :
         _disposed = true;
         _brandIconResolver.CatalogChanged -= BrandCatalogChanged;
         _sensitiveOperationLifetime?.Cancel();
+        EndImportProgress();
         CancelNotificationLifetime();
         ClearCopyConfirmation();
         CancelBackgroundLockTimer();
@@ -2912,6 +3086,7 @@ public sealed class MobileShellViewModel :
         RefreshFavoriteState();
         RefreshGroups();
         ApplyAccountFilter(selectedId);
+        StartCodeRefresh();
     }
 
     private void ApplyAccountFilter(Guid? preferredSelection = null)
@@ -2928,10 +3103,12 @@ public sealed class MobileShellViewModel :
                     query,
                     StringComparison.CurrentCultureIgnoreCase) ?? false)));
 
-        Accounts.Clear();
-        foreach (var account in matches) Accounts.Add(account);
+        _realizedAccountIds.Clear();
+        _accounts.ReplaceAll(matches);
 
         OnPropertyChanged(nameof(HasAccounts));
+        OnPropertyChanged(nameof(IsNativeAccountListVisible));
+        OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
         OnPropertyChanged(nameof(HasNoAccounts));
         OnPropertyChanged(nameof(HasNoSearchResults));
         OnPropertyChanged(nameof(SearchResultSummary));
@@ -2940,7 +3117,6 @@ public sealed class MobileShellViewModel :
                 ?? Accounts.FirstOrDefault()
             : Accounts.FirstOrDefault();
         NotifyCommands();
-        StartCodeRefresh();
     }
 
     private Task SelectGroupAsync(Guid groupId)
@@ -2985,10 +3161,10 @@ public sealed class MobileShellViewModel :
         if (_selectedGroupId.HasValue && groups.All(group => group.Id != _selectedGroupId))
             _selectedGroupId = null;
 
-        Groups.Clear();
-        foreach (var group in groups) Groups.Add(group);
+        _groups.ReplaceAll(groups);
         OnPropertyChanged(nameof(HasGroups));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
+        OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
         OnPropertyChanged(nameof(HasSelectedGroup));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
@@ -3026,32 +3202,38 @@ public sealed class MobileShellViewModel :
 
     private void StartCodeRefresh()
     {
-        CancelCodeRefresh();
-        if (Accounts.Count == 0 || !IsAccountListVisible) return;
+        StopCodeRefresh();
+        if (_allAccounts.Count == 0 || !IsAccountListVisible) return;
+
+        var refreshAccounts = _allAccounts.ToArray();
+        if (refreshAccounts.Length == 0) return;
+        foreach (var account in refreshAccounts)
+            account.BeginCodeRefresh(ShouldNotifyCodeBindings(account));
 
         var lifetime = new CancellationTokenSource();
         _codeLifetime = lifetime;
-        _ = RunCodeRefreshAsync(lifetime);
+        _ = RunCodeRefreshAsync(refreshAccounts, lifetime);
     }
 
-    private async Task RunCodeRefreshAsync(CancellationTokenSource lifetime)
+    private async Task RunCodeRefreshAsync(
+        MobileAccountItem[] refreshAccounts,
+        CancellationTokenSource lifetime)
     {
         try
         {
-            var visibleAccounts = Accounts.ToArray();
-            if (!await RefreshAccountCodesAsync(visibleAccounts, lifetime.Token)) return;
-            var expiringAccounts = new List<MobileAccountItem>(visibleAccounts.Length);
+            if (!await RefreshAccountCodesAsync(refreshAccounts, lifetime.Token)) return;
+            var expiringAccounts = new List<MobileAccountItem>(refreshAccounts.Length);
 
             while (!lifetime.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), lifetime.Token);
                 expiringAccounts.Clear();
-                foreach (var account in visibleAccounts)
+                foreach (var account in refreshAccounts)
                 {
                     if (account.RemainingSeconds <= 1)
                         expiringAccounts.Add(account);
                     else
-                        account.Tick(notifyBindings: !_isAccountListScrolling);
+                        account.Tick(notifyBindings: ShouldNotifyCodeBindings(account));
                 }
 
                 if (expiringAccounts.Count > 0
@@ -3067,7 +3249,7 @@ public sealed class MobileShellViewModel :
         catch (Exception)
         {
             foreach (var account in Accounts)
-                account.ClearCode(notifyBindings: !_isAccountListScrolling);
+                account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
             SetError(MobileStringKeys.CodeUnavailable);
         }
         finally
@@ -3092,7 +3274,7 @@ public sealed class MobileShellViewModel :
         catch (Exception)
         {
             foreach (var account in accounts)
-                account.ClearCode(notifyBindings: !_isAccountListScrolling);
+                account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
             SetError(MobileStringKeys.CodeUnavailable);
             return false;
         }
@@ -3101,7 +3283,7 @@ public sealed class MobileShellViewModel :
         if (refreshed.IsFailed)
         {
             foreach (var account in accounts)
-                account.ClearCode(notifyBindings: !_isAccountListScrolling);
+                account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
             SetError(MobileStringKeys.CodeUnavailable);
             return false;
         }
@@ -3120,7 +3302,7 @@ public sealed class MobileShellViewModel :
                 generated.Code,
                 Math.Max(1, generated.RemainingSeconds),
                 generated.PeriodSeconds,
-                notifyBindings: !_isAccountListScrolling);
+                notifyBindings: ShouldNotifyCodeBindings(account));
         }
 
         if (refreshFailed)
@@ -3185,11 +3367,27 @@ public sealed class MobileShellViewModel :
 
     private void CancelCodeRefresh()
     {
+        StopCodeRefresh();
+        foreach (var account in _allAccounts)
+        {
+            account.ClearCode(notifyBindings:
+                _realizedAccountIds.Contains(account.Id)
+                || Accounts.Count <= FullListCodeRefreshLimit);
+        }
+        _realizedAccountIds.Clear();
+    }
+
+    private void StopCodeRefresh()
+    {
         var lifetime = _codeLifetime;
         _codeLifetime = null;
         lifetime?.Cancel();
-        foreach (var account in _allAccounts) account.ClearCode();
     }
+
+    private bool ShouldNotifyCodeBindings(MobileAccountItem account) =>
+        !_isAccountListScrolling
+        && (Accounts.Count <= FullListCodeRefreshLimit && Accounts.Contains(account)
+            || _realizedAccountIds.Contains(account.Id));
 
     private void PostBackgroundLockCheck()
     {
@@ -3235,7 +3433,7 @@ public sealed class MobileShellViewModel :
         GroupColorOptions = [];
         SelectedGroupColor = null;
         _allGroupEditorAccounts.Clear();
-        GroupEditorAccounts.Clear();
+        if (_groupEditorAccounts.Count > 0) _groupEditorAccounts.Clear();
         IsDeleteGroupConfirmationVisible = false;
         OnPropertyChanged(nameof(GroupEditorTitle));
         OnPropertyChanged(nameof(IsCreatingGroup));
@@ -3267,8 +3465,7 @@ public sealed class MobileShellViewModel :
             || account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
             || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase));
 
-        GroupEditorAccounts.Clear();
-        foreach (var account in matches) GroupEditorAccounts.Add(account);
+        _groupEditorAccounts.ReplaceAll(matches);
     }
 
     private void RefreshGroupColorOptions(string? selectedColor)
@@ -3289,12 +3486,14 @@ public sealed class MobileShellViewModel :
 
     private void RefreshFavoriteState()
     {
+        _favoriteCount = _allAccounts.Count(account => account.IsFavorite);
         if (_showFavoritesOnly && !HasFavoriteAccounts)
             _showFavoritesOnly = false;
         OnPropertyChanged(nameof(FavoriteCount));
         OnPropertyChanged(nameof(HasFavoriteAccounts));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
+        OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
         OnPropertyChanged(nameof(HasActiveAccountFilter));
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
     }
@@ -3597,6 +3796,8 @@ public sealed class MobileShellViewModel :
     private void NotifyUnlockedSectionChanged()
     {
         OnPropertyChanged(nameof(IsAccountListVisible));
+        OnPropertyChanged(nameof(IsNativeAccountListVisible));
+        OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
         OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
         OnPropertyChanged(nameof(IsSettingsVisible));
         OnPropertyChanged(nameof(IsBiometricSetupAvailable));
@@ -3721,6 +3922,43 @@ public sealed class MobileShellViewModel :
 
     private void SetError(string key) =>
         SetNotification(Get(key), NotificationSeverity.Error);
+
+    private void BeginImportProgress(string textKey)
+    {
+        EndImportProgress();
+        ImportProgressText = Get(textKey);
+        var lifetime = new CancellationTokenSource();
+        _importProgressLifetime = lifetime;
+        _ = ShowImportProgressAfterDelayAsync(lifetime);
+    }
+
+    private async Task ShowImportProgressAfterDelayAsync(CancellationTokenSource lifetime)
+    {
+        try
+        {
+            await Task.Delay(ImportProgressDelay, lifetime.Token);
+            if (ReferenceEquals(_importProgressLifetime, lifetime) && !_disposed)
+                IsImportProgressVisible = true;
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_importProgressLifetime, lifetime))
+                _importProgressLifetime = null;
+            lifetime.Dispose();
+        }
+    }
+
+    private void EndImportProgress()
+    {
+        var lifetime = _importProgressLifetime;
+        _importProgressLifetime = null;
+        lifetime?.Cancel();
+        IsImportProgressVisible = false;
+        ImportProgressText = string.Empty;
+    }
 
     private void SetSuccess(string key) =>
         SetNotification(Get(key), NotificationSeverity.Success);

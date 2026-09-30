@@ -5,6 +5,30 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void LongImports_ShowAnIndeterminateProgressOverlay()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var overlay = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute("IsVisible")?.Value
+                == "{Binding IsImportProgressVisible}");
+
+        Assert.Equal("90", overlay.Attribute("Panel.ZIndex")?.Value);
+        Assert.Contains(
+            overlay.Descendants(avalonia + "ProgressBar"),
+            progress => progress.Attribute("IsIndeterminate")?.Value == "True");
+        Assert.Contains(
+            overlay.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value == "{Binding ImportProgressText}");
+    }
+
+    [Fact]
     public void AccountList_BuffersVirtualizedRowsForSmoothMobileScrolling()
     {
         var document = XDocument.Load(Path.Combine(
@@ -22,7 +46,7 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "VirtualizingStackPanel")
             .Single();
 
-        Assert.Equal("0.5", itemsPanel.Attribute("CacheLength")?.Value);
+        Assert.Equal("1", itemsPanel.Attribute("CacheLength")?.Value);
     }
 
     [Fact]
@@ -99,6 +123,13 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("NoWrap", copyConfirmation.Attribute("TextWrapping")?.Value);
         Assert.Null(copyConfirmation.Attribute("IsVisible"));
 
+        var countdown = document
+            .Descendants(avalonia + "ProgressBar")
+            .Single(element => element.Attribute("Classes")?.Value == "account-countdown");
+        Assert.Equal(
+            "{Binding IsCodeLoading}",
+            countdown.Attribute("IsIndeterminate")?.Value);
+
         var groupItems = document
             .Descendants(avalonia + "ItemsControl")
             .Single(element => element.Attribute("ItemsSource")?.Value == "{Binding Groups}");
@@ -127,6 +158,7 @@ public sealed class MobileAccountInteractionTests
             .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountGroupsStrip");
         Assert.Equal("2", groupsStrip.Attribute("Grid.Row")?.Value);
         Assert.Equal("64", groupsStrip.Attribute("MinHeight")?.Value);
+        Assert.Equal("0,6,0,6", groupsStrip.Attribute("Margin")?.Value);
         Assert.Equal("Center", groupsStrip.Attribute("VerticalAlignment")?.Value);
 
         var createGroupButton = document
@@ -143,9 +175,17 @@ public sealed class MobileAccountInteractionTests
                 && element.Attribute("Kind")?.Value == "Camera");
         Assert.Equal("0,2,0,0", cameraIcon.Attribute("Margin")?.Value);
 
-        Assert.DoesNotContain(
-            document.Descendants(avalonia + "TextBlock"),
-            element => element.Attribute("Text")?.Value == "{Binding SearchResultSummary}");
+        var accountCountSummary = document
+            .Descendants(avalonia + "TextBlock")
+            .Single(element => element.Attribute("Text")?.Value == "{Binding SearchResultSummary}");
+        var accountCountFooter = accountCountSummary.Parent;
+        Assert.NotNull(accountCountFooter);
+        Assert.Equal("AccountCountFooter", accountCountFooter.Attribute(xaml + "Name")?.Value);
+        Assert.Equal("2", accountCountFooter.Attribute("Grid.Row")?.Value);
+        Assert.Equal("18", accountCountFooter.Attribute("Height")?.Value);
+        Assert.Equal("{Binding IsAccountListVisible}", accountCountFooter.Attribute("IsVisible")?.Value);
+        Assert.Equal("Center", accountCountSummary.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("11", accountCountSummary.Attribute("FontSize")?.Value);
         Assert.DoesNotContain(
             document.Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value == "{Binding AccountSwipeHintText}");
@@ -204,21 +244,32 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("{Binding GroupColorOptions}", colorPicker.Attribute("ItemsSource")?.Value);
         Assert.Equal("{Binding SelectedGroupColor, Mode=TwoWay}", colorPicker.Attribute("SelectedItem")?.Value);
 
+        var nativeGroupStrip = document
+            .Descendants(avalonia + "ContentControl")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "NativeAccountGroupsPresenter");
+        Assert.Equal(
+            "{Binding IsNativeAccountGroupsVisible}",
+            nativeGroupStrip.Attribute("IsVisible")?.Value);
+        Assert.Equal("64", nativeGroupStrip.Attribute("MinHeight")?.Value);
+        Assert.Equal("0,6,0,6", nativeGroupStrip.Attribute("Margin")?.Value);
+
+        var accountPicker = document
+            .Descendants(avalonia + "ListBox")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "GroupAccountPicker");
+        Assert.Equal("{Binding GroupEditorAccounts}", accountPicker.Attribute("ItemsSource")?.Value);
+        Assert.Equal("220", accountPicker.Attribute("MaxHeight")?.Value);
         Assert.Contains(
-            document.Descendants(avalonia + "ItemsControl"),
-            element => element.Attribute("ItemsSource")?.Value == "{Binding GroupEditorAccounts}");
+            accountPicker.Descendants(avalonia + "VirtualizingStackPanel"),
+            element => element.Attribute("CacheLength")?.Value == "0.5");
         var accountSearch = document
             .Descendants(avalonia + "TextBox")
             .Single(element => element.Attribute(xaml + "Name")?.Value == "GroupAccountSearchBox");
         Assert.Equal(
             "{Binding GroupEditorSearchText, Mode=TwoWay}",
             accountSearch.Attribute("Text")?.Value);
-        var accountPickerScroller = document
-            .Descendants(avalonia + "ScrollViewer")
-            .Single(element => element.Attribute("MaxHeight")?.Value == "220");
-        Assert.Equal("Hidden", accountPickerScroller.Attribute("VerticalScrollBarVisibility")?.Value);
-        Assert.Equal("False", accountPickerScroller.Attribute("IsScrollChainingEnabled")?.Value);
-        var accountSelection = accountPickerScroller
+        Assert.Equal("Hidden", accountPicker.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
+        Assert.Equal("False", accountPicker.Attribute("ScrollViewer.IsScrollChainingEnabled")?.Value);
+        var accountSelection = accountPicker
             .Descendants(avalonia + "CheckBox")
             .Single(element => element.Attribute("IsChecked")?.Value.Contains(
                 "IsSelected",

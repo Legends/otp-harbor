@@ -113,6 +113,8 @@ public static class MobileStringKeys
     public const string BrandIcons = nameof(BrandIcons);
     public const string BrandIconsDescription = nameof(BrandIconsDescription);
     public const string ImportSimpleIconsPack = nameof(ImportSimpleIconsPack);
+    public const string ImportingAccounts = nameof(ImportingAccounts);
+    public const string ImportingBrandIcons = nameof(ImportingBrandIcons);
     public const string NoBrandIconPackSelected = nameof(NoBrandIconPackSelected);
     public const string BrandIconPackImported = nameof(BrandIconPackImported);
     public const string BrandIconPackImportFailed = nameof(BrandIconPackImportFailed);
@@ -338,6 +340,8 @@ public static class MobileStringKeys
         BrandIcons,
         BrandIconsDescription,
         ImportSimpleIconsPack,
+        ImportingAccounts,
+        ImportingBrandIcons,
         NoBrandIconPackSelected,
         BrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,

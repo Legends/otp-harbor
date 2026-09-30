@@ -164,7 +164,7 @@
   <data name="AccountDeleteFailed" xml:space="preserve"><value>The account could not be deleted.</value></data>
   <data name="CodeUnavailable" xml:space="preserve"><value>A code could not be generated for this account.</value></data>
   <data name="CopyCode" xml:space="preserve"><value>Copy code</value></data>
-  <data name="CodeCopied" xml:space="preserve"><value>Code copied.</value></data>
+  <data name="CodeCopied" xml:space="preserve"><value>Copied</value></data>
   <data name="CodeCopyFailed" xml:space="preserve"><value>The code could not be copied safely.</value></data>
   <data name="LoadingAccountsFailed" xml:space="preserve"><value>Your encrypted accounts could not be loaded.</value></data>
   <data name="EditorAddTitle" xml:space="preserve"><value>Add TOTP account</value></data>
@@ -213,6 +213,8 @@
   <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
   <data name="BrandIconsDescription" xml:space="preserve"><value>Import a Simple Icons release ZIP that you downloaded yourself. OTP Harbor stores it only on this device and never uploads issuer or account information. The icon trademarks remain the property of their owners.</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import Simple Icons ZIP…</value></data>
+  <data name="ImportingAccounts" xml:space="preserve"><value>Importing accounts…</value></data>
+  <data name="ImportingBrandIcons" xml:space="preserve"><value>Importing icon pack…</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No icon pack was selected.</value></data>
   <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from Simple Icons {1}.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>The icon pack is invalid or could not be installed safely.</value></data>

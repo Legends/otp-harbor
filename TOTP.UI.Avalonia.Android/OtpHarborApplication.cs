@@ -32,6 +32,8 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
             app.MainViewFactory = () =>
             {
                 var view = new MainView { DataContext = viewModel };
+                view.UseNativeAccountList(new AndroidAccountListHost(viewModel));
+                view.UseNativeAccountGroupStrip(new AndroidAccountGroupStripHost(viewModel));
                 viewModel.InitializeCommand.Execute(null);
                 return view;
             };
@@ -42,6 +44,16 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     {
         _services?.GetService<IMobileLifecycleSink>()?.OnEnteredBackground(lockImmediately);
     }
+
+#if DEBUG
+    internal Task<bool> AddDebugSyntheticAccountsAsync(int count) =>
+        _services?.GetService<MobileShellViewModel>()?.AddDebugSyntheticAccountsAsync(count)
+        ?? Task.FromResult(false);
+
+    internal Task<bool> DeleteDebugSyntheticAccountsAsync() =>
+        _services?.GetService<MobileShellViewModel>()?.DeleteDebugSyntheticAccountsAsync()
+        ?? Task.FromResult(false);
+#endif
 
     public void AttachActivity(MainActivity activity)
     {

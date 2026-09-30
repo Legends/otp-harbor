@@ -425,6 +425,9 @@ When making these changes, document:
 ### Default posture
 
 - read before writing
+- if a requested approach has architectural, performance, maintainability,
+  security, or platform-specific disadvantages, briefly explain the better
+  approach before proceeding
 - use narrow searches, focused file slices, and bounded command output
 - avoid repeated discovery or validation when inputs have not changed
 - keep progress updates and final summaries concise unless detail is requested or a risk needs explanation

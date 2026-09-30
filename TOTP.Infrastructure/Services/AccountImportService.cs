@@ -141,12 +141,12 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             if (backup.IsFailed)
                 return Result.Ok(new AccountImportOutcome(AccountImportStatus.RecoveryBackupFailed));
 
-            return Result.Ok(await ApplyAsync(
+            return await ApplyAsync(
                 validated,
                 currentResult.Value,
                 conflictStrategy,
                 perAccountResolution,
-                cancellationToken));
+                cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -158,7 +158,40 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         }
     }
 
-    private async Task<AccountImportOutcome> ApplyAsync(
+    private async Task<Result<AccountImportOutcome>> ApplyAsync(
+        IReadOnlyList<Account> imported,
+        IReadOnlyList<Account> existing,
+        ImportConflictStrategy strategy,
+        IReadOnlyDictionary<int, AccountImportConflictAction>? perAccountResolution,
+        CancellationToken cancellationToken)
+    {
+        var plan = await Task.Run(
+            () => BuildImportPlan(
+                imported,
+                existing,
+                strategy,
+                perAccountResolution,
+                cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+
+        if (plan.Added == 0 && plan.Replaced == 0)
+        {
+            return Result.Ok(new AccountImportOutcome(
+                AccountImportStatus.Completed,
+                Skipped: plan.Skipped));
+        }
+
+        var committed = await accountManager.CommitImportAsync(plan.Accounts).ConfigureAwait(false);
+        return committed.IsSuccess
+            ? Result.Ok(new AccountImportOutcome(
+                AccountImportStatus.Completed,
+                plan.Added,
+                plan.Replaced,
+                plan.Skipped))
+            : Result.Fail<AccountImportOutcome>(committed.Errors);
+    }
+
+    private static ImportPlan BuildImportPlan(
         IReadOnlyList<Account> imported,
         IReadOnlyList<Account> existing,
         ImportConflictStrategy strategy,
@@ -169,7 +202,6 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         var addedCount = 0;
         var replacedCount = 0;
         var skippedCount = 0;
-        var failedCount = 0;
         for (var importIndex = 0; importIndex < imported.Count; importIndex++)
         {
             var incoming = imported[importIndex];
@@ -188,7 +220,6 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 continue;
             }
 
-            Result write;
             if (match is not null
                 && (resolvedAction == AccountImportConflictAction.Replace
                     || strategy == ImportConflictStrategy.ReplaceExisting))
@@ -201,13 +232,9 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     incoming.PeriodSeconds,
                     incoming.Group,
                     incoming.IsFavorite || match.IsFavorite);
-                write = await accountManager.UpdateAsync(match, replacement);
-                if (write.IsSuccess)
-                {
-                    working.Remove(match);
-                    working.Add(replacement);
-                    replacedCount++;
-                }
+                working.Remove(match);
+                working.Add(replacement);
+                replacedCount++;
             }
             else
             {
@@ -221,23 +248,16 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                         incoming.Group,
                         incoming.IsFavorite)
                     : CreateKeepBoth(incoming, working);
-                write = await accountManager.AddNewAsync(added);
-                if (write.IsSuccess)
-                {
-                    working.Add(added);
-                    addedCount++;
-                }
+                working.Add(added);
+                addedCount++;
             }
-
-            if (write.IsFailed) failedCount++;
         }
 
-        return new AccountImportOutcome(
-            AccountImportStatus.Completed,
+        return new ImportPlan(
+            working,
             addedCount,
             replacedCount,
-            skippedCount,
-            failedCount);
+            skippedCount);
     }
 
     private static bool TryValidate(IReadOnlyCollection<Account> imported, out List<Account> validated)
@@ -364,4 +384,10 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             incoming.Group,
             incoming.IsFavorite);
     }
+
+    private sealed record ImportPlan(
+        IReadOnlyCollection<Account> Accounts,
+        int Added,
+        int Replaced,
+        int Skipped);
 }

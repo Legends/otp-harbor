@@ -57,7 +57,8 @@ public sealed class AccountImportServiceTests
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
         var sut = new AccountImportService(accounts.Object);
 
         var result = await sut.ImportAsync(
@@ -67,8 +68,64 @@ public sealed class AccountImportServiceTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(AccountImportStatus.Completed, result.Value.Status);
-        accounts.Verify(value => value.AddNewAsync(
-            It.Is<Account>(account => account.Group == group)), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Count == 1 && batch.Single().Group == group)), Times.Once);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WithSixHundredAccounts_CreatesOneBackupAndOneAtomicCommit()
+    {
+        var imported = Enumerable.Range(1, 600)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                $"Issuer {index}",
+                "JBSWY3DPEHPK3PXP",
+                $"account-{index}"))
+            .ToArray();
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            imported,
+            ImportConflictStrategy.SkipExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(600, result.Value.Added);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch => batch.Count == 600)), Times.Once);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WhenAtomicCommitFails_DoesNotReportPartialSuccess()
+    {
+        var incoming = new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP", "user");
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Fail("commit failed"));
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            [incoming],
+            ImportConflictStrategy.SkipExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        accounts.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Once);
     }
 
     [Fact]
@@ -84,7 +141,8 @@ public sealed class AccountImportServiceTests
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
         var sut = new AccountImportService(accounts.Object);
 
         var result = await sut.ImportWithConflictResolutionAsync(
@@ -106,9 +164,9 @@ public sealed class AccountImportServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1, result.Value.Replaced);
-        accounts.Verify(value => value.UpdateAsync(
-            existing,
-            It.Is<Account>(replacement => replacement.IsFavorite)), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Count == 1 && batch.Single().IsFavorite)), Times.Once);
     }
 
     [Fact]
@@ -129,7 +187,8 @@ public sealed class AccountImportServiceTests
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
         var sut = new AccountImportService(accounts.Object);
 
         var result = await sut.ImportAsync(
@@ -140,9 +199,9 @@ public sealed class AccountImportServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1, result.Value.Replaced);
-        accounts.Verify(value => value.UpdateAsync(
-            existing,
-            It.Is<Account>(replacement => replacement.IsFavorite)), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Count == 1 && batch.Single().IsFavorite)), Times.Once);
     }
 
     [Fact]
@@ -177,7 +236,8 @@ public sealed class AccountImportServiceTests
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
         var sut = new AccountImportService(accounts.Object);
 
         var result = await sut.ImportAsync(
@@ -189,10 +249,13 @@ public sealed class AccountImportServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(AccountImportStatus.Completed, result.Value.Status);
         Assert.Equal(1, result.Value.Added);
-        accounts.Verify(value => value.AddNewAsync(It.Is<Account>(account =>
-            account.ID != existing.ID
-            && account.Issuer == "Issuer (imported)"
-            && account.PeriodSeconds == 30)), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Count == 2
+                && batch.Any(account =>
+                    account.ID != existing.ID
+                    && account.Issuer == "Issuer (imported)"
+                    && account.PeriodSeconds == 30))), Times.Once);
     }
 
     [Fact]
@@ -268,11 +331,8 @@ public sealed class AccountImportServiceTests
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
                 [unchangedOne, currentRenamed, unchangedTwo]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.UpdateAsync(
-                currentRenamed,
-                It.IsAny<Account>()))
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
             .ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
         var sut = new AccountImportService(accounts.Object);
 
         var result = await sut.ImportWithConflictResolutionAsync(
@@ -304,13 +364,13 @@ public sealed class AccountImportServiceTests
         Assert.Equal(1, result.Value.Replaced);
         Assert.Equal(2, result.Value.Skipped);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
-        accounts.Verify(value => value.UpdateAsync(
-            currentRenamed,
-            It.Is<Account>(replacement =>
-                replacement.ID == currentRenamed.ID
-                && replacement.AccountName == "original@example.invalid")), Times.Once);
-        accounts.Verify(value => value.AddNewAsync(It.Is<Account>(added =>
-            added.ID == deletedAccount.ID)), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Count == 4
+                && batch.Any(replacement =>
+                    replacement.ID == currentRenamed.ID
+                    && replacement.AccountName == "original@example.invalid")
+                && batch.Any(added => added.ID == deletedAccount.ID))), Times.Once);
     }
 
     [Fact]

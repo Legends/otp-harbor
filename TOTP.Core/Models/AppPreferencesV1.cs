@@ -32,6 +32,12 @@ public sealed record AppPreferencesV1
     [JsonPropertyName("idleTimeoutMinutes")]
     public int IdleTimeoutMinutes { get; init; } = 10;
 
+    // Present only when a sub-minute precision value cannot be represented by
+    // the original v1 minutes field. Older files continue to use minutes.
+    [JsonPropertyName("idleTimeoutSeconds")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? IdleTimeoutSeconds { get; init; }
+
     [JsonPropertyName("lockOnSessionLock")]
     public bool LockOnSessionLock { get; init; } = true;
 

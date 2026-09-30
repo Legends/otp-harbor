@@ -64,6 +64,12 @@ public sealed class PasswordUnlockViewModel : INotifyPropertyChanged
 
     public ICommand UnlockCommand => _unlockCommand;
 
+    public void Clear()
+    {
+        Password = string.Empty;
+        Message = string.Empty;
+    }
+
     public async Task UnlockAsync()
     {
         if (IsBusy || Password.Length == 0) return;

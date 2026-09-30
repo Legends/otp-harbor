@@ -19,18 +19,18 @@
   <data name="Unlock" xml:space="preserve"><value>Entsperren</value></data>
   <data name="VaultUnlocked" xml:space="preserve"><value>Tresor entsperrt.</value></data>
   <data name="QuickUnlockFallback" xml:space="preserve"><value>Die Schnellentsperrung wurde nicht abgeschlossen. Gib dein Master-Passwort ein, um den Zugriff wiederherzustellen.</value></data>
-  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Mit Schnellentsperrung entsperren</value></data>
+  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Mit biometrischer ID entsperren</value></data>
   <data name="UseMasterPassword" xml:space="preserve"><value>Master-Passwort verwenden</value></data>
   <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Tresor gesperrt. Verwende die Schnellentsperrung oder dein Master-Passwort, um fortzufahren.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Tresor gesperrt. Gib dein Master-Passwort ein, um fortzufahren.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Die Schnellentsperrung wurde abgebrochen. Dein Tresor bleibt gesperrt.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>Die Schnellentsperrung konnte nicht abgeschlossen werden. Verwende dein Master-Passwort, um den Zugriff wiederherzustellen.</value></data>
-  <data name="QuickUnlock" xml:space="preserve"><value>Schnellentsperrung</value></data>
-  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Die Schnellentsperrung ist optional. Dein Master-Passwort bleibt die Wiederherstellungsmethode und ist zum Aktivieren oder Ändern der Sicherheitseinstellungen erforderlich.</value></data>
+  <data name="QuickUnlock" xml:space="preserve"><value>Mit biometrischer ID entsperren</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Das Entsperren mit biometrischer ID ist optional. Dein Master-Passwort bleibt die Wiederherstellungsmethode und ist zum Aktivieren oder Ändern der Sicherheitseinstellungen erforderlich.</value></data>
   <data name="QuickUnlockAvailable" xml:space="preserve"><value>Die Schnellentsperrung ist auf diesem System verfügbar.</value></data>
   <data name="QuickUnlockUnavailable" xml:space="preserve"><value>Die Schnellentsperrung ist auf diesem System nicht verfügbar. Das Entsperren mit Master-Passwort bleibt verfügbar.</value></data>
   <data name="EnableQuickUnlock" xml:space="preserve"><value>Schnellentsperrung aktivieren</value></data>
-  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Schnellentsperrung beim Start</value></data>
+  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Biometrische ID beim Start verwenden</value></data>
   <data name="QuickUnlockRecoveryPrompt" xml:space="preserve"><value>Gib dein Master-Passwort ein, um den Wiederherstellungszugriff vor der Aktivierung der Plattform-Schnellentsperrung zu bestätigen.</value></data>
   <data name="QuickUnlockEnrollmentCancelled" xml:space="preserve"><value>Die Schnellentsperrung wurde nicht aktiviert. Das Entsperren mit Master-Passwort bleibt unverändert.</value></data>
   <data name="QuickUnlockEnrollmentFailed" xml:space="preserve"><value>Die Schnellentsperrung konnte nicht aktiviert werden. Das Entsperren mit Master-Passwort bleibt verfügbar.</value></data>
@@ -185,8 +185,11 @@
   <data name="GermanLanguage" xml:space="preserve"><value>Deutsch</value></data>
   <data name="FrenchLanguage" xml:space="preserve"><value>Französisch</value></data>
   <data name="SpanishLanguage" xml:space="preserve"><value>Spanisch</value></data>
-  <data name="IdleTimeout" xml:space="preserve"><value>Leerlaufzeit in Minuten (0 deaktiviert die Sperre)</value></data>
-  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Null eingeben, um die Leerlaufsperre zu deaktivieren.</value></data>
+  <data name="IdleTimeout" xml:space="preserve"><value>Automatische Sperre</value></data>
+  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Die App nach der ausgewählten Inaktivitätsdauer automatisch sperren.</value></data>
+  <data name="AutoLockDisabled" xml:space="preserve"><value>Deaktiviert</value></data>
+  <data name="AutoLockSecondsFormat" xml:space="preserve"><value>{0} s</value></data>
+  <data name="AutoLockMinutesFormat" xml:space="preserve"><value>{0} Min.</value></data>
   <data name="LockWhenMinimized" xml:space="preserve"><value>Beim Minimieren sperren</value></data>
   <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Änderungen werden automatisch gespeichert.</value></data>
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Einstellungen automatisch gespeichert.</value></data>

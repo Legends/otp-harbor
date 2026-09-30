@@ -54,6 +54,7 @@ public static class AppPreferencesV1Codec
         if (!Enum.IsDefined(preferences.MinimumLogLevel)
             || !Enum.IsDefined(preferences.PreferredUnlockMethod)
             || preferences.IdleTimeoutMinutes is < 0 or > 1440
+            || preferences.IdleTimeoutSeconds is < 1 or > 86400
             || preferences.ClearClipboardSeconds is < 1 or > 300
             || !double.IsFinite(preferences.QrPreviewScaleFactor)
             || preferences.QrPreviewScaleFactor is < 1.0 or > 6.0

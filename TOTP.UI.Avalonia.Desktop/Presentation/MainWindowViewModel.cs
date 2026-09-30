@@ -37,6 +37,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _scanQrCommand;
     private readonly AsyncCommand _quickUnlockCommand;
     private readonly AsyncCommand _usePasswordFallbackCommand;
+    private readonly AsyncCommand _returnToQuickUnlockCommand;
     private readonly CancellationTokenSource _lifetime = new();
     private readonly IReadOnlyList<NotificationState> _settingsNotificationSources;
     private bool _isBusy;
@@ -160,6 +161,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _usePasswordFallbackCommand = new AsyncCommand(
             UsePasswordFallbackAsync,
             () => _isQuickUnlockVisible && !_isQuickUnlockBusy);
+        _returnToQuickUnlockCommand = new AsyncCommand(
+            ReturnToQuickUnlockAsync,
+            CanReturnToQuickUnlock);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -224,6 +228,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand UsePasswordFallbackCommand => _usePasswordFallbackCommand;
 
+    public ICommand ReturnToQuickUnlockCommand => _returnToQuickUnlockCommand;
+
     public PasswordUnlockViewModel PasswordUnlock { get; }
 
     public PasswordSetupViewModel PasswordSetup { get; }
@@ -245,8 +251,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public bool IsPasswordUnlockVisible
     {
         get => _isPasswordUnlockVisible;
-        private set => SetField(ref _isPasswordUnlockVisible, value);
+        private set
+        {
+            if (!SetField(ref _isPasswordUnlockVisible, value)) return;
+            OnPropertyChanged(nameof(IsReturnToQuickUnlockVisible));
+            NotifyQuickUnlockCommands();
+        }
     }
+
+    public bool IsReturnToQuickUnlockVisible => CanReturnToQuickUnlock();
 
     public bool IsQuickUnlockVisible
     {
@@ -264,6 +277,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         private set
         {
             if (!SetField(ref _isQuickUnlockBusy, value)) return;
+            OnPropertyChanged(nameof(IsReturnToQuickUnlockVisible));
             NotifyQuickUnlockCommands();
         }
     }
@@ -569,6 +583,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         return Task.CompletedTask;
     }
 
+    public Task ReturnToQuickUnlockAsync()
+    {
+        if (!CanReturnToQuickUnlock()) return Task.CompletedTask;
+        PasswordUnlock.Clear();
+        IsPasswordUnlockVisible = false;
+        IsQuickUnlockVisible = true;
+        QuickUnlockMessage = string.Empty;
+        StatusText = _localization.GetString(AvaloniaStringKeys.VaultLockedQuickUnlock);
+        StatusSeverity = NotificationSeverity.Information;
+        return Task.CompletedTask;
+    }
+
     public Task HandleWindowMinimizedAsync()
     {
         if (!IsShellVisible || _settingsService?.Current.LockOnMinimize != true)
@@ -724,6 +750,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool CanUseToolbarSearch() =>
         _isShellVisible && !_isSettingsVisible;
 
+    private bool CanReturnToQuickUnlock() =>
+        _isPasswordUnlockVisible
+        && !_isQuickUnlockBusy
+        && _authorizationService.State is { IsUnlocked: false } state
+        && state.PreferredUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock;
+
     private void NotifyModalCommands()
     {
         _lockCommand.NotifyCanExecuteChanged();
@@ -742,7 +774,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         _quickUnlockCommand?.NotifyCanExecuteChanged();
         _usePasswordFallbackCommand?.NotifyCanExecuteChanged();
+        _returnToQuickUnlockCommand?.NotifyCanExecuteChanged();
     }
+
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {

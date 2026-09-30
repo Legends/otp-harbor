@@ -20,6 +20,23 @@ public sealed class AppPreferencesV1CodecTests
     }
 
     [Fact]
+    public void SerializeThenDeserialize_RoundTripsSubMinuteIdleTimeout()
+    {
+        var preferences = CreatePreferences() with
+        {
+            IdleTimeoutMinutes = 1,
+            IdleTimeoutSeconds = 30
+        };
+
+        var encoded = AppPreferencesV1Codec.Serialize(preferences);
+        var decoded = AppPreferencesV1Codec.Deserialize(encoded.Value);
+
+        Assert.True(encoded.IsSuccess);
+        Assert.True(decoded.IsSuccess);
+        Assert.Equal(30, decoded.Value.IdleTimeoutSeconds);
+    }
+
+    [Fact]
     public void Serialize_NeverEmitsAuthorizationOrKeyMaterialFields()
     {
         var encoded = AppPreferencesV1Codec.Serialize(CreatePreferences());
@@ -81,6 +98,20 @@ public sealed class AppPreferencesV1CodecTests
         };
 
         var result = AppPreferencesV1Codec.Serialize(preferences);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppPreferencesErrorCode.InvalidValue, ErrorCode(result.Errors));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(86401)]
+    public void Serialize_InvalidIdleTimeoutSeconds_ReturnsTypedFailure(int seconds)
+    {
+        var result = AppPreferencesV1Codec.Serialize(CreatePreferences() with
+        {
+            IdleTimeoutSeconds = seconds
+        });
 
         Assert.False(result.IsSuccess);
         Assert.Equal(AppPreferencesErrorCode.InvalidValue, ErrorCode(result.Errors));

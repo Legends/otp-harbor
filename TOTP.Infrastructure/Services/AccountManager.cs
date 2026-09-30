@@ -16,6 +16,12 @@ public class AccountManager(
         return await otpDal.AddNewAsync(newItem);
     }
 
+    public Task<Result> CommitImportAsync(IReadOnlyCollection<Account> accounts)
+    {
+        ArgumentNullException.ThrowIfNull(accounts);
+        return otpDal.CommitImportAsync(accounts);
+    }
+
     public async Task<Result> UpdateAsync(Account previous, Account updated)
     {
         ArgumentNullException.ThrowIfNull(previous);
@@ -49,7 +55,7 @@ public class AccountManager(
 
     public async Task<Result<IReadOnlyList<Account>>> GetAllOtpEntriesSortedAsync()
     {
-        var result = await otpDal.GetAllAsync();
+        var result = await otpDal.GetAllAsync().ConfigureAwait(false);
 
         if (result.IsFailed)
             return result.ToResult();

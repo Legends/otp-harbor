@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Core.Enums;
+using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
 
@@ -22,7 +23,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _openLogFolderCommand;
     private readonly TimeSpan _autoSaveDelay;
     private CancellationTokenSource? _autoSaveCts;
-    private int _idleTimeoutMinutes;
+    private AutoLockOption? _selectedAutoLock;
     private bool _lockOnMinimize;
     private bool _lockOnSessionLock;
     private bool _clearClipboardEnabled;
@@ -39,6 +40,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private LanguageOption? _selectedLanguage;
     private ThemeOption? _selectedTheme;
     private IReadOnlyList<ThemeOption> _themes = [];
+    private IReadOnlyList<AutoLockOption> _autoLockOptions = [];
 
     public SettingsPageViewModel(
         ISettingsService settingsService,
@@ -62,6 +64,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         Languages = localization?.SupportedLanguages ?? [];
         LogLevels = Enum.GetValues<AppLogLevel>();
         InterfaceScales = CreateInterfaceScaleOptions();
+        _autoLockOptions = CreateAutoLockOptions(_settingsService.Current.IdleTimeout);
         _themes = CreateThemeOptions();
         _selectedLanguage = localization?.CurrentLanguage;
         if (_localization is not null)
@@ -83,6 +86,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public IReadOnlyList<LanguageOption> Languages { get; }
     public IReadOnlyList<AppLogLevel> LogLevels { get; }
     public IReadOnlyList<InterfaceScaleOption> InterfaceScales { get; }
+    public IReadOnlyList<AutoLockOption> AutoLockOptions => _autoLockOptions;
     public IReadOnlyList<ThemeOption> Themes => _themes;
     public bool IsInterfaceScaleAvailable => OperatingSystem.IsLinux();
     public string VersionText { get; }
@@ -101,12 +105,12 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public int IdleTimeoutMinutes
+    public AutoLockOption? SelectedAutoLock
     {
-        get => _idleTimeoutMinutes;
+        get => _selectedAutoLock;
         set
         {
-            if (!SetField(ref _idleTimeoutMinutes, value)) return;
+            if (!SetField(ref _selectedAutoLock, value)) return;
             QueueAutoSave();
         }
     }
@@ -223,10 +227,10 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         _isReloading = true;
         try
         {
-            IdleTimeoutMinutes = (int)Math.Clamp(
-                Math.Round(_settingsService.Current.IdleTimeout.TotalMinutes),
-                0,
-                1440);
+            _autoLockOptions = CreateAutoLockOptions(_settingsService.Current.IdleTimeout);
+            OnPropertyChanged(nameof(AutoLockOptions));
+            SelectedAutoLock = _autoLockOptions.First(option =>
+                option.Timeout == _settingsService.Current.IdleTimeout);
             LockOnMinimize = _settingsService.Current.LockOnMinimize;
             LockOnSessionLock = _settingsService.Current.LockOnSessionLock;
             ClearClipboardEnabled = _settingsService.Current.ClearClipboardEnabled;
@@ -252,7 +256,10 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task SaveAsync()
     {
-        if (IdleTimeoutMinutes is < 0 or > 1440
+        if (SelectedAutoLock is null
+            || SelectedAutoLock.Timeout < TimeSpan.Zero
+            || SelectedAutoLock.Timeout > TimeSpan.FromDays(1)
+            || !AutoLockOptions.Contains(SelectedAutoLock)
             || ClearClipboardSeconds is < 1 or > 300
             || QrPreviewScaleFactor is < 1.0m or > 6.0m
             || QrPreviewScaleFactor * 2 != decimal.Truncate(QrPreviewScaleFactor * 2)
@@ -272,7 +279,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         var previous = TOTP.Core.Models.AppPreferencesMapper.FromSettings(_settingsService.Current);
         try
         {
-            _settingsService.Current.IdleTimeout = TimeSpan.FromMinutes(IdleTimeoutMinutes);
+            _settingsService.Current.IdleTimeout = SelectedAutoLock.Timeout;
             _settingsService.Current.LockOnMinimize = LockOnMinimize;
             _settingsService.Current.LockOnSessionLock = LockOnSessionLock;
             _settingsService.Current.ClearClipboardEnabled = ClearClipboardEnabled;
@@ -361,6 +368,14 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         var preference = _selectedTheme?.Preference
             ?? _appearanceSettingsService?.ThemePreference
             ?? AppThemePreference.Dark;
+        var selectedAutoLock = _selectedAutoLock?.Timeout
+            ?? _settingsService.Current.IdleTimeout;
+        _autoLockOptions = CreateAutoLockOptions(selectedAutoLock);
+        OnPropertyChanged(nameof(AutoLockOptions));
+        SetField(
+            ref _selectedAutoLock,
+            _autoLockOptions.First(option => option.Timeout == selectedAutoLock),
+            nameof(SelectedAutoLock));
         _themes = CreateThemeOptions();
         OnPropertyChanged(nameof(Themes));
         SetField(
@@ -465,6 +480,46 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         })
     ];
 
+    private IReadOnlyList<AutoLockOption> CreateAutoLockOptions(TimeSpan currentTimeout)
+    {
+        var timeouts = new List<TimeSpan>
+        {
+            TimeSpan.Zero,
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(30),
+            TimeSpan.FromMinutes(1),
+            TimeSpan.FromMinutes(2),
+            TimeSpan.FromMinutes(3),
+            TimeSpan.FromMinutes(4),
+            TimeSpan.FromMinutes(5),
+            AppSettings.DefaultIdleTimeout
+        };
+        if (!timeouts.Contains(currentTimeout)) timeouts.Add(currentTimeout);
+
+        return timeouts
+            .Distinct()
+            .Order()
+            .Select(timeout => new AutoLockOption(timeout, FormatAutoLockTimeout(timeout)))
+            .ToArray();
+    }
+
+    private string FormatAutoLockTimeout(TimeSpan timeout)
+    {
+        if (timeout == TimeSpan.Zero) return Localize(AvaloniaStringKeys.AutoLockDisabled);
+        if (timeout.TotalSeconds < 60)
+        {
+            return string.Format(
+                CultureInfo.CurrentUICulture,
+                Localize(AvaloniaStringKeys.AutoLockSecondsFormat),
+                (int)timeout.TotalSeconds);
+        }
+
+        return string.Format(
+            CultureInfo.CurrentUICulture,
+            Localize(AvaloniaStringKeys.AutoLockMinutesFormat),
+            (int)timeout.TotalMinutes);
+    }
+
     private IReadOnlyList<ThemeOption> CreateThemeOptions() =>
     [
         new(AppThemePreference.System, Localize(AvaloniaStringKeys.ThemeFollowSystem)),
@@ -486,5 +541,6 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     public sealed record InterfaceScaleOption(int Percent, string Label);
+    public sealed record AutoLockOption(TimeSpan Timeout, string Label);
     public sealed record ThemeOption(AppThemePreference Preference, string Label);
 }

@@ -35,7 +35,8 @@ public sealed class AccountDAL : IAccountDAL
 
     public async Task<Result<List<Account>>> GetAllAsync()
     {
-        await _semaphore.WaitAsync();
+        await _semaphore.WaitAsync().ConfigureAwait(false);
+        byte[]? blob = null;
         try
         {
             if (!File.Exists(_secretsPath))
@@ -45,15 +46,21 @@ public sealed class AccountDAL : IAccountDAL
 
             SecureStorageDirectory();
             _fileSecurity.RestrictFileToCurrentUser(_secretsPath);
-            byte[] blob = await File.ReadAllBytesAsync(_secretsPath);
-            return Result.Ok(_vaultService.DecryptVault(blob));
+            blob = await File.ReadAllBytesAsync(_secretsPath).ConfigureAwait(false);
+            var accounts = await Task.Run(() => _vaultService.DecryptVault(blob))
+                .ConfigureAwait(false);
+            return Result.Ok(accounts);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load accounts.");
             return Result.Fail(AccountDalErrorMapper.MapReadError(ex));
         }
-        finally { _semaphore.Release(); }
+        finally
+        {
+            if (blob is not null) CryptographicOperations.ZeroMemory(blob);
+            _semaphore.Release();
+        }
     }
 
     public async Task<Result> ExportEncryptedAsync(string targetPath)
@@ -96,12 +103,48 @@ public sealed class AccountDAL : IAccountDAL
 
         SecureStorageDirectory();
         _fileSecurity.RestrictFileToCurrentUser(_secretsPath);
-        byte[] blob = await File.ReadAllBytesAsync(_secretsPath);
-        return _vaultService.DecryptVault(blob);
+        byte[] blob = await File.ReadAllBytesAsync(_secretsPath).ConfigureAwait(false);
+        try
+        {
+            return await Task.Run(() => _vaultService.DecryptVault(blob)).ConfigureAwait(false);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(blob);
+        }
     }
 
     public async Task<Result> AddNewAsync(Account newItem) =>
         await ExecuteWriteAsync(list => list.Add(newItem), AppErrorCode.OtpCreateFailed, "Failed to create OTP entry.");
+
+    public async Task<Result> CommitImportAsync(IReadOnlyCollection<Account> accounts)
+    {
+        ArgumentNullException.ThrowIfNull(accounts);
+        await _semaphore.WaitAsync().ConfigureAwait(false);
+        byte[]? blob = null;
+        try
+        {
+            var snapshot = accounts.ToList();
+            blob = await Task.Run(() => _vaultService.EncryptVault(snapshot)).ConfigureAwait(false);
+
+            SecureStorageDirectory();
+            await CommitEncryptedBlobAsync(_secretsPath, blob).ConfigureAwait(false);
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Atomic account import commit failed.");
+            return Result.Fail(AccountDalErrorMapper.MapWriteError(
+                ex,
+                AppErrorCode.OtpCreateFailed,
+                "Failed to commit imported OTP entries."));
+        }
+        finally
+        {
+            if (blob is not null) CryptographicOperations.ZeroMemory(blob);
+            _semaphore.Release();
+        }
+    }
 
     public async Task<Result> UpdateAsync(Account updated) =>
         await ExecuteWriteAsync(list =>
@@ -174,16 +217,17 @@ public sealed class AccountDAL : IAccountDAL
 
     private async Task<Result> ExecuteWriteAsync(Action<List<Account>> action, AppErrorCode operationCode, string operationMessage)
     {
-        await _semaphore.WaitAsync();
+        await _semaphore.WaitAsync().ConfigureAwait(false);
         byte[]? blob = null;
         try
         {
-            var list = await GetAllInternalAsync();
+            var list = await GetAllInternalAsync().ConfigureAwait(false);
             action(list);
-            blob = _vaultService.EncryptVault(list);
+            blob = await Task.Run(() => _vaultService.EncryptVault(list))
+                .ConfigureAwait(false);
 
             SecureStorageDirectory();
-            await CommitEncryptedBlobAsync(_secretsPath, blob);
+            await CommitEncryptedBlobAsync(_secretsPath, blob).ConfigureAwait(false);
 
             return Result.Ok();
         }

@@ -19,18 +19,18 @@
   <data name="Unlock" xml:space="preserve"><value>Unlock</value></data>
   <data name="VaultUnlocked" xml:space="preserve"><value>Vault unlocked.</value></data>
   <data name="QuickUnlockFallback" xml:space="preserve"><value>Quick unlock was not completed. Enter your master password to recover access.</value></data>
-  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Unlock with quick unlock</value></data>
+  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Unlock using Biometric ID</value></data>
   <data name="UseMasterPassword" xml:space="preserve"><value>Use master password</value></data>
   <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Vault locked. Use quick unlock or your master password to continue.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Vault locked. Enter your master password to continue.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Quick unlock was cancelled. Your vault remains locked.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>Quick unlock could not be completed. Use your master password to recover access.</value></data>
-  <data name="QuickUnlock" xml:space="preserve"><value>Quick unlock</value></data>
-  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Quick unlock is optional. Your master password remains the recovery method and is required to enable or change security settings.</value></data>
+  <data name="QuickUnlock" xml:space="preserve"><value>Unlock using Biometric ID</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Biometric ID unlock is optional. Your master password remains the recovery method and is required to enable or change security settings.</value></data>
   <data name="QuickUnlockAvailable" xml:space="preserve"><value>Quick unlock is available on this system.</value></data>
   <data name="QuickUnlockUnavailable" xml:space="preserve"><value>Quick unlock is unavailable on this system. Master-password unlock remains available.</value></data>
   <data name="EnableQuickUnlock" xml:space="preserve"><value>Enable quick unlock</value></data>
-  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Quick unlock at startup</value></data>
+  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Use Biometric ID at startup</value></data>
   <data name="QuickUnlockRecoveryPrompt" xml:space="preserve"><value>Enter your master password to verify recovery access before enabling platform quick unlock.</value></data>
   <data name="QuickUnlockEnrollmentCancelled" xml:space="preserve"><value>Quick unlock was not enabled. Master-password unlock is unchanged.</value></data>
   <data name="QuickUnlockEnrollmentFailed" xml:space="preserve"><value>Quick unlock could not be enabled. Master-password unlock remains available.</value></data>
@@ -185,8 +185,11 @@
   <data name="GermanLanguage" xml:space="preserve"><value>German</value></data>
   <data name="FrenchLanguage" xml:space="preserve"><value>French</value></data>
   <data name="SpanishLanguage" xml:space="preserve"><value>Spanish</value></data>
-  <data name="IdleTimeout" xml:space="preserve"><value>Idle timeout in minutes (0 disables idle lock)</value></data>
-  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Enter zero to disable idle locking.</value></data>
+  <data name="IdleTimeout" xml:space="preserve"><value>Auto Lock</value></data>
+  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Lock the app automatically after the selected period of inactivity.</value></data>
+  <data name="AutoLockDisabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="AutoLockSecondsFormat" xml:space="preserve"><value>{0} s</value></data>
+  <data name="AutoLockMinutesFormat" xml:space="preserve"><value>{0} min</value></data>
   <data name="LockWhenMinimized" xml:space="preserve"><value>Lock when minimized</value></data>
   <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Changes are saved automatically.</value></data>
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Settings saved automatically.</value></data>

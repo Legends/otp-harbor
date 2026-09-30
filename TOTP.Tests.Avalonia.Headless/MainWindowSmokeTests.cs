@@ -2249,6 +2249,14 @@ public sealed class MainWindowSmokeTests
                 window.GetVisualDescendants().OfType<Border>(),
                 control => control.Name == "SecurityBehaviorSettings");
             Assert.Contains(behaviorSettings, scrollViewer.GetVisualDescendants());
+            var autoLockSelector = Assert.Single(
+                behaviorSettings.GetVisualDescendants().OfType<ComboBox>(),
+                control => control.Name == "AutoLockSelector");
+            Assert.Equal(9, autoLockSelector.ItemCount);
+            Assert.Equal(
+                TimeSpan.FromMinutes(10),
+                Assert.IsType<SettingsPageViewModel.AutoLockOption>(
+                    autoLockSelector.SelectedItem).Timeout);
         }
         finally
         {

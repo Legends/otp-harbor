@@ -19,18 +19,18 @@
   <data name="Unlock" xml:space="preserve"><value>Desbloquear</value></data>
   <data name="VaultUnlocked" xml:space="preserve"><value>Caja fuerte desbloqueada.</value></data>
   <data name="QuickUnlockFallback" xml:space="preserve"><value>El desbloqueo rápido no se completó. Introduce tu contraseña maestra para recuperar el acceso.</value></data>
-  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Desbloquear con desbloqueo rápido</value></data>
+  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Desbloquear con identificación biométrica</value></data>
   <data name="UseMasterPassword" xml:space="preserve"><value>Usar contraseña maestra</value></data>
   <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Caja fuerte bloqueada. Usa el desbloqueo rápido o tu contraseña maestra para continuar.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Caja fuerte bloqueada. Introduce tu contraseña maestra para continuar.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Se canceló el desbloqueo rápido. Tu caja fuerte sigue bloqueada.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>No se pudo completar el desbloqueo rápido. Usa tu contraseña maestra para recuperar el acceso.</value></data>
-  <data name="QuickUnlock" xml:space="preserve"><value>Desbloqueo rápido</value></data>
-  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>El desbloqueo rápido es opcional. Tu contraseña maestra sigue siendo el método de recuperación y es necesaria para activar o cambiar los ajustes de seguridad.</value></data>
+  <data name="QuickUnlock" xml:space="preserve"><value>Desbloquear con identificación biométrica</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>El desbloqueo biométrico es opcional. Tu contraseña maestra sigue siendo el método de recuperación y es necesaria para activar o cambiar los ajustes de seguridad.</value></data>
   <data name="QuickUnlockAvailable" xml:space="preserve"><value>El desbloqueo rápido está disponible en este sistema.</value></data>
   <data name="QuickUnlockUnavailable" xml:space="preserve"><value>El desbloqueo rápido no está disponible en este sistema. El desbloqueo mediante contraseña maestra sigue disponible.</value></data>
   <data name="EnableQuickUnlock" xml:space="preserve"><value>Activar desbloqueo rápido</value></data>
-  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Desbloqueo rápido al iniciar</value></data>
+  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Usar identificación biométrica al iniciar</value></data>
   <data name="QuickUnlockRecoveryPrompt" xml:space="preserve"><value>Introduce tu contraseña maestra para verificar el acceso de recuperación antes de activar el desbloqueo rápido de la plataforma.</value></data>
   <data name="QuickUnlockEnrollmentCancelled" xml:space="preserve"><value>No se activó el desbloqueo rápido. El desbloqueo mediante contraseña maestra no ha cambiado.</value></data>
   <data name="QuickUnlockEnrollmentFailed" xml:space="preserve"><value>No se pudo activar el desbloqueo rápido. El desbloqueo mediante contraseña maestra sigue disponible.</value></data>
@@ -185,8 +185,11 @@
   <data name="GermanLanguage" xml:space="preserve"><value>Alemán</value></data>
   <data name="FrenchLanguage" xml:space="preserve"><value>Francés</value></data>
   <data name="SpanishLanguage" xml:space="preserve"><value>Español</value></data>
-  <data name="IdleTimeout" xml:space="preserve"><value>Tiempo de inactividad en minutos (0 desactiva el bloqueo)</value></data>
-  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Introduce cero para desactivar el bloqueo por inactividad.</value></data>
+  <data name="IdleTimeout" xml:space="preserve"><value>Bloqueo automático</value></data>
+  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Bloquea automáticamente la aplicación tras el periodo de inactividad seleccionado.</value></data>
+  <data name="AutoLockDisabled" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="AutoLockSecondsFormat" xml:space="preserve"><value>{0} s</value></data>
+  <data name="AutoLockMinutesFormat" xml:space="preserve"><value>{0} min</value></data>
   <data name="LockWhenMinimized" xml:space="preserve"><value>Bloquear al minimizar</value></data>
   <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Los cambios se guardan automáticamente.</value></data>
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Ajustes guardados automáticamente.</value></data>

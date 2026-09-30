@@ -42,6 +42,30 @@ public sealed class SettingsPageViewModelTests
     }
 
     [Fact]
+    public void AutoLockOptions_ExposeRequestedDurationsAndPreserveExistingCustomValue()
+    {
+        var current = new AppSettings { IdleTimeout = TimeSpan.FromMinutes(12) };
+
+        using var sut = new SettingsPageViewModel(CreateSettings(current).Object);
+
+        var expected = new[]
+        {
+            TimeSpan.Zero,
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(30),
+            TimeSpan.FromMinutes(1),
+            TimeSpan.FromMinutes(2),
+            TimeSpan.FromMinutes(3),
+            TimeSpan.FromMinutes(4),
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromMinutes(10),
+            TimeSpan.FromMinutes(12)
+        };
+        Assert.Equal(expected, sut.AutoLockOptions.Select(option => option.Timeout));
+        Assert.Equal(TimeSpan.FromMinutes(12), sut.SelectedAutoLock?.Timeout);
+    }
+
+    [Fact]
     public async Task SaveAsync_PersistsReviewedSecurityPreferences()
     {
         var current = new AppSettings();
@@ -49,13 +73,13 @@ public sealed class SettingsPageViewModelTests
         settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
         using var sut = new SettingsPageViewModel(settings.Object)
         {
-            IdleTimeoutMinutes = 25,
             LockOnMinimize = false
         };
+        sut.SelectedAutoLock = AutoLock(sut, TimeSpan.FromSeconds(30));
 
         await sut.SaveAsync();
 
-        Assert.Equal(TimeSpan.FromMinutes(25), current.IdleTimeout);
+        Assert.Equal(TimeSpan.FromSeconds(30), current.IdleTimeout);
         Assert.False(current.LockOnMinimize);
         Assert.Equal("Settings saved automatically.", sut.Message);
         Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
@@ -84,7 +108,7 @@ public sealed class SettingsPageViewModelTests
     {
         var current = new AppSettings
         {
-            IdleTimeout = TimeSpan.FromMinutes(10),
+            IdleTimeout = TimeSpan.FromSeconds(30),
             LockOnMinimize = true
         };
         var settings = CreateSettings(current);
@@ -92,13 +116,13 @@ public sealed class SettingsPageViewModelTests
             .ReturnsAsync(Result.Fail("synthetic failure"));
         using var sut = new SettingsPageViewModel(settings.Object)
         {
-            IdleTimeoutMinutes = 60,
             LockOnMinimize = false
         };
+        sut.SelectedAutoLock = AutoLock(sut, TimeSpan.FromMinutes(2));
 
         await sut.SaveAsync();
 
-        Assert.Equal(TimeSpan.FromMinutes(10), current.IdleTimeout);
+        Assert.Equal(TimeSpan.FromSeconds(30), current.IdleTimeout);
         Assert.True(current.LockOnMinimize);
         Assert.DoesNotContain("synthetic", sut.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
@@ -156,7 +180,6 @@ public sealed class SettingsPageViewModelTests
         settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
         using var sut = new SettingsPageViewModel(settings.Object)
         {
-            IdleTimeoutMinutes = 45,
             LockOnMinimize = false,
             LockOnSessionLock = false,
             ClearClipboardEnabled = true,
@@ -165,13 +188,14 @@ public sealed class SettingsPageViewModelTests
             OpenExportFileAfterExport = false,
             MinimumLogLevel = AppLogLevel.Warning
         };
+        sut.SelectedAutoLock = AutoLock(sut, TimeSpan.FromMinutes(5));
         sut.SelectedInterfaceScale = Assert.Single(
             sut.InterfaceScales,
             option => option.Percent == 175);
 
         await sut.SaveAsync();
 
-        Assert.Equal(TimeSpan.FromMinutes(45), current.IdleTimeout);
+        Assert.Equal(TimeSpan.FromMinutes(5), current.IdleTimeout);
         Assert.False(current.LockOnMinimize);
         Assert.False(current.LockOnSessionLock);
         Assert.True(current.ClearClipboardEnabled);
@@ -414,7 +438,7 @@ public sealed class SettingsPageViewModelTests
             settings.Object,
             autoSaveDelay: TimeSpan.FromMilliseconds(25));
 
-        sut.IdleTimeoutMinutes = 15;
+        sut.SelectedAutoLock = AutoLock(sut, TimeSpan.FromSeconds(30));
         sut.ClearClipboardSeconds = 20;
         sut.OpenExportFileAfterExport = false;
         await saved.Task.WaitAsync(
@@ -422,7 +446,7 @@ public sealed class SettingsPageViewModelTests
             TestContext.Current.CancellationToken);
         await Task.Delay(50, TestContext.Current.CancellationToken);
 
-        Assert.Equal(TimeSpan.FromMinutes(15), current.IdleTimeout);
+        Assert.Equal(TimeSpan.FromSeconds(30), current.IdleTimeout);
         Assert.Equal(20, current.ClearClipboardSeconds);
         Assert.False(current.OpenExportFileAfterExport);
         settings.Verify(value => value.SaveAsync(), Times.Once);
@@ -434,4 +458,9 @@ public sealed class SettingsPageViewModelTests
         settings.SetupGet(value => value.Current).Returns(current);
         return settings;
     }
+
+    private static SettingsPageViewModel.AutoLockOption AutoLock(
+        SettingsPageViewModel viewModel,
+        TimeSpan timeout) =>
+        Assert.Single(viewModel.AutoLockOptions, option => option.Timeout == timeout);
 }

@@ -8,6 +8,24 @@ namespace TOTP.Tests.Services;
 public sealed class AccountManagerTests
 {
     [Fact]
+    public async Task CommitImportAsync_DelegatesCompleteSnapshotOnce()
+    {
+        var snapshot = new[]
+        {
+            new Account(Guid.NewGuid(), "One", "JBSWY3DPEHPK3PXP"),
+            new Account(Guid.NewGuid(), "Two", "KRSXG5DSNFXGOIDB")
+        };
+        var dal = new Mock<IAccountDAL>();
+        dal.Setup(value => value.CommitImportAsync(snapshot)).ReturnsAsync(FluentResults.Result.Ok());
+        var sut = new AccountManager(dal.Object);
+
+        var result = await sut.CommitImportAsync(snapshot);
+
+        Assert.True(result.IsSuccess);
+        dal.Verify(value => value.CommitImportAsync(snapshot), Times.Once);
+    }
+
+    [Fact]
     public async Task SaveFavoritesAsync_WithSelections_DelegatesAtomicUpdate()
     {
         var selected = new[] { Guid.NewGuid(), Guid.NewGuid() };

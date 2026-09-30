@@ -59,8 +59,25 @@ public sealed class AvaloniaLocalizationServiceTests
         var sut = new AvaloniaStringCatalog();
 
         Assert.Equal(
-            expected,
-            sut.Get(AvaloniaStringKeys.AppTitle, System.Globalization.CultureInfo.GetCultureInfo(cultureName)));
+                expected,
+                sut.Get(AvaloniaStringKeys.AppTitle, System.Globalization.CultureInfo.GetCultureInfo(cultureName)));
+    }
+
+    [Theory]
+    [InlineData("en", "Auto Lock", "Unlock using Biometric ID")]
+    [InlineData("de", "Automatische Sperre", "Mit biometrischer ID entsperren")]
+    [InlineData("fr", "Verrouillage automatique", "Déverrouiller avec l’identification biométrique")]
+    [InlineData("es", "Bloqueo automático", "Desbloquear con identificación biométrica")]
+    public void Catalog_SecuritySettingsUseLocalizedUserFacingNames(
+        string cultureName,
+        string expectedAutoLock,
+        string expectedBiometricUnlock)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        Assert.Equal(expectedAutoLock, sut.Get(AvaloniaStringKeys.IdleTimeout, culture));
+        Assert.Equal(expectedBiometricUnlock, sut.Get(AvaloniaStringKeys.QuickUnlock, culture));
     }
 
     [Theory]

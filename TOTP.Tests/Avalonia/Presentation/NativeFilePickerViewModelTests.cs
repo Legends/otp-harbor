@@ -275,7 +275,7 @@ public sealed class NativeFilePickerViewModelTests
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
         accounts.InSequence(sequence).Setup(value => value.BackupOtpEntriesStorageFileAsync())
             .ReturnsAsync(Result.Ok());
-        accounts.InSequence(sequence).Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+        accounts.InSequence(sequence).Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
             .ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
         dialogs.Setup(value => value.PromptForPasswordAsync(
@@ -299,8 +299,8 @@ public sealed class NativeFilePickerViewModelTests
 
         await sut.RestoreEncryptedBackupAsync();
 
-        accounts.Verify(value => value.AddNewAsync(It.Is<Account>(account =>
-            account.Secret == imported.Secret)), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(It.Is<IReadOnlyCollection<Account>>(batch =>
+            batch.Count == 1 && batch.Single().Secret == imported.Secret)), Times.Once);
         Assert.Equal(1, changed);
         Assert.Contains("1 added", sut.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -346,6 +346,7 @@ public sealed class NativeFilePickerViewModelTests
         dialogs.Verify(value => value.ConfirmAsync(
             It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
         accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
     }
@@ -394,7 +395,7 @@ public sealed class NativeFilePickerViewModelTests
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
         accounts.InSequence(sequence).Setup(value => value.BackupOtpEntriesStorageFileAsync())
             .ReturnsAsync(Result.Ok());
-        accounts.InSequence(sequence).Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+        accounts.InSequence(sequence).Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
             .ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
         dialogs.Setup(value => value.ConfirmAsync(
@@ -408,8 +409,8 @@ public sealed class NativeFilePickerViewModelTests
 
         Assert.Contains("1 added", sut.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(1, changed);
-        accounts.Verify(value => value.AddNewAsync(It.Is<Account>(account =>
-            account.Secret == "JBSWY3DPEHPK3PXP")), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(It.Is<IReadOnlyCollection<Account>>(batch =>
+            batch.Count == 1 && batch.Single().Secret == "JBSWY3DPEHPK3PXP")), Times.Once);
     }
 
     [Fact]
@@ -482,7 +483,8 @@ public sealed class NativeFilePickerViewModelTests
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(existing));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
         dialogs.Setup(value => value.ConfirmAsync(
                 It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
@@ -498,7 +500,11 @@ public sealed class NativeFilePickerViewModelTests
                 && !request.Message.Contains("?", StringComparison.Ordinal)),
             It.IsAny<CancellationToken>()), Times.Once);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
-        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Exactly(12));
+        accounts.Verify(value => value.CommitImportAsync(It.Is<IReadOnlyCollection<Account>>(batch =>
+            batch.Count == 17
+            && batch.Count(account => account.AccountName != null
+                && account.AccountName.StartsWith("new-", StringComparison.Ordinal)) == 12)),
+            Times.Once);
         Assert.Contains("12 added", sut.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("5 skipped", sut.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -530,6 +536,7 @@ public sealed class NativeFilePickerViewModelTests
         await sut.ImportAsync();
 
         Assert.Contains("stopped", sut.Message, StringComparison.OrdinalIgnoreCase);
+        accounts.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
         accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
     }
@@ -551,7 +558,8 @@ public sealed class NativeFilePickerViewModelTests
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
         dialogs.Setup(value => value.ConfirmAsync(
                 It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
@@ -561,8 +569,10 @@ public sealed class NativeFilePickerViewModelTests
 
         await sut.ImportAsync();
 
-        accounts.Verify(value => value.UpdateAsync(existing, It.Is<Account>(replacement =>
-            replacement.ID == id && replacement.Secret == incoming.Secret)), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(It.Is<IReadOnlyCollection<Account>>(batch =>
+            batch.Count == 1
+            && batch.Single().ID == id
+            && batch.Single().Secret == incoming.Secret)), Times.Once);
         Assert.Contains("1 replaced", sut.Message, StringComparison.OrdinalIgnoreCase);
     }
 
