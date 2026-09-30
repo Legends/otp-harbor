@@ -54,9 +54,8 @@ public sealed class AvaloniaThemeService(
         applyTheme(appearanceSettings.ThemePreference switch
         {
             AppThemePreference.Light => ThemeVariant.Light,
-            AppThemePreference.System when values?.ThemeVariant == PlatformThemeVariant.Light =>
-                ThemeVariant.Light,
-            _ => ThemeVariant.Dark
+            AppThemePreference.Dark => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
         });
     }
 }

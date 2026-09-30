@@ -51,7 +51,7 @@ public sealed class AvaloniaThemeServiceTests
     }
 
     [Fact]
-    public void Start_WithoutPlatformSettings_UsesSafeDefault()
+    public void Start_WithoutPlatformSettings_UsesFrameworkDefault()
     {
         var appearance = Appearance(AppThemePreference.System);
         ThemeVariant? applied = null;
@@ -59,7 +59,7 @@ public sealed class AvaloniaThemeServiceTests
 
         sut.Start();
 
-        Assert.Same(ThemeVariant.Dark, applied);
+        Assert.Same(ThemeVariant.Default, applied);
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public sealed class AvaloniaThemeServiceTests
     }
 
     [Fact]
-    public void SystemPreference_FollowsPlatformTheme()
+    public void SystemPreference_UsesFrameworkDefaultInsteadOfPlatformSnapshot()
     {
         var platform = new Mock<IPlatformSettings>();
         platform.Setup(value => value.GetColorValues()).Returns(Colors(
@@ -96,7 +96,27 @@ public sealed class AvaloniaThemeServiceTests
 
         sut.Start();
 
-        Assert.Same(ThemeVariant.Light, applied);
+        Assert.Same(ThemeVariant.Default, applied);
+    }
+
+    [Fact]
+    public void PreferenceChange_FromForcedDarkToSystem_ReleasesThemeOverride()
+    {
+        var platform = new Mock<IPlatformSettings>();
+        platform.Setup(value => value.GetColorValues()).Returns(Colors(
+            ColorContrastPreference.NoPreference,
+            PlatformThemeVariant.Dark));
+        var preference = AppThemePreference.Dark;
+        var appearance = new Mock<IAppearanceSettingsService>();
+        appearance.SetupGet(value => value.ThemePreference).Returns(() => preference);
+        var applied = new List<ThemeVariant>();
+        using var sut = new AvaloniaThemeService(platform.Object, appearance.Object, applied.Add);
+        sut.Start();
+
+        preference = AppThemePreference.System;
+        appearance.Raise(value => value.PreferenceChanged += null, appearance.Object, EventArgs.Empty);
+
+        Assert.Equal([ThemeVariant.Dark, ThemeVariant.Default], applied);
     }
 
     private static Mock<IAppearanceSettingsService> Appearance(AppThemePreference preference)
