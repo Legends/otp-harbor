@@ -441,6 +441,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         if (imported.Value.Status is QrAccountImportStatus.Added
             or QrAccountImportStatus.Updated
             or QrAccountImportStatus.KeptBoth
+            or QrAccountImportStatus.DuplicateUnchanged
             or QrAccountImportStatus.BulkImported)
         {
             AccountImported?.Invoke(this, new AccountImportedEventArgs(

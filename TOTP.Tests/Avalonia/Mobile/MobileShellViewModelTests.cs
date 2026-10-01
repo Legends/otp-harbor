@@ -627,6 +627,14 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsBiometricUnlockVisible);
         Assert.False(context.Sut.IsFingerprintUnlockVisible);
         Assert.True(context.Sut.IsDeviceCredentialUnlockVisible);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.UnlockWithDevicePin),
+            context.Sut.UnlockWithDevicePinText);
+        Assert.False(string.IsNullOrWhiteSpace(context.Sut.UnlockWithDevicePinText));
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.DeviceCredentialUnlockButton),
+            context.Sut.DeviceCredentialUnlockButtonText);
+        Assert.Contains('\n', context.Sut.DeviceCredentialUnlockButtonText);
     }
 
     [Fact]
@@ -1295,7 +1303,11 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(2, context.Sut.GroupEditorAccounts.Count);
         context.Sut.GroupEditorSearchText = "micro";
         Assert.Equal(secondAccount.ID, Assert.Single(context.Sut.GroupEditorAccounts).AccountId);
-        context.Sut.GroupEditorSearchText = string.Empty;
+        Assert.True(context.Sut.HasGroupEditorSearchText);
+        Assert.True(context.Sut.ClearGroupEditorSearchCommand.CanExecute(null));
+        await context.Sut.ClearGroupEditorSearchAsync();
+        Assert.False(context.Sut.HasGroupEditorSearchText);
+        Assert.False(context.Sut.ClearGroupEditorSearchCommand.CanExecute(null));
         var selection = Assert.Single(
             context.Sut.GroupEditorAccounts,
             value => value.AccountId == account.ID);
@@ -1649,6 +1661,34 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task CopyAccountCodeAsync_LegacyDisabledSettingStillUsesNormalizedLifetime()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true, [account]);
+        context.SettingsValue.ClearClipboardEnabled = false;
+        context.SettingsValue.ClearClipboardSeconds = 12;
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp
+            .Setup(value => value.GenerateAsync(account.ID))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var accountRow = Assert.Single(context.Sut.Accounts);
+
+        await context.Sut.CopyAccountCodeAsync(accountRow);
+
+        context.Clipboard.Verify(value => value.CopyAndScheduleClearAsync(
+            "123456",
+            TimeSpan.FromSeconds(10)), Times.Once);
+        context.Clipboard.Verify(value => value.CopyAsync(
+            It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
     public async Task AccountCountdown_BatchesBindingUpdatesWhileListIsScrolling()
     {
         var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
@@ -1914,7 +1954,9 @@ public sealed class MobileShellViewModelTests
         const string payload =
             "otpauth://totp/Example:user?secret=JBSWY3DPEHPK3PXP&issuer=Example";
         var importedId = Guid.NewGuid();
-        var context = CreateContext(isConfigured: true);
+        var context = CreateContext(
+            isConfigured: true,
+            [new Account(importedId, "Example", ValidSecret, "user")]);
         context.Authorization
             .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
             .Callback(context.State.Unlock)
@@ -1933,11 +1975,50 @@ public sealed class MobileShellViewModelTests
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
+        context.Sut.SearchText = "temporarily hidden";
 
         await context.Sut.ScanQrAsync();
 
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.QrAccountAdded),
+            context.Sut.NotificationText);
+        Assert.Equal(importedId, context.Sut.AccountRevealRequest?.AccountId);
+        Assert.Empty(context.Sut.SearchText);
+    }
+
+    [Fact]
+    public async Task ScanQrAsync_WhenExactAccountIsSkipped_DoesNotRequestNewAccountHighlight()
+    {
+        const string payload =
+            "otpauth://totp/Example:user?secret=JBSWY3DPEHPK3PXP&issuer=Example";
+        var existingId = Guid.NewGuid();
+        var context = CreateContext(
+            isConfigured: true,
+            [new Account(existingId, "Example", ValidSecret, "user")]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MobileQrScanResult.Successful(payload));
+        context.QrImport.Setup(value => value.ImportAsync(
+                payload,
+                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
+                QrAccountImportStatus.DuplicateUnchanged,
+                existingId,
+                "Example",
+                "user")));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        await context.Sut.ScanQrAsync();
+
+        Assert.Null(context.Sut.AccountRevealRequest);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.QrAccountDuplicate),
             context.Sut.NotificationText);
     }
 

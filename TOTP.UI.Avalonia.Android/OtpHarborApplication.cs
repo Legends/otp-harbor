@@ -34,6 +34,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                 var view = new MainView { DataContext = viewModel };
                 view.UseNativeAccountList(new AndroidAccountListHost(viewModel));
                 view.UseNativeAccountGroupStrip(new AndroidAccountGroupStripHost(viewModel));
+                view.UseNativeGroupAccountPicker(new AndroidGroupAccountPickerHost(viewModel));
                 viewModel.InitializeCommand.Execute(null);
                 return view;
             };

@@ -49,6 +49,7 @@
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
+                    <SolidColorBrush x:Key="BrushQrInstruction" Color="#282828" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#137333" />
                     <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#137333" />
                     <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="#168AE0" />
@@ -65,7 +66,7 @@
                     <SolidColorBrush x:Key="BrushTitleBarBorder" Color="#D7E1EB" />
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#E5EEF6" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#D6E4EF" />
-                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#FABD62" />
                     <SolidColorBrush x:Key="BrushToastBackground" Color="#F7F8FC" />
                     <SolidColorBrush x:Key="BrushToastForeground" Color="#172033" />
                     <SolidColorBrush x:Key="BrushToastHeaderForeground" Color="#526174" />
@@ -115,6 +116,7 @@
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
+                    <SolidColorBrush x:Key="BrushQrInstruction" Color="#282828" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#137333" />
                     <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#137333" />
                     <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="#168AE0" />
@@ -131,7 +133,7 @@
                     <SolidColorBrush x:Key="BrushTitleBarBorder" Color="#D7E1EB" />
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#E5EEF6" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#D6E4EF" />
-                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#FABD62" />
                     <SolidColorBrush x:Key="BrushToastBackground" Color="#F7F8FC" />
                     <SolidColorBrush x:Key="BrushToastForeground" Color="#172033" />
                     <SolidColorBrush x:Key="BrushToastHeaderForeground" Color="#526174" />
@@ -181,6 +183,7 @@
                     <SolidColorBrush x:Key="BrushDanger" Color="#EF5350" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFD166" />
+                    <SolidColorBrush x:Key="BrushQrInstruction" Color="#F4CA16" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#87CE3E" />
                     <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#B7FF4A" />
                     <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="Transparent" />
@@ -197,7 +200,7 @@
                     <SolidColorBrush x:Key="BrushTitleBarBorder" Color="#9899FF" />
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#9193FF" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#6A6CDF" />
-                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#FFD166" />
                     <SolidColorBrush x:Key="BrushToastBackground" Color="#243C63" />
                     <SolidColorBrush x:Key="BrushToastForeground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushToastHeaderForeground" Color="#E2EAFE" />
@@ -243,6 +246,7 @@
                     <SolidColorBrush x:Key="BrushDanger" Color="#FF8080" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#000000" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFFF00" />
+                    <SolidColorBrush x:Key="BrushQrInstruction" Color="#FFFF00" />
                     <SolidColorBrush x:Key="BrushSuccess" Color="#00FF00" />
                     <SolidColorBrush x:Key="BrushCopyConfirmation" Color="#00FF00" />
                     <SolidColorBrush x:Key="BrushFavoriteStarFill" Color="#FFFF00" />
@@ -259,7 +263,7 @@
                     <SolidColorBrush x:Key="BrushTitleBarBorder" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushTitleBarHover" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTitleBarPressed" Color="#000000" />
-                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#66FFD54F" />
+                    <SolidColorBrush x:Key="BrushRecentAccountHighlight" Color="#FFFF00" />
                     <SolidColorBrush x:Key="BrushToastBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushToastForeground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushToastHeaderForeground" Color="#FFFFFF" />
@@ -589,10 +593,10 @@
     </Style>
     <Style Selector="Border.account-row-container">
         <Setter Property="Margin" Value="4,3" />
-        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="Padding" Value="6,3" />
         <Setter Property="Background" Value="{DynamicResource BrushAccountItemBackground}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="2" />
         <Setter Property="CornerRadius" Value="6" />
     </Style>
     <Style Selector="Border.group-card">
@@ -648,17 +652,35 @@
     <Style Selector="Border.account-row-container.recently-added">
         <Style.Animations>
             <Animation
-                Duration="0:0:1.4"
-                Easing="CubicEaseOut"
-                FillMode="Forward"
+                Duration="0:0:1"
+                FillMode="None"
                 PlaybackBehavior="OnlyIfVisible">
                 <KeyFrame Cue="0%">
-                    <Setter Property="Background" Value="{DynamicResource BrushRecentAccountHighlight}" />
-                    <Setter Property="Opacity" Value="1" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </KeyFrame>
+                <KeyFrame Cue="12.5%">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BrushRecentAccountHighlight}" />
+                </KeyFrame>
+                <KeyFrame Cue="25%">
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </KeyFrame>
+                <KeyFrame Cue="37.5%">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BrushRecentAccountHighlight}" />
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </KeyFrame>
+                <KeyFrame Cue="62.5%">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BrushRecentAccountHighlight}" />
+                </KeyFrame>
+                <KeyFrame Cue="75%">
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </KeyFrame>
+                <KeyFrame Cue="87.5%">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BrushRecentAccountHighlight}" />
                 </KeyFrame>
                 <KeyFrame Cue="100%">
-                    <Setter Property="Background" Value="{DynamicResource BrushAccountItemBackground}" />
-                    <Setter Property="Opacity" Value="1" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
                 </KeyFrame>
             </Animation>
         </Style.Animations>
@@ -694,24 +716,6 @@
         <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
-    </Style>
-    <Style Selector="ListBox.desktop-accounts Border.account-row-container.recently-added">
-        <Style.Animations>
-            <Animation
-                Duration="0:0:1.4"
-                Easing="CubicEaseOut"
-                FillMode="Forward"
-                PlaybackBehavior="OnlyIfVisible">
-                <KeyFrame Cue="0%">
-                    <Setter Property="Background" Value="{DynamicResource BrushRecentAccountHighlight}" />
-                    <Setter Property="Opacity" Value="1" />
-                </KeyFrame>
-                <KeyFrame Cue="100%">
-                    <Setter Property="Background" Value="{DynamicResource BrushDesktopAccountItemBackground}" />
-                    <Setter Property="Opacity" Value="1" />
-                </KeyFrame>
-            </Animation>
-        </Style.Animations>
     </Style>
     <Style Selector="Button.numeric-clear">
         <Setter Property="Width" Value="24" />
@@ -992,8 +996,8 @@
         </Setter>
     </Style>
     <Style Selector="controls|NotificationBanner.toast">
-        <Setter Property="MinWidth" Value="260" />
-        <Setter Property="MaxWidth" Value="440" />
+        <Setter Property="MinWidth" Value="180" />
+        <Setter Property="MaxWidth" Value="400" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Bottom" />
         <Setter Property="Template">
@@ -1005,47 +1009,26 @@
                     Background="{DynamicResource BrushToastBackground}"
                     BorderBrush="{DynamicResource BrushToastBorder}"
                     BorderThickness="1"
-                    BoxShadow="{DynamicResource ElevationToast}"
-                    CornerRadius="14"
-                    Padding="12,11,14,13">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Border
-                                Width="26"
-                                Height="26"
-                                Background="{DynamicResource BrushAccent}"
-                                CornerRadius="7">
-                                <controls:SymbolIcon
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Foreground="{DynamicResource BrushOnAccent}"
-                                    IconSize="13"
-                                    Kind="Lock" />
-                            </Border>
-                            <TextBlock
-                                Grid.Column="1"
-                                Margin="8,0,8,0"
-                                VerticalAlignment="Center"
-                                FontSize="11"
-                                FontWeight="SemiBold"
-                                Foreground="{DynamicResource BrushToastHeaderForeground}"
-                                Text="{DynamicResource AppTitle}" />
-                            <Ellipse
-                                Name="PART_SeverityIndicator"
-                                Grid.Column="2"
-                                Width="8"
-                                Height="8"
-                                VerticalAlignment="Center"
-                                Fill="{DynamicResource BrushAccent}" />
-                        </Grid>
+                    CornerRadius="9"
+                    Padding="10,8,12,8">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                        <controls:SymbolIcon
+                            Name="PART_SeverityIcon"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Foreground="{DynamicResource BrushAccent}"
+                            IconSize="16"
+                            Kind="Information" />
                         <TextBlock
-                            FontSize="13"
-                            FontWeight="SemiBold"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            FontWeight="Normal"
                             Foreground="{DynamicResource BrushToastForeground}"
                             Text="{TemplateBinding Text}"
                             TextAlignment="Left"
                             TextWrapping="Wrap" />
-                    </StackPanel>
+                    </Grid>
                 </Border>
             </ControlTemplate>
         </Setter>
@@ -1062,17 +1045,17 @@
     <Style Selector="controls|NotificationBanner:error /template/ Border#PART_Banner">
         <Setter Property="BorderBrush" Value="{DynamicResource BrushDanger}" />
     </Style>
-    <Style Selector="controls|NotificationBanner:information /template/ Ellipse#PART_SeverityIndicator">
-        <Setter Property="Fill" Value="{DynamicResource BrushAccent}" />
+    <Style Selector="controls|NotificationBanner:information /template/ controls|SymbolIcon#PART_SeverityIcon">
+        <Setter Property="Foreground" Value="{DynamicResource BrushAccent}" />
     </Style>
-    <Style Selector="controls|NotificationBanner:success /template/ Ellipse#PART_SeverityIndicator">
-        <Setter Property="Fill" Value="{DynamicResource BrushSuccess}" />
+    <Style Selector="controls|NotificationBanner:success /template/ controls|SymbolIcon#PART_SeverityIcon">
+        <Setter Property="Foreground" Value="{DynamicResource BrushSuccess}" />
     </Style>
-    <Style Selector="controls|NotificationBanner:warning /template/ Ellipse#PART_SeverityIndicator">
-        <Setter Property="Fill" Value="{DynamicResource BrushWarning}" />
+    <Style Selector="controls|NotificationBanner:warning /template/ controls|SymbolIcon#PART_SeverityIcon">
+        <Setter Property="Foreground" Value="{DynamicResource BrushWarning}" />
     </Style>
-    <Style Selector="controls|NotificationBanner:error /template/ Ellipse#PART_SeverityIndicator">
-        <Setter Property="Fill" Value="{DynamicResource BrushDanger}" />
+    <Style Selector="controls|NotificationBanner:error /template/ controls|SymbolIcon#PART_SeverityIcon">
+        <Setter Property="Foreground" Value="{DynamicResource BrushDanger}" />
     </Style>
     <Style Selector="controls|SymbolIcon">
         <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />

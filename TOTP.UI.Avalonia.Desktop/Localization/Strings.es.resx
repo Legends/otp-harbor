@@ -162,7 +162,7 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>La imagen de código QR seleccionada supera el límite de tamaño seguro.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>La imagen del código QR no se pudo leer de forma segura. No se modificaron datos de cuentas.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No se seleccionó ninguna imagen de código QR.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>La cámara puede escanear códigos QR de una sola cuenta si su resolución es suficiente. Para exportaciones de Google Authenticator con varias cuentas, use una imagen QR nítida y elija «Abrir imagen QR» abajo.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>La cámara puede escanear códigos QR de una sola cuenta si su resolución es suficiente. Asegúrate de que haya buena iluminación y evita los reflejos o la retroiluminación intensa. Mantén el código QR estable, completamente visible y lo más recto posible frente a la cámara. Si es necesario, ajusta lentamente la distancia hasta que el código se vea nítido. Para exportaciones de Google Authenticator con varias cuentas, usa una imagen QR nítida y elige «Abrir imagen QR» abajo.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Se ha detectado una exportación de Google Authenticator. Cuentas encontradas: {0}. ¿Importarlas?</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Cancelar escaneo</value></data>

@@ -203,6 +203,7 @@
   <data name="UnlockWithPassword" xml:space="preserve"><value>Master password</value></data>
   <data name="UnlockWithBiometrics" xml:space="preserve"><value>Strong biometrics</value></data>
   <data name="UnlockWithDevicePin" xml:space="preserve"><value>Device screen lock (PIN, pattern, or password)</value></data>
+  <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Device screen lock&#xA;(PIN, pattern, or password)</value></data>
   <data name="DevicePinUnavailable" xml:space="preserve"><value>A secure device screen lock (PIN, pattern, or password) is not configured.</value></data>
   <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Enter your master password to authorize changing the unlock method.</value></data>
   <data name="UnlockMethodChanged" xml:space="preserve"><value>Unlock method changed.</value></data>

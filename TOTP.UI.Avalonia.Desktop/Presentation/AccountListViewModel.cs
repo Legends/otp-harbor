@@ -206,6 +206,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+    public event Action<AccountListItemViewModel>? AccountRevealRequested;
 
     public IReadOnlyList<AccountListItemViewModel> Accounts
     {
@@ -215,12 +216,15 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!SetField(ref _accounts, value)) return;
             OnPropertyChanged(nameof(HasNoAccounts));
             OnPropertyChanged(nameof(HasNoSearchResults));
+            OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
             OnPropertyChanged(nameof(SearchResultSummary));
         }
     }
 
     public bool HasNoAccounts =>
         !IsBusy && !HasMessage && _allAccounts.Count == 0;
+
+    public bool HasAnyAccounts => _allAccounts.Count > 0;
 
     public bool HasNoSearchResults =>
         !IsBusy
@@ -400,12 +404,16 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             if (!SetField(ref _groups, value)) return;
             OnPropertyChanged(nameof(HasGroups));
+            OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
         }
     }
 
     public bool HasGroups => _allGroups.Count > 0;
 
     public bool HasAccountNavigationCards => HasFavoriteAccounts || HasGroups;
+
+    public bool ShouldShowAccountNavigationCards =>
+        HasAccountNavigationCards && !HasNoSearchResults;
 
     public bool HasSelectedGroup => _selectedGroupId.HasValue;
 
@@ -466,6 +474,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             NotifyCrudCommands();
             OnPropertyChanged(nameof(HasNoAccounts));
             OnPropertyChanged(nameof(HasNoSearchResults));
+            OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
         }
     }
 
@@ -666,6 +675,89 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public Task LoadAsync() => LoadAsync(null);
 
+#if DEBUG
+    private const string DebugSyntheticAccountMarker = "otp-harbor-debug-load-test:";
+
+    public async Task<bool> AddDebugSyntheticAccountsAsync(int count = 600)
+    {
+        if (IsBusy || count is < 1 or > 5000) return false;
+
+        IsBusy = true;
+        StopAndClearRowCodes();
+        try
+        {
+            var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+            if (loaded.IsFailed) return false;
+
+            var accounts = loaded.Value
+                .Where(account => !IsDebugSyntheticAccount(account))
+                .ToList();
+            var groups = new[]
+            {
+                new AccountGroup(new Guid("20000000-0000-0000-0000-000000000001"), "Desktop Load Test 1", "#4C956C"),
+                new AccountGroup(new Guid("20000000-0000-0000-0000-000000000002"), "Desktop Load Test 2", "#18A999"),
+                new AccountGroup(new Guid("20000000-0000-0000-0000-000000000003"), "Desktop Load Test 3", "#4F6BED"),
+                new AccountGroup(new Guid("20000000-0000-0000-0000-000000000004"), "Desktop Load Test 4", "#F59E0B"),
+                new AccountGroup(new Guid("20000000-0000-0000-0000-000000000005"), "Desktop Load Test 5", "#E45757"),
+                new AccountGroup(new Guid("20000000-0000-0000-0000-000000000006"), "Desktop Load Test 6", "#B455C7")
+            };
+            for (var index = 1; index <= count; index++)
+            {
+                accounts.Add(new Account(
+                    Guid.NewGuid(),
+                    $"Debug Service {index:0000}",
+                    "JBSWY3DPEHPK3PXP",
+                    $"{DebugSyntheticAccountMarker}{index:0000}",
+                    index % 10 == 0 ? 60 : TotpPeriodPolicy.DefaultSeconds,
+                    groups[(index - 1) % groups.Length],
+                    isFavorite: index % 8 == 0));
+            }
+
+            var saved = await _accountManager.CommitImportAsync(accounts);
+            if (saved.IsFailed) return false;
+
+            IsBusy = false;
+            await LoadAsync();
+            return true;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task<bool> DeleteDebugSyntheticAccountsAsync()
+    {
+        if (IsBusy) return false;
+
+        IsBusy = true;
+        StopAndClearRowCodes();
+        try
+        {
+            var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+            if (loaded.IsFailed) return false;
+            var retained = loaded.Value
+                .Where(account => !IsDebugSyntheticAccount(account))
+                .ToArray();
+            var saved = await _accountManager.CommitImportAsync(retained);
+            if (saved.IsFailed) return false;
+
+            IsBusy = false;
+            await LoadAsync();
+            return true;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private static bool IsDebugSyntheticAccount(Account account) =>
+        account.AccountName?.StartsWith(
+            DebugSyntheticAccountMarker,
+            StringComparison.Ordinal) == true;
+#endif
+
     private async Task LoadAsync(Guid? recentlyAddedAccountId)
     {
         if (IsBusy) return;
@@ -832,26 +924,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var code = account.Code;
         var remainingSeconds = Math.Max(1, account.RemainingSeconds);
 
-        if (_settingsService?.Current.ClearClipboardEnabled == false)
-        {
-            var copyResult = await _clipboardService.CopyAsync(code);
-            if (copyResult.IsSuccess)
-            {
-                ShowCopyConfirmation(account);
-            }
-            else
-            {
-                ShowLocalizedTransientNotification(
-                    AvaloniaStringKeys.ClipboardCopyUnavailable,
-                    NotificationSeverity.Error);
-            }
-
-            return;
-        }
-
         var configuredLifetime = _settingsService?.Current.ClearClipboardSeconds
             ?? remainingSeconds;
-        var clearSeconds = Math.Max(1, Math.Min(remainingSeconds, configuredLifetime));
+        var clearSeconds = Math.Min(
+            remainingSeconds,
+            TOTP.Core.Validation.ClipboardLifetimePolicy.NormalizeSeconds(configuredLifetime));
         var clearResult = await _clipboardService.CopyAndScheduleClearAsync(
             code,
             TimeSpan.FromSeconds(clearSeconds));
@@ -1188,8 +1265,17 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             RefreshGroups();
             ApplyFilter();
         }
-        SelectedAccount = Accounts.FirstOrDefault(account => account.Id == accountId);
+        var accountToReveal = Accounts.FirstOrDefault(account => account.Id == accountId);
+        if (accountToReveal is not null)
+            AccountRevealRequested?.Invoke(accountToReveal);
         ShowTransientMessage(successMessage);
+    }
+
+    public void ShowQrImportOutcome(string message, NotificationSeverity severity)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return;
+        ClearNotificationLocalization();
+        Notification.ShowTransient(message, severity);
     }
 
     public Task DeleteAccountAsync() => DeleteAccountAsync(SelectedAccount);
@@ -1977,7 +2063,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ApplyGroupSearch();
         OnPropertyChanged(nameof(HasGroups));
         OnPropertyChanged(nameof(HasAccountNavigationCards));
+        OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
         OnPropertyChanged(nameof(AllAccountCount));
+        OnPropertyChanged(nameof(HasAnyAccounts));
         OnPropertyChanged(nameof(IsAllAccountsFilterSelected));
         OnPropertyChanged(nameof(UngroupedCount));
         OnPropertyChanged(nameof(HasUngroupedAccounts));
@@ -2000,6 +2088,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             OnPropertyChanged(nameof(HasFavoriteAccounts));
             OnPropertyChanged(nameof(HasAccountNavigationCards));
+            OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
         }
         OnPropertyChanged(nameof(HasMultipleAccounts));
         OnPropertyChanged(nameof(IsFavoritesFilterSelected));
@@ -2223,6 +2312,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(HasMessage));
         OnPropertyChanged(nameof(HasNoAccounts));
         OnPropertyChanged(nameof(HasNoSearchResults));
+        OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
     }
 
     private void ShowCopyConfirmation(AccountListItemViewModel account)
@@ -2285,7 +2375,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     {
         try
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(1400), lifetime.Token);
+            await Task.Delay(TimeSpan.FromMilliseconds(1100), lifetime.Token);
             if (ReferenceEquals(_recentHighlightLifetime, lifetime))
                 highlightedAccount.ClearRecentlyAdded();
         }

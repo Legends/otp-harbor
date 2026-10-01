@@ -26,7 +26,13 @@ $repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptDirectory "..\
 $projectPath = Join-Path $repositoryRoot "TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj"
 
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
-    $OutputPath = Join-Path $repositoryRoot "artifacts\dev\avalonia-windows"
+    $configurationDirectory = if ($Configuration -eq 'Debug') {
+        'avalonia-windows-debug'
+    }
+    else {
+        'avalonia-windows'
+    }
+    $OutputPath = Join-Path $repositoryRoot "artifacts\dev\$configurationDirectory"
 }
 elseif (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
     $OutputPath = Join-Path $repositoryRoot $OutputPath

@@ -21,6 +21,7 @@ public sealed class AvaloniaDialogService(
             var owner = windows.GetRequiredDialogOwner();
             var viewModel = new ConfirmationDialogViewModel(request);
             var dialog = new ConfirmationDialogWindow { DataContext = viewModel };
+            dialog.ConfigureForOwner(owner, request.IsDestructive);
             var requestedResult = false;
             viewModel.CloseRequested += Close;
             using var ownership = windows.RegisterOwnedDialog(dialog);

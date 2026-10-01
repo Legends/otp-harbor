@@ -368,7 +368,9 @@ public sealed class CameraScannerViewModelTests
             importService: import.Object,
             reconnectDelay: TimeSpan.FromMilliseconds(50));
         var closeRequested = false;
+        AccountImportedEventArgs? completedImport = null;
         sut.CloseRequested += (_, _) => closeRequested = true;
+        sut.AccountImported += (_, args) => completedImport = args;
 
         var scan = sut.StartAsync();
 
@@ -390,6 +392,8 @@ public sealed class CameraScannerViewModelTests
 
         Assert.False(sut.IsScanning);
         Assert.True(closeRequested);
+        Assert.Equal(QrAccountImportStatus.DuplicateUnchanged, completedImport?.Status);
+        Assert.Equal(AvaloniaStringKeys.QrAccountDuplicate, completedImport?.Message);
         import.Verify(value => value.ImportAsync(
             It.IsAny<string>(),
             It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),

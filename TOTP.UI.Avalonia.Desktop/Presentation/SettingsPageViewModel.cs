@@ -26,8 +26,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private AutoLockOption? _selectedAutoLock;
     private bool _lockOnMinimize;
     private bool _lockOnSessionLock;
-    private bool _clearClipboardEnabled;
-    private int _clearClipboardSeconds;
+    private ClipboardLifetimeOption? _selectedClipboardLifetime;
     private decimal _qrPreviewScaleFactor;
     private InterfaceScaleOption? _selectedInterfaceScale;
     private bool _openExportFileAfterExport;
@@ -41,6 +40,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private ThemeOption? _selectedTheme;
     private IReadOnlyList<ThemeOption> _themes = [];
     private IReadOnlyList<AutoLockOption> _autoLockOptions = [];
+    private IReadOnlyList<ClipboardLifetimeOption> _clipboardLifetimeOptions = [];
 
     public SettingsPageViewModel(
         ISettingsService settingsService,
@@ -65,6 +65,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         LogLevels = Enum.GetValues<AppLogLevel>();
         InterfaceScales = CreateInterfaceScaleOptions();
         _autoLockOptions = CreateAutoLockOptions(_settingsService.Current.IdleTimeout);
+        _clipboardLifetimeOptions = CreateClipboardLifetimeOptions();
         _themes = CreateThemeOptions();
         _selectedLanguage = localization?.CurrentLanguage;
         if (_localization is not null)
@@ -87,6 +88,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public IReadOnlyList<AppLogLevel> LogLevels { get; }
     public IReadOnlyList<InterfaceScaleOption> InterfaceScales { get; }
     public IReadOnlyList<AutoLockOption> AutoLockOptions => _autoLockOptions;
+    public IReadOnlyList<ClipboardLifetimeOption> ClipboardLifetimeOptions =>
+        _clipboardLifetimeOptions;
     public IReadOnlyList<ThemeOption> Themes => _themes;
     public bool IsInterfaceScaleAvailable => OperatingSystem.IsLinux();
     public string VersionText { get; }
@@ -135,22 +138,12 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public bool ClearClipboardEnabled
+    public ClipboardLifetimeOption? SelectedClipboardLifetime
     {
-        get => _clearClipboardEnabled;
+        get => _selectedClipboardLifetime;
         set
         {
-            if (!SetField(ref _clearClipboardEnabled, value)) return;
-            QueueAutoSave();
-        }
-    }
-
-    public int ClearClipboardSeconds
-    {
-        get => _clearClipboardSeconds;
-        set
-        {
-            if (!SetField(ref _clearClipboardSeconds, value)) return;
+            if (!SetField(ref _selectedClipboardLifetime, value)) return;
             QueueAutoSave();
         }
     }
@@ -233,8 +226,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
                 option.Timeout == _settingsService.Current.IdleTimeout);
             LockOnMinimize = _settingsService.Current.LockOnMinimize;
             LockOnSessionLock = _settingsService.Current.LockOnSessionLock;
-            ClearClipboardEnabled = _settingsService.Current.ClearClipboardEnabled;
-            ClearClipboardSeconds = _settingsService.Current.ClearClipboardSeconds;
+            SelectedClipboardLifetime = FindClipboardLifetimeOption(
+                _settingsService.Current.ClearClipboardSeconds);
             QrPreviewScaleFactor = (decimal)_settingsService.Current.QrPreviewScaleFactor;
             SelectedInterfaceScale = InterfaceScales.FirstOrDefault(
                 option => option.Percent == _settingsService.Current.InterfaceScalePercent)
@@ -260,7 +253,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             || SelectedAutoLock.Timeout < TimeSpan.Zero
             || SelectedAutoLock.Timeout > TimeSpan.FromDays(1)
             || !AutoLockOptions.Contains(SelectedAutoLock)
-            || ClearClipboardSeconds is < 1 or > 300
+            || SelectedClipboardLifetime is null
+            || !ClipboardLifetimeOptions.Contains(SelectedClipboardLifetime)
             || QrPreviewScaleFactor is < 1.0m or > 6.0m
             || QrPreviewScaleFactor * 2 != decimal.Truncate(QrPreviewScaleFactor * 2)
             || SelectedInterfaceScale is null
@@ -282,8 +276,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             _settingsService.Current.IdleTimeout = SelectedAutoLock.Timeout;
             _settingsService.Current.LockOnMinimize = LockOnMinimize;
             _settingsService.Current.LockOnSessionLock = LockOnSessionLock;
-            _settingsService.Current.ClearClipboardEnabled = ClearClipboardEnabled;
-            _settingsService.Current.ClearClipboardSeconds = ClearClipboardSeconds;
+            _settingsService.Current.ClearClipboardEnabled = true;
+            _settingsService.Current.ClearClipboardSeconds = SelectedClipboardLifetime.Seconds;
             _settingsService.Current.QrPreviewScaleFactor = (double)QrPreviewScaleFactor;
             _settingsService.Current.InterfaceScalePercent = SelectedInterfaceScale.Percent;
             _settingsService.Current.OpenExportFileAfterExport = OpenExportFileAfterExport;
@@ -376,6 +370,15 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             ref _selectedAutoLock,
             _autoLockOptions.First(option => option.Timeout == selectedAutoLock),
             nameof(SelectedAutoLock));
+        var selectedClipboardLifetime = _selectedClipboardLifetime?.Seconds
+            ?? TOTP.Core.Validation.ClipboardLifetimePolicy.NormalizeSeconds(
+                _settingsService.Current.ClearClipboardSeconds);
+        _clipboardLifetimeOptions = CreateClipboardLifetimeOptions();
+        OnPropertyChanged(nameof(ClipboardLifetimeOptions));
+        SetField(
+            ref _selectedClipboardLifetime,
+            FindClipboardLifetimeOption(selectedClipboardLifetime),
+            nameof(SelectedClipboardLifetime));
         _themes = CreateThemeOptions();
         OnPropertyChanged(nameof(Themes));
         SetField(
@@ -503,6 +506,22 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             .ToArray();
     }
 
+    private IReadOnlyList<ClipboardLifetimeOption> CreateClipboardLifetimeOptions() =>
+        TOTP.Core.Validation.ClipboardLifetimePolicy.AllowedSeconds
+            .Select(seconds => new ClipboardLifetimeOption(
+                seconds,
+                string.Format(
+                    CultureInfo.CurrentUICulture,
+                    Localize(AvaloniaStringKeys.AutoLockSecondsFormat),
+                    seconds)))
+            .ToArray();
+
+    private ClipboardLifetimeOption FindClipboardLifetimeOption(int seconds)
+    {
+        var normalized = TOTP.Core.Validation.ClipboardLifetimePolicy.NormalizeSeconds(seconds);
+        return _clipboardLifetimeOptions.First(option => option.Seconds == normalized);
+    }
+
     private string FormatAutoLockTimeout(TimeSpan timeout)
     {
         if (timeout == TimeSpan.Zero) return Localize(AvaloniaStringKeys.AutoLockDisabled);
@@ -542,5 +561,6 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
 
     public sealed record InterfaceScaleOption(int Percent, string Label);
     public sealed record AutoLockOption(TimeSpan Timeout, string Label);
+    public sealed record ClipboardLifetimeOption(int Seconds, string Label);
     public sealed record ThemeOption(AppThemePreference Preference, string Label);
 }

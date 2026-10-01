@@ -41,6 +41,8 @@ internal sealed class NativeAccountRowView : View
     private readonly float _scaledDensity;
     private NativeAccountRow? _row;
     private ValueAnimator? _settleAnimator;
+    private ValueAnimator? _highlightAnimator;
+    private float _highlightStrength;
     private float _downX;
     private float _downY;
     private float _startOffset;
@@ -115,6 +117,7 @@ internal sealed class NativeAccountRowView : View
 
     public void Unbind()
     {
+        StopHighlight();
         StopAnimating();
         Unsubscribe();
         _row = null;
@@ -144,6 +147,18 @@ internal sealed class NativeAccountRowView : View
     public void StopAnimating() => _animating = false;
 
     public void CloseActions() => SettleTo(0);
+
+    public void PulseHighlight()
+    {
+        StopHighlight();
+        var animator = ValueAnimator.OfFloat(0, 1, 0, 1, 0, 1, 0, 1, 0)
+            ?? throw new InvalidOperationException("Android did not create the highlight animation.");
+        _highlightAnimator = animator;
+        animator.SetDuration(1000);
+        animator.Update += HighlightAnimationUpdated;
+        animator.AnimationEnd += HighlightAnimationEnded;
+        animator.Start();
+    }
 
     protected override void OnDraw(Canvas canvas)
     {
@@ -394,11 +409,40 @@ internal sealed class NativeAccountRowView : View
     private void DrawCardOutline(Canvas canvas, NativeAccountPalette palette)
     {
         var account = _row!.Account;
-        _stroke.Color = _viewModel.SelectedAccount?.Id == account.Id
-            ? palette.Accent
-            : palette.Border;
-        _stroke.StrokeWidth = _viewModel.SelectedAccount?.Id == account.Id ? Dp(1.5f) : Dp(1);
+        var highlighted = _highlightStrength >= 0.45f;
+        _stroke.Color = highlighted
+            ? palette.ImportHighlight
+            : _viewModel.SelectedAccount?.Id == account.Id
+                ? palette.Accent
+                : palette.Border;
+        _stroke.StrokeWidth = highlighted
+            ? Dp(4)
+            : _viewModel.SelectedAccount?.Id == account.Id ? Dp(1.5f) : Dp(1);
         canvas.DrawRoundRect(CardBounds, Dp(9), Dp(9), _stroke);
+    }
+
+    private void HighlightAnimationUpdated(object? sender, ValueAnimator.AnimatorUpdateEventArgs args)
+    {
+        if (args.Animation.AnimatedValue is not Java.Lang.Float value) return;
+        _highlightStrength = value.FloatValue();
+        Invalidate();
+    }
+
+    private void HighlightAnimationEnded(object? sender, EventArgs args) => StopHighlight();
+
+    private void StopHighlight()
+    {
+        if (_highlightAnimator is not null)
+        {
+            _highlightAnimator.Update -= HighlightAnimationUpdated;
+            _highlightAnimator.AnimationEnd -= HighlightAnimationEnded;
+            _highlightAnimator.Cancel();
+            _highlightAnimator.Dispose();
+            _highlightAnimator = null;
+        }
+
+        _highlightStrength = 0;
+        Invalidate();
     }
 
     private void DrawBrand(
@@ -785,6 +829,7 @@ internal sealed record NativeAccountPalette(
     Color AccountName,
     Color Code,
     Color Accent,
+    Color ImportHighlight,
     Color CopyConfirmation,
     Color FavoriteFill,
     Color FavoriteOutline,
@@ -801,6 +846,7 @@ internal sealed record NativeAccountPalette(
         Color.ParseColor("#CBDAF3"),
         Color.ParseColor("#97B0DF"),
         Color.ParseColor("#7D7FF4"),
+        Color.ParseColor("#FFD166"),
         Color.ParseColor("#B7FF4A"),
         Color.Transparent,
         Color.ParseColor("#FFD166"),
@@ -817,6 +863,7 @@ internal sealed record NativeAccountPalette(
         Color.ParseColor("#7E7E84"),
         Color.ParseColor("#185F99"),
         Color.ParseColor("#168AE0"),
+        Color.ParseColor("#D89A12"),
         Color.ParseColor("#168AE0"),
         Color.ParseColor("#168AE0"),
         Color.Transparent,
@@ -832,6 +879,7 @@ internal sealed record NativeAccountPalette(
         Color.White,
         Color.White,
         Color.White,
+        Color.Yellow,
         Color.Yellow,
         Color.Yellow,
         Color.Yellow,

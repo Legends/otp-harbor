@@ -203,6 +203,7 @@
   <data name="UnlockWithPassword" xml:space="preserve"><value>Mot de passe principal</value></data>
   <data name="UnlockWithBiometrics" xml:space="preserve"><value>Biométrie forte</value></data>
   <data name="UnlockWithDevicePin" xml:space="preserve"><value>Verrouillage de l’appareil (code PIN, schéma ou mot de passe)</value></data>
+  <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Verrouillage de l’appareil&#xA;(code PIN, schéma ou mot de passe)</value></data>
   <data name="DevicePinUnavailable" xml:space="preserve"><value>Aucun verrouillage sécurisé de l’appareil (code PIN, schéma ou mot de passe) n’est configuré.</value></data>
   <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Saisissez votre mot de passe principal pour autoriser la modification de la méthode de déverrouillage.</value></data>
   <data name="UnlockMethodChanged" xml:space="preserve"><value>Méthode de déverrouillage modifiée.</value></data>

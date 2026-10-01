@@ -182,8 +182,16 @@
                     <Button
                         Classes="wide secondary"
                         Command="{Binding BiometricUnlockCommand}"
-                        Content="{Binding BiometricUnlockText}"
-                        IsVisible="{Binding IsDeviceCredentialUnlockVisible}" />
+                        MinHeight="68"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Center"
+                        IsVisible="{Binding IsDeviceCredentialUnlockVisible}"
+                        ToolTip.Tip="{Binding UnlockWithDevicePinText}">
+                        <TextBlock
+                            Text="{Binding DeviceCredentialUnlockButtonText}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                    </Button>
                 </StackPanel>
 
                 <Grid IsVisible="{Binding IsAccountsVisible}">
@@ -301,20 +309,25 @@
                                             Command="{Binding ToggleFavoritesFilterCommand}"
                                             IsChecked="{Binding IsFavoritesFilterSelected, Mode=OneWay}"
                                             ToolTip.Tip="{Binding FavoritesText}">
-                                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="7">
                                                 <controls:SymbolIcon
+                                                    Grid.Column="0"
                                                     Foreground="{DynamicResource BrushFavoriteFilterIcon}"
                                                     IconSize="20"
                                                     Kind="Favorite" />
                                                 <TextBlock
+                                                    Grid.Column="1"
                                                     VerticalAlignment="Center"
                                                     FontWeight="SemiBold"
-                                                    Text="{Binding FavoritesText}" />
+                                                    Text="{Binding FavoritesText}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="NoWrap" />
                                                 <TextBlock
+                                                    Grid.Column="2"
                                                     VerticalAlignment="Center"
                                                     FontSize="12"
                                                     Text="{Binding FavoriteCount}" />
-                                            </StackPanel>
+                                            </Grid>
                                         </ToggleButton>
                                     </Border>
                                     <ItemsControl ItemsSource="{Binding Groups}">
@@ -351,7 +364,8 @@
                                                                     VerticalAlignment="Center"
                                                                     FontWeight="SemiBold"
                                                                     Text="{Binding Name}"
-                                                                    TextTrimming="CharacterEllipsis" />
+                                                                    TextTrimming="CharacterEllipsis"
+                                                                    TextWrapping="NoWrap" />
                                                                 <TextBlock
                                                                     Grid.Column="2"
                                                                     VerticalAlignment="Center"
@@ -461,9 +475,13 @@
 
                         <TextBlock
                             Grid.Row="4"
+                            Margin="0,24,0,0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
                             Foreground="{DynamicResource BrushTextSecondary}"
                             IsVisible="{Binding HasNoSearchResults}"
                             Text="{Binding NoSearchResultsText}"
+                            TextAlignment="Center"
                             TextWrapping="Wrap" />
 
                         <ListBox
@@ -1088,56 +1106,81 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                         <TextBlock Classes="field-label" Text="{Binding GroupAccountsText}" />
-                        <TextBox
-                            x:Name="GroupAccountSearchBox"
-                            automation:AutomationProperties.Name="{Binding SearchAccountsText}"
-                            PlaceholderText="{Binding SearchAccountsText}"
-                            Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox
+                                x:Name="GroupAccountSearchBox"
+                                Grid.ColumnSpan="2"
+                                Padding="12,8,48,8"
+                                automation:AutomationProperties.Name="{Binding SearchAccountsText}"
+                                PlaceholderText="{Binding SearchAccountsText}"
+                                Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
+                            <Button
+                                Grid.Column="1"
+                                Width="44"
+                                Height="44"
+                                MinHeight="44"
+                                Margin="0,0,4,0"
+                                Padding="0"
+                                VerticalAlignment="Center"
+                                automation:AutomationProperties.Name="{Binding ClearSearchText}"
+                                Classes="link"
+                                Click="RefocusGroupAccountSearchAfterClear"
+                                Command="{Binding ClearGroupEditorSearchCommand}"
+                                Content="×"
+                                FontSize="26"
+                                IsVisible="{Binding HasGroupEditorSearchText}"
+                                ToolTip.Tip="{Binding ClearSearchText}" />
+                        </Grid>
                         <Border Classes="card" Padding="6">
-                            <ListBox
-                                x:Name="GroupAccountPicker"
-                                Classes="accounts group-account-picker"
-                                MaxHeight="220"
-                                ItemsSource="{Binding GroupEditorAccounts}"
-                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                ScrollViewer.IsScrollChainingEnabled="False"
-                                ScrollViewer.VerticalScrollBarVisibility="Hidden">
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel CacheLength="0.5" />
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:MobileGroupAccountSelection">
-                                        <CheckBox
-                                            MinHeight="54"
-                                            Padding="6,3"
-                                            VerticalAlignment="Stretch"
-                                            VerticalContentAlignment="Center"
-                                            IsChecked="{Binding IsSelected, Mode=TwoWay}">
-                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                                <controls:BrandTile
-                                                    Grid.Column="0"
-                                                    IsVisible="{Binding ShowIssuerLogo}"
-                                                    IconData="{Binding Brand.IconData}"
-                                                    Initials="{Binding Brand.Initials}"
-                                                    TileBackground="{Binding Brand.BackgroundBrush}" />
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock
-                                                        FontWeight="SemiBold"
-                                                        Text="{Binding Issuer}"
-                                                        TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock
-                                                        Foreground="{DynamicResource BrushTextSecondary}"
-                                                        FontSize="12"
-                                                        Text="{Binding AccountName}"
-                                                        TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
-                                            </Grid>
-                                        </CheckBox>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                            <Grid Height="220">
+                                <ListBox
+                                    x:Name="GroupAccountPicker"
+                                    Classes="accounts group-account-picker"
+                                    ItemsSource="{Binding GroupEditorAccounts}"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                    ScrollViewer.IsScrollChainingEnabled="False"
+                                    ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel CacheLength="0.5" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:MobileGroupAccountSelection">
+                                            <CheckBox
+                                                MinHeight="54"
+                                                Padding="6,3"
+                                                VerticalAlignment="Stretch"
+                                                VerticalContentAlignment="Center"
+                                                IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                    <controls:BrandTile
+                                                        Grid.Column="0"
+                                                        IsVisible="{Binding ShowIssuerLogo}"
+                                                        IconData="{Binding Brand.IconData}"
+                                                        Initials="{Binding Brand.Initials}"
+                                                        TileBackground="{Binding Brand.BackgroundBrush}" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock
+                                                            FontWeight="SemiBold"
+                                                            Text="{Binding Issuer}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock
+                                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                                            FontSize="12"
+                                                            Text="{Binding AccountName}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <ContentControl
+                                    x:Name="NativeGroupAccountPickerPresenter"
+                                    IsHitTestVisible="False"
+                                    IsVisible="{Binding !IsDeleteGroupConfirmationVisible}" />
+                            </Grid>
                         </Border>
                         <controls:ValidationMessage Severity="Error" Text="{Binding GroupEditorMessage}" />
                         <Grid ColumnDefinitions="Auto,*,*" ColumnSpacing="10">
@@ -1158,29 +1201,6 @@
                                 Command="{Binding SaveGroupCommand}"
                                 Content="{Binding SaveText}" />
                         </Grid>
-                        <Border
-                            Background="{DynamicResource BrushSurfaceAlternate}"
-                            BorderBrush="{DynamicResource BrushDanger}"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            IsVisible="{Binding IsDeleteGroupConfirmationVisible}"
-                            Padding="12">
-                            <StackPanel Spacing="10">
-                                <TextBlock Text="{Binding GroupDeletePrompt}" TextWrapping="Wrap" />
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                    <Button
-                                        Grid.Column="0"
-                                        Classes="wide secondary"
-                                        Command="{Binding CancelDeleteGroupCommand}"
-                                        Content="{Binding CancelText}" />
-                                    <Button
-                                        Grid.Column="1"
-                                        Classes="wide danger"
-                                        Command="{Binding ConfirmDeleteGroupCommand}"
-                                        Content="{Binding DeleteText}" />
-                                </Grid>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
 
                     <StackPanel
@@ -1285,34 +1305,51 @@
             </Button>
         </Grid>
 
-        <Border
-            x:Name="AccountCountFooter"
+        <!-- Android native controls always render above Avalonia overlays. Keep account-list
+             notifications in this fixed, non-native footer so they remain visible without
+             changing the list viewport when a transient message appears. -->
+        <Grid
+            x:Name="AccountListFooter"
             Grid.Row="2"
-            Height="18"
-            Background="{DynamicResource BrushSurface}"
-            BorderBrush="{DynamicResource BrushBorder}"
-            BorderThickness="0,1,0,0"
+            Height="40"
             IsVisible="{Binding IsAccountListVisible}">
-            <TextBlock
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                FontSize="11"
-                Foreground="{DynamicResource BrushTextSecondary}"
+            <Border
+                x:Name="AccountCountFooter"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="0,1,0,0">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="{DynamicResource BrushTextSecondary}"
+                    IsHitTestVisible="False"
+                    Text="{Binding SearchResultSummary}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap" />
+            </Border>
+            <controls:NotificationBanner
+                Margin="12,3"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
                 IsHitTestVisible="False"
-                Text="{Binding SearchResultSummary}"
-                TextTrimming="CharacterEllipsis"
-                TextWrapping="NoWrap" />
-        </Border>
+                ZIndex="1"
+                Severity="{Binding NotificationSeverity}"
+                Text="{Binding NotificationText}" />
+        </Grid>
 
-        <controls:NotificationBanner
+        <Grid
             Grid.RowSpan="3"
-            Margin="20,8,20,20"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Bottom"
             IsHitTestVisible="False"
-            ZIndex="50"
-            Severity="{Binding NotificationSeverity}"
-            Text="{Binding NotificationText}" />
+            IsVisible="{Binding !IsAccountListVisible}"
+            Panel.ZIndex="50">
+            <controls:NotificationBanner
+                Margin="20,8,20,20"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Bottom"
+                Severity="{Binding NotificationSeverity}"
+                Text="{Binding NotificationText}" />
+        </Grid>
 
         <Grid
             Grid.RowSpan="3"
@@ -1535,6 +1572,43 @@
                             Content="{Binding ConfirmImportText}" />
                     </Grid>
                 </Grid>
+            </Border>
+        </Grid>
+
+        <Grid
+            x:Name="GroupDeleteModalOverlay"
+            Grid.RowSpan="3"
+            Panel.ZIndex="102"
+            Background="#99000000"
+            IsVisible="{Binding IsDeleteGroupConfirmationVisible}">
+            <Border
+                MaxWidth="420"
+                Margin="24"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                automation:AutomationProperties.Name="{Binding DeleteGroupText}"
+                Background="{DynamicResource BrushSurface}"
+                CornerRadius="12"
+                Padding="22">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        FontSize="20"
+                        FontWeight="SemiBold"
+                        Text="{Binding DeleteGroupText}" />
+                    <TextBlock Text="{Binding GroupDeletePrompt}" TextWrapping="Wrap" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button
+                            Grid.Column="0"
+                            Classes="wide secondary"
+                            Command="{Binding CancelDeleteGroupCommand}"
+                            Content="{Binding CancelText}" />
+                        <Button
+                            Grid.Column="1"
+                            Classes="wide danger"
+                            Command="{Binding ConfirmDeleteGroupCommand}"
+                            Content="{Binding DeleteText}" />
+                    </Grid>
+                </StackPanel>
             </Border>
         </Grid>
 

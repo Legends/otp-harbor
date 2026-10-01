@@ -4,10 +4,12 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using TOTP.Avalonia.Shared.Appearance;
 using TOTP.Avalonia.Desktop.Platform;
+using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Avalonia.Desktop.Startup;
 using TOTP.Core.Platform;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Infrastructure.Services;
+using Serilog;
 
 namespace TOTP.Avalonia.Desktop;
 
@@ -56,16 +58,58 @@ public partial class App : Application
             desktop.MainWindow = mainWindow;
             _services.GetRequiredService<IActivationListener>().Start(request =>
             {
-                if (request.Kind != ApplicationActivationKind.ActivateMainWindow) return;
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     windows.ActivateCurrent();
+#if DEBUG
+                    if (request.Kind == ApplicationActivationKind.DebugBulkAddSyntheticAccounts)
+                    {
+                        _ = AddDebugSyntheticAccountsAsync(
+                            _services.GetRequiredService<AccountListViewModel>());
+                        return;
+                    }
+                    if (request.Kind == ApplicationActivationKind.DebugBulkDeleteSyntheticAccounts)
+                    {
+                        _ = DeleteDebugSyntheticAccountsAsync(
+                            _services.GetRequiredService<AccountListViewModel>());
+                    }
+#endif
                 });
             });
         }
 
         base.OnFrameworkInitializationCompleted();
     }
+
+#if DEBUG
+    private static async Task AddDebugSyntheticAccountsAsync(AccountListViewModel accountList)
+    {
+        try
+        {
+            await accountList.AddDebugSyntheticAccountsAsync();
+        }
+        catch (Exception exception)
+        {
+            Log.Warning(
+                "Debug synthetic account creation failed with {ExceptionType}.",
+                exception.GetType().FullName);
+        }
+    }
+
+    private static async Task DeleteDebugSyntheticAccountsAsync(AccountListViewModel accountList)
+    {
+        try
+        {
+            await accountList.DeleteDebugSyntheticAccountsAsync();
+        }
+        catch (Exception exception)
+        {
+            Log.Warning(
+                "Debug synthetic account deletion failed with {ExceptionType}.",
+                exception.GetType().FullName);
+        }
+    }
+#endif
 
     private void ApplyTheme(global::Avalonia.Styling.ThemeVariant variant)
     {

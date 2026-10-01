@@ -7,5 +7,11 @@ public sealed record ApplicationActivationRequest(int Version, ApplicationActiva
     public static ApplicationActivationRequest ActivateMainWindow() =>
         new(CurrentVersion, ApplicationActivationKind.ActivateMainWindow);
 
+    public static ApplicationActivationRequest DebugBulkAddSyntheticAccounts() =>
+        new(CurrentVersion, ApplicationActivationKind.DebugBulkAddSyntheticAccounts);
+
+    public static ApplicationActivationRequest DebugBulkDeleteSyntheticAccounts() =>
+        new(CurrentVersion, ApplicationActivationKind.DebugBulkDeleteSyntheticAccounts);
+
     public bool IsSupported => Version == CurrentVersion && Enum.IsDefined(Kind);
 }

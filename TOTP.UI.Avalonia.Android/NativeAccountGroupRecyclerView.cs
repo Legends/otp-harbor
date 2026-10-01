@@ -425,7 +425,7 @@ internal sealed class NativeAccountGroupView : View
     private string Ellipsize(string value, float width)
     {
         if (_text.MeasureText(value) <= width) return value;
-        const string suffix = "…";
+        const string suffix = "..";
         var low = 0;
         var high = value.Length;
         while (low < high)

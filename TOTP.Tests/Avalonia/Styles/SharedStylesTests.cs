@@ -103,9 +103,11 @@ public sealed class SharedStylesTests
             .Single(element => GetResourceKeyOrDefault(element) == "Dark");
 
         Assert.Equal("#137333", BrushColor(light, avalonia, "BrushCopyConfirmation"));
+        Assert.Equal("#282828", BrushColor(light, avalonia, "BrushQrInstruction"));
         Assert.Equal("#168AE0", BrushColor(light, avalonia, "BrushFavoriteStarFill"));
         Assert.Equal("Transparent", BrushColor(light, avalonia, "BrushFavoriteStarOutline"));
         Assert.Equal("#B7FF4A", BrushColor(dark, avalonia, "BrushCopyConfirmation"));
+        Assert.Equal("#F4CA16", BrushColor(dark, avalonia, "BrushQrInstruction"));
         Assert.Equal("Transparent", BrushColor(dark, avalonia, "BrushFavoriteStarFill"));
         Assert.Equal("#FFD166", BrushColor(dark, avalonia, "BrushFavoriteStarOutline"));
         Assert.Equal("Transparent", BrushColor(dark, avalonia, "BrushFavoriteButtonInteractiveBackground"));
@@ -307,6 +309,45 @@ public sealed class SharedStylesTests
                 "Hidden",
                 accountList.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
         }
+    }
+
+    [Fact]
+    public void RecentlyAddedAccount_AnimatesOnlyAReservedGoldenOutline()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var rowStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value
+                == "Border.account-row-container");
+        Assert.Contains(
+            rowStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "BorderThickness"
+                && setter.Attribute("Value")?.Value == "2");
+
+        var highlightStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value
+                == "Border.account-row-container.recently-added");
+        var animation = highlightStyle.Descendants(avalonia + "Animation").Single();
+        Assert.Equal("0:0:1", animation.Attribute("Duration")?.Value);
+        Assert.Equal("None", animation.Attribute("FillMode")?.Value);
+        var setters = animation.Descendants(avalonia + "Setter").ToArray();
+        Assert.DoesNotContain(
+            setters,
+            setter => setter.Attribute("Property")?.Value == "Background");
+        Assert.All(
+            setters,
+            setter => Assert.Equal("BorderBrush", setter.Attribute("Property")?.Value));
+        Assert.Contains(
+            setters,
+            setter => setter.Attribute("Value")?.Value
+                == "{DynamicResource BrushRecentAccountHighlight}");
     }
 
     [Fact]

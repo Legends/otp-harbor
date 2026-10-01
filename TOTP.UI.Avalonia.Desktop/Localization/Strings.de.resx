@@ -162,7 +162,7 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>Das ausgewählte QR-Code-Bild überschreitet die sichere Größenbegrenzung.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>Das QR-Code-Bild konnte nicht sicher gelesen werden. Es wurden keine Kontodaten geändert.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>Es wurde kein QR-Code-Bild ausgewählt.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Das Scannen mit der Kamera unterstützt QR-Codes für einzelne Konten, wenn die Kameraauflösung ausreicht. Verwenden Sie für Google-Authenticator-Exporte mit mehreren Konten ein scharfes QR-Bild und wählen Sie unten „QR-Bild öffnen“.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Das Scannen mit der Kamera unterstützt QR-Codes für einzelne Konten, wenn die Kameraauflösung ausreicht. Sorgen Sie für gute Beleuchtung und vermeiden Sie Spiegelungen oder starkes Gegenlicht. Halten Sie den QR-Code ruhig, vollständig sichtbar und möglichst gerade vor die Kamera. Passen Sie bei Bedarf langsam den Abstand an, bis der Code scharf erscheint. Verwenden Sie für Google-Authenticator-Exporte mit mehreren Konten ein scharfes QR-Bild und wählen Sie unten „QR-Bild öffnen“.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Aus Google Authenticator importieren</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Google-Authenticator-Export erkannt. Gefundene Konten: {0}. Jetzt importieren?</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Scan abbrechen</value></data>

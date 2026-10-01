@@ -15,6 +15,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
     private readonly LinearLayoutManager _layoutManager;
     private readonly AccountScrollListener _scrollListener;
     private int _submitRevision;
+    private int _revealRevision;
     private bool _disposed;
 
     public NativeAccountRecyclerView(Context context, MobileShellViewModel viewModel)
@@ -39,6 +40,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
         _viewModel.PropertyChanged += ViewModelPropertyChanged;
         _adapter.ReplaceAll(CaptureRows());
         Post(ReportVisibleAccounts);
+        HandleRevealRequest(_viewModel.AccountRevealRequest);
     }
 
     public void DisposeHost()
@@ -99,6 +101,10 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
         {
             Post(_adapter.NotifyVisibleContentChanged);
         }
+        else if (args.PropertyName == nameof(MobileShellViewModel.AccountRevealRequest))
+        {
+            HandleRevealRequest(_viewModel.AccountRevealRequest);
+        }
     }
 
     private void SubmitRows()
@@ -123,6 +129,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
                         if (_disposed || revision != Volatile.Read(ref _submitRevision)) return;
                         _adapter.ApplyDiff(next, completed.Result);
                         ReportVisibleAccounts();
+                        HandleRevealRequest(_viewModel.AccountRevealRequest);
                     });
                 },
                 CancellationToken.None,
@@ -132,6 +139,35 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
 
     private NativeAccountRow[] CaptureRows() =>
         _viewModel.Accounts.Select(NativeAccountRow.FromAccount).ToArray();
+
+    private void HandleRevealRequest(MobileAccountRevealRequest? request)
+    {
+        if (_disposed || request is null || request.Revision <= _revealRevision) return;
+
+        var position = _adapter.FindPosition(request.AccountId);
+        if (position == NoPosition) return;
+
+        _revealRevision = request.Revision;
+        var offset = Math.Max(
+            0,
+            (Height - NativeAccountRowView.RowHeight(Context!)) / 2);
+        _layoutManager.ScrollToPositionWithOffset(position, offset);
+        PostDelayed(() => PulseRevealedAccount(position, request.Revision, 0), 50);
+    }
+
+    private void PulseRevealedAccount(int position, int revision, int attempt)
+    {
+        if (_disposed || revision != _revealRevision) return;
+        if (FindViewHolderForAdapterPosition(position) is NativeAccountAdapter.AccountViewHolder holder)
+        {
+            holder.Row.PulseHighlight();
+            ReportVisibleAccounts();
+            return;
+        }
+
+        if (attempt < 5)
+            PostDelayed(() => PulseRevealedAccount(position, revision, attempt + 1), 50);
+    }
 
     private sealed class AccountScrollListener(NativeAccountRecyclerView owner)
         : RecyclerView.OnScrollListener
@@ -218,6 +254,16 @@ internal sealed class NativeAccountAdapter : RecyclerView.Adapter
     internal void NotifyVisibleContentChanged() =>
         NotifyItemRangeChanged(0, ItemCount, NativeAccountRowView.LocalizationPayload);
 
+    internal int FindPosition(Guid accountId)
+    {
+        for (var index = 0; index < _items.Length; index++)
+        {
+            if (_items[index].Id == accountId) return index;
+        }
+
+        return RecyclerView.NoPosition;
+    }
+
     internal void DisposeAdapter()
     {
         CloseOpenRow();
@@ -244,7 +290,7 @@ internal sealed class NativeAccountAdapter : RecyclerView.Adapter
         _openRow = null;
     }
 
-    private sealed class AccountViewHolder(NativeAccountRowView row) : RecyclerView.ViewHolder(row)
+    internal sealed class AccountViewHolder(NativeAccountRowView row) : RecyclerView.ViewHolder(row)
     {
         public NativeAccountRowView Row { get; } = row;
         public void Bind(NativeAccountRow item) => Row.Bind(item);

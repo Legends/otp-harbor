@@ -60,6 +60,15 @@ public sealed class ContextPreservingAccountListBox : ListBox
             DispatcherPriority.Loaded);
     }
 
+    public void RevealAccount(AccountListItemViewModel account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        ScrollIntoView(account);
+        Dispatcher.UIThread.Post(
+            () => ScrollIntoView(account),
+            DispatcherPriority.Loaded);
+    }
+
     private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.KeyModifiers != KeyModifiers.None

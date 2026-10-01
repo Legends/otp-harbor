@@ -162,7 +162,7 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>The selected QR code image exceeds the safe size limit.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>The QR code image could not be read safely. No account data was changed.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No QR code image was selected.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Camera scanning supports single-account QR codes when the camera resolution is sufficient. For Google Authenticator exports containing multiple accounts, use a sharp QR image and choose Open QR image below.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Camera scanning supports single-account QR codes when the camera resolution is sufficient. Ensure good lighting and avoid reflections or strong backlighting. Keep the QR code steady, fully visible, and as straight as possible in front of the camera. If necessary, slowly adjust the distance until the code appears sharp. For Google Authenticator exports containing multiple accounts, use a sharp QR image and choose Open QR image below.</value></data>
   <data name="QrMigrationConfirmationTitle" xml:space="preserve"><value>Import from Google Authenticator</value></data>
   <data name="QrMigrationConfirmationMessage" xml:space="preserve"><value>Google Authenticator export detected. Accounts found: {0}. Import them?</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Cancel scan</value></data>

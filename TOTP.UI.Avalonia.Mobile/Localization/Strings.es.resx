@@ -203,6 +203,7 @@
   <data name="UnlockWithPassword" xml:space="preserve"><value>Contraseña maestra</value></data>
   <data name="UnlockWithBiometrics" xml:space="preserve"><value>Biometría fuerte</value></data>
   <data name="UnlockWithDevicePin" xml:space="preserve"><value>Bloqueo del dispositivo (PIN, patrón o contraseña)</value></data>
+  <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Bloqueo del dispositivo&#xA;(PIN, patrón o contraseña)</value></data>
   <data name="DevicePinUnavailable" xml:space="preserve"><value>No hay configurado un bloqueo seguro del dispositivo (PIN, patrón o contraseña).</value></data>
   <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Introduzca su contraseña maestra para autorizar el cambio del método de desbloqueo.</value></data>
   <data name="UnlockMethodChanged" xml:space="preserve"><value>Método de desbloqueo cambiado.</value></data>

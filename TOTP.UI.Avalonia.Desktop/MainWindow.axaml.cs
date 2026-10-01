@@ -484,7 +484,10 @@ public partial class MainWindow : Window
         if (_observedViewModel is not null)
             _observedViewModel.PropertyChanged -= MainViewModelPropertyChanged;
         if (_observedAccountList is not null)
+        {
             _observedAccountList.PropertyChanged -= AccountListPropertyChanged;
+            _observedAccountList.AccountRevealRequested -= AccountRevealRequested;
+        }
 
         _observedViewModel = viewModel;
         _observedAccountList = viewModel?.AccountList;
@@ -492,7 +495,20 @@ public partial class MainWindow : Window
         if (_observedViewModel is not null)
             _observedViewModel.PropertyChanged += MainViewModelPropertyChanged;
         if (_observedAccountList is not null)
+        {
             _observedAccountList.PropertyChanged += AccountListPropertyChanged;
+            _observedAccountList.AccountRevealRequested += AccountRevealRequested;
+        }
+    }
+
+    private void AccountRevealRequested(AccountListItemViewModel account)
+    {
+        Dispatcher.UIThread.Post(
+            () => this.GetVisualDescendants()
+                .OfType<ContextPreservingAccountListBox>()
+                .FirstOrDefault(control => control.Name == "AccountsListBox")
+                ?.RevealAccount(account),
+            DispatcherPriority.Loaded);
     }
 
     private void MainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

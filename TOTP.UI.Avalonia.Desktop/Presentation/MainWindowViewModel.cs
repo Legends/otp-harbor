@@ -482,6 +482,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         try
         {
+            if (e.Status == QrAccountImportStatus.DuplicateUnchanged)
+            {
+                AccountList.ShowQrImportOutcome(e.Message, NotificationSeverity.Information);
+                return;
+            }
+
             await AccountList.RevealImportedAccountAsync(
                 e.AccountId,
                 e.Status is QrAccountImportStatus.Added or QrAccountImportStatus.KeptBoth,

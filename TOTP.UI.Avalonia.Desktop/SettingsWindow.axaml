@@ -124,13 +124,17 @@
                                                 </ComboBox>
                                                 <CheckBox Content="{DynamicResource LockWhenMinimized}" IsChecked="{Binding LockOnMinimize, Mode=TwoWay}" />
                                                 <CheckBox Content="{DynamicResource LockOnSessionLock}" IsChecked="{Binding LockOnSessionLock, Mode=TwoWay}" />
-                                                <CheckBox Content="{DynamicResource ClearClipboard}" IsChecked="{Binding ClearClipboardEnabled, Mode=TwoWay}" />
                                                 <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource ClipboardClearSeconds}" />
-                                                <NumericUpDown
-                                                    IsEnabled="{Binding ClearClipboardEnabled}"
-                                                    Maximum="300"
-                                                    Minimum="1"
-                                                    Value="{Binding ClearClipboardSeconds, Mode=TwoWay}" />
+                                                <ComboBox
+                                                    x:Name="ClipboardLifetimeSelector"
+                                                    ItemsSource="{Binding ClipboardLifetimeOptions}"
+                                                    SelectedItem="{Binding SelectedClipboardLifetime, Mode=TwoWay}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="presentation:SettingsPageViewModel+ClipboardLifetimeOption">
+                                                            <TextBlock Text="{Binding Label}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>

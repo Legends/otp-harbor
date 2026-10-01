@@ -42,7 +42,8 @@ internal static class Program
             using var instance = new SingleInstanceCoordinator(
                 new NamedMutexInstanceLock(DesktopInstanceIdentity.MutexName),
                 new NamedPipeActivationDispatcher(DesktopInstanceIdentity.PipeName));
-            var outcome = instance.Start(ApplicationActivationRequest.ActivateMainWindow());
+            var activationRequest = ResolveActivationRequest(args);
+            var outcome = instance.Start(activationRequest);
             if (outcome == SingleInstanceOutcome.ActivationRedirected) return;
             if (outcome == SingleInstanceOutcome.ActivationFailed)
             {
@@ -73,6 +74,17 @@ internal static class Program
         builder = builder.WithDeveloperTools();
 #endif
         return builder;
+    }
+
+    private static ApplicationActivationRequest ResolveActivationRequest(string[] args)
+    {
+#if DEBUG
+        if (args is ["--debug-bulk-add-synthetic-accounts"])
+            return ApplicationActivationRequest.DebugBulkAddSyntheticAccounts();
+        if (args is ["--debug-bulk-delete-synthetic-accounts"])
+            return ApplicationActivationRequest.DebugBulkDeleteSyntheticAccounts();
+#endif
+        return ApplicationActivationRequest.ActivateMainWindow();
     }
 
     private static void ApplyInterfaceScalePreference(DesktopPlatformServices platformServices)

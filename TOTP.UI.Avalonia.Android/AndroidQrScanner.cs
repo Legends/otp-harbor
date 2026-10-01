@@ -1,24 +1,17 @@
-using System.Security.Cryptography;
-using Android.App;
 using Android.Content;
-using Android.Graphics;
-using Android.Provider;
-using AndroidX.Core.Content;
 using Microsoft.Extensions.Logging;
+using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
-using ZXing;
-using ZXing.Common;
 using AndroidResult = Android.App.Result;
 
 namespace TOTP.Avalonia.Android;
 
 internal sealed class AndroidQrScanner(
     AndroidActivityProvider activityProvider,
+    MobileStringCatalog strings,
     ILogger<AndroidQrScanner> logger) : IMobileQrScanner
 {
-    private const int CaptureRequestCode = 0x4f54;
-    private const string CaptureDirectoryName = "qr-captures";
-    private static readonly double[] CenterCropScales = [0.9d, 0.75d, 0.6d];
+    private const int ScanRequestCode = 0x4f54;
 
     public async Task<MobileQrScanResult> ScanAsync(
         CancellationToken cancellationToken = default)
@@ -27,19 +20,11 @@ internal sealed class AndroidQrScanner(
         var activity = activityProvider.GetCurrent();
         if (activity is null) return MobileQrScanResult.Unavailable;
 
-        using var cameraIntent = new Intent(MediaStore.ActionImageCapture);
-        var packageManager = activity.PackageManager;
-        if (packageManager is null || cameraIntent.ResolveActivity(packageManager) is null)
-            return MobileQrScanResult.Unavailable;
-
-        string? capturePath = null;
-        global::Android.Net.Uri? captureUri = null;
-
         var completion = new TaskCompletionSource<(AndroidResult Code, Intent? Data)>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         void OnActivityResult(int requestCode, AndroidResult resultCode, Intent? data)
         {
-            if (requestCode == CaptureRequestCode)
+            if (requestCode == ScanRequestCode)
                 completion.TrySetResult((resultCode, data));
         }
 
@@ -48,27 +33,31 @@ internal sealed class AndroidQrScanner(
             completion.TrySetCanceled(cancellationToken));
         try
         {
-            var captureDirectory = System.IO.Path.Combine(
-                activity.CacheDir!.AbsolutePath,
-                CaptureDirectoryName);
-            Directory.CreateDirectory(captureDirectory);
-            capturePath = System.IO.Path.Combine(captureDirectory, $"{Guid.NewGuid():N}.jpg");
-            using var captureFile = new Java.IO.File(capturePath);
-            captureUri = FileProvider.GetUriForFile(
-                activity,
-                $"{activity.PackageName}.fileprovider",
-                captureFile);
-            cameraIntent.PutExtra(MediaStore.ExtraOutput, captureUri);
-            cameraIntent.ClipData = ClipData.NewRawUri(string.Empty, captureUri);
-            cameraIntent.AddFlags(
-                ActivityFlags.GrantReadUriPermission |
-                ActivityFlags.GrantWriteUriPermission);
+            using var intent = new Intent(activity, typeof(LiveQrScannerActivity));
+            intent.PutExtra(
+                LiveQrScannerActivity.InstructionExtra,
+                strings.Get(MobileStringKeys.ScanQr));
+            intent.PutExtra(
+                LiveQrScannerActivity.CancelExtra,
+                strings.Get(MobileStringKeys.Cancel));
 
-            activity.StartActivityForResult(cameraIntent, CaptureRequestCode);
-            var capture = await completion.Task;
-            if (capture.Code != AndroidResult.Ok) return MobileQrScanResult.Cancelled;
+            activity.IsInternalQrScannerActive = true;
+            activity.StartActivityForResult(intent, ScanRequestCode);
+            var scan = await completion.Task;
+            if (scan.Code != AndroidResult.Ok)
+            {
+                return scan.Data?.GetStringExtra(LiveQrScannerActivity.StatusExtra) switch
+                {
+                    LiveQrScannerActivity.UnavailableStatus => MobileQrScanResult.Unavailable,
+                    LiveQrScannerActivity.FailedStatus => MobileQrScanResult.Failed,
+                    _ => MobileQrScanResult.Cancelled
+                };
+            }
 
-            return Decode(capturePath);
+            var payload = scan.Data?.GetStringExtra(LiveQrScannerActivity.PayloadExtra);
+            return string.IsNullOrWhiteSpace(payload)
+                ? MobileQrScanResult.Failed
+                : MobileQrScanResult.Successful(payload);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -77,214 +66,14 @@ internal sealed class AndroidQrScanner(
         catch (Exception exception)
         {
             logger.LogWarning(
-                "Android QR capture failed with {ExceptionType}.",
+                "Android live QR scanner failed with {ExceptionType}.",
                 exception.GetType().Name);
             return MobileQrScanResult.Failed;
         }
         finally
         {
+            activity.IsInternalQrScannerActive = false;
             activity.ActivityResultReceived -= OnActivityResult;
-            RevokeCaptureAccess(activity, captureUri);
-            DeleteCapture(capturePath);
-        }
-    }
-
-    private void RevokeCaptureAccess(Activity activity, global::Android.Net.Uri? captureUri)
-    {
-        if (captureUri is null) return;
-
-        try
-        {
-            activity.RevokeUriPermission(
-                captureUri,
-                ActivityFlags.GrantReadUriPermission |
-                ActivityFlags.GrantWriteUriPermission);
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(
-                "Android QR capture permission cleanup failed with {ExceptionType}.",
-                exception.GetType().Name);
-        }
-    }
-
-    private void DeleteCapture(string? capturePath)
-    {
-        if (string.IsNullOrEmpty(capturePath)) return;
-
-        try
-        {
-            if (File.Exists(capturePath)) File.Delete(capturePath);
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(
-                "Android QR capture cleanup failed with {ExceptionType}.",
-                exception.GetType().Name);
-        }
-    }
-
-    private static MobileQrScanResult Decode(string capturePath)
-    {
-        var encodedBytes = new FileInfo(capturePath).Length;
-        using var bounds = new BitmapFactory.Options { InJustDecodeBounds = true };
-        using var ignored = BitmapFactory.DecodeFile(capturePath, bounds);
-        var plan = MobileQrCapturePolicy.CreatePlan(
-            encodedBytes,
-            bounds.OutWidth,
-            bounds.OutHeight);
-        if (!plan.IsAccepted) return MobileQrScanResult.Failed;
-
-        using var options = new BitmapFactory.Options
-        {
-            InSampleSize = plan.SampleSize,
-            InPreferredConfig = Bitmap.Config.Argb8888
-        };
-        using var bitmap = BitmapFactory.DecodeFile(capturePath, options);
-        return bitmap is null ? MobileQrScanResult.Failed : Decode(bitmap);
-    }
-
-    private static MobileQrScanResult Decode(Bitmap bitmap)
-    {
-        var width = bitmap.Width;
-        var height = bitmap.Height;
-        if (width <= 0 || height <= 0 ||
-            (long)width * height > MobileQrCapturePolicy.MaximumDecodedPixels)
-            return MobileQrScanResult.Failed;
-
-        var originalResult = DecodeSingle(bitmap);
-        if (originalResult.Status == MobileQrScanStatus.Success)
-            return originalResult;
-
-        foreach (var scale in CenterCropScales)
-        {
-            var cropWidth = Math.Max(1, (int)Math.Round(width * scale));
-            var cropHeight = Math.Max(1, (int)Math.Round(height * scale));
-            var left = (width - cropWidth) / 2;
-            var top = (height - cropHeight) / 2;
-            using var cropped = Bitmap.CreateBitmap(
-                bitmap,
-                left,
-                top,
-                cropWidth,
-                cropHeight);
-            if (cropped is null) continue;
-
-            var croppedResult = DecodeSingle(cropped);
-            if (croppedResult.Status == MobileQrScanStatus.Success)
-                return croppedResult;
-        }
-
-        foreach (var size in MobileQrCapturePolicy.CreateDecodeSizes(width, height).Skip(1))
-        {
-            using var filtered = Bitmap.CreateScaledBitmap(
-                bitmap,
-                size.Width,
-                size.Height,
-                true);
-            if (filtered is not null)
-            {
-                var filteredResult = DecodeSingle(filtered);
-                if (filteredResult.Status == MobileQrScanStatus.Success)
-                    return filteredResult;
-            }
-
-            using var scaled = Bitmap.CreateScaledBitmap(
-                bitmap,
-                size.Width,
-                size.Height,
-                false);
-            if (scaled is null) continue;
-
-            var scaledResult = DecodeSingle(scaled);
-            if (scaledResult.Status == MobileQrScanStatus.Success)
-                return scaledResult;
-        }
-
-        return MobileQrScanResult.Failed;
-    }
-
-    private static MobileQrScanResult DecodeSingle(Bitmap bitmap)
-    {
-        var width = bitmap.Width;
-        var height = bitmap.Height;
-        var pixelCount = checked(width * height);
-
-        var pixels = new int[pixelCount];
-        byte[]? rgb = null;
-        try
-        {
-            bitmap.GetPixels(pixels, 0, width, 0, 0, width, height);
-            rgb = new byte[checked(pixelCount * 3)];
-            for (var index = 0; index < pixelCount; index++)
-            {
-                var color = pixels[index];
-                var offset = index * 3;
-                rgb[offset] = (byte)((color >> 16) & 0xff);
-                rgb[offset + 1] = (byte)((color >> 8) & 0xff);
-                rgb[offset + 2] = (byte)(color & 0xff);
-            }
-
-            var reader = new BarcodeReaderGeneric
-            {
-                AutoRotate = true,
-                Options = new DecodingOptions
-                {
-                    PossibleFormats = [BarcodeFormat.QR_CODE],
-                    TryHarder = true,
-                    TryInverted = true
-                }
-            };
-            var decoded = reader.Decode(
-                rgb,
-                width,
-                height,
-                RGBLuminanceSource.BitmapFormat.RGB24);
-            if (!string.IsNullOrWhiteSpace(decoded?.Text))
-                return MobileQrScanResult.Successful(decoded.Text);
-
-            var luminance = new RGBLuminanceSource(
-                rgb,
-                width,
-                height,
-                RGBLuminanceSource.BitmapFormat.RGB24);
-            var globalResult = DecodeGlobalHistogram(luminance);
-            if (!string.IsNullOrWhiteSpace(globalResult))
-                return MobileQrScanResult.Successful(globalResult);
-
-            var invertedResult = DecodeGlobalHistogram(luminance.invert());
-            return string.IsNullOrWhiteSpace(invertedResult)
-                ? MobileQrScanResult.Failed
-                : MobileQrScanResult.Successful(invertedResult);
-        }
-        finally
-        {
-            Array.Clear(pixels);
-            if (rgb is not null) CryptographicOperations.ZeroMemory(rgb);
-        }
-    }
-
-    private static string? DecodeGlobalHistogram(LuminanceSource source)
-    {
-        var reader = new ZXing.QrCode.QRCodeReader();
-        try
-        {
-            var decoded = reader.decode(
-                new BinaryBitmap(new GlobalHistogramBinarizer(source)),
-                new Dictionary<DecodeHintType, object>
-                {
-                    [DecodeHintType.TRY_HARDER] = true,
-                    [DecodeHintType.CHARACTER_SET] = "UTF-8"
-                });
-            return decoded?.Text;
-        }
-        catch (ReaderException)
-        {
-            return null;
-        }
-        finally
-        {
-            reader.reset();
         }
     }
 }

@@ -594,6 +594,58 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task ScanQrAsync_WhenAccountIsUnchangedDuplicate_ShowsSkippedMessageWithoutReloadingList()
+    {
+        const string payload = "otpauth://totp/Example:alice?secret=JBSWY3DPEHPK3PXP";
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var runner = new Mock<IQrScannerRunner>();
+        runner.Setup(value => value.RunAsync(
+                It.IsAny<CancellationToken>(),
+                It.IsAny<Action<byte[]>>(),
+                It.IsAny<Action>(),
+                It.IsAny<Action>()))
+            .ReturnsAsync(QrScannerRunResult.Decoded(payload));
+        var validator = new Mock<IQrPayloadValidator>();
+        validator.Setup(value => value.Validate(payload))
+            .Returns(new QrPayloadValidationResult(true, "Example", "alice"));
+        var import = new Mock<IQrAccountImportService>();
+        import.Setup(value => value.ImportAsync(
+                payload,
+                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
+                QrAccountImportStatus.DuplicateUnchanged,
+                Guid.NewGuid(),
+                "Example",
+                "alice")));
+        using var scanner = CreateCameraScanner(runner.Object, validator.Object, import.Object);
+        var scannerDialogs = new Mock<IAvaloniaCameraScannerDialogService>();
+        scannerDialogs.Setup(value => value.ShowAsync(
+                scanner,
+                It.IsAny<CancellationToken>()))
+            .Returns(() => scanner.StartAsync());
+        var accounts = new Mock<IAccountManager>();
+        using var sut = CreateSut(
+            coordinator.Object,
+            Mock.Of<IAuthorizationService>(),
+            scannerDialogs.Object,
+            accounts.Object,
+            cameraScanner: scanner);
+        await sut.InitializeAsync();
+        accounts.Invocations.Clear();
+
+        await sut.ScanQrAsync();
+
+        Assert.Equal(AvaloniaStringKeys.QrAccountDuplicate, sut.AccountList.Notification.Text);
+        Assert.Equal(NotificationSeverity.Information, sut.AccountList.Notification.Severity);
+        accounts.Verify(
+            value => value.GetAllOtpEntriesSortedAsync(),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task HandleWindowMinimizedAsync_WhenPolicyEnabled_LocksAuthorizedShell()
     {
         var coordinator = new Mock<IAvaloniaStartupCoordinator>();
@@ -648,7 +700,8 @@ public sealed class MainWindowViewModelTests
         IAvaloniaLocalizationService? localization = null,
         IdleMonitoringBackgroundService? idleLockPolicy = null,
         UpdateCheckViewModel? updateCheck = null,
-        TimeSpan? settingsNotificationDuration = null) =>
+        TimeSpan? settingsNotificationDuration = null,
+        CameraScannerViewModel? cameraScanner = null) =>
         new(
             coordinator,
             authorization,
@@ -665,7 +718,7 @@ public sealed class MainWindowViewModelTests
             CreateSettingsPage(),
             CreateAuthorizationSettings(authorization),
             nativeFilePicker ?? CreateFilePicker(),
-            CreateCameraScanner(),
+            cameraScanner ?? CreateCameraScanner(),
             updateCheck ?? CreateUpdateCheck(),
             CreateDiagnostics(),
             localization ?? CreateLocalization(),
@@ -742,16 +795,19 @@ public sealed class MainWindowViewModelTests
             CreateLocalization());
     }
 
-    private static CameraScannerViewModel CreateCameraScanner() =>
+    private static CameraScannerViewModel CreateCameraScanner(
+        IQrScannerRunner? runner = null,
+        IQrPayloadValidator? validator = null,
+        IQrAccountImportService? import = null) =>
         new(
-            Mock.Of<IQrScannerRunner>(),
+            runner ?? Mock.Of<IQrScannerRunner>(),
             Mock.Of<IQrImageDecoder>(),
             Mock.Of<IAvaloniaFilePicker>(),
-            Mock.Of<IQrPayloadValidator>(),
+            validator ?? Mock.Of<IQrPayloadValidator>(),
             Mock.Of<IAvaloniaQrImageFactory>(),
             Mock.Of<IUiScheduler>(),
             NullLogger<CameraScannerViewModel>.Instance,
-            Mock.Of<IQrAccountImportService>(),
+            import ?? Mock.Of<IQrAccountImportService>(),
             Mock.Of<IAvaloniaDialogService>(),
             CreateLocalization());
 

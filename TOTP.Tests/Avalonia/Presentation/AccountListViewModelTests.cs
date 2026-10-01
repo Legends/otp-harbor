@@ -31,13 +31,14 @@ public sealed class AccountListViewModelTests
         await sut.LoadAsync();
 
         Assert.True(sut.HasNoAccounts);
+        Assert.False(sut.HasAnyAccounts);
         Assert.False(sut.HasNoSearchResults);
         Assert.False(sut.HasAccountNavigationCards);
         Assert.False(sut.HasMessage);
     }
 
     [Fact]
-    public async Task RevealImportedAccountAsync_SelectsHighlightsAndAnnouncesImportedRow()
+    public async Task RevealImportedAccountAsync_RequestsRevealHighlightsAndAnnouncesImportedRow()
     {
         var importedId = Guid.NewGuid();
         var accounts = Enumerable.Range(0, 30)
@@ -51,14 +52,17 @@ public sealed class AccountListViewModelTests
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(accounts));
         using var sut = CreateSut(manager.Object);
+        AccountListItemViewModel? revealRequest = null;
+        sut.AccountRevealRequested += account => revealRequest = account;
 
         await sut.RevealImportedAccountAsync(
             importedId,
             highlightAsNew: true,
             AvaloniaStringKeys.QrAccountAdded);
 
-        Assert.Equal(importedId, sut.SelectedAccount!.Id);
-        Assert.True(sut.SelectedAccount.IsRecentlyAdded);
+        Assert.Null(sut.SelectedAccount);
+        Assert.Equal(importedId, revealRequest?.Id);
+        Assert.True(revealRequest?.IsRecentlyAdded);
         Assert.Equal(AvaloniaStringKeys.QrAccountAdded, sut.Message);
 
         sut.SearchText = "does-not-match";
@@ -82,6 +86,8 @@ public sealed class AccountListViewModelTests
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([favorite, imported]));
         using var sut = CreateSut(manager.Object);
+        AccountListItemViewModel? revealRequest = null;
+        sut.AccountRevealRequested += account => revealRequest = account;
         await sut.LoadAsync();
         sut.ToggleFavoritesFilterCommand.Execute(null);
         Assert.True(sut.IsFavoritesFilterSelected);
@@ -89,8 +95,9 @@ public sealed class AccountListViewModelTests
         await sut.RevealImportedAccountAsync(imported.ID, true, "Imported safely.");
 
         Assert.False(sut.IsFavoritesFilterSelected);
-        Assert.Equal(imported.ID, sut.SelectedAccount?.Id);
-        Assert.True(sut.SelectedAccount?.IsRecentlyAdded);
+        Assert.Null(sut.SelectedAccount);
+        Assert.Equal(imported.ID, revealRequest?.Id);
+        Assert.True(revealRequest?.IsRecentlyAdded);
     }
 
     [Fact]
@@ -100,15 +107,18 @@ public sealed class AccountListViewModelTests
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
             [
-                new(Guid.NewGuid(), "GitHub", ValidSecret, "alice")
+                new(Guid.NewGuid(), "GitHub", ValidSecret, "alice", isFavorite: true)
             ]));
         var sut = CreateSut(manager.Object);
         await sut.LoadAsync();
+        Assert.True(sut.ShouldShowAccountNavigationCards);
 
         sut.SearchText = "missing";
 
         Assert.False(sut.HasNoAccounts);
+        Assert.True(sut.HasAnyAccounts);
         Assert.True(sut.HasNoSearchResults);
+        Assert.False(sut.ShouldShowAccountNavigationCards);
     }
 
     [Fact]
@@ -172,6 +182,38 @@ public sealed class AccountListViewModelTests
             property => string.Equals(property.Name, "Secret", StringComparison.Ordinal));
         Assert.False(sut.HasMessage);
     }
+
+#if DEBUG
+    [Fact]
+    public async Task DebugSyntheticAccounts_UseOneBatchCommitAndPreserveRegularAccounts()
+    {
+        var regular = new Account(Guid.NewGuid(), "Existing", ValidSecret, "regular");
+        IReadOnlyList<Account> stored = [regular];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(stored));
+        manager.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(accounts => stored = accounts.ToArray())
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+
+        Assert.True(await sut.AddDebugSyntheticAccountsAsync(600));
+
+        Assert.Equal(601, stored.Count);
+        Assert.Contains(stored, account => account.ID == regular.ID);
+        Assert.Equal(600, stored.Count(account =>
+            account.AccountName?.StartsWith(
+                "otp-harbor-debug-load-test:",
+                StringComparison.Ordinal) == true));
+        Assert.Equal(6, stored.Where(account => account.Group is not null)
+            .Select(account => account.Group!.Id)
+            .Distinct()
+            .Count());
+        manager.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
+    }
+#endif
 
     [Fact]
     public async Task LoadAsync_WhenAutomaticGenerationIsEnabled_ProjectsCodeIntoEveryRow()
@@ -2013,15 +2055,16 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
-    public async Task CopyCodeAsync_WhenAutomaticClearIsDisabled_CopiesWithoutSchedulingClear()
+    public async Task CopyCodeAsync_WhenLegacySettingDisabled_StillSchedulesRequiredClear()
     {
         var id = Guid.NewGuid();
         var totp = new Mock<IAccountTotpService>();
         totp.Setup(value => value.GenerateAsync(id))
             .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 30, 30)));
         var clipboard = new Mock<IAsyncClipboardService>();
-        clipboard.Setup(value => value.CopyAsync(
+        clipboard.Setup(value => value.CopyAndScheduleClearAsync(
                 "123456",
+                TimeSpan.FromSeconds(15),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
         var settings = new Mock<ISettingsService>();
@@ -2046,9 +2089,9 @@ public sealed class AccountListViewModelTests
         await sut.CopyCodeAsync();
 
         clipboard.Verify(value => value.CopyAndScheduleClearAsync(
-            It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+            "123456", TimeSpan.FromSeconds(15), It.IsAny<CancellationToken>()), Times.Once);
         clipboard.Verify(value => value.CopyAsync(
-            "123456", It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         Assert.Equal("Copied", sut.SelectedAccount.CopyConfirmation);
         Assert.Empty(sut.Notification.Text);
         Assert.Empty(sut.CodeMessage);

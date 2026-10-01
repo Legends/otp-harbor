@@ -16,6 +16,7 @@ public sealed class SymbolIconTests
     [InlineData(SymbolIconKind.Favorite)]
     [InlineData(SymbolIconKind.Folder)]
     [InlineData(SymbolIconKind.FolderAdd)]
+    [InlineData(SymbolIconKind.Information)]
     [InlineData(SymbolIconKind.Lock)]
     [InlineData(SymbolIconKind.QrCode)]
     [InlineData(SymbolIconKind.Reveal)]

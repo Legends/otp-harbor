@@ -68,6 +68,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _showAccountsCommand;
     private readonly MobileAsyncCommand _showSettingsCommand;
     private readonly MobileAsyncCommand _clearSearchCommand;
+    private readonly MobileAsyncCommand _clearGroupEditorSearchCommand;
     private readonly MobileAsyncCommand _toggleFavoritesFilterCommand;
     private readonly MobileAsyncCommand _clearGroupFilterCommand;
     private readonly MobileAsyncCommand _beginAddGroupCommand;
@@ -148,6 +149,8 @@ public sealed class MobileShellViewModel :
     private IReadOnlyList<MobileGroupColorOption> _groupColorOptions = [];
     private MobileGroupColorOption? _selectedGroupColor;
     private MobileAccountItem? _selectedAccount;
+    private MobileAccountRevealRequest? _accountRevealRequest;
+    private int _accountRevealRevision;
     private bool _isEditorVisible;
     private bool _isDeleteConfirmationVisible;
     private Guid? _pendingDeleteAccountId;
@@ -296,6 +299,9 @@ public sealed class MobileShellViewModel :
         _clearSearchCommand = new MobileAsyncCommand(
             ClearSearchAsync,
             () => HasSearchText && IsAccountListVisible && !IsBusy);
+        _clearGroupEditorSearchCommand = new MobileAsyncCommand(
+            ClearGroupEditorSearchAsync,
+            () => HasGroupEditorSearchText && IsGroupEditorVisible && !IsBusy);
         _toggleFavoritesFilterCommand = new MobileAsyncCommand(
             ToggleFavoritesFilterAsync,
             () => HasFavoriteAccounts && IsAccountListVisible && !IsBusy);
@@ -437,6 +443,7 @@ public sealed class MobileShellViewModel :
     public ICommand ShowAccountsCommand => _showAccountsCommand;
     public ICommand ShowSettingsCommand => _showSettingsCommand;
     public ICommand ClearSearchCommand => _clearSearchCommand;
+    public ICommand ClearGroupEditorSearchCommand => _clearGroupEditorSearchCommand;
     public ICommand ToggleFavoritesFilterCommand => _toggleFavoritesFilterCommand;
     public ICommand ClearGroupFilterCommand => _clearGroupFilterCommand;
     public ICommand BeginAddGroupCommand => _beginAddGroupCommand;
@@ -514,6 +521,7 @@ public sealed class MobileShellViewModel :
     public bool HasNoAccounts => _hasLoadedAccounts && _allAccounts.Count == 0;
     public bool HasNoSearchResults => _allAccounts.Count > 0 && Accounts.Count == 0;
     public bool HasSearchText => SearchText.Length > 0;
+    public bool HasGroupEditorSearchText => GroupEditorSearchText.Length > 0;
     public int FavoriteCount => _favoriteCount;
     public bool HasFavoriteAccounts => FavoriteCount > 0;
     public bool IsFavoritesFilterSelected => _showFavoritesOnly;
@@ -782,6 +790,12 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
+    public Task ClearGroupEditorSearchAsync()
+    {
+        if (HasGroupEditorSearchText) GroupEditorSearchText = string.Empty;
+        return Task.CompletedTask;
+    }
+
     public Task ToggleFavoritesFilterAsync()
     {
         if (!HasFavoriteAccounts) return Task.CompletedTask;
@@ -945,6 +959,12 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    public MobileAccountRevealRequest? AccountRevealRequest
+    {
+        get => _accountRevealRequest;
+        private set => SetField(ref _accountRevealRequest, value);
+    }
+
     public bool IsGroupEditorVisible
     {
         get => _isGroupEditorVisible;
@@ -993,6 +1013,8 @@ public sealed class MobileShellViewModel :
         set
         {
             if (!SetField(ref _groupEditorSearchText, value ?? string.Empty)) return;
+            OnPropertyChanged(nameof(HasGroupEditorSearchText));
+            _clearGroupEditorSearchCommand.NotifyCanExecuteChanged();
             ApplyGroupEditorSearch();
         }
     }
@@ -1196,6 +1218,8 @@ public sealed class MobileShellViewModel :
     public string UnlockWithPasswordText => Get(MobileStringKeys.UnlockWithPassword);
     public string UnlockWithBiometricsText => Get(MobileStringKeys.UnlockWithBiometrics);
     public string UnlockWithDevicePinText => Get(MobileStringKeys.UnlockWithDevicePin);
+    public string DeviceCredentialUnlockButtonText =>
+        Get(MobileStringKeys.DeviceCredentialUnlockButton);
     public string DevicePinUnavailableText => Get(MobileStringKeys.DevicePinUnavailable);
     public string UnlockMethodPasswordPromptText =>
         Get(MobileStringKeys.UnlockMethodPasswordPrompt);
@@ -1976,7 +2000,9 @@ public sealed class MobileShellViewModel :
             switch (outcome.Status)
             {
                 case QrAccountImportStatus.Added:
+                    ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
+                    RequestAccountReveal(outcome.AccountId);
                     SetSuccess(MobileStringKeys.QrAccountAdded);
                     break;
                 case QrAccountImportStatus.Updated:
@@ -1984,7 +2010,9 @@ public sealed class MobileShellViewModel :
                     SetSuccess(MobileStringKeys.QrAccountUpdated);
                     break;
                 case QrAccountImportStatus.KeptBoth:
+                    ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
+                    RequestAccountReveal(outcome.AccountId);
                     SetSuccess(MobileStringKeys.QrAccountKeptBoth);
                     break;
                 case QrAccountImportStatus.DuplicateUnchanged:
@@ -3189,10 +3217,11 @@ public sealed class MobileShellViewModel :
     {
         try
         {
-            var seconds = Math.Max(1, _settings.Current.ClearClipboardSeconds);
-            var result = _settings.Current.ClearClipboardEnabled
-                ? await _clipboard.CopyAndScheduleClearAsync(code, TimeSpan.FromSeconds(seconds))
-                : await _clipboard.CopyAsync(code);
+            var seconds = TOTP.Core.Validation.ClipboardLifetimePolicy.NormalizeSeconds(
+                _settings.Current.ClearClipboardSeconds);
+            var result = await _clipboard.CopyAndScheduleClearAsync(
+                code,
+                TimeSpan.FromSeconds(seconds));
             if (result.IsFailed)
             {
                 SetError(MobileStringKeys.CodeCopyFailed);
@@ -3817,6 +3846,26 @@ public sealed class MobileShellViewModel :
         NotifyCommands();
     }
 
+    private void RequestAccountReveal(Guid accountId)
+    {
+        if (accountId == Guid.Empty || Accounts.All(account => account.Id != accountId)) return;
+        AccountRevealRequest = new MobileAccountRevealRequest(
+            accountId,
+            ++_accountRevealRevision);
+    }
+
+    private void ClearAccountFiltersForReveal()
+    {
+        _showFavoritesOnly = false;
+        _selectedGroupId = null;
+        if (HasSearchText) SearchText = string.Empty;
+        RefreshGroups();
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+    }
+
     private void NotifyAppLockChanged()
     {
         OnPropertyChanged(nameof(IsAppLockEnabled));
@@ -4107,6 +4156,7 @@ public sealed class MobileShellViewModel :
         _showAccountsCommand.NotifyCanExecuteChanged();
         _showSettingsCommand.NotifyCanExecuteChanged();
         _clearSearchCommand.NotifyCanExecuteChanged();
+        _clearGroupEditorSearchCommand.NotifyCanExecuteChanged();
         _toggleFavoritesFilterCommand.NotifyCanExecuteChanged();
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         _beginAddGroupCommand.NotifyCanExecuteChanged();
@@ -4213,6 +4263,7 @@ public sealed class MobileShellViewModel :
         nameof(UnlockWithPasswordText),
         nameof(UnlockWithBiometricsText),
         nameof(UnlockWithDevicePinText),
+        nameof(DeviceCredentialUnlockButtonText),
         nameof(DevicePinUnavailableText),
         nameof(UnlockMethodPasswordPromptText),
         nameof(ApplyUnlockMethodText),

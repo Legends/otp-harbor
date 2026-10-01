@@ -57,6 +57,35 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void LockScreen_DeviceCredentialButtonUsesDedicatedLocalizedTextBinding()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var button = document
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute("IsVisible")?.Value
+                == "{Binding IsDeviceCredentialUnlockVisible}");
+
+        Assert.Equal("{Binding UnlockWithDevicePinText}", button.Attribute("ToolTip.Tip")?.Value);
+        Assert.Equal("68", button.Attribute("MinHeight")?.Value);
+        Assert.Equal("Stretch", button.Attribute("HorizontalContentAlignment")?.Value);
+        Assert.Equal("Center", button.Attribute("VerticalContentAlignment")?.Value);
+        var buttonText = button
+            .Elements(avalonia + "TextBlock")
+            .Single();
+        Assert.Equal(
+            "{Binding DeviceCredentialUnlockButtonText}",
+            buttonText.Attribute("Text")?.Value);
+        Assert.Equal("Center", buttonText.Attribute("TextAlignment")?.Value);
+        Assert.Equal("Wrap", buttonText.Attribute("TextWrapping")?.Value);
+    }
+
+    [Fact]
     public void LongImports_ShowAnIndeterminateProgressOverlay()
     {
         var document = XDocument.Load(Path.Combine(
@@ -204,6 +233,18 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "Button")
             .Single(element => element.Attribute("Command")?.Value == "{Binding EditCommand}");
         Assert.Equal("1", editGroupButton.Attribute("Grid.Column")?.Value);
+        var groupName = groupButton
+            .Descendants(avalonia + "TextBlock")
+            .Single(element => element.Attribute("Text")?.Value == "{Binding Name}");
+        Assert.Equal("CharacterEllipsis", groupName.Attribute("TextTrimming")?.Value);
+        Assert.Equal("NoWrap", groupName.Attribute("TextWrapping")?.Value);
+
+        var favoriteName = document
+            .Descendants(avalonia + "TextBlock")
+            .Single(element => element.Attribute("Text")?.Value == "{Binding FavoritesText}"
+                && element.Ancestors(avalonia + "ToggleButton").Any());
+        Assert.Equal("CharacterEllipsis", favoriteName.Attribute("TextTrimming")?.Value);
+        Assert.Equal("NoWrap", favoriteName.Attribute("TextWrapping")?.Value);
 
         var groupsStrip = document
             .Descendants(avalonia + "Grid")
@@ -233,9 +274,17 @@ public sealed class MobileAccountInteractionTests
         var accountCountFooter = accountCountSummary.Parent;
         Assert.NotNull(accountCountFooter);
         Assert.Equal("AccountCountFooter", accountCountFooter.Attribute(xaml + "Name")?.Value);
-        Assert.Equal("2", accountCountFooter.Attribute("Grid.Row")?.Value);
-        Assert.Equal("18", accountCountFooter.Attribute("Height")?.Value);
-        Assert.Equal("{Binding IsAccountListVisible}", accountCountFooter.Attribute("IsVisible")?.Value);
+        var accountListFooter = accountCountFooter.Parent;
+        Assert.NotNull(accountListFooter);
+        Assert.Equal("AccountListFooter", accountListFooter.Attribute(xaml + "Name")?.Value);
+        Assert.Equal("2", accountListFooter.Attribute("Grid.Row")?.Value);
+        Assert.Equal("40", accountListFooter.Attribute("Height")?.Value);
+        Assert.Equal("{Binding IsAccountListVisible}", accountListFooter.Attribute("IsVisible")?.Value);
+        var accountListNotification = accountListFooter
+            .Elements()
+            .Single(element => element.Name.LocalName == "NotificationBanner");
+        Assert.Equal("{Binding NotificationText}", accountListNotification.Attribute("Text")?.Value);
+        Assert.Equal("Stretch", accountListNotification.Attribute("VerticalAlignment")?.Value);
         Assert.Equal("Center", accountCountSummary.Attribute("VerticalAlignment")?.Value);
         Assert.Equal("11", accountCountSummary.Attribute("FontSize")?.Value);
         Assert.DoesNotContain(
@@ -309,16 +358,34 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "ListBox")
             .Single(element => element.Attribute(xaml + "Name")?.Value == "GroupAccountPicker");
         Assert.Equal("{Binding GroupEditorAccounts}", accountPicker.Attribute("ItemsSource")?.Value);
-        Assert.Equal("220", accountPicker.Attribute("MaxHeight")?.Value);
+        Assert.Equal("220", accountPicker.Parent?.Attribute("Height")?.Value);
         Assert.Contains(
             accountPicker.Descendants(avalonia + "VirtualizingStackPanel"),
             element => element.Attribute("CacheLength")?.Value == "0.5");
+        var nativeAccountPicker = document
+            .Descendants(avalonia + "ContentControl")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "NativeGroupAccountPickerPresenter");
+        Assert.Same(accountPicker.Parent, nativeAccountPicker.Parent);
+        Assert.Equal("False", nativeAccountPicker.Attribute("IsHitTestVisible")?.Value);
+        Assert.Equal(
+            "{Binding !IsDeleteGroupConfirmationVisible}",
+            nativeAccountPicker.Attribute("IsVisible")?.Value);
         var accountSearch = document
             .Descendants(avalonia + "TextBox")
             .Single(element => element.Attribute(xaml + "Name")?.Value == "GroupAccountSearchBox");
         Assert.Equal(
             "{Binding GroupEditorSearchText, Mode=TwoWay}",
             accountSearch.Attribute("Text")?.Value);
+        var clearGroupSearchButton = accountSearch.Parent?
+            .Elements(avalonia + "Button")
+            .Single();
+        Assert.Equal(
+            "{Binding ClearGroupEditorSearchCommand}",
+            clearGroupSearchButton?.Attribute("Command")?.Value);
+        Assert.Equal(
+            "{Binding HasGroupEditorSearchText}",
+            clearGroupSearchButton?.Attribute("IsVisible")?.Value);
         Assert.Equal("Hidden", accountPicker.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
         Assert.Equal("False", accountPicker.Attribute("ScrollViewer.IsScrollChainingEnabled")?.Value);
         var accountSelection = accountPicker
@@ -333,9 +400,30 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains(
             document.Descendants(avalonia + "Button"),
             element => element.Attribute("Command")?.Value == "{Binding BeginDeleteGroupCommand}");
+        var deleteOverlay = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "GroupDeleteModalOverlay");
+        Assert.Equal("3", deleteOverlay.Attribute("Grid.RowSpan")?.Value);
+        Assert.Equal("102", deleteOverlay.Attribute("Panel.ZIndex")?.Value);
+        Assert.Equal(
+            "{Binding IsDeleteGroupConfirmationVisible}",
+            deleteOverlay.Attribute("IsVisible")?.Value);
+        var deleteDialog = deleteOverlay.Elements(avalonia + "Border").Single();
+        Assert.Null(deleteDialog.Attribute("BorderBrush"));
+        Assert.Null(deleteDialog.Attribute("BorderThickness"));
         Assert.Contains(
-            document.Descendants(avalonia + "Button"),
-            element => element.Attribute("Command")?.Value == "{Binding ConfirmDeleteGroupCommand}");
+            deleteOverlay.Descendants(avalonia + "Button"),
+            element => element.Attribute("Command")?.Value
+                == "{Binding ConfirmDeleteGroupCommand}");
+
+        var noSearchResults = document
+            .Descendants(avalonia + "TextBlock")
+            .Single(element => element.Attribute("IsVisible")?.Value
+                == "{Binding HasNoSearchResults}");
+        Assert.Equal("Center", noSearchResults.Attribute("HorizontalAlignment")?.Value);
+        Assert.Equal("Center", noSearchResults.Attribute("TextAlignment")?.Value);
+        Assert.Equal("0,24,0,0", noSearchResults.Attribute("Margin")?.Value);
     }
 
     [Fact]

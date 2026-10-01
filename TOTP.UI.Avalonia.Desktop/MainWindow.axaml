@@ -213,7 +213,11 @@
                             Classes="icon"
                             Command="{Binding ScanQrCommand}"
                             ToolTip.Tip="{DynamicResource QrScannerSupportedFormats}">
-                            <shared:SymbolIcon Foreground="#E16C6C" IconSize="16" Kind="Camera" />
+                            <shared:SymbolIcon
+                                Margin="0,2,0,0"
+                                Foreground="#E16C6C"
+                                IconSize="16"
+                                Kind="Camera" />
                         </Button>
                         <Button
                             x:Name="AddAccountButton"
@@ -262,17 +266,28 @@
                             <Button
                                 x:Name="ClearSearchButton"
                                 Grid.Column="1"
-                                Width="20"
-                                Height="20"
+                                Width="24"
+                                Height="24"
+                                MinWidth="24"
+                                MinHeight="24"
                                 Margin="0,0,2,0"
                                 Padding="0"
+                                HorizontalContentAlignment="Center"
                                 VerticalAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 automation:AutomationProperties.Name="{DynamicResource ClearSearch}"
                                 Classes="link"
                                 Click="RefocusAccountSearchAfterClear"
                                 Command="{Binding ClearSearchCommand}"
-                                Content="×"
-                                IsVisible="{Binding AccountList.HasSearchText}" />
+                                CornerRadius="12"
+                                IsVisible="{Binding AccountList.HasSearchText}">
+                                <TextBlock
+                                    Margin="0,-1,0,0"
+                                    FontSize="17"
+                                    LineHeight="17"
+                                    Text="×"
+                                    TextAlignment="Center" />
+                            </Button>
                         </Grid>
                         <StackPanel
                             x:Name="ToolbarTrailingActions"
@@ -320,7 +335,7 @@
                                 Click="ToggleAccountSortMenu"
                                 IsVisible="{Binding AccountList.HasMultipleAccounts}"
                                 ToolTip.Tip="{DynamicResource SortAccounts}">
-                                <shared:SymbolIcon IconSize="20" Kind="Sort" />
+                                <shared:SymbolIcon Margin="0,2,0,0" IconSize="20" Kind="Sort" />
                             </Button>
                         </StackPanel>
                     </Grid>
@@ -333,9 +348,10 @@
                         IsVisible="{Binding IsAccountListVisible}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:AccountListViewModel">
-                                <Grid>
+                                <Grid RowDefinitions="*,Auto">
                                     <ScrollViewer
                                         x:Name="AccountPageScrollViewer"
+                                        Grid.Row="0"
                                         HorizontalContentAlignment="Stretch"
                                         HorizontalScrollBarVisibility="Disabled"
                                         VerticalContentAlignment="Top"
@@ -344,8 +360,8 @@
                                             x:Name="AccountPageContent"
                                             Margin="10,8,10,12"
                                             VerticalAlignment="Top"
-                                            Spacing="8">
-                                            <StackPanel IsVisible="{Binding HasAccountNavigationCards}" Spacing="6">
+                                            Spacing="4">
+                                            <StackPanel IsVisible="{Binding ShouldShowAccountNavigationCards}" Spacing="6">
                                                 <Grid ColumnDefinitions="10,*">
                                                     <Button
                                                         x:Name="GroupBackButton"
@@ -395,13 +411,17 @@
                                                                     Command="{Binding ToggleFavoritesFilterCommand}"
                                                                     Foreground="{DynamicResource BrushTextPrimary}"
                                                                     ToolTip.Tip="{DynamicResource FavoriteAccounts}">
-                                                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                                                        <shared:SymbolIcon Foreground="{Binding FavoriteGroupForeground}" IconSize="20" Kind="Favorite" />
-                                                                        <StackPanel>
-                                                                            <TextBlock FontWeight="SemiBold" Text="{DynamicResource FavoriteAccounts}" />
+                                                                    <Grid ColumnDefinitions="20,*" ColumnSpacing="7">
+                                                                        <shared:SymbolIcon Grid.Column="0" Foreground="{Binding FavoriteGroupForeground}" IconSize="20" Kind="Favorite" />
+                                                                        <StackPanel Grid.Column="1">
+                                                                            <TextBlock
+                                                                                FontWeight="SemiBold"
+                                                                                Text="{DynamicResource FavoriteAccounts}"
+                                                                                TextTrimming="CharacterEllipsis"
+                                                                                TextWrapping="NoWrap" />
                                                                             <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
                                                                         </StackPanel>
-                                                                    </StackPanel>
+                                                                    </Grid>
                                                                 </Button>
                                                             </Border>
                                                             <ItemsControl ItemsSource="{Binding Groups}">
@@ -440,16 +460,21 @@
                                                                         <Button
                                                                             Classes="group-card-hit-target"
                                                                             Command="{Binding SelectCommand}">
-                                                                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                                                            <Grid ColumnDefinitions="20,*" ColumnSpacing="7">
                                                                                 <shared:SymbolIcon
+                                                                                    Grid.Column="0"
                                                                                     Foreground="{Binding Foreground}"
                                                                                     IconSize="20"
                                                                                     Kind="Folder" />
-                                                                                <StackPanel>
-                                                                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                                                                <StackPanel Grid.Column="1">
+                                                                                    <TextBlock
+                                                                                        FontWeight="SemiBold"
+                                                                                        Text="{Binding Name}"
+                                                                                        TextTrimming="CharacterEllipsis"
+                                                                                        TextWrapping="NoWrap" />
                                                                                     <TextBlock FontSize="11" Text="{Binding AccountCount}" />
                                                                                 </StackPanel>
-                                                                            </StackPanel>
+                                                                            </Grid>
                                                                         </Button>
                                                                     </Border>
                                                                 </DataTemplate>
@@ -459,14 +484,6 @@
                                                     </ScrollViewer>
                                                 </Grid>
                                             </StackPanel>
-                                            <Grid>
-                                                <TextBlock
-                                                    VerticalAlignment="Center"
-                                                    Classes="secondary"
-                                                    FontSize="11"
-                                                    IsVisible="{Binding HasActiveAccountFilter}"
-                                                    Text="{Binding SearchResultSummary}" />
-                                            </Grid>
                                             <Grid x:Name="AccountListRegion">
                                                 <controls:ContextPreservingAccountListBox
                                                     x:Name="AccountsListBox"
@@ -670,8 +687,28 @@
                                         </StackPanel>
                                     </ScrollViewer>
 
+                                    <Border
+                                        x:Name="AccountCountFooter"
+                                        Grid.Row="1"
+                                        Height="22"
+                                        Background="{DynamicResource BrushWindowBackground}"
+                                        BorderBrush="{DynamicResource BrushBorder}"
+                                        BorderThickness="0,1,0,0"
+                                        IsVisible="{Binding HasAnyAccounts}">
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Classes="secondary"
+                                            FontSize="10"
+                                            Text="{Binding SearchResultSummary}"
+                                            TextAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap" />
+                                    </Border>
+
                                     <shared:NotificationBanner
                                         x:Name="AccountMessageToast"
+                                        Grid.Row="0"
                                         ZIndex="10"
                                         Margin="16,16,16,18"
                                         Classes="toast"
@@ -683,6 +720,7 @@
 
                                     <Border
                                         x:Name="AccountEditorFlyout"
+                                        Grid.RowSpan="2"
                                         ZIndex="20"
                                         Margin="0"
                                         Padding="16"
@@ -825,6 +863,7 @@
 
                                     <Border
                                         x:Name="GroupEditorFlyout"
+                                        Grid.RowSpan="2"
                                         ZIndex="21"
                                         Padding="16"
                                         HorizontalAlignment="Stretch"
@@ -922,15 +961,21 @@
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate x:DataType="presentation:GroupAccountSelectionViewModel">
                                                                     <Grid
+                                                                        x:Name="GroupAccountSelectionRow"
+                                                                        MinHeight="44"
                                                                         Margin="4,3"
                                                                         ColumnDefinitions="Auto,Auto,*"
                                                                         ColumnSpacing="8">
                                                                         <CheckBox
+                                                                            x:Name="GroupAccountSelectionCheckBox"
                                                                             Grid.Column="0"
+                                                                            Margin="0,0,8,0"
                                                                             VerticalAlignment="Center"
                                                                             IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                                         <shared:BrandTile
+                                                                            x:Name="GroupAccountSelectionBrand"
                                                                             Grid.Column="1"
+                                                                            VerticalAlignment="Center"
                                                                             IsVisible="{Binding ShowIssuerLogo}"
                                                                             IconData="{Binding Brand.IconData}"
                                                                             Initials="{Binding Brand.Initials}"

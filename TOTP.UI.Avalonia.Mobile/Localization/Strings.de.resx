@@ -203,6 +203,7 @@
   <data name="UnlockWithPassword" xml:space="preserve"><value>Masterpasswort</value></data>
   <data name="UnlockWithBiometrics" xml:space="preserve"><value>Starke Biometrie</value></data>
   <data name="UnlockWithDevicePin" xml:space="preserve"><value>Gerätesperre (PIN, Muster oder Passwort)</value></data>
+  <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Gerätesperre&#xA;(PIN, Muster oder Passwort)</value></data>
   <data name="DevicePinUnavailable" xml:space="preserve"><value>Es ist keine sichere Gerätesperre (PIN, Muster oder Passwort) eingerichtet.</value></data>
   <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Geben Sie Ihr Masterpasswort ein, um die Änderung der Entsperrmethode zu autorisieren.</value></data>
   <data name="UnlockMethodChanged" xml:space="preserve"><value>Entsperrmethode geändert.</value></data>

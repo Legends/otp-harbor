@@ -182,13 +182,12 @@ public sealed class SettingsPageViewModelTests
         {
             LockOnMinimize = false,
             LockOnSessionLock = false,
-            ClearClipboardEnabled = true,
-            ClearClipboardSeconds = 20,
             QrPreviewScaleFactor = 2.5m,
             OpenExportFileAfterExport = false,
             MinimumLogLevel = AppLogLevel.Warning
         };
         sut.SelectedAutoLock = AutoLock(sut, TimeSpan.FromMinutes(5));
+        sut.SelectedClipboardLifetime = ClipboardLifetime(sut, 20);
         sut.SelectedInterfaceScale = Assert.Single(
             sut.InterfaceScales,
             option => option.Percent == 175);
@@ -204,6 +203,25 @@ public sealed class SettingsPageViewModelTests
         Assert.Equal(175, current.InterfaceScalePercent);
         Assert.False(current.OpenExportFileAfterExport);
         Assert.Equal(AppLogLevel.Warning, current.MinimumLogLevel);
+    }
+
+    [Fact]
+    public void ClipboardLifetime_UsesRequiredFixedValuesAndNormalizesLegacySettings()
+    {
+        var current = new AppSettings
+        {
+            ClearClipboardEnabled = false,
+            ClearClipboardSeconds = 12
+        };
+        var settings = CreateSettings(current);
+
+        using var sut = new SettingsPageViewModel(settings.Object);
+
+        Assert.Equal(
+            [5, 10, 15, 20, 30, 60],
+            sut.ClipboardLifetimeOptions.Select(option => option.Seconds));
+        Assert.Equal(10, sut.SelectedClipboardLifetime?.Seconds);
+        settings.Verify(value => value.SaveAsync(), Times.Never);
     }
 
 
@@ -439,7 +457,7 @@ public sealed class SettingsPageViewModelTests
             autoSaveDelay: TimeSpan.FromMilliseconds(25));
 
         sut.SelectedAutoLock = AutoLock(sut, TimeSpan.FromSeconds(30));
-        sut.ClearClipboardSeconds = 20;
+        sut.SelectedClipboardLifetime = ClipboardLifetime(sut, 20);
         sut.OpenExportFileAfterExport = false;
         await saved.Task.WaitAsync(
             TimeSpan.FromSeconds(1),
@@ -463,4 +481,9 @@ public sealed class SettingsPageViewModelTests
         SettingsPageViewModel viewModel,
         TimeSpan timeout) =>
         Assert.Single(viewModel.AutoLockOptions, option => option.Timeout == timeout);
+
+    private static SettingsPageViewModel.ClipboardLifetimeOption ClipboardLifetime(
+        SettingsPageViewModel viewModel,
+        int seconds) =>
+        Assert.Single(viewModel.ClipboardLifetimeOptions, option => option.Seconds == seconds);
 }

@@ -13,6 +13,7 @@ public enum SymbolIconKind
     Favorite,
     Folder,
     FolderAdd,
+    Information,
     Lock,
     QrCode,
     Reveal,

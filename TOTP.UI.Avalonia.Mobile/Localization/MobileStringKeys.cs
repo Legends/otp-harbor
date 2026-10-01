@@ -205,6 +205,7 @@ public static class MobileStringKeys
     public const string UnlockWithPassword = nameof(UnlockWithPassword);
     public const string UnlockWithBiometrics = nameof(UnlockWithBiometrics);
     public const string UnlockWithDevicePin = nameof(UnlockWithDevicePin);
+    public const string DeviceCredentialUnlockButton = nameof(DeviceCredentialUnlockButton);
     public const string DevicePinUnavailable = nameof(DevicePinUnavailable);
     public const string UnlockMethodPasswordPrompt = nameof(UnlockMethodPasswordPrompt);
     public const string UnlockMethodChanged = nameof(UnlockMethodChanged);
@@ -427,6 +428,7 @@ public static class MobileStringKeys
         UnlockWithPassword,
         UnlockWithBiometrics,
         UnlockWithDevicePin,
+        DeviceCredentialUnlockButton,
         DevicePinUnavailable,
         UnlockMethodPasswordPrompt,
         UnlockMethodChanged,

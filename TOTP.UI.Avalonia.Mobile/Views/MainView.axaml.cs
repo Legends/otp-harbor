@@ -58,8 +58,20 @@ public partial class MainView : UserControl
         NativeAccountGroupsPresenter.IsHitTestVisible = true;
     }
 
+    public void UseNativeGroupAccountPicker(Control nativeGroupAccountPicker)
+    {
+        ArgumentNullException.ThrowIfNull(nativeGroupAccountPicker);
+        GroupAccountPicker.IsVisible = false;
+        GroupAccountPicker.ItemsSource = null;
+        NativeGroupAccountPickerPresenter.Content = nativeGroupAccountPicker;
+        NativeGroupAccountPickerPresenter.IsHitTestVisible = true;
+    }
+
     private void RefocusAccountSearchAfterClear(object? sender, RoutedEventArgs e) =>
         PostInputFocus(AccountSearchBox);
+
+    private void RefocusGroupAccountSearchAfterClear(object? sender, RoutedEventArgs e) =>
+        PostInputFocus(GroupAccountSearchBox);
 
     private void RefocusAccountPeriodAfterClear(object? sender, RoutedEventArgs e)
     {

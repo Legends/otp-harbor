@@ -24,6 +24,7 @@ public class MainActivity : AvaloniaMainActivity
     private MobileShellViewModel? _screenCapturePolicy;
 
     internal event Action<int, Result, Intent?>? ActivityResultReceived;
+    internal bool IsInternalQrScannerActive { get; set; }
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
@@ -40,7 +41,9 @@ public class MainActivity : AvaloniaMainActivity
 
     protected override void OnStop()
     {
-        if (!IsChangingConfigurations && Application is OtpHarborApplication host)
+        if (!IsChangingConfigurations &&
+            !IsInternalQrScannerActive &&
+            Application is OtpHarborApplication host)
             host.NotifyEnteredBackground(IsDeviceUnavailable());
         base.OnStop();
     }

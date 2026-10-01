@@ -26,6 +26,7 @@ using TOTP.Avalonia.Desktop.Dialogs;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Controls;
 using TOTP.Avalonia.Desktop.Presentation;
+using TOTP.Avalonia.Desktop.Presentation.Dialogs;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
@@ -424,7 +425,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void AccountRowHighlightContainer_PadsContentInsideHighlight()
+    public void AccountRowHighlightContainer_ReservesOutlineWithoutMovingContent()
     {
         var text = new TextBlock { Text = "new account" };
         var highlight = new Border { Child = text };
@@ -437,8 +438,8 @@ public sealed class MainWindowSmokeTests
             window.Show();
             window.UpdateLayout();
 
-            Assert.Equal(new Thickness(8, 5), highlight.Padding);
-            Assert.Equal(new Thickness(0), highlight.BorderThickness);
+            Assert.Equal(new Thickness(6, 3), highlight.Padding);
+            Assert.Equal(new Thickness(2), highlight.BorderThickness);
             Assert.True(text.Bounds.X >= 8);
             Assert.True(text.Bounds.Y >= 5);
         }
@@ -817,6 +818,46 @@ public sealed class MainWindowSmokeTests
         Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canDelete, isTextEditing]));
     }
 
+    [AvaloniaFact]
+    public async Task AccountList_RevealScrollsImportedRowWithoutSelectingIt()
+    {
+        var accounts = Enumerable.Range(0, 50)
+            .Select(index => new AccountListItemViewModel(
+                Guid.NewGuid(),
+                $"Issuer {index:00}",
+                $"account-{index:00}"))
+            .ToArray();
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 220,
+            Height = 120,
+            ItemsSource = accounts
+        };
+        var window = new Window { Width = 260, Height = 160, Content = list };
+
+        try
+        {
+            window.Show();
+            list.ApplyTemplate();
+            window.UpdateLayout();
+
+            list.RevealAccount(accounts[^1]);
+            await Dispatcher.UIThread.InvokeAsync(
+                static () => { },
+                DispatcherPriority.Loaded);
+            window.UpdateLayout();
+
+            Assert.Null(list.SelectedItem);
+            Assert.Contains(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, accounts[^1]));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [Theory]
     [InlineData(Key.Escape, true, true, true)]
     [InlineData(Key.Escape, true, false, false)]
@@ -1091,28 +1132,23 @@ public sealed class MainWindowSmokeTests
                 notification.GetVisualDescendants().OfType<Border>(),
                 border => border.Name == "PART_Banner");
             Assert.Equal(new Thickness(1), banner.BorderThickness);
-            Assert.Equal(new CornerRadius(14), banner.CornerRadius);
-            Assert.NotEqual(default, banner.BoxShadow);
-            var brandIcon = Assert.Single(
+            Assert.Equal(new CornerRadius(9), banner.CornerRadius);
+            Assert.Equal(default, banner.BoxShadow);
+            var severityIcon = Assert.Single(
                 notification.GetVisualDescendants().OfType<SymbolIcon>(),
-                icon => icon.Kind == SymbolIconKind.Lock);
-            Assert.Equal(13, brandIcon.IconSize);
-            var appTitle = Assert.Single(
+                icon => icon.Kind == SymbolIconKind.Information);
+            Assert.Equal(16, severityIcon.IconSize);
+            var message = Assert.Single(
                 notification.GetVisualDescendants().OfType<TextBlock>(),
-                textBlock => Equals(
-                    textBlock.Text,
-                    Application.Current!.Resources[AvaloniaStringKeys.AppTitle]));
-            Assert.Equal(FontWeight.SemiBold, appTitle.FontWeight);
-            var severityIndicator = Assert.Single(
-                notification.GetVisualDescendants().OfType<Ellipse>(),
-                ellipse => ellipse.Name == "PART_SeverityIndicator");
+                textBlock => textBlock.Text == "Synthetic account saved");
+            Assert.Equal(FontWeight.Normal, message.FontWeight);
             Assert.True(notification.TryFindResource(
                 "BrushSuccess",
                 ThemeVariant.Dark,
                 out var successBrush));
             Assert.Equal(
                 Assert.IsType<SolidColorBrush>(successBrush).Color,
-                Assert.IsType<SolidColorBrush>(severityIndicator.Fill).Color);
+                Assert.IsType<SolidColorBrush>(severityIcon.Foreground).Color);
         }
         finally
         {
@@ -1204,6 +1240,12 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             Assert.Equal(560, window.Width);
             Assert.Equal(420, window.Height);
+            var instructionIcon = Assert.Single(
+                window.GetVisualDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Information);
+            Assert.Equal(16, instructionIcon.IconSize);
+            var instructionLayout = Assert.IsType<Grid>(instructionIcon.Parent);
+            Assert.Equal(2, instructionLayout.ColumnDefinitions.Count);
         }
         finally
         {
@@ -1269,6 +1311,12 @@ public sealed class MainWindowSmokeTests
             window.Show();
 
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Equal(WindowStartupLocation.CenterOwner, window.WindowStartupLocation);
+            Assert.Equal(SizeToContent.WidthAndHeight, window.SizeToContent);
+            Assert.False(window.CanResize);
+            Assert.False(window.ShowInTaskbar);
+            Assert.Equal(460, window.Width);
+            Assert.Equal(360, window.MinWidth);
             Assert.Equal(
                 Color.Parse("#192B52"),
                 Assert.IsType<SolidColorBrush>(window.Background).Color);
@@ -1303,6 +1351,36 @@ public sealed class MainWindowSmokeTests
         {
             foreach (var window in windows)
                 window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void DestructiveConfirmationDialog_LeavesMarginsInsideMinimumMainWindowWidth()
+    {
+        var window = new ConfirmationDialogWindow
+        {
+            DataContext = new ConfirmationDialogViewModel(new ConfirmationDialogRequest(
+                "Delete account",
+                "Delete this account?",
+                NotificationSeverity.Warning,
+                "Delete",
+                "Cancel",
+                IsDestructive: true))
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Contains("destructive", window.Classes);
+            Assert.Equal(320, window.Width);
+            Assert.Equal(300, window.MinWidth);
+            Assert.Equal(WindowStartupLocation.CenterOwner, window.WindowStartupLocation);
+        }
+        finally
+        {
+            window.Close();
         }
     }
 
@@ -1495,16 +1573,31 @@ public sealed class MainWindowSmokeTests
             AssertToolbarAutomationName(window, "ManageGroupsButton", AvaloniaStringKeys.CreateGroup);
             var manageGroupsButton = window.FindControl<Button>("ManageGroupsButton")!;
             var toggleSearchButton = window.FindControl<Button>("ToggleSearchButton")!;
+            var clearSearchButton = window.FindControl<Button>("ClearSearchButton")!;
             Assert.Equal(2, Grid.GetColumn(manageGroupsButton));
             Assert.Equal(3, Grid.GetColumn(toggleSearchButton));
             Assert.Equal(
                 SymbolIconKind.FolderAdd,
                 Assert.IsType<SymbolIcon>(manageGroupsButton.Content).Kind);
             AssertToolbarAutomationName(window, "ClearSearchButton", AvaloniaStringKeys.ClearSearch);
+            Assert.Equal(24, clearSearchButton.Width);
+            Assert.Equal(24, clearSearchButton.Height);
+            Assert.Equal(24, clearSearchButton.MinWidth);
+            Assert.Equal(24, clearSearchButton.MinHeight);
+            Assert.Equal(HorizontalAlignment.Center, clearSearchButton.HorizontalContentAlignment);
+            Assert.Equal(VerticalAlignment.Center, clearSearchButton.VerticalContentAlignment);
+            Assert.Equal(new CornerRadius(12), clearSearchButton.CornerRadius);
             AssertToolbarAutomationName(window, "OpenSettingsButton", AvaloniaStringKeys.Settings);
             AssertToolbarAutomationName(window, "AccountSortButton", AvaloniaStringKeys.SortAccounts);
+            var scanButton = window.FindControl<Button>("ScanQrButton")!;
             var settingsButton = window.FindControl<Button>("OpenSettingsButton")!;
             var sortButton = window.FindControl<Button>("AccountSortButton")!;
+            Assert.Equal(
+                new Thickness(0, 2, 0, 0),
+                Assert.IsType<SymbolIcon>(scanButton.Content).Margin);
+            Assert.Equal(
+                new Thickness(0, 2, 0, 0),
+                Assert.IsType<SymbolIcon>(sortButton.Content).Margin);
             var trailingActions = window.FindControl<StackPanel>("ToolbarTrailingActions")!;
             Assert.Equal(4, trailingActions.Spacing);
             Assert.Same(trailingActions, languageSelector.Parent);
@@ -2257,6 +2350,14 @@ public sealed class MainWindowSmokeTests
                 TimeSpan.FromMinutes(10),
                 Assert.IsType<SettingsPageViewModel.AutoLockOption>(
                     autoLockSelector.SelectedItem).Timeout);
+            var clipboardLifetimeSelector = Assert.Single(
+                behaviorSettings.GetVisualDescendants().OfType<ComboBox>(),
+                control => control.Name == "ClipboardLifetimeSelector");
+            Assert.Equal(6, clipboardLifetimeSelector.ItemCount);
+            Assert.Equal(
+                [5, 10, 15, 20, 30, 60],
+                settingsPage.ClipboardLifetimeOptions.Select(option => option.Seconds));
+            Assert.Empty(behaviorSettings.GetVisualDescendants().OfType<NumericUpDown>());
         }
         finally
         {
