@@ -110,6 +110,35 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AccountSearch_ClearButtonUsesCenteredVectorIcon()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var searchBox = document
+            .Descendants(avalonia + "TextBox")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountSearchBox");
+        var clearButton = searchBox.Parent?
+            .Elements(avalonia + "Button")
+            .Single();
+
+        Assert.NotNull(clearButton);
+        Assert.Equal("{Binding ClearSearchCommand}", clearButton.Attribute("Command")?.Value);
+        Assert.Equal("Center", clearButton.Attribute("HorizontalContentAlignment")?.Value);
+        Assert.Equal("Center", clearButton.Attribute("VerticalContentAlignment")?.Value);
+        var closeIcon = clearButton
+            .Descendants()
+            .Single(element => element.Name.LocalName == "SymbolIcon");
+        Assert.Equal("Close", closeIcon.Attribute("Kind")?.Value);
+        Assert.Equal("18", closeIcon.Attribute("IconSize")?.Value);
+    }
+
+    [Fact]
     public void AccountList_BuffersVirtualizedRowsForSmoothMobileScrolling()
     {
         var document = XDocument.Load(Path.Combine(

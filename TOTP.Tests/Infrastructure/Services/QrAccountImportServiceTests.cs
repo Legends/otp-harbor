@@ -207,7 +207,8 @@ public sealed class QrAccountImportServiceTests
                     "Work")
             ],
             batchSize: 2,
-            batchIndex: 0);
+            batchIndex: 0,
+            version: 2);
 
         var result = await sut.ImportAsync(
             payload,
@@ -364,12 +365,13 @@ public sealed class QrAccountImportServiceTests
         IReadOnlyList<MigrationAccount> entries,
         int batchSize = 1,
         int batchIndex = 0,
-        int batchId = 42)
+        int batchId = 42,
+        int version = 1)
     {
         var payload = new List<byte>();
         foreach (var entry in entries)
             WriteBytes(payload, 1, EncodeAccount(entry));
-        WriteVarintField(payload, 2, 1);
+        WriteVarintField(payload, 2, version);
         WriteVarintField(payload, 3, batchSize);
         WriteVarintField(payload, 4, batchIndex);
         WriteVarintField(payload, 5, batchId);

@@ -151,6 +151,12 @@ public sealed class MobileShellViewModel :
     private MobileAccountItem? _selectedAccount;
     private MobileAccountRevealRequest? _accountRevealRequest;
     private int _accountRevealRevision;
+    private MobileAccountGroupRevealRequest? _groupRevealRequest;
+    private int _groupRevealRevision;
+    private MobileResumeTarget _resumeTarget;
+    private Guid? _resumeEntityId;
+    private Guid? _resumeSelectedGroupId;
+    private bool _resumeFavoritesFilter;
     private bool _isEditorVisible;
     private bool _isDeleteConfirmationVisible;
     private Guid? _pendingDeleteAccountId;
@@ -781,6 +787,11 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(HasActiveAccountFilter));
             _clearSearchCommand.NotifyCanExecuteChanged();
             ApplyAccountFilter();
+            if (_searchText.Trim().Length > 0 && Accounts.Count > 0)
+                RequestAccountReveal(
+                    Accounts[0].Id,
+                    highlight: false,
+                    alignToTop: true);
         }
     }
 
@@ -963,6 +974,12 @@ public sealed class MobileShellViewModel :
     {
         get => _accountRevealRequest;
         private set => SetField(ref _accountRevealRequest, value);
+    }
+
+    public MobileAccountGroupRevealRequest? GroupRevealRequest
+    {
+        get => _groupRevealRequest;
+        private set => SetField(ref _groupRevealRequest, value);
     }
 
     public bool IsGroupEditorVisible
@@ -1479,6 +1496,7 @@ public sealed class MobileShellViewModel :
 
         var password = UnlockPassword;
         UnlockPassword = string.Empty;
+        var unlocked = false;
         IsBusy = true;
         try
         {
@@ -1493,6 +1511,7 @@ public sealed class MobileShellViewModel :
 
             SetScreen(MobileScreen.Accounts);
             await LoadAccountsAsync();
+            unlocked = true;
         }
         catch (Exception)
         {
@@ -1503,12 +1522,15 @@ public sealed class MobileShellViewModel :
             password = string.Empty;
             IsBusy = false;
         }
+
+        if (unlocked) await RestorePostUnlockNavigationAsync();
     }
 
     public async Task BiometricUnlockAsync()
     {
         if (!IsBiometricUnlockVisible || IsBusy) return;
 
+        var unlocked = false;
         IsBusy = true;
         ClearNotification();
         try
@@ -1519,20 +1541,21 @@ public sealed class MobileShellViewModel :
                 ClearNotification();
                 SetScreen(MobileScreen.Accounts);
                 await LoadAccountsAsync();
-                return;
+                unlocked = true;
             }
-
-            if (result == AuthorizationResult.Cancelled) return;
-            SetError(result switch
+            else if (result != AuthorizationResult.Cancelled)
             {
-                AuthorizationResult.PasswordRequired =>
-                    MobileStringKeys.BiometricRecoveryRequired,
-                AuthorizationResult.TooManyAttempts =>
-                    MobileStringKeys.BiometricRetriesExhausted,
-                AuthorizationResult.DisabledByPolicy =>
-                    MobileStringKeys.BiometricDisabledByPolicy,
-                _ => MobileStringKeys.BiometricUnlockFailed
-            });
+                SetError(result switch
+                {
+                    AuthorizationResult.PasswordRequired =>
+                        MobileStringKeys.BiometricRecoveryRequired,
+                    AuthorizationResult.TooManyAttempts =>
+                        MobileStringKeys.BiometricRetriesExhausted,
+                    AuthorizationResult.DisabledByPolicy =>
+                        MobileStringKeys.BiometricDisabledByPolicy,
+                    _ => MobileStringKeys.BiometricUnlockFailed
+                });
+            }
         }
         catch (Exception)
         {
@@ -1542,6 +1565,8 @@ public sealed class MobileShellViewModel :
         {
             IsBusy = false;
         }
+
+        if (unlocked) await RestorePostUnlockNavigationAsync();
     }
 
     public Task BeginBiometricEnrollmentAsync()
@@ -1977,15 +2002,6 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            if (validation.Kind == QrPayloadKind.GoogleAuthenticatorMigration
-                && !await ConfirmQrMigrationAsync(validation.AccountCount, operation.Token))
-            {
-                SetNotification(
-                    Get(MobileStringKeys.QrImportCancelled),
-                    NotificationSeverity.Information);
-                return;
-            }
-
             var imported = await _qrImport.ImportAsync(
                 payload,
                 ResolveQrConflictAsync,
@@ -2006,7 +2022,9 @@ public sealed class MobileShellViewModel :
                     SetSuccess(MobileStringKeys.QrAccountAdded);
                     break;
                 case QrAccountImportStatus.Updated:
+                    ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
+                    RequestAccountReveal(outcome.AccountId);
                     SetSuccess(MobileStringKeys.QrAccountUpdated);
                     break;
                 case QrAccountImportStatus.KeptBoth:
@@ -2016,7 +2034,9 @@ public sealed class MobileShellViewModel :
                     SetSuccess(MobileStringKeys.QrAccountKeptBoth);
                     break;
                 case QrAccountImportStatus.DuplicateUnchanged:
+                    ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
+                    RequestAccountReveal(outcome.AccountId);
                     SetNotification(
                         Get(MobileStringKeys.QrAccountDuplicate),
                         NotificationSeverity.Information);
@@ -2627,6 +2647,7 @@ public sealed class MobileShellViewModel :
             IsGroupEditorVisible = false;
             RefreshGroups();
             ApplyAccountFilter();
+            RequestGroupReveal(group.Id);
             StartCodeRefresh();
         }
         catch (Exception)
@@ -2702,7 +2723,6 @@ public sealed class MobileShellViewModel :
         if (!CanEditAccounts()) return Task.CompletedTask;
         ClearEditor();
         IsDeleteConfirmationVisible = false;
-        CancelCodeRefresh();
         IsEditorVisible = true;
         ClearNotification();
         return Task.CompletedTask;
@@ -2719,7 +2739,6 @@ public sealed class MobileShellViewModel :
         EditorPeriodSeconds = SelectedAccount.ConfiguredPeriodSeconds;
         EditorIsFavorite = SelectedAccount.IsFavorite;
         IsDeleteConfirmationVisible = false;
-        CancelCodeRefresh();
         IsEditorVisible = true;
         ClearNotification();
         return Task.CompletedTask;
@@ -2807,6 +2826,7 @@ public sealed class MobileShellViewModel :
                 secret,
                 accountName.Length == 0 ? null : accountName,
                 periodSeconds,
+                group: existing?.Group,
                 isFavorite: EditorIsFavorite);
             var saved = existing is null
                 ? await _accountManager.AddNewAsync(updated)
@@ -2818,9 +2838,18 @@ public sealed class MobileShellViewModel :
             }
 
             var savedId = updated.ID;
+            var refreshCode = existing is null
+                || !string.Equals(existing.Secret, updated.Secret, StringComparison.Ordinal)
+                || existing.PeriodSeconds != updated.PeriodSeconds;
+            ApplySavedAccount(updated);
+            if (refreshCode)
+                await RefreshSavedAccountCodeAsync(savedId);
+#if DEBUG
+            TraceCodeRefresh(refreshCode ? "save-targeted-refresh" : "save-metadata-only");
+#endif
             ClearEditor();
             IsEditorVisible = false;
-            await LoadAccountsAsync(savedId);
+            RequestAccountReveal(savedId);
             SetSuccess(MobileStringKeys.AccountSaved);
         }
         catch (Exception)
@@ -2841,7 +2870,6 @@ public sealed class MobileShellViewModel :
         ClearEditor();
         IsEditorVisible = false;
         ClearNotification();
-        StartCodeRefresh();
         return Task.CompletedTask;
     }
 
@@ -3095,23 +3123,44 @@ public sealed class MobileShellViewModel :
         }
 
         _hasLoadedAccounts = true;
-        _allAccounts.Clear();
+        var existingAccounts = _allAccounts.ToDictionary(account => account.Id);
+        var refreshedAccounts = new List<MobileAccountItem>(loaded.Value.Count);
         foreach (var account in loaded.Value)
         {
             AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
-            _allAccounts.Add(new MobileAccountItem(
-                account.ID,
-                account.Issuer,
-                account.AccountName ?? string.Empty,
-                account.PeriodSeconds,
-                FormatCustomPeriod(account.PeriodSeconds),
-                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
-                account.IsFavorite,
-                AddToFavoritesText,
-                RemoveFromFavoritesText,
-                group));
-            _allAccounts[^1].UpdateLogoVisibility(ShowIssuerLogo);
+            var accountName = account.AccountName ?? string.Empty;
+            MobileAccountItem item;
+            if (existingAccounts.TryGetValue(account.ID, out var existing)
+                && string.Equals(existing.Issuer, account.Issuer, StringComparison.Ordinal)
+                && string.Equals(existing.AccountName, accountName, StringComparison.Ordinal)
+                && existing.ConfiguredPeriodSeconds == account.PeriodSeconds)
+            {
+                item = existing;
+                item.UpdateCustomPeriodLabel(FormatCustomPeriod(account.PeriodSeconds));
+                item.UpdateFavorite(account.IsFavorite);
+                item.UpdateFavoriteLocalization(AddToFavoritesText, RemoveFromFavoritesText);
+                item.UpdateGroup(group);
+            }
+            else
+            {
+                item = new MobileAccountItem(
+                    account.ID,
+                    account.Issuer,
+                    accountName,
+                    account.PeriodSeconds,
+                    FormatCustomPeriod(account.PeriodSeconds),
+                    _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
+                    account.IsFavorite,
+                    AddToFavoritesText,
+                    RemoveFromFavoritesText,
+                    group);
+            }
+
+            item.UpdateLogoVisibility(ShowIssuerLogo);
+            refreshedAccounts.Add(item);
         }
+        _allAccounts.Clear();
+        _allAccounts.AddRange(refreshedAccounts);
 
         if (_showFavoritesOnly
             && selectedId.HasValue
@@ -3123,6 +3172,62 @@ public sealed class MobileShellViewModel :
         RefreshGroups();
         ApplyAccountFilter(selectedId);
         StartCodeRefresh();
+    }
+
+    private void ApplySavedAccount(Account account)
+    {
+        AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
+        var accountName = account.AccountName ?? string.Empty;
+        var item = _allAccounts.FirstOrDefault(value => value.Id == account.ID);
+        var previousIssuer = item?.Issuer;
+        if (item is null)
+        {
+            item = new MobileAccountItem(
+                account.ID,
+                account.Issuer,
+                accountName,
+                account.PeriodSeconds,
+                FormatCustomPeriod(account.PeriodSeconds),
+                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
+                account.IsFavorite,
+                AddToFavoritesText,
+                RemoveFromFavoritesText,
+                group);
+            item.UpdateLogoVisibility(ShowIssuerLogo);
+            _allAccounts.Add(item);
+        }
+        else
+        {
+            item.UpdateAccountDetails(
+                account.Issuer,
+                accountName,
+                account.PeriodSeconds,
+                FormatCustomPeriod(account.PeriodSeconds),
+                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName));
+            item.UpdateFavorite(account.IsFavorite);
+            item.UpdateGroup(group);
+        }
+
+        if (previousIssuer is null
+            || !string.Equals(previousIssuer, account.Issuer, StringComparison.OrdinalIgnoreCase))
+        {
+            RepositionAccountByIssuer(item);
+        }
+        if (_showFavoritesOnly && !account.IsFavorite)
+            _showFavoritesOnly = false;
+        RefreshFavoriteState();
+        ApplyAccountFilter(account.ID);
+    }
+
+    private void RepositionAccountByIssuer(MobileAccountItem item)
+    {
+        _allAccounts.Remove(item);
+        var insertionIndex = _allAccounts.FindLastIndex(candidate =>
+            string.Compare(
+                candidate.Issuer,
+                item.Issuer,
+                StringComparison.OrdinalIgnoreCase) <= 0) + 1;
+        _allAccounts.Insert(insertionIndex, item);
     }
 
     private void ApplyAccountFilter(Guid? preferredSelection = null)
@@ -3137,10 +3242,17 @@ public sealed class MobileShellViewModel :
                 || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
                 || (account.Group?.Name.Contains(
                     query,
-                    StringComparison.CurrentCultureIgnoreCase) ?? false)));
+                    StringComparison.CurrentCultureIgnoreCase) ?? false)))
+            .ToArray();
 
-        _realizedAccountIds.Clear();
-        _accounts.ReplaceAll(matches);
+        var visibleSequenceChanged = _accounts.Count != matches.Length;
+        for (var index = 0; !visibleSequenceChanged && index < matches.Length; index++)
+            visibleSequenceChanged = !ReferenceEquals(_accounts[index], matches[index]);
+        if (visibleSequenceChanged)
+        {
+            _realizedAccountIds.Clear();
+            _accounts.ReplaceAll(matches);
+        }
 
         OnPropertyChanged(nameof(HasAccounts));
         OnPropertyChanged(nameof(IsNativeAccountListVisible));
@@ -3237,33 +3349,41 @@ public sealed class MobileShellViewModel :
         }
     }
 
-    private void StartCodeRefresh()
+    private void StartCodeRefresh(Guid? initialAccountId = null)
     {
         StopCodeRefresh();
         if (_allAccounts.Count == 0 || !IsAccountListVisible) return;
 
         var refreshAccounts = _allAccounts.ToArray();
         if (refreshAccounts.Length == 0) return;
-        foreach (var account in refreshAccounts)
+        var initialAccounts = initialAccountId.HasValue
+            ? refreshAccounts.Where(account => account.Id == initialAccountId.Value).ToArray()
+            : refreshAccounts;
+        foreach (var account in initialAccounts)
             account.BeginCodeRefresh(ShouldNotifyCodeBindings(account));
 
         var lifetime = new CancellationTokenSource();
         _codeLifetime = lifetime;
-        _ = RunCodeRefreshAsync(refreshAccounts, lifetime);
+#if DEBUG
+        TraceCodeRefresh($"loop-start total={refreshAccounts.Length} initial={initialAccounts.Length}");
+#endif
+        _ = RunCodeRefreshAsync(initialAccounts, lifetime);
     }
 
     private async Task RunCodeRefreshAsync(
-        MobileAccountItem[] refreshAccounts,
+        MobileAccountItem[] initialAccounts,
         CancellationTokenSource lifetime)
     {
         try
         {
-            if (!await RefreshAccountCodesAsync(refreshAccounts, lifetime.Token)) return;
-            var expiringAccounts = new List<MobileAccountItem>(refreshAccounts.Length);
+            if (initialAccounts.Length > 0)
+                await RefreshAccountCodesAsync(initialAccounts, lifetime.Token);
+            var expiringAccounts = new List<MobileAccountItem>(_allAccounts.Count);
 
             while (!lifetime.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), lifetime.Token);
+                var refreshAccounts = _allAccounts.ToArray();
                 expiringAccounts.Clear();
                 foreach (var account in refreshAccounts)
                 {
@@ -3273,11 +3393,8 @@ public sealed class MobileShellViewModel :
                         account.Tick(notifyBindings: ShouldNotifyCodeBindings(account));
                 }
 
-                if (expiringAccounts.Count > 0
-                    && !await RefreshAccountCodesAsync(expiringAccounts, lifetime.Token))
-                {
-                    return;
-                }
+                if (expiringAccounts.Count > 0)
+                    await RefreshAccountCodesAsync(expiringAccounts, lifetime.Token);
             }
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
@@ -3296,11 +3413,24 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    private async Task RefreshSavedAccountCodeAsync(Guid accountId)
+    {
+        var account = _allAccounts.FirstOrDefault(item => item.Id == accountId);
+        if (account is null) return;
+
+        account.BeginCodeRefresh(ShouldNotifyCodeBindings(account));
+        var cancellationToken = _codeLifetime?.Token ?? CancellationToken.None;
+        await RefreshAccountCodesAsync([account], cancellationToken);
+    }
+
     private async Task<bool> RefreshAccountCodesAsync(
         IReadOnlyList<MobileAccountItem> accounts,
         CancellationToken cancellationToken)
     {
         if (accounts.Count == 0) return false;
+#if DEBUG
+        TraceCodeRefresh($"generate count={accounts.Count} editor={IsEditorVisible}");
+#endif
 
         FluentResults.Result<AccountTotpGenerationBatch> refreshed;
         try
@@ -3347,9 +3477,15 @@ public sealed class MobileShellViewModel :
         return true;
     }
 
+#if DEBUG
+    private static void TraceCodeRefresh(string message) =>
+        Console.WriteLine($"OTP-HARBOR-REFRESH {DateTimeOffset.UtcNow:O} {message}");
+#endif
+
     private void LockCore()
     {
         if (_disposed || !IsAppLockEnabled) return;
+        CapturePostUnlockNavigation();
         _backgroundedAtTimestamp = null;
         CancelBackgroundLockTimer();
         _sensitiveOperationLifetime?.Cancel();
@@ -3381,6 +3517,69 @@ public sealed class MobileShellViewModel :
         SetScreen(_authorization.State.IsConfigured
             ? MobileScreen.Unlock
             : MobileScreen.Setup);
+    }
+
+    private void CapturePostUnlockNavigation()
+    {
+        _resumeSelectedGroupId = _selectedGroupId;
+        _resumeFavoritesFilter = _showFavoritesOnly;
+        _resumeEntityId = null;
+        _resumeTarget = IsSettingsVisible
+            ? MobileResumeTarget.Settings
+            : IsEditorVisible && _editingAccountId.HasValue
+                ? MobileResumeTarget.AccountEditor
+                : IsGroupEditorVisible && _editingGroupId.HasValue
+                    ? MobileResumeTarget.GroupEditor
+                    : MobileResumeTarget.Accounts;
+
+        if (_resumeTarget == MobileResumeTarget.AccountEditor)
+            _resumeEntityId = _editingAccountId;
+        else if (_resumeTarget == MobileResumeTarget.GroupEditor)
+            _resumeEntityId = _editingGroupId;
+    }
+
+    private async Task RestorePostUnlockNavigationAsync()
+    {
+        var target = _resumeTarget;
+        var entityId = _resumeEntityId;
+        var selectedGroupId = _resumeSelectedGroupId;
+        var favoritesFilter = _resumeFavoritesFilter;
+        ClearPostUnlockNavigation();
+
+        _selectedGroupId = selectedGroupId.HasValue
+            && Groups.Any(group => group.Id == selectedGroupId.Value)
+                ? selectedGroupId
+                : null;
+        _showFavoritesOnly = favoritesFilter && HasFavoriteAccounts;
+        if (_showFavoritesOnly) _selectedGroupId = null;
+        RefreshGroups();
+        ApplyAccountFilter();
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+
+        switch (target)
+        {
+            case MobileResumeTarget.Settings:
+                await ShowSettingsAsync();
+                break;
+            case MobileResumeTarget.AccountEditor when entityId.HasValue:
+                SelectedAccount = Accounts.FirstOrDefault(account => account.Id == entityId.Value);
+                await BeginEditAsync();
+                break;
+            case MobileResumeTarget.GroupEditor when entityId.HasValue:
+                await BeginEditGroupAsync(entityId.Value);
+                break;
+        }
+    }
+
+    private void ClearPostUnlockNavigation()
+    {
+        _resumeTarget = MobileResumeTarget.None;
+        _resumeEntityId = null;
+        _resumeSelectedGroupId = null;
+        _resumeFavoritesFilter = false;
     }
 
     private void RequestAutomaticBiometricUnlock()
@@ -3750,15 +3949,6 @@ public sealed class MobileShellViewModel :
         _confirmBackupConflictResolutionCommand.NotifyCanExecuteChanged();
     }
 
-    private Task<bool> ConfirmQrMigrationAsync(
-        int accountCount,
-        CancellationToken cancellationToken)
-        => ShowImportConfirmationAsync(
-            string.Format(
-                Get(MobileStringKeys.QrMigrationConfirmation),
-                accountCount),
-            cancellationToken);
-
     private async Task<bool> ShowImportConfirmationAsync(
         string message,
         CancellationToken cancellationToken,
@@ -3846,12 +4036,25 @@ public sealed class MobileShellViewModel :
         NotifyCommands();
     }
 
-    private void RequestAccountReveal(Guid accountId)
+    private void RequestAccountReveal(
+        Guid accountId,
+        bool highlight = true,
+        bool alignToTop = false)
     {
         if (accountId == Guid.Empty || Accounts.All(account => account.Id != accountId)) return;
         AccountRevealRequest = new MobileAccountRevealRequest(
             accountId,
-            ++_accountRevealRevision);
+            ++_accountRevealRevision,
+            highlight,
+            alignToTop);
+    }
+
+    private void RequestGroupReveal(Guid groupId)
+    {
+        if (groupId == Guid.Empty || Groups.All(group => group.Id != groupId)) return;
+        GroupRevealRequest = new MobileAccountGroupRevealRequest(
+            groupId,
+            ++_groupRevealRevision);
     }
 
     private void ClearAccountFiltersForReveal()
@@ -4361,5 +4564,14 @@ public sealed class MobileShellViewModel :
         Setup,
         Unlock,
         Accounts
+    }
+
+    private enum MobileResumeTarget
+    {
+        None,
+        Accounts,
+        Settings,
+        AccountEditor,
+        GroupEditor
     }
 }

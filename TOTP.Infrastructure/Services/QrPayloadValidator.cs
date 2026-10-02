@@ -7,12 +7,16 @@ public sealed class QrPayloadValidator : IQrPayloadValidator
 {
     public QrPayloadValidationResult Validate(string decodedPayload)
     {
+        var kind = !string.IsNullOrWhiteSpace(decodedPayload)
+            && GoogleAuthenticatorMigrationParser.IsMigrationPayload(decodedPayload)
+                ? QrPayloadKind.GoogleAuthenticatorMigration
+                : QrPayloadKind.StandardAccount;
         if (string.IsNullOrWhiteSpace(decodedPayload) || decodedPayload.Length > 4096)
-            return QrPayloadValidationResult.Invalid;
+            return Invalid(kind);
 
         try
         {
-            if (GoogleAuthenticatorMigrationParser.IsMigrationPayload(decodedPayload))
+            if (kind == QrPayloadKind.GoogleAuthenticatorMigration)
             {
                 var migration = GoogleAuthenticatorMigrationParser.Parse(decodedPayload);
                 var first = migration.Accounts[0];
@@ -25,7 +29,7 @@ public sealed class QrPayloadValidator : IQrPayloadValidator
             }
 
             var parsed = OtpauthParser.Parse(decodedPayload);
-            if (!OtpAuthSupportPolicy.IsSupported(parsed)) return QrPayloadValidationResult.Invalid;
+            if (!OtpAuthSupportPolicy.IsSupported(parsed)) return Invalid(kind);
             return new QrPayloadValidationResult(
                 true,
                 parsed.Issuer?.Trim() ?? string.Empty,
@@ -33,8 +37,14 @@ public sealed class QrPayloadValidator : IQrPayloadValidator
         }
         catch (Exception)
         {
-            return QrPayloadValidationResult.Invalid;
+            return Invalid(kind);
         }
     }
 
+    private static QrPayloadValidationResult Invalid(QrPayloadKind kind) => new(
+        false,
+        string.Empty,
+        string.Empty,
+        kind,
+        0);
 }

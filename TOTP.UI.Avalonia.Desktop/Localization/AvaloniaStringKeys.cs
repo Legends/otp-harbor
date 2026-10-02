@@ -80,8 +80,7 @@ public static class AvaloniaStringKeys
     public const string QrImageReadFailedSafely = nameof(QrImageReadFailedSafely);
     public const string QrImageSelectionCancelled = nameof(QrImageSelectionCancelled);
     public const string QrScannerSupportedFormats = nameof(QrScannerSupportedFormats);
-    public const string QrMigrationConfirmationTitle = nameof(QrMigrationConfirmationTitle);
-    public const string QrMigrationConfirmationMessage = nameof(QrMigrationConfirmationMessage);
+    public const string QrMigrationCameraUseImage = nameof(QrMigrationCameraUseImage);
     public const string CancelScan = nameof(CancelScan);
     public const string CameraReconnectHint = nameof(CameraReconnectHint);
     public const string CameraReadyToStart = nameof(CameraReadyToStart);
@@ -430,7 +429,7 @@ public static class AvaloniaStringKeys
         OpenQrImage, SelectQrImage, QrImageFiles,
         QrImageReading, QrImageNoCode, QrImageInvalid, QrImageTooLarge,
         QrImageReadFailedSafely, QrImageSelectionCancelled, QrScannerSupportedFormats,
-        QrMigrationConfirmationTitle, QrMigrationConfirmationMessage,
+        QrMigrationCameraUseImage,
         CancelScan, CameraReconnectHint, CameraReadyToStart, CameraSearching,
         CameraInitializing, CameraActive, CameraScanCancelled,
         CameraScanFailedSafely, CameraRuntimeUnavailable, CameraNotFound, CameraStartFailed,

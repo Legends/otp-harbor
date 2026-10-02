@@ -742,6 +742,34 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task ResumeState_ExistingGroupEditorReloadsPersistedGroupById()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Persisted group", "#4F6BED");
+        var account = new Account(
+            Guid.NewGuid(),
+            "Example",
+            ValidSecret,
+            "user",
+            group: group);
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        sut.Groups.Single().EditCommand.Execute(null);
+        sut.GroupEditorName = "Unsaved group name";
+
+        var resumeState = sut.CaptureResumeState();
+        sut.Clear();
+        await sut.LoadAsync();
+        await sut.RestoreResumeStateAsync(resumeState);
+
+        Assert.True(sut.IsGroupEditorVisible);
+        Assert.True(sut.IsEditingExistingGroup);
+        Assert.Equal("Persisted group", sut.GroupEditorName);
+    }
+
+    [Fact]
     public async Task EditFavorites_ChangesColorAndAssignmentsThroughBuiltInGroupEditor()
     {
         var first = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice", isFavorite: true);

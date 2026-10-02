@@ -375,6 +375,83 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task LockAsync_AfterSettings_ReopensSettingsAfterPasswordUnlock()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var authorization = new Mock<IAuthorizationService>();
+        var state = CreateAuthorizationState(PreferredUnlockMethod.Password);
+        authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.TryUnlockWithPasswordAsync("test-password"))
+            .Callback(state.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        using var sut = CreateSut(
+            coordinator.Object,
+            authorization.Object,
+            accountManager: manager.Object);
+        await sut.InitializeAsync();
+        await sut.ShowSettingsAsync();
+
+        await sut.LockAsync();
+
+        Assert.False(sut.IsSettingsVisible);
+        Assert.True(sut.IsPasswordUnlockVisible);
+
+        sut.PasswordUnlock.Password = "test-password";
+        await sut.PasswordUnlock.UnlockAsync();
+        await WaitUntilAsync(() => sut.IsSettingsVisible);
+
+        Assert.True(sut.IsShellVisible);
+        Assert.True(sut.IsSettingsVisible);
+    }
+
+    [Fact]
+    public async Task LockAsync_WhileEditingExistingAccount_ReloadsPersistedEditorById()
+    {
+        var account = new Account(Guid.NewGuid(), "Persisted issuer", "JBSWY3DPEHPK3PXP", "user");
+        IReadOnlyList<Account> stored = [account];
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var authorization = new Mock<IAuthorizationService>();
+        var state = CreateAuthorizationState(PreferredUnlockMethod.Password);
+        authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.TryUnlockWithPasswordAsync("test-password"))
+            .Callback(state.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(stored));
+        using var sut = CreateSut(
+            coordinator.Object,
+            authorization.Object,
+            accountManager: manager.Object);
+        await sut.InitializeAsync();
+        sut.AccountList.SelectedAccount = Assert.Single(sut.AccountList.Accounts);
+        await sut.AccountList.BeginEditAsync();
+        sut.AccountList.EditorIssuer = "Unsaved draft";
+
+        await sut.LockAsync();
+
+        Assert.False(sut.AccountList.IsEditorVisible);
+        Assert.Empty(sut.AccountList.EditorSecret);
+
+        sut.PasswordUnlock.Password = "test-password";
+        await sut.PasswordUnlock.UnlockAsync();
+        await WaitUntilAsync(() => sut.AccountList.IsEditorVisible);
+
+        Assert.Equal("Persisted issuer", sut.AccountList.EditorIssuer);
+        Assert.Equal(account.Secret, sut.AccountList.EditorSecret);
+        Assert.Equal(account.ID, sut.AccountList.SelectedAccount?.Id);
+    }
+
+    [Fact]
     public async Task ReturnToQuickUnlockAsync_FromPasswordFallback_RestoresBiometricGateAndClearsPassword()
     {
         var coordinator = new Mock<IAvaloniaStartupCoordinator>();
@@ -725,6 +802,14 @@ public sealed class MainWindowViewModelTests
             scannerDialogs ?? Mock.Of<IAvaloniaCameraScannerDialogService>(),
             idleLockPolicy: idleLockPolicy,
             settingsNotificationDuration: settingsNotificationDuration);
+
+    private static async Task WaitUntilAsync(Func<bool> predicate)
+    {
+        for (var attempt = 0; attempt < 100 && !predicate(); attempt++)
+            await Task.Delay(10, global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.True(predicate());
+    }
 
     private sealed class TestStorageFile(string name) : INativeStorageFile
     {

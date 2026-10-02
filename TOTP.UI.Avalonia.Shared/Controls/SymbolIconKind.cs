@@ -5,6 +5,7 @@ public enum SymbolIconKind
     Add,
     ArrowLeft,
     Camera,
+    Close,
     Conceal,
     Codes,
     Copy,

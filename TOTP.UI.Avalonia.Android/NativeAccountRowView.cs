@@ -49,14 +49,13 @@ internal sealed class NativeAccountRowView : View
     private float _swipeOffset;
     private bool _horizontalGesture;
     private bool _animating;
-    private long _remainingObservedAt;
     private global::Android.Graphics.Path? _brandPath;
     private string _displayIssuer = string.Empty;
     private string _displaySecondary = string.Empty;
     private string _displayCode = string.Empty;
     private string _rawCode = string.Empty;
-    private int _observedRemainingSeconds;
     private Color _brandColor;
+    private bool _isSelected;
 
     public NativeAccountRowView(
         Context context,
@@ -100,8 +99,7 @@ internal sealed class NativeAccountRowView : View
         _row = row;
         _row.Account.PropertyChanged += AccountPropertyChanged;
         _viewModel.PropertyChanged += ViewModelPropertyChanged;
-        _remainingObservedAt = SystemClock.ElapsedRealtime();
-        _observedRemainingSeconds = row.Account.RemainingSeconds;
+        _isSelected = _viewModel.SelectedAccount?.Id == row.Id;
         _swipeOffset = 0;
         _rawCode = row.Account.Code;
         _displayCode = row.Account.DisplayCode;
@@ -128,7 +126,7 @@ internal sealed class NativeAccountRowView : View
         _displaySecondary = string.Empty;
         _displayCode = string.Empty;
         _rawCode = string.Empty;
-        _observedRemainingSeconds = 0;
+        _isSelected = false;
         _starPath.Reset();
         ContentDescription = string.Empty;
         _settleAnimator?.Cancel();
@@ -412,12 +410,12 @@ internal sealed class NativeAccountRowView : View
         var highlighted = _highlightStrength >= 0.45f;
         _stroke.Color = highlighted
             ? palette.ImportHighlight
-            : _viewModel.SelectedAccount?.Id == account.Id
+            : _isSelected
                 ? palette.Accent
                 : palette.Border;
         _stroke.StrokeWidth = highlighted
             ? Dp(4)
-            : _viewModel.SelectedAccount?.Id == account.Id ? Dp(1.5f) : Dp(1);
+            : _isSelected ? Dp(1.5f) : Dp(1);
         canvas.DrawRoundRect(CardBounds, Dp(9), Dp(9), _stroke);
     }
 
@@ -484,7 +482,10 @@ internal sealed class NativeAccountRowView : View
         _stroke.Color = palette.ProgressTrack;
         canvas.DrawLine(left, y, right, y, _stroke);
 
-        _stroke.Color = account.IsExpiring ? palette.Danger : palette.Accent;
+        var periodMilliseconds = Math.Max(1L, account.PeriodSeconds) * 1000L;
+        var elapsedInPeriod = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % periodMilliseconds;
+        var remainingMilliseconds = periodMilliseconds - elapsedInPeriod;
+        _stroke.Color = remainingMilliseconds <= 10_000L ? palette.Danger : palette.Accent;
         float fraction;
         if (account.IsCodeLoading)
         {
@@ -495,9 +496,7 @@ internal sealed class NativeAccountRowView : View
             return;
         }
 
-        var elapsed = Math.Max(0, SystemClock.ElapsedRealtime() - _remainingObservedAt) / 1000f;
-        var remaining = Math.Max(0, account.RemainingSeconds - elapsed);
-        fraction = account.PeriodSeconds <= 0 ? 0 : remaining / account.PeriodSeconds;
+        fraction = remainingMilliseconds / (float)periodMilliseconds;
         canvas.DrawLine(left, y, left + width * Math.Clamp(fraction, 0, 1), y, _stroke);
     }
 
@@ -574,11 +573,15 @@ internal sealed class NativeAccountRowView : View
 
     private void AccountPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        if (args.PropertyName == nameof(MobileAccountItem.RemainingSeconds))
+#if DEBUG
+        if (args.PropertyName == nameof(MobileAccountItem.Code) && _row is not null)
         {
-            _observedRemainingSeconds = _row?.Account.RemainingSeconds ?? 0;
-            _remainingObservedAt = SystemClock.ElapsedRealtime();
+            var account = _row.Account;
+            global::Android.Util.Log.Debug(
+                "OtpHarborRefresh",
+                $"code-notify editor={_viewModel.IsEditorVisible} remaining={account.RemainingSeconds} period={account.PeriodSeconds}");
         }
+#endif
         if (args.PropertyName is nameof(MobileAccountItem.Code)
             or nameof(MobileAccountItem.DisplayCode))
         {
@@ -598,17 +601,24 @@ internal sealed class NativeAccountRowView : View
             UpdateTextLayout();
             UpdateStarPath();
         }
-        else if (args.PropertyName == nameof(MobileAccountItem.CustomPeriodLabel))
+        else if (args.PropertyName is nameof(MobileAccountItem.Issuer)
+            or nameof(MobileAccountItem.AccountName)
+            or nameof(MobileAccountItem.ConfiguredPeriodSeconds)
+            or nameof(MobileAccountItem.CustomPeriodLabel))
         {
             UpdateTextLayout();
+            UpdateAccessibilityDescription();
         }
         PostInvalidate();
     }
 
     private void ViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        if (args.PropertyName == nameof(MobileShellViewModel.SelectedAccount))
-            PostInvalidate();
+        if (args.PropertyName != nameof(MobileShellViewModel.SelectedAccount) || _row is null) return;
+        var isSelected = _viewModel.SelectedAccount?.Id == _row.Id;
+        if (_isSelected == isSelected) return;
+        _isSelected = isSelected;
+        PostInvalidate();
     }
 
     private void UpdateAccessibilityDescription()
@@ -627,10 +637,6 @@ internal sealed class NativeAccountRowView : View
             _rawCode = account.Code;
             _displayCode = account.DisplayCode;
         }
-
-        if (_observedRemainingSeconds == account.RemainingSeconds) return;
-        _observedRemainingSeconds = account.RemainingSeconds;
-        _remainingObservedAt = SystemClock.ElapsedRealtime();
     }
 
     private void Unsubscribe()

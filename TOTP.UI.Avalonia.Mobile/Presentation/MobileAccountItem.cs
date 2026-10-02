@@ -18,6 +18,9 @@ public sealed class MobileAccountItem(
     string removeFromFavoritesText = "",
     AccountGroup? group = null) : INotifyPropertyChanged
 {
+    private string _issuer = issuer;
+    private string _accountName = accountName;
+    private int _configuredPeriodSeconds = configuredPeriodSeconds;
     private string _code = string.Empty;
     private int _remainingSeconds;
     private int _periodSeconds = configuredPeriodSeconds;
@@ -35,9 +38,9 @@ public sealed class MobileAccountItem(
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public Guid Id { get; } = id;
-    public string Issuer { get; } = issuer;
-    public string AccountName { get; } = accountName;
-    public int ConfiguredPeriodSeconds { get; } = configuredPeriodSeconds;
+    public string Issuer => _issuer;
+    public string AccountName => _accountName;
+    public int ConfiguredPeriodSeconds => _configuredPeriodSeconds;
     public bool HasCustomPeriod => ConfiguredPeriodSeconds != TotpPeriodPolicy.DefaultSeconds;
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
@@ -82,6 +85,39 @@ public sealed class MobileAccountItem(
         {
             _codeBindingsDirty = true;
         }
+    }
+
+    internal void UpdateAccountDetails(
+        string issuer,
+        string accountName,
+        int configuredPeriodSeconds,
+        string customPeriodLabel,
+        BrandInfo brand)
+    {
+        var issuerChanged = !string.Equals(_issuer, issuer, StringComparison.Ordinal);
+        var hadAccountName = HasAccountName;
+        var accountNameChanged = !string.Equals(
+            _accountName,
+            accountName,
+            StringComparison.Ordinal);
+        var periodChanged = _configuredPeriodSeconds != configuredPeriodSeconds;
+
+        _issuer = issuer;
+        _accountName = accountName;
+        _configuredPeriodSeconds = configuredPeriodSeconds;
+
+        if (issuerChanged) OnPropertyChanged(nameof(Issuer));
+        if (accountNameChanged) OnPropertyChanged(nameof(AccountName));
+        if (hadAccountName != HasAccountName) OnPropertyChanged(nameof(HasAccountName));
+        if (issuerChanged || accountNameChanged) OnPropertyChanged(nameof(DisplayName));
+        if (periodChanged)
+        {
+            OnPropertyChanged(nameof(ConfiguredPeriodSeconds));
+            OnPropertyChanged(nameof(HasCustomPeriod));
+        }
+
+        UpdateCustomPeriodLabel(customPeriodLabel);
+        UpdateBrand(brand);
     }
 
     internal void Tick(bool notifyBindings = true)
@@ -133,7 +169,15 @@ public sealed class MobileAccountItem(
     internal void UpdateBrand(BrandInfo brand)
     {
         ArgumentNullException.ThrowIfNull(brand);
-        if (ReferenceEquals(_brand, brand)) return;
+        if (ReferenceEquals(_brand, brand)
+            || (_brand.Id == brand.Id
+                && _brand.DisplayName == brand.DisplayName
+                && _brand.Initials == brand.Initials
+                && _brand.BackgroundColor == brand.BackgroundColor
+                && _brand.IconData == brand.IconData))
+        {
+            return;
+        }
         _brand = brand;
         OnPropertyChanged(nameof(Brand));
     }
@@ -162,6 +206,7 @@ public sealed class MobileAccountItem(
 
     internal void UpdateFavoriteLocalization(string addText, string removeText)
     {
+        if (_addToFavoritesText == addText && _removeFromFavoritesText == removeText) return;
         _addToFavoritesText = addText;
         _removeFromFavoritesText = removeText;
         OnPropertyChanged(nameof(FavoriteActionText));

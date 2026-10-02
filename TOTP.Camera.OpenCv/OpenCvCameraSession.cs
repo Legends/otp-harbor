@@ -33,6 +33,8 @@ internal sealed class OpenCvCameraSession(
 
         var fingerprint = ComputeFingerprint(encoded);
         var decoded = decodeQr ? OpenCvQrDecoder.Decode(mat, _detector) : null;
+        if (decodeQr && string.IsNullOrWhiteSpace(decoded))
+            decoded = ZxingQrImageDecoder.Decode(mat);
         frame = new CameraFrame(encoded, fingerprint, decoded);
         return true;
     }

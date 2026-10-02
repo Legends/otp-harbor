@@ -19,6 +19,8 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
 {
     private readonly MobileShellViewModel _viewModel;
     private readonly NativeAccountGroupAdapter _adapter;
+    private readonly LinearLayoutManager _layoutManager;
+    private int _revealRevision;
     private bool _submitPending;
     private bool _disposed;
 
@@ -27,7 +29,8 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
     {
         _viewModel = viewModel;
         _adapter = new NativeAccountGroupAdapter(viewModel);
-        SetLayoutManager(new LinearLayoutManager(context, Horizontal, false));
+        _layoutManager = new LinearLayoutManager(context, Horizontal, false);
+        SetLayoutManager(_layoutManager);
         SetAdapter(_adapter);
         SetItemAnimator(null);
         HasFixedSize = true;
@@ -40,6 +43,7 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
         _viewModel.Groups.CollectionChanged += GroupsChanged;
         _viewModel.PropertyChanged += ViewModelPropertyChanged;
         _adapter.ReplaceAll(CaptureRows());
+        HandleRevealRequest(_viewModel.GroupRevealRequest);
     }
 
     public void DisposeHost()
@@ -66,6 +70,10 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
         {
             ScheduleSubmit();
         }
+        else if (args.PropertyName == nameof(MobileShellViewModel.GroupRevealRequest))
+        {
+            Post(() => HandleRevealRequest(_viewModel.GroupRevealRequest));
+        }
     }
 
     private void ScheduleSubmit()
@@ -75,8 +83,19 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
         Post(() =>
         {
             _submitPending = false;
-            if (!_disposed) _adapter.Submit(CaptureRows());
+            if (_disposed) return;
+            _adapter.Submit(CaptureRows());
+            HandleRevealRequest(_viewModel.GroupRevealRequest);
         });
+    }
+
+    private void HandleRevealRequest(MobileAccountGroupRevealRequest? request)
+    {
+        if (_disposed || request is null || request.Revision <= _revealRevision) return;
+        var position = _adapter.FindPosition(request.GroupId);
+        if (position == NoPosition) return;
+        _revealRevision = request.Revision;
+        SmoothScrollToPosition(position);
     }
 
     private NativeAccountGroupRow[] CaptureRows()
@@ -135,6 +154,16 @@ internal sealed class NativeAccountGroupAdapter : RecyclerView.Adapter
         var diff = DiffUtil.CalculateDiff(new GroupDiffCallback(_items, items), false);
         _items = items;
         diff.DispatchUpdatesTo(this);
+    }
+
+    internal int FindPosition(Guid groupId)
+    {
+        for (var index = 0; index < _items.Length; index++)
+        {
+            if (_items[index].Id == groupId) return index;
+        }
+
+        return RecyclerView.NoPosition;
     }
 
     private sealed class GroupViewHolder(NativeAccountGroupView row) : RecyclerView.ViewHolder(row)

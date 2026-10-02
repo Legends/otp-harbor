@@ -56,6 +56,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _automaticUpdateCheckStarted;
     private bool _shutdownPrepared;
     private bool _disposed;
+    private ShellResumeState? _resumeState;
 
     public MainWindowViewModel(
         IAvaloniaStartupCoordinator startupCoordinator,
@@ -387,7 +388,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             IsPasswordSetupVisible = outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup;
             if (outcome == AvaloniaStartupOutcome.ReadyUnlocked)
             {
-                EnterAuthorizedShell();
+                await EnterAuthorizedShellAsync();
                 StartAutomaticUpdateCheck();
             }
         }
@@ -457,22 +458,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         StatusSeverity = NotificationSeverity.Information;
     }
 
-    private void OnUnlocked(object? sender, EventArgs e)
+    private async void OnUnlocked(object? sender, EventArgs e)
     {
         IsPasswordUnlockVisible = false;
         IsQuickUnlockVisible = false;
-        EnterAuthorizedShell();
+        await EnterAuthorizedShellAsync();
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultUnlocked);
         StatusSeverity = NotificationSeverity.Success;
         StartAutomaticUpdateCheck();
     }
 
-    private void OnConfigured(object? sender, EventArgs e)
+    private async void OnConfigured(object? sender, EventArgs e)
     {
         IsPasswordSetupVisible = false;
         IsPasswordUnlockVisible = false;
         IsQuickUnlockVisible = false;
-        EnterAuthorizedShell();
+        await EnterAuthorizedShellAsync();
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultConfigured);
         StatusSeverity = NotificationSeverity.Success;
         StartAutomaticUpdateCheck();
@@ -514,6 +515,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplyLockedUiState()
     {
+        CaptureResumeState();
         AccountList.Clear();
         CameraScanner.Dismiss();
         IsSettingsVisible = false;
@@ -546,7 +548,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             if (result == AuthorizationResult.Success && _authorizationService.State.IsUnlocked)
             {
                 IsQuickUnlockVisible = false;
-                EnterAuthorizedShell();
+                await EnterAuthorizedShellAsync();
                 StatusText = _localization.GetString(AvaloniaStringKeys.VaultUnlocked);
                 StatusSeverity = NotificationSeverity.Success;
                 StartAutomaticUpdateCheck();
@@ -699,11 +701,50 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             AccountList.ResumeRowCodeGeneration();
     }
 
-    private void EnterAuthorizedShell()
+    private async Task EnterAuthorizedShellAsync()
     {
+        var resumeState = _resumeState;
+        _resumeState = null;
         IsShellVisible = true;
-        SetActivePage(ShellPage.Accounts);
-        AccountList.LoadCommand.Execute(null);
+        var activePage = resumeState?.ActivePage ?? ShellPage.Accounts;
+        SetActivePage(activePage);
+
+        if (resumeState?.SettingsVisible == true)
+        {
+            try
+            {
+                await ShowSettingsAsync();
+            }
+            catch (Exception)
+            {
+                IsSettingsVisible = false;
+            }
+        }
+
+        await AccountList.LoadAsync();
+        if (activePage == ShellPage.Accounts && resumeState?.AccountListState is not null)
+            await AccountList.RestoreResumeStateAsync(resumeState.AccountListState);
+    }
+
+    private void CaptureResumeState()
+    {
+        if (!IsShellVisible) return;
+
+        var activePage = IsToolsVisible ? ShellPage.Tools : ShellPage.Accounts;
+        var accountListState = AccountList.CaptureResumeState();
+        if (IsSettingsVisible)
+        {
+            accountListState = accountListState with
+            {
+                Target = AccountListResumeTarget.None,
+                EntityId = null
+            };
+        }
+
+        _resumeState = new ShellResumeState(
+            activePage,
+            IsSettingsVisible,
+            accountListState);
     }
 
     private void StartAutomaticUpdateCheck()
@@ -793,4 +834,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         return true;
     }
+
+    private sealed record ShellResumeState(
+        ShellPage ActivePage,
+        bool SettingsVisible,
+        AccountListResumeState AccountListState);
 }

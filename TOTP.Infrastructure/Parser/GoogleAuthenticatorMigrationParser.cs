@@ -9,6 +9,8 @@ internal static class GoogleAuthenticatorMigrationParser
     private const int MaximumAccounts = 100;
     private const int MaximumSecretBytes = 128;
     private const int MaximumTextBytes = 1024;
+    private const int MinimumSupportedVersion = 1;
+    private const int MaximumSupportedVersion = 2;
     private const string Base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
@@ -86,7 +88,7 @@ internal static class GoogleAuthenticatorMigrationParser
             }
         }
 
-        if (version != 1
+        if (version is < MinimumSupportedVersion or > MaximumSupportedVersion
             || accounts.Count == 0
             || batchSize is < 1 or > MaximumAccounts
             || batchIndex < 0

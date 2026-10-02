@@ -1951,6 +1951,67 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         ClearEditor();
     }
 
+    public AccountListResumeState CaptureResumeState()
+    {
+        var target = IsEditorVisible && _editingAccountId.HasValue
+            ? AccountListResumeTarget.AccountEditor
+            : IsGroupEditorVisible && _editingGroupId.HasValue
+                ? AccountListResumeTarget.GroupEditor
+                : IsGroupEditorVisible && IsEditingFavorites
+                    ? AccountListResumeTarget.FavoritesEditor
+                    : AccountListResumeTarget.None;
+        var entityId = target switch
+        {
+            AccountListResumeTarget.AccountEditor => _editingAccountId,
+            AccountListResumeTarget.GroupEditor => _editingGroupId,
+            _ => null
+        };
+
+        return new AccountListResumeState(
+            target,
+            entityId,
+            _selectedGroupId,
+            _showFavoritesOnly,
+            _showAllAccounts);
+    }
+
+    public async Task RestoreResumeStateAsync(AccountListResumeState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (IsBusy) return;
+
+        _selectedGroupId = state.SelectedGroupId.HasValue
+            && _allGroups.Any(group => group.Id == state.SelectedGroupId.Value)
+                ? state.SelectedGroupId
+                : null;
+        _showFavoritesOnly = state.FavoritesFilter && HasFavoriteAccounts;
+        _showAllAccounts = state.AllAccountsFilter;
+        if (_showFavoritesOnly || _showAllAccounts) _selectedGroupId = null;
+        RefreshGroups();
+        ApplyFilter();
+        OnPropertyChanged(nameof(IsFavoritesFilterSelected));
+        OnPropertyChanged(nameof(IsAllAccountsFilterSelected));
+        OnPropertyChanged(nameof(HasSelectedGroup));
+        OnPropertyChanged(nameof(HasSelectedAccountNavigationCard));
+        OnPropertyChanged(nameof(HasActiveAccountFilter));
+        _clearGroupFilterCommand.NotifyCanExecuteChanged();
+
+        switch (state.Target)
+        {
+            case AccountListResumeTarget.AccountEditor when state.EntityId.HasValue:
+                SelectedAccount = _allAccounts.FirstOrDefault(
+                    account => account.Id == state.EntityId.Value);
+                await BeginEditAsync();
+                break;
+            case AccountListResumeTarget.GroupEditor when state.EntityId.HasValue:
+                await BeginEditGroupAsync(state.EntityId.Value);
+                break;
+            case AccountListResumeTarget.FavoritesEditor:
+                await BeginEditFavoritesAsync();
+                break;
+        }
+    }
+
     private void StopAndClearRowCodes()
     {
         var lifetime = _rowCodeLifetime;

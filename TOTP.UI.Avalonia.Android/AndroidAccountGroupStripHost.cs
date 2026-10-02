@@ -1,12 +1,11 @@
 using Avalonia.Android;
-using Avalonia.Controls;
 using Avalonia.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Android;
 
 internal sealed class AndroidAccountGroupStripHost(MobileShellViewModel viewModel)
-    : NativeControlHost
+    : AndroidNativeControlHost
 {
     private NativeAccountGroupRecyclerView? _groupStrip;
 

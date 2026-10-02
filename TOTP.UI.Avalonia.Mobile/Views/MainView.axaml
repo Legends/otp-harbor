@@ -269,15 +269,17 @@
                                 MinHeight="44"
                                 Margin="0,0,4,0"
                                 Padding="0"
+                                HorizontalContentAlignment="Center"
                                 VerticalAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 automation:AutomationProperties.Name="{Binding ClearSearchText}"
                                 Classes="link"
                                 Click="RefocusAccountSearchAfterClear"
                                 Command="{Binding ClearSearchCommand}"
-                                Content="×"
-                                FontSize="26"
                                 IsVisible="{Binding HasSearchText}"
-                                ToolTip.Tip="{Binding ClearSearchText}" />
+                                ToolTip.Tip="{Binding ClearSearchText}">
+                                <controls:SymbolIcon IconSize="18" Kind="Close" />
+                            </Button>
                         </Grid>
 
                         <Grid
@@ -1121,15 +1123,17 @@
                                 MinHeight="44"
                                 Margin="0,0,4,0"
                                 Padding="0"
+                                HorizontalContentAlignment="Center"
                                 VerticalAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 automation:AutomationProperties.Name="{Binding ClearSearchText}"
                                 Classes="link"
                                 Click="RefocusGroupAccountSearchAfterClear"
                                 Command="{Binding ClearGroupEditorSearchCommand}"
-                                Content="×"
-                                FontSize="26"
                                 IsVisible="{Binding HasGroupEditorSearchText}"
-                                ToolTip.Tip="{Binding ClearSearchText}" />
+                                ToolTip.Tip="{Binding ClearSearchText}">
+                                <controls:SymbolIcon IconSize="18" Kind="Close" />
+                            </Button>
                         </Grid>
                         <Border Classes="card" Padding="6">
                             <Grid Height="220">

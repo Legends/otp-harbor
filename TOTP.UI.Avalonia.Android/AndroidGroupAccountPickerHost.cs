@@ -1,12 +1,11 @@
 using Avalonia.Android;
-using Avalonia.Controls;
 using Avalonia.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Android;
 
 internal sealed class AndroidGroupAccountPickerHost(MobileShellViewModel viewModel)
-    : NativeControlHost
+    : AndroidNativeControlHost
 {
     private NativeGroupAccountPickerRecyclerView? _accountPicker;
 

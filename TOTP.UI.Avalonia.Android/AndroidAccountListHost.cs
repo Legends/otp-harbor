@@ -1,11 +1,10 @@
 using Avalonia.Android;
-using Avalonia.Controls;
 using Avalonia.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Android;
 
-internal sealed class AndroidAccountListHost(MobileShellViewModel viewModel) : NativeControlHost
+internal sealed class AndroidAccountListHost(MobileShellViewModel viewModel) : AndroidNativeControlHost
 {
     private NativeAccountRecyclerView? _accountList;
 

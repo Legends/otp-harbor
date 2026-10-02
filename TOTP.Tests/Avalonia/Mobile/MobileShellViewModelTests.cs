@@ -202,7 +202,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task ImportGoogleQrAsync_FromSettings_UsesBoundedMigrationWorkflow()
+    public async Task ImportGoogleQrAsync_FromSettings_ImportsWithoutAdditionalConfirmation()
     {
         const string payload = "otpauth-migration://offline?data=synthetic";
         var context = CreateContext(isConfigured: false);
@@ -234,11 +234,9 @@ public sealed class MobileShellViewModelTests
         await context.Sut.CancelEditAsync();
         await context.Sut.ShowSettingsAsync();
 
-        var import = context.Sut.ImportGoogleQrAsync();
-        Assert.True(context.Sut.IsImportConfirmationVisible);
-        await context.Sut.ResolveImportConfirmationAsync(true);
-        await import;
+        await context.Sut.ImportGoogleQrAsync();
 
+        Assert.False(context.Sut.IsImportConfirmationVisible);
         context.QrImport.Verify(value => value.ImportAsync(
             payload,
             It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
@@ -1206,7 +1204,7 @@ public sealed class MobileShellViewModelTests
         var accounts = Enumerable.Range(0, 600)
             .Select(index => new Account(
                 Guid.NewGuid(),
-                index == 427 ? "Needle Service" : $"Issuer {index:D3}",
+                index >= 427 ? $"Needle Service {index:D3}" : $"Issuer {index:D3}",
                 ValidSecret,
                 $"user-{index:D3}@example.test",
                 isFavorite: index % 7 == 0,
@@ -1240,7 +1238,14 @@ public sealed class MobileShellViewModelTests
         context.Sut.SearchText = "needle";
 
         Assert.False(context.Sut.HasSelectedGroup);
-        Assert.Equal(accounts[427].ID, Assert.Single(context.Sut.Accounts).Id);
+        Assert.Equal(173, context.Sut.Accounts.Count);
+        Assert.All(
+            context.Sut.Accounts,
+            account => Assert.Contains("Needle", account.Issuer, StringComparison.Ordinal));
+        Assert.Equal(accounts[427].ID, context.Sut.Accounts[0].Id);
+        Assert.Equal(accounts[427].ID, context.Sut.AccountRevealRequest?.AccountId);
+        Assert.False(context.Sut.AccountRevealRequest?.Highlight);
+        Assert.True(context.Sut.AccountRevealRequest?.AlignToTop);
 
         await context.Sut.ClearSearchAsync();
         await context.Sut.ToggleFavoritesFilterAsync();
@@ -1335,6 +1340,7 @@ public sealed class MobileShellViewModelTests
         Assert.Equal("#4F6BED", created.Group.Color);
         Assert.False(context.Sut.IsGroupEditorVisible);
         Assert.True(context.Sut.IsNativeAccountGroupsVisible);
+        Assert.Equal(created.Id, context.Sut.GroupRevealRequest?.GroupId);
         context.AccountManager.Verify(value => value.SaveGroupAsync(
             It.Is<AccountGroup>(group => group.Name == "Work" && group.Color == "#4F6BED"),
             It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(new[] { account.ID }))));
@@ -1987,7 +1993,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task ScanQrAsync_WhenExactAccountIsSkipped_DoesNotRequestNewAccountHighlight()
+    public async Task ScanQrAsync_WhenExactAccountIsSkipped_RevealsExistingAccount()
     {
         const string payload =
             "otpauth://totp/Example:user?secret=JBSWY3DPEHPK3PXP&issuer=Example";
@@ -2013,17 +2019,19 @@ public sealed class MobileShellViewModelTests
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
+        context.Sut.SearchText = "temporarily hidden";
 
         await context.Sut.ScanQrAsync();
 
-        Assert.Null(context.Sut.AccountRevealRequest);
+        Assert.Equal(existingId, context.Sut.AccountRevealRequest?.AccountId);
+        Assert.Empty(context.Sut.SearchText);
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.QrAccountDuplicate),
             context.Sut.NotificationText);
     }
 
     [Fact]
-    public async Task ScanQrAsync_WhenBulkMigrationIsImported_ShowsLocalizedBatchProgress()
+    public async Task ScanQrAsync_WhenBulkMigrationIsScanned_ImportsWithoutAdditionalConfirmation()
     {
         const string payload = "otpauth-migration://offline?data=synthetic";
         var importedId = Guid.NewGuid();
@@ -2059,23 +2067,9 @@ public sealed class MobileShellViewModelTests
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
 
-        var scanTask = context.Sut.ScanQrAsync();
-        for (var attempt = 0;
-             attempt < 20 && !context.Sut.IsImportConfirmationVisible;
-             attempt++)
-        {
-            await Task.Delay(10, global::Xunit.TestContext.Current.CancellationToken);
-        }
+        await context.Sut.ScanQrAsync();
 
-        Assert.True(context.Sut.IsImportConfirmationVisible);
-        Assert.Equal(
-            string.Format(
-                context.Strings.Get(MobileStringKeys.QrMigrationConfirmation),
-                3),
-            context.Sut.ImportConfirmationText);
-        await context.Sut.ResolveImportConfirmationAsync(true);
-        await scanTask;
-
+        Assert.False(context.Sut.IsImportConfirmationVisible);
         Assert.Equal(
             string.Format(
                 context.Strings.Get(MobileStringKeys.QrBulkImportedMore),
@@ -2086,49 +2080,10 @@ public sealed class MobileShellViewModelTests
                 0),
             context.Sut.NotificationText);
         Assert.DoesNotContain("Scan the next", context.Sut.NotificationText, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task ScanQrAsync_WhenBulkMigrationIsDeclined_DoesNotImportAccounts()
-    {
-        const string payload = "otpauth-migration://offline?data=synthetic";
-        var context = CreateContext(isConfigured: true, cultureName: "de");
-        context.Authorization
-            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
-            .Callback(context.State.Unlock)
-            .ReturnsAsync(AuthorizationResult.Success);
-        context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MobileQrScanResult.Successful(payload));
-        context.QrPayloadValidator.Setup(value => value.Validate(payload))
-            .Returns(new QrPayloadValidationResult(
-                true,
-                "Example",
-                "user",
-                QrPayloadKind.GoogleAuthenticatorMigration,
-                2));
-        await context.Sut.InitializeAsync();
-        context.Sut.UnlockPassword = "synthetic password";
-        await context.Sut.UnlockAsync();
-
-        var scanTask = context.Sut.ScanQrAsync();
-        for (var attempt = 0;
-             attempt < 20 && !context.Sut.IsImportConfirmationVisible;
-             attempt++)
-        {
-            await Task.Delay(10, global::Xunit.TestContext.Current.CancellationToken);
-        }
-
-        Assert.True(context.Sut.IsImportConfirmationVisible);
-        await context.Sut.ResolveImportConfirmationAsync(false);
-        await scanTask;
-
-        Assert.Equal(
-            context.Strings.Get(MobileStringKeys.QrImportCancelled),
-            context.Sut.NotificationText);
         context.QrImport.Verify(value => value.ImportAsync(
-            It.IsAny<string>(),
+            payload,
             It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -2192,6 +2147,115 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.QrAccountUpdated),
             context.Sut.NotificationText);
+    }
+
+    [Fact]
+    public async Task LockAsync_AfterSettings_ReopensSettingsOnlyAfterSuccessfulUnlock()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.LockAsync();
+
+        Assert.True(context.Sut.IsUnlockVisible);
+        Assert.False(context.Sut.IsSettingsVisible);
+
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.True(context.Sut.IsSettingsVisible);
+        Assert.False(context.Sut.IsAccountListVisible);
+    }
+
+    [Fact]
+    public async Task LockAsync_WhileEditingExistingAccount_ReloadsPersistedEditorById()
+    {
+        var account = new Account(Guid.NewGuid(), "Persisted issuer", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true, [account]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+        context.Sut.EditorIssuer = "Unsaved draft";
+
+        await context.Sut.LockAsync();
+
+        Assert.False(context.Sut.IsEditorVisible);
+        Assert.Empty(context.Sut.EditorIssuer);
+
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.True(context.Sut.IsEditorVisible);
+        Assert.Equal(account.ID, context.Sut.SelectedAccount?.Id);
+        Assert.Equal("Persisted issuer", context.Sut.EditorIssuer);
+        Assert.Empty(context.Sut.EditorSecret);
+    }
+
+    [Fact]
+    public async Task LockAsync_WhileAddingAccount_DoesNotRetainUnsavedDraft()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginAddAsync();
+        context.Sut.EditorIssuer = "Unsaved issuer";
+        context.Sut.EditorSecret = ValidSecret;
+
+        await context.Sut.LockAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.False(context.Sut.IsEditorVisible);
+        Assert.Empty(context.Sut.EditorIssuer);
+        Assert.Empty(context.Sut.EditorSecret);
+    }
+
+    [Fact]
+    public async Task LockAsync_WhileEditingExistingGroup_ReloadsPersistedGroupById()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Persisted group", "#4F6BED");
+        var account = new Account(
+            Guid.NewGuid(),
+            "Example",
+            ValidSecret,
+            "user",
+            group: group);
+        var context = CreateContext(isConfigured: true, [account]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginEditGroupAsync(group.Id);
+        context.Sut.GroupEditorName = "Unsaved group name";
+
+        await context.Sut.LockAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.True(context.Sut.IsGroupEditorVisible);
+        Assert.True(context.Sut.IsEditingGroup);
+        Assert.Equal("Persisted group", context.Sut.GroupEditorName);
     }
 
     [Fact]
@@ -2815,6 +2879,150 @@ public sealed class MobileShellViewModelTests
 
         Assert.NotNull(updated);
         Assert.False(updated.IsFavorite);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_ChangingIssuerUpdatesOnlyEditedItemMetadata()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var before = new Account(Guid.NewGuid(), "Alpha", ValidSecret, "before");
+        var edited = new Account(
+            Guid.NewGuid(),
+            "Beta",
+            ValidSecret,
+            "edited",
+            group: group);
+        var after = new Account(Guid.NewGuid(), "Gamma", ValidSecret, "after");
+        var stored = new List<Account> { before, edited, after };
+        var context = CreateContext(isConfigured: true, stored);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(edited, It.IsAny<Account>()))
+            .Callback<Account, Account>((_, updated) => stored[1] = updated)
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await WaitUntilAsync(() => context.Sut.Accounts.All(account => account.Code.Length > 0));
+        var beforeItem = context.Sut.Accounts.Single(account => account.Id == before.ID);
+        var editedItem = context.Sut.Accounts.Single(account => account.Id == edited.ID);
+        var afterItem = context.Sut.Accounts.Single(account => account.Id == after.ID);
+        var beforeCode = beforeItem.Code;
+        var afterCode = afterItem.Code;
+        var collectionChanges = 0;
+        var beforeChanges = new List<string?>();
+        var afterChanges = new List<string?>();
+        context.Sut.Accounts.CollectionChanged += (_, _) => collectionChanges++;
+        beforeItem.PropertyChanged += (_, args) => beforeChanges.Add(args.PropertyName);
+        afterItem.PropertyChanged += (_, args) => afterChanges.Add(args.PropertyName);
+        context.Sut.SelectedAccount = editedItem;
+        context.AccountTotp.Invocations.Clear();
+
+        await context.Sut.BeginEditAsync();
+        context.Sut.EditorIssuer = "Beta Updated";
+        await context.Sut.SaveAccountAsync();
+
+        Assert.Same(beforeItem, context.Sut.Accounts.Single(account => account.Id == before.ID));
+        Assert.Same(editedItem, context.Sut.Accounts.Single(account => account.Id == edited.ID));
+        Assert.Same(afterItem, context.Sut.Accounts.Single(account => account.Id == after.ID));
+        Assert.Equal("Beta Updated", editedItem.Issuer);
+        Assert.Equal(group, stored[1].Group);
+        Assert.Equal(0, collectionChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.Code), beforeChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), beforeChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.Code), afterChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), afterChanges);
+        Assert.Equal(beforeCode, beforeItem.Code);
+        Assert.Equal(afterCode, afterItem.Code);
+        Assert.True(beforeItem.RemainingSeconds > 0);
+        Assert.True(afterItem.RemainingSeconds > 0);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(
+            It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_ChangingIssuerPreservesEqualIssuerNeighborOrder()
+    {
+        var edited = new Account(Guid.NewGuid(), "112rvhh", ValidSecret, "edited");
+        var stored = new List<Account> { edited };
+        stored.AddRange(Enumerable.Range(0, 600).Select(index => new Account(
+            Guid.NewGuid(),
+            "1Password",
+            ValidSecret,
+            $"loadtest-{index:0000}")));
+        var context = CreateContext(isConfigured: true, stored);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(edited, It.IsAny<Account>()))
+            .Callback<Account, Account>((_, updated) => stored[0] = updated)
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var orderBeforeSave = context.Sut.Accounts.Select(account => account.Id).ToArray();
+        var collectionChanges = 0;
+        context.Sut.Accounts.CollectionChanged += (_, _) => collectionChanges++;
+        context.Sut.SelectedAccount = context.Sut.Accounts.Single(account => account.Id == edited.ID);
+
+        await context.Sut.BeginEditAsync();
+        context.Sut.EditorIssuer = "112rvhhgv";
+        await context.Sut.SaveAccountAsync();
+
+        Assert.Equal(orderBeforeSave, context.Sut.Accounts.Select(account => account.Id));
+        Assert.Equal(0, collectionChanges);
+        Assert.Equal(edited.ID, context.Sut.AccountRevealRequest?.AccountId);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_ChangingPeriodRefreshesOnlyEditedAccountWithoutListReset()
+    {
+        var edited = new Account(Guid.NewGuid(), "Alpha", ValidSecret, "edited");
+        var neighbor = new Account(Guid.NewGuid(), "Beta", ValidSecret, "neighbor");
+        var stored = new List<Account> { edited, neighbor };
+        var context = CreateContext(isConfigured: true, stored);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(edited, It.IsAny<Account>()))
+            .Callback<Account, Account>((_, updated) => stored[0] = updated)
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await WaitUntilAsync(() => context.Sut.Accounts.All(account => account.Code.Length > 0));
+        var editedItem = context.Sut.Accounts.Single(account => account.Id == edited.ID);
+        var neighborItem = context.Sut.Accounts.Single(account => account.Id == neighbor.ID);
+        var collectionResetCount = 0;
+        var neighborChanges = new List<string?>();
+        context.Sut.Accounts.CollectionChanged += (_, _) => collectionResetCount++;
+        neighborItem.PropertyChanged += (_, args) => neighborChanges.Add(args.PropertyName);
+        context.Sut.SelectedAccount = editedItem;
+        context.AccountTotp.Invocations.Clear();
+
+        await context.Sut.BeginEditAsync();
+        context.Sut.EditorPeriodSeconds = 60;
+        await context.Sut.SaveAccountAsync();
+        await WaitUntilAsync(() => editedItem.PeriodSeconds == 60);
+
+        Assert.Same(editedItem, context.Sut.Accounts.Single(account => account.Id == edited.ID));
+        Assert.Same(neighborItem, context.Sut.Accounts.Single(account => account.Id == neighbor.ID));
+        Assert.Equal(0, collectionResetCount);
+        Assert.DoesNotContain(nameof(MobileAccountItem.Code), neighborChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.DisplayCode), neighborChanges);
+        Assert.DoesNotContain(nameof(MobileAccountItem.PeriodSeconds), neighborChanges);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(
+            It.Is<IReadOnlyCollection<Guid>>(ids =>
+                ids.Count == 1 && ids.Single() == edited.ID)), Times.Once);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(
+            It.Is<IReadOnlyCollection<Guid>>(ids => ids.Any(id => id != edited.ID))), Times.Never);
     }
 
     [Fact]

@@ -8,6 +8,7 @@ public sealed class SymbolIconTests
     [InlineData(SymbolIconKind.Add)]
     [InlineData(SymbolIconKind.ArrowLeft)]
     [InlineData(SymbolIconKind.Camera)]
+    [InlineData(SymbolIconKind.Close)]
     [InlineData(SymbolIconKind.Conceal)]
     [InlineData(SymbolIconKind.Codes)]
     [InlineData(SymbolIconKind.Copy)]

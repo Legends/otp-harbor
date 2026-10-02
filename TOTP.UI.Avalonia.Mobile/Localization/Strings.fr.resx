@@ -75,7 +75,6 @@
   <data name="QrImportCancelled" xml:space="preserve"><value>Importation QR annulée. Aucun compte n’a été modifié.</value></data>
   <data name="QrBulkImported" xml:space="preserve"><value>Importation QR : {0} importé(s), {1} inchangé(s), {2} échec(s).</value></data>
   <data name="QrBulkImportedMore" xml:space="preserve"><value>QR code {0} sur {1} : {2} importé(s), {3} inchangé(s), {4} échec(s). Scannez le QR code suivant.</value></data>
-  <data name="QrMigrationConfirmation" xml:space="preserve"><value>Exportation Google Authenticator détectée. Nombre de comptes : {0}. Les importer ?</value></data>
   <data name="QrConflictTitle" xml:space="preserve"><value>Le compte existe déjà</value></data>
   <data name="QrConflictPrompt" xml:space="preserve"><value>{0} existe déjà avec un autre secret. Choisissez comment continuer.</value></data>
   <data name="UpdateExisting" xml:space="preserve"><value>Mettre à jour le compte existant</value></data>

@@ -85,6 +85,18 @@ public sealed class QrPayloadValidatorTests
     }
 
     [Fact]
+    public void Validate_WhenGoogleAuthenticatorMigrationVersionTwoIsValid_ReturnsSafeDescriptor()
+    {
+        var result = _sut.Validate(
+            GoogleAuthenticatorMigrationTestData.SingleAccountVersion2Payload);
+
+        Assert.True(result.IsValid);
+        Assert.Equal(QrPayloadKind.GoogleAuthenticatorMigration, result.Kind);
+        Assert.Equal(1, result.AccountCount);
+        Assert.DoesNotContain("TestSecret", result.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Validate_WhenGoogleAuthenticatorMigrationContainsTenAccountsAndShortSecrets_ReturnsValid()
     {
         var result = _sut.Validate(GoogleAuthenticatorMigrationTestData.TenAccountPayload);
@@ -98,7 +110,7 @@ public sealed class QrPayloadValidatorTests
     [InlineData("otpauth-migration://offline?data=")]
     [InlineData("otpauth-migration://offline?data=not-base64")]
     [InlineData("otpauth-migration://offline?data=Cg%3D%3D")]
-    [InlineData("otpauth-migration://offline?data=CioKClRlc3RTZWNyZXQSDUV4YW1wbGU6YWxpY2UaB0V4YW1wbGUgASgBMAIQAhgBIAAoKg%3D%3D")]
+    [InlineData("otpauth-migration://offline?data=CioKClRlc3RTZWNyZXQSDUV4YW1wbGU6YWxpY2UaB0V4YW1wbGUgASgBMAIQAxgBIAAoKg%3D%3D")]
     public void Validate_WhenGoogleAuthenticatorMigrationPayloadIsMalformedOrUnsupported_FailsClosed(
         string payload)
     {
@@ -107,5 +119,6 @@ public sealed class QrPayloadValidatorTests
         Assert.False(result.IsValid);
         Assert.Empty(result.Issuer);
         Assert.Empty(result.AccountName);
+        Assert.Equal(QrPayloadKind.GoogleAuthenticatorMigration, result.Kind);
     }
 }

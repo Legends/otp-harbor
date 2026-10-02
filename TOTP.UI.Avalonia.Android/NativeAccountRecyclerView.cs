@@ -143,16 +143,35 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
     private void HandleRevealRequest(MobileAccountRevealRequest? request)
     {
         if (_disposed || request is null || request.Revision <= _revealRevision) return;
+        if (!AdapterMatchesCurrentAccounts()) return;
 
         var position = _adapter.FindPosition(request.AccountId);
         if (position == NoPosition) return;
 
         _revealRevision = request.Revision;
-        var offset = Math.Max(
-            0,
-            (Height - NativeAccountRowView.RowHeight(Context!)) / 2);
+        var offset = request.AlignToTop
+            ? 0
+            : Math.Max(
+                0,
+                (Height - NativeAccountRowView.RowHeight(Context!)) / 2);
         _layoutManager.ScrollToPositionWithOffset(position, offset);
-        PostDelayed(() => PulseRevealedAccount(position, request.Revision, 0), 50);
+        if (request.Highlight)
+            PostDelayed(() => PulseRevealedAccount(position, request.Revision, 0), 50);
+        else
+            Post(ReportVisibleAccounts);
+    }
+
+    private bool AdapterMatchesCurrentAccounts()
+    {
+        if (_adapter.ItemCount != _viewModel.Accounts.Count) return false;
+
+        for (var index = 0; index < _adapter.ItemCount; index++)
+        {
+            if (_adapter.Items[index].Id != _viewModel.Accounts[index].Id)
+                return false;
+        }
+
+        return true;
     }
 
     private void PulseRevealedAccount(int position, int revision, int attempt)
@@ -203,7 +222,7 @@ internal sealed class NativeAccountAdapter : RecyclerView.Adapter
     {
         Span<byte> bytes = stackalloc byte[16];
         _items[position].Id.TryWriteBytes(bytes);
-        return BitConverter.ToInt64(bytes);
+        return BitConverter.ToInt64(bytes[..8]) ^ BitConverter.ToInt64(bytes[8..]);
     }
 
     public override int GetItemViewType(int position) => AccountViewType;
@@ -337,7 +356,8 @@ internal sealed record NativeAccountRow(
         account.IsFavorite);
 
     public bool HasSameVisuals(NativeAccountRow other) =>
-        Issuer == other.Issuer
+        ReferenceEquals(Account, other.Account)
+        && Issuer == other.Issuer
         && AccountName == other.AccountName
         && CustomPeriodLabel == other.CustomPeriodLabel
         && BrandInitials == other.BrandInitials

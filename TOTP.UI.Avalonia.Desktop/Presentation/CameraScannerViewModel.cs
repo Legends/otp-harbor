@@ -172,11 +172,14 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
                     var validation = _payloadValidator.Validate(result.DecodedText!);
                     if (!validation.IsValid)
                     {
-                        Message = _localization.GetString(AvaloniaStringKeys.QrInvalid);
+                        Message = _localization.GetString(
+                            validation.Kind == QrPayloadKind.GoogleAuthenticatorMigration
+                                ? AvaloniaStringKeys.QrMigrationCameraUseImage
+                                : AvaloniaStringKeys.QrInvalid);
                     }
                     else
                     {
-                        await ImportDecodedAsync(result.DecodedText!, validation, token);
+                        await ImportDecodedAsync(result.DecodedText!, token);
                     }
 
                     return;
@@ -271,7 +274,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            LastImageNotificationSeverity = await ImportDecodedAsync(decoded.Payload!, validation, token);
+            LastImageNotificationSeverity = await ImportDecodedAsync(decoded.Payload!, token);
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
@@ -399,28 +402,8 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
 
     private async Task<NotificationSeverity> ImportDecodedAsync(
         string payload,
-        QrPayloadValidationResult validation,
         CancellationToken cancellationToken)
     {
-        if (validation.Kind == QrPayloadKind.GoogleAuthenticatorMigration)
-        {
-            var confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
-                _localization.GetString(AvaloniaStringKeys.QrMigrationConfirmationTitle),
-                string.Format(
-                    _localization.GetString(AvaloniaStringKeys.QrMigrationConfirmationMessage),
-                    validation.AccountCount),
-                NotificationSeverity.Information,
-                _localization.GetString(AvaloniaStringKeys.ImportAccounts),
-                _localization.GetString(AvaloniaStringKeys.Cancel)),
-                cancellationToken);
-            if (!confirmed)
-            {
-                Message = _localization.GetString(AvaloniaStringKeys.QrImportCancelled);
-                CloseRequested?.Invoke(this, EventArgs.Empty);
-                return NotificationSeverity.Information;
-            }
-        }
-
         var imported = await _importService.ImportAsync(payload, ResolveConflictAsync, cancellationToken);
         if (imported.IsFailed)
         {
