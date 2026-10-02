@@ -1,19 +1,24 @@
 # Large account import fixture
 
-`prominent-platforms-500.json` contains 500 synthetic OTP Harbor accounts for
-manual and automated load testing. Issuer names are derived from the first 500
-entries of the Tranco research ranking. The checked-in fixture was generated
-from list `Y83YG` on 2026-10-02.
+The generator creates `prominent-platforms-500.json` with 500 synthetic OTP
+Harbor accounts for manual and automated load testing. Issuer names are
+derived from the first 500 entries of the pinned Tranco research ranking list
+`Y83YG`.
 
-Every account identifier, Base32 secret, and `example.invalid` account name is
-deterministic test data. The secrets are public and must never be used for real
-accounts.
+The generated file is deliberately written below the ignored `artifacts/`
+directory and is not committed. This prevents secret scanners from treating
+test-only Base32 values as repository credentials.
 
-Regenerate the fixture with:
+Every generated account identifier, Base32 secret, and `example.invalid`
+account name is deterministic test data. The secrets are public and must never
+be used for real accounts.
+
+Generate the fixture with:
 
 ```powershell
 .\scripts\testing\Generate-ProminentPlatformAccountFixture.ps1
 ```
 
-The settings import UI can import the JSON directly. Debug builds additionally
-support one-batch test helpers for importing the file and deleting all accounts.
+The settings import UI can import the generated JSON directly. Debug builds
+additionally support one-batch test helpers for importing the file and deleting
+all accounts.

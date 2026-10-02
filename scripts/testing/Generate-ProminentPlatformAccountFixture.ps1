@@ -1,9 +1,9 @@
 [CmdletBinding()]
 param(
-    [string]$OutputPath = (Join-Path $PSScriptRoot "..\..\TOTP.Tests\Fixtures\LoadTesting\prominent-platforms-500.json"),
+    [string]$OutputPath = (Join-Path $PSScriptRoot "..\..\artifacts\test-data\prominent-platforms-500.json"),
     [ValidateRange(1, 5000)]
     [int]$Count = 500,
-    [string]$TrancoListId
+    [string]$TrancoListId = "Y83YG"
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,9 +38,6 @@ function Get-DeterministicBytes {
         [System.Text.Encoding]::UTF8.GetBytes($Value))
 }
 
-if ([string]::IsNullOrWhiteSpace($TrancoListId)) {
-    $TrancoListId = (Invoke-RestMethod -Uri "https://tranco-list.eu/top-1m-id").Trim()
-}
 if ($TrancoListId -notmatch '^[A-Z0-9]{5}$') {
     throw "The Tranco list id is invalid."
 }

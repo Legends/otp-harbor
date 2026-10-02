@@ -100,7 +100,7 @@ public class MainActivity : AvaloniaMainActivity
         var window = Window;
         if (window is null) return;
 
-#if DEBUG || OTP_HARBOR_MARKETING_CAPTURE
+#if OTP_HARBOR_MARKETING_CAPTURE
         window.ClearFlags(WindowManagerFlags.Secure);
 #else
         if (_screenCapturePolicy?.IsScreenCaptureProtectionRequired == true)

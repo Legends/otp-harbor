@@ -1,0 +1,9 @@
+title = "OTP Harbor Gitleaks policy"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Historical synthetic load-test fixture removed from the repository"
+commits = ["a68522767894e5d72e675c58099339101e483ced"]
+paths = ["^TOTP\\.Tests/Fixtures/LoadTesting/prominent-platforms-500\\.json$"]
