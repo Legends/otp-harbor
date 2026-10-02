@@ -53,7 +53,7 @@ if ($LASTEXITCODE -ne 0 -or $packageRootLines.Count -ne 1) {
 }
 $packageRoot = ([string]$packageRootLines[0] -replace '^global-packages:\s*', '').Trim()
 $approvedExpressions = [Collections.Generic.HashSet[string]]::new(
-    [string[]]@('MIT', 'Apache-2.0', 'MIT AND Apache-2.0', 'ISC'),
+    [string[]]@('MIT', 'Apache-2.0', 'MIT AND Apache-2.0', 'MIT AND Apache-2.0 AND BSD-3-Clause', 'ISC'),
     [StringComparer]::Ordinal)
 $licenseCounts = [Collections.Generic.Dictionary[string, int]]::new([StringComparer]::Ordinal)
 
@@ -97,30 +97,52 @@ foreach ($package in ($packages.Values | Sort-Object Id, Version)) {
         throw "Expected exactly one nuspec for locked package: $($package.Id) $($package.Version)"
     }
     [xml]$nuspec = [IO.File]::ReadAllText($nuspecFiles[0].FullName)
-    $license = $nuspec.package.metadata.license
-    if ($null -eq $license) {
-        throw "Locked package has no NuGet license declaration: $($package.Id) $($package.Version)"
-    }
-
-    $licenseValue = $license.InnerText.Trim()
-    if ([string]$license.type -ceq 'expression') {
-        if (-not $approvedExpressions.Contains($licenseValue)) {
-            throw "Locked package declares an unreviewed license expression '$licenseValue': $($package.Id) $($package.Version)"
-        }
-    }
-    elseif ([string]$license.type -ceq 'file' -and
-        $package.Id -ceq 'Otp.NET' -and
-        $package.Version -ceq '1.4.1' -and
-        $licenseValue -ceq 'LICENSE.txt') {
-        $licensePath = Join-Path $packageDirectory $licenseValue
-        $licenseHash = (Get-FileHash -LiteralPath $licensePath -Algorithm SHA256).Hash
-        if ($licenseHash -cne '0BC32BE0CE13330BA88D208548582A641F95B1F66BB19BE91F5ACC1436C52472') {
-            throw 'Otp.NET license file no longer matches the reviewed MIT text.'
-        }
-        $licenseValue = 'MIT (reviewed package file)'
+    $metadata = $nuspec.package.metadata
+    $license = if ($metadata.PSObject.Properties.Name -contains 'license') {
+        $metadata.license
     }
     else {
-        throw "Locked package uses an unreviewed license declaration '$licenseValue': $($package.Id) $($package.Version)"
+        $null
+    }
+    if ($null -eq $license -and
+        $package.Id -ceq 'Xamarin.Google.Guava.ListenableFuture' -and
+        $package.Version -ceq '9999.0.0') {
+        $noticePath = Join-Path $packageDirectory 'THIRD-PARTY-NOTICES.txt'
+        if (-not (Test-Path -LiteralPath $noticePath -PathType Leaf)) {
+            throw 'The reviewed Xamarin.Google.Guava.ListenableFuture package is missing its third-party notice.'
+        }
+        $notice = [IO.File]::ReadAllText($noticePath)
+        if (-not $notice.Contains('# Guava', [StringComparison]::Ordinal) -or
+            -not $notice.Contains('Apache License', [StringComparison]::Ordinal) -or
+            -not $notice.Contains('Version 2.0', [StringComparison]::Ordinal)) {
+            throw 'The reviewed Xamarin.Google.Guava.ListenableFuture package no longer contains the expected Apache-2.0 notice.'
+        }
+        $licenseValue = 'Apache-2.0'
+    }
+    elseif ($null -eq $license) {
+        throw "Locked package has no NuGet license declaration: $($package.Id) $($package.Version)"
+    }
+    else {
+        $licenseValue = $license.InnerText.Trim()
+        if ([string]$license.type -ceq 'expression') {
+            if (-not $approvedExpressions.Contains($licenseValue)) {
+                throw "Locked package declares an unreviewed license expression '$licenseValue': $($package.Id) $($package.Version)"
+            }
+        }
+        elseif ([string]$license.type -ceq 'file' -and
+            $package.Id -ceq 'Otp.NET' -and
+            $package.Version -ceq '1.4.1' -and
+            $licenseValue -ceq 'LICENSE.txt') {
+            $licensePath = Join-Path $packageDirectory $licenseValue
+            $licenseHash = (Get-FileHash -LiteralPath $licensePath -Algorithm SHA256).Hash
+            if ($licenseHash -cne '0BC32BE0CE13330BA88D208548582A641F95B1F66BB19BE91F5ACC1436C52472') {
+                throw 'Otp.NET license file no longer matches the reviewed MIT text.'
+            }
+            $licenseValue = 'MIT (reviewed package file)'
+        }
+        else {
+            throw "Locked package uses an unreviewed license declaration '$licenseValue': $($package.Id) $($package.Version)"
+        }
     }
 
     if (-not $licenseCounts.TryAdd($licenseValue, 1)) {
@@ -129,9 +151,10 @@ foreach ($package in ($packages.Values | Sort-Object Id, Version)) {
 }
 
 $expectedLicenseCounts = [ordered]@{
-    'MIT AND Apache-2.0' = 60
+    'MIT AND Apache-2.0' = 87
     'MIT' = 35
-    'Apache-2.0' = 11
+    'Apache-2.0' = 12
+    'MIT AND Apache-2.0 AND BSD-3-Clause' = 1
     'ISC' = 1
     'MIT (reviewed package file)' = 1
 }
@@ -148,9 +171,10 @@ foreach ($expected in $expectedLicenseCounts.GetEnumerator()) {
 $audit = [IO.File]::ReadAllText((Join-Path $repositoryRoot 'docs\android\FDROID_DEPENDENCY_AUDIT.md'))
 foreach ($required in @(
     "$($packages.Count) locked package ID/version pairs",
-    '60 `MIT AND Apache-2.0`',
+    '87 `MIT AND Apache-2.0`',
     '35 `MIT`',
-    '11 `Apache-2.0`',
+    '12 `Apache-2.0`',
+    '1 `MIT AND Apache-2.0 AND BSD-3-Clause`',
     '1 `ISC`',
     '1 reviewed MIT license file')) {
     if (-not $audit.Contains($required, [StringComparison]::Ordinal)) {

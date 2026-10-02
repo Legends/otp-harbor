@@ -1,15 +1,16 @@
 # F-Droid dependency audit
 
-The Android graph currently contains **108 locked package ID/version pairs** across seven projects.
+The Android graph currently contains **137 locked package ID/version pairs** across seven projects.
 After a locked restore, `Test-AndroidDependencyLicenses.ps1` matches every cache metadata content
 hash to the committed lock file, verifies the downloaded package archive against its cached SHA-512
 record, requires the canonical NuGet source, and reads the package's NuGet license declaration.
 
 The review performed on 2026-09-27 found:
 
-- 60 `MIT AND Apache-2.0` declarations
+- 87 `MIT AND Apache-2.0` declarations
 - 35 `MIT` declarations
-- 11 `Apache-2.0` declarations
+- 12 `Apache-2.0` declarations (including the reviewed Guava third-party notice)
+- 1 `MIT AND Apache-2.0 AND BSD-3-Clause` declaration
 - 1 `ISC` declaration (`libsodium`)
 - 1 reviewed MIT license file (`Otp.NET` 1.4.1)
 
