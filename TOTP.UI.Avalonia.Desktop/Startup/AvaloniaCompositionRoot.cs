@@ -152,7 +152,10 @@ public static class AvaloniaCompositionRoot
             settingsService: provider.GetRequiredService<ISettingsService>(),
             qrPreviewDialogs: provider.GetRequiredService<IAvaloniaQrPreviewDialogService>(),
             brandIconResolver: provider.GetRequiredService<IBrandIconResolver>(),
-            brandIconPackService: provider.GetRequiredService<IBrandIconPackService>()));
+            brandIconPackService: provider.GetRequiredService<IBrandIconPackService>(),
+            filePicker: provider.GetRequiredService<IAvaloniaFilePicker>(),
+            exportService: provider.GetRequiredService<IExportService>(),
+            accountImportService: provider.GetRequiredService<IAccountImportService>()));
         services.AddSingleton<SettingsPageViewModel>();
         services.AddSingleton<AuthorizationSettingsViewModel>();
         services.AddSingleton<NativeFilePickerViewModel>();

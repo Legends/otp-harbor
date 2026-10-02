@@ -1,34 +1,32 @@
 using System.Collections.Concurrent;
-using System.IO.Compression;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml;
 using FluentResults;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using TOTP.Core.Icons;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Infrastructure.Branding;
+using TOTP.Infrastructure.Icons;
 
 namespace TOTP.Infrastructure.Services;
 
 public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackService
 {
     private const int MaximumArchiveBytes = 25 * 1024 * 1024;
-    private const long MaximumExpandedBytes = 64L * 1024 * 1024;
     private const int MaximumEntries = 10_000;
-    private const int MaximumMetadataBytes = 8 * 1024 * 1024;
     private const int MaximumSvgBytes = 64 * 1024;
-    private const int MaximumGenericIcons = 5_000;
-    private const int MaximumGenericNotices = 64;
     private const int MaximumNoticeBytes = 128 * 1024;
     private const int MaximumAliasesPerBrand = 32;
-    private const int PackFormatVersion = 3;
+    private const int PackFormatVersion = 4;
     private const string StorageDirectoryName = "BrandIcons";
     private const string CurrentPackFileName = "current.json";
     private const string DisplaySettingsFileName = "display-settings.json";
     private const string AccountBrandSettingsFileName = "account-brand-settings.json";
+    private const string CustomIconIndexFileName = "custom-icon-index.json";
     private const string IndexFileName = "brand-index.json";
 
     private readonly string _storageRoot;
@@ -36,8 +34,12 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private readonly string _currentPackPath;
     private readonly string _displaySettingsPath;
     private readonly string _accountBrandSettingsPath;
+    private readonly string _customIconsRoot;
+    private readonly string _customIconIndexPath;
     private readonly IPlatformFileSecurity _fileSecurity;
     private readonly ILogger<SimpleIconsBrandIconPackService> _logger;
+    private readonly IIconPackImporterResolver _importerResolver;
+    private readonly ICustomIconImporter _customIconImporter;
     private readonly IssuerAliasResolver _issuerAliases;
     private readonly SemaphoreSlim _importLock = new(1, 1);
     private readonly ConcurrentDictionary<string, string> _pathDataCache =
@@ -45,24 +47,52 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private CatalogSnapshot _catalog = CatalogSnapshot.Empty;
     private IReadOnlyDictionary<Guid, string> _accountBrandIds =
         new Dictionary<Guid, string>();
+    private IReadOnlyDictionary<string, BrandDefinition> _customIcons =
+        new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase);
     private bool _showIssuerLogo = true;
 
     public SimpleIconsBrandIconPackService(
         IPlatformApplicationPaths applicationPaths,
         IPlatformFileSecurity fileSecurity,
         ILogger<SimpleIconsBrandIconPackService> logger)
+        : this(
+            applicationPaths,
+            fileSecurity,
+            logger,
+            new IconPackImporterResolver(
+                [
+                    new SimpleIconsImporter(),
+                    new AegisIconPackImporter(),
+                    new FilenameIndexedIconPackImporter()
+                ],
+                NullLogger<IconPackImporterResolver>.Instance),
+            new SvgIconImporter())
+    {
+    }
+
+    public SimpleIconsBrandIconPackService(
+        IPlatformApplicationPaths applicationPaths,
+        IPlatformFileSecurity fileSecurity,
+        ILogger<SimpleIconsBrandIconPackService> logger,
+        IIconPackImporterResolver importerResolver,
+        ICustomIconImporter customIconImporter)
     {
         ArgumentNullException.ThrowIfNull(applicationPaths);
         _fileSecurity = fileSecurity ?? throw new ArgumentNullException(nameof(fileSecurity));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _importerResolver = importerResolver ?? throw new ArgumentNullException(nameof(importerResolver));
+        _customIconImporter = customIconImporter ?? throw new ArgumentNullException(nameof(customIconImporter));
         _issuerAliases = LoadIssuerAliases(_logger);
         _storageRoot = Path.Combine(applicationPaths.ApplicationDataDirectory, StorageDirectoryName);
         _packsRoot = Path.Combine(_storageRoot, "packs");
         _currentPackPath = Path.Combine(_storageRoot, CurrentPackFileName);
         _displaySettingsPath = Path.Combine(_storageRoot, DisplaySettingsFileName);
         _accountBrandSettingsPath = Path.Combine(_storageRoot, AccountBrandSettingsFileName);
+        _customIconsRoot = Path.Combine(_storageRoot, "custom");
+        _customIconIndexPath = Path.Combine(_storageRoot, CustomIconIndexFileName);
         TryLoadDisplaySettings();
         TryLoadAccountBrandSettings();
+        TryLoadCustomIcons();
         TryLoadInstalledCatalog();
     }
 
@@ -89,6 +119,13 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             && catalog.ById.TryGetValue(explicitBrandId.Trim(), out var explicitlySelected))
         {
             return explicitlySelected;
+        }
+        if (!string.IsNullOrWhiteSpace(explicitBrandId)
+            && Volatile.Read(ref _customIcons).TryGetValue(
+                explicitBrandId.Trim(),
+                out var customIcon))
+        {
+            return customIcon;
         }
 
         if (string.IsNullOrWhiteSpace(issuer)) return null;
@@ -156,13 +193,20 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         pathData = string.Empty;
         if (string.IsNullOrWhiteSpace(brandId)) return false;
         var catalog = Volatile.Read(ref _catalog);
-        if (!catalog.ById.TryGetValue(brandId, out var brand)) return false;
+        var customIcons = Volatile.Read(ref _customIcons);
+        var isCustomIcon = customIcons.TryGetValue(brandId, out var brand);
+        if (!isCustomIcon && !catalog.ById.TryGetValue(brandId, out brand)) return false;
+        if (brand is null) return false;
         if (_pathDataCache.TryGetValue(brand.Id, out pathData!)) return true;
 
         try
         {
-            var iconPath = Path.Combine(catalog.PackDirectory!, "icons", brand.IconFileName);
-            if (!IsDescendantOf(iconPath, catalog.PackDirectory!)) return false;
+            var iconRoot = isCustomIcon ? _customIconsRoot : catalog.PackDirectory;
+            if (iconRoot is null) return false;
+            var iconPath = isCustomIcon
+                ? Path.Combine(iconRoot, brand.IconFileName)
+                : Path.Combine(iconRoot, "icons", brand.IconFileName);
+            if (!IsDescendantOf(iconPath, iconRoot)) return false;
             using var stream = new FileStream(iconPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (stream.Length is <= 0 or > MaximumSvgBytes) return false;
             using var reader = XmlReader.Create(stream, new XmlReaderSettings
@@ -206,16 +250,23 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             var archiveHash = await CopyBoundedAndHashAsync(zipStream, temporaryArchive, cancellationToken);
             _fileSecurity.RestrictFileToCurrentUser(temporaryArchive);
 
-            using var archive = ZipFile.OpenRead(temporaryArchive);
-            ValidateArchiveShape(archive);
-            var metadataEntry = FindMetadataEntry(archive);
-            var parsed = metadataEntry is null
-                ? ParseFilenameIndexedPack(archive)
-                : await ParseSimpleIconsMetadataAsync(metadataEntry, cancellationToken);
+            await using var archiveStream = new FileStream(
+                temporaryArchive,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                81920,
+                useAsync: true);
+            var parsedResult = await _importerResolver.ImportAsync(
+                new IconPackSource { Stream = archiveStream },
+                cancellationToken);
+            if (parsedResult.IsFailed)
+                return Result.Fail("The archive did not match a supported icon-pack format.");
+            var parsed = parsedResult.Value;
             var packageVersion = parsed.Version;
-            var packPrefix = parsed.Format == BrandIconPackFormat.SimpleIcons
-                ? "simple-icons"
-                : "local-icons";
+            var packPrefix = SanitizeVersion(parsed.ProviderId).ToLowerInvariant();
+            if (packPrefix.Length == 0)
+                throw new InvalidDataException("The icon-pack provider id is invalid.");
             var packId = $"{packPrefix}-{SanitizeVersion(packageVersion)}-v{PackFormatVersion}-{archiveHash[..12].ToLowerInvariant()}";
             stagingDirectory = Path.Combine(_packsRoot, $".{packId}-{Guid.NewGuid():N}.staging");
             Directory.CreateDirectory(stagingDirectory);
@@ -224,34 +275,52 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             Directory.CreateDirectory(iconsDirectory);
             _fileSecurity.RestrictDirectoryToCurrentUser(iconsDirectory);
 
-            var imported = new List<IndexBrand>(parsed.Brands.Count);
-            foreach (var sourceBrand in parsed.Brands.OrderBy(value => value.Id, StringComparer.Ordinal))
+            var imported = new List<IndexBrand>(parsed.Icons.Count);
+            foreach (var sourceBrand in parsed.Icons.OrderBy(value => value.Id, StringComparer.Ordinal))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var iconEntry = archive.GetEntry(sourceBrand.ArchiveEntryName);
-                if (iconEntry is null || iconEntry.Length is <= 0 or > MaximumSvgBytes) continue;
+                if (!SafeSlugRegex().IsMatch(sourceBrand.Id)
+                    || sourceBrand.SvgData.Length is <= 0 or > MaximumSvgBytes
+                    || !IsSafeDisplayText(sourceBrand.Name, 256))
+                    throw new InvalidDataException("The normalized icon pack contains invalid icon metadata.");
                 var destination = Path.Combine(iconsDirectory, $"{sourceBrand.Id}.svg");
-                await ExtractValidatedSvgAsync(iconEntry, destination, cancellationToken);
+                await File.WriteAllBytesAsync(destination, sourceBrand.SvgData, cancellationToken);
+                _fileSecurity.RestrictFileToCurrentUser(destination);
                 imported.Add(new IndexBrand(
                     sourceBrand.Id,
-                    sourceBrand.DisplayName,
+                    sourceBrand.Name,
                     sourceBrand.BackgroundColor,
                     $"{sourceBrand.Id}.svg",
-                    sourceBrand.Aliases));
+                    sourceBrand.Issuers
+                        .Where(value => IsSafeDisplayText(value, 128))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Take(MaximumAliasesPerBrand)
+                        .ToArray()));
             }
             if (imported.Count == 0) return Result.Fail("The archive did not contain usable brand SVG files.");
 
-            if (parsed.Format == BrandIconPackFormat.SimpleIcons)
+            if (parsed.Notices.Count > 0)
             {
-                var archivePrefix = metadataEntry!.FullName[..^"data/simple-icons.json".Length];
-                await CopyNoticeIfPresentAsync(archive, archivePrefix, "LICENSE.md", stagingDirectory, cancellationToken);
-                await CopyNoticeIfPresentAsync(archive, archivePrefix, "DISCLAIMER.md", stagingDirectory, cancellationToken);
+                var noticesDirectory = Path.Combine(stagingDirectory, "notices");
+                Directory.CreateDirectory(noticesDirectory);
+                _fileSecurity.RestrictDirectoryToCurrentUser(noticesDirectory);
+                for (var indexValue = 0; indexValue < parsed.Notices.Count; indexValue++)
+                {
+                    var notice = parsed.Notices[indexValue];
+                    if (notice.Data.Length is <= 0 or > MaximumNoticeBytes) continue;
+                    var noticePath = Path.Combine(
+                        noticesDirectory,
+                        $"{indexValue + 1:D2}-{Path.GetFileName(notice.FileName)}");
+                    await File.WriteAllBytesAsync(noticePath, notice.Data, cancellationToken);
+                    _fileSecurity.RestrictFileToCurrentUser(noticePath);
+                }
             }
-            else
-            {
-                await CopyGenericNoticesAsync(archive, stagingDirectory, cancellationToken);
-            }
-            var index = new BrandIndex(packageVersion, imported);
+            var index = new BrandIndex(
+                packageVersion,
+                imported,
+                parsed.ProviderId,
+                parsed.ProviderDisplayName,
+                parsed.Format);
             var indexPath = Path.Combine(stagingDirectory, IndexFileName);
             await WriteJsonAsync(indexPath, index, cancellationToken);
             _fileSecurity.RestrictFileToCurrentUser(indexPath);
@@ -275,7 +344,9 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             return Result.Ok(new BrandIconPackImportResult(
                 packageVersion,
                 imported.Count,
-                parsed.Format));
+                parsed.Format,
+                parsed.ProviderId,
+                parsed.ProviderDisplayName));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -290,6 +361,133 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         {
             TryDeleteFile(temporaryArchive);
             TryDeleteDirectory(stagingDirectory);
+            _importLock.Release();
+        }
+    }
+
+    public async Task<Result<BrandDefinition>> ImportCustomIconAsync(
+        Guid accountId,
+        Stream svgStream,
+        string? fileName = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (accountId == Guid.Empty)
+            return Result.Fail<BrandDefinition>("The account identifier is invalid.");
+        ArgumentNullException.ThrowIfNull(svgStream);
+
+        await _importLock.WaitAsync(cancellationToken);
+        string? temporaryIconPath = null;
+        string? temporaryIndexPath = null;
+        string? temporarySettingsPath = null;
+        try
+        {
+            var imported = await _customIconImporter.ImportAsync(
+                new CustomIconSource
+                {
+                    Stream = svgStream,
+                    FileName = fileName
+                },
+                cancellationToken);
+            if (imported.IsFailed)
+                return Result.Fail<BrandDefinition>(imported.Errors);
+
+            var icon = imported.Value;
+            if (!SafeSlugRegex().IsMatch(icon.Id)
+                || icon.SvgData.Length is <= 0 or > MaximumSvgBytes
+                || !IsSafeDisplayText(icon.Name, 256))
+            {
+                return Result.Fail<BrandDefinition>("The selected custom SVG is invalid.");
+            }
+
+            Directory.CreateDirectory(_storageRoot);
+            Directory.CreateDirectory(_customIconsRoot);
+            _fileSecurity.RestrictDirectoryToCurrentUser(_storageRoot);
+            _fileSecurity.RestrictDirectoryToCurrentUser(_customIconsRoot);
+
+            var iconFileName = $"{icon.Id}.svg";
+            var finalIconPath = Path.Combine(_customIconsRoot, iconFileName);
+            temporaryIconPath = Path.Combine(
+                _customIconsRoot,
+                $".{icon.Id}-{Guid.NewGuid():N}.tmp");
+            await File.WriteAllBytesAsync(temporaryIconPath, icon.SvgData, cancellationToken);
+            _fileSecurity.RestrictFileToCurrentUser(temporaryIconPath);
+            File.Move(temporaryIconPath, finalIconPath, overwrite: true);
+            temporaryIconPath = null;
+            _fileSecurity.RestrictFileToCurrentUser(finalIconPath);
+
+            var definition = new BrandDefinition(
+                icon.Id,
+                icon.Name,
+                icon.BackgroundColor,
+                iconFileName);
+            var customIcons = new Dictionary<string, BrandDefinition>(
+                Volatile.Read(ref _customIcons),
+                StringComparer.OrdinalIgnoreCase)
+            {
+                [definition.Id] = definition
+            };
+            temporaryIndexPath = Path.Combine(
+                _storageRoot,
+                $"{CustomIconIndexFileName}.{Guid.NewGuid():N}.tmp");
+            await WriteJsonAsync(
+                temporaryIndexPath,
+                new CustomIconIndex(
+                    1,
+                    customIcons.Values
+                        .OrderBy(value => value.Id, StringComparer.Ordinal)
+                        .Select(value => new CustomIconEntry(
+                            value.Id,
+                            value.DisplayName,
+                            value.BackgroundColor,
+                            value.IconFileName))
+                        .ToList()),
+                cancellationToken);
+            _fileSecurity.RestrictFileToCurrentUser(temporaryIndexPath);
+            File.Move(temporaryIndexPath, _customIconIndexPath, overwrite: true);
+            temporaryIndexPath = null;
+            _fileSecurity.RestrictFileToCurrentUser(_customIconIndexPath);
+
+            var mappings = new Dictionary<Guid, string>(Volatile.Read(ref _accountBrandIds))
+            {
+                [accountId] = definition.Id
+            };
+            Directory.CreateDirectory(_storageRoot);
+            _fileSecurity.RestrictDirectoryToCurrentUser(_storageRoot);
+            temporarySettingsPath = Path.Combine(
+                _storageRoot,
+                $"{AccountBrandSettingsFileName}.{Guid.NewGuid():N}.tmp");
+            var settings = new AccountBrandSettings(
+                1,
+                mappings.OrderBy(pair => pair.Key)
+                    .Select(pair => new AccountBrandOverride(pair.Key, pair.Value))
+                    .ToList());
+            await WriteJsonAsync(temporarySettingsPath, settings, cancellationToken);
+            _fileSecurity.RestrictFileToCurrentUser(temporarySettingsPath);
+            File.Move(temporarySettingsPath, _accountBrandSettingsPath, overwrite: true);
+            temporarySettingsPath = null;
+            _fileSecurity.RestrictFileToCurrentUser(_accountBrandSettingsPath);
+
+            Volatile.Write(ref _customIcons, customIcons);
+            Volatile.Write(ref _accountBrandIds, mappings);
+            _pathDataCache.TryRemove(definition.Id, out _);
+            CatalogChanged?.Invoke(this, EventArgs.Empty);
+            return Result.Ok(definition);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "A local per-account custom SVG could not be imported.");
+            return Result.Fail<BrandDefinition>(
+                "The selected custom SVG is invalid or could not be stored safely.");
+        }
+        finally
+        {
+            TryDeleteFile(temporaryIconPath);
+            TryDeleteFile(temporaryIndexPath);
+            TryDeleteFile(temporarySettingsPath);
             _importLock.Release();
         }
     }
@@ -388,7 +586,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         try
         {
             if (normalizedBrandId is not null
-                && !Volatile.Read(ref _catalog).ById.ContainsKey(normalizedBrandId))
+                && !Volatile.Read(ref _catalog).ById.ContainsKey(normalizedBrandId)
+                && !Volatile.Read(ref _customIcons).ContainsKey(normalizedBrandId))
                 return Result.Fail("The selected local brand icon is unavailable.");
 
             var updated = new Dictionary<Guid, string>(
@@ -493,6 +692,60 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
     }
 
+    private void TryLoadCustomIcons()
+    {
+        try
+        {
+            if (!File.Exists(_customIconIndexPath)) return;
+            var file = new FileInfo(_customIconIndexPath);
+            if (file.Length is <= 0 or > 1024 * 1024) return;
+            var index = JsonSerializer.Deserialize<CustomIconIndex>(
+                File.ReadAllText(_customIconIndexPath));
+            if (index is null
+                || index.Version != 1
+                || index.Icons is null
+                || index.Icons.Count > MaximumEntries) return;
+
+            var icons = new Dictionary<string, BrandDefinition>(
+                StringComparer.OrdinalIgnoreCase);
+            foreach (var item in index.Icons)
+            {
+                if (item is null
+                    || string.IsNullOrWhiteSpace(item.Id)
+                    || !SafeSlugRegex().IsMatch(item.Id)
+                    || !item.Id.StartsWith("custom_", StringComparison.Ordinal)
+                    || string.IsNullOrWhiteSpace(item.IconFileName)
+                    || !SafeSvgNameRegex().IsMatch(item.IconFileName)
+                    || !IsSafeDisplayText(item.DisplayName, 256)
+                    || string.IsNullOrWhiteSpace(item.BackgroundColor)
+                    || !IconImportArchive.IsHexColor(item.BackgroundColor.TrimStart('#'))
+                    || !icons.TryAdd(
+                        item.Id,
+                        new BrandDefinition(
+                            item.Id,
+                            item.DisplayName,
+                            item.BackgroundColor,
+                            item.IconFileName)))
+                {
+                    return;
+                }
+
+                var iconPath = Path.Combine(_customIconsRoot, item.IconFileName);
+                if (!IsDescendantOf(iconPath, _customIconsRoot)
+                    || !File.Exists(iconPath)
+                    || new FileInfo(iconPath).Length is <= 0 or > MaximumSvgBytes)
+                {
+                    return;
+                }
+            }
+            Volatile.Write(ref _customIcons, icons);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogWarning("The local custom-icon index could not be loaded.");
+        }
+    }
+
     private void TryLoadInstalledCatalog()
     {
         try
@@ -515,6 +768,14 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     private static CatalogSnapshot CreateSnapshot(string packDirectory, BrandIndex index)
     {
+        var format = string.Equals(index.Version, "filename-indexed", StringComparison.OrdinalIgnoreCase)
+            && index.Format == BrandIconPackFormat.SimpleIcons
+            ? BrandIconPackFormat.FilenameIndexed
+            : index.Format;
+        var providerDisplayName = format == BrandIconPackFormat.FilenameIndexed
+            && string.Equals(index.ProviderDisplayName, "Simple Icons", StringComparison.Ordinal)
+                ? "Filename-indexed SVG pack"
+                : index.ProviderDisplayName;
         var byId = new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase);
         var byAlias = new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase);
         var byNormalizedAlias = new Dictionary<string, BrandDefinition>(StringComparer.Ordinal);
@@ -547,7 +808,12 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             byId.Values.OrderBy(value => value.DisplayName, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(value => value.Id, StringComparer.Ordinal)
                 .ToArray(),
-            new BrandIconPackStatus(true, index.Version, byId.Count));
+            new BrandIconPackStatus(
+                true,
+                index.Version,
+                byId.Count,
+                format,
+                providerDisplayName));
     }
 
     private static void AddUnambiguousAlias(
@@ -584,242 +850,16 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         return Convert.ToHexString(hash.GetHashAndReset());
     }
 
-    private static void ValidateArchiveShape(ZipArchive archive)
-    {
-        if (archive.Entries.Count is 0 or > MaximumEntries) throw new InvalidDataException("Unexpected archive entry count.");
-        long expanded = 0;
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in archive.Entries)
-        {
-            var normalized = entry.FullName.Replace('\\', '/');
-            if (!names.Add(normalized)) throw new InvalidDataException("Duplicate archive entry.");
-            expanded = checked(expanded + entry.Length);
-            if (expanded > MaximumExpandedBytes) throw new InvalidDataException("Expanded archive is too large.");
-            if (normalized.StartsWith("/", StringComparison.Ordinal)
-                || normalized.Split('/').Any(segment => segment is ".." or "."))
-                throw new InvalidDataException("Unsafe archive path.");
-        }
-    }
-
-    private static ZipArchiveEntry? FindMetadataEntry(ZipArchive archive)
-    {
-        var matches = archive.Entries.Where(entry =>
-            entry.FullName.Replace('\\', '/').EndsWith(
-                "data/simple-icons.json",
-                StringComparison.OrdinalIgnoreCase)).ToArray();
-        if (matches.Length == 0) return null;
-        if (matches.Length != 1 || matches[0].Length is <= 0 or > MaximumMetadataBytes)
-            throw new InvalidDataException("Simple Icons metadata is invalid or ambiguous.");
-        return matches[0];
-    }
-
-    private static async Task<ParsedMetadata> ParseSimpleIconsMetadataAsync(
-        ZipArchiveEntry entry,
-        CancellationToken token)
-    {
-        await using var stream = entry.Open();
-        using var document = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 16 }, token);
-        if (document.RootElement.ValueKind != JsonValueKind.Array) throw new InvalidDataException("Unexpected Simple Icons metadata.");
-        var archivePrefix = entry.FullName[..^"data/simple-icons.json".Length];
-        var brands = new List<SourceBrand>();
-        foreach (var icon in document.RootElement.EnumerateArray())
-        {
-            if (!icon.TryGetProperty("title", out var titleElement)
-                || !icon.TryGetProperty("hex", out var hexElement)) continue;
-            var title = titleElement.GetString();
-            var hex = hexElement.GetString();
-            if (hex is null
-                || !IsSafeDisplayText(title, 256)
-                || hex.Length is not 6
-                ) continue;
-            var safeTitle = title!;
-            var slug = icon.TryGetProperty("slug", out var slugElement)
-                ? slugElement.GetString()
-                : TitleToSlug(safeTitle);
-            if (slug is null
-                || !SafeSlugRegex().IsMatch(slug) || !HexRegex().IsMatch(hex)) continue;
-            var aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { slug, safeTitle };
-            if (icon.TryGetProperty("aliases", out var aliasObject))
-            {
-                AddAliases(aliasObject, "aka", aliases);
-                AddAliases(aliasObject, "old", aliases);
-            }
-            brands.Add(new SourceBrand(
-                slug,
-                safeTitle,
-                $"#{hex.ToUpperInvariant()}",
-                aliases.OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-                    .Take(MaximumAliasesPerBrand)
-                    .ToArray(),
-                $"{archivePrefix}icons/{slug}.svg"));
-        }
-        var version = ReadVersionFromArchivePrefix(entry.FullName) ?? "unknown";
-        return new ParsedMetadata(version, BrandIconPackFormat.SimpleIcons, brands);
-    }
-
-    private static ParsedMetadata ParseFilenameIndexedPack(ZipArchive archive)
-    {
-        var brands = new List<SourceBrand>();
-        var brandIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in archive.Entries)
-        {
-            if (entry.Name.Length == 0
-                || !entry.Name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)) continue;
-            if (entry.Length is <= 0 or > MaximumSvgBytes)
-                throw new InvalidDataException("A filename-indexed SVG has an invalid size.");
-            if (!SafeGenericSvgNameRegex().IsMatch(entry.Name))
-                throw new InvalidDataException("A filename-indexed SVG has an unsafe brand id.");
-            var sourceName = Path.GetFileNameWithoutExtension(entry.Name);
-            var brandId = sourceName.ToLowerInvariant();
-            if (!brandIds.Add(brandId))
-                throw new InvalidDataException("A filename-indexed brand id is duplicated or ambiguous.");
-            if (brands.Count >= MaximumGenericIcons)
-                throw new InvalidDataException("The filename-indexed icon count exceeds the supported limit.");
-            brands.Add(new SourceBrand(
-                brandId,
-                sourceName,
-                "#334155",
-                [brandId, sourceName],
-                entry.FullName));
-        }
-        if (brands.Count == 0)
-            throw new InvalidDataException("The archive contains no filename-indexed SVG files.");
-        return new ParsedMetadata("filename-indexed", BrandIconPackFormat.FilenameIndexed, brands);
-    }
-
-    private static void AddAliases(JsonElement aliasObject, string propertyName, HashSet<string> target)
-    {
-        if (!aliasObject.TryGetProperty(propertyName, out var aliases) || aliases.ValueKind != JsonValueKind.Array) return;
-        foreach (var alias in aliases.EnumerateArray())
-        {
-            string? value = alias.ValueKind == JsonValueKind.String ? alias.GetString()
-                : alias.ValueKind == JsonValueKind.Object && alias.TryGetProperty("title", out var title) ? title.GetString()
-                : null;
-            if (IsSafeDisplayText(value, 128)) target.Add(value!);
-        }
-    }
-
     private static bool IsSafeDisplayText(string? value, int maximumLength) =>
         !string.IsNullOrWhiteSpace(value)
         && value.Length <= maximumLength
         && !value.Any(char.IsControl);
-
-    private static async Task ExtractValidatedSvgAsync(ZipArchiveEntry entry, string destination, CancellationToken token)
-    {
-        await using var input = entry.Open();
-        using var memory = new MemoryStream((int)entry.Length);
-        await input.CopyToAsync(memory, token);
-        if (memory.Length != entry.Length || memory.Length > MaximumSvgBytes) throw new InvalidDataException("Invalid SVG size.");
-        memory.Position = 0;
-        using (var reader = XmlReader.Create(memory, new XmlReaderSettings
-        {
-            DtdProcessing = DtdProcessing.Prohibit,
-            XmlResolver = null,
-            MaxCharactersInDocument = MaximumSvgBytes
-        }))
-        {
-            var foundSvg = false;
-            var foundPath = false;
-            while (reader.Read())
-            {
-                if (reader.NodeType != XmlNodeType.Element) continue;
-                foundSvg |= reader.LocalName == "svg";
-                foundPath |= reader.LocalName == "path" && !string.IsNullOrWhiteSpace(reader.GetAttribute("d"));
-            }
-            if (!foundSvg || !foundPath) throw new InvalidDataException("Unsupported SVG content.");
-        }
-        await File.WriteAllBytesAsync(destination, memory.ToArray(), token);
-    }
-
-    private static async Task CopyNoticeIfPresentAsync(ZipArchive archive, string prefix, string name, string destinationDirectory, CancellationToken token)
-    {
-        var entry = archive.GetEntry(prefix + name);
-        if (entry is null || entry.Length <= 0 || entry.Length > MaximumNoticeBytes) return;
-        await using var input = entry.Open();
-        await using var output = new FileStream(Path.Combine(destinationDirectory, name), FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
-        await input.CopyToAsync(output, token);
-    }
-
-    private static async Task CopyGenericNoticesAsync(
-        ZipArchive archive,
-        string destinationDirectory,
-        CancellationToken token)
-    {
-        var notices = archive.Entries.Where(entry =>
-            entry.Name.Length > 0
-            && GenericNoticeNameRegex().IsMatch(entry.Name)).ToArray();
-        if (notices.Length == 0) return;
-        if (notices.Length > MaximumGenericNotices
-            || notices.Any(entry => entry.Length is <= 0 or > MaximumNoticeBytes))
-            throw new InvalidDataException("The filename-indexed pack contains invalid notice files.");
-
-        var noticesDirectory = Path.Combine(destinationDirectory, "notices");
-        Directory.CreateDirectory(noticesDirectory);
-        for (var index = 0; index < notices.Length; index++)
-        {
-            token.ThrowIfCancellationRequested();
-            var entry = notices[index];
-            var destination = Path.Combine(
-                noticesDirectory,
-                $"{index + 1:D2}-{entry.Name.ToUpperInvariant()}");
-            await using var input = entry.Open();
-            await using var output = new FileStream(
-                destination,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None,
-                81920,
-                true);
-            await input.CopyToAsync(output, token);
-        }
-    }
 
     private static async Task WriteJsonAsync<T>(string path, T value, CancellationToken token)
     {
         await using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
         await JsonSerializer.SerializeAsync(stream, value, cancellationToken: token);
         await stream.FlushAsync(token);
-    }
-
-    // Mirrors Simple Icons' titleToSlug implementation so metadata entries that
-    // omit an explicit slug resolve to the same SVG filename as the source pack.
-    private static string TitleToSlug(string title)
-    {
-        var lowered = title.ToLowerInvariant();
-        var replaced = new StringBuilder(lowered.Length);
-        foreach (var character in lowered)
-        {
-            replaced.Append(character switch
-            {
-                '+' => "plus",
-                '.' => "dot",
-                '&' => "and",
-                'đ' => "d",
-                'ħ' => "h",
-                'ı' => "i",
-                'ĸ' => "k",
-                'ŀ' => "l",
-                'ł' => "l",
-                'ß' => "ss",
-                'ŧ' => "t",
-                'ø' => "o",
-                _ => character.ToString()
-            });
-        }
-
-        var normalized = replaced.ToString().Normalize(NormalizationForm.FormD);
-        var slug = new StringBuilder(normalized.Length);
-        foreach (var character in normalized)
-        {
-            if (character is >= 'a' and <= 'z' or >= '0' and <= '9') slug.Append(character);
-        }
-        return slug.ToString();
-    }
-
-    private static string? ReadVersionFromArchivePrefix(string fullName)
-    {
-        var match = VersionRegex().Match(fullName.Replace('\\', '/'));
-        return match.Success ? match.Groups[1].Value : null;
     }
 
     private static string SanitizeVersion(string value) =>
@@ -855,37 +895,26 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     [GeneratedRegex("^[a-z0-9_]+\\.svg$", RegexOptions.CultureInvariant)]
     private static partial Regex SafeSvgNameRegex();
 
-    [GeneratedRegex("^[A-Za-z0-9_]+\\.svg$", RegexOptions.CultureInvariant)]
-    private static partial Regex SafeGenericSvgNameRegex();
-
-    [GeneratedRegex("^(?:LICENSE|LICENCE|COPYING|NOTICE|DISCLAIMER)(?:\\.(?:MD|TXT))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex GenericNoticeNameRegex();
-
-    [GeneratedRegex("^[0-9A-Fa-f]{6}$", RegexOptions.CultureInvariant)]
-    private static partial Regex HexRegex();
-
-    [GeneratedRegex("^(?:simple-icons|local-icons)-[0-9A-Za-z.-]+-[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^[a-z0-9-]+-[0-9A-Za-z.-]+-v[0-9]+-[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
     private static partial Regex SafePackIdRegex();
-
-    [GeneratedRegex(@"(?:^|/)simple-icons-([0-9]+(?:\.[0-9]+){1,3}(?:-[0-9A-Za-z.-]+)?)/data/simple-icons\.json$", RegexOptions.CultureInvariant)]
-    private static partial Regex VersionRegex();
 
     private sealed record CurrentPack(string PackId);
     private sealed record BrandDisplaySettings(bool ShowIssuerLogo);
     private sealed record AccountBrandSettings(int Version, List<AccountBrandOverride> Overrides);
     private sealed record AccountBrandOverride(Guid AccountId, string BrandId);
-    private sealed record BrandIndex(string Version, List<IndexBrand> Brands);
-    private sealed record IndexBrand(string Id, string DisplayName, string BackgroundColor, string IconFileName, string[] Aliases);
-    private sealed record SourceBrand(
+    private sealed record CustomIconIndex(int Version, List<CustomIconEntry> Icons);
+    private sealed record CustomIconEntry(
         string Id,
         string DisplayName,
         string BackgroundColor,
-        string[] Aliases,
-        string ArchiveEntryName);
-    private sealed record ParsedMetadata(
+        string IconFileName);
+    private sealed record BrandIndex(
         string Version,
-        BrandIconPackFormat Format,
-        List<SourceBrand> Brands);
+        List<IndexBrand> Brands,
+        string ProviderId = "simple-icons",
+        string ProviderDisplayName = "Simple Icons",
+        BrandIconPackFormat Format = BrandIconPackFormat.SimpleIcons);
+    private sealed record IndexBrand(string Id, string DisplayName, string BackgroundColor, string IconFileName, string[] Aliases);
     private sealed record CatalogSnapshot(
         string? PackDirectory,
         IReadOnlyDictionary<string, BrandDefinition> ById,

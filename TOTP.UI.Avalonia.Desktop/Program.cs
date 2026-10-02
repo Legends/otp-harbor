@@ -76,13 +76,18 @@ internal static class Program
         return builder;
     }
 
-    private static ApplicationActivationRequest ResolveActivationRequest(string[] args)
+    internal static ApplicationActivationRequest ResolveActivationRequest(string[] args)
     {
 #if DEBUG
         if (args is ["--debug-bulk-add-synthetic-accounts"])
             return ApplicationActivationRequest.DebugBulkAddSyntheticAccounts();
         if (args is ["--debug-bulk-delete-synthetic-accounts"])
             return ApplicationActivationRequest.DebugBulkDeleteSyntheticAccounts();
+        if (args is ["--debug-import-accounts", var filePath]
+            && !string.IsNullOrWhiteSpace(filePath))
+            return ApplicationActivationRequest.DebugImportAccounts(Path.GetFullPath(filePath));
+        if (args is ["--debug-delete-all-accounts"])
+            return ApplicationActivationRequest.DebugDeleteAllAccounts();
 #endif
         return ApplicationActivationRequest.ActivateMainWindow();
     }

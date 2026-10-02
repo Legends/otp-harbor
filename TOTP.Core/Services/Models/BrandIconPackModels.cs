@@ -9,15 +9,21 @@ public sealed record BrandDefinition(
 public sealed record BrandIconPackStatus(
     bool IsInstalled,
     string? Version,
-    int BrandCount);
+    int BrandCount,
+    BrandIconPackFormat? Format = null,
+    string? ProviderDisplayName = null);
 
 public enum BrandIconPackFormat
 {
     SimpleIcons,
-    FilenameIndexed
+    Aegis,
+    FilenameIndexed,
+    CustomSvg
 }
 
 public sealed record BrandIconPackImportResult(
     string Version,
     int BrandCount,
-    BrandIconPackFormat Format);
+    BrandIconPackFormat Format,
+    string ProviderId = "simple-icons",
+    string ProviderDisplayName = "Simple Icons");

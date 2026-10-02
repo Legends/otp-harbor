@@ -813,6 +813,12 @@
                                                             </DataTemplate>
                                                         </controls:TypeAheadComboBox.ItemTemplate>
                                                     </controls:TypeAheadComboBox>
+                                                    <Button
+                                                        x:Name="CustomSvgIconButton"
+                                                        Classes="secondary wide"
+                                                        Command="{Binding ImportCustomIconCommand}"
+                                                        Content="{DynamicResource ChooseCustomSvgIcon}"
+                                                        IsVisible="{Binding IsEditingExistingAccount}" />
                                                     <TextBlock
                                                         Classes="secondary"
                                                         Text="{DynamicResource BrandIconHelp}"

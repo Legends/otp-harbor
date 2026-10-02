@@ -72,6 +72,25 @@ public sealed class MobileStringCatalogTests
     }
 
     [Theory]
+    [InlineData("en", "Third-party icon packs", "does not imply affiliation")]
+    [InlineData("de", "Symbolpakete und benutzerdefinierte Symbole", "bedeutet weder eine Verbindung")]
+    [InlineData("fr", "packs d’icônes tiers", "n’implique aucune affiliation")]
+    [InlineData("es", "paquetes de iconos de terceros", "no implica afiliación")]
+    public void Get_BrandIconDescriptionIncludesLocalizedOwnershipNotice(
+        string cultureName,
+        string expectedOpening,
+        string expectedDisclaimer)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        var description = catalog.Get(MobileStringKeys.BrandIconsDescription);
+
+        Assert.Contains(expectedOpening, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(expectedDisclaimer, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("OTP Harbor", description, StringComparison.Ordinal);
+    }
+
+    [Theory]
     [InlineData(
         "en",
         "Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.",

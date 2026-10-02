@@ -14,6 +14,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
     private const int CreateRequestCode = 0x4f56;
     private const int BrandIconPackRequestCode = 0x4f57;
     private const int AccountImportRequestCode = 0x4f58;
+    private const int CustomSvgIconRequestCode = 0x4f59;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
 
     public async Task<MobileReadableDocument?> OpenEncryptedBackupAsync(
@@ -93,7 +94,25 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         var selected = await StartAsync(intent, BrandIconPackRequestCode, cancellationToken);
         if (selected is null) return null;
 
-        return OpenReadableDocument(selected, "simple-icons.zip");
+        return OpenReadableDocument(selected, "icon-pack.zip");
+    }
+
+    public async Task<MobileReadableDocument?> OpenCustomSvgIconAsync(
+        CancellationToken cancellationToken = default)
+    {
+        using var intent = new Intent(Intent.ActionOpenDocument);
+        intent.AddCategory(Intent.CategoryOpenable);
+        intent.SetType("image/svg+xml");
+        intent.PutExtra(Intent.ExtraMimeTypes, new[]
+        {
+            "image/svg+xml",
+            "text/xml",
+            "application/xml"
+        });
+        var selected = await StartAsync(intent, CustomSvgIconRequestCode, cancellationToken);
+        if (selected is null) return null;
+
+        return OpenReadableDocument(selected, "custom-icon.svg");
     }
 
     private MobileReadableDocument? OpenReadableDocument(

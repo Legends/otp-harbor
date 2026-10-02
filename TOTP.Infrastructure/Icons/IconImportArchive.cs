@@ -1,0 +1,221 @@
+using System.Globalization;
+using System.IO.Compression;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml;
+using TOTP.Core.Icons;
+
+namespace TOTP.Infrastructure.Icons;
+
+internal static partial class IconImportArchive
+{
+    internal const int MaximumEntries = 10_000;
+    internal const long MaximumExpandedBytes = 64L * 1024 * 1024;
+    internal const int MaximumMetadataBytes = 8 * 1024 * 1024;
+    internal const int MaximumSvgBytes = 64 * 1024;
+    internal const int MaximumIcons = 5_000;
+    internal const int MaximumAliasesPerIcon = 32;
+    internal const int MaximumNotices = 64;
+    internal const int MaximumNoticeBytes = 128 * 1024;
+
+    internal static ZipArchive Open(IconPackSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(source.Stream);
+        if (!source.Stream.CanRead || !source.Stream.CanSeek)
+            throw new InvalidDataException("Icon pack streams must be readable and seekable.");
+        source.Stream.Position = 0;
+        var archive = new ZipArchive(source.Stream, ZipArchiveMode.Read, leaveOpen: true);
+        ValidateShape(archive);
+        return archive;
+    }
+
+    internal static void ValidateShape(ZipArchive archive)
+    {
+        if (archive.Entries.Count is 0 or > MaximumEntries)
+            throw new InvalidDataException("Unexpected icon archive entry count.");
+
+        long expanded = 0;
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in archive.Entries)
+        {
+            var normalized = NormalizeEntryName(entry.FullName);
+            if (!names.Add(normalized))
+                throw new InvalidDataException("Duplicate icon archive entry.");
+            expanded = checked(expanded + entry.Length);
+            if (expanded > MaximumExpandedBytes)
+                throw new InvalidDataException("Expanded icon archive is too large.");
+            EnsureSafeRelativePath(normalized);
+        }
+    }
+
+    internal static ZipArchiveEntry? FindUniqueEntryBySuffix(
+        ZipArchive archive,
+        string suffix,
+        int maximumBytes)
+    {
+        var normalizedSuffix = suffix.Replace('\\', '/');
+        var matches = archive.Entries.Where(entry =>
+            MatchesSuffix(entry, normalizedSuffix)).ToArray();
+        if (matches.Length == 0) return null;
+        if (matches.Length != 1 || matches[0].Length is <= 0 || matches[0].Length > maximumBytes)
+            throw new InvalidDataException("Icon pack metadata is invalid or ambiguous.");
+        return matches[0];
+    }
+
+    internal static bool ContainsEntryBySuffix(ZipArchive archive, string suffix)
+    {
+        var normalizedSuffix = suffix.Replace('\\', '/');
+        return archive.Entries.Any(entry => MatchesSuffix(entry, normalizedSuffix));
+    }
+
+    internal static string PrefixBefore(ZipArchiveEntry entry, string suffix) =>
+        NormalizeEntryName(entry.FullName)[..^suffix.Length];
+
+    internal static async Task<byte[]> ReadValidatedSvgAsync(
+        ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+    {
+        if (entry.Length is <= 0 or > MaximumSvgBytes)
+            throw new InvalidDataException("An SVG has an invalid size.");
+        await using var input = entry.Open();
+        return await ReadValidatedSvgAsync(input, cancellationToken);
+    }
+
+    internal static async Task<byte[]> ReadValidatedSvgAsync(
+        Stream stream,
+        CancellationToken cancellationToken)
+    {
+        using var memory = new MemoryStream();
+        var buffer = new byte[16 * 1024];
+        var total = 0;
+        int read;
+        while ((read = await stream.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            total += read;
+            if (total > MaximumSvgBytes)
+                throw new InvalidDataException("An SVG exceeds the supported size.");
+            await memory.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+        }
+        if (memory.Length == 0) throw new InvalidDataException("An SVG is empty.");
+
+        memory.Position = 0;
+        using (var reader = XmlReader.Create(memory, new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+            MaxCharactersInDocument = MaximumSvgBytes,
+            IgnoreComments = true
+        }))
+        {
+            var foundSvg = false;
+            var foundPath = false;
+            while (reader.Read())
+            {
+                if (reader.NodeType != XmlNodeType.Element) continue;
+                if (reader.LocalName.Equals("svg", StringComparison.OrdinalIgnoreCase))
+                    foundSvg = true;
+                if (reader.LocalName.Equals("path", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(reader.GetAttribute("d")))
+                    foundPath = true;
+                if (reader.LocalName.Equals("script", StringComparison.OrdinalIgnoreCase)
+                    || reader.GetAttribute("href") is { Length: > 0 }
+                    || reader.GetAttribute("href", "http://www.w3.org/1999/xlink") is { Length: > 0 })
+                    throw new InvalidDataException("External or executable SVG content is not supported.");
+            }
+            if (!foundSvg || !foundPath)
+                throw new InvalidDataException("Unsupported SVG content.");
+        }
+        return memory.ToArray();
+    }
+
+    internal static async Task<byte[]> ReadBoundedAsync(
+        ZipArchiveEntry entry,
+        int maximumBytes,
+        CancellationToken cancellationToken)
+    {
+        if (entry.Length is <= 0 || entry.Length > maximumBytes)
+            throw new InvalidDataException("An icon pack entry has an invalid size.");
+        await using var input = entry.Open();
+        using var memory = new MemoryStream((int)entry.Length);
+        await input.CopyToAsync(memory, cancellationToken);
+        if (memory.Length != entry.Length || memory.Length > maximumBytes)
+            throw new InvalidDataException("An icon pack entry has an invalid size.");
+        return memory.ToArray();
+    }
+
+    internal static async Task<IReadOnlyList<ImportedIconNotice>> ReadNoticesAsync(
+        ZipArchive archive,
+        string prefix,
+        CancellationToken cancellationToken)
+    {
+        var notices = archive.Entries.Where(entry =>
+            entry.Name.Length > 0
+            && NormalizeEntryName(entry.FullName).StartsWith(prefix, StringComparison.Ordinal)
+            && NoticeNameRegex().IsMatch(entry.Name)).ToArray();
+        if (notices.Length > MaximumNotices)
+            throw new InvalidDataException("The icon pack contains too many notice files.");
+
+        var result = new List<ImportedIconNotice>(notices.Length);
+        foreach (var entry in notices)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            result.Add(new ImportedIconNotice(
+                entry.Name.ToUpperInvariant(),
+                await ReadBoundedAsync(entry, MaximumNoticeBytes, cancellationToken)));
+        }
+        return result;
+    }
+
+    internal static string NormalizeEntryName(string value) => value.Replace('\\', '/');
+
+    private static bool MatchesSuffix(ZipArchiveEntry entry, string normalizedSuffix)
+    {
+        var name = NormalizeEntryName(entry.FullName);
+        return name.Equals(normalizedSuffix, StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith('/' + normalizedSuffix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static void EnsureSafeRelativePath(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || value.StartsWith("/", StringComparison.Ordinal)
+            || Path.IsPathRooted(value)
+            || value.Split('/').Any(segment => segment is "." or ".."))
+            throw new InvalidDataException("Unsafe icon archive path.");
+    }
+
+    internal static bool IsSafeDisplayText(string? value, int maximumLength = 256) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.Length <= maximumLength
+        && !value.Any(char.IsControl);
+
+    internal static string ToCanonicalId(string value)
+    {
+        var normalized = value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var result = new StringBuilder(normalized.Length);
+        foreach (var character in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
+                continue;
+            if (character is >= 'a' and <= 'z' or >= '0' and <= '9' || character == '_')
+                result.Append(character);
+            else if (character == '+') result.Append("plus");
+            else if (character == '&') result.Append("and");
+        }
+        return result.ToString();
+    }
+
+    internal static bool IsCanonicalId(string value) => CanonicalIdRegex().IsMatch(value);
+
+    internal static bool IsHexColor(string value) => HexRegex().IsMatch(value);
+
+    [GeneratedRegex("^[a-z0-9_]+$", RegexOptions.CultureInvariant)]
+    private static partial Regex CanonicalIdRegex();
+
+    [GeneratedRegex("^[0-9A-Fa-f]{6}$", RegexOptions.CultureInvariant)]
+    private static partial Regex HexRegex();
+
+    [GeneratedRegex("^(?:LICENSE|LICENCE|COPYING|NOTICE|DISCLAIMER)(?:\\.(?:MD|TXT))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex NoticeNameRegex();
+}

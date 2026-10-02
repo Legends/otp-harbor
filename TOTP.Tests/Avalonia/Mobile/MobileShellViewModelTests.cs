@@ -1431,6 +1431,58 @@ public sealed class MobileShellViewModelTests
             Times.Exactly(2));
         context.Sut.Dispose();
     }
+
+    [Fact]
+    public async Task DebugAccountMethods_ImportThroughProductionPipelineAndDeleteAllInOneCommit()
+    {
+        IReadOnlyList<Account> storedAccounts = [];
+        var importedAccount = new Account(Guid.NewGuid(), "Google", ValidSecret, "load-test");
+        var context = CreateContext(isConfigured: true, storedAccounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(() => context.Authorization.Object.State.Unlock())
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(storedAccounts));
+        context.AccountManager
+            .Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(accounts => storedAccounts = accounts.ToArray())
+            .ReturnsAsync(Result.Ok());
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(),
+                "fixture.json",
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { importedAccount }));
+        context.AccountImport.Setup(value => value.ImportAsync(
+                It.IsAny<IReadOnlyList<Account>>(),
+                ImportConflictStrategy.SkipExisting,
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback(() => storedAccounts = [importedAccount])
+            .ReturnsAsync(Result.Ok(new AccountImportOutcome(
+                AccountImportStatus.Completed,
+                Added: 1)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await using var json = new MemoryStream([1, 2, 3]);
+
+        Assert.True(await context.Sut.ImportAccountsAsync(
+            json,
+            "fixture.json",
+            global::Xunit.TestContext.Current.CancellationToken));
+        Assert.Single(storedAccounts);
+        Assert.True(await context.Sut.DeleteAllAccountsAsync());
+        Assert.Empty(storedAccounts);
+
+        context.AccountManager.Verify(
+            value => value.CommitImportAsync(
+                It.Is<IReadOnlyCollection<Account>>(accounts => accounts.Count == 0)),
+            Times.Once);
+        context.Sut.Dispose();
+    }
 #endif
 
     [Fact]
@@ -2787,6 +2839,54 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(600, persisted.PeriodSeconds);
         Assert.Empty(context.Sut.EditorSecret);
         Assert.False(context.Sut.IsEditorVisible);
+    }
+
+    [Fact]
+    public async Task EditAccount_CanImportAccountSpecificCustomSvg()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var custom = new BrandDefinition(
+            "custom_0123456789abcdef01234567",
+            "personal-mark",
+            "#334155",
+            "custom_0123456789abcdef01234567.svg");
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.ImportCustomIconAsync(
+                account.ID,
+                It.IsAny<Stream>(),
+                "personal-mark.svg",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(custom));
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "personal-mark.svg"));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+
+        await context.Sut.ImportCustomIconAsync();
+
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.CustomIconImported),
+            context.Sut.NotificationText);
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            account.ID,
+            It.IsAny<Stream>(),
+            "personal-mark.svg",
+            It.IsAny<CancellationToken>()), Times.Once);
+        context.Sut.Dispose();
     }
 
     [Fact]

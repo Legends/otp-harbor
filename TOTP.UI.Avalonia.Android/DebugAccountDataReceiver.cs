@@ -9,13 +9,15 @@ namespace TOTP.Avalonia.Android;
     Name = "io.github.legends.otpharbor.debug.DebugAccountDataReceiver",
     Enabled = true,
     Exported = true)]
-[IntentFilter([AddAction, DeleteAction])]
+[IntentFilter([AddAction, DeleteAction, DeleteAllAction])]
 public sealed class DebugAccountDataReceiver : BroadcastReceiver
 {
     internal const string AddAction =
         "io.github.legends.otpharbor.debug.action.BULK_ADD_SYNTHETIC_ACCOUNTS";
     internal const string DeleteAction =
         "io.github.legends.otpharbor.debug.action.BULK_DELETE_SYNTHETIC_ACCOUNTS";
+    internal const string DeleteAllAction =
+        "io.github.legends.otpharbor.debug.action.DELETE_ALL_ACCOUNTS";
 
     public override void OnReceive(Context? context, Intent? intent)
     {
@@ -33,6 +35,8 @@ public sealed class DebugAccountDataReceiver : BroadcastReceiver
                         await application.AddDebugSyntheticAccountsAsync(count),
                     DeleteAction when application is not null =>
                         await application.DeleteDebugSyntheticAccountsAsync(),
+                    DeleteAllAction when application is not null =>
+                        await application.DeleteAllAccountsAsync(),
                     _ => false
                 };
                 Log.Info("OtpHarborDebug", $"Debug account data action completed: {succeeded}.");

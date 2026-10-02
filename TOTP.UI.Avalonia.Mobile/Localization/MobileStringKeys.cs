@@ -122,6 +122,9 @@ public static class MobileStringKeys
     public const string ResetBrandIcons = nameof(ResetBrandIcons);
     public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
     public const string ShowIssuerLogoDescription = nameof(ShowIssuerLogoDescription);
+    public const string ChooseCustomSvgIcon = nameof(ChooseCustomSvgIcon);
+    public const string CustomIconImported = nameof(CustomIconImported);
+    public const string CustomIconImportFailed = nameof(CustomIconImportFailed);
     public const string SettingsSaveFailed = nameof(SettingsSaveFailed);
     public const string BackupFileName = nameof(BackupFileName);
     public const string BackupPasswordRequired = nameof(BackupPasswordRequired);
@@ -344,7 +347,8 @@ public static class MobileStringKeys
         NoBrandIconPackSelected,
         BrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
-        ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, SettingsSaveFailed,
+        ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, ChooseCustomSvgIcon,
+        CustomIconImported, CustomIconImportFailed, SettingsSaveFailed,
         BackupFileName,
         BackupPasswordRequired,
         BackupPasswordMinimumLength,

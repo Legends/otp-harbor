@@ -68,6 +68,8 @@ public static class AvaloniaStringKeys
     public const string FilenameIndexedBrandIconPackStatus = nameof(FilenameIndexedBrandIconPackStatus);
     public const string ResetBrandIcons = nameof(ResetBrandIcons);
     public const string ResetBrandIconsConfirmation = nameof(ResetBrandIconsConfirmation);
+    public const string ImportingAccounts = nameof(ImportingAccounts);
+    public const string ImportingBrandIcons = nameof(ImportingBrandIcons);
     public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
     public const string ShowIssuerLogoHelp = nameof(ShowIssuerLogoHelp);
     public const string OpenQrImage = nameof(OpenQrImage);
@@ -239,6 +241,11 @@ public static class AvaloniaStringKeys
     public const string BrandIcon = nameof(BrandIcon);
     public const string AutomaticBrandIcon = nameof(AutomaticBrandIcon);
     public const string BrandIconHelp = nameof(BrandIconHelp);
+    public const string CustomAccountIcon = nameof(CustomAccountIcon);
+    public const string ChooseCustomSvgIcon = nameof(ChooseCustomSvgIcon);
+    public const string SvgIconFiles = nameof(SvgIconFiles);
+    public const string CustomIconImported = nameof(CustomIconImported);
+    public const string CustomIconImportFailed = nameof(CustomIconImportFailed);
     public const string AdvancedOptions = nameof(AdvancedOptions);
     public const string TotpPeriod = nameof(TotpPeriod);
     public const string ClearPeriod = nameof(ClearPeriod);
@@ -424,7 +431,7 @@ public static class AvaloniaStringKeys
         FilenameIndexedBrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
         BrandIconPackNotInstalled, BrandIconPackStatus, FilenameIndexedBrandIconPackStatus, ResetBrandIcons,
-        ResetBrandIconsConfirmation,
+        ResetBrandIconsConfirmation, ImportingAccounts, ImportingBrandIcons,
         ShowIssuerLogo, ShowIssuerLogoHelp,
         OpenQrImage, SelectQrImage, QrImageFiles,
         QrImageReading, QrImageNoCode, QrImageInvalid, QrImageTooLarge,
@@ -471,6 +478,8 @@ public static class AvaloniaStringKeys
         AddAccount, AddAccountShortcut, EditAccount, EditAccountShortcut,
         DeleteAccount, DeleteAccountShortcut, DeleteAccountPrompt, Delete, Issuer,
         AccountName, Secret, BrandIcon, AutomaticBrandIcon, BrandIconHelp,
+        CustomAccountIcon, ChooseCustomSvgIcon, SvgIconFiles, CustomIconImported,
+        CustomIconImportFailed,
         AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,
         AccountSecretInvalid, AccountDuplicate, AccountSaveFailed, AccountSaved,

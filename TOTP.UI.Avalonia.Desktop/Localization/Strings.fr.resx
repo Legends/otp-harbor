@@ -68,6 +68,11 @@
   <data name="BrandIcon" xml:space="preserve"><value>Icône du compte</value></data>
   <data name="AutomaticBrandIcon" xml:space="preserve"><value>Correspondance automatique de l’émetteur</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Choisissez une icône du pack local importé ou conservez la correspondance automatique. Cette préférence d’affichage locale n’est pas incluse dans les sauvegardes du coffre-fort.</value></data>
+  <data name="CustomAccountIcon" xml:space="preserve"><value>SVG personnalisé</value></data>
+  <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Choisir un SVG personnalisé…</value></data>
+  <data name="SvgIconFiles" xml:space="preserve"><value>Fichiers d’icônes SVG</value></data>
+  <data name="CustomIconImported" xml:space="preserve"><value>L’icône personnalisée a été appliquée à ce compte.</value></data>
+  <data name="CustomIconImportFailed" xml:space="preserve"><value>Le SVG est invalide ou n’a pas pu être stocké en toute sécurité.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Options avancées</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Période du code en secondes</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Effacer la période du code</value></data>
@@ -383,13 +388,13 @@
   <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Choisissez une capture d’écran nette ou une image enregistrée d’un code QR de transfert Google Authenticator. Les exports de plusieurs comptes ou pages sont importés une image QR à la fois.</value></data>
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choisir l’image QR Google Authenticator…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Icônes de marque facultatives</value></data>
-  <data name="BrandIconsHelp" xml:space="preserve"><value>OTP Harbor n’inclut aucun logo tiers et n’est ni affilié ni approuvé par Simple Icons, les fournisseurs de packs d’icônes ou les marques représentées. Importez uniquement une archive ZIP obtenue indépendamment et que vous êtes autorisé à utiliser. Les images importées restent dans les données locales de l’application ; aucune information d’émetteur ou de compte n’est transmise.</value></data>
-  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Archives ZIP prises en charge : une version de Simple Icons ou des fichiers SVG nommés avec des identifiants canoniques tels que github.svg. Les sous-dossiers sont autorisés ; les noms en double ou non canoniques sont refusés.</value></data>
+  <data name="BrandIconsHelp" xml:space="preserve"><value>Les packs d’icônes tiers et les icônes personnalisées sont importés et stockés localement par l’utilisateur. OTP Harbor ne fournit ni ne distribue ces éléments.&#xA;&#xA;Toutes les marques, tous les logos, droits d’auteur, licences et directives d’utilisation restent sous la responsabilité de leurs propriétaires respectifs et s’appliquent indépendamment d’OTP Harbor.&#xA;&#xA;La compatibilité avec un pack d’icônes n’implique aucune affiliation, aucun parrainage ni aucune approbation de son fournisseur ou d’un détenteur de marque.</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Archives ZIP prises en charge : versions de Simple Icons, packs d’icônes Aegis basés sur SVG ou fichiers SVG nommés avec des identifiants canoniques tels que github.svg. Les extensions de format compatibles sont acceptées ; les chemins non sûrs, métadonnées ambiguës, identifiants en double et contenus d’image non pris en charge sont refusés.</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Importer une archive ZIP d’icônes locale…</value></data>
   <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Sélectionner une archive ZIP d’icônes locale</value></data>
   <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Archives ZIP de packs d’icônes</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Aucun pack d’icônes n’a été sélectionné.</value></data>
-  <data name="BrandIconPackImported" xml:space="preserve"><value>{0} icônes locales importées depuis Simple Icons {1}.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>{0} icônes locales importées depuis {1} {2}.</value></data>
   <data name="FilenameIndexedBrandIconPackImported" xml:space="preserve"><value>{0} icônes de marque locales importées depuis l’archive ZIP indexée par nom de fichier.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Le pack d’icônes est invalide ou n’a pas pu être installé en toute sécurité.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Les icônes de marque importées ont été supprimées.</value></data>
@@ -399,6 +404,8 @@
   <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} icônes locales installées depuis une archive ZIP indexée par nom de fichier.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Supprimer les icônes importées</value></data>
   <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>Supprimer le pack d’icônes importé ? Les données des comptes ne seront pas modifiées, mais les comptes utiliseront des icônes automatiques ou génériques jusqu’à l’importation d’un autre pack.</value></data>
+  <data name="ImportingAccounts" xml:space="preserve"><value>Importation des comptes…</value></data>
+  <data name="ImportingBrandIcons" xml:space="preserve"><value>Importation des icônes locales…</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Afficher le logo de l’émetteur</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Afficher une tuile de marque ou de remplacement à côté de chaque compte.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Apparence</value></data>

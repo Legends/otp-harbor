@@ -442,5 +442,27 @@
             IsHitTestVisible="False"
             Severity="{Binding SettingsNotification.Severity}"
             Text="{Binding SettingsNotification.Text}" />
+        <Border
+            x:Name="SettingsImportProgressOverlay"
+            ZIndex="100"
+            Background="#66000000"
+            IsVisible="{Binding NativeFilePicker.IsImportProgressVisible}">
+            <Border
+                Width="300"
+                Padding="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{DynamicResource BrushSurface}"
+                CornerRadius="8">
+                <StackPanel Spacing="12">
+                    <ProgressBar IsIndeterminate="True" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Text="{Binding NativeFilePicker.ImportProgressText}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </Window>

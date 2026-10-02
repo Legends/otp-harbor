@@ -12,6 +12,17 @@ Final generation prompt:
 
 The generated image was visually reviewed for prohibited text, third-party branding, and small-size legibility before conversion.
 
+## Biometric unlock artwork
+
+`biometric-fingerprint-master.svg` and `biometric-lock-screen-master.svg` are the unmodified
+Recraft exports supplied by the maintainer on 2026-09-30 for OTP Harbor's biometric unlock and
+marketing presentation. Their embedded provenance metadata is retained in the repository. The
+runtime PNGs under `TOTP.UI.Avalonia.Shared/Assets/Biometric` are project-created derivatives:
+generated placeholder text was removed, a light-theme treatment was produced, the canonical
+OTP Harbor mark was composited where required, and the interactive fingerprint was separated from
+the static background to keep unlock rendering efficient. The masters and derivatives were
+visually reviewed for unrelated branding, personal data, and unexpected text before inclusion.
+
 ## Language flags
 
 `en.png` and `de.png` were rendered inside the project workspace on 2026-08-29 from geometric primitives. `fr.png` and `es.png` were rendered on 2026-09-03 by [`Generate-AdditionalLanguageFlags.ps1`](../../scripts/assets/Generate-AdditionalLanguageFlags.ps1), also from geometric primitives. They do not derive from downloaded image files:
@@ -159,6 +170,12 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/de.png` | `2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a` |
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/fr.png` | `b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340` |
 | `TOTP.UI.Avalonia.Desktop/Assets/flags/es.png` | `d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd` |
+| `TOTP.UI.Avalonia.Shared/Assets/Biometric/fingerprint.png` | `8fb24a9f292168bb5cfd696f4d2b476d668445449bc5d0a8474896207d83d503` |
+| `TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-dark.png` | `4af14f62d27b27d68a0c2312c1f40e8a369461e34cbc1ee1d190e55402eae327` |
+| `TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png` | `176bdef9bec8a6596efa256a36e2ad3c87f1a2a298ff9df77d3a02d771590ba4` |
+| `TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
+| `packaging/marketing/source/recraft/biometric-fingerprint-master.svg` | `eb8d9731e7884ed53d5bb5ff2e542e37a51e5518d63b72d68f658de313f1534b` |
+| `packaging/marketing/source/recraft/biometric-lock-screen-master.svg` | `1ffb46aab0b9247fa1ee3f9543b3c9e6f4a8bb70385acb24bcf0312a3aafeee0` |
 | `docs/images/readme/app.png` | `f35c44c51e29e7561053cbfe7f6593465df60924feaa3a84d194f2d8b4a07ce6` |
 | `docs/images/social/otp-harbor-social-preview.jpg` | `2ca1ebc4d4dabbb5f8061013432c4d3dc5708efa03ab746b20e4e83686de6725` |
 | `scripts/release/installer/InstallerDialog.bmp` | `be89b19fbb5e0c3abcf6e6d6df916e8f79fa9c3528a3c2cdf5881f5b419ddacc` |

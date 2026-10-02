@@ -383,6 +383,104 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         Assert.False(CreateSut(temp.Path).ShowIssuerLogo);
     }
 
+    [Fact]
+    public async Task ImportCustomIconAsync_PersistsPerAccountOverrideWithoutReplacingPack()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var archive = CreateArchive();
+        Assert.True((await sut.ImportAsync(
+            archive,
+            TestContext.Current.CancellationToken)).IsSuccess);
+        var accountId = Guid.NewGuid();
+        await using var svg = new MemoryStream(Encoding.UTF8.GetBytes(ValidSvg));
+
+        var imported = await sut.ImportCustomIconAsync(
+            accountId,
+            svg,
+            "personal-mark.svg",
+            TestContext.Current.CancellationToken);
+        var reloaded = CreateSut(temp.Path);
+
+        Assert.True(imported.IsSuccess);
+        Assert.StartsWith("custom_", imported.Value.Id, StringComparison.Ordinal);
+        Assert.Equal(imported.Value.Id, reloaded.GetAccountBrandId(accountId));
+        Assert.Equal(imported.Value.Id, reloaded.Resolve(null, imported.Value.Id)?.Id);
+        Assert.True(reloaded.TryGetIconPathData(imported.Value.Id, out var pathData));
+        Assert.Equal("M0 0h24v24H0z", pathData);
+        Assert.True(reloaded.Status.IsInstalled);
+        Assert.Equal("github", reloaded.Resolve("github.com")?.Id);
+        Assert.DoesNotContain(
+            reloaded.AvailableBrands,
+            brand => brand.Id == imported.Value.Id);
+    }
+
+    [Fact]
+    public async Task ImportAsync_InstallsAegisSvgPackAndRestoresProviderMetadata()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var archive = new MemoryStream();
+        using (var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            WriteEntry(zip, "pack.json", """
+                {
+                  "uuid":"c553f06f-2a17-46ca-87f5-56af90dd0500",
+                  "name":"Synthetic Aegis Pack",
+                  "version":7,
+                  "icons":[
+                    {"name":"GitHub","filename":"icons/GitHub.svg","issuer":["github.com"]}
+                  ],
+                  "futureOptionalField":true
+                }
+                """);
+            WriteEntry(zip, "icons/GitHub.svg", ValidSvg);
+        }
+        archive.Position = 0;
+
+        var imported = await sut.ImportAsync(archive, TestContext.Current.CancellationToken);
+        var reloaded = CreateSut(temp.Path);
+
+        Assert.True(imported.IsSuccess);
+        Assert.Equal(BrandIconPackFormat.Aegis, imported.Value.Format);
+        Assert.Equal("Aegis", imported.Value.ProviderDisplayName);
+        Assert.Equal("github", reloaded.Resolve("github.com")?.Id);
+        Assert.Equal(BrandIconPackFormat.Aegis, reloaded.Status.Format);
+        Assert.Equal("Aegis", reloaded.Status.ProviderDisplayName);
+    }
+
+    [Fact]
+    public void Constructor_LoadsLegacyFilenameIndexedCatalogWithoutNewProviderFields()
+    {
+        using var temp = new TempDir();
+        var packId = "local-icons-filename-indexed-v3-aaaaaaaaaaaa";
+        var packDirectory = Path.Combine(temp.Path, "BrandIcons", "packs", packId);
+        Directory.CreateDirectory(Path.Combine(packDirectory, "icons"));
+        File.WriteAllText(Path.Combine(temp.Path, "BrandIcons", "current.json"),
+            $$"""{"PackId":"{{packId}}"}""");
+        File.WriteAllText(Path.Combine(packDirectory, "brand-index.json"), """
+            {
+              "Version":"filename-indexed",
+              "Brands":[
+                {
+                  "Id":"github",
+                  "DisplayName":"GitHub",
+                  "BackgroundColor":"#334155",
+                  "IconFileName":"github.svg",
+                  "Aliases":["github.com"]
+                }
+              ]
+            }
+            """);
+        File.WriteAllText(Path.Combine(packDirectory, "icons", "github.svg"), ValidSvg);
+
+        var sut = CreateSut(temp.Path);
+
+        Assert.True(sut.Status.IsInstalled);
+        Assert.Equal(BrandIconPackFormat.FilenameIndexed, sut.Status.Format);
+        Assert.Equal("github", sut.Resolve("github.com")?.Id);
+    }
+
     private static SimpleIconsBrandIconPackService CreateSut(string applicationDataDirectory)
     {
         var paths = new Mock<IPlatformApplicationPaths>();

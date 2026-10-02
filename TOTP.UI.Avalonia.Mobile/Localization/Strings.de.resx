@@ -211,18 +211,21 @@
   <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>OTP Harbor entsperren</value></data>
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Verwenden Sie die Gerätesperre (PIN, Muster oder Passwort).</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optionale Markensymbole</value></data>
-  <data name="BrandIconsDescription" xml:space="preserve"><value>Importieren Sie eine selbst heruntergeladene Simple-Icons-ZIP-Datei. OTP Harbor speichert sie nur auf diesem Gerät und lädt niemals Aussteller- oder Kontoinformationen hoch. Die Markenrechte verbleiben bei ihren Eigentümern.</value></data>
-  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Simple-Icons-ZIP importieren…</value></data>
+  <data name="BrandIconsDescription" xml:space="preserve"><value>Symbolpakete und benutzerdefinierte Symbole von Drittanbietern werden vom Benutzer importiert und lokal gespeichert. OTP Harbor stellt diese Inhalte weder bereit noch verbreitet sie.&#xA;&#xA;Alle Marken, Logos, Urheberrechte, Lizenzen und Nutzungsrichtlinien verbleiben in der Verantwortung ihrer jeweiligen Eigentümer und gelten unabhängig von OTP Harbor.&#xA;&#xA;Die Kompatibilität mit einem Symbolpaket bedeutet weder eine Verbindung oder Förderung noch eine Empfehlung durch dessen Anbieter oder einen Markeninhaber. Unterstützt werden unter anderem Simple-Icons-Releases, SVG-basierte Aegis-Pakete und nach Dateinamen indizierte SVG-Pakete.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Lokales Symbolpaket-ZIP importieren…</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Konten werden importiert…</value></data>
   <data name="ImportingBrandIcons" xml:space="preserve"><value>Icon-Paket wird importiert…</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Es wurde kein Symbolpaket ausgewählt.</value></data>
-  <data name="BrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus Simple Icons {1} wurden importiert.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus {1} {2} wurden importiert.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Das Symbolpaket ist ungültig oder konnte nicht sicher installiert werden.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Importierte Markensymbole wurden entfernt.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Importierte Markensymbole konnten nicht entfernt werden.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Importierte Symbole entfernen</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Ausstellerlogo anzeigen</value></data>
   <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Ein Marken- oder Platzhalterfeld neben jedem Konto anzeigen.</value></data>
+  <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Benutzerdefiniertes SVG auswählen…</value></data>
+  <data name="CustomIconImported" xml:space="preserve"><value>Das benutzerdefinierte Symbol wurde diesem Konto zugewiesen.</value></data>
+  <data name="CustomIconImportFailed" xml:space="preserve"><value>Das SVG ist ungültig oder konnte nicht sicher gespeichert werden.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Diese Einstellung konnte nicht gespeichert werden.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Erscheinungsbild</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Systemeinstellung verwenden</value></data>

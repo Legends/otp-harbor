@@ -213,6 +213,54 @@ public sealed class AccountListViewModelTests
             value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
             Times.Once);
     }
+
+    [Fact]
+    public async Task DebugAccountMethods_ImportThroughProductionPipelineAndDeleteAllInOneCommit()
+    {
+        var importedAccount = new Account(Guid.NewGuid(), "Google", ValidSecret, "load-test");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        manager.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(),
+                "fixture.json",
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { importedAccount }));
+        var accountImport = new Mock<IAccountImportService>();
+        accountImport.Setup(value => value.ImportAsync(
+                It.IsAny<IReadOnlyList<Account>>(),
+                ImportConflictStrategy.SkipExisting,
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new AccountImportOutcome(
+                AccountImportStatus.Completed,
+                Added: 1)));
+        using var sut = CreateSut(
+            manager.Object,
+            exportService: export.Object,
+            accountImportService: accountImport.Object);
+        await using var json = new MemoryStream([1, 2, 3]);
+
+        Assert.True(await sut.ImportAccountsAsync(
+            json,
+            "fixture.json",
+            TestContext.Current.CancellationToken));
+        Assert.True(await sut.DeleteAllAccountsAsync(TestContext.Current.CancellationToken));
+
+        accountImport.Verify(value => value.ImportAsync(
+            It.Is<IReadOnlyList<Account>>(accounts => accounts.Count == 1),
+            ImportConflictStrategy.SkipExisting,
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<bool>>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+        manager.Verify(
+            value => value.CommitImportAsync(
+                It.Is<IReadOnlyCollection<Account>>(accounts => accounts.Count == 0)),
+            Times.Once);
+    }
 #endif
 
     [Fact]
@@ -1611,6 +1659,55 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task EditAccount_CanImportAndSelectAccountSpecificCustomSvg()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var custom = new BrandDefinition(
+            "custom_0123456789abcdef01234567",
+            "personal-mark",
+            "#334155",
+            "custom_0123456789abcdef01234567.svg");
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
+        brandIcons.Setup(value => value.ImportCustomIconAsync(
+                account.ID,
+                It.IsAny<Stream>(),
+                "personal-mark.svg",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(custom));
+        brandIcons.Setup(value => value.Resolve(null, custom.Id)).Returns(custom);
+        var selectedFile = new Mock<INativeStorageFile>();
+        selectedFile.SetupGet(value => value.Name).Returns("personal-mark.svg");
+        selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MemoryStream([1, 2, 3]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(selectedFile.Object);
+        using var sut = CreateSut(
+            manager.Object,
+            brandIconPackService: brandIcons.Object,
+            filePicker: picker.Object);
+        await sut.LoadAsync();
+        sut.SelectForKeyboardNavigation(Assert.Single(sut.Accounts));
+        await sut.BeginEditAsync();
+
+        await sut.ImportCustomIconAsync();
+
+        Assert.Equal(custom.Id, sut.SelectedEditorBrandIconOption?.Id);
+        Assert.Contains(
+            sut.EditorBrandIconOptions,
+            option => option.Id == custom.Id && option.DisplayName == "Custom SVG");
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            account.ID,
+            It.IsAny<Stream>(),
+            "personal-mark.svg",
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task SaveAccountAsync_WhenIconPreferenceFails_ReportsAccountWasStillSaved()
     {
         var manager = new Mock<IAccountManager>();
@@ -2217,7 +2314,10 @@ public sealed class AccountListViewModelTests
         IBrandIconResolver? brandIconResolver = null,
         IBrandIconPackService? brandIconPackService = null,
         ISettingsService? settingsService = null,
-        IAvaloniaLocalizationService? localization = null) =>
+        IAvaloniaLocalizationService? localization = null,
+        IExportService? exportService = null,
+        IAccountImportService? accountImportService = null,
+        IAvaloniaFilePicker? filePicker = null) =>
         new(
             manager,
             accountTotpService ?? Mock.Of<IAccountTotpService>(),
@@ -2229,7 +2329,10 @@ public sealed class AccountListViewModelTests
             transientMessageDuration: transientMessageDuration,
             settingsService: settingsService,
             brandIconResolver: brandIconResolver,
-            brandIconPackService: brandIconPackService);
+            brandIconPackService: brandIconPackService,
+            exportService: exportService,
+            accountImportService: accountImportService,
+            filePicker: filePicker);
 
     private static Mock<IAsyncClipboardService> SuccessfulClipboard()
     {

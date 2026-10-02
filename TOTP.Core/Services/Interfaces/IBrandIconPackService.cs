@@ -30,6 +30,12 @@ public interface IBrandIconPackService
         Stream zipStream,
         CancellationToken cancellationToken = default);
 
+    Task<Result<BrandDefinition>> ImportCustomIconAsync(
+        Guid accountId,
+        Stream svgStream,
+        string? fileName = null,
+        CancellationToken cancellationToken = default);
+
     Task<Result> ResetAsync(CancellationToken cancellationToken = default);
 
     Task<Result> SetShowIssuerLogoAsync(

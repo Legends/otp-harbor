@@ -70,6 +70,76 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
+    public async Task ImportBrandIconsAsync_ReportsDetectedAegisProvider()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickBrandIconPackAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("aegis-icons.zip", content: [1, 2, 3]));
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.ImportAsync(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new BrandIconPackImportResult(
+                "20261002",
+                450,
+                BrandIconPackFormat.Aegis,
+                "aegis",
+                "Aegis")));
+        using var sut = Create(
+            picker.Object,
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            brandIconPackService: brandIcons.Object,
+            localization: Localization("en"));
+
+        await sut.ImportBrandIconsAsync();
+
+        Assert.Equal(
+            "Imported 450 local brand icons from Aegis 20261002.",
+            sut.Message);
+    }
+
+    [Fact]
+    public async Task ImportBrandIconsAsync_WhenImportRunsLong_ShowsDelayedProgressUntilCompletion()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickBrandIconPackAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("large-icons.zip", content: [1, 2, 3]));
+        var completion = new TaskCompletionSource<Result<BrandIconPackImportResult>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.ImportAsync(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+            .Returns(completion.Task);
+        using var sut = Create(
+            picker.Object,
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            brandIconPackService: brandIcons.Object,
+            localization: Localization("en"));
+
+        var importTask = sut.ImportBrandIconsAsync();
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1650),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(sut.IsImportProgressVisible);
+        Assert.Equal("Importing local icons…", sut.ImportProgressText);
+
+        completion.SetResult(Result.Ok(new BrandIconPackImportResult(
+            "20261002",
+            500,
+            BrandIconPackFormat.SimpleIcons,
+            "simple-icons",
+            "Simple Icons")));
+        await importTask;
+
+        Assert.False(sut.IsImportProgressVisible);
+        Assert.Empty(sut.ImportProgressText);
+    }
+
+    [Fact]
     public async Task ResetBrandIconsAsync_WhenCancelled_KeepsImportedPack()
     {
         var brandIcons = new Mock<IBrandIconPackService>();

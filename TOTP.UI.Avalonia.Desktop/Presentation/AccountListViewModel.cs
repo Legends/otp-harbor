@@ -25,6 +25,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly IAvaloniaLocalizationService _localization;
     private readonly IBrandIconResolver _brandIconResolver;
     private readonly IBrandIconPackService? _brandIconPackService;
+    private readonly IAvaloniaFilePicker? _filePicker;
+    private readonly IExportService? _exportService;
+    private readonly IAccountImportService? _accountImportService;
     private readonly TimeSpan _countdownTickInterval;
     private readonly TimeSpan _copyConfirmationDuration;
     private readonly ISettingsService? _settingsService;
@@ -40,6 +43,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _saveAccountCommand;
     private readonly AsyncCommand _cancelEditCommand;
     private readonly AsyncCommand _clearEditorPeriodCommand;
+    private readonly AsyncCommand _importCustomIconCommand;
     private readonly AsyncCommand _deleteAccountCommand;
     private readonly AsyncCommand _beginContextEditCommand;
     private readonly AsyncCommand _generateContextQrCommand;
@@ -119,7 +123,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         IAvaloniaQrPreviewDialogService? qrPreviewDialogs = null,
         TimeSpan? transientMessageDuration = null,
         IBrandIconResolver? brandIconResolver = null,
-        IBrandIconPackService? brandIconPackService = null)
+        IBrandIconPackService? brandIconPackService = null,
+        IAvaloniaFilePicker? filePicker = null,
+        IExportService? exportService = null,
+        IAccountImportService? accountImportService = null)
     {
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountTotpService = accountTotpService ?? throw new ArgumentNullException(nameof(accountTotpService));
@@ -130,6 +137,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _brandIconResolver = brandIconResolver ?? FallbackBrandIconResolver.Instance;
         _brandIconPackService = brandIconPackService;
+        _filePicker = filePicker;
+        _exportService = exportService;
+        _accountImportService = accountImportService;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         _countdownTickInterval = countdownTickInterval ?? TimeSpan.FromSeconds(1);
         _copyConfirmationDuration = transientMessageDuration
@@ -163,6 +173,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _clearEditorPeriodCommand = new AsyncCommand(
             ClearEditorPeriodAsync,
             () => !IsBusy && IsEditorVisible && EditorPeriodSeconds.HasValue);
+        _importCustomIconCommand = new AsyncCommand(
+            ImportCustomIconAsync,
+            () => !IsBusy
+                && IsEditorVisible
+                && IsEditingExistingAccount
+                && _brandIconPackService is not null
+                && _filePicker is not null);
         _deleteAccountCommand = new AsyncCommand(
             DeleteAccountAsync,
             () => !IsBusy && !IsEditorVisible && !IsGroupEditorVisible && SelectedAccount is not null);
@@ -673,7 +690,52 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasBrandIconChoices => EditorBrandIconOptions.Count > 1;
 
+    public ICommand ImportCustomIconCommand => _importCustomIconCommand;
+
     public Task LoadAsync() => LoadAsync(null);
+
+    public async Task ImportCustomIconAsync()
+    {
+        if (IsBusy
+            || !IsEditorVisible
+            || !_editingAccountId.HasValue
+            || _brandIconPackService is null
+            || _filePicker is null)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            await using var file = await _filePicker.PickCustomSvgIconAsync();
+            if (file is null) return;
+            await using var stream = await file.OpenReadAsync();
+            var imported = await _brandIconPackService.ImportCustomIconAsync(
+                _editingAccountId.Value,
+                stream,
+                file.Name);
+            if (imported.IsFailed)
+            {
+                EditorMessage = _localization.GetString(
+                    AvaloniaStringKeys.CustomIconImportFailed);
+                return;
+            }
+
+            RefreshBrandIconOptions(imported.Value.Id);
+            Notification.ShowTransient(
+                _localization.GetString(AvaloniaStringKeys.CustomIconImported),
+                NotificationSeverity.Success);
+        }
+        catch (Exception)
+        {
+            EditorMessage = _localization.GetString(AvaloniaStringKeys.CustomIconImportFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
 #if DEBUG
     private const string DebugSyntheticAccountMarker = "otp-harbor-debug-load-test:";
@@ -742,6 +804,71 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             var saved = await _accountManager.CommitImportAsync(retained);
             if (saved.IsFailed) return false;
 
+            IsBusy = false;
+            await LoadAsync();
+            return true;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task<bool> ImportAccountsAsync(
+        Stream jsonStream,
+        string fileName = "otp-harbor-load-test-500.json",
+        CancellationToken cancellationToken = default)
+    {
+        if (IsBusy
+            || _exportService is null
+            || _accountImportService is null
+            || !Path.GetExtension(fileName).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        ArgumentNullException.ThrowIfNull(jsonStream);
+        IsBusy = true;
+        StopAndClearRowCodes();
+        try
+        {
+            var decoded = await _exportService.ImportFromStreamAsync(
+                jsonStream,
+                fileName,
+                cancellationToken: cancellationToken);
+            if (decoded.IsFailed || decoded.Value.Count == 0) return false;
+            var imported = await _accountImportService.ImportAsync(
+                decoded.Value,
+                ImportConflictStrategy.SkipExisting,
+                (_, _) => Task.FromResult(true),
+                cancellationToken);
+            if (imported.IsFailed
+                || imported.Value.Status != AccountImportStatus.Completed)
+            {
+                return false;
+            }
+
+            IsBusy = false;
+            await LoadAsync();
+            return true;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task<bool> DeleteAllAccountsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (IsBusy) return false;
+
+        IsBusy = true;
+        StopAndClearRowCodes();
+        try
+        {
+            var saved = await _accountManager.CommitImportAsync([]);
+            if (saved.IsFailed) return false;
             IsBusy = false;
             await LoadAsync();
             return true;
@@ -2079,10 +2206,22 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             null,
             _localization.GetString(AvaloniaStringKeys.AutomaticBrandIcon));
         var available = _brandIconPackService?.AvailableBrands ?? [];
+        var selectedCustom = !string.IsNullOrWhiteSpace(selectedBrandId)
+            ? _brandIconPackService?.Resolve(null, selectedBrandId)
+            : null;
         EditorBrandIconOptions =
         [
             automatic,
-            .. available.Select(brand => new BrandIconOption(brand.Id, brand.DisplayName))
+            .. available.Select(brand => new BrandIconOption(brand.Id, brand.DisplayName)),
+            .. (selectedCustom is not null
+                && available.All(brand => !string.Equals(
+                    brand.Id,
+                    selectedCustom.Id,
+                    StringComparison.OrdinalIgnoreCase))
+                    ? [new BrandIconOption(
+                        selectedCustom.Id,
+                        _localization.GetString(AvaloniaStringKeys.CustomAccountIcon))]
+                    : Array.Empty<BrandIconOption>())
         ];
         SelectBrandIconOption(selectedBrandId);
     }
@@ -2247,6 +2386,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
         _clearEditorPeriodCommand.NotifyCanExecuteChanged();
+        _importCustomIconCommand.NotifyCanExecuteChanged();
         _deleteAccountCommand.NotifyCanExecuteChanged();
         _beginContextEditCommand.NotifyCanExecuteChanged();
         _generateContextQrCommand.NotifyCanExecuteChanged();

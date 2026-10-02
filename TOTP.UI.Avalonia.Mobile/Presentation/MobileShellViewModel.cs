@@ -81,6 +81,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _saveAccountCommand;
     private readonly MobileAsyncCommand _cancelEditCommand;
     private readonly MobileAsyncCommand _clearEditorPeriodCommand;
+    private readonly MobileAsyncCommand _importCustomIconCommand;
     private readonly MobileAsyncCommand _confirmDeleteCommand;
     private readonly MobileAsyncCommand _cancelDeleteCommand;
     private readonly MobileAsyncCommand _scanQrCommand;
@@ -342,6 +343,12 @@ public sealed class MobileShellViewModel :
         _clearEditorPeriodCommand = new MobileAsyncCommand(
             ClearEditorPeriodAsync,
             () => IsEditorVisible && !IsBusy && EditorPeriodSeconds.HasValue);
+        _importCustomIconCommand = new MobileAsyncCommand(
+            ImportCustomIconAsync,
+            () => IsEditorVisible
+                && IsEditingExistingAccount
+                && !IsBusy
+                && _brandIconPackService is not null);
         _confirmDeleteCommand = new MobileAsyncCommand(
             ConfirmDeleteAsync,
             () => IsDeleteConfirmationVisible && !IsBusy);
@@ -462,6 +469,7 @@ public sealed class MobileShellViewModel :
     public ICommand SaveAccountCommand => _saveAccountCommand;
     public ICommand CancelEditCommand => _cancelEditCommand;
     public ICommand ClearEditorPeriodCommand => _clearEditorPeriodCommand;
+    public ICommand ImportCustomIconCommand => _importCustomIconCommand;
     public ICommand ConfirmDeleteCommand => _confirmDeleteCommand;
     public ICommand CancelDeleteCommand => _cancelDeleteCommand;
     public ICommand ScanQrCommand => _scanQrCommand;
@@ -922,6 +930,77 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    public async Task<bool> ImportAccountsAsync(
+        Stream jsonStream,
+        string fileName = "otp-harbor-load-test-500.json",
+        CancellationToken cancellationToken = default)
+    {
+        if (!_authorization.State.IsUnlocked
+            || IsBusy
+            || !Path.GetExtension(fileName).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        ArgumentNullException.ThrowIfNull(jsonStream);
+        IsBusy = true;
+        CancelCodeRefresh();
+        BeginImportProgress(MobileStringKeys.ImportingAccounts);
+        var completed = false;
+        try
+        {
+            var decoded = await _exportService.ImportFromStreamAsync(
+                jsonStream,
+                fileName,
+                cancellationToken: cancellationToken);
+            if (decoded.IsFailed || decoded.Value.Count == 0) return false;
+            var imported = await _accountImport.ImportAsync(
+                decoded.Value,
+                ImportConflictStrategy.SkipExisting,
+                (_, _) => Task.FromResult(true),
+                cancellationToken);
+            if (imported.IsFailed
+                || imported.Value.Status != AccountImportStatus.Completed)
+            {
+                return false;
+            }
+
+            await LoadAccountsAsync();
+            completed = true;
+            return true;
+        }
+        finally
+        {
+            EndImportProgress();
+            IsBusy = false;
+            if (!completed) StartCodeRefresh();
+        }
+    }
+
+    public async Task<bool> DeleteAllAccountsAsync()
+    {
+        if (!_authorization.State.IsUnlocked || IsBusy) return false;
+
+        IsBusy = true;
+        CancelCodeRefresh();
+        var completed = false;
+        try
+        {
+            var saved = await _accountManager.CommitImportAsync([]);
+            if (saved.IsFailed) return false;
+            _showFavoritesOnly = false;
+            _selectedGroupId = null;
+            await LoadAccountsAsync();
+            completed = true;
+            return true;
+        }
+        finally
+        {
+            IsBusy = false;
+            if (!completed) StartCodeRefresh();
+        }
+    }
+
     private static bool IsDebugSyntheticAccount(Account account) =>
         account.AccountName?.StartsWith(
             DebugSyntheticAccountMarker,
@@ -1183,6 +1262,8 @@ public sealed class MobileShellViewModel :
         ? MobileStringKeys.EditorEditTitle
         : MobileStringKeys.EditorAddTitle);
 
+    public bool IsEditingExistingAccount => _editingAccountId.HasValue;
+
     public string EditorSecretPlaceholder => Get(_editingAccountId.HasValue
         ? MobileStringKeys.SecretOptionalOnEdit
         : MobileStringKeys.Secret);
@@ -1309,6 +1390,7 @@ public sealed class MobileShellViewModel :
     public string ImportBackupText => Get(MobileStringKeys.ImportBackup);
     public string BrandIconsText => Get(MobileStringKeys.BrandIcons);
     public string BrandIconsDescriptionText => Get(MobileStringKeys.BrandIconsDescription);
+    public string ChooseCustomSvgIconText => Get(MobileStringKeys.ChooseCustomSvgIcon);
     public string ImportSimpleIconsPackText => Get(MobileStringKeys.ImportSimpleIconsPack);
     public string ShowIssuerLogoText => Get(MobileStringKeys.ShowIssuerLogo);
     public string ShowIssuerLogoDescriptionText => Get(MobileStringKeys.ShowIssuerLogoDescription);
@@ -2476,6 +2558,7 @@ public sealed class MobileShellViewModel :
                 string.Format(
                     Get(MobileStringKeys.BrandIconPackImported),
                     imported.Value.BrandCount,
+                    imported.Value.ProviderDisplayName,
                     imported.Value.Version),
                 NotificationSeverity.Success);
         }
@@ -2733,6 +2816,7 @@ public sealed class MobileShellViewModel :
         if (!CanEditAccounts() || SelectedAccount is null) return Task.CompletedTask;
         ClearQrImage();
         _editingAccountId = SelectedAccount.Id;
+        OnPropertyChanged(nameof(IsEditingExistingAccount));
         EditorIssuer = SelectedAccount.Issuer;
         EditorAccountName = SelectedAccount.AccountName;
         EditorSecret = string.Empty;
@@ -2909,6 +2993,18 @@ public sealed class MobileShellViewModel :
             {
                 SetError(MobileStringKeys.AccountDeleteFailed);
                 return;
+            }
+
+            if (_brandIconPackService is not null)
+            {
+                try
+                {
+                    await _brandIconPackService.SetAccountBrandIdAsync(accountId, null);
+                }
+                catch (Exception)
+                {
+                    // Account deletion is authoritative; a stale local display preference is harmless.
+                }
             }
 
             IsDeleteConfirmationVisible = false;
@@ -3149,7 +3245,10 @@ public sealed class MobileShellViewModel :
                     accountName,
                     account.PeriodSeconds,
                     FormatCustomPeriod(account.PeriodSeconds),
-                    _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
+                    _brandIconResolver.ResolveAccount(
+                        account.ID,
+                        account.Issuer,
+                        account.AccountName),
                     account.IsFavorite,
                     AddToFavoritesText,
                     RemoveFromFavoritesText,
@@ -3188,7 +3287,10 @@ public sealed class MobileShellViewModel :
                 accountName,
                 account.PeriodSeconds,
                 FormatCustomPeriod(account.PeriodSeconds),
-                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName),
+                _brandIconResolver.ResolveAccount(
+                    account.ID,
+                    account.Issuer,
+                    account.AccountName),
                 account.IsFavorite,
                 AddToFavoritesText,
                 RemoveFromFavoritesText,
@@ -3203,7 +3305,10 @@ public sealed class MobileShellViewModel :
                 accountName,
                 account.PeriodSeconds,
                 FormatCustomPeriod(account.PeriodSeconds),
-                _brandIconResolver.ResolveAccount(account.Issuer, account.AccountName));
+                _brandIconResolver.ResolveAccount(
+                    account.ID,
+                    account.Issuer,
+                    account.AccountName));
             item.UpdateFavorite(account.IsFavorite);
             item.UpdateGroup(group);
         }
@@ -3278,6 +3383,49 @@ public sealed class MobileShellViewModel :
         _clearGroupFilterCommand.NotifyCanExecuteChanged();
         ApplyAccountFilter();
         return Task.CompletedTask;
+    }
+
+    public async Task ImportCustomIconAsync()
+    {
+        if (!IsEditorVisible
+            || IsBusy
+            || !_editingAccountId.HasValue
+            || _brandIconPackService is null)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        using var operation = BeginSensitiveOperation();
+        try
+        {
+            using var document = await _documents.OpenCustomSvgIconAsync(operation.Token);
+            if (document is null) return;
+            var imported = await _brandIconPackService.ImportCustomIconAsync(
+                _editingAccountId.Value,
+                document.Stream,
+                document.Name,
+                operation.Token);
+            if (imported.IsFailed)
+            {
+                SetError(MobileStringKeys.CustomIconImportFailed);
+                return;
+            }
+
+            SetSuccess(MobileStringKeys.CustomIconImported);
+        }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested)
+        {
+        }
+        catch (Exception)
+        {
+            SetError(MobileStringKeys.CustomIconImportFailed);
+        }
+        finally
+        {
+            EndSensitiveOperation(operation);
+            IsBusy = false;
+        }
     }
 
     private void RefreshGroups()
@@ -3648,6 +3796,7 @@ public sealed class MobileShellViewModel :
     private void ClearEditor()
     {
         _editingAccountId = null;
+        OnPropertyChanged(nameof(IsEditingExistingAccount));
         EditorIssuer = string.Empty;
         EditorAccountName = string.Empty;
         EditorSecret = string.Empty;
@@ -3888,7 +4037,10 @@ public sealed class MobileShellViewModel :
         }
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
         foreach (var account in _allAccounts)
-            account.UpdateBrand(_brandIconResolver.ResolveAccount(account.Issuer, account.AccountName));
+            account.UpdateBrand(_brandIconResolver.ResolveAccount(
+                account.Id,
+                account.Issuer,
+                account.AccountName));
     }
 
     private void UpdateLogoVisibility()
@@ -4372,6 +4524,7 @@ public sealed class MobileShellViewModel :
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
         _clearEditorPeriodCommand.NotifyCanExecuteChanged();
+        _importCustomIconCommand.NotifyCanExecuteChanged();
         _confirmDeleteCommand.NotifyCanExecuteChanged();
         _cancelDeleteCommand.NotifyCanExecuteChanged();
         _scanQrCommand.NotifyCanExecuteChanged();
@@ -4531,6 +4684,7 @@ public sealed class MobileShellViewModel :
         nameof(ImportBackupText),
         nameof(BrandIconsText),
         nameof(BrandIconsDescriptionText),
+        nameof(ChooseCustomSvgIconText),
         nameof(ImportSimpleIconsPackText),
         nameof(ResetBrandIconsText),
         nameof(ShowIssuerLogoText),

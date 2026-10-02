@@ -1235,6 +1235,12 @@
                             RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                             Text="{Binding EditorSecret, Mode=TwoWay}" />
                         <controls:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
+                        <Button
+                            x:Name="CustomSvgIconButton"
+                            Classes="wide secondary"
+                            Command="{Binding ImportCustomIconCommand}"
+                            Content="{Binding ChooseCustomSvgIconText}"
+                            IsVisible="{Binding IsEditingExistingAccount}" />
                         <Expander
                             Header="{Binding AdvancedOptionsText}"
                             IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">

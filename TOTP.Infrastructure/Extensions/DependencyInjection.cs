@@ -7,7 +7,9 @@ using TOTP.Core.Common;
 using TOTP.Core.Security;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Icons;
 using TOTP.DAL.Services;
+using TOTP.Infrastructure.Icons;
 using TOTP.Infrastructure.Security;
 using TOTP.Infrastructure.Services;
 
@@ -59,11 +61,18 @@ public static class DependencyInjection
         services.AddSingleton<IQrPayloadValidator, QrPayloadValidator>();
         services.AddSingleton<IQrAccountImportService, QrAccountImportService>();
         services.AddSingleton<IAccountImportService, AccountImportService>();
+        services.AddSingleton<IIconPackImporter, SimpleIconsImporter>();
+        services.AddSingleton<IIconPackImporter, AegisIconPackImporter>();
+        services.AddSingleton<IIconPackImporter, FilenameIndexedIconPackImporter>();
+        services.AddSingleton<IIconPackImporterResolver, IconPackImporterResolver>();
+        services.AddSingleton<ICustomIconImporter, SvgIconImporter>();
         services.AddSingleton<IBrandIconPackService>(sp =>
             new SimpleIconsBrandIconPackService(
                 applicationPaths,
                 sp.GetRequiredService<IPlatformFileSecurity>(),
-                sp.GetRequiredService<ILogger<SimpleIconsBrandIconPackService>>()));
+                sp.GetRequiredService<ILogger<SimpleIconsBrandIconPackService>>(),
+                sp.GetRequiredService<IIconPackImporterResolver>(),
+                sp.GetRequiredService<ICustomIconImporter>()));
         services.AddSingleton<IStartupDiagnostics, StartupDiagnostics>();
         services.AddSingleton<ISupportDiagnosticsService, SupportDiagnosticsService>();
         services.AddSingleton<ISignedAppcastVerifier, SignedAppcastVerifier>();

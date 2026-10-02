@@ -2185,6 +2185,37 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void SettingsWindow_LongImportsUseCenteredOverlayProgressOutsideLayoutFlow()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var overlay = window.FindControl<Border>("SettingsImportProgressOverlay");
+            Assert.NotNull(overlay);
+            Assert.Equal(100, overlay.GetValue(Panel.ZIndexProperty));
+            var progress = Assert.Single(
+                overlay.GetVisualDescendants().OfType<ProgressBar>());
+            Assert.True(progress.IsIndeterminate);
+            var panel = Assert.Single(
+                overlay.GetVisualChildren().OfType<Border>());
+            Assert.Equal(
+                global::Avalonia.Layout.HorizontalAlignment.Center,
+                panel.HorizontalAlignment);
+            Assert.Equal(
+                global::Avalonia.Layout.VerticalAlignment.Center,
+                panel.VerticalAlignment);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void SettingsWindow_CloseButtonHasLocalizedAutomationName()
     {
         var window = new SettingsWindow();
@@ -2293,6 +2324,11 @@ public sealed class MainWindowSmokeTests
             Assert.Contains("wide", importButton.Classes);
             Assert.Contains("secondary", resetButton.Classes);
             Assert.Contains("wide", resetButton.Classes);
+            Assert.Contains(
+                panel.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.BrandIconsHelp]));
             Assert.Contains(
                 panel.GetLogicalDescendants().OfType<CheckBox>(),
                 checkBox => Equals(

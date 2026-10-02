@@ -54,6 +54,10 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     internal Task<bool> DeleteDebugSyntheticAccountsAsync() =>
         _services?.GetService<MobileShellViewModel>()?.DeleteDebugSyntheticAccountsAsync()
         ?? Task.FromResult(false);
+
+    internal Task<bool> DeleteAllAccountsAsync() =>
+        _services?.GetService<MobileShellViewModel>()?.DeleteAllAccountsAsync()
+        ?? Task.FromResult(false);
 #endif
 
     public void AttachActivity(MainActivity activity)

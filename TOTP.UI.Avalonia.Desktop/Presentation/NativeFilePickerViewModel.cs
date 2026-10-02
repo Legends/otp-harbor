@@ -15,6 +15,7 @@ namespace TOTP.Avalonia.Desktop.Presentation;
 
 public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposable
 {
+    private static readonly TimeSpan ImportProgressDelay = TimeSpan.FromMilliseconds(1500);
     private readonly IAvaloniaFilePicker _filePicker;
     private readonly IExportService _exportService;
     private readonly IAccountManager _accountManager;
@@ -35,6 +36,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly CameraScannerViewModel? _cameraScanner;
     private bool _isBusy;
+    private bool _isImportProgressVisible;
+    private string _importProgressText = string.Empty;
+    private CancellationTokenSource? _importProgressLifetime;
     private bool _disposed;
     private string? _lastBackupPath;
     private string? _lastBackupFolder;
@@ -124,6 +128,16 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         private set => SetField(ref _backupLocationText, value);
     }
     public bool HasLastBackupFolder => _lastBackupFolder is not null;
+    public bool IsImportProgressVisible
+    {
+        get => _isImportProgressVisible;
+        private set => SetField(ref _isImportProgressVisible, value);
+    }
+    public string ImportProgressText
+    {
+        get => _importProgressText;
+        private set => SetField(ref _importProgressText, value);
+    }
 
     public ICommand ImportCommand => _importCommand;
     public ICommand RestoreBackupCommand => _restoreBackupCommand;
@@ -141,7 +155,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             if (status?.IsInstalled != true)
                 return Localized(AvaloniaStringKeys.BrandIconPackNotInstalled);
 
-            return string.Equals(status.Version, "filename-indexed", StringComparison.OrdinalIgnoreCase)
+            return status.Format == BrandIconPackFormat.FilenameIndexed
+                || string.Equals(status.Version, "filename-indexed", StringComparison.OrdinalIgnoreCase)
                 ? Localized(AvaloniaStringKeys.FilenameIndexedBrandIconPackStatus, status.BrandCount)
                 : Localized(
                     AvaloniaStringKeys.BrandIconPackStatus,
@@ -164,6 +179,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 return;
             }
 
+            BeginImportProgress(AvaloniaStringKeys.ImportingBrandIcons);
             await using var stream = await file.OpenReadAsync();
             var imported = await _brandIconPackService.ImportAsync(stream);
             if (imported.IsFailed)
@@ -180,6 +196,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 : Localized(
                     AvaloniaStringKeys.BrandIconPackImported,
                     imported.Value.BrandCount,
+                    imported.Value.ProviderDisplayName,
                     imported.Value.Version);
             SetMessage(successMessage, NotificationSeverity.Success);
         }
@@ -290,6 +307,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 return;
             }
 
+            BeginImportProgress(AvaloniaStringKeys.ImportingAccounts);
             var imported = await ReadImportAsync(file);
             if (imported is null) return;
             var importResult = await _accountImportService.ImportAsync(
@@ -606,6 +624,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
     private void EndOperation()
     {
+        EndImportProgress();
         _isBusy = false;
         _importCommand.NotifyCanExecuteChanged();
         _restoreBackupCommand.NotifyCanExecuteChanged();
@@ -671,6 +690,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             _brandIconPackService.CatalogChanged -= BrandCatalogChanged;
         if (_disposed) return;
         _disposed = true;
+        EndImportProgress();
         _localization.CultureChanged -= LocalizationCultureChanged;
         Notification.Dispose();
     }
@@ -680,6 +700,37 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         OnPropertyChanged(nameof(HasImportedBrandIcons));
         OnPropertyChanged(nameof(BrandIconPackStatusText));
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
+    }
+
+    private void BeginImportProgress(string textKey)
+    {
+        EndImportProgress();
+        ImportProgressText = Localized(textKey);
+        var lifetime = new CancellationTokenSource();
+        _importProgressLifetime = lifetime;
+        _ = ShowImportProgressAfterDelayAsync(lifetime);
+    }
+
+    private async Task ShowImportProgressAfterDelayAsync(CancellationTokenSource lifetime)
+    {
+        try
+        {
+            await Task.Delay(ImportProgressDelay, lifetime.Token);
+            if (ReferenceEquals(_importProgressLifetime, lifetime))
+                IsImportProgressVisible = true;
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+        {
+        }
+    }
+
+    private void EndImportProgress()
+    {
+        var lifetime = Interlocked.Exchange(ref _importProgressLifetime, null);
+        lifetime?.Cancel();
+        lifetime?.Dispose();
+        IsImportProgressVisible = false;
+        ImportProgressText = string.Empty;
     }
 
     private void SetMessage(string message, NotificationSeverity severity)

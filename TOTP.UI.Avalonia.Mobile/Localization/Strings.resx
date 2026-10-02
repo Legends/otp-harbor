@@ -211,18 +211,21 @@
   <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>Unlock OTP Harbor</value></data>
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Use your device screen lock (PIN, pattern, or password).</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
-  <data name="BrandIconsDescription" xml:space="preserve"><value>Import a Simple Icons release ZIP that you downloaded yourself. OTP Harbor stores it only on this device and never uploads issuer or account information. The icon trademarks remain the property of their owners.</value></data>
-  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import Simple Icons ZIP…</value></data>
+  <data name="BrandIconsDescription" xml:space="preserve"><value>Third-party icon packs and custom icons are imported and stored locally by the user. OTP Harbor does not provide or distribute these assets.&#xA;&#xA;All trademarks, logos, copyrights, licenses, and usage guidelines remain the responsibility of their respective owners and apply independently of OTP Harbor.&#xA;&#xA;Compatibility with an icon pack does not imply affiliation with, sponsorship by, or endorsement by its provider or any trademark owner. Supported ZIPs include Simple Icons releases, SVG-based Aegis packs, and filename-indexed SVG packs.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import local icon pack ZIP…</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Importing accounts…</value></data>
   <data name="ImportingBrandIcons" xml:space="preserve"><value>Importing icon pack…</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No icon pack was selected.</value></data>
-  <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from Simple Icons {1}.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from {1} {2}.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>The icon pack is invalid or could not be installed safely.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Imported brand icons were removed.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Could not remove the imported brand icons.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Remove imported icons</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Show issuer logo</value></data>
   <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Show a branded or placeholder tile beside each account.</value></data>
+  <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Choose custom SVG…</value></data>
+  <data name="CustomIconImported" xml:space="preserve"><value>The custom icon was applied to this account.</value></data>
+  <data name="CustomIconImportFailed" xml:space="preserve"><value>The SVG is invalid or could not be stored safely.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Could not save this setting.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Follow system</value></data>

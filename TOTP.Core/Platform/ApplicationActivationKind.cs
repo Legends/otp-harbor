@@ -4,5 +4,7 @@ public enum ApplicationActivationKind
 {
     ActivateMainWindow,
     DebugBulkAddSyntheticAccounts,
-    DebugBulkDeleteSyntheticAccounts
+    DebugBulkDeleteSyntheticAccounts,
+    DebugImportAccounts,
+    DebugDeleteAllAccounts
 }

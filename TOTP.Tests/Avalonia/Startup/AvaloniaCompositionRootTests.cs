@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Icons;
 using TOTP.Core.Platform;
 using TOTP.Avalonia.Desktop.Startup;
 using TOTP.Avalonia.Desktop.Presentation;
@@ -66,6 +67,9 @@ public sealed class AvaloniaCompositionRootTests
         var accountList = Assert.IsType<AccountListViewModel>(
             services.GetRequiredService<AccountListViewModel>());
         var brandIcons = services.GetRequiredService<IBrandIconPackService>();
+        Assert.Equal(3, services.GetServices<IIconPackImporter>().Count());
+        Assert.NotNull(services.GetRequiredService<IIconPackImporterResolver>());
+        Assert.NotNull(services.GetRequiredService<ICustomIconImporter>());
         Assert.Equal(
             brandIcons.AvailableBrands.Count + 1,
             accountList.EditorBrandIconOptions.Count);

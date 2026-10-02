@@ -68,6 +68,11 @@
   <data name="BrandIcon" xml:space="preserve"><value>Account icon</value></data>
   <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatic issuer match</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Choose an icon from the imported local pack or keep automatic matching. This local display preference is not included in vault backups.</value></data>
+  <data name="CustomAccountIcon" xml:space="preserve"><value>Custom SVG</value></data>
+  <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Choose custom SVG…</value></data>
+  <data name="SvgIconFiles" xml:space="preserve"><value>SVG icon files</value></data>
+  <data name="CustomIconImported" xml:space="preserve"><value>The custom icon was applied to this account.</value></data>
+  <data name="CustomIconImportFailed" xml:space="preserve"><value>The SVG is invalid or could not be stored safely.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Advanced options</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code period in seconds</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Clear code period</value></data>
@@ -383,13 +388,13 @@
   <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Choose a crisp screenshot or saved image of a Google Authenticator transfer QR code. Multi-account and multi-page exports are imported one QR image at a time.</value></data>
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choose Google Authenticator QR image…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
-  <data name="BrandIconsHelp" xml:space="preserve"><value>OTP Harbor includes no third-party logos and is not affiliated with or endorsed by Simple Icons, icon-pack providers, or depicted brands. Import only a ZIP you obtained independently and are authorized to use. Imported artwork stays in local app data; no issuer or account information is uploaded.</value></data>
-  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Supported ZIPs: a Simple Icons release, or SVG files named with canonical IDs such as github.svg. Nested folders are allowed; duplicate or non-canonical filenames are rejected.</value></data>
+  <data name="BrandIconsHelp" xml:space="preserve"><value>Third-party icon packs and custom icons are imported and stored locally by the user. OTP Harbor does not provide or distribute these assets.&#xA;&#xA;All trademarks, logos, copyrights, licenses, and usage guidelines remain the responsibility of their respective owners and apply independently of OTP Harbor.&#xA;&#xA;Compatibility with an icon pack does not imply affiliation with, sponsorship by, or endorsement by its provider or any trademark owner.</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Supported ZIPs: Simple Icons releases, SVG-based Aegis icon packs, or SVG files named with canonical IDs such as github.svg. Compatible format extensions are accepted; unsafe paths, ambiguous metadata, duplicate IDs, and unsupported image content are rejected.</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import local icon pack ZIP…</value></data>
   <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Select local icon pack ZIP</value></data>
   <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Icon pack ZIP files</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No icon pack was selected.</value></data>
-  <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from Simple Icons {1}.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from {1} {2}.</value></data>
   <data name="FilenameIndexedBrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from the filename-indexed ZIP.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>The icon pack is invalid or could not be installed safely.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Imported brand icons were removed.</value></data>
@@ -399,6 +404,8 @@
   <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} local icons installed from a filename-indexed ZIP.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Remove imported icons</value></data>
   <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>Remove the imported icon pack? Account data will not change, but accounts will use automatic or generic icons until another pack is imported.</value></data>
+  <data name="ImportingAccounts" xml:space="preserve"><value>Importing accounts…</value></data>
+  <data name="ImportingBrandIcons" xml:space="preserve"><value>Importing local icons…</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Show issuer logo</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Show a branded or placeholder tile beside each account.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>

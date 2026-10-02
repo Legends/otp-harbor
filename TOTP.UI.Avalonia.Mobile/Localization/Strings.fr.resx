@@ -211,18 +211,21 @@
   <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>Déverrouiller OTP Harbor</value></data>
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Utilisez le verrouillage de l’appareil (code PIN, schéma ou mot de passe).</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Icônes de marque facultatives</value></data>
-  <data name="BrandIconsDescription" xml:space="preserve"><value>Importez une archive ZIP Simple Icons que vous avez téléchargée vous-même. OTP Harbor la stocke uniquement sur cet appareil et ne transmet jamais les informations de compte ou d’émetteur. Les marques restent la propriété de leurs détenteurs.</value></data>
-  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Importer l’archive ZIP Simple Icons…</value></data>
+  <data name="BrandIconsDescription" xml:space="preserve"><value>Les packs d’icônes tiers et les icônes personnalisées sont importés et stockés localement par l’utilisateur. OTP Harbor ne fournit ni ne distribue ces éléments.&#xA;&#xA;Toutes les marques, tous les logos, droits d’auteur, licences et directives d’utilisation restent sous la responsabilité de leurs propriétaires respectifs et s’appliquent indépendamment d’OTP Harbor.&#xA;&#xA;La compatibilité avec un pack d’icônes n’implique aucune affiliation, aucun parrainage ni aucune approbation de son fournisseur ou d’un détenteur de marque. Les archives prises en charge comprennent les versions de Simple Icons, les packs Aegis basés sur SVG et les packs SVG indexés par nom de fichier.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Importer une archive ZIP d’icônes locale…</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Importation des comptes…</value></data>
   <data name="ImportingBrandIcons" xml:space="preserve"><value>Importation du pack d’icônes…</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Aucun pack d’icônes n’a été sélectionné.</value></data>
-  <data name="BrandIconPackImported" xml:space="preserve"><value>{0} icônes locales importées depuis Simple Icons {1}.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>{0} icônes locales importées depuis {1} {2}.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Le pack d’icônes est invalide ou n’a pas pu être installé en toute sécurité.</value></data>
   <data name="BrandIconPackReset" xml:space="preserve"><value>Les icônes de marque importées ont été supprimées.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Impossible de supprimer les icônes de marque importées.</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Supprimer les icônes importées</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Afficher le logo de l’émetteur</value></data>
   <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Afficher une tuile de marque ou de remplacement à côté de chaque compte.</value></data>
+  <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Choisir un SVG personnalisé…</value></data>
+  <data name="CustomIconImported" xml:space="preserve"><value>L’icône personnalisée a été appliquée à ce compte.</value></data>
+  <data name="CustomIconImportFailed" xml:space="preserve"><value>Le SVG est invalide ou n’a pas pu être stocké en toute sécurité.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Impossible d’enregistrer ce réglage.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Apparence</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Suivre le système</value></data>

@@ -27,8 +27,14 @@ function Read-RepositoryFile {
 
 $policy = Read-RepositoryFile 'docs/assets/BRAND_ICONS.md'
 $assetProvenance = Read-RepositoryFile 'docs/assets/ASSET_PROVENANCE.md'
-$desktopStringsPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Localization/Strings.resx'
 $brandService = Read-RepositoryFile 'TOTP.Infrastructure/Services/SimpleIconsBrandIconPackService.cs'
+$iconArchive = Read-RepositoryFile 'TOTP.Infrastructure/Icons/IconImportArchive.cs'
+$iconImporterPaths = @(
+    'TOTP.Infrastructure/Icons/SimpleIconsImporter.cs',
+    'TOTP.Infrastructure/Icons/AegisIconPackImporter.cs',
+    'TOTP.Infrastructure/Icons/FilenameIndexedIconPackImporter.cs'
+)
+$iconImporters = ($iconImporterPaths | ForEach-Object { Read-RepositoryFile $_ }) -join "`n"
 $resolverDatabaseText = Read-RepositoryFile 'TOTP.Infrastructure/Branding/issuer-resolver.v1.json'
 
 foreach ($requiredText in @(
@@ -71,29 +77,44 @@ foreach ($entry in $resolverEntries) {
     }
 }
 
-[xml]$desktopStrings = [IO.File]::ReadAllText($desktopStringsPath)
-$brandHelp = @($desktopStrings.root.data | Where-Object name -eq 'BrandIconsHelp')
-if ($brandHelp.Count -ne 1) {
-    throw 'The invariant BrandIconsHelp disclosure is missing or duplicated.'
-}
-$brandHelpText = [string]$brandHelp[0].value
-foreach ($requiredText in @(
-    'includes no third-party logos',
-    'not affiliated with or endorsed by',
-    'are authorized to use',
-    'stays in local app data',
-    'no issuer or account information is uploaded'
+$requiredDisclosureText = @(
+    'Third-party icon packs and custom icons are imported and stored locally by the user.',
+    'OTP Harbor does not provide or distribute these assets.',
+    'All trademarks, logos, copyrights, licenses, and usage guidelines remain the responsibility of their respective owners and apply independently of OTP Harbor.',
+    'Compatibility with an icon pack does not imply affiliation with, sponsorship by, or endorsement by its provider or any trademark owner.'
+)
+foreach ($disclosure in @(
+    @{ Path = 'TOTP.UI.Avalonia.Desktop/Localization/Strings.resx'; Key = 'BrandIconsHelp' },
+    @{ Path = 'TOTP.UI.Avalonia.Mobile/Localization/Strings.resx'; Key = 'BrandIconsDescription' }
 )) {
-    if (-not $brandHelpText.Contains($requiredText, [StringComparison]::Ordinal)) {
-        throw "The brand-icon import disclosure is missing: $requiredText"
+    [xml]$strings = Read-RepositoryFile $disclosure.Path
+    $brandHelp = @($strings.root.data | Where-Object name -eq $disclosure.Key)
+    if ($brandHelp.Count -ne 1) {
+        throw "The invariant $($disclosure.Key) disclosure is missing or duplicated."
+    }
+    $brandHelpText = [string]$brandHelp[0].value
+    foreach ($requiredText in $requiredDisclosureText) {
+        if (-not $brandHelpText.Contains($requiredText, [StringComparison]::Ordinal)) {
+            throw "The brand-icon import disclosure is missing from $($disclosure.Path): $requiredText"
+        }
     }
 }
 
+[xml]$desktopStrings = Read-RepositoryFile 'TOTP.UI.Avalonia.Desktop/Localization/Strings.resx'
 $brandFormatHelp = @($desktopStrings.root.data | Where-Object name -eq 'BrandIconsFormatHelp')
 if ($brandFormatHelp.Count -ne 1) {
     throw 'The invariant BrandIconsFormatHelp disclosure is missing or duplicated.'
 }
-foreach ($requiredText in @('canonical IDs', 'Nested folders', 'duplicate', 'rejected')) {
+foreach ($requiredText in @(
+    'Simple Icons',
+    'Aegis',
+    'canonical IDs',
+    'unsafe paths',
+    'ambiguous metadata',
+    'duplicate IDs',
+    'unsupported image content',
+    'rejected'
+)) {
     if (-not ([string]$brandFormatHelp[0].value).Contains($requiredText, [StringComparison]::Ordinal)) {
         throw "The filename-indexed icon-pack guidance is missing: $requiredText"
     }
@@ -173,16 +194,27 @@ foreach ($relativePath in $trackedVisualAssets) {
 }
 
 foreach ($requiredText in @(
-    'CopyNoticeIfPresentAsync(archive, archivePrefix, "LICENSE.md"',
-    'CopyNoticeIfPresentAsync(archive, archivePrefix, "DISCLAIMER.md"',
-    'CopyGenericNoticesAsync(archive, stagingDirectory'
+    'LICENSE|LICENCE|COPYING|NOTICE|DISCLAIMER',
+    'ReadBoundedAsync(entry, MaximumNoticeBytes'
 )) {
-    if (-not $brandService.Contains($requiredText, [StringComparison]::Ordinal)) {
-        throw "The icon importer no longer preserves an upstream notice: $requiredText"
+    if (-not $iconArchive.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The icon-import archive boundary no longer preserves an upstream notice: $requiredText"
     }
 }
-$usesHttpClient = $brandService.Contains('HttpClient', [StringComparison]::Ordinal)
-$usesWebRequest = $brandService.Contains('WebRequest', [StringComparison]::Ordinal)
+foreach ($importerPath in $iconImporterPaths) {
+    $importer = Read-RepositoryFile $importerPath
+    if (-not $importer.Contains('IconImportArchive.ReadNoticesAsync', [StringComparison]::Ordinal)) {
+        throw "The icon-pack importer no longer collects upstream notices: $importerPath"
+    }
+}
+foreach ($requiredText in @('parsed.Notices', 'File.WriteAllBytesAsync(noticePath')) {
+    if (-not $brandService.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The icon-pack service no longer stores an upstream notice: $requiredText"
+    }
+}
+$iconImportImplementation = $brandService + "`n" + $iconArchive + "`n" + $iconImporters
+$usesHttpClient = $iconImportImplementation.Contains('HttpClient', [StringComparison]::Ordinal)
+$usesWebRequest = $iconImportImplementation.Contains('WebRequest', [StringComparison]::Ordinal)
 if ($usesHttpClient -or $usesWebRequest) {
     throw 'The local icon-pack importer must not download or fetch brand assets.'
 }

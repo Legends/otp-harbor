@@ -105,6 +105,29 @@ public sealed class AvaloniaFilePicker(
         return files.Count == 1 ? new AvaloniaStorageFile(files[0]) : null;
     }
 
+    public async Task<INativeStorageFile?> PickCustomSvgIconAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var provider = windowCoordinator.GetRequiredDialogOwner().StorageProvider;
+        if (!provider.CanOpen) return null;
+
+        var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = localization.GetString(AvaloniaStringKeys.ChooseCustomSvgIcon),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType(localization.GetString(AvaloniaStringKeys.SvgIconFiles))
+                {
+                    Patterns = ["*.svg"]
+                }
+            ]
+        });
+        cancellationToken.ThrowIfCancellationRequested();
+        return files.Count == 1 ? new AvaloniaStorageFile(files[0]) : null;
+    }
+
     public async Task<INativeStorageFile?> PickEncryptedBackupFileAsync(
         CancellationToken cancellationToken = default)
     {

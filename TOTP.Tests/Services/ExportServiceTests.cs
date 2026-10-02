@@ -95,6 +95,41 @@ public sealed class ExportServiceTests
         Assert.True(imported.IsFavorite);
     }
 
+    [Fact]
+    public async Task ProminentPlatformLoadFixture_ContainsFiveHundredDistinctImportableAccounts()
+    {
+        var fixturePath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "LoadTesting",
+            "prominent-platforms-500.json");
+        await using var stream = new FileStream(
+            fixturePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            81920,
+            useAsync: true);
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            Path.GetFileName(fixturePath),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(500, result.Value.Count);
+        Assert.Equal(500, result.Value.Select(account => account.ID).Distinct().Count());
+        Assert.Equal(
+            500,
+            result.Value.Select(account => account.Issuer)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count());
+        Assert.Equal(500, result.Value.Select(account => account.Secret).Distinct().Count());
+        Assert.Contains(result.Value, account => account.Issuer == "Google");
+        Assert.Contains(result.Value, account => account.Issuer == "AWS");
+        Assert.Contains(result.Value, account => account.Issuer == "Microsoft");
+    }
+
     [Theory]
     [InlineData(ExportFileFormat.Txt, "accounts.txt")]
     [InlineData(ExportFileFormat.Csv, "accounts.csv")]
