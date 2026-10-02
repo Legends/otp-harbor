@@ -340,7 +340,7 @@ public sealed class AccountListViewModelTests
         Assert.Equal(firstId, sut.SelectedAccount.Id);
         clipboard.Verify(value => value.CopyAndScheduleClearAsync(
             "222222",
-            TimeSpan.FromSeconds(12),
+            TimeSpan.FromSeconds(10),
             It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal("Copied", sut.Accounts[1].CopyConfirmation);
         Assert.Empty(sut.Accounts[0].CopyConfirmation);
@@ -1178,7 +1178,7 @@ public sealed class AccountListViewModelTests
         totp.Verify(value => value.GenerateAsync(accountId), Times.Once);
         clipboard.Verify(value => value.CopyAndScheduleClearAsync(
             "654321",
-            TimeSpan.FromSeconds(24),
+            TimeSpan.FromSeconds(20),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

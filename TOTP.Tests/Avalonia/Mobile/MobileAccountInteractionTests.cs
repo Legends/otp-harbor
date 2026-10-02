@@ -477,8 +477,9 @@ public sealed class MobileAccountInteractionTests
             favoriteIcon.Attribute("Foreground")?.Value);
         var favoriteContent = favoriteFilter
             .Elements()
-            .Single(element => element.Name.LocalName == "StackPanel");
-        Assert.Equal("Horizontal", favoriteContent.Attribute("Orientation")?.Value);
+            .Single(element => element.Name.LocalName == "Grid");
+        Assert.Equal("Auto,*,Auto", favoriteContent.Attribute("ColumnDefinitions")?.Value);
+        Assert.Equal("7", favoriteContent.Attribute("ColumnSpacing")?.Value);
         Assert.Equal(2, favoriteContent.Elements().Count(element => element.Name.LocalName == "TextBlock"));
         Assert.DoesNotContain(
             favoriteContent.Elements(),
