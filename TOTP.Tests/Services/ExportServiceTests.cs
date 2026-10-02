@@ -38,6 +38,191 @@ public sealed class ExportServiceTests
     }
 
     [Fact]
+    public async Task ExportToStreamAsync_ThenImportFromStreamAsync_CsvRoundTripsQuotedUnicodeAndLineBreaks()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var input = new Account(
+            Guid.NewGuid(),
+            "München, \"Nord\"\r\nTeam",
+            "JBSWY3DPEHPK3PXP",
+            "alice,\nadmin",
+            60);
+        await using var stream = new MemoryStream();
+
+        var export = await _sut.ExportToStreamAsync(
+            [input], stream, ExportFileFormat.Csv, cancellationToken);
+        stream.Position = 0;
+        var import = await _sut.ImportFromStreamAsync(
+            stream, "accounts.csv", cancellationToken: cancellationToken);
+
+        Assert.True(export.IsSuccess);
+        Assert.True(import.IsSuccess);
+        var imported = Assert.Single(import.Value);
+        Assert.Equal(input.ID, imported.ID);
+        Assert.Equal(input.Issuer, imported.Issuer);
+        Assert.Equal(input.AccountName, imported.AccountName);
+        Assert.Equal(input.Secret, imported.Secret);
+        Assert.Equal(input.PeriodSeconds, imported.PeriodSeconds);
+    }
+
+    [Fact]
+    public async Task ExportToStreamAsync_ThenImportFromStreamAsync_JsonPreservesOtpHarborMetadata()
+    {
+        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var input = new Account(
+            Guid.NewGuid(),
+            "Example",
+            "JBSWY3DPEHPK3PXP",
+            "alice",
+            60,
+            group,
+            isFavorite: true);
+        await using var stream = new MemoryStream();
+
+        Assert.True((await _sut.ExportToStreamAsync(
+            [input],
+            stream,
+            ExportFileFormat.Json,
+            TestContext.Current.CancellationToken)).IsSuccess);
+        stream.Position = 0;
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "accounts.json",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var imported = Assert.Single(result.Value);
+        Assert.Equal(group, imported.Group);
+        Assert.True(imported.IsFavorite);
+    }
+
+    [Theory]
+    [InlineData(ExportFileFormat.Txt, "accounts.txt")]
+    [InlineData(ExportFileFormat.Csv, "accounts.csv")]
+    public async Task ExportToStreamAsync_ThenImportFromStreamAsync_DelimitedFormatsRemainUngrouped(
+        ExportFileFormat format,
+        string fileName)
+    {
+        var input = new Account(
+            Guid.NewGuid(),
+            "Example",
+            "JBSWY3DPEHPK3PXP",
+            "alice",
+            group: new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED"),
+            isFavorite: true);
+        await using var stream = new MemoryStream();
+
+        Assert.True((await _sut.ExportToStreamAsync(
+            [input],
+            stream,
+            format,
+            TestContext.Current.CancellationToken)).IsSuccess);
+        stream.Position = 0;
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            fileName,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var imported = Assert.Single(result.Value);
+        Assert.Null(imported.Group);
+        Assert.False(imported.IsFavorite);
+    }
+
+    [Theory]
+    [InlineData("malformed.json", "{")]
+    [InlineData("unsupported.json", "{}")]
+    [InlineData("scalar.json", "\"not-an-account-list\"")]
+    public async Task ImportFromStreamAsync_WithMalformedOrUnsupportedJson_FailsClosed(
+        string fileName,
+        string content)
+    {
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            fileName,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Theory]
+    [InlineData("Issuer|account")]
+    [InlineData("Issuer|account|JBSWY3DPEHPK3PXP|00000000-0000-0000-0000-000000000001|30|extra")]
+    [InlineData("issuer|account_name|secret|id|period_seconds|extra")]
+    public async Task ImportFromStreamAsync_WithMalformedLegacyTextRow_FailsClosed(string content)
+    {
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "accounts.txt",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Theory]
+    [InlineData("issuer,id,account_name,secret\nExample,00000000-0000-0000-0000-000000000001,alice,JBSWY3DPEHPK3PXP")]
+    [InlineData("id,issuer,account_name,secret\n00000000-0000-0000-0000-000000000001,Example,alice")]
+    [InlineData("id,issuer,account_name,secret\n00000000-0000-0000-0000-000000000001,\"Example,alice,JBSWY3DPEHPK3PXP")]
+    [InlineData("id,issuer,account_name,secret\n00000000-0000-0000-0000-000000000001,\"Example\"x,alice,JBSWY3DPEHPK3PXP")]
+    [InlineData("id,issuer,account_name,secret\n00000000-0000-0000-0000-000000000001,Ex\"ample,alice,JBSWY3DPEHPK3PXP")]
+    [InlineData(",,,")]
+    public async Task ImportFromStreamAsync_WithMalformedCsv_FailsClosed(string content)
+    {
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "accounts.csv",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Theory]
+    [InlineData("accounts.json", "[{\"id\":\"00000000-0000-0000-0000-000000000001\",\"issuer\":\"Example\",\"secret\":\"JBSWY3DPEHPK3PXP\"}]")]
+    [InlineData("accounts.txt", "Example|alice|JBSWY3DPEHPK3PXP")]
+    [InlineData("accounts.csv", "id,issuer,account_name,secret\n00000000-0000-0000-0000-000000000001,Example,alice,JBSWY3DPEHPK3PXP")]
+    public async Task ImportFromStreamAsync_WithUtf8Bom_AcceptsEveryPlaintextFormat(
+        string fileName,
+        string content)
+    {
+        var payload = System.Text.Encoding.UTF8.GetPreamble()
+            .Concat(System.Text.Encoding.UTF8.GetBytes(content))
+            .ToArray();
+        await using var stream = new MemoryStream(payload);
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            fileName,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value);
+    }
+
+    [Theory]
+    [InlineData("accounts.json")]
+    [InlineData("accounts.txt")]
+    [InlineData("accounts.csv")]
+    public async Task ImportFromStreamAsync_WithInvalidUtf8_FailsClosed(string fileName)
+    {
+        await using var stream = new MemoryStream([0xC3, 0x28]);
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            fileName,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppErrorCode.ImportInvalidPayload, result.GetErrorCode());
+    }
+
+    [Fact]
     public async Task ImportFromFileAsync_WhenExtensionUnsupported_ReturnsInvalidFileError()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
@@ -567,6 +752,45 @@ public sealed class ExportServiceTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(AppErrorCode.ImportWrongPasswordOrTampered, result.GetErrorCode());
+    }
+
+    [Fact]
+    public async Task ImportFromEncryptedStreamAsync_WhenAuthenticatedMaterialIsModified_FailsAuthentication()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var exported = new MemoryStream();
+        var export = await _sut.ExportToEncryptedStreamAsync(
+            [new Account(Guid.NewGuid(), "Example", "JBSWY3DPEHPK3PXP", "alice")],
+            "correct-password",
+            exported,
+            ExportFileFormat.Json,
+            cancellationToken);
+        Assert.True(export.IsSuccess);
+        var encrypted = exported.ToArray();
+        const int firstSaltByte = 4 + 1;
+        const int firstNonceByte = firstSaltByte + 16;
+        const int firstCiphertextByte = 4 + 1 + 16 + 12;
+
+        foreach (var offset in new[]
+                 {
+                     firstSaltByte,
+                     firstNonceByte,
+                     firstCiphertextByte,
+                     encrypted.Length - 1
+                 })
+        {
+            var modified = (byte[])encrypted.Clone();
+            modified[offset] ^= 0x01;
+            await using var source = new MemoryStream(modified, writable: false);
+
+            var result = await _sut.ImportFromEncryptedStreamAsync(
+                "correct-password",
+                source,
+                cancellationToken);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(AppErrorCode.ImportWrongPasswordOrTampered, result.GetErrorCode());
+        }
     }
 
     [Fact]

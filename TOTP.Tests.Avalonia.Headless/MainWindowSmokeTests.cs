@@ -858,6 +858,39 @@ public sealed class MainWindowSmokeTests
         }
     }
 
+    [AvaloniaFact]
+    public void AccountEditorScrollPosition_IsResetBeforeEachPresentation()
+    {
+        var scrollViewer = new ScrollViewer
+        {
+            Width = 240,
+            Height = 160,
+            Content = new Border { Width = 240, Height = 800 }
+        };
+        var window = new Window { Content = scrollViewer };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            scrollViewer.Offset = new Vector(0, 320);
+            window.UpdateLayout();
+            Assert.True(scrollViewer.Offset.Y > 0);
+            var reset = typeof(MainWindow).GetMethod(
+                "ResetScrollPosition",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(reset);
+            reset.Invoke(null, [scrollViewer]);
+
+            Assert.Equal(default, scrollViewer.Offset);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [Theory]
     [InlineData(Key.Escape, true, true, true)]
     [InlineData(Key.Escape, true, false, false)]
@@ -1587,6 +1620,10 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(HorizontalAlignment.Center, clearSearchButton.HorizontalContentAlignment);
             Assert.Equal(VerticalAlignment.Center, clearSearchButton.VerticalContentAlignment);
             Assert.Equal(new CornerRadius(12), clearSearchButton.CornerRadius);
+            Assert.Contains("search-clear", clearSearchButton.Classes);
+            var clearSearchIcon = Assert.IsType<SymbolIcon>(clearSearchButton.Content);
+            Assert.Equal(SymbolIconKind.Close, clearSearchIcon.Kind);
+            Assert.Equal(12, clearSearchIcon.IconSize);
             AssertToolbarAutomationName(window, "OpenSettingsButton", AvaloniaStringKeys.Settings);
             AssertToolbarAutomationName(window, "AccountSortButton", AvaloniaStringKeys.SortAccounts);
             var scanButton = window.FindControl<Button>("ScanQrButton")!;

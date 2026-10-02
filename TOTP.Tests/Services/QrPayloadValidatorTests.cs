@@ -58,6 +58,26 @@ public sealed class QrPayloadValidatorTests
     }
 
     [Theory]
+    [InlineData("otpauth://totp/alice?secret=JBSWY3DPEHPK3PXP")]
+    [InlineData("otpauth://totp/Example:alice?secret=JBSWY3DPEHPK3PXP&issuer=")]
+    public void Validate_WhenRequiredIssuerIsMissing_FailsClosed(string payload)
+    {
+        var result = _sut.Validate(payload);
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_WhenIdentityExceedsStorageLimit_FailsClosed()
+    {
+        var issuer = new string('I', 257);
+        var result = _sut.Validate(
+            $"otpauth://totp/{issuer}:alice?secret=JBSWY3DPEHPK3PXP&issuer={issuer}");
+
+        Assert.False(result.IsValid);
+    }
+
+    [Theory]
     [InlineData(5)]
     [InlineData(60)]
     [InlineData(600)]

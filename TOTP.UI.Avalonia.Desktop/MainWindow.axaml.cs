@@ -687,9 +687,21 @@ public partial class MainWindow : Window
         }
 
         PrepareAccountEditorForLayout();
+        ResetAccountEditorScrollPosition();
         FitAccountEditorHeight();
         SetAccountEditorPresented(true);
     }
+
+    private void ResetAccountEditorScrollPosition()
+    {
+        var scrollViewer = this.GetVisualDescendants()
+            .OfType<ScrollViewer>()
+            .FirstOrDefault(control => control.Name == "AccountEditorScrollViewer");
+        if (scrollViewer is not null) ResetScrollPosition(scrollViewer);
+    }
+
+    private static void ResetScrollPosition(ScrollViewer scrollViewer) =>
+        scrollViewer.Offset = default;
 
     private void FitAccountEditorHeight()
     {

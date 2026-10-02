@@ -17,6 +17,7 @@ namespace TOTP.Infrastructure.Services;
 public sealed class ExportService : IExportService
 {
     private static readonly byte[] MagicBytes = Encoding.ASCII.GetBytes("TOTP");
+    private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private const int SaltSize = 16;
     private const long MaxImportFileBytes = 5 * 1024 * 1024; // 5 MiB hard limit to reduce parser/DoS risk.
 
@@ -224,7 +225,7 @@ public sealed class ExportService : IExportService
         try
         {
             (fileBytes, var length) = await ReadBoundedAsync(source, cancellationToken);
-            var content = Encoding.UTF8.GetString(fileBytes, 0, length);
+            var content = StrictUtf8.GetString(fileBytes, 0, length);
             return Result.Ok(DeserializeTokens(content, format));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -300,7 +301,7 @@ public sealed class ExportService : IExportService
                 return Result.Fail(new AppError(AppErrorCode.ImportWrongPasswordOrTampered, "Import decryption failed."));
             }
 
-            var content = Encoding.UTF8.GetString(decryptedBytes);
+            var content = StrictUtf8.GetString(decryptedBytes);
             return Result.Ok(DeserializeTokens(content, format));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -385,6 +386,7 @@ public sealed class ExportService : IExportService
 
     private static List<Account> DeserializeTokens(string content, ExportFileFormat format)
     {
+        content = content.TrimStart('\uFEFF');
         return format switch
         {
             ExportFileFormat.Json => ParseJson(content),
@@ -449,18 +451,23 @@ public sealed class ExportService : IExportService
             return ParseOtpAuthLines(lines.Select(line => line.Trim()));
         }
 
-        foreach (var line in lines)
+        for (var index = 0; index < lines.Length; index++)
         {
-            if (line.StartsWith("issuer|account_name|secret|id", StringComparison.OrdinalIgnoreCase))
+            var line = lines[index];
+            if (index == 0
+                && (line.Equals(
+                        "issuer|account_name|secret|id",
+                        StringComparison.OrdinalIgnoreCase)
+                    || line.Equals(
+                        "issuer|account_name|secret|id|period_seconds",
+                        StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
 
             var parts = line.Split('|');
-            if (parts.Length < 3)
-            {
-                continue;
-            }
+            if (parts.Length is < 3 or > 5)
+                throw new FormatException("The text import contains a malformed account row.");
 
             var issuer = parts[0];
             var accountName = string.IsNullOrWhiteSpace(parts[1]) ? null : parts[1];
@@ -501,19 +508,26 @@ public sealed class ExportService : IExportService
     private static List<Account> ParseCsv(string content)
     {
         var result = new List<Account>();
-        var lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length <= 1)
+        var rows = SplitCsvRows(content);
+        if (rows.Count == 0) return result;
+
+        var header = rows[0];
+        if (header.Count is not (4 or 5)
+            || !header[0].Equals("id", StringComparison.OrdinalIgnoreCase)
+            || !header[1].Equals("issuer", StringComparison.OrdinalIgnoreCase)
+            || !header[2].Equals("account_name", StringComparison.OrdinalIgnoreCase)
+            || !header[3].Equals("secret", StringComparison.OrdinalIgnoreCase)
+            || header.Count == 5
+            && !header[4].Equals("period_seconds", StringComparison.OrdinalIgnoreCase))
         {
-            return result;
+            throw new FormatException("The CSV import header is invalid.");
         }
 
-        for (var i = 1; i < lines.Length; i++)
+        for (var i = 1; i < rows.Count; i++)
         {
-            var row = SplitCsvLine(lines[i]);
-            if (row.Count < 4)
-            {
-                continue;
-            }
+            var row = rows[i];
+            if (row.Count != header.Count)
+                throw new FormatException("The CSV import contains a malformed account row.");
 
             var id = Guid.TryParse(row[0], out var parsedId) ? parsedId : Guid.NewGuid();
             var issuer = row[1];
@@ -533,40 +547,84 @@ public sealed class ExportService : IExportService
                 ? periodSeconds
                 : 0;
 
-    private static List<string> SplitCsvLine(string line)
+    private static List<List<string>> SplitCsvRows(string content)
     {
+        var rows = new List<List<string>>();
         var values = new List<string>();
         var current = new StringBuilder();
-        bool inQuotes = false;
+        var inQuotes = false;
+        var quoteClosed = false;
 
-        for (int i = 0; i < line.Length; i++)
+        void CompleteField()
         {
-            var c = line[i];
+            values.Add(current.ToString());
+            current.Clear();
+            quoteClosed = false;
+        }
+
+        void CompleteRow()
+        {
+            var hasRowSyntax = current.Length > 0 || values.Count > 0 || quoteClosed;
+            CompleteField();
+            if (hasRowSyntax) rows.Add([.. values]);
+            values.Clear();
+        }
+
+        for (var index = 0; index < content.Length; index++)
+        {
+            var c = content[index];
             if (c == '"')
             {
-                if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                if (inQuotes && index + 1 < content.Length && content[index + 1] == '"')
                 {
                     current.Append('"');
-                    i++;
+                    index++;
                     continue;
                 }
 
-                inQuotes = !inQuotes;
+                if (inQuotes)
+                {
+                    inQuotes = false;
+                    quoteClosed = true;
+                    continue;
+                }
+
+                if (current.Length > 0 || quoteClosed)
+                    throw new FormatException("The CSV import contains an invalid quote.");
+                inQuotes = true;
                 continue;
             }
 
-            if (c == ',' && !inQuotes)
+            if (inQuotes)
             {
-                values.Add(current.ToString());
-                current.Clear();
+                current.Append(c);
                 continue;
             }
 
+            if (c == ',')
+            {
+                CompleteField();
+                continue;
+            }
+
+            if (c is '\r' or '\n')
+            {
+                CompleteRow();
+                if (c == '\r' && index + 1 < content.Length && content[index + 1] == '\n')
+                    index++;
+                continue;
+            }
+
+            if (quoteClosed)
+                throw new FormatException("The CSV import contains characters after a closing quote.");
             current.Append(c);
         }
 
-        values.Add(current.ToString());
-        return values;
+        if (inQuotes)
+            throw new FormatException("The CSV import contains an unterminated quote.");
+        if (current.Length > 0 || values.Count > 0 || quoteClosed)
+            CompleteRow();
+        return rows;
     }
 
     private static bool TryGetUnencryptedFormat(string extension, out ExportFileFormat format)

@@ -107,6 +107,59 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
+    public async Task ImportAsync_AtMaximumAccountCount_IsAccepted()
+    {
+        var repeated = new Account(
+            Guid.NewGuid(),
+            "Issuer",
+            "JBSWY3DPEHPK3PXP",
+            "account");
+        var imported = Enumerable.Repeat(repeated, 10_000).ToArray();
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            imported,
+            ImportConflictStrategy.SkipExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccountImportStatus.Completed, result.Value.Status);
+        Assert.Equal(1, result.Value.Added);
+        Assert.Equal(9_999, result.Value.Skipped);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch => batch.Count == 1)), Times.Once);
+    }
+
+    [Fact]
+    public async Task ImportAsync_AboveMaximumAccountCount_IsRejectedBeforeVaultAccess()
+    {
+        var repeated = new Account(
+            Guid.NewGuid(),
+            "Issuer",
+            "JBSWY3DPEHPK3PXP",
+            "account");
+        var accounts = new Mock<IAccountManager>(MockBehavior.Strict);
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            Enumerable.Repeat(repeated, 10_001).ToArray(),
+            ImportConflictStrategy.SkipExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccountImportStatus.InvalidTargets, result.Value.Status);
+        accounts.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task ImportAsync_WhenAtomicCommitFails_DoesNotReportPartialSuccess()
     {
         var incoming = new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP", "user");

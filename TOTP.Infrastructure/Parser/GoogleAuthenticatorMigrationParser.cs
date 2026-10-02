@@ -231,7 +231,14 @@ internal static class GoogleAuthenticatorMigrationParser
         var value = ReadLengthDelimited(payload, ref offset);
         if (value.Length > MaximumTextBytes)
             throw new FormatException("The migration text field is too long.");
-        return StrictUtf8.GetString(value);
+        try
+        {
+            return StrictUtf8.GetString(value);
+        }
+        catch (DecoderFallbackException exception)
+        {
+            throw new FormatException("The migration text field is not valid UTF-8.", exception);
+        }
     }
 
     private static ReadOnlySpan<byte> ReadLengthDelimited(ReadOnlySpan<byte> payload, ref int offset)

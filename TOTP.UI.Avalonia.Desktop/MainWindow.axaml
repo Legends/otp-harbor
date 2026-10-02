@@ -26,6 +26,14 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="TextWrapping" Value="NoWrap" />
         </Style>
+        <Style Selector="Button.search-clear:pointerover">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.search-clear:pressed">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*">
@@ -276,17 +284,12 @@
                                 VerticalAlignment="Center"
                                 VerticalContentAlignment="Center"
                                 automation:AutomationProperties.Name="{DynamicResource ClearSearch}"
-                                Classes="link"
+                                Classes="link search-clear"
                                 Click="RefocusAccountSearchAfterClear"
                                 Command="{Binding ClearSearchCommand}"
                                 CornerRadius="12"
                                 IsVisible="{Binding AccountList.HasSearchText}">
-                                <TextBlock
-                                    Margin="0,-1,0,0"
-                                    FontSize="17"
-                                    LineHeight="17"
-                                    Text="×"
-                                    TextAlignment="Center" />
+                                <shared:SymbolIcon IconSize="12" Kind="Close" />
                             </Button>
                         </Grid>
                         <StackPanel

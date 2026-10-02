@@ -239,6 +239,57 @@ public sealed class QrAccountImportServiceTests
     }
 
     [Fact]
+    public async Task ImportAsync_WhenGoogleMigrationRecoveryBackupFails_PerformsNoWrites()
+    {
+        var accounts = Manager([]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Fail("backup failed"));
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+            [new MigrationAccount(
+                Convert.FromHexString("48656C6C6F21DEADBEEF"),
+                "Example:alice",
+                "Example")]);
+
+        var result = await sut.ImportAsync(
+            payload,
+            (_, _) => Task.FromResult(QrAccountConflictDecision.Cancel),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WhenGoogleMigrationIsLastBatch_ReportsNoMoreBatches()
+    {
+        var accounts = Manager([]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+            [new MigrationAccount(
+                Convert.FromHexString("48656C6C6F21DEADBEEF"),
+                "Example:alice",
+                "Example")],
+            batchSize: 2,
+            batchIndex: 1);
+
+        var result = await sut.ImportAsync(
+            payload,
+            (_, _) => Task.FromResult(QrAccountConflictDecision.Cancel),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.HasMoreBatches);
+        Assert.Equal(1, result.Value.BatchIndex);
+        Assert.Equal(2, result.Value.BatchSize);
+    }
+
+    [Fact]
     public async Task ImportAsync_WhenGoogleMigrationContainsTenAccountsAndShortSecrets_ImportsAll()
     {
         var accounts = Manager([]);

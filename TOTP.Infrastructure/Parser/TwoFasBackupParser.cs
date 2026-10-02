@@ -15,7 +15,8 @@ internal static class TwoFasBackupParser
         if (schemaVersion is < MinimumSchemaVersion or > MaximumSchemaVersion)
             throw new FormatException("The 2FAS backup schema version is not supported.");
 
-        if (HasNonEmptyString(root, "reference") || HasNonEmptyString(root, "servicesEncrypted"))
+        if (HasEncryptedMarker(root, "reference")
+            || HasEncryptedMarker(root, "servicesEncrypted"))
             throw new FormatException("Encrypted 2FAS backups are not supported.");
 
         if (!root.TryGetProperty("services", out var services)
@@ -67,10 +68,18 @@ internal static class TwoFasBackupParser
         return accounts;
     }
 
-    private static bool HasNonEmptyString(JsonElement element, string propertyName) =>
-        element.TryGetProperty(propertyName, out var property)
-        && property.ValueKind == JsonValueKind.String
-        && !string.IsNullOrWhiteSpace(property.GetString());
+    private static bool HasEncryptedMarker(JsonElement element, string propertyName)
+    {
+        if (!element.TryGetProperty(propertyName, out var property)
+            || property.ValueKind == JsonValueKind.Null)
+        {
+            return false;
+        }
+
+        if (property.ValueKind != JsonValueKind.String)
+            throw new FormatException($"The 2FAS backup has an invalid '{propertyName}' value.");
+        return !string.IsNullOrWhiteSpace(property.GetString());
+    }
 
     private static string GetRequiredString(JsonElement element, string propertyName) =>
         GetOptionalString(element, propertyName)

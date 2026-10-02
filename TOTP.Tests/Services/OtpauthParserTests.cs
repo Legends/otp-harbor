@@ -45,15 +45,53 @@ public sealed class OtpauthParserTests
     }
 
     [Fact]
-    public void Parse_WhenDigitsInvalidAndPeriodMissing_UsesDefaults()
+    public void Parse_WhenOptionalParametersAreMissing_UsesDefaults()
     {
-        var uri = "otpauth://totp/John?secret=JBSWY3DPEHPK3PXP&digits=abc";
+        var uri = "otpauth://totp/John?secret=JBSWY3DPEHPK3PXP";
 
         var parsed = OtpauthParser.Parse(uri);
 
         Assert.Equal(6, parsed.Digits);
         Assert.Equal(30, parsed.Period);
         Assert.Equal("SHA1", parsed.Algorithm);
+    }
+
+    [Theory]
+    [InlineData("digits=abc")]
+    [InlineData("digits=")]
+    public void Parse_WhenDigitsIsMalformed_ThrowsArgumentException(string query)
+    {
+        var uri = $"otpauth://totp/John?secret=JBSWY3DPEHPK3PXP&{query}";
+
+        Assert.Throws<ArgumentException>(() => OtpauthParser.Parse(uri));
+    }
+
+    [Fact]
+    public void Parse_IsCaseInsensitiveAndNormalizesBase32Secret()
+    {
+        const string uri =
+            "OTPAUTH://TOTP/Example%3Aalice%2Badmin?SECRET=jbsw-y3dp%20ehpk3pxp%3D%3D%3D%3D&ISSUER=Example&ALGORITHM=sha1&DIGITS=6&PERIOD=30";
+
+        var parsed = OtpauthParser.Parse(uri);
+
+        Assert.Equal("Example", parsed.Issuer);
+        Assert.Equal("alice+admin", parsed.Label);
+        Assert.Equal("JBSWY3DPEHPK3PXP", parsed.SecretBase32);
+        Assert.Equal("sha1", parsed.Algorithm);
+        Assert.Equal(6, parsed.Digits);
+        Assert.Equal(30, parsed.Period);
+    }
+
+    [Fact]
+    public void Parse_WhenQueryParameterIsRepeated_UsesLastValue()
+    {
+        const string uri =
+            "otpauth://totp/Example:alice?secret=INVALID1&secret=JBSWY3DPEHPK3PXP&issuer=Old&issuer=Example";
+
+        var parsed = OtpauthParser.Parse(uri);
+
+        Assert.Equal("JBSWY3DPEHPK3PXP", parsed.SecretBase32);
+        Assert.Equal("Example", parsed.Issuer);
     }
 
     [Fact]
