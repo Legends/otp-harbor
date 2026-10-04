@@ -608,6 +608,21 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void ChangingSettingsTab_ClearsContextualNotifications()
+    {
+        using var sut = CreateSut(Mock.Of<IAvaloniaStartupCoordinator>());
+        sut.NativeFilePicker.Notification.ShowPersistent(
+            "Synthetic import notice",
+            NotificationSeverity.Information);
+        Assert.True(sut.SettingsNotification.HasMessage);
+
+        sut.SelectedSettingsTabIndex = 2;
+
+        Assert.False(sut.SettingsNotification.HasMessage);
+        Assert.False(sut.NativeFilePicker.Notification.HasMessage);
+    }
+
+    [Fact]
     public async Task SettingsWindowOverlay_AlwaysDismissesRecoverableErrors()
     {
         using var sut = CreateSut(

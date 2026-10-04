@@ -123,11 +123,7 @@ foreach ($requiredText in @(
 $approvedDesktopAssets = @(
     'Icons/app-1024.png',
     'Icons/app-128.png',
-    'Icons/app.ico',
-    'flags/de.png',
-    'flags/en.png',
-    'flags/es.png',
-    'flags/fr.png'
+    'Icons/app.ico'
 )
 $desktopAssetsRoot = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Assets'
 $actualDesktopAssets = @(Get-ChildItem -LiteralPath $desktopAssetsRoot -Recurse -File |

@@ -34,8 +34,6 @@ public sealed class DiagnosticsViewModelTests
         Assert.Contains("Preferences: 12 ms", sut.SupportInformation, StringComparison.Ordinal);
         Assert.DoesNotContain("\\Users\\", sut.SupportInformation, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("secret", sut.SupportInformation, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
         Assert.Empty(sut.Message);
     }
 
@@ -84,9 +82,7 @@ public sealed class DiagnosticsViewModelTests
 
         Assert.Contains("Plattform: Windows", sut.SupportInformation, StringComparison.Ordinal);
         Assert.Contains("Protokollordner konfiguriert: nein", sut.SupportInformation, StringComparison.Ordinal);
-        Assert.Equal(
-            "Supportinformationen aktualisiert. Sie enthalten keine Kontodaten oder Dateisystempfade.",
-            sut.Message);
+        Assert.Empty(sut.Message);
     }
 
     private static IAvaloniaLocalizationService CreateLocalization(string culture)

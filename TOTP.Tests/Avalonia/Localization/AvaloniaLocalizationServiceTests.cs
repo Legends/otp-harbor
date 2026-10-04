@@ -6,6 +6,16 @@ namespace TOTP.Tests.Avalonia.Localization;
 public sealed class AvaloniaLocalizationServiceTests
 {
     [Fact]
+    public void Catalog_DesktopSettingsUsesCompactEnglishTabNames()
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo("en");
+
+        Assert.Equal("Back & Restore", sut.Get(AvaloniaStringKeys.Backups, culture));
+        Assert.Equal("Imports", sut.Get(AvaloniaStringKeys.ImportExport, culture));
+    }
+
+    [Fact]
     public void ApplyCulture_UpdatesExistingDynamicResourceHostInPlace()
     {
         var resources = new ResourceDictionary();
@@ -103,19 +113,33 @@ public sealed class AvaloniaLocalizationServiceTests
     {
         var sut = new AvaloniaStringCatalog();
 
-        var help = sut.Get(
-            AvaloniaStringKeys.OtherFormatsImportHelp,
-            System.Globalization.CultureInfo.GetCultureInfo(cultureName));
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+        var help = string.Join('\n',
+            sut.Get(AvaloniaStringKeys.OtherFormatsImportHelp, culture),
+            sut.Get(AvaloniaStringKeys.OtherFormatAegis, culture),
+            sut.Get(AvaloniaStringKeys.OtherFormatTwoFas, culture),
+            sut.Get(AvaloniaStringKeys.OtherFormatOtpAuth, culture));
 
-        Assert.Contains("OTP", help, StringComparison.Ordinal);
-        Assert.Contains("Harbor", help, StringComparison.Ordinal);
         Assert.Contains("Aegis", help, StringComparison.Ordinal);
         Assert.Contains("2FAS", help, StringComparison.Ordinal);
         Assert.Contains(".json", help, StringComparison.Ordinal);
-        Assert.Contains(".csv", help, StringComparison.Ordinal);
         Assert.Contains(".txt", help, StringComparison.Ordinal);
         Assert.Contains(".2fas", help, StringComparison.Ordinal);
         Assert.Contains("otpauth://", help, StringComparison.Ordinal);
+        Assert.Contains("1.", help, StringComparison.Ordinal);
+        Assert.Contains("3.", help, StringComparison.Ordinal);
+        Assert.DoesNotContain("OTP Harbor", help, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(".csv", help, StringComparison.OrdinalIgnoreCase);
+
+        Assert.Contains("\"entries\"", sut.Get(AvaloniaStringKeys.FaqImportFormatsAegisExample, culture));
+        Assert.Contains("\"services\"", sut.Get(AvaloniaStringKeys.FaqImportFormatsTwoFasExample, culture));
+        Assert.StartsWith("otpauth://", sut.Get(AvaloniaStringKeys.FaqImportFormatsOtpAuthExample, culture));
+        Assert.False(string.IsNullOrWhiteSpace(sut.Get(AvaloniaStringKeys.FaqImportFormatsAegisDescription, culture)));
+        Assert.False(string.IsNullOrWhiteSpace(sut.Get(AvaloniaStringKeys.FaqImportFormatsTwoFasDescription, culture)));
+        Assert.False(string.IsNullOrWhiteSpace(sut.Get(AvaloniaStringKeys.FaqImportFormatsOtpAuthDescription, culture)));
+        Assert.Contains("Simple Icons", sut.Get(AvaloniaStringKeys.FaqSimpleIconsOfficialLink, culture));
+        Assert.Contains("Aegis", sut.Get(AvaloniaStringKeys.FaqAegisIconPackDocsLink, culture));
+        Assert.Contains("OTP Harbor", sut.Get(AvaloniaStringKeys.FaqImportIconPacksDisclaimer, culture));
     }
 
     [Theory]

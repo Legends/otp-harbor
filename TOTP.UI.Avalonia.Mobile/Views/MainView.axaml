@@ -46,6 +46,87 @@
             <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
             <Setter Property="BorderThickness" Value="3" />
         </Style>
+        <Style Selector="Button.settings-category">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="14,12" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide">
+            <Setter Property="Background" Value="{DynamicResource BrushAccent}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushAccentHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushAccentPressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide.danger">
+            <Setter Property="Background" Value="{DynamicResource BrushDanger}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushOnDanger}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDanger}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide.danger:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushDanger}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDanger}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide.danger:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushDanger}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDanger}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide.settings-category">
+            <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide.settings-category:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" />
+        </Style>
+        <Style Selector="StackPanel.settings-root Button.wide.settings-category:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" />
+        </Style>
+        <Style Selector="Button.settings-back-to-top">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="24" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushAccent}" />
+        </Style>
+        <Style Selector="Button.settings-back-to-top:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentHover}" />
+        </Style>
+        <Style Selector="Button.settings-back-to-top:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentPressed}" />
+        </Style>
+        <Style Selector="Expander.mobile-faq-section">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="Expander.mobile-faq-section /template/ ToggleButton#ExpanderHeader">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushFaqHeaderForeground}" />
+            <Setter Property="Background" Value="{DynamicResource BrushFaqHeaderBackground}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Expander.mobile-faq-section /template/ ToggleButton#ExpanderHeader:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushFaqHeaderBackground}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Expander.mobile-faq-section /template/ ToggleButton#ExpanderHeader:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushFaqHeaderBackground}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
     </UserControl.Styles>
     <Grid
         Container.Name="MobileShell"
@@ -58,12 +139,14 @@
             BorderBrush="{DynamicResource BrushBorder}"
             BorderThickness="0,0,0,1">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <controls:SymbolIcon
+                <Image
+                    x:Name="MobileAppLogo"
                     Grid.Column="0"
+                    Width="32"
+                    Height="32"
                     VerticalAlignment="Center"
-                    Foreground="{DynamicResource BrushAccent}"
-                    IconSize="32"
-                    Kind="Lock" />
+                    Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png"
+                    Stretch="Uniform" />
                 <TextBlock
                     Grid.Column="1"
                     Margin="12,0,0,0"
@@ -97,7 +180,9 @@
             IsVisible="{Binding IsUnlockVisible}" />
 
         <ScrollViewer
+            x:Name="MainScrollViewer"
             Grid.Row="1"
+            ScrollChanged="MainScrollViewerChanged"
             Classes.account-list="{Binding IsAccountListVisible}">
             <ScrollViewer.Styles>
                 <Style Selector="ScrollViewer.account-list">
@@ -243,6 +328,7 @@
                                 Grid.Column="4"
                                 automation:AutomationProperties.Name="{Binding SettingsText}"
                                 Classes="icon-action account-toolbar-action"
+                                Click="ScrollMainViewToTop"
                                 Command="{Binding ShowSettingsCommand}"
                                 ToolTip.Tip="{Binding SettingsText}">
                                 <controls:SymbolIcon IconSize="24" Kind="Settings" />
@@ -528,7 +614,7 @@
                                                     CornerRadius="0"
                                                     ToolTip.Tip="{Binding DataContext.ShowQrText, ElementName=Root}">
                                                     <controls:SymbolIcon
-                                                        Foreground="White"
+                                                        Foreground="{DynamicResource BrushOnAccent}"
                                                         IconSize="23"
                                                         Kind="QrCode" />
                                                 </Button>
@@ -541,7 +627,7 @@
                                                     CornerRadius="0"
                                                     ToolTip.Tip="{Binding DataContext.EditAccountText, ElementName=Root}">
                                                     <controls:SymbolIcon
-                                                        Foreground="White"
+                                                        Foreground="{DynamicResource BrushOnAccent}"
                                                         IconSize="23"
                                                         Kind="Edit" />
                                                 </Button>
@@ -554,7 +640,7 @@
                                                 <controls:SymbolIcon
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    Foreground="White"
+                                                    Foreground="{DynamicResource BrushOnDanger}"
                                                     IconSize="24"
                                                     Kind="Delete" />
                                             </Border>
@@ -583,7 +669,8 @@
                                                         Grid.RowSpan="2"
                                                         Grid.Column="0"
                                                         IsVisible="{Binding ShowIssuerLogo}"
-                                                        IconData="{Binding Brand.IconData}"
+                                                            IconData="{Binding Brand.IconData}"
+                                                            IconTransform="{Binding Brand.IconTransform}"
                                                         Initials="{Binding Brand.Initials}"
                                                         TileBackground="{Binding Brand.BackgroundBrush}" />
                                                     <Button
@@ -694,7 +781,7 @@
                                     Text="{Binding SelectedAccount.DisplayName}"
                                     TextTrimming="CharacterEllipsis" />
                                 <Border
-                                    Background="White"
+                                    Background="{DynamicResource BrushQrBackground}"
                                     CornerRadius="8"
                                     IsVisible="{Binding HasQrImage}"
                                     Padding="16">
@@ -706,7 +793,7 @@
                                             Source="{Binding QrImage}"
                                             Stretch="Uniform" />
                                         <TextBlock
-                                            Foreground="#1A2E4E"
+                                            Foreground="{DynamicResource BrushQrForeground}"
                                             Text="{Binding QrPrivacyNoticeText}"
                                             TextAlignment="Center"
                                             TextWrapping="Wrap" />
@@ -721,89 +808,266 @@
                     </Grid>
 
                     <StackPanel
+                        Classes="settings-root"
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsSettingsVisible}"
                         Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                            <Button
                                 Grid.Column="0"
+                                automation:AutomationProperties.Name="{Binding BackToSettingsText}"
+                                Classes="icon-action"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowSettingsCategoriesCommand}"
+                                IsVisible="{Binding IsSettingsCategoryDetailVisible}"
+                                ToolTip.Tip="{Binding BackToSettingsText}">
+                                <controls:SymbolIcon IconSize="22" Kind="ArrowLeft" />
+                            </Button>
+                            <TextBlock
+                                Grid.Column="1"
                                 VerticalAlignment="Center"
                                 FontSize="26"
                                 FontWeight="SemiBold"
-                                Text="{Binding SettingsText}" />
+                                Text="{Binding SettingsCategoryTitle}"
+                                TextTrimming="CharacterEllipsis" />
                             <Button
-                                Grid.Column="1"
-                                automation:AutomationProperties.Name="{Binding CodesText}"
+                                Grid.Column="2"
+                                automation:AutomationProperties.Name="{Binding CloseSettingsText}"
                                 Classes="icon-action"
+                                Click="ScrollMainViewToTop"
                                 Command="{Binding ShowAccountsCommand}"
-                                ToolTip.Tip="{Binding CodesText}">
-                                <controls:SymbolIcon IconSize="24" Kind="Codes" />
+                                IsVisible="{Binding IsSettingsCategoryListVisible}"
+                                ToolTip.Tip="{Binding CloseSettingsText}">
+                                <controls:SymbolIcon IconSize="22" Kind="Close" />
+                            </Button>
+                            <Button
+                                Grid.Column="2"
+                                automation:AutomationProperties.Name="{Binding BackToSettingsText}"
+                                Classes="icon-action"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowSettingsCategoriesCommand}"
+                                IsVisible="{Binding IsSettingsCategoryDetailVisible}"
+                                ToolTip.Tip="{Binding BackToSettingsText}">
+                                <controls:SymbolIcon IconSize="22" Kind="Close" />
                             </Button>
                         </Grid>
-                        <Border Classes="card" Padding="16">
+                        <StackPanel
+                            IsVisible="{Binding IsSettingsCategoryListVisible}"
+                            Spacing="8">
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowAppearanceSettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Settings" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding AppearanceText}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding AppearanceSettingsDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowBrandIconSettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Folder" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding BrandIconsText}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding BrandIconSettingsDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowSecuritySettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Lock" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding SecurityText}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding SecuritySettingsDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowBackupSettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="FolderAdd" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding BackupTitle}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding BackupSettingsDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowImportExportSettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="QrCode" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding ImportExportText}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding ImportExportSettingsDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowMiscSettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Settings" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding MiscellaneousText}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding MiscSettingsDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowFaqSettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Information" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding FaqText}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqSettingsDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                        </StackPanel>
+                        <Border
+                            Classes="card"
+                            IsVisible="{Binding IsAppearanceSettingsVisible}"
+                            Padding="16">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="28">
+                                <StackPanel Grid.Column="0" Spacing="10">
+                                    <TextBlock
+                                        FontSize="18"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding LanguageText}" />
+                                    <ComboBox
+                                        Width="88"
+                                        MinHeight="52"
+                                        HorizontalAlignment="Left"
+                                        HorizontalContentAlignment="Center"
+                                        automation:AutomationProperties.Name="{Binding LanguageText}"
+                                        ItemsSource="{Binding Languages}"
+                                        SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:MobileLanguageOption">
+                                                <controls:LanguageFlagImage
+                                                    Width="40"
+                                                    Height="30"
+                                                    automation:AutomationProperties.Name="{Binding DisplayName}"
+                                                    CultureName="{Binding CultureName}"
+                                                    Stretch="Uniform"
+                                                    ToolTip.Tip="{Binding DisplayName}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                        <ComboBox.SelectionBoxItemTemplate>
+                                            <DataTemplate x:DataType="vm:MobileLanguageOption">
+                                                <controls:LanguageFlagImage
+                                                    Width="40"
+                                                    Height="30"
+                                                    automation:AutomationProperties.Name="{Binding DisplayName}"
+                                                    CultureName="{Binding CultureName}"
+                                                    Stretch="Uniform"
+                                                    ToolTip.Tip="{Binding DisplayName}" />
+                                            </DataTemplate>
+                                        </ComboBox.SelectionBoxItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="8">
+                                    <TextBlock
+                                        FontSize="18"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding AppearanceText}" />
+                                    <StackPanel Spacing="4">
+                                        <RadioButton
+                                            GroupName="AppearanceTheme"
+                                            Command="{Binding SelectSystemThemeCommand}"
+                                            Content="{Binding ThemeFollowSystemText}"
+                                            IsChecked="{Binding IsSystemThemeSelected, Mode=OneWay}" />
+                                        <RadioButton
+                                            GroupName="AppearanceTheme"
+                                            Command="{Binding SelectDarkThemeCommand}"
+                                            Content="{Binding ThemeDarkText}"
+                                            IsChecked="{Binding IsDarkThemeSelected, Mode=OneWay}" />
+                                        <RadioButton
+                                            GroupName="AppearanceTheme"
+                                            Command="{Binding SelectLightThemeCommand}"
+                                            Content="{Binding ThemeLightText}"
+                                            IsChecked="{Binding IsLightThemeSelected, Mode=OneWay}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border
+                            Classes="card"
+                            IsVisible="{Binding IsMiscSettingsVisible}"
+                            Padding="16">
                             <StackPanel Spacing="10">
                                 <TextBlock
                                     FontSize="18"
                                     FontWeight="SemiBold"
-                                    Text="{Binding LanguageText}" />
-                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                                    <Button
-                                        Grid.Column="0"
-                                        Classes="wide language-option"
-                                        Classes.selected="{Binding IsEnglishLanguageSelected}"
-                                        Command="{Binding SelectEnglishLanguageCommand}"
-                                        Content="{Binding EnglishLanguageText}" />
-                                    <Button
-                                        Grid.Column="1"
-                                        Classes="wide language-option"
-                                        Classes.selected="{Binding IsGermanLanguageSelected}"
-                                        Command="{Binding SelectGermanLanguageCommand}"
-                                        Content="{Binding GermanLanguageText}" />
-                                    <Button
-                                        Grid.Row="1"
-                                        Grid.Column="0"
-                                        Classes="wide language-option"
-                                        Classes.selected="{Binding IsFrenchLanguageSelected}"
-                                        Command="{Binding SelectFrenchLanguageCommand}"
-                                        Content="{Binding FrenchLanguageText}" />
-                                    <Button
-                                        Grid.Row="1"
-                                        Grid.Column="1"
-                                        Classes="wide language-option"
-                                        Classes.selected="{Binding IsSpanishLanguageSelected}"
-                                        Command="{Binding SelectSpanishLanguageCommand}"
-                                        Content="{Binding SpanishLanguageText}" />
-                                </Grid>
-                                <TextBlock
-                                    Margin="0,8,0,0"
-                                    FontSize="18"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding AppearanceText}" />
-                                <StackPanel Spacing="4">
-                                    <RadioButton
-                                        GroupName="AppearanceTheme"
-                                        Command="{Binding SelectSystemThemeCommand}"
-                                        Content="{Binding ThemeFollowSystemText}"
-                                        IsChecked="{Binding IsSystemThemeSelected, Mode=OneWay}" />
-                                    <RadioButton
-                                        GroupName="AppearanceTheme"
-                                        Command="{Binding SelectDarkThemeCommand}"
-                                        Content="{Binding ThemeDarkText}"
-                                        IsChecked="{Binding IsDarkThemeSelected, Mode=OneWay}" />
-                                    <RadioButton
-                                        GroupName="AppearanceTheme"
-                                        Command="{Binding SelectLightThemeCommand}"
-                                        Content="{Binding ThemeLightText}"
-                                        IsChecked="{Binding IsLightThemeSelected, Mode=OneWay}" />
-                                </StackPanel>
+                                    Text="{Binding LoggingLevelText}"
+                                    TextWrapping="Wrap" />
+                                <ComboBox
+                                    ItemsSource="{Binding LogLevels}"
+                                    SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
                             </StackPanel>
                         </Border>
-                        <Border Classes="card" Padding="16">
+                        <Border
+                            Classes="card"
+                            IsVisible="{Binding IsSecuritySettingsVisible}"
+                            Padding="16">
                             <StackPanel Spacing="12">
                                 <TextBlock
                                     FontSize="18"
                                     FontWeight="SemiBold"
                                     Text="{Binding SecurityText}" />
+                                <Border
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock
+                                            FontSize="17"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding ChangeMasterPasswordText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding ChangeMasterPasswordDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <controls:RevealableSecretInput
+                                            AccessibleName="{Binding CurrentPasswordText}"
+                                            PlaceholderText="{Binding CurrentPasswordText}"
+                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                            Text="{Binding CurrentMasterPassword, Mode=TwoWay}" />
+                                        <controls:RevealableSecretInput
+                                            AccessibleName="{Binding NewPasswordText}"
+                                            PlaceholderText="{Binding NewPasswordText}"
+                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                            Text="{Binding NewMasterPassword, Mode=TwoWay}" />
+                                        <controls:RevealableSecretInput
+                                            AccessibleName="{Binding ConfirmPasswordText}"
+                                            PlaceholderText="{Binding ConfirmPasswordText}"
+                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                            Text="{Binding NewMasterPasswordConfirmation, Mode=TwoWay}" />
+                                        <Button
+                                            Classes="wide primary"
+                                            Command="{Binding ChangeMasterPasswordCommand}"
+                                            Content="{Binding ChangeMasterPasswordText}" />
+                                    </StackPanel>
+                                </Border>
                                 <TextBlock
                                     FontSize="17"
                                     FontWeight="SemiBold"
@@ -926,69 +1190,11 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Classes="card" Padding="16">
+                        <Border
+                            Classes="card"
+                            IsVisible="{Binding IsBrandIconSettingsVisible}"
+                            Padding="16">
                             <StackPanel Spacing="12">
-                                <TextBlock
-                                    FontSize="18"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding ImportSectionText}" />
-                                <TextBlock
-                                    FontSize="17"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding ImportGoogleQrText}" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding ImportGoogleQrDescriptionText}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Classes="wide primary"
-                                    Command="{Binding ImportGoogleQrCommand}"
-                                    Content="{Binding ImportGoogleQrText}" />
-                                <Border
-                                    Background="{DynamicResource BrushSurfaceAlternate}"
-                                    CornerRadius="8"
-                                    IsVisible="{Binding IsQrConflictVisible}"
-                                    Padding="12">
-                                    <StackPanel Spacing="10">
-                                        <TextBlock
-                                            FontWeight="SemiBold"
-                                            Text="{Binding QrConflictTitle}" />
-                                        <TextBlock Text="{Binding QrConflictPrompt}" TextWrapping="Wrap" />
-                                        <Button Classes="wide primary" Command="{Binding UpdateQrConflictCommand}" Content="{Binding UpdateExistingText}" />
-                                        <Button Classes="wide secondary" Command="{Binding KeepBothQrConflictCommand}" Content="{Binding KeepBothText}" />
-                                        <Button Classes="wide secondary" Command="{Binding CancelQrConflictCommand}" Content="{Binding CancelText}" />
-                                    </StackPanel>
-                                </Border>
-                                <TextBlock
-                                    FontSize="17"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding ImportAccountFileText}" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding ImportAccountFileDescriptionText}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Classes="wide secondary"
-                                    Command="{Binding ImportAccountFileCommand}"
-                                    Content="{Binding ImportAccountFileText}" />
-                                <TextBlock
-                                    FontSize="17"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding ImportBackupText}" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding ImportBackupDescriptionText}"
-                                    TextWrapping="Wrap" />
-                                <controls:RevealableSecretInput
-                                    AccessibleName="{Binding BackupPasswordText}"
-                                    PlaceholderText="{Binding BackupPasswordText}"
-                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                    Text="{Binding ImportPassword, Mode=TwoWay}" />
-                                <Button
-                                    Classes="wide secondary"
-                                    Command="{Binding ImportBackupCommand}"
-                                    Content="{Binding ImportBackupText}" />
                                 <TextBlock
                                     FontSize="17"
                                     FontWeight="SemiBold"
@@ -996,6 +1202,12 @@
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
                                     Text="{Binding BrandIconsDescriptionText}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextPrimary}"
+                                    FontWeight="SemiBold"
+                                    IsVisible="{Binding HasImportedBrandIcons}"
+                                    Text="{Binding BrandIconPackStatusText}"
                                     TextWrapping="Wrap" />
                                 <Button
                                     Classes="wide secondary"
@@ -1015,36 +1227,259 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
-                        <Border Classes="card" Padding="16">
+                        <Border
+                            Classes="card"
+                            IsVisible="{Binding IsBackupSettingsVisible}"
+                            Padding="16">
                             <StackPanel Spacing="12">
                                 <TextBlock
-                                    FontSize="18"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding ExportSectionText}" />
-                                <TextBlock
-                                    FontSize="17"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding ExportBackupText}" />
-                                <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding ExportBackupDescriptionText}"
+                                    Text="{Binding BackupDescription}"
                                     TextWrapping="Wrap" />
-                                <controls:RevealableSecretInput
-                                    AccessibleName="{Binding BackupPasswordText}"
-                                    PlaceholderText="{Binding BackupPasswordText}"
-                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                    Text="{Binding BackupPassword, Mode=TwoWay}" />
-                                <controls:RevealableSecretInput
-                                    AccessibleName="{Binding ConfirmBackupPasswordText}"
-                                    PlaceholderText="{Binding ConfirmBackupPasswordText}"
-                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                    Text="{Binding BackupPasswordConfirmation, Mode=TwoWay}" />
-                                <Button
-                                    Classes="wide primary"
-                                    Command="{Binding ExportBackupCommand}"
-                                    Content="{Binding ExportBackupText}" />
+                                <Border
+                                    x:Name="BackupExportPanel"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding BackupSectionText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding ExportBackupDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <controls:RevealableSecretInput
+                                            AccessibleName="{Binding BackupPasswordText}"
+                                            PlaceholderText="{Binding BackupPasswordText}"
+                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                            Text="{Binding BackupPassword, Mode=TwoWay}" />
+                                        <controls:RevealableSecretInput
+                                            AccessibleName="{Binding ConfirmBackupPasswordText}"
+                                            PlaceholderText="{Binding ConfirmBackupPasswordText}"
+                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                            Text="{Binding BackupPasswordConfirmation, Mode=TwoWay}" />
+                                        <Button
+                                            Classes="wide secondary"
+                                            Command="{Binding ExportBackupCommand}"
+                                            Content="{Binding ExportBackupText}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    x:Name="BackupRestorePanel"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding RestoreSectionText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding ImportBackupDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <controls:RevealableSecretInput
+                                            AccessibleName="{Binding BackupPasswordText}"
+                                            PlaceholderText="{Binding BackupPasswordText}"
+                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                            Text="{Binding ImportPassword, Mode=TwoWay}" />
+                                        <Button
+                                            Classes="wide secondary"
+                                            Command="{Binding ImportBackupCommand}"
+                                            Content="{Binding ImportBackupText}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                        <Border
+                            Classes="card"
+                            IsVisible="{Binding IsImportExportSettingsVisible}"
+                            Padding="16">
+                            <StackPanel Spacing="12">
+                                <Border
+                                    x:Name="GoogleAuthenticatorImportPanel"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock
+                                            FontSize="17"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding ImportGoogleQrText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding ImportGoogleQrDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <Button
+                                            x:Name="GoogleAuthenticatorImportButton"
+                                            Classes="wide secondary"
+                                            Command="{Binding ImportGoogleQrCommand}"
+                                            Content="{Binding ImportSectionText}" />
+                                        <Border
+                                            Background="{DynamicResource BrushSurfaceAlternate}"
+                                            CornerRadius="8"
+                                            IsVisible="{Binding IsQrConflictVisible}"
+                                            Padding="12">
+                                            <StackPanel Spacing="10">
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding QrConflictTitle}" />
+                                                <TextBlock Text="{Binding QrConflictPrompt}" TextWrapping="Wrap" />
+                                                <Button Classes="wide primary" Command="{Binding UpdateQrConflictCommand}" Content="{Binding UpdateExistingText}" />
+                                                <Button Classes="wide secondary" Command="{Binding KeepBothQrConflictCommand}" Content="{Binding KeepBothText}" />
+                                                <Button Classes="wide secondary" Command="{Binding CancelQrConflictCommand}" Content="{Binding CancelText}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    x:Name="OtherFormatsImportPanel"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock
+                                            FontSize="17"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding ImportAccountFileText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding ImportAccountFileDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{Binding ImportFormatAegisText}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding ImportFormatTwoFasText}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding ImportFormatOtpAuthText}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button
+                                            Classes="link"
+                                            Click="ScrollMainViewToTop"
+                                            Command="{Binding ShowImportFormatsFaqCommand}"
+                                            Content="{Binding ViewImportFormatsFaqText}"
+                                            HorizontalAlignment="Left" />
+                                        <Button
+                                            x:Name="OtherFormatsImportButton"
+                                            Classes="wide secondary"
+                                            Command="{Binding ImportAccountFileCommand}"
+                                            Content="{Binding ImportSectionText}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                        <Border
+                            IsVisible="{Binding IsFaqSettingsVisible}"
+                            Padding="0">
+                            <StackPanel Spacing="12">
+                                <Border
+                                    HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource BrushFaqHeaderBackground}"
+                                    BoxShadow="{DynamicResource ElevationCard}"
+                                    CornerRadius="8">
+                                    <Expander
+                                        x:Name="FaqIconPacksExpander"
+                                        Classes="mobile-faq-section"
+                                        Expanded="FaqSectionExpanded"
+                                        HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,11" MinHeight="44" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <controls:SymbolIcon
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderIcon}"
+                                                    IconSize="24"
+                                                    Kind="Folder" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                    FontSize="18"
+                                                    FontWeight="SemiBold"
+                                                    Text="{Binding FaqImportIconPacksQuestionText}"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border
+                                            Background="{DynamicResource BrushFaqContentBackground}"
+                                            CornerRadius="0,0,8,8"
+                                            Padding="12">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock
+                                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                                    Text="{Binding FaqImportIconPacksAnswerText}"
+                                                    TextWrapping="Wrap" />
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
+                                                    Content="{Binding FaqSimpleIconsOfficialLinkText}"
+                                                    NavigateUri="https://github.com/simple-icons/simple-icons"
+                                                    Padding="0,4" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
+                                                    Content="{Binding FaqAegisIconPackDocsLinkText}"
+                                                    NavigateUri="https://github.com/beemdevelopment/Aegis/blob/master/docs/iconpacks.md"
+                                                    Padding="0,4" />
+                                                <TextBlock
+                                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                                    Text="{Binding FaqImportIconPacksDisclaimerText}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Expander>
+                                </Border>
+                                <Border
+                                    HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource BrushFaqHeaderBackground}"
+                                    BoxShadow="{DynamicResource ElevationCard}"
+                                    CornerRadius="8">
+                                    <Expander
+                                        x:Name="FaqImportFormatsExpander"
+                                        Classes="mobile-faq-section"
+                                        Expanded="FaqSectionExpanded"
+                                        HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,11" MinHeight="44" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <controls:SymbolIcon
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderIcon}"
+                                                    IconSize="24"
+                                                    Kind="QrCode" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                    FontSize="18"
+                                                    FontWeight="SemiBold"
+                                                    Text="{Binding FaqImportFormatsQuestionText}"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border
+                                            Background="{DynamicResource BrushFaqContentBackground}"
+                                            CornerRadius="0,0,8,8"
+                                            Padding="12">
+                                            <StackPanel Spacing="10">
+                                                <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqImportFormatsIntroText}" TextWrapping="Wrap" />
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportFormatsAegisTitleText}" TextWrapping="Wrap" />
+                                                <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqImportFormatsAegisDescriptionText}" TextWrapping="Wrap" />
+                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                    <TextBlock FontSize="11" Text="{Binding FaqImportFormatsAegisExampleText}" TextWrapping="Wrap" />
+                                                </Border>
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportFormatsTwoFasTitleText}" TextWrapping="Wrap" />
+                                                <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqImportFormatsTwoFasDescriptionText}" TextWrapping="Wrap" />
+                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                    <TextBlock FontSize="11" Text="{Binding FaqImportFormatsTwoFasExampleText}" TextWrapping="Wrap" />
+                                                </Border>
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportFormatsOtpAuthTitleText}" TextWrapping="Wrap" />
+                                                <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqImportFormatsOtpAuthDescriptionText}" TextWrapping="Wrap" />
+                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                    <TextBlock FontSize="11" Text="{Binding FaqImportFormatsOtpAuthExampleText}" TextWrapping="Wrap" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </Expander>
+                                </Border>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -1161,7 +1596,8 @@
                                                     <controls:BrandTile
                                                         Grid.Column="0"
                                                         IsVisible="{Binding ShowIssuerLogo}"
-                                                        IconData="{Binding Brand.IconData}"
+                                                            IconData="{Binding Brand.IconData}"
+                                                            IconTransform="{Binding Brand.IconTransform}"
                                                         Initials="{Binding Brand.Initials}"
                                                         TileBackground="{Binding Brand.BackgroundBrush}" />
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -1224,10 +1660,6 @@
                             automation:AutomationProperties.Name="{Binding AccountNameText}"
                             PlaceholderText="{Binding AccountNameText}"
                             Text="{Binding EditorAccountName, Mode=TwoWay}" />
-                        <CheckBox
-                            automation:AutomationProperties.Name="{Binding FavoriteAccountText}"
-                            Content="{Binding FavoriteAccountText}"
-                            IsChecked="{Binding EditorIsFavorite, Mode=TwoWay}" />
                         <controls:RevealableSecretInput
                             AccessibleName="{Binding EditorSecretPlaceholder}"
                             PlaceholderText="{Binding EditorSecretPlaceholder}"
@@ -1235,16 +1667,60 @@
                             RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                             Text="{Binding EditorSecret, Mode=TwoWay}" />
                         <controls:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
-                        <Button
-                            x:Name="CustomSvgIconButton"
-                            Classes="wide secondary"
-                            Command="{Binding ImportCustomIconCommand}"
-                            Content="{Binding ChooseCustomSvgIconText}"
-                            IsVisible="{Binding IsEditingExistingAccount}" />
                         <Expander
+                            x:Name="AccountAdvancedOptions"
                             Header="{Binding AdvancedOptionsText}"
                             IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">
-                            <StackPanel Spacing="6">
+                            <StackPanel Spacing="8">
+                                <CheckBox
+                                    automation:AutomationProperties.Name="{Binding FavoriteAccountText}"
+                                    Content="{Binding FavoriteAccountText}"
+                                    IsChecked="{Binding EditorIsFavorite, Mode=TwoWay}" />
+                                <TextBlock
+                                    Classes="field-label"
+                                    Text="{Binding BrandIconText}" />
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <ComboBox
+                                        x:Name="AccountBrandIconComboBox"
+                                        Grid.Column="0"
+                                        Width="{Binding EditorBrandIconPickerWidth}"
+                                        HorizontalAlignment="Left"
+                                        automation:AutomationProperties.Name="{Binding BrandIconText}"
+                                        IsEnabled="{Binding HasBrandIconChoices}"
+                                        ItemsSource="{Binding EditorBrandIconOptions}"
+                                        SelectedItem="{Binding SelectedEditorBrandIconOption, Mode=TwoWay}">
+                                        <ComboBox.Styles>
+                                            <Style Selector="ComboBoxItem">
+                                                <Setter Property="MinWidth" Value="300" />
+                                            </Style>
+                                        </ComboBox.Styles>
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:MobileBrandIconOption">
+                                                <TextBlock Text="{Binding DisplayName}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </Grid>
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    IsVisible="{Binding IsEditingExistingAccount}"
+                                    Text="{Binding OrText}" />
+                                <Button
+                                    x:Name="CustomSvgIconButton"
+                                    Classes="wide secondary"
+                                    Command="{Binding ImportCustomIconCommand}"
+                                    Content="{Binding ChooseCustomSvgIconText}"
+                                    IsVisible="{Binding IsEditingExistingAccount}" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    IsVisible="{Binding HasSelectedEditorCustomIconFileName}"
+                                    Text="{Binding SelectedEditorCustomIconFileName}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding BrandIconHelpText}"
+                                    TextWrapping="Wrap" />
                                 <TextBlock
                                     Classes="field-label"
                                     Text="{Binding TotpPeriodText}" />
@@ -1289,6 +1765,26 @@
                 </Grid>
             </Grid>
         </ScrollViewer>
+
+        <Button
+            x:Name="SettingsBackToTopButton"
+            Grid.Row="1"
+            ZIndex="20"
+            Width="48"
+            Height="48"
+            MinWidth="48"
+            MinHeight="48"
+            Margin="0,0,16,16"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            automation:AutomationProperties.Name="{Binding BackToTopText}"
+            Classes="settings-back-to-top"
+            Click="ScrollMainViewToTop"
+            IsVisible="False"
+            Padding="12"
+            ToolTip.Tip="{Binding BackToTopText}">
+            <controls:SymbolIcon IconSize="18" Kind="ArrowUp" Opacity="0.65" />
+        </Button>
 
         <!-- Keep the biometric action responsive: its center is exactly in the
              middle of the lower third of the content area. -->
@@ -1364,7 +1860,7 @@
         <Grid
             Grid.RowSpan="3"
             Panel.ZIndex="90"
-            Background="#66000000"
+            Background="{DynamicResource BrushOverlayLight}"
             IsVisible="{Binding IsImportProgressVisible}">
             <Border
                 MaxWidth="360"
@@ -1392,7 +1888,7 @@
         <Grid
             Grid.RowSpan="3"
             Panel.ZIndex="100"
-            Background="#99000000"
+            Background="{DynamicResource BrushOverlayStrong}"
             IsVisible="{Binding IsImportConfirmationVisible}">
             <Border
                 MaxWidth="420"
@@ -1440,7 +1936,7 @@
         <Grid
             Grid.RowSpan="3"
             Panel.ZIndex="100"
-            Background="#99000000"
+            Background="{DynamicResource BrushOverlayStrong}"
             IsVisible="{Binding IsBackupConflictResolutionVisible}">
             <Border
                 MaxWidth="560"
@@ -1586,10 +2082,51 @@
         </Grid>
 
         <Grid
+            x:Name="AccountEditorExitModalOverlay"
+            Grid.RowSpan="3"
+            Panel.ZIndex="103"
+            Background="{DynamicResource BrushOverlayStrong}"
+            IsVisible="{Binding IsAccountEditorExitConfirmationVisible}">
+            <Border
+                MaxWidth="420"
+                Margin="24"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                automation:AutomationProperties.Name="{Binding UnsavedAccountChangesTitleText}"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="22">
+                <StackPanel Spacing="14">
+                    <TextBlock
+                        FontSize="20"
+                        FontWeight="SemiBold"
+                        Text="{Binding UnsavedAccountChangesTitleText}" />
+                    <TextBlock
+                        Text="{Binding UnsavedAccountChangesPromptText}"
+                        TextWrapping="Wrap" />
+                    <Button
+                        Classes="wide primary"
+                        Command="{Binding SaveAccountAndNavigateBackCommand}"
+                        Content="{Binding SaveText}" />
+                    <Button
+                        Classes="wide secondary"
+                        Command="{Binding DiscardAccountChangesCommand}"
+                        Content="{Binding DiscardChangesText}" />
+                    <Button
+                        Classes="wide secondary"
+                        Command="{Binding CancelAccountNavigationCommand}"
+                        Content="{Binding CancelText}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid
             x:Name="GroupDeleteModalOverlay"
             Grid.RowSpan="3"
             Panel.ZIndex="102"
-            Background="#99000000"
+            Background="{DynamicResource BrushOverlayStrong}"
             IsVisible="{Binding IsDeleteGroupConfirmationVisible}">
             <Border
                 MaxWidth="420"
@@ -1625,7 +2162,7 @@
         <Grid
             Grid.RowSpan="3"
             Panel.ZIndex="101"
-            Background="#99000000"
+            Background="{DynamicResource BrushOverlayStrong}"
             IsVisible="{Binding IsDeleteConfirmationVisible}">
             <Border
                 MaxWidth="420"

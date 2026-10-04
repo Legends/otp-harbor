@@ -189,6 +189,15 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 - When behavior selects or composes localized messages, add regression coverage that proves the complete displayed message comes from the active locale. Also keep resource-completeness tests passing.
 - Logs and developer diagnostics are not UI and should remain stable, structured, non-secret-bearing English unless an existing subsystem requires otherwise.
 
+### Third-party icon legal-review rules
+
+- When changing code, documentation, or user-visible text related to third-party icon imports, act as a professional legal-risk reviewer for copyright, licensing, and trademark issues.
+- Always check the relevant upstream license, trademark disclaimer, attribution requirements, redistribution terms, and usage guidance against authoritative sources before finalizing the change.
+- Clearly distinguish format compatibility from affiliation, sponsorship, endorsement, hosting, bundling, or redistribution. Do not describe a community pack as official unless its provider explicitly does so.
+- Prefer links to an upstream project or its documentation over bundling assets or linking directly to third-party downloadable archives. Never imply that OTP Harbor grants rights to third-party assets.
+- Ensure user-facing wording states that third-party assets remain subject to their own licenses, trademark rights, and usage terms, and that users are responsible for compliant use.
+- Flag unresolved or jurisdiction-specific legal risk for qualified legal counsel; professional-grade issue spotting by an agent is not a substitute for legal advice from a licensed lawyer.
+
 ### Testing rules
 
 - New behavior should come with tests.

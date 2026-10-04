@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -43,6 +44,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private readonly IssuerAliasResolver _issuerAliases;
     private readonly SemaphoreSlim _importLock = new(1, 1);
     private readonly ConcurrentDictionary<string, string> _pathDataCache =
+        new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, BrandIconTransform> _iconTransformCache =
         new(StringComparer.Ordinal);
     private CatalogSnapshot _catalog = CatalogSnapshot.Empty;
     private IReadOnlyDictionary<Guid, string> _accountBrandIds =
@@ -220,6 +223,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 if (reader.NodeType != XmlNodeType.Element || reader.LocalName != "path") continue;
                 var data = reader.GetAttribute("d");
                 if (string.IsNullOrWhiteSpace(data) || data.Length > MaximumSvgBytes) return false;
+                if (TryParseSvgTransform(reader.GetAttribute("transform"), out var transform))
+                    _iconTransformCache[brand.Id] = transform;
                 pathData = _pathDataCache.GetOrAdd(brand.Id, data);
                 return true;
             }
@@ -231,8 +236,30 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         return false;
     }
 
+    public bool TryGetIconTransform(string brandId, out BrandIconTransform? transform)
+    {
+        transform = null;
+        if (string.IsNullOrWhiteSpace(brandId)) return false;
+        if (_iconTransformCache.TryGetValue(brandId, out var cached))
+        {
+            transform = cached;
+            return true;
+        }
+
+        if (!TryGetIconPathData(brandId, out _)
+            || !_iconTransformCache.TryGetValue(brandId, out cached)) return false;
+        transform = cached;
+        return true;
+    }
+
+    public Task<Result<BrandIconPackImportResult>> ImportAsync(
+        Stream zipStream,
+        CancellationToken cancellationToken = default) =>
+        ImportAsync(zipStream, null, cancellationToken);
+
     public async Task<Result<BrandIconPackImportResult>> ImportAsync(
         Stream zipStream,
+        string? fileName,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(zipStream);
@@ -258,7 +285,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 81920,
                 useAsync: true);
             var parsedResult = await _importerResolver.ImportAsync(
-                new IconPackSource { Stream = archiveStream },
+                new IconPackSource { Stream = archiveStream, FileName = fileName },
                 cancellationToken);
             if (parsedResult.IsFailed)
                 return Result.Fail("The archive did not match a supported icon-pack format.");
@@ -340,6 +367,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             var snapshot = CreateSnapshot(finalDirectory, index);
             Volatile.Write(ref _catalog, snapshot);
             _pathDataCache.Clear();
+            _iconTransformCache.Clear();
             CatalogChanged?.Invoke(this, EventArgs.Empty);
             return Result.Ok(new BrandIconPackImportResult(
                 packageVersion,
@@ -419,7 +447,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 icon.Id,
                 icon.Name,
                 icon.BackgroundColor,
-                iconFileName);
+                iconFileName,
+                icon.SourceFileName);
             var customIcons = new Dictionary<string, BrandDefinition>(
                 Volatile.Read(ref _customIcons),
                 StringComparer.OrdinalIgnoreCase)
@@ -439,7 +468,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                             value.Id,
                             value.DisplayName,
                             value.BackgroundColor,
-                            value.IconFileName))
+                            value.IconFileName,
+                            value.SourceFileName))
                         .ToList()),
                 cancellationToken);
             _fileSecurity.RestrictFileToCurrentUser(temporaryIndexPath);
@@ -470,6 +500,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             Volatile.Write(ref _customIcons, customIcons);
             Volatile.Write(ref _accountBrandIds, mappings);
             _pathDataCache.TryRemove(definition.Id, out _);
+            _iconTransformCache.TryRemove(definition.Id, out _);
             CatalogChanged?.Invoke(this, EventArgs.Empty);
             return Result.Ok(definition);
         }
@@ -508,6 +539,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
             await Task.Run(RemoveImportedPackFiles, cancellationToken);
             _pathDataCache.Clear();
+            _iconTransformCache.Clear();
             Volatile.Write(ref _catalog, CatalogSnapshot.Empty);
             CatalogChanged?.Invoke(this, EventArgs.Empty);
             return Result.Ok();
@@ -717,6 +749,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     || string.IsNullOrWhiteSpace(item.IconFileName)
                     || !SafeSvgNameRegex().IsMatch(item.IconFileName)
                     || !IsSafeDisplayText(item.DisplayName, 256)
+                    || item.SourceFileName is { Length: > 0 }
+                        && !IsSafeDisplayText(item.SourceFileName, 256)
                     || string.IsNullOrWhiteSpace(item.BackgroundColor)
                     || !IconImportArchive.IsHexColor(item.BackgroundColor.TrimStart('#'))
                     || !icons.TryAdd(
@@ -725,7 +759,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                             item.Id,
                             item.DisplayName,
                             item.BackgroundColor,
-                            item.IconFileName)))
+                            item.IconFileName,
+                            item.SourceFileName)))
                 {
                     return;
                 }
@@ -855,6 +890,67 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         && value.Length <= maximumLength
         && !value.Any(char.IsControl);
 
+    private static bool TryParseSvgTransform(
+        string? value,
+        out BrandIconTransform transform)
+    {
+        transform = null!;
+        if (string.IsNullOrWhiteSpace(value)) return false;
+
+        var matrix = SvgMatrixTransformRegex().Match(value);
+        if (matrix.Success
+            && TryParseFiniteTransformValues(matrix.Groups, 6, out var matrixValues))
+        {
+            transform = new BrandIconTransform(
+                matrixValues[0],
+                matrixValues[1],
+                matrixValues[2],
+                matrixValues[3],
+                matrixValues[4],
+                matrixValues[5]);
+            return true;
+        }
+
+        var translatedScale = SvgTranslateScaleTransformRegex().Match(value);
+        if (!translatedScale.Success
+            || !TryParseFiniteTransformValues(
+                translatedScale.Groups,
+                translatedScale.Groups[4].Success ? 4 : 3,
+                out var values)) return false;
+        var scaleY = values.Length == 4 ? values[3] : values[2];
+        transform = new BrandIconTransform(
+            values[2],
+            0,
+            0,
+            scaleY,
+            values[0],
+            values[1]);
+        return true;
+    }
+
+    private static bool TryParseFiniteTransformValues(
+        GroupCollection groups,
+        int count,
+        out double[] values)
+    {
+        values = new double[count];
+        for (var index = 0; index < count; index++)
+        {
+            if (!double.TryParse(
+                    groups[index + 1].Value,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out values[index])
+                || !double.IsFinite(values[index])
+                || Math.Abs(values[index]) > 10_000)
+            {
+                values = [];
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static async Task WriteJsonAsync<T>(string path, T value, CancellationToken token)
     {
         await using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
@@ -898,6 +994,12 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     [GeneratedRegex("^[a-z0-9-]+-[0-9A-Za-z.-]+-v[0-9]+-[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
     private static partial Regex SafePackIdRegex();
 
+    [GeneratedRegex(@"^\s*matrix\(\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*[, ]\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*[, ]\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*[, ]\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*[, ]\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*[, ]\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*\)\s*$", RegexOptions.CultureInvariant)]
+    private static partial Regex SvgMatrixTransformRegex();
+
+    [GeneratedRegex(@"^\s*translate\(\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*[, ]\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)\s*\)\s*scale\(\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?)(?:\s*[, ]\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?))?\s*\)\s*$", RegexOptions.CultureInvariant)]
+    private static partial Regex SvgTranslateScaleTransformRegex();
+
     private sealed record CurrentPack(string PackId);
     private sealed record BrandDisplaySettings(bool ShowIssuerLogo);
     private sealed record AccountBrandSettings(int Version, List<AccountBrandOverride> Overrides);
@@ -907,7 +1009,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         string Id,
         string DisplayName,
         string BackgroundColor,
-        string IconFileName);
+        string IconFileName,
+        string? SourceFileName = null);
     private sealed record BrandIndex(
         string Version,
         List<IndexBrand> Brands,

@@ -25,6 +25,11 @@
                     <SolidColorBrush x:Key="BrushTextSecondary" Color="#526174" />
                     <SolidColorBrush x:Key="BrushTextBrand" Color="#176FAF" />
                     <SolidColorBrush x:Key="BrushTextSelection" Color="#185F99" />
+                    <SolidColorBrush x:Key="BrushToolbarSearchIcon" Color="#6B7280" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderForeground" Color="#202336" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderIcon" Color="#4F6EF7" />
+                    <SolidColorBrush x:Key="BrushFaqContentBackground" Color="#F8FAFC" />
                     <SolidColorBrush x:Key="BrushTextHighlight" Color="#137333" />
                     <SolidColorBrush x:Key="BrushBorder" Color="#D7E1EB" />
                     <SolidColorBrush x:Key="BrushControlBorder" Color="#9FB3C7" />
@@ -47,6 +52,7 @@
                         Stretch="UniformToFill" />
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
+                    <SolidColorBrush x:Key="BrushDangerPressed" Color="#8F1C13" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
                     <SolidColorBrush x:Key="BrushQrInstruction" Color="#282828" />
@@ -60,6 +66,10 @@
                     <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushQrForeground" Color="#1A2E4E" />
+                    <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
+                    <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#F8FAFC" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#172033" />
@@ -92,6 +102,11 @@
                     <SolidColorBrush x:Key="BrushTextSecondary" Color="#526174" />
                     <SolidColorBrush x:Key="BrushTextBrand" Color="#176FAF" />
                     <SolidColorBrush x:Key="BrushTextSelection" Color="#185F99" />
+                    <SolidColorBrush x:Key="BrushToolbarSearchIcon" Color="#6B7280" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderForeground" Color="#202336" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderIcon" Color="#4F6EF7" />
+                    <SolidColorBrush x:Key="BrushFaqContentBackground" Color="#F8FAFC" />
                     <SolidColorBrush x:Key="BrushTextHighlight" Color="#137333" />
                     <SolidColorBrush x:Key="BrushBorder" Color="#D7E1EB" />
                     <SolidColorBrush x:Key="BrushControlBorder" Color="#9FB3C7" />
@@ -114,6 +129,7 @@
                         Stretch="UniformToFill" />
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
+                    <SolidColorBrush x:Key="BrushDangerPressed" Color="#8F1C13" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#8A4B00" />
                     <SolidColorBrush x:Key="BrushQrInstruction" Color="#282828" />
@@ -127,6 +143,10 @@
                     <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#0B6FB8" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushQrForeground" Color="#1A2E4E" />
+                    <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
+                    <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#F8FAFC" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#172033" />
@@ -159,6 +179,11 @@
                     <SolidColorBrush x:Key="BrushTextSecondary" Color="#CBDAF3" />
                     <SolidColorBrush x:Key="BrushTextBrand" Color="#AA3ADA" />
                     <SolidColorBrush x:Key="BrushTextSelection" Color="#97B0DF" />
+                    <SolidColorBrush x:Key="BrushToolbarSearchIcon" Color="#5AA9E6" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderBackground" Color="#0E192D" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderForeground" Color="#F7F9FF" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderIcon" Color="#4EA1FF" />
+                    <SolidColorBrush x:Key="BrushFaqContentBackground" Color="#12203A" />
                     <SolidColorBrush x:Key="BrushTextHighlight" Color="#87CE3E" />
                     <SolidColorBrush x:Key="BrushBorder" Color="#1D3366" />
                     <SolidColorBrush x:Key="BrushControlBorder" Color="#2F5E9E" />
@@ -181,6 +206,7 @@
                         Stretch="UniformToFill" />
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#59071C33" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#EF5350" />
+                    <SolidColorBrush x:Key="BrushDangerPressed" Color="#D84340" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFD166" />
                     <SolidColorBrush x:Key="BrushQrInstruction" Color="#F4CA16" />
@@ -194,6 +220,10 @@
                     <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="Transparent" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#9899FF" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushQrForeground" Color="#1A2E4E" />
+                    <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
+                    <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#192B52" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#7D7FF4" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#FFFFFF" />
@@ -226,6 +256,11 @@
                     <SolidColorBrush x:Key="BrushTextSecondary" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushTextBrand" Color="#FFFF00" />
                     <SolidColorBrush x:Key="BrushTextSelection" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushToolbarSearchIcon" Color="#00FFFF" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderBackground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderForeground" Color="#FFFF00" />
+                    <SolidColorBrush x:Key="BrushFaqHeaderIcon" Color="#00FFFF" />
+                    <SolidColorBrush x:Key="BrushFaqContentBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTextHighlight" Color="#00FF00" />
                     <SolidColorBrush x:Key="BrushBorder" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushControlBorder" Color="#FFFFFF" />
@@ -244,6 +279,7 @@
                     <SolidColorBrush x:Key="BrushBiometricLockScreenArtwork" Color="#000000" />
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="Transparent" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#FF8080" />
+                    <SolidColorBrush x:Key="BrushDangerPressed" Color="#FF8080" />
                     <SolidColorBrush x:Key="BrushOnDanger" Color="#000000" />
                     <SolidColorBrush x:Key="BrushWarning" Color="#FFFF00" />
                     <SolidColorBrush x:Key="BrushQrInstruction" Color="#FFFF00" />
@@ -257,6 +293,10 @@
                     <SolidColorBrush x:Key="BrushFavoriteButtonFocusBorder" Color="#00FFFF" />
                     <SolidColorBrush x:Key="BrushFocus" Color="#00FFFF" />
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushQrForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushOverlayLight" Color="#CC000000" />
+                    <SolidColorBrush x:Key="BrushOverlayStrong" Color="#EE000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#FFFFFF" />
@@ -272,8 +312,6 @@
                     <BoxShadows x:Key="ElevationToast">0 0 0 0 #00000000</BoxShadows>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
-
-            <SolidColorBrush x:Key="BrushProgressIndicator" Color="#0078D4" />
 
             <x:Double x:Key="Space1">4</x:Double>
             <x:Double x:Key="Space2">8</x:Double>
@@ -488,7 +526,7 @@
         <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
     <Style Selector="Button.titlebar-close:pressed">
-        <Setter Property="Background" Value="#CCB42318" />
+        <Setter Property="Background" Value="{DynamicResource BrushDangerPressed}" />
         <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
     <Style Selector="Button.row-code">
@@ -745,7 +783,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
     </Style>
     <Style Selector="ProgressBar">
-        <Setter Property="Foreground" Value="{StaticResource BrushProgressIndicator}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushAccent}" />
     </Style>
     <Style Selector="ProgressBar.account-countdown">
         <Setter Property="Background" Value="{DynamicResource BrushCountdownTrack}" />
@@ -958,14 +996,16 @@
                             VerticalAlignment="Center"
                             FontSize="13"
                             FontWeight="Bold"
-                            Foreground="White"
+                            Foreground="{DynamicResource BrushBrandTileForeground}"
                             Text="{TemplateBinding Initials}" />
                         <Viewbox Stretch="Uniform">
                             <Path
                                 Width="24"
                                 Height="24"
                                 Data="{TemplateBinding IconData}"
-                                Fill="White"
+                                Fill="{DynamicResource BrushBrandTileForeground}"
+                                RenderTransform="{TemplateBinding IconTransform}"
+                                RenderTransformOrigin="0%,0%"
                                 Stretch="Uniform" />
                         </Viewbox>
                     </Grid>

@@ -5,6 +5,7 @@
   <uses-permission android:name="android.permission.CAMERA" />
   <application
       android:allowBackup="false"
+      android:enableOnBackInvokedCallback="true"
       android:fullBackupContent="false"
       android:icon="@drawable/app_icon"
       android:label="OTP Harbor"

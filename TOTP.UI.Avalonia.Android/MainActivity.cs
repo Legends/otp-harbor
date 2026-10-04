@@ -3,6 +3,7 @@ using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
+using Android.Window;
 using Avalonia.Android;
 using System.ComponentModel;
 using TOTP.Avalonia.Mobile.Presentation;
@@ -22,6 +23,9 @@ namespace TOTP.Avalonia.Android;
 public class MainActivity : AvaloniaMainActivity
 {
     private MobileShellViewModel? _screenCapturePolicy;
+    private bool _backNavigationInProgress;
+    private BackInvokedCallback? _backInvokedCallback;
+    private bool _isBackInvokedCallbackRegistered;
 
     internal event Action<int, Result, Intent?>? ActivityResultReceived;
     internal bool IsInternalQrScannerActive { get; set; }
@@ -67,10 +71,12 @@ public class MainActivity : AvaloniaMainActivity
         _screenCapturePolicy = viewModel;
         _screenCapturePolicy.PropertyChanged += ScreenCapturePolicyChanged;
         ApplyScreenCapturePolicy();
+        UpdateSystemBackCallback();
     }
 
     internal void DetachScreenCapturePolicy()
     {
+        UnregisterSystemBackCallback();
         if (_screenCapturePolicy is not null)
             _screenCapturePolicy.PropertyChanged -= ScreenCapturePolicyChanged;
         _screenCapturePolicy = null;
@@ -81,6 +87,32 @@ public class MainActivity : AvaloniaMainActivity
         base.OnActivityResult(requestCode, resultCode, data);
         ActivityResultReceived?.Invoke(requestCode, resultCode, data);
     }
+
+#pragma warning disable CA1422 // Android's compatibility callback also receives gesture navigation.
+    public override void OnBackPressed() => _ = HandleBackNavigationAsync();
+
+    private async Task HandleBackNavigationAsync()
+    {
+        if (_backNavigationInProgress) return;
+        _backNavigationInProgress = true;
+        try
+        {
+            if (Application is OtpHarborApplication host
+                && await host.TryHandleBackNavigationAsync())
+            {
+                UpdateSystemBackCallback();
+                return;
+            }
+
+            UnregisterSystemBackCallback();
+            base.OnBackPressed();
+        }
+        finally
+        {
+            _backNavigationInProgress = false;
+        }
+    }
+#pragma warning restore CA1422
 
     private bool IsDeviceUnavailable()
     {
@@ -93,6 +125,40 @@ public class MainActivity : AvaloniaMainActivity
     {
         if (args.PropertyName == nameof(MobileShellViewModel.IsScreenCaptureProtectionRequired))
             ApplyScreenCapturePolicy();
+        if (args.PropertyName == nameof(MobileShellViewModel.CanHandleSystemBack))
+            UpdateSystemBackCallback();
+    }
+
+    private void UpdateSystemBackCallback()
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(33)) return;
+
+        if (_screenCapturePolicy?.CanHandleSystemBack == true)
+        {
+            if (_isBackInvokedCallbackRegistered) return;
+            _backInvokedCallback ??= new BackInvokedCallback(
+                () => _ = HandleBackNavigationAsync());
+            OnBackInvokedDispatcher.RegisterOnBackInvokedCallback(
+                IOnBackInvokedDispatcher.PriorityDefault,
+                _backInvokedCallback);
+            _isBackInvokedCallbackRegistered = true;
+            return;
+        }
+
+        UnregisterSystemBackCallback();
+    }
+
+    private void UnregisterSystemBackCallback()
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(33)
+            || !_isBackInvokedCallbackRegistered
+            || _backInvokedCallback is null)
+        {
+            return;
+        }
+
+        OnBackInvokedDispatcher.UnregisterOnBackInvokedCallback(_backInvokedCallback);
+        _isBackInvokedCallbackRegistered = false;
     }
 
     private void ApplyScreenCapturePolicy()
@@ -108,5 +174,11 @@ public class MainActivity : AvaloniaMainActivity
         else
             window.ClearFlags(WindowManagerFlags.Secure);
 #endif
+    }
+
+    private sealed class BackInvokedCallback(Action invoke)
+        : Java.Lang.Object, IOnBackInvokedCallback
+    {
+        public void OnBackInvoked() => invoke();
     }
 }

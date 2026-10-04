@@ -65,7 +65,7 @@ public sealed class FilenameIndexedIconPackImporter : IIconPackImporter
 
             return Result.Ok(new IconPackImportResult(
                 Id,
-                DisplayName,
+                GetDisplayName(source.FileName),
                 "filename-indexed",
                 BrandIconPackFormat.FilenameIndexed,
                 icons,
@@ -75,9 +75,20 @@ public sealed class FilenameIndexedIconPackImporter : IIconPackImporter
         {
             throw;
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Xml.XmlException)
+        catch (Exception ex) when (ex is IOException
+            or InvalidDataException
+            or System.Xml.XmlException
+            or IconImportArchive.SvgValidationException)
         {
             return Result.Fail("The filename-indexed SVG archive is invalid or unsupported.");
         }
+    }
+
+    private static string GetDisplayName(string? fileName)
+    {
+        var candidate = Path.GetFileNameWithoutExtension(fileName ?? string.Empty).Trim();
+        return IconImportArchive.IsSafeDisplayText(candidate)
+            ? candidate
+            : "Filename-indexed SVG pack";
     }
 }

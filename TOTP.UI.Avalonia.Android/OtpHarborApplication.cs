@@ -79,6 +79,10 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
         _services?.GetService<IMobileLifecycleSink>()?.OnReturnedToForeground();
     }
 
+    internal Task<bool> TryHandleBackNavigationAsync() =>
+        _services?.GetService<MobileShellViewModel>()?.TryHandleBackNavigationAsync()
+        ?? Task.FromResult(false);
+
     public override void OnTerminate()
     {
         (global::Avalonia.Application.Current as MobileApp)?.DisposeAppearance();

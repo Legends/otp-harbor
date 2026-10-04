@@ -55,12 +55,16 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         var sut = CreateSut(temp.Path);
         await using var archive = CreateFilenameIndexedArchive();
 
-        var imported = await sut.ImportAsync(archive, TestContext.Current.CancellationToken);
+        var imported = await sut.ImportAsync(
+            archive,
+            "my-local-icons.zip",
+            TestContext.Current.CancellationToken);
 
         Assert.True(imported.IsSuccess);
         Assert.Equal("filename-indexed", imported.Value.Version);
         Assert.Equal(3, imported.Value.BrandCount);
         Assert.Equal(BrandIconPackFormat.FilenameIndexed, imported.Value.Format);
+        Assert.Equal("my-local-icons", imported.Value.ProviderDisplayName);
         Assert.Equal("microsoft", sut.Resolve("Office 365")?.Id);
         Assert.Equal("github", sut.Resolve("github.com")?.Id);
         Assert.Equal("google", sut.Resolve("Google Workspace")?.Id);
@@ -404,6 +408,7 @@ public sealed class SimpleIconsBrandIconPackServiceTests
 
         Assert.True(imported.IsSuccess);
         Assert.StartsWith("custom_", imported.Value.Id, StringComparison.Ordinal);
+        Assert.Equal("personal-mark.svg", imported.Value.SourceFileName);
         Assert.Equal(imported.Value.Id, reloaded.GetAccountBrandId(accountId));
         Assert.Equal(imported.Value.Id, reloaded.Resolve(null, imported.Value.Id)?.Id);
         Assert.True(reloaded.TryGetIconPathData(imported.Value.Id, out var pathData));
@@ -443,10 +448,62 @@ public sealed class SimpleIconsBrandIconPackServiceTests
 
         Assert.True(imported.IsSuccess);
         Assert.Equal(BrandIconPackFormat.Aegis, imported.Value.Format);
-        Assert.Equal("Aegis", imported.Value.ProviderDisplayName);
+        Assert.Equal("Synthetic Aegis Pack", imported.Value.ProviderDisplayName);
         Assert.Equal("github", reloaded.Resolve("github.com")?.Id);
         Assert.Equal(BrandIconPackFormat.Aegis, reloaded.Status.Format);
-        Assert.Equal("Aegis", reloaded.Status.ProviderDisplayName);
+        Assert.Equal("Synthetic Aegis Pack", reloaded.Status.ProviderDisplayName);
+    }
+
+    [Fact]
+    public async Task ImportAsync_AegisBookingEntryResolvesAliasAndLoadsGeometry()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var archive = new MemoryStream();
+        using (var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            WriteEntry(zip, "pack.json", """
+                {
+                  "uuid":"c553f06f-2a17-46ca-87f5-56af90dd0500",
+                  "name":"Aegis Simple Icons",
+                  "version":264,
+                  "icons":[
+                    {
+                      "name":"Booking.com",
+                      "filename":"SVG/bookingdotcom.svg",
+                      "category":null,
+                      "issuer":["Booking.com"]
+                    }
+                  ]
+                }
+                """);
+            WriteEntry(zip, "svg/bookingdotcom.svg", """
+                <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <title>Booking.com</title>
+                  <circle cx="12" cy="12" r="12" fill="#003A9A"></circle>
+                  <path d="M24 0H0v24h24ZM8.575 6.563h2.658c2.108 0 3.473 1.15 3.473 2.898z" transform="translate(4.8, 4.8) scale(0.6)" fill="white"></path>
+                </svg>
+                """);
+        }
+        archive.Position = 0;
+
+        var imported = await sut.ImportAsync(
+            archive,
+            "aegis-simple-icons-v264.zip",
+            TestContext.Current.CancellationToken);
+        var definition = sut.Resolve("booking.com");
+
+        Assert.True(imported.IsSuccess);
+        Assert.Equal("Aegis Simple Icons", imported.Value.ProviderDisplayName);
+        Assert.Equal("bookingdotcom", definition?.Id);
+        Assert.Equal("#003A9A", definition?.BackgroundColor);
+        Assert.True(sut.TryGetIconPathData("bookingdotcom", out var pathData));
+        Assert.StartsWith("M24 0H0v24h24Z", pathData, StringComparison.Ordinal);
+        Assert.True(sut.TryGetIconTransform("bookingdotcom", out var transform));
+        Assert.Equal(0.6, transform?.M11);
+        Assert.Equal(0.6, transform?.M22);
+        Assert.Equal(4.8, transform?.M31);
+        Assert.Equal(4.8, transform?.M32);
     }
 
     [Fact]

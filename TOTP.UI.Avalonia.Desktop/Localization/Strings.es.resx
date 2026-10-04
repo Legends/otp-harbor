@@ -73,6 +73,12 @@
   <data name="SvgIconFiles" xml:space="preserve"><value>Archivos de iconos SVG</value></data>
   <data name="CustomIconImported" xml:space="preserve"><value>El icono personalizado se aplicó a esta cuenta.</value></data>
   <data name="CustomIconImportFailed" xml:space="preserve"><value>El SVG no es válido o no se pudo almacenar de forma segura.</value></data>
+  <data name="CustomIconImportEmpty" xml:space="preserve"><value>El archivo SVG está vacío.</value></data>
+  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>El SVG no puede superar los 64 KB.</value></data>
+  <data name="CustomIconImportMalformed" xml:space="preserve"><value>El SVG no es XML bien formado.</value></data>
+  <data name="CustomIconImportMissingPath" xml:space="preserve"><value>El SVG debe contener una raíz &lt;svg&gt; y al menos un elemento &lt;path&gt; con datos de trazado.</value></data>
+  <data name="CustomIconImportUnsafe" xml:space="preserve"><value>El SVG contiene un script o una referencia a un recurso externo, lo cual no está permitido.</value></data>
+  <data name="CustomIconImportUnreadable" xml:space="preserve"><value>El SVG no se pudo leer o almacenar de forma segura.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Opciones avanzadas</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Período del código en segundos</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Borrar el período del código</value></data>
@@ -135,7 +141,11 @@
   <data name="ImportConflictHandling" xml:space="preserve"><value>Gestión de conflictos</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Importar cuentas</value></data>
   <data name="ImportOtherFormats" xml:space="preserve"><value>Importar cuentas desde otros formatos</value></data>
-  <data name="OtherFormatsImportHelp" xml:space="preserve"><value>Formatos compatibles: archivos de OTP Harbor sin cifrar en JSON (.json), CSV (.csv) o texto delimitado por barras verticales (.txt); exportaciones JSON de Aegis sin cifrar (.json); copias de 2FAS sin cifrar (.2fas); y archivos de texto (.txt) con un URI TOTP otpauth:// estándar por línea.</value></data>
+  <data name="OtherFormatsImportHelp" xml:space="preserve"><value>Elija un archivo de migración sin cifrar. Formatos compatibles:</value></data>
+  <data name="OtherFormatAegis" xml:space="preserve"><value>1. Exportación JSON de Aegis (.json, sin cifrar)</value></data>
+  <data name="OtherFormatTwoFas" xml:space="preserve"><value>2. Copia de seguridad de 2FAS (.2fas, sin cifrar)</value></data>
+  <data name="OtherFormatOtpAuth" xml:space="preserve"><value>3. Lista de URI TOTP otpauth:// estándar (.txt, un URI por línea)</value></data>
+  <data name="OtherFormatLegacyOtpHarbor" xml:space="preserve"><value>4. JSON, CSV o texto delimitado por barras verticales heredado de OTP Harbor (.json, .csv, .txt; solo importación de compatibilidad—la versión actual exporta copias cifradas)</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exportar cuentas</value></data>
   <data name="EncryptedBackupHelp" xml:space="preserve"><value>Crea una copia portátil de todas las cuentas protegida por contraseña y elige dónde guardarla. Conserva la copia y su contraseña por separado; restáurala con «Restaurar copia cifrada» más abajo.</value></data>
   <data name="BackupAndRecovery" xml:space="preserve"><value>Copia de seguridad y recuperación</value></data>
@@ -182,8 +192,8 @@
   <data name="CameraStartFailed" xml:space="preserve"><value>El escáner de la cámara no pudo iniciarse de forma segura.</value></data>
   <data name="SecuritySettings" xml:space="preserve"><value>Ajustes de seguridad</value></data>
   <data name="Security" xml:space="preserve"><value>Seguridad</value></data>
-  <data name="ImportExport" xml:space="preserve"><value>Importar / Exportar</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>Varios</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Importaciones</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>VARIOS</value></data>
   <data name="Language" xml:space="preserve"><value>Idioma</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Inglés</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Alemán</value></data>
@@ -400,16 +410,41 @@
   <data name="BrandIconPackReset" xml:space="preserve"><value>Se quitaron los iconos de marca importados.</value></data>
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>No se pudieron quitar los iconos de marca importados.</value></data>
   <data name="BrandIconPackNotInstalled" xml:space="preserve"><value>No hay ningún paquete de iconos local instalado.</value></data>
-  <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} iconos locales instalados (versión {1}).</value></data>
-  <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} iconos locales instalados desde un ZIP indexado por nombre de archivo.</value></data>
+  <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} iconos locales instalados ({1} v{2}).</value></data>
+  <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} iconos locales instalados ({1}).</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Quitar iconos importados</value></data>
   <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>¿Quitar el paquete de iconos importado? Los datos de las cuentas no cambiarán, pero las cuentas usarán iconos automáticos o genéricos hasta que se importe otro paquete.</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Importando cuentas…</value></data>
   <data name="ImportingBrandIcons" xml:space="preserve"><value>Importando iconos locales…</value></data>
+  <data name="RemovingBrandIcons" xml:space="preserve"><value>Eliminando iconos locales…</value></data>
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Mostrar el logotipo del emisor</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Mostrar una tesela de marca o de marcador junto a cada cuenta.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Apariencia</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Usar configuración del sistema</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Claro</value></data>
+  <data name="Backups" xml:space="preserve"><value>Copia y restauración</value></data>
+  <data name="IconPacks" xml:space="preserve"><value>Paquetes de iconos</value></data>
+  <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
+  <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>¿Cómo importo paquetes de iconos?</value></data>
+  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Abre Ajustes → Paquetes de iconos → Importar paquete de iconos ZIP local. OTP Harbor admite versiones compatibles de Simple Icons, paquetes compatibles con Aegis basados en SVG y archivos ZIP de SVG indexados por nombre de archivo.</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Obtén paquetes compatibles de forma independiente desde sus proyectos oficiales:</value></data>
+  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — repositorio oficial</value></data>
+  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis — formato de paquetes e información sobre paquetes de la comunidad</value></data>
+  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor importa y almacena localmente los iconos seleccionados. OTP Harbor no aloja, incluye, redistribuye ni avala paquetes de iconos de terceros. Los recursos de terceros siguen sujetos a sus respectivas licencias, derechos de marca y condiciones de uso. Los usuarios son responsables de garantizar que su uso cumpla esas condiciones.</value></data>
+  <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>¿Cómo importo cuentas desde distintos formatos?</value></data>
+  <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Usa una exportación original sin cifrar de la aplicación de origen. Se rechazan las exportaciones cifradas de Aegis y 2FAS. Las siguientes estructuras mínimas muestran los campos obligatorios:</value></data>
+  <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>1. Aegis JSON (.json)</value></data>
+  <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Exporta la bóveda desde Aegis sin cifrado y selecciona el archivo JSON resultante. OTP Harbor lee las entradas TOTP de db.entries. Se rechazan las bóvedas cifradas, las entradas HOTP y los parámetros TOTP no compatibles.</value></data>
+  <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>
+  <data name="FaqImportFormatsTwoFasTitle" xml:space="preserve"><value>2. Copia de 2FAS (.2fas)</value></data>
+  <data name="FaqImportFormatsTwoFasDescription" xml:space="preserve"><value>Crea una copia de seguridad de 2FAS sin cifrar y selecciona el archivo .2fas. OTP Harbor lee las cuentas TOTP de services. Se rechazan las copias protegidas con contraseña o cifradas y los parámetros OTP no compatibles.</value></data>
+  <data name="FaqImportFormatsTwoFasExample" xml:space="preserve"><value>{&#xA;  "schemaVersion": 4,&#xA;  "services": [{&#xA;    "name": "Example",&#xA;    "secret": "JBSWY3DPEHPK3PXP",&#xA;    "otp": {&#xA;      "tokenType": "TOTP",&#xA;      "issuer": "Example",&#xA;      "account": "alice@example.com",&#xA;      "algorithm": "SHA1",&#xA;      "digits": 6,&#xA;      "period": 30&#xA;    }&#xA;  }],&#xA;  "servicesEncrypted": null,&#xA;  "reference": null&#xA;}</value></data>
+  <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>3. Archivo de texto otpauth (.txt)</value></data>
+  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Crea un archivo de texto UTF-8 con una URI otpauth://totp estándar por línea. Se ignoran las líneas vacías y las que comienzan por #. Cada URI debe contener un emisor y un secreto Base32 válido, y usar parámetros TOTP compatibles de seis dígitos con SHA-1.</value></data>
+  <data name="FaqImportFormatsOtpAuthExample" xml:space="preserve"><value>otpauth://totp/Example:alice%40example.com?secret=JBSWY3DPEHPK3PXP&amp;issuer=Example&amp;period=30</value></data>
+  <data name="BackupSection" xml:space="preserve"><value>Copia de seguridad</value></data>
+  <data name="RestoreSection" xml:space="preserve"><value>Restauración</value></data>
+  <data name="ExportBackupAction" xml:space="preserve"><value>Exportar</value></data>
+  <data name="RestoreBackupAction" xml:space="preserve"><value>Restaurar</value></data>
 </root>

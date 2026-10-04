@@ -23,6 +23,45 @@
         <KeyBinding Gesture="Escape" Command="{Binding CloseSettingsCommand}" />
     </Window.KeyBindings>
 
+    <Window.Styles>
+        <Style Selector="Button.settings-action">
+            <Setter Property="Background" Value="{DynamicResource BrushAccent}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+        </Style>
+        <Style Selector="Button.settings-action:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushAccentHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />
+        </Style>
+        <Style Selector="Button.settings-action:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushAccentPressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />
+        </Style>
+        <Style Selector="Expander.faq-section">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="Expander.faq-section /template/ ToggleButton#ExpanderHeader">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushFaqHeaderForeground}" />
+            <Setter Property="Background" Value="{DynamicResource BrushFaqHeaderBackground}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Expander.faq-section /template/ ToggleButton#ExpanderHeader:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushFaqHeaderBackground}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Expander.faq-section /template/ ToggleButton#ExpanderHeader:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushFaqHeaderBackground}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+    </Window.Styles>
+
     <Grid>
         <Grid
             Margin="16"
@@ -43,10 +82,14 @@
                     Content="✕"
                     ToolTip.Tip="{DynamicResource CloseSettings}" />
             </Grid>
-            <TabControl Grid.Row="1" Margin="0,8,0,0" Classes="settings-tabs">
+            <TabControl
+                Grid.Row="1"
+                Margin="0,8,0,0"
+                Classes="settings-tabs"
+                SelectedIndex="{Binding SelectedSettingsTabIndex, Mode=TwoWay}">
                 <TabControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Rows="1" />
+                        <UniformGrid Columns="4" />
                     </ItemsPanelTemplate>
                 </TabControl.ItemsPanel>
                 <TabItem Header="{DynamicResource Security}">
@@ -78,6 +121,7 @@
                                                         IsChecked="{Binding !IsQuickUnlockEnabled, Mode=OneWay}" />
                                                 </StackPanel>
                                                 <Button
+                                                    Classes="settings-action"
                                                     Command="{Binding RefreshCommand}"
                                                     Content="{DynamicResource Retry}"
                                                     IsVisible="{Binding ShowQuickUnlockRetry}" />
@@ -90,6 +134,7 @@
                                                 <shared:RevealableSecretInput AccessibleName="{DynamicResource ConfirmPassword}" PlaceholderText="{DynamicResource ConfirmPassword}" Text="{Binding ConfirmPassword, Mode=TwoWay}" />
                                                 <Button
                                                     x:Name="MasterPasswordChangeButton"
+                                                    Classes="settings-action"
                                                     Command="{Binding ChangePasswordCommand}"
                                                     Content="{DynamicResource ChangeMasterPassword}" />
                                             </StackPanel>
@@ -144,7 +189,7 @@
                         </ScrollViewer>
                     </Grid>
                 </TabItem>
-                <TabItem Header="{DynamicResource ImportExport}">
+                <TabItem Header="{DynamicResource Backups}">
                     <ContentControl
                         x:Name="ImportExportSettingsHost"
                         Content="{Binding NativeFilePicker}">
@@ -169,7 +214,7 @@
                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                         Padding="10">
                                                         <StackPanel Spacing="7">
-                                                            <TextBlock Classes="settings-label" Text="{DynamicResource EncryptedBackup}" />
+                                                            <TextBlock Classes="settings-label" Text="{DynamicResource BackupSection}" />
                                                             <TextBlock
                                                                 Classes="secondary"
                                                                 Text="{DynamicResource EncryptedBackupHelp}"
@@ -180,16 +225,16 @@
                                                                 TextWrapping="Wrap" />
                                                             <Button
                                                                 x:Name="EncryptedBackupExportButton"
-                                                                Classes="primary wide"
+                                                                Classes="primary wide settings-action"
                                                                 Command="{Binding ExportCommand}"
-                                                                Content="{DynamicResource ExportEncryptedBackup}" />
+                                                                Content="{DynamicResource ExportBackupAction}" />
                                                             <CheckBox
                                                                 x:Name="OpenExportAfterCheckBox"
                                                                 Content="{DynamicResource OpenExportAfter}"
                                                                 IsChecked="{Binding DataContext.SettingsPage.OpenExportFileAfterExport, ElementName=SettingsRoot, Mode=TwoWay}" />
                                                             <Button
                                                                 x:Name="OpenLastBackupFolderButton"
-                                                                Classes="secondary wide"
+                                                                Classes="secondary wide settings-action"
                                                                 Command="{Binding OpenLastBackupFolderCommand}"
                                                                 Content="{DynamicResource OpenLastBackupFolder}"
                                                                 IsVisible="{Binding HasLastBackupFolder}" />
@@ -201,7 +246,7 @@
                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                         Padding="10">
                                                         <StackPanel Spacing="7">
-                                                            <TextBlock Classes="settings-label" Text="{DynamicResource RestoreEncryptedBackup}" />
+                                                            <TextBlock Classes="settings-label" Text="{DynamicResource RestoreSection}" />
                                                             <TextBlock
                                                                 Classes="secondary"
                                                                 Text="{DynamicResource RestoreBackupHelp}"
@@ -219,50 +264,11 @@
                                                             </ComboBox>
                                                             <Button
                                                                 x:Name="EncryptedBackupRestoreButton"
-                                                                Classes="wide"
+                                                                Classes="wide settings-action"
                                                                 Command="{Binding RestoreBackupCommand}"
-                                                                Content="{DynamicResource RestoreEncryptedBackup}" />
+                                                                Content="{DynamicResource RestoreBackupAction}" />
                                                         </StackPanel>
                                                     </Border>
-                                                </StackPanel>
-                                            </Border>
-                                            <Border Classes="panel">
-                                                <StackPanel Spacing="8">
-                                                    <TextBlock Classes="section-title" Text="{DynamicResource ImportOtherFormats}" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource OtherFormatsImportHelp}"
-                                                        TextWrapping="Wrap" />
-                                                    <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
-                                                    <ComboBox
-                                                        x:Name="OtherFormatsConflictStrategyComboBox"
-                                                        ItemsSource="{Binding ConflictStrategies}"
-                                                        SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
-                                                                <TextBlock Text="{Binding Label}" />
-                                                            </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                    </ComboBox>
-                                                    <Button
-                                                        x:Name="OtherFormatsImportButton"
-                                                        Classes="wide"
-                                                        Command="{Binding ImportCommand}"
-                                                        Content="{DynamicResource ChooseImportFile}" />
-                                                </StackPanel>
-                                            </Border>
-                                            <Border Classes="panel">
-                                                <StackPanel Spacing="8">
-                                                    <TextBlock Classes="section-title" Text="{DynamicResource ImportGoogleAuthenticator}" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource GoogleAuthenticatorImportHelp}"
-                                                        TextWrapping="Wrap" />
-                                                    <Button
-                                                        x:Name="GoogleAuthenticatorImportButton"
-                                                        Classes="wide"
-                                                        Command="{Binding ImportGoogleQrCommand}"
-                                                        Content="{DynamicResource ChooseGoogleAuthenticatorQrImage}" />
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
@@ -272,18 +278,55 @@
                         </ContentControl.ContentTemplate>
                     </ContentControl>
                 </TabItem>
-                <TabItem Header="{DynamicResource Miscellaneous}">
-                    <ContentControl x:Name="MiscellaneousSettingsHost" Content="{Binding SettingsPage}">
+                <TabItem Header="{DynamicResource ImportExport}">
+                    <ContentControl x:Name="AccountImportSettingsHost" Content="{Binding NativeFilePicker}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="presentation:NativeFilePickerViewModel">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Margin="4,8,4,4" VerticalAlignment="Top" Spacing="12">
+                                        <Border Classes="panel">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Classes="section-title" Text="{DynamicResource ImportOtherFormats}" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatsImportHelp}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatAegis}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatTwoFas}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatOtpAuth}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
+                                                <ComboBox x:Name="OtherFormatsConflictStrategyComboBox" ItemsSource="{Binding ConflictStrategies}" SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
+                                                            <TextBlock Text="{Binding Label}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                                <Button x:Name="OtherFormatsImportButton" Classes="wide settings-action" Command="{Binding ImportCommand}" Content="{DynamicResource ChooseImportFile}" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Classes="panel">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Classes="section-title" Text="{DynamicResource ImportGoogleAuthenticator}" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource GoogleAuthenticatorImportHelp}" TextWrapping="Wrap" />
+                                                <Button x:Name="GoogleAuthenticatorImportButton" Classes="wide settings-action" Command="{Binding ImportGoogleQrCommand}" Content="{DynamicResource ChooseGoogleAuthenticatorQrImage}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+                </TabItem>
+                <TabItem Header="{DynamicResource Appearance}">
+                    <ContentControl x:Name="AppearanceSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:SettingsPageViewModel">
                                 <Grid RowDefinitions="*,Auto">
                                     <ScrollViewer
-                                        x:Name="MiscellaneousSettingsScroll"
+                                        x:Name="AppearanceSettingsScroll"
                                         Grid.Row="0"
                                         HorizontalScrollBarVisibility="Disabled"
                                         VerticalScrollBarVisibility="Auto">
                                         <Border
-                                            x:Name="MiscellaneousSettingsPanel"
+                                            x:Name="AppearanceSettingsPanel"
                                             Margin="4,8,4,4"
                                             VerticalAlignment="Top"
                                             Classes="panel">
@@ -320,43 +363,6 @@
                                                 </ComboBox>
                                                 <TextBlock Classes="secondary" Text="{DynamicResource InterfaceScaleHelp}" TextWrapping="Wrap" />
                                             </StackPanel>
-                                            <Border Margin="0,4,0,0" Classes="panel">
-                                                <StackPanel Spacing="8">
-                                                    <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource BrandIconsHelp}"
-                                                        TextWrapping="Wrap" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource BrandIconsFormatHelp}"
-                                                        TextWrapping="Wrap" />
-                                                    <TextBlock
-                                                        Classes="settings-label"
-                                                        Text="{Binding DataContext.NativeFilePicker.BrandIconPackStatusText, ElementName=SettingsRoot}"
-                                                        TextWrapping="Wrap" />
-                                                    <Button
-                                                        x:Name="BrandIconsImportButton"
-                                                        Classes="wide"
-                                                        Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}"
-                                                        Content="{DynamicResource ImportSimpleIconsPack}" />
-                                                    <Button
-                                                        x:Name="BrandIconsResetButton"
-                                                        Classes="secondary wide"
-                                                        Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
-                                                        Content="{DynamicResource ResetBrandIcons}"
-                                                        IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}" />
-                                                    <CheckBox
-                                                        Content="{DynamicResource ShowIssuerLogo}"
-                                                        IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
-                                                    <TextBlock
-                                                        Classes="secondary"
-                                                        Text="{DynamicResource ShowIssuerLogoHelp}"
-                                                        TextWrapping="Wrap" />
-                                                </StackPanel>
-                                            </Border>
-                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource LoggingLevel}" />
-                                            <ComboBox ItemsSource="{Binding LogLevels}" SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
                                             </StackPanel>
                                         </Border>
                                     </ScrollViewer>
@@ -364,6 +370,168 @@
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
+                </TabItem>
+                <TabItem Header="{DynamicResource IconPacks}">
+                    <ContentControl x:Name="BrandIconSettingsHost" Content="{Binding SettingsPage}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="presentation:SettingsPageViewModel">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                    <Border x:Name="BrandIconsPanel" Margin="4,8,4,4" Classes="panel">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsHelp}" TextWrapping="Wrap" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsFormatHelp}" TextWrapping="Wrap" />
+                                            <TextBlock
+                                                Classes="settings-label"
+                                                Text="{Binding DataContext.NativeFilePicker.BrandIconPackStatusText, ElementName=SettingsRoot}"
+                                                TextWrapping="Wrap" />
+                                            <Button
+                                                x:Name="BrandIconsImportButton"
+                                                Classes="wide settings-action"
+                                                Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}"
+                                                Content="{DynamicResource ImportSimpleIconsPack}" />
+                                            <Button
+                                                x:Name="BrandIconsResetButton"
+                                                Classes="secondary wide settings-action"
+                                                Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
+                                                Content="{DynamicResource ResetBrandIcons}"
+                                                IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}" />
+                                            <CheckBox Content="{DynamicResource ShowIssuerLogo}" IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource ShowIssuerLogoHelp}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </ScrollViewer>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+                </TabItem>
+                <TabItem Header="{DynamicResource Miscellaneous}">
+                    <ContentControl x:Name="MiscSettingsHost" Content="{Binding SettingsPage}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="presentation:SettingsPageViewModel">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                    <Border x:Name="MiscSettingsPanel" Margin="4,8,4,4" VerticalAlignment="Top" Classes="panel">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="settings-label" Text="{DynamicResource LoggingLevel}" />
+                                            <ComboBox
+                                                x:Name="MinimumLoggingLevelPicker"
+                                                ItemsSource="{Binding LogLevels}"
+                                                SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Border>
+                                </ScrollViewer>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+                </TabItem>
+                <TabItem Header="{DynamicResource Faq}">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="4,8,4,4" Spacing="10">
+                                <Border
+                                    x:Name="FaqIconPacksCard"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource BrushFaqHeaderBackground}"
+                                    BoxShadow="{DynamicResource ElevationCard}"
+                                    CornerRadius="8">
+                                    <Expander
+                                        x:Name="FaqIconPacksExpander"
+                                        Classes="faq-section"
+                                        Expanded="FaqSectionExpanded"
+                                        HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,10" MinHeight="38" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <shared:SymbolIcon
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderIcon}"
+                                                    IconSize="22"
+                                                    Kind="Folder" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                    FontWeight="SemiBold"
+                                                    Text="{DynamicResource FaqImportIconPacksQuestion}"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border
+                                            Background="{DynamicResource BrushFaqContentBackground}"
+                                            CornerRadius="0,0,8,8"
+                                            Padding="12">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportIconPacksAnswer}" TextWrapping="Wrap" />
+                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportIconPacksSources}" TextWrapping="Wrap" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
+                                                    Content="{DynamicResource FaqSimpleIconsOfficialLink}"
+                                                    NavigateUri="https://github.com/simple-icons/simple-icons"
+                                                    Padding="0,3" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
+                                                    Content="{DynamicResource FaqAegisIconPackDocsLink}"
+                                                    NavigateUri="https://github.com/beemdevelopment/Aegis/blob/master/docs/iconpacks.md"
+                                                    Padding="0,3" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportIconPacksDisclaimer}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Expander>
+                                </Border>
+                                <Border
+                                    x:Name="FaqImportFormatsCard"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource BrushFaqHeaderBackground}"
+                                    BoxShadow="{DynamicResource ElevationCard}"
+                                    CornerRadius="8">
+                                    <Expander
+                                        x:Name="FaqImportFormatsExpander"
+                                        Classes="faq-section"
+                                        Expanded="FaqSectionExpanded"
+                                        HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,10" MinHeight="38" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <shared:SymbolIcon
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderIcon}"
+                                                    IconSize="22"
+                                                    Kind="QrCode" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                    FontWeight="SemiBold"
+                                                    Text="{DynamicResource FaqImportFormatsQuestion}"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border
+                                            Background="{DynamicResource BrushFaqContentBackground}"
+                                            CornerRadius="0,0,8,8"
+                                            Padding="12">
+                                            <StackPanel Spacing="10">
+                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsIntro}" TextWrapping="Wrap" />
+                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsAegisTitle}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsAegisDescription}" TextWrapping="Wrap" />
+                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                    <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsAegisExample}" TextWrapping="Wrap" />
+                                                </Border>
+                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsTwoFasTitle}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsTwoFasDescription}" TextWrapping="Wrap" />
+                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                    <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsTwoFasExample}" TextWrapping="Wrap" />
+                                                </Border>
+                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsOtpAuthTitle}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsOtpAuthDescription}" TextWrapping="Wrap" />
+                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                    <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsOtpAuthExample}" TextWrapping="Wrap" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </Expander>
+                                </Border>
+                        </StackPanel>
+                    </ScrollViewer>
                 </TabItem>
                 <TabItem Header="{DynamicResource About}">
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
@@ -375,7 +543,7 @@
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource About}" />
                                                 <TextBlock Text="{Binding VersionText}" />
-                                                <Button Command="{Binding OpenLogFolderCommand}" Content="{DynamicResource OpenLogFolder}" />
+                                                <Button Classes="settings-action" Command="{Binding OpenLogFolderCommand}" Content="{DynamicResource OpenLogFolder}" />
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -393,18 +561,22 @@
                                                     Maximum="100"
                                                     Value="{Binding ProgressPercentage}" />
                                                 <Button
+                                                    Classes="settings-action"
                                                     Command="{Binding CheckCommand}"
                                                     Content="{DynamicResource VerifyAppcast}"
                                                     IsVisible="{Binding ShowCheckAction}" />
                                                 <Button
+                                                    Classes="settings-action"
                                                     Command="{Binding DownloadCommand}"
                                                     Content="{DynamicResource DownloadUpdate}"
                                                     IsVisible="{Binding ShowDownloadAction}" />
                                                 <Button
+                                                    Classes="settings-action"
                                                     Command="{Binding InstallCommand}"
                                                     Content="{DynamicResource InstallUpdate}"
                                                     IsVisible="{Binding ShowInstallAction}" />
                                                 <Button
+                                                    Classes="settings-action"
                                                     Command="{Binding CancelCommand}"
                                                     Content="{DynamicResource Cancel}"
                                                     IsVisible="{Binding ShowCancelAction}" />
@@ -420,7 +592,7 @@
                                         <Border Classes="panel">
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource SupportDiagnostics}" />
-                                                <Button Command="{Binding RefreshCommand}" Content="{DynamicResource RefreshSupportInformation}" />
+                                                <Button Classes="settings-action" Command="{Binding RefreshCommand}" Content="{DynamicResource RefreshSupportInformation}" />
                                                 <TextBox AcceptsReturn="True" IsReadOnly="True" MinHeight="100" Text="{Binding SupportInformation}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>
@@ -445,7 +617,7 @@
         <Border
             x:Name="SettingsImportProgressOverlay"
             ZIndex="100"
-            Background="#66000000"
+            Background="{DynamicResource BrushOverlayLight}"
             IsVisible="{Binding NativeFilePicker.IsImportProgressVisible}">
             <Border
                 Width="300"

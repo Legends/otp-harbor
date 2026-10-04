@@ -17,10 +17,10 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class NativeFilePickerViewModelTests
 {
     [Theory]
-    [InlineData("en", "42 local icons installed (version 13.4.0).")]
-    [InlineData("de", "42 lokale Symbole installiert (Version 13.4.0).")]
-    [InlineData("fr", "42 icônes locales installées (version 13.4.0).")]
-    [InlineData("es", "42 iconos locales instalados (versión 13.4.0).")]
+    [InlineData("en", "42 local icons installed (Simple Icons v13.4.0).")]
+    [InlineData("de", "42 lokale Symbole installiert (Simple Icons v13.4.0).")]
+    [InlineData("fr", "42 icônes locales installées (Simple Icons v13.4.0).")]
+    [InlineData("es", "42 iconos locales instalados (Simple Icons v13.4.0).")]
     public void BrandIconPackStatusText_DescribesInstalledPackInActiveLocale(
         string cultureName,
         string expected)
@@ -47,7 +47,7 @@ public sealed class NativeFilePickerViewModelTests
             .ReturnsAsync(new TestStorageFile("local-icons.zip", content: [1, 2, 3]));
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.Setup(value => value.ImportAsync(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                It.IsAny<Stream>(), "local-icons.zip", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new BrandIconPackImportResult(
                 "filename-indexed",
                 3,
@@ -66,7 +66,7 @@ public sealed class NativeFilePickerViewModelTests
             "3 lokale Markensymbole aus dem nach Dateinamen indizierten ZIP wurden importiert.",
             sut.Message);
         brandIcons.Verify(value => value.ImportAsync(
-            It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<Stream>(), "local-icons.zip", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class NativeFilePickerViewModelTests
             .ReturnsAsync(new TestStorageFile("aegis-icons.zip", content: [1, 2, 3]));
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.Setup(value => value.ImportAsync(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                It.IsAny<Stream>(), "aegis-icons.zip", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new BrandIconPackImportResult(
                 "20261002",
                 450,
@@ -109,7 +109,7 @@ public sealed class NativeFilePickerViewModelTests
             TaskCreationOptions.RunContinuationsAsynchronously);
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.Setup(value => value.ImportAsync(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                It.IsAny<Stream>(), "large-icons.zip", It.IsAny<CancellationToken>()))
             .Returns(completion.Task);
         using var sut = Create(
             picker.Object,
@@ -162,6 +162,42 @@ public sealed class NativeFilePickerViewModelTests
 
         brandIcons.Verify(value => value.ResetAsync(It.IsAny<CancellationToken>()), Times.Never);
         Assert.Empty(sut.Message);
+    }
+
+    [Fact]
+    public async Task ResetBrandIconsAsync_WhenRemovalRunsLong_ShowsDelayedProgressUntilCompletion()
+    {
+        var completion = new TaskCompletionSource<Result>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.ResetAsync(It.IsAny<CancellationToken>()))
+            .Returns(completion.Task);
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        using var sut = Create(
+            Mock.Of<IAvaloniaFilePicker>(),
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            dialogs.Object,
+            brandIconPackService: brandIcons.Object,
+            localization: Localization("en"));
+
+        var resetTask = sut.ResetBrandIconsAsync();
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(1650),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(sut.IsImportProgressVisible);
+        Assert.Equal("Removing local icons…", sut.ImportProgressText);
+
+        completion.SetResult(Result.Ok());
+        await resetTask;
+
+        Assert.False(sut.IsImportProgressVisible);
+        Assert.Empty(sut.ImportProgressText);
     }
 
     [Theory]

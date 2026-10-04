@@ -29,6 +29,10 @@ public static class AvaloniaStringKeys
     public const string EncryptedBackup = nameof(EncryptedBackup);
     public const string EncryptedBackupHelp = nameof(EncryptedBackupHelp);
     public const string BackupAndRecovery = nameof(BackupAndRecovery);
+    public const string BackupSection = nameof(BackupSection);
+    public const string RestoreSection = nameof(RestoreSection);
+    public const string ExportBackupAction = nameof(ExportBackupAction);
+    public const string RestoreBackupAction = nameof(RestoreBackupAction);
     public const string BackupSecuritySummary = nameof(BackupSecuritySummary);
     public const string BackupDestinationBeforeExport = nameof(BackupDestinationBeforeExport);
     public const string LastBackupLocation = nameof(LastBackupLocation);
@@ -70,6 +74,7 @@ public static class AvaloniaStringKeys
     public const string ResetBrandIconsConfirmation = nameof(ResetBrandIconsConfirmation);
     public const string ImportingAccounts = nameof(ImportingAccounts);
     public const string ImportingBrandIcons = nameof(ImportingBrandIcons);
+    public const string RemovingBrandIcons = nameof(RemovingBrandIcons);
     public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
     public const string ShowIssuerLogoHelp = nameof(ShowIssuerLogoHelp);
     public const string OpenQrImage = nameof(OpenQrImage);
@@ -97,6 +102,26 @@ public static class AvaloniaStringKeys
     public const string SecuritySettings = nameof(SecuritySettings);
     public const string Security = nameof(Security);
     public const string ImportExport = nameof(ImportExport);
+    public const string Backups = nameof(Backups);
+    public const string IconPacks = nameof(IconPacks);
+    public const string Faq = nameof(Faq);
+    public const string FaqImportIconPacksQuestion = nameof(FaqImportIconPacksQuestion);
+    public const string FaqImportIconPacksAnswer = nameof(FaqImportIconPacksAnswer);
+    public const string FaqImportIconPacksSources = nameof(FaqImportIconPacksSources);
+    public const string FaqSimpleIconsOfficialLink = nameof(FaqSimpleIconsOfficialLink);
+    public const string FaqAegisIconPackDocsLink = nameof(FaqAegisIconPackDocsLink);
+    public const string FaqImportIconPacksDisclaimer = nameof(FaqImportIconPacksDisclaimer);
+    public const string FaqImportFormatsQuestion = nameof(FaqImportFormatsQuestion);
+    public const string FaqImportFormatsIntro = nameof(FaqImportFormatsIntro);
+    public const string FaqImportFormatsAegisTitle = nameof(FaqImportFormatsAegisTitle);
+    public const string FaqImportFormatsAegisDescription = nameof(FaqImportFormatsAegisDescription);
+    public const string FaqImportFormatsAegisExample = nameof(FaqImportFormatsAegisExample);
+    public const string FaqImportFormatsTwoFasTitle = nameof(FaqImportFormatsTwoFasTitle);
+    public const string FaqImportFormatsTwoFasDescription = nameof(FaqImportFormatsTwoFasDescription);
+    public const string FaqImportFormatsTwoFasExample = nameof(FaqImportFormatsTwoFasExample);
+    public const string FaqImportFormatsOtpAuthTitle = nameof(FaqImportFormatsOtpAuthTitle);
+    public const string FaqImportFormatsOtpAuthDescription = nameof(FaqImportFormatsOtpAuthDescription);
+    public const string FaqImportFormatsOtpAuthExample = nameof(FaqImportFormatsOtpAuthExample);
     public const string Miscellaneous = nameof(Miscellaneous);
     public const string Language = nameof(Language);
     public const string Appearance = nameof(Appearance);
@@ -246,6 +271,16 @@ public static class AvaloniaStringKeys
     public const string SvgIconFiles = nameof(SvgIconFiles);
     public const string CustomIconImported = nameof(CustomIconImported);
     public const string CustomIconImportFailed = nameof(CustomIconImportFailed);
+    public const string CustomIconImportEmpty = nameof(CustomIconImportEmpty);
+    public const string CustomIconImportTooLarge = nameof(CustomIconImportTooLarge);
+    public const string CustomIconImportMalformed = nameof(CustomIconImportMalformed);
+    public const string CustomIconImportMissingPath = nameof(CustomIconImportMissingPath);
+    public const string CustomIconImportUnsafe = nameof(CustomIconImportUnsafe);
+    public const string CustomIconImportUnreadable = nameof(CustomIconImportUnreadable);
+    public const string OtherFormatAegis = nameof(OtherFormatAegis);
+    public const string OtherFormatTwoFas = nameof(OtherFormatTwoFas);
+    public const string OtherFormatOtpAuth = nameof(OtherFormatOtpAuth);
+    public const string OtherFormatLegacyOtpHarbor = nameof(OtherFormatLegacyOtpHarbor);
     public const string AdvancedOptions = nameof(AdvancedOptions);
     public const string TotpPeriod = nameof(TotpPeriod);
     public const string ClearPeriod = nameof(ClearPeriod);
@@ -418,7 +453,8 @@ public static class AvaloniaStringKeys
         StartupCancelled, ClosingSafely, Retry, MasterPassword, MasterPasswordHelp,
         Unlock, Lock, LockShortcut, Accounts, Tools, Settings, ChooseImportFile, ExportEncryptedBackup,
         ImportConflictHandling, ImportAccounts, ImportOtherFormats, OtherFormatsImportHelp,
-        EncryptedBackup, EncryptedBackupHelp, BackupAndRecovery, BackupSecuritySummary,
+        EncryptedBackup, EncryptedBackupHelp, BackupAndRecovery, BackupSection, RestoreSection,
+        ExportBackupAction, RestoreBackupAction, BackupSecuritySummary,
         BackupDestinationBeforeExport, LastBackupLocation, ProviderManagedBackupLocation,
         RestoreBackupHelp, RestoreEncryptedBackup, RestoreBackup, OpenLastBackupFolder,
         BackupFolderOpenFailed, NoBackupFileSelected,
@@ -431,7 +467,7 @@ public static class AvaloniaStringKeys
         FilenameIndexedBrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
         BrandIconPackNotInstalled, BrandIconPackStatus, FilenameIndexedBrandIconPackStatus, ResetBrandIcons,
-        ResetBrandIconsConfirmation, ImportingAccounts, ImportingBrandIcons,
+        ResetBrandIconsConfirmation, ImportingAccounts, ImportingBrandIcons, RemovingBrandIcons,
         ShowIssuerLogo, ShowIssuerLogoHelp,
         OpenQrImage, SelectQrImage, QrImageFiles,
         QrImageReading, QrImageNoCode, QrImageInvalid, QrImageTooLarge,
@@ -440,7 +476,13 @@ public static class AvaloniaStringKeys
         CancelScan, CameraReconnectHint, CameraReadyToStart, CameraSearching,
         CameraInitializing, CameraActive, CameraScanCancelled,
         CameraScanFailedSafely, CameraRuntimeUnavailable, CameraNotFound, CameraStartFailed,
-        SecuritySettings, Security, ImportExport, Miscellaneous,
+        SecuritySettings, Security, Backups, ImportExport, IconPacks, Faq,
+        FaqImportIconPacksQuestion, FaqImportIconPacksAnswer, FaqImportIconPacksSources,
+        FaqSimpleIconsOfficialLink, FaqAegisIconPackDocsLink, FaqImportIconPacksDisclaimer,
+        FaqImportFormatsQuestion, FaqImportFormatsIntro,
+        FaqImportFormatsAegisTitle, FaqImportFormatsAegisDescription, FaqImportFormatsAegisExample,
+        FaqImportFormatsTwoFasTitle, FaqImportFormatsTwoFasDescription, FaqImportFormatsTwoFasExample,
+        FaqImportFormatsOtpAuthTitle, FaqImportFormatsOtpAuthDescription, FaqImportFormatsOtpAuthExample, Miscellaneous,
         Language, EnglishLanguage, GermanLanguage, FrenchLanguage, SpanishLanguage,
         Appearance, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
         IdleTimeoutHelp, AutoLockDisabled, AutoLockSecondsFormat, AutoLockMinutesFormat,
@@ -479,7 +521,10 @@ public static class AvaloniaStringKeys
         DeleteAccount, DeleteAccountShortcut, DeleteAccountPrompt, Delete, Issuer,
         AccountName, Secret, BrandIcon, AutomaticBrandIcon, BrandIconHelp,
         CustomAccountIcon, ChooseCustomSvgIcon, SvgIconFiles, CustomIconImported,
-        CustomIconImportFailed,
+        CustomIconImportFailed, CustomIconImportEmpty, CustomIconImportTooLarge,
+        CustomIconImportMalformed, CustomIconImportMissingPath, CustomIconImportUnsafe,
+        CustomIconImportUnreadable, OtherFormatAegis, OtherFormatTwoFas, OtherFormatOtpAuth,
+        OtherFormatLegacyOtpHarbor,
         AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,
         AccountSecretInvalid, AccountDuplicate, AccountSaveFailed, AccountSaved,

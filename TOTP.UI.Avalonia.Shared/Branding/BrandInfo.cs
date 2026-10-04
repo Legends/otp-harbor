@@ -8,7 +8,8 @@ public sealed record BrandInfo(
     string Initials,
     string BackgroundColor,
     IBrush BackgroundBrush,
-    string? IconData)
+    string? IconData,
+    Transform? IconTransform = null)
 {
     public bool HasIcon => IconData is not null;
 

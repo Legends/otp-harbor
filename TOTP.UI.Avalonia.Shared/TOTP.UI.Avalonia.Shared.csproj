@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\Biometric\*.png" />
+    <AvaloniaResource Include="Assets\flags\*.png" />
   </ItemGroup>
 
 </Project>

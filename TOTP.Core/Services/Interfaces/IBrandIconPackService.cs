@@ -26,8 +26,19 @@ public interface IBrandIconPackService
 
     bool TryGetIconPathData(string brandId, out string pathData);
 
+    bool TryGetIconTransform(string brandId, out BrandIconTransform? transform)
+    {
+        transform = null;
+        return false;
+    }
+
     Task<Result<BrandIconPackImportResult>> ImportAsync(
         Stream zipStream,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BrandIconPackImportResult>> ImportAsync(
+        Stream zipStream,
+        string? fileName,
         CancellationToken cancellationToken = default);
 
     Task<Result<BrandDefinition>> ImportCustomIconAsync(

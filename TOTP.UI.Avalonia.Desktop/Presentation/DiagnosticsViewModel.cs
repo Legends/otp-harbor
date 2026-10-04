@@ -95,9 +95,6 @@ public sealed class DiagnosticsViewModel : INotifyPropertyChanged
             }
 
             SupportInformation = output.ToString().TrimEnd();
-            Notification.ShowForSeverity(
-                _localization.GetString(AvaloniaStringKeys.DiagnosticRefreshSuccess),
-                NotificationSeverity.Success);
         }
         catch (Exception)
         {

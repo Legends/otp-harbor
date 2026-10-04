@@ -4,6 +4,7 @@ public enum SymbolIconKind
 {
     Add,
     ArrowLeft,
+    ArrowUp,
     Camera,
     Close,
     Conceal,

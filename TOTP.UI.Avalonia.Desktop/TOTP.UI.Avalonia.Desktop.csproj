@@ -51,10 +51,6 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\Icons\app.ico" />
-    <AvaloniaResource Include="Assets\flags\en.png" />
-    <AvaloniaResource Include="Assets\flags\de.png" />
-    <AvaloniaResource Include="Assets\flags\fr.png" />
-    <AvaloniaResource Include="Assets\flags\es.png" />
     <Content Include="Assets\Icons\app-128.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\Icons\app-1024.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

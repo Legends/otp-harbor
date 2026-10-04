@@ -5,6 +5,7 @@ using Avalonia.Media;
 using TOTP.Avalonia.Desktop.Platform;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
+using TOTP.Core.Icons;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
@@ -679,14 +680,34 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             if (!SetField(ref _editorBrandIconOptions, value)) return;
             OnPropertyChanged(nameof(HasBrandIconChoices));
+            OnPropertyChanged(nameof(EditorBrandIconPickerWidth));
         }
     }
 
     public BrandIconOption? SelectedEditorBrandIconOption
     {
         get => _selectedEditorBrandIconOption;
-        set => SetField(ref _selectedEditorBrandIconOption, value);
+        set
+        {
+            if (!SetField(ref _selectedEditorBrandIconOption, value)) return;
+            OnPropertyChanged(nameof(SelectedEditorBrandIconFileName));
+            OnPropertyChanged(nameof(HasSelectedEditorBrandIconFileName));
+        }
     }
+
+    public string SelectedEditorBrandIconFileName =>
+        SelectedEditorBrandIconOption?.FileName ?? string.Empty;
+
+    public bool HasSelectedEditorBrandIconFileName =>
+        !string.IsNullOrWhiteSpace(SelectedEditorBrandIconFileName);
+
+    public double EditorBrandIconPickerWidth =>
+        Math.Clamp(
+            (EditorBrandIconOptions.Count == 0
+                ? 0
+                : EditorBrandIconOptions.Max(option => option.DisplayName.Length)) * 9d + 64d,
+            220d,
+            420d);
 
     public bool HasBrandIconChoices => EditorBrandIconOptions.Count > 1;
 
@@ -717,8 +738,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 file.Name);
             if (imported.IsFailed)
             {
-                EditorMessage = _localization.GetString(
-                    AvaloniaStringKeys.CustomIconImportFailed);
+                EditorMessage = _localization.GetString(CustomIconFailureKey(imported.Errors));
                 return;
             }
 
@@ -735,6 +755,21 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             IsBusy = false;
         }
+    }
+
+    private static string CustomIconFailureKey(IReadOnlyCollection<FluentResults.IError> errors)
+    {
+        var reason = errors.OfType<CustomIconImportError>().FirstOrDefault()?.Reason;
+        return reason switch
+        {
+            CustomIconImportFailureReason.Empty => AvaloniaStringKeys.CustomIconImportEmpty,
+            CustomIconImportFailureReason.TooLarge => AvaloniaStringKeys.CustomIconImportTooLarge,
+            CustomIconImportFailureReason.MalformedXml => AvaloniaStringKeys.CustomIconImportMalformed,
+            CustomIconImportFailureReason.MissingVectorPath => AvaloniaStringKeys.CustomIconImportMissingPath,
+            CustomIconImportFailureReason.UnsafeContent => AvaloniaStringKeys.CustomIconImportUnsafe,
+            CustomIconImportFailureReason.Unreadable => AvaloniaStringKeys.CustomIconImportUnreadable,
+            _ => AvaloniaStringKeys.CustomIconImportFailed
+        };
     }
 
 #if DEBUG
@@ -2212,7 +2247,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorBrandIconOptions =
         [
             automatic,
-            .. available.Select(brand => new BrandIconOption(brand.Id, brand.DisplayName)),
+            .. available.Select(brand => new BrandIconOption(
+                brand.Id,
+                brand.DisplayName,
+                brand.SourceFileName)),
             .. (selectedCustom is not null
                 && available.All(brand => !string.Equals(
                     brand.Id,
@@ -2220,7 +2258,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                     StringComparison.OrdinalIgnoreCase))
                     ? [new BrandIconOption(
                         selectedCustom.Id,
-                        _localization.GetString(AvaloniaStringKeys.CustomAccountIcon))]
+                        _localization.GetString(AvaloniaStringKeys.CustomAccountIcon),
+                        selectedCustom.SourceFileName
+                            ?? selectedCustom.DisplayName + ".svg")]
                     : Array.Empty<BrandIconOption>())
         ];
         SelectBrandIconOption(selectedBrandId);

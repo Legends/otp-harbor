@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Moq;
 using Avalonia.Controls;
 using Avalonia.Media;
+using TOTP.Core.Icons;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Security.Interfaces;
@@ -1635,7 +1636,12 @@ public sealed class AccountListViewModelTests
         brandIcons.SetupGet(value => value.AvailableBrands).Returns(
         [
             new BrandDefinition("amazon", "Amazon", "#FF9900", "amazon.svg"),
-            new BrandDefinition("github", "GitHub", "#181717", "github.svg")
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg"),
+            new BrandDefinition(
+                "long-brand",
+                "A deliberately longer local brand",
+                "#334155",
+                "long-brand.svg")
         ]);
         brandIcons.Setup(value => value.GetAccountBrandId(account.ID)).Returns("amazon");
         brandIcons.Setup(value => value.SetAccountBrandIdAsync(
@@ -1649,9 +1655,12 @@ public sealed class AccountListViewModelTests
 
         Assert.True(sut.HasBrandIconChoices);
         Assert.Equal("amazon", sut.SelectedEditorBrandIconOption?.Id);
+        var pickerWidth = sut.EditorBrandIconPickerWidth;
+        Assert.InRange(pickerWidth, 221, 419);
         sut.SelectedEditorBrandIconOption = Assert.Single(
             sut.EditorBrandIconOptions,
             option => option.Id == "github");
+        Assert.Equal(pickerWidth, sut.EditorBrandIconPickerWidth);
         await sut.SaveAccountAsync();
 
         brandIcons.Verify(value => value.SetAccountBrandIdAsync(
@@ -1669,7 +1678,8 @@ public sealed class AccountListViewModelTests
             "custom_0123456789abcdef01234567",
             "personal-mark",
             "#334155",
-            "custom_0123456789abcdef01234567.svg");
+            "custom_0123456789abcdef01234567.svg",
+            "personal-mark.svg");
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
         brandIcons.Setup(value => value.ImportCustomIconAsync(
@@ -1697,6 +1707,8 @@ public sealed class AccountListViewModelTests
         await sut.ImportCustomIconAsync();
 
         Assert.Equal(custom.Id, sut.SelectedEditorBrandIconOption?.Id);
+        Assert.Equal("personal-mark.svg", sut.SelectedEditorBrandIconFileName);
+        Assert.True(sut.HasSelectedEditorBrandIconFileName);
         Assert.Contains(
             sut.EditorBrandIconOptions,
             option => option.Id == custom.Id && option.DisplayName == "Custom SVG");
@@ -1705,6 +1717,44 @@ public sealed class AccountListViewModelTests
             It.IsAny<Stream>(),
             "personal-mark.svg",
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EditAccount_WhenCustomSvgContainsExternalContent_ExplainsValidationFailure()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
+        brandIcons.Setup(value => value.ImportCustomIconAsync(
+                account.ID,
+                It.IsAny<Stream>(),
+                "unsafe.svg",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail<BrandDefinition>(
+                new CustomIconImportError(CustomIconImportFailureReason.UnsafeContent)));
+        var selectedFile = new Mock<INativeStorageFile>();
+        selectedFile.SetupGet(value => value.Name).Returns("unsafe.svg");
+        selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MemoryStream([1, 2, 3]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(selectedFile.Object);
+        using var sut = CreateSut(
+            manager.Object,
+            brandIconPackService: brandIcons.Object,
+            filePicker: picker.Object);
+        await sut.LoadAsync();
+        sut.SelectForKeyboardNavigation(Assert.Single(sut.Accounts));
+        await sut.BeginEditAsync();
+
+        await sut.ImportCustomIconAsync();
+
+        Assert.Equal(
+            "The SVG contains a script or an external resource reference, which is not allowed.",
+            sut.EditorMessage);
     }
 
     [Fact]

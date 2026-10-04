@@ -99,7 +99,7 @@ public sealed class IconPackImporterTests
                   ]
                 }
                 """);
-            WriteEntry(archive, "aegis-icons/icons/GitHub.svg", ValidSvg);
+            WriteEntry(archive, "aegis-icons/ICONS/GitHub.svg", ValidSvg);
             WriteEntry(archive, "aegis-icons/generic/GitHub.svg", ValidSvg);
             WriteEntry(archive, "aegis-icons/icons/raster.png", "not imported");
             WriteEntry(archive, "aegis-icons/LICENSE.md", "Synthetic license");
@@ -111,6 +111,7 @@ public sealed class IconPackImporterTests
             TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
+        Assert.Equal("Synthetic Aegis Pack", result.Value.ProviderDisplayName);
         Assert.Equal("20261002", result.Value.Version);
         Assert.Equal(BrandIconPackFormat.Aegis, result.Value.Format);
         var icon = Assert.Single(result.Value.Icons);
@@ -192,6 +193,9 @@ public sealed class IconPackImporterTests
             new CustomIconSource { Stream = unsafeSvg, FileName = "unsafe.svg" },
             TestContext.Current.CancellationToken);
         Assert.True(rejected.IsFailed);
+        Assert.Equal(
+            CustomIconImportFailureReason.UnsafeContent,
+            Assert.IsType<CustomIconImportError>(Assert.Single(rejected.Errors)).Reason);
     }
 
     private static MemoryStream CreateArchive(Action<ZipArchive> write)

@@ -4,7 +4,16 @@ public sealed record BrandDefinition(
     string Id,
     string DisplayName,
     string BackgroundColor,
-    string IconFileName);
+    string IconFileName,
+    string? SourceFileName = null);
+
+public sealed record BrandIconTransform(
+    double M11,
+    double M12,
+    double M21,
+    double M22,
+    double M31,
+    double M32);
 
 public sealed record BrandIconPackStatus(
     bool IsInstalled,

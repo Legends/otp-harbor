@@ -56,6 +56,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _automaticUpdateCheckStarted;
     private bool _shutdownPrepared;
     private bool _disposed;
+    private int _selectedSettingsTabIndex;
     private ShellResumeState? _resumeState;
 
     public MainWindowViewModel(
@@ -172,6 +173,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public NotificationState Notification { get; }
 
     public NotificationState SettingsNotification { get; }
+
+    public int SelectedSettingsTabIndex
+    {
+        get => _selectedSettingsTabIndex;
+        set
+        {
+            if (!SetField(ref _selectedSettingsTabIndex, value)) return;
+            ClearSettingsNotifications();
+        }
+    }
 
     public string StatusText
     {
@@ -663,6 +674,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void SettingsNotificationShown(object? sender, NotificationShownEventArgs args) =>
         SettingsNotification.ShowTransient(args.Text, args.Severity);
+
+    private void ClearSettingsNotifications()
+    {
+        foreach (var source in _settingsNotificationSources.Distinct())
+            source.Clear();
+        SettingsNotification.Clear();
+    }
 
     public Task ToggleSearchAsync()
     {

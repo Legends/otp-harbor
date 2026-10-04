@@ -19,6 +19,9 @@ public sealed class BrandTile : TemplatedControl
     public static readonly StyledProperty<string?> IconDataProperty =
         AvaloniaProperty.Register<BrandTile, string?>(nameof(IconData));
 
+    public static readonly StyledProperty<Transform?> IconTransformProperty =
+        AvaloniaProperty.Register<BrandTile, Transform?>(nameof(IconTransform));
+
     public static readonly StyledProperty<string> InitialsProperty =
         AvaloniaProperty.Register<BrandTile, string>(nameof(Initials), "?");
 
@@ -32,6 +35,12 @@ public sealed class BrandTile : TemplatedControl
     {
         get => GetValue(IconDataProperty);
         set => SetValue(IconDataProperty, value);
+    }
+
+    public Transform? IconTransform
+    {
+        get => GetValue(IconTransformProperty);
+        set => SetValue(IconTransformProperty, value);
     }
 
     public string Initials

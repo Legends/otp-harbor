@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using Moq;
 using TOTP.Avalonia.Shared.Branding;
 using TOTP.Core.Services.Interfaces;
@@ -45,6 +46,12 @@ public sealed class BrandIconResolverTests
             .Returns(new BrandDefinition("github", "GitHub", "#181717", "github.svg"));
         pack.Setup(value => value.TryGetIconPathData("github", out It.Ref<string>.IsAny))
             .Returns((string _, out string path) => { path = "M0 0h24v24H0z"; return true; });
+        pack.Setup(value => value.TryGetIconTransform("github", out It.Ref<BrandIconTransform?>.IsAny))
+            .Returns((string _, out BrandIconTransform? transform) =>
+            {
+                transform = new BrandIconTransform(0.6, 0, 0, 0.6, 4.8, 4.8);
+                return true;
+            });
         using var sut = new BrandIconResolver(pack.Object);
 
         var first = sut.Resolve("GitHub");
@@ -52,6 +59,7 @@ public sealed class BrandIconResolverTests
 
         Assert.Equal("github", first.Id);
         Assert.True(first.HasIcon);
+        Assert.IsType<MatrixTransform>(first.IconTransform);
         Assert.Same(first, second);
         pack.Verify(value => value.TryGetIconPathData("github", out It.Ref<string>.IsAny), Times.Once);
     }

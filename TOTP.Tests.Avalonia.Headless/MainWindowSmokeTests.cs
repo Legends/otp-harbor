@@ -37,6 +37,34 @@ namespace TOTP.Tests.Avalonia.Headless;
 public sealed class MainWindowSmokeTests
 {
     [AvaloniaFact]
+    public void SettingsFaq_ExpandingOneSectionCollapsesThePreviouslyOpenSection()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var iconPacks = window.FindControl<Expander>("FaqIconPacksExpander");
+            var importFormats = window.FindControl<Expander>("FaqImportFormatsExpander");
+            Assert.NotNull(iconPacks);
+            Assert.NotNull(importFormats);
+
+            iconPacks.IsExpanded = true;
+            iconPacks.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(iconPacks.IsExpanded);
+
+            importFormats.IsExpanded = true;
+            importFormats.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(importFormats.IsExpanded);
+            Assert.False(iconPacks.IsExpanded);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void PeriodClearButton_IsCenteredBeforeSpinnerWithoutOverlap()
     {
         var clear = new Button { Content = "×" };
@@ -1388,6 +1416,34 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void SharedLanguageFlagImage_LoadsEveryMobileLanguageFlag()
+    {
+        var flags = new[] { "en", "de", "fr", "es" }
+            .Select(cultureName => new LanguageFlagImage { CultureName = cultureName })
+            .ToArray();
+        var window = new Window
+        {
+            Content = new StackPanel { Children = { flags[0], flags[1], flags[2], flags[3] } }
+        };
+
+        try
+        {
+            window.Show();
+            Assert.All(flags, flag =>
+            {
+                Assert.NotNull(flag.Source);
+                Assert.True(flag.Source.Size.Width > 0);
+                Assert.True(flag.Source.Size.Height > 0);
+            });
+            Assert.Equal(4, flags.Select(flag => flag.Source).Distinct().Count());
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void DestructiveConfirmationDialog_LeavesMarginsInsideMinimumMainWindowWidth()
     {
         var window = new ConfirmationDialogWindow
@@ -1593,9 +1649,9 @@ public sealed class MainWindowSmokeTests
             Assert.NotEmpty(window.GetVisualDescendants().OfType<ScrollViewer>());
             Assert.Empty(window.GetVisualDescendants().OfType<TabControl>());
             Assert.True(AssetLoader.Exists(new Uri(
-                "avares://TOTP.UI.Avalonia.Desktop/Assets/flags/en.png")));
+                "avares://TOTP.UI.Avalonia.Shared/Assets/flags/en.png")));
             Assert.True(AssetLoader.Exists(new Uri(
-                "avares://TOTP.UI.Avalonia.Desktop/Assets/flags/de.png")));
+                "avares://TOTP.UI.Avalonia.Shared/Assets/flags/de.png")));
             var languageSelector = Assert.Single(
                 window.GetVisualDescendants().OfType<ComboBox>(),
                 combo => combo.Width == 64
@@ -1921,6 +1977,14 @@ public sealed class MainWindowSmokeTests
 
             Assert.True(brandIconPicker.IsVisible);
             Assert.True(brandIconPicker.Bounds.Height > 0);
+            Assert.Contains(brandIconPicker, advancedOptions.GetLogicalDescendants());
+            var customSvgButton = Assert.Single(
+                advancedOptions.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "CustomSvgIconButton");
+            Assert.Same(advancedOptions, customSvgButton
+                .GetLogicalAncestors()
+                .OfType<Expander>()
+                .First());
 
             var accountEditorContent = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<StackPanel>(),
@@ -2107,7 +2171,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void SettingsWindow_IsOwnedWindowWidthWithSingleRowTabs()
+    public void SettingsWindow_IsCompactWithTwoRowsOfTabs()
     {
         var window = new SettingsWindow();
 
@@ -2125,12 +2189,35 @@ public sealed class MainWindowSmokeTests
                 window.GetVisualDescendants().OfType<TabControl>(),
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
             var tabs = settingsTabs.GetVisualDescendants().OfType<TabItem>().ToArray();
-            Assert.Equal(4, tabs.Length);
-            Assert.True(tabs.Sum(tab => tab.MinWidth) <= window.Width - 32);
+            Assert.Equal(8, tabs.Length);
+            Assert.Equal(
+                [
+                    Application.Current!.Resources[AvaloniaStringKeys.Security],
+                    Application.Current.Resources[AvaloniaStringKeys.Backups],
+                    Application.Current.Resources[AvaloniaStringKeys.ImportExport],
+                    Application.Current.Resources[AvaloniaStringKeys.Appearance],
+                    Application.Current.Resources[AvaloniaStringKeys.IconPacks],
+                    Application.Current.Resources[AvaloniaStringKeys.Miscellaneous],
+                    Application.Current.Resources[AvaloniaStringKeys.Faq],
+                    Application.Current.Resources[AvaloniaStringKeys.About]
+                ],
+                tabs.Select(tab => tab.Header));
+            Assert.True(tabs.Take(4).Sum(tab => tab.MinWidth) <= window.Width - 32);
             Assert.All(
                 tabs,
                 tab => Assert.Equal(tabs[0].Bounds.Width, tab.Bounds.Width, precision: 2));
-            for (var index = 1; index < tabs.Length; index++)
+            Assert.Equal(2, tabs.Select(tab => tab.Bounds.Top).Distinct().Count());
+            Assert.All(tabs.Take(4), tab => Assert.Equal(tabs[0].Bounds.Top, tab.Bounds.Top, precision: 2));
+            Assert.All(tabs.Skip(4), tab => Assert.Equal(tabs[4].Bounds.Top, tab.Bounds.Top, precision: 2));
+            Assert.True(tabs[4].Bounds.Top > tabs[0].Bounds.Top);
+            for (var index = 1; index < 4; index++)
+            {
+                Assert.Equal(
+                    tabs[index - 1].Bounds.Right,
+                    tabs[index].Bounds.Left,
+                    precision: 2);
+            }
+            for (var index = 5; index < tabs.Length; index++)
             {
                 Assert.Equal(
                     tabs[index - 1].Bounds.Right,
@@ -2177,10 +2264,62 @@ public sealed class MainWindowSmokeTests
 
             Assert.DoesNotContain("primary", changeButton.Classes);
             Assert.DoesNotContain("danger", changeButton.Classes);
+            Assert.Contains("settings-action", changeButton.Classes);
         }
         finally
         {
             window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_DarkFaqCardsUseConfiguredHeaderBackground()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousTheme = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Dark;
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var settingsTabs = Assert.Single(
+                window.GetVisualDescendants().OfType<TabControl>(),
+                tabControl => tabControl.Classes.Contains("settings-tabs"));
+            settingsTabs.SelectedIndex = 6;
+            window.UpdateLayout();
+
+            var faqCards = window
+                .GetVisualDescendants()
+                .OfType<Border>()
+                .Where(border => border.Name is "FaqIconPacksCard" or "FaqImportFormatsCard")
+                .ToArray();
+            Assert.Equal(2, faqCards.Length);
+            Assert.All(faqCards, card => Assert.Equal(
+                Color.Parse("#0E192D"),
+                Assert.IsType<SolidColorBrush>(card.Background).Color));
+            var renderedHeaders = faqCards
+                .Select(card => Assert.Single(
+                    card.GetVisualDescendants().OfType<ToggleButton>(),
+                    toggle => toggle.Name == "ExpanderHeader"))
+                .ToArray();
+            Assert.All(renderedHeaders, header =>
+            {
+                Assert.Equal(
+                    Color.Parse("#0E192D"),
+                    Assert.IsType<SolidColorBrush>(header.Background).Color);
+                var renderedHeaderSurface = Assert.Single(
+                    header.GetVisualDescendants().OfType<Border>(),
+                    border => border.Name == "ToggleButtonBackground");
+                Assert.Equal(
+                    Color.Parse("#0E192D"),
+                    Assert.IsType<SolidColorBrush>(renderedHeaderSurface.Background).Color);
+            });
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = previousTheme;
         }
     }
 
@@ -2240,7 +2379,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void ImportExportSettings_ProvidesDedicatedBackupRecoveryActions()
+    public void BackupAndImportSettings_AreSeparatedIntoDedicatedTabs()
     {
         var window = new SettingsWindow();
 
@@ -2269,17 +2408,9 @@ public sealed class MainWindowSmokeTests
             var restorePanel = Assert.Single(
                 content.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "EncryptedBackupRestorePanel");
-            var importButtons = new[]
-            {
-                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtherFormatsImportButton"),
-                Assert.Single(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton")
-            };
             var restoreConflictStrategy = Assert.Single(
                 content.GetLogicalDescendants().OfType<ComboBox>(),
                 comboBox => comboBox.Name == "RestoreConflictStrategyComboBox");
-            var otherFormatsConflictStrategy = Assert.Single(
-                content.GetLogicalDescendants().OfType<ComboBox>(),
-                comboBox => comboBox.Name == "OtherFormatsConflictStrategyComboBox");
             Assert.Contains("primary", exportButton.Classes);
             Assert.Contains("wide", exportButton.Classes);
             Assert.Contains("wide", restoreButton.Classes);
@@ -2289,11 +2420,25 @@ public sealed class MainWindowSmokeTests
             Assert.Contains(openExportAfterCheckBox, exportPanel.GetLogicalDescendants());
             Assert.DoesNotContain(openFolderButton, restorePanel.GetLogicalDescendants());
             Assert.NotNull(restoreConflictStrategy);
-            Assert.NotNull(otherFormatsConflictStrategy);
-            Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));
+            Assert.DoesNotContain(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name is "OtherFormatsImportButton" or "GoogleAuthenticatorImportButton");
             Assert.DoesNotContain(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
+
+            var importHost = window.FindControl<ContentControl>("AccountImportSettingsHost");
+            Assert.NotNull(importHost?.ContentTemplate);
+            var importContent = Assert.IsAssignableFrom<Control>(importHost.ContentTemplate!.Build(null));
+            var importButtons = new[]
+            {
+                Assert.Single(importContent.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtherFormatsImportButton"),
+                Assert.Single(importContent.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton")
+            };
+            Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));
+            Assert.Single(
+                importContent.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "OtherFormatsConflictStrategyComboBox");
         }
         finally
         {
@@ -2302,35 +2447,50 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void MiscellaneousAppearance_ContainsOptionalBrandIconManagement()
+    public void AppearanceAndBrandIconSettings_AreSeparatedIntoDedicatedTabs()
     {
         var window = new SettingsWindow();
 
         try
         {
             window.Show();
-            var host = window.FindControl<ContentControl>("MiscellaneousSettingsHost");
+            var host = window.FindControl<ContentControl>("MiscSettingsHost");
             Assert.NotNull(host?.ContentTemplate);
             var content = Assert.IsAssignableFrom<Control>(host.ContentTemplate.Build(null));
             var panel = Assert.Single(
                 content.GetLogicalDescendants().OfType<Border>(),
-                border => border.Name == "MiscellaneousSettingsPanel");
-            var importButton = Assert.Single(
+                border => border.Name == "MiscSettingsPanel");
+            var loggingPicker = Assert.Single(
+                panel.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "MinimumLoggingLevelPicker");
+            Assert.NotNull(loggingPicker);
+            Assert.DoesNotContain(
                 panel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
+
+            var brandIconHost = window.FindControl<ContentControl>("BrandIconSettingsHost");
+            Assert.NotNull(brandIconHost?.ContentTemplate);
+            var brandIconContent = Assert.IsAssignableFrom<Control>(
+                brandIconHost.ContentTemplate!.Build(null));
+            var brandIconsPanel = Assert.Single(
+                brandIconContent.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "BrandIconsPanel");
+            var importButton = Assert.Single(
+                brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "BrandIconsImportButton");
             var resetButton = Assert.Single(
-                panel.GetLogicalDescendants().OfType<Button>(),
+                brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "BrandIconsResetButton");
             Assert.Contains("wide", importButton.Classes);
             Assert.Contains("secondary", resetButton.Classes);
             Assert.Contains("wide", resetButton.Classes);
             Assert.Contains(
-                panel.GetLogicalDescendants().OfType<TextBlock>(),
+                brandIconsPanel.GetLogicalDescendants().OfType<TextBlock>(),
                 textBlock => Equals(
                     textBlock.Text,
                     Application.Current!.Resources[AvaloniaStringKeys.BrandIconsHelp]));
             Assert.Contains(
-                panel.GetLogicalDescendants().OfType<CheckBox>(),
+                brandIconsPanel.GetLogicalDescendants().OfType<CheckBox>(),
                 checkBox => Equals(
                     checkBox.Content,
                     Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo]));
@@ -2361,8 +2521,9 @@ public sealed class MainWindowSmokeTests
             var settingsTabs = Assert.Single(
                 window.GetVisualDescendants().OfType<TabControl>(),
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
+            Assert.Equal(8, settingsTabs.ItemCount);
             NotificationBanner? overlay = null;
-            for (var tabIndex = 0; tabIndex < 4; tabIndex++)
+            for (var tabIndex = 0; tabIndex < settingsTabs.ItemCount; tabIndex++)
             {
                 settingsTabs.SelectedIndex = tabIndex;
                 window.UpdateLayout();

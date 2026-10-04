@@ -32,7 +32,7 @@ public sealed class SharedStylesTests
     }
 
     [Fact]
-    public void ProgressBarsUseStaticWindowsBlueAcrossPlatforms()
+    public void ProgressBarsUseThemeAccentAcrossPlatforms()
     {
         var sourcePath = Path.Combine(
             AppContext.BaseDirectory,
@@ -42,19 +42,6 @@ public sealed class SharedStylesTests
         var document = XDocument.Load(sourcePath);
         XNamespace avalonia = "https://github.com/avaloniaui";
 
-        var progressBrush = document
-            .Descendants(avalonia + "SolidColorBrush")
-            .Single(element =>
-                string.Equals(
-                    element.Attributes().Single(attribute => attribute.Name.LocalName == "Key").Value,
-                    "BrushProgressIndicator",
-                    StringComparison.Ordinal));
-
-        Assert.Equal("#0078D4", progressBrush.Attribute("Color")?.Value);
-        Assert.DoesNotContain(
-            progressBrush.Ancestors(),
-            ancestor => ancestor.Name == avalonia + "ResourceDictionary.ThemeDictionaries");
-
         var progressStyle = document
             .Descendants(avalonia + "Style")
             .Single(element => element.Attribute("Selector")?.Value == "ProgressBar");
@@ -63,8 +50,216 @@ public sealed class SharedStylesTests
             .Single(element => element.Attribute("Property")?.Value == "Foreground");
 
         Assert.Equal(
-            "{StaticResource BrushProgressIndicator}",
+            "{DynamicResource BrushAccent}",
             foregroundSetter.Attribute("Value")?.Value);
+    }
+
+    [Fact]
+    public void EveryBuiltInThemeProvidesTheSemanticPresentationPalette()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        var themeDictionaries = document
+            .Descendants(avalonia + "ResourceDictionary.ThemeDictionaries")
+            .Single()
+            .Elements(avalonia + "ResourceDictionary")
+            .ToArray();
+        var requiredBrushes = new[]
+        {
+            "BrushWindowBackground",
+            "BrushSurface",
+            "BrushTextPrimary",
+            "BrushTextSecondary",
+            "BrushToolbarSearchIcon",
+            "BrushFaqHeaderBackground",
+            "BrushFaqHeaderForeground",
+            "BrushFaqHeaderIcon",
+            "BrushFaqContentBackground",
+            "BrushAccent",
+            "BrushAccentHover",
+            "BrushAccentPressed",
+            "BrushOnAccent",
+            "BrushDanger",
+            "BrushDangerPressed",
+            "BrushOnDanger",
+            "BrushSuccess",
+            "BrushQrBackground",
+            "BrushQrForeground",
+            "BrushBrandTileForeground",
+            "BrushOverlayLight",
+            "BrushOverlayStrong"
+        };
+
+        Assert.Equal(4, themeDictionaries.Length);
+        Assert.All(themeDictionaries, dictionary =>
+        {
+            var brushKeys = dictionary
+                .Elements(avalonia + "SolidColorBrush")
+                .Select(GetResourceKey)
+                .ToHashSet(StringComparer.Ordinal);
+            Assert.All(requiredBrushes, key => Assert.Contains(key, brushKeys));
+        });
+    }
+
+    [Fact]
+    public void AppViewsUseSemanticThemeResourcesInsteadOfLiteralColors()
+    {
+        var fixtureDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia");
+        var colorProperties = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Background",
+            "BorderBrush",
+            "Fill",
+            "Foreground",
+            "Stroke"
+        };
+        var namedColors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Black",
+            "Blue",
+            "Green",
+            "Red",
+            "White",
+            "Yellow"
+        };
+
+        foreach (var fixtureName in new[]
+                 {
+                     "DesktopMainWindow.axaml",
+                     "DesktopSettingsWindow.axaml",
+                     "MobileMainView.axaml"
+                 })
+        {
+            var document = XDocument.Load(Path.Combine(fixtureDirectory, fixtureName));
+            var literalColors = document
+                .Descendants()
+                .Attributes()
+                .Where(attribute => colorProperties.Contains(attribute.Name.LocalName))
+                .Where(attribute => attribute.Value.StartsWith('#') || namedColors.Contains(attribute.Value))
+                .Select(attribute => $"{attribute.Parent?.Name.LocalName}.{attribute.Name.LocalName}={attribute.Value}")
+                .ToArray();
+
+            Assert.Empty(literalColors);
+        }
+    }
+
+    [Fact]
+    public void DesktopSearchIconAndFaqUseThemeableInteractivePresentation()
+    {
+        var fixtureDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia");
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        var mainWindow = XDocument.Load(Path.Combine(fixtureDirectory, "DesktopMainWindow.axaml"));
+        var searchIcon = mainWindow
+            .Descendants()
+            .Single(element => element.Name.LocalName == "SymbolIcon"
+                && element.Attribute("Kind")?.Value == "Search");
+        Assert.Equal(
+            "{DynamicResource BrushToolbarSearchIcon}",
+            searchIcon.Attribute("Foreground")?.Value);
+
+        var settings = XDocument.Load(Path.Combine(fixtureDirectory, "DesktopSettingsWindow.axaml"));
+        var faqTab = settings
+            .Descendants(avalonia + "TabItem")
+            .Single(element => element.Attribute("Header")?.Value == "{DynamicResource Faq}");
+        var faqSections = faqTab.Descendants(avalonia + "Expander").ToArray();
+        Assert.Equal(2, faqSections.Length);
+        Assert.All(
+            faqSections,
+            section => Assert.Equal(
+                "FaqSectionExpanded",
+                section.Attribute("Expanded")?.Value));
+        Assert.Equal(
+            ["{DynamicResource FaqImportIconPacksQuestion}", "{DynamicResource FaqImportFormatsQuestion}"],
+            faqSections.Select(section => section
+                .Descendants(avalonia + "TextBlock")
+                .First()
+                .Attribute("Text")?.Value));
+        Assert.Equal(
+            ["Folder", "QrCode"],
+            faqSections.Select(section => section
+                .Descendants()
+                .Single(element => element.Name.LocalName == "SymbolIcon")
+                .Attribute("Kind")?.Value));
+        Assert.Equal(
+            [
+                "https://github.com/simple-icons/simple-icons",
+                "https://github.com/beemdevelopment/Aegis/blob/master/docs/iconpacks.md"
+            ],
+            faqSections[0]
+                .Descendants(avalonia + "HyperlinkButton")
+                .Select(link => link.Attribute("NavigateUri")?.Value));
+        Assert.Contains(
+            faqSections[1].Descendants(avalonia + "TextBlock"),
+            element => element.Attribute("Text")?.Value
+                == "{DynamicResource FaqImportFormatsAegisDescription}");
+        Assert.All(
+            faqSections,
+            section =>
+            {
+                var card = Assert.IsType<XElement>(section.Parent);
+                Assert.Equal(avalonia + "Border", card.Name);
+                Assert.Equal("Stretch", card.Attribute("HorizontalAlignment")?.Value);
+                Assert.Equal("{DynamicResource BrushFaqHeaderBackground}", card.Attribute("Background")?.Value);
+                Assert.Equal("{DynamicResource ElevationCard}", card.Attribute("BoxShadow")?.Value);
+                Assert.Null(card.Attribute("BorderBrush"));
+                Assert.Equal("Stretch", section.Attribute("HorizontalAlignment")?.Value);
+                var content = section.Elements(avalonia + "Border").Single();
+                Assert.Equal("{DynamicResource BrushFaqContentBackground}", content.Attribute("Background")?.Value);
+                Assert.Null(content.Attribute("BorderBrush"));
+            });
+        Assert.DoesNotContain(
+            faqTab.Descendants(avalonia + "Border"),
+            border => border.Attribute("Classes")?.Value == "panel");
+
+        var styles = XDocument.Load(Path.Combine(fixtureDirectory, "SharedStyles.axaml"));
+        var light = styles
+            .Descendants(avalonia + "ResourceDictionary")
+            .Single(element => GetResourceKeyOrDefault(element) == "Light");
+        var dark = styles
+            .Descendants(avalonia + "ResourceDictionary")
+            .Single(element => GetResourceKeyOrDefault(element) == "Dark");
+        Assert.Equal("#FFFFFF", BrushColor(light, avalonia, "BrushFaqHeaderBackground"));
+        Assert.Equal("#4F6EF7", BrushColor(light, avalonia, "BrushFaqHeaderIcon"));
+        Assert.Equal("#F8FAFC", BrushColor(light, avalonia, "BrushFaqContentBackground"));
+        Assert.Equal("#0E192D", BrushColor(dark, avalonia, "BrushFaqHeaderBackground"));
+        Assert.Equal("#4EA1FF", BrushColor(dark, avalonia, "BrushFaqHeaderIcon"));
+        Assert.Equal("#12203A", BrushColor(dark, avalonia, "BrushFaqContentBackground"));
+    }
+
+    [Fact]
+    public void DesktopMinimumLoggingLevelLivesOnlyInMiscTab()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "DesktopSettingsWindow.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var appearanceTab = document
+            .Descendants(avalonia + "TabItem")
+            .Single(element => element.Attribute("Header")?.Value == "{DynamicResource Appearance}");
+        var miscTab = document
+            .Descendants(avalonia + "TabItem")
+            .Single(element => element.Attribute("Header")?.Value == "{DynamicResource Miscellaneous}");
+
+        Assert.DoesNotContain(
+            appearanceTab.Descendants(avalonia + "ComboBox"),
+            element => element.Attribute(xaml + "Name")?.Value == "MinimumLoggingLevelPicker");
+        Assert.Single(
+            miscTab.Descendants(avalonia + "ComboBox"),
+            element => element.Attribute(xaml + "Name")?.Value == "MinimumLoggingLevelPicker");
     }
 
     [Fact]

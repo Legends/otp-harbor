@@ -7,7 +7,7 @@ Draws the reviewed French, German, and Spanish flag bitmaps with System.Drawing 
 #>
 [CmdletBinding()]
 param(
-    [string]$OutputDirectory = 'TOTP.UI.Avalonia.Desktop/Assets/flags'
+    [string]$OutputDirectory = 'TOTP.UI.Avalonia.Shared/Assets/flags'
 )
 
 Set-StrictMode -Version Latest
@@ -16,7 +16,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $resolvedOutput = (Resolve-Path -LiteralPath (Join-Path $repositoryRoot $OutputDirectory)).Path
 $expectedOutput = (Resolve-Path -LiteralPath (
-    Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Assets/flags')).Path
+    Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Shared/Assets/flags')).Path
 if (-not $resolvedOutput.Equals($expectedOutput, [StringComparison]::OrdinalIgnoreCase)) {
     throw 'Language flags may only be generated in the reviewed desktop flag directory.'
 }

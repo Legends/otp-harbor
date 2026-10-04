@@ -155,12 +155,19 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             if (status?.IsInstalled != true)
                 return Localized(AvaloniaStringKeys.BrandIconPackNotInstalled);
 
+            var providerName = string.IsNullOrWhiteSpace(status.ProviderDisplayName)
+                ? "Simple Icons"
+                : status.ProviderDisplayName;
             return status.Format == BrandIconPackFormat.FilenameIndexed
                 || string.Equals(status.Version, "filename-indexed", StringComparison.OrdinalIgnoreCase)
-                ? Localized(AvaloniaStringKeys.FilenameIndexedBrandIconPackStatus, status.BrandCount)
+                ? Localized(
+                    AvaloniaStringKeys.FilenameIndexedBrandIconPackStatus,
+                    status.BrandCount,
+                    providerName)
                 : Localized(
                     AvaloniaStringKeys.BrandIconPackStatus,
                     status.BrandCount,
+                    providerName,
                     status.Version ?? string.Empty);
         }
     }
@@ -181,7 +188,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
             BeginImportProgress(AvaloniaStringKeys.ImportingBrandIcons);
             await using var stream = await file.OpenReadAsync();
-            var imported = await _brandIconPackService.ImportAsync(stream);
+            var imported = await _brandIconPackService.ImportAsync(stream, file.Name);
             if (imported.IsFailed)
             {
                 SetMessage(
@@ -226,6 +233,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 IsDestructive: true));
             if (!confirmed) return;
 
+            BeginImportProgress(AvaloniaStringKeys.RemovingBrandIcons);
             var result = await _brandIconPackService.ResetAsync();
             SetMessage(
                 result.IsSuccess

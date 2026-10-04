@@ -79,7 +79,9 @@ public sealed class SimpleIconsImporter : IIconPackImporter
                 if (slug is null || !IconImportArchive.IsCanonicalId(slug) || !ids.Add(slug))
                     throw new InvalidDataException("Simple Icons contains an invalid or duplicate slug.");
 
-                var iconEntry = archive.GetEntry($"{prefix}icons/{slug}.svg");
+                var iconEntry = IconImportArchive.FindEntryByPath(
+                    archive,
+                    $"{prefix}icons/{slug}.svg");
                 if (iconEntry is null) continue;
                 var aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { slug, title! };
                 if (item.TryGetProperty("aliases", out var aliasObject))
@@ -114,7 +116,11 @@ public sealed class SimpleIconsImporter : IIconPackImporter
         {
             throw;
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException or System.Xml.XmlException)
+        catch (Exception ex) when (ex is IOException
+            or InvalidDataException
+            or JsonException
+            or System.Xml.XmlException
+            or IconImportArchive.SvgValidationException)
         {
             return Result.Fail("The Simple Icons archive is invalid or unsupported.");
         }

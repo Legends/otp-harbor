@@ -5,6 +5,7 @@ using Moq;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
+using TOTP.Core.Icons;
 using TOTP.Core.Models;
 using TOTP.Core.Enums;
 using TOTP.Core.Security;
@@ -157,6 +158,140 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsUnlockVisible);
         Assert.Empty(context.Sut.NotificationText);
         context.Authorization.Verify(value => value.Lock(), Times.Once);
+    }
+
+    [Fact]
+    public async Task Settings_CategoryNavigationOpensDetailsAndReturnsToOverview()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.True(context.Sut.IsSettingsCategoryListVisible);
+        context.Sut.ShowBrandIconSettingsCommand.Execute(null);
+
+        Assert.True(context.Sut.IsSettingsCategoryDetailVisible);
+        Assert.True(context.Sut.IsBrandIconSettingsVisible);
+        Assert.False(context.Sut.IsSettingsCategoryListVisible);
+
+        await context.Sut.NavigateBackAsync();
+
+        Assert.True(context.Sut.IsSettingsCategoryListVisible);
+        Assert.False(context.Sut.IsSettingsCategoryDetailVisible);
+
+        context.Sut.ShowFaqSettingsCommand.Execute(null);
+
+        Assert.True(context.Sut.IsFaqSettingsVisible);
+        Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksAnswerText));
+
+        context.Sut.ShowSettingsCategoriesCommand.Execute(null);
+        context.Sut.ShowImportExportSettingsCommand.Execute(null);
+        context.Sut.ShowImportFormatsFaqCommand.Execute(null);
+
+        Assert.True(context.Sut.IsFaqSettingsVisible);
+        Assert.Contains("otpauth://", context.Sut.FaqImportFormatsOtpAuthExampleText, StringComparison.Ordinal);
+
+        context.Sut.ShowSettingsCategoriesCommand.Execute(null);
+        context.Sut.ShowMiscSettingsCommand.Execute(null);
+
+        Assert.True(context.Sut.IsMiscSettingsVisible);
+        Assert.Equal(context.SettingsValue.MinimumLogLevel, context.Sut.MinimumLogLevel);
+    }
+
+    [Fact]
+    public async Task BackNavigation_FromSettingsDetailReturnsToOverviewThenAccounts()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ShowAppearanceSettingsCommand.Execute(null);
+
+        Assert.True(context.Sut.CanHandleSystemBack);
+        Assert.True(await context.Sut.TryHandleBackNavigationAsync());
+        Assert.True(context.Sut.IsSettingsCategoryListVisible);
+        Assert.True(context.Sut.CanHandleSystemBack);
+
+        Assert.True(await context.Sut.TryHandleBackNavigationAsync());
+        Assert.False(context.Sut.IsSettingsVisible);
+        Assert.True(context.Sut.IsAccountListVisible);
+        Assert.False(context.Sut.CanHandleSystemBack);
+    }
+
+    [Fact]
+    public async Task Settings_MinimumLogLevelPersistsAndRollsBackOnFailure()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.SelectMinimumLogLevelAsync(AppLogLevel.Warning);
+
+        Assert.Equal(AppLogLevel.Warning, context.SettingsValue.MinimumLogLevel);
+        context.Settings.Verify(value => value.SaveAsync(), Times.Once);
+
+        context.Settings.Setup(value => value.SaveAsync())
+            .ReturnsAsync(Result.Fail("simulated settings failure"));
+        await context.Sut.SelectMinimumLogLevelAsync(AppLogLevel.Error);
+
+        Assert.Equal(AppLogLevel.Warning, context.SettingsValue.MinimumLogLevel);
+        Assert.Equal(AppLogLevel.Warning, context.Sut.MinimumLogLevel);
+        Assert.NotEmpty(context.Sut.NotificationText);
+    }
+
+    [Fact]
+    public async Task Settings_LanguagePickerProvidesSupportedLanguagesAndCurrentSelection()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false, cultureName: "de");
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        Assert.Equal(["en", "de", "fr", "es"],
+            context.Sut.Languages.Select(option => option.CultureName));
+        Assert.All(context.Sut.Languages, option => Assert.False(
+            string.IsNullOrWhiteSpace(option.DisplayName)));
+        Assert.Equal("de", context.Sut.SelectedLanguage.CultureName);
+    }
+
+    [Fact]
+    public async Task Security_ChangeMasterPasswordRotatesPasswordAndClearsInputs()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization.Setup(value => value.ChangePasswordAsync(
+                "current-password",
+                "new-synthetic-password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ShowSecuritySettingsCommand.Execute(null);
+        await WaitUntilAsync(() => context.Sut.IsSecuritySettingsVisible);
+        context.Sut.CurrentMasterPassword = "current-password";
+        context.Sut.NewMasterPassword = "new-synthetic-password";
+        context.Sut.NewMasterPasswordConfirmation = "new-synthetic-password";
+
+        await context.Sut.ChangeMasterPasswordAsync();
+
+        context.Authorization.Verify(value => value.ChangePasswordAsync(
+            "current-password",
+            "new-synthetic-password"), Times.Once);
+        Assert.Empty(context.Sut.CurrentMasterPassword);
+        Assert.Empty(context.Sut.NewMasterPassword);
+        Assert.Empty(context.Sut.NewMasterPasswordConfirmation);
+        Assert.Equal("Master password changed.", context.Sut.NotificationText);
     }
 
     [Fact]
@@ -2659,6 +2794,7 @@ public sealed class MobileShellViewModelTests
             TaskCreationOptions.RunContinuationsAsynchronously);
         brandIcons.Setup(value => value.ImportAsync(
                 It.IsAny<Stream>(),
+                "simple-icons.zip",
                 It.IsAny<CancellationToken>()))
             .Returns(importing.Task);
         await context.Sut.InitializeAsync();
@@ -2681,6 +2817,27 @@ public sealed class MobileShellViewModelTests
 
         Assert.False(context.Sut.IsImportProgressVisible);
         Assert.Empty(context.Sut.ImportProgressText);
+    }
+
+    [Fact]
+    public void BrandIconPackStatusText_IncludesInstalledProviderAndVersion()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status).Returns(new BrandIconPackStatus(
+            true,
+            "264",
+            3460,
+            BrandIconPackFormat.Aegis,
+            "Aegis Simple Icons"));
+        var context = CreateContext(
+            isConfigured: true,
+            cultureName: "en",
+            brandIconPackService: brandIcons.Object);
+
+        Assert.Equal(
+            "3460 local icons installed (Aegis Simple Icons v264).",
+            context.Sut.BrandIconPackStatusText);
+        context.Sut.Dispose();
     }
 
     [Fact]
@@ -2792,6 +2949,66 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task BackNavigation_WithDirtyAccountEditorPromptsBeforeDiscarding()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await ConfigureAndBeginAddAsync(context);
+
+        Assert.False(context.Sut.HasUnsavedAccountChanges);
+        context.Sut.EditorIssuer = "Example";
+        Assert.True(context.Sut.HasUnsavedAccountChanges);
+        Assert.True(context.Sut.CanHandleSystemBack);
+
+        Assert.True(await context.Sut.TryHandleBackNavigationAsync());
+        Assert.True(context.Sut.IsAccountEditorExitConfirmationVisible);
+        Assert.True(context.Sut.IsEditorVisible);
+
+        await context.Sut.CancelAccountNavigationAsync();
+        Assert.False(context.Sut.IsAccountEditorExitConfirmationVisible);
+        Assert.True(context.Sut.IsEditorVisible);
+
+        await context.Sut.TryHandleBackNavigationAsync();
+        await context.Sut.DiscardAccountChangesAsync();
+
+        Assert.False(context.Sut.IsAccountEditorExitConfirmationVisible);
+        Assert.False(context.Sut.IsEditorVisible);
+        Assert.False(context.Sut.CanHandleSystemBack);
+        context.AccountManager.Verify(
+            value => value.AddNewAsync(It.IsAny<Account>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task BackNavigation_SaveChoicePersistsDirtyAccountAndClosesEditor()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .ReturnsAsync(Result.Ok());
+        await ConfigureAndBeginAddAsync(context);
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorAccountName = "alice@example.test";
+        context.Sut.EditorSecret = ValidSecret;
+
+        await context.Sut.TryHandleBackNavigationAsync();
+        await context.Sut.SaveAccountAndNavigateBackAsync();
+
+        Assert.False(context.Sut.IsAccountEditorExitConfirmationVisible);
+        Assert.False(context.Sut.IsEditorVisible);
+        context.AccountManager.Verify(
+            value => value.AddNewAsync(It.Is<Account>(account =>
+                account.Issuer == "Example"
+                && account.AccountName == "alice@example.test")),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task SaveAccountAsync_WithInvalidSecret_DoesNotPersistAccount()
     {
         var context = CreateContext(isConfigured: false);
@@ -2849,7 +3066,8 @@ public sealed class MobileShellViewModelTests
             "custom_0123456789abcdef01234567",
             "personal-mark",
             "#334155",
-            "custom_0123456789abcdef01234567.svg");
+            "custom_0123456789abcdef01234567.svg",
+            "personal-mark.svg");
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.Setup(value => value.ImportCustomIconAsync(
                 account.ID,
@@ -2881,11 +3099,98 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.CustomIconImported),
             context.Sut.NotificationText);
+        Assert.Equal("personal-mark.svg", context.Sut.SelectedEditorBrandIconFileName);
+        Assert.True(context.Sut.HasSelectedEditorCustomIconFileName);
+        Assert.Equal(
+            "Image name: personal-mark.svg",
+            context.Sut.SelectedEditorCustomIconFileName);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             account.ID,
             It.IsAny<Stream>(),
             "personal-mark.svg",
             It.IsAny<CancellationToken>()), Times.Once);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task EditAccount_BrandIconPickerLoadsAndPersistsExplicitSelection()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var original = new BrandDefinition("example", "Example", "#334155", "example.svg");
+        var selected = new BrandDefinition("github", "GitHub", "#181717", "github.svg");
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([original, selected]);
+        brandIcons.Setup(value => value.GetAccountBrandId(account.ID)).Returns(original.Id);
+        brandIcons.Setup(value => value.SetAccountBrandIdAsync(
+                account.ID,
+                selected.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager.Setup(value => value.UpdateAsync(account, It.IsAny<Account>()))
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+
+        Assert.Equal(original.Id, context.Sut.SelectedEditorBrandIconOption?.Id);
+        Assert.InRange(context.Sut.EditorBrandIconPickerWidth, 180d, 260d);
+        context.Sut.SelectedEditorBrandIconOption = context.Sut.EditorBrandIconOptions
+            .Single(option => option.Id == selected.Id);
+
+        await context.Sut.SaveAccountAsync();
+
+        brandIcons.Verify(value => value.SetAccountBrandIdAsync(
+            account.ID,
+            selected.Id,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EditAccount_WhenCustomSvgHasNoVectorPath_ExplainsValidationFailure()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.ImportCustomIconAsync(
+                account.ID,
+                It.IsAny<Stream>(),
+                "empty-shape.svg",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail<BrandDefinition>(
+                new CustomIconImportError(CustomIconImportFailureReason.MissingVectorPath)));
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "empty-shape.svg"));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+
+        await context.Sut.ImportCustomIconAsync();
+
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.CustomIconImportMissingPath),
+            context.Sut.NotificationText);
         context.Sut.Dispose();
     }
 

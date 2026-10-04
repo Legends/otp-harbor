@@ -42,9 +42,10 @@ public sealed class MobileStringCatalogTests
         Assert.Equal(
             "Import accounts from other formats",
             catalog.Get(MobileStringKeys.ImportAccountFile));
-        Assert.Equal("Restore encrypted backup", catalog.Get(MobileStringKeys.ImportBackup));
+        Assert.Equal("Backup & Restore", catalog.Get(MobileStringKeys.BackupTitle));
+        Assert.Equal("Restore", catalog.Get(MobileStringKeys.ImportBackup));
         Assert.Equal("Export", catalog.Get(MobileStringKeys.ExportSection));
-        Assert.Equal("Export encrypted backup", catalog.Get(MobileStringKeys.ExportBackup));
+        Assert.Equal("Export", catalog.Get(MobileStringKeys.ExportBackup));
         Assert.Equal("Confirm account import", catalog.Get(MobileStringKeys.ImportConfirmationTitle));
         Assert.Equal("Replace", catalog.Get(MobileStringKeys.Override));
     }
@@ -58,17 +59,29 @@ public sealed class MobileStringCatalogTests
     {
         var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
 
-        var help = catalog.Get(MobileStringKeys.ImportAccountFileDescription);
+        var formats = string.Join('\n',
+            catalog.Get(MobileStringKeys.ImportFormatAegis),
+            catalog.Get(MobileStringKeys.ImportFormatTwoFas),
+            catalog.Get(MobileStringKeys.ImportFormatOtpAuth));
 
-        Assert.Contains("OTP", help, StringComparison.Ordinal);
-        Assert.Contains("Harbor", help, StringComparison.Ordinal);
-        Assert.Contains("Aegis", help, StringComparison.Ordinal);
-        Assert.Contains("2FAS", help, StringComparison.Ordinal);
-        Assert.Contains(".json", help, StringComparison.Ordinal);
-        Assert.Contains(".csv", help, StringComparison.Ordinal);
-        Assert.Contains(".txt", help, StringComparison.Ordinal);
-        Assert.Contains(".2fas", help, StringComparison.Ordinal);
-        Assert.Contains("otpauth://", help, StringComparison.Ordinal);
+        Assert.Contains("Aegis", formats, StringComparison.Ordinal);
+        Assert.Contains("2FAS", formats, StringComparison.Ordinal);
+        Assert.Contains(".json", formats, StringComparison.Ordinal);
+        Assert.Contains(".txt", formats, StringComparison.Ordinal);
+        Assert.Contains(".2fas", formats, StringComparison.Ordinal);
+        Assert.Contains("otpauth://", formats, StringComparison.Ordinal);
+        Assert.DoesNotContain("OTP Harbor", formats, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(".csv", formats, StringComparison.OrdinalIgnoreCase);
+
+        Assert.Contains("\"entries\"", catalog.Get(MobileStringKeys.FaqImportFormatsAegisExample));
+        Assert.Contains("\"services\"", catalog.Get(MobileStringKeys.FaqImportFormatsTwoFasExample));
+        Assert.StartsWith("otpauth://", catalog.Get(MobileStringKeys.FaqImportFormatsOtpAuthExample));
+        Assert.False(string.IsNullOrWhiteSpace(catalog.Get(MobileStringKeys.FaqImportFormatsAegisDescription)));
+        Assert.False(string.IsNullOrWhiteSpace(catalog.Get(MobileStringKeys.FaqImportFormatsTwoFasDescription)));
+        Assert.False(string.IsNullOrWhiteSpace(catalog.Get(MobileStringKeys.FaqImportFormatsOtpAuthDescription)));
+        Assert.Contains("Simple Icons", catalog.Get(MobileStringKeys.FaqSimpleIconsOfficialLink));
+        Assert.Contains("Aegis", catalog.Get(MobileStringKeys.FaqAegisIconPackDocsLink));
+        Assert.Contains("OTP Harbor", catalog.Get(MobileStringKeys.FaqImportIconPacksDisclaimer));
     }
 
     [Theory]

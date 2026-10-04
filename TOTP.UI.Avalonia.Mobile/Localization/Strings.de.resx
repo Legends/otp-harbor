@@ -18,6 +18,14 @@
   <data name="PasswordRequired" xml:space="preserve"><value>Geben Sie Ihr Masterpasswort ein.</value></data>
   <data name="PasswordMinimumLength" xml:space="preserve"><value>Das Masterpasswort muss mindestens {0} Zeichen enthalten.</value></data>
   <data name="PasswordMismatch" xml:space="preserve"><value>Die Passwörter stimmen nicht überein.</value></data>
+  <data name="ChangeMasterPassword" xml:space="preserve"><value>Master-Passwort ändern</value></data>
+  <data name="ChangeMasterPasswordDescription" xml:space="preserve"><value>Bestätige dein aktuelles Master-Passwort und wähle ein neues. Deine Konten und eingerichteten Entsperrmethoden bleiben erhalten.</value></data>
+  <data name="CurrentPassword" xml:space="preserve"><value>Aktuelles Master-Passwort</value></data>
+  <data name="CurrentPasswordRequired" xml:space="preserve"><value>Gib dein aktuelles Master-Passwort ein.</value></data>
+  <data name="NewPassword" xml:space="preserve"><value>Neues Master-Passwort</value></data>
+  <data name="PasswordVerificationFailed" xml:space="preserve"><value>Das aktuelle Master-Passwort konnte nicht bestätigt werden.</value></data>
+  <data name="PasswordChangeFailed" xml:space="preserve"><value>Das Master-Passwort konnte nicht sicher geändert werden. Der bestehende Zugriff bleibt aktiv.</value></data>
+  <data name="PasswordChanged" xml:space="preserve"><value>Master-Passwort geändert.</value></data>
   <data name="SetupFailed" xml:space="preserve"><value>Der verschlüsselte Tresor konnte nicht eingerichtet werden.</value></data>
   <data name="ExistingVaultConflict" xml:space="preserve"><value>Vorhandene verschlüsselte Daten benötigen ihr ursprüngliches Masterpasswort.</value></data>
   <data name="UnlockTitle" xml:space="preserve"><value>OTP Harbor entsperren</value></data>
@@ -28,6 +36,17 @@
   <data name="AccountsTitle" xml:space="preserve"><value>Konten</value></data>
   <data name="Codes" xml:space="preserve"><value>Codes</value></data>
   <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
+  <data name="CloseSettings" xml:space="preserve"><value>Einstellungen schließen</value></data>
+  <data name="BackToSettings" xml:space="preserve"><value>Zurück zu Einstellungen</value></data>
+  <data name="BackToTop" xml:space="preserve"><value>Nach oben</value></data>
+  <data name="AppearanceSettingsDescription" xml:space="preserve"><value>Sprache, Design und visuelle Einstellungen anpassen.</value></data>
+  <data name="BrandIconSettingsDescription" xml:space="preserve"><value>Lokale Symbolpakete verwalten und importieren.</value></data>
+  <data name="SecuritySettingsDescription" xml:space="preserve"><value>Verschlüsselung, App-Sperre und Entsperrmethoden konfigurieren.</value></data>
+  <data name="BackupSettingsDescription" xml:space="preserve"><value>Verschlüsselte OTP-Harbor-Sicherungen erstellen oder wiederherstellen.</value></data>
+  <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Konten aus QR-Codes oder unterstützten Dateien importieren.</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>SONSTIGES</value></data>
+  <data name="MiscSettingsDescription" xml:space="preserve"><value>Diagnoseprotokollierung konfigurieren.</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Minimale Protokollstufe (gilt nach Neustart)</value></data>
   <data name="Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Englisch</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Deutsch</value></data>
@@ -83,16 +102,16 @@
   <data name="DismissQr" xml:space="preserve"><value>QR-Code ausblenden</value></data>
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Dieser QR-Code enthält das Kontogeheimnis. Teilen Sie ihn nur mit einem vertrauenswürdigen Authenticator.</value></data>
   <data name="QrDisplayFailed" xml:space="preserve"><value>Der Konto-QR-Code konnte nicht sicher angezeigt werden.</value></data>
-  <data name="BackupTitle" xml:space="preserve"><value>Verschlüsseltes Backup</value></data>
+  <data name="BackupTitle" xml:space="preserve"><value>Sichern &amp; Wiederherstellen</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Exportieren Sie eine verschlüsselte OTP-Harbor-Sicherung oder stellen Sie sie wieder her. Vorhandene Konten werden standardmäßig übersprungen; geänderte Treffer werden vor dem Import geprüft.</value></data>
   <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-.totp-Sicherung und geben Sie ihr Passwort ein. Vorhandene Konten werden standardmäßig übersprungen; prüfen Sie jeden geänderten Treffer, bevor ein Konto geändert wird.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Konten aus anderen Formaten importieren</value></data>
-  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Unterstützte Formate: unverschlüsselte OTP-Harbor-Dateien als JSON (.json), CSV (.csv) oder durch senkrechte Striche getrennte Textdatei (.txt); unverschlüsselte Aegis-JSON-Exporte (.json); unverschlüsselte 2FAS-Sicherungen (.2fas); und Textdateien (.txt) mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile.</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Unterstützte Formate:</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie eine portable, passwortgeschützte Sicherung. Android fragt nach dem Speicherort. Bewahren Sie Sicherung und Passwort getrennt auf; verwenden Sie zur Wiederherstellung „Verschlüsselte Sicherung wiederherstellen“.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup-Passwort</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Backup-Passwort bestätigen</value></data>
-  <data name="ExportBackup" xml:space="preserve"><value>Verschlüsseltes Backup exportieren</value></data>
-  <data name="ImportBackup" xml:space="preserve"><value>Verschlüsselte Sicherung wiederherstellen</value></data>
+  <data name="ExportBackup" xml:space="preserve"><value>Exportieren</value></data>
+  <data name="ImportBackup" xml:space="preserve"><value>Wiederherstellen</value></data>
   <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Geben Sie ein Backup-Passwort ein.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>Das Backup-Passwort muss mindestens {0} Zeichen enthalten.</value></data>
@@ -156,6 +175,7 @@
   <data name="SecretInvalid" xml:space="preserve"><value>Das Kontogeheimnis enthält keine gültigen Base32-Daten.</value></data>
   <data name="DuplicateAccount" xml:space="preserve"><value>Ein Konto mit diesem Anbieter und Kontonamen ist bereits vorhanden.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Konto gespeichert.</value></data>
+  <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Das Konto wurde gespeichert, seine lokale Symboleinstellung jedoch nicht.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>Das Konto konnte nicht gespeichert werden.</value></data>
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} löschen? Dies kann nicht rückgängig gemacht werden.</value></data>
   <data name="Delete" xml:space="preserve"><value>Löschen</value></data>
@@ -192,7 +212,7 @@
   <data name="AppLockDisabled" xml:space="preserve"><value>App-Sperre deaktiviert. Jeder Benutzer dieses entsperrten Geräts kann die Codes sehen.</value></data>
   <data name="AppLockEnabled" xml:space="preserve"><value>App-Sperre aktiviert. Nach der nächsten Sperre ist das Master-Passwort erforderlich.</value></data>
   <data name="AppLockChangeFailed" xml:space="preserve"><value>Die App-Sperre konnte nicht sicher geändert werden.</value></data>
-  <data name="ImportExport" xml:space="preserve"><value>Import / Export</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Importe</value></data>
   <data name="ImportSection" xml:space="preserve"><value>Import</value></data>
   <data name="ExportSection" xml:space="preserve"><value>Export</value></data>
   <data name="ImportGoogleQr" xml:space="preserve"><value>Aus Google Authenticator importieren</value></data>
@@ -210,11 +230,14 @@
   <data name="ApplyUnlockMethod" xml:space="preserve"><value>Übernehmen</value></data>
   <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>OTP Harbor entsperren</value></data>
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Verwenden Sie die Gerätesperre (PIN, Muster oder Passwort).</value></data>
-  <data name="BrandIcons" xml:space="preserve"><value>Optionale Markensymbole</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Symbolpakete</value></data>
   <data name="BrandIconsDescription" xml:space="preserve"><value>Symbolpakete und benutzerdefinierte Symbole von Drittanbietern werden vom Benutzer importiert und lokal gespeichert. OTP Harbor stellt diese Inhalte weder bereit noch verbreitet sie.&#xA;&#xA;Alle Marken, Logos, Urheberrechte, Lizenzen und Nutzungsrichtlinien verbleiben in der Verantwortung ihrer jeweiligen Eigentümer und gelten unabhängig von OTP Harbor.&#xA;&#xA;Die Kompatibilität mit einem Symbolpaket bedeutet weder eine Verbindung oder Förderung noch eine Empfehlung durch dessen Anbieter oder einen Markeninhaber. Unterstützt werden unter anderem Simple-Icons-Releases, SVG-basierte Aegis-Pakete und nach Dateinamen indizierte SVG-Pakete.</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Lokales Symbolpaket-ZIP importieren…</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Konten werden importiert…</value></data>
   <data name="ImportingBrandIcons" xml:space="preserve"><value>Icon-Paket wird importiert…</value></data>
+  <data name="RemovingBrandIcons" xml:space="preserve"><value>Lokale Symbole werden entfernt…</value></data>
+  <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole installiert ({1} v{2}).</value></data>
+  <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole installiert ({1}).</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Es wurde kein Symbolpaket ausgewählt.</value></data>
   <data name="BrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus {1} {2} wurden importiert.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>Das Symbolpaket ist ungültig oder konnte nicht sicher installiert werden.</value></data>
@@ -224,11 +247,51 @@
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Ausstellerlogo anzeigen</value></data>
   <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Ein Marken- oder Platzhalterfeld neben jedem Konto anzeigen.</value></data>
   <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Benutzerdefiniertes SVG auswählen…</value></data>
+  <data name="Or" xml:space="preserve"><value>oder</value></data>
+  <data name="CustomIconFileName" xml:space="preserve"><value>Bildname: {0}</value></data>
+  <data name="BrandIcon" xml:space="preserve"><value>Kontosymbol</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatisch nach Anbieter zuordnen</value></data>
+  <data name="BrandIconHelp" xml:space="preserve"><value>Wählen Sie ein Symbol aus dem importierten lokalen Paket oder behalten Sie die automatische Zuordnung bei. Diese lokale Anzeigeeinstellung ist nicht in Tresor-Sicherungen enthalten.</value></data>
+  <data name="CustomAccountIcon" xml:space="preserve"><value>Benutzerdefiniertes SVG</value></data>
   <data name="CustomIconImported" xml:space="preserve"><value>Das benutzerdefinierte Symbol wurde diesem Konto zugewiesen.</value></data>
   <data name="CustomIconImportFailed" xml:space="preserve"><value>Das SVG ist ungültig oder konnte nicht sicher gespeichert werden.</value></data>
+  <data name="CustomIconImportEmpty" xml:space="preserve"><value>Die SVG-Datei ist leer.</value></data>
+  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>Das SVG darf höchstens 64 KB groß sein.</value></data>
+  <data name="CustomIconImportMalformed" xml:space="preserve"><value>Das SVG ist kein wohlgeformtes XML.</value></data>
+  <data name="CustomIconImportMissingPath" xml:space="preserve"><value>Das SVG muss ein &lt;svg&gt;-Wurzelelement und mindestens ein &lt;path&gt;-Element mit Pfaddaten enthalten.</value></data>
+  <data name="CustomIconImportUnsafe" xml:space="preserve"><value>Das SVG enthält ein Skript oder einen externen Ressourcenverweis; beides ist nicht zulässig.</value></data>
+  <data name="CustomIconImportUnreadable" xml:space="preserve"><value>Das SVG konnte nicht sicher gelesen oder gespeichert werden.</value></data>
+  <data name="UnsavedAccountChangesTitle" xml:space="preserve"><value>Ungespeicherte Änderungen</value></data>
+  <data name="UnsavedAccountChangesPrompt" xml:space="preserve"><value>Möchten Sie Ihre Änderungen vor dem Verlassen speichern?</value></data>
+  <data name="DiscardChanges" xml:space="preserve"><value>Änderungen verwerfen</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Diese Einstellung konnte nicht gespeichert werden.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Erscheinungsbild</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Systemeinstellung verwenden</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Dunkel</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Hell</value></data>
+  <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
+  <data name="FaqSettingsDescription" xml:space="preserve"><value>Antworten auf häufige Fragen zu OTP Harbor.</value></data>
+  <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>Wie importiere ich Symbolpakete?</value></data>
+  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Öffne Einstellungen → Symbolpakete → Lokales Symbolpaket-ZIP importieren. OTP Harbor unterstützt kompatible Simple-Icons-Veröffentlichungen, SVG-basierte Aegis-kompatible Symbolpakete und nach Dateinamen indizierte SVG-ZIP-Archive.</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Beziehe kompatible Pakete unabhängig von ihren offiziellen Projekten:</value></data>
+  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — offizielles Repository</value></data>
+  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis — Symbolpaketformat und Informationen zu Community-Paketen</value></data>
+  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor importiert und speichert die ausgewählten Symbole lokal. OTP Harbor hostet, bündelt oder verteilt keine Symbolpakete von Drittanbietern und spricht keine Empfehlung dafür aus. Drittanbieter-Assets unterliegen weiterhin ihren jeweiligen Lizenzen, Markenrechten und Nutzungsbedingungen. Benutzer sind dafür verantwortlich, dass ihre Nutzung diese Bedingungen einhält.</value></data>
+  <data name="BackupSection" xml:space="preserve"><value>Sicherung</value></data>
+  <data name="RestoreSection" xml:space="preserve"><value>Wiederherstellen</value></data>
+  <data name="ImportFormatAegis" xml:space="preserve"><value>1. Unverschlüsselter Aegis-JSON-Export (.json)</value></data>
+  <data name="ImportFormatTwoFas" xml:space="preserve"><value>2. Unverschlüsselte 2FAS-Sicherung (.2fas)</value></data>
+  <data name="ImportFormatOtpAuth" xml:space="preserve"><value>3. Textdatei mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile (.txt)</value></data>
+  <data name="ViewImportFormatsFaq" xml:space="preserve"><value>Wie müssen diese Importdateien aufgebaut sein?</value></data>
+  <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>Wie importiere ich Konten aus verschiedenen Formaten?</value></data>
+  <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Verwende einen unveränderten, unverschlüsselten Export der Quell-App. Verschlüsselte Aegis- und 2FAS-Exporte werden abgelehnt. Die folgenden Minimalstrukturen zeigen die erforderlichen Felder:</value></data>
+  <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>1. Aegis JSON (.json)</value></data>
+  <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Exportiere den Tresor unverschlüsselt aus Aegis und wähle die erzeugte JSON-Datei. OTP Harbor liest TOTP-Einträge aus db.entries. Verschlüsselte Tresore, HOTP-Einträge und nicht unterstützte TOTP-Parameter werden abgelehnt.</value></data>
+  <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>
+  <data name="FaqImportFormatsTwoFasTitle" xml:space="preserve"><value>2. 2FAS-Sicherung (.2fas)</value></data>
+  <data name="FaqImportFormatsTwoFasDescription" xml:space="preserve"><value>Erstelle eine unverschlüsselte 2FAS-Sicherung und wähle die .2fas-Datei. OTP Harbor liest TOTP-Konten aus services. Passwortgeschützte oder verschlüsselte Sicherungen und nicht unterstützte OTP-Parameter werden abgelehnt.</value></data>
+  <data name="FaqImportFormatsTwoFasExample" xml:space="preserve"><value>{&#xA;  "schemaVersion": 4,&#xA;  "services": [{&#xA;    "name": "Example",&#xA;    "secret": "JBSWY3DPEHPK3PXP",&#xA;    "otp": {&#xA;      "tokenType": "TOTP",&#xA;      "issuer": "Example",&#xA;      "account": "alice@example.com",&#xA;      "algorithm": "SHA1",&#xA;      "digits": 6,&#xA;      "period": 30&#xA;    }&#xA;  }],&#xA;  "servicesEncrypted": null,&#xA;  "reference": null&#xA;}</value></data>
+  <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>3. otpauth-Textdatei (.txt)</value></data>
+  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Erstelle eine UTF-8-Textdatei mit genau einer standardmäßigen otpauth://totp-URI pro Zeile. Leerzeilen und Zeilen, die mit # beginnen, werden ignoriert. Jede URI muss einen Aussteller und ein gültiges Base32-Geheimnis enthalten und unterstützte TOTP-Parameter mit SHA-1 und sechs Stellen verwenden.</value></data>
+  <data name="FaqImportFormatsOtpAuthExample" xml:space="preserve"><value>otpauth://totp/Example:alice%40example.com?secret=JBSWY3DPEHPK3PXP&amp;issuer=Example&amp;period=30</value></data>
 </root>

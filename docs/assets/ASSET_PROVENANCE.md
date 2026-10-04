@@ -166,10 +166,10 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png` | `66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-128.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
 | `TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico` | `7a71a423982499c438177e3b58126f003c3ece9a66cb2b91c07dc50a812ab81e` |
-| `TOTP.UI.Avalonia.Desktop/Assets/flags/en.png` | `1c2bcc20e5985e5f03a3a440f198b5d08a4ac609e9cebba00b639b0e50fba8fc` |
-| `TOTP.UI.Avalonia.Desktop/Assets/flags/de.png` | `2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a` |
-| `TOTP.UI.Avalonia.Desktop/Assets/flags/fr.png` | `b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340` |
-| `TOTP.UI.Avalonia.Desktop/Assets/flags/es.png` | `d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd` |
+| `TOTP.UI.Avalonia.Shared/Assets/flags/en.png` | `1c2bcc20e5985e5f03a3a440f198b5d08a4ac609e9cebba00b639b0e50fba8fc` |
+| `TOTP.UI.Avalonia.Shared/Assets/flags/de.png` | `2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a` |
+| `TOTP.UI.Avalonia.Shared/Assets/flags/fr.png` | `b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340` |
+| `TOTP.UI.Avalonia.Shared/Assets/flags/es.png` | `d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd` |
 | `TOTP.UI.Avalonia.Shared/Assets/Biometric/fingerprint.png` | `8fb24a9f292168bb5cfd696f4d2b476d668445449bc5d0a8474896207d83d503` |
 | `TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-dark.png` | `4af14f62d27b27d68a0c2312c1f40e8a369461e34cbc1ee1d190e55402eae327` |
 | `TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png` | `176bdef9bec8a6596efa256a36e2ad3c87f1a2a298ff9df77d3a02d771590ba4` |

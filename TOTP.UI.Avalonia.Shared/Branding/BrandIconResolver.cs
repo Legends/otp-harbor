@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using Avalonia;
 using Avalonia.Media;
 using TOTP.Core.Services.Interfaces;
 
@@ -60,8 +61,22 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
     private BrandInfo CreateKnown(TOTP.Core.Services.Models.BrandDefinition definition)
     {
         string? geometry = null;
+        Transform? iconTransform = null;
         if (_packService.TryGetIconPathData(definition.Id, out var pathData))
+        {
             geometry = pathData;
+            if (_packService.TryGetIconTransform(definition.Id, out var transform)
+                && transform is not null)
+            {
+                iconTransform = new MatrixTransform(new Matrix(
+                    transform.M11,
+                    transform.M12,
+                    transform.M21,
+                    transform.M22,
+                    transform.M31,
+                    transform.M32));
+            }
+        }
         var color = NormalizeColor(definition.BackgroundColor);
         return new BrandInfo(
             definition.Id,
@@ -69,7 +84,8 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
             InitialsFor(definition.DisplayName),
             color,
             new SolidColorBrush(Color.Parse(color)),
-            geometry);
+            geometry,
+            iconTransform);
     }
 
     private static BrandInfo CreateFallback(string issuer, string normalized)

@@ -16,6 +16,14 @@ public static class MobileStringKeys
     public const string PasswordRequired = nameof(PasswordRequired);
     public const string PasswordMinimumLength = nameof(PasswordMinimumLength);
     public const string PasswordMismatch = nameof(PasswordMismatch);
+    public const string ChangeMasterPassword = nameof(ChangeMasterPassword);
+    public const string ChangeMasterPasswordDescription = nameof(ChangeMasterPasswordDescription);
+    public const string CurrentPassword = nameof(CurrentPassword);
+    public const string CurrentPasswordRequired = nameof(CurrentPasswordRequired);
+    public const string NewPassword = nameof(NewPassword);
+    public const string PasswordVerificationFailed = nameof(PasswordVerificationFailed);
+    public const string PasswordChangeFailed = nameof(PasswordChangeFailed);
+    public const string PasswordChanged = nameof(PasswordChanged);
     public const string SetupFailed = nameof(SetupFailed);
     public const string ExistingVaultConflict = nameof(ExistingVaultConflict);
     public const string UnlockTitle = nameof(UnlockTitle);
@@ -26,6 +34,36 @@ public static class MobileStringKeys
     public const string AccountsTitle = nameof(AccountsTitle);
     public const string Codes = nameof(Codes);
     public const string Settings = nameof(Settings);
+    public const string CloseSettings = nameof(CloseSettings);
+    public const string BackToSettings = nameof(BackToSettings);
+    public const string BackToTop = nameof(BackToTop);
+    public const string AppearanceSettingsDescription = nameof(AppearanceSettingsDescription);
+    public const string BrandIconSettingsDescription = nameof(BrandIconSettingsDescription);
+    public const string SecuritySettingsDescription = nameof(SecuritySettingsDescription);
+    public const string BackupSettingsDescription = nameof(BackupSettingsDescription);
+    public const string ImportExportSettingsDescription = nameof(ImportExportSettingsDescription);
+    public const string Miscellaneous = nameof(Miscellaneous);
+    public const string MiscSettingsDescription = nameof(MiscSettingsDescription);
+    public const string LoggingLevel = nameof(LoggingLevel);
+    public const string Faq = nameof(Faq);
+    public const string FaqSettingsDescription = nameof(FaqSettingsDescription);
+    public const string FaqImportIconPacksQuestion = nameof(FaqImportIconPacksQuestion);
+    public const string FaqImportIconPacksAnswer = nameof(FaqImportIconPacksAnswer);
+    public const string FaqImportIconPacksSources = nameof(FaqImportIconPacksSources);
+    public const string FaqSimpleIconsOfficialLink = nameof(FaqSimpleIconsOfficialLink);
+    public const string FaqAegisIconPackDocsLink = nameof(FaqAegisIconPackDocsLink);
+    public const string FaqImportIconPacksDisclaimer = nameof(FaqImportIconPacksDisclaimer);
+    public const string FaqImportFormatsQuestion = nameof(FaqImportFormatsQuestion);
+    public const string FaqImportFormatsIntro = nameof(FaqImportFormatsIntro);
+    public const string FaqImportFormatsAegisTitle = nameof(FaqImportFormatsAegisTitle);
+    public const string FaqImportFormatsAegisDescription = nameof(FaqImportFormatsAegisDescription);
+    public const string FaqImportFormatsAegisExample = nameof(FaqImportFormatsAegisExample);
+    public const string FaqImportFormatsTwoFasTitle = nameof(FaqImportFormatsTwoFasTitle);
+    public const string FaqImportFormatsTwoFasDescription = nameof(FaqImportFormatsTwoFasDescription);
+    public const string FaqImportFormatsTwoFasExample = nameof(FaqImportFormatsTwoFasExample);
+    public const string FaqImportFormatsOtpAuthTitle = nameof(FaqImportFormatsOtpAuthTitle);
+    public const string FaqImportFormatsOtpAuthDescription = nameof(FaqImportFormatsOtpAuthDescription);
+    public const string FaqImportFormatsOtpAuthExample = nameof(FaqImportFormatsOtpAuthExample);
     public const string Language = nameof(Language);
     public const string EnglishLanguage = nameof(EnglishLanguage);
     public const string GermanLanguage = nameof(GermanLanguage);
@@ -100,10 +138,16 @@ public static class MobileStringKeys
     public const string QrPrivacyNotice = nameof(QrPrivacyNotice);
     public const string QrDisplayFailed = nameof(QrDisplayFailed);
     public const string BackupTitle = nameof(BackupTitle);
+    public const string BackupSection = nameof(BackupSection);
+    public const string RestoreSection = nameof(RestoreSection);
     public const string BackupDescription = nameof(BackupDescription);
     public const string ImportBackupDescription = nameof(ImportBackupDescription);
     public const string ImportAccountFile = nameof(ImportAccountFile);
     public const string ImportAccountFileDescription = nameof(ImportAccountFileDescription);
+    public const string ImportFormatAegis = nameof(ImportFormatAegis);
+    public const string ImportFormatTwoFas = nameof(ImportFormatTwoFas);
+    public const string ImportFormatOtpAuth = nameof(ImportFormatOtpAuth);
+    public const string ViewImportFormatsFaq = nameof(ViewImportFormatsFaq);
     public const string ExportBackupDescription = nameof(ExportBackupDescription);
     public const string BackupPassword = nameof(BackupPassword);
     public const string ConfirmBackupPassword = nameof(ConfirmBackupPassword);
@@ -114,6 +158,9 @@ public static class MobileStringKeys
     public const string ImportSimpleIconsPack = nameof(ImportSimpleIconsPack);
     public const string ImportingAccounts = nameof(ImportingAccounts);
     public const string ImportingBrandIcons = nameof(ImportingBrandIcons);
+    public const string RemovingBrandIcons = nameof(RemovingBrandIcons);
+    public const string BrandIconPackStatus = nameof(BrandIconPackStatus);
+    public const string FilenameIndexedBrandIconPackStatus = nameof(FilenameIndexedBrandIconPackStatus);
     public const string NoBrandIconPackSelected = nameof(NoBrandIconPackSelected);
     public const string BrandIconPackImported = nameof(BrandIconPackImported);
     public const string BrandIconPackImportFailed = nameof(BrandIconPackImportFailed);
@@ -123,8 +170,23 @@ public static class MobileStringKeys
     public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
     public const string ShowIssuerLogoDescription = nameof(ShowIssuerLogoDescription);
     public const string ChooseCustomSvgIcon = nameof(ChooseCustomSvgIcon);
+    public const string Or = nameof(Or);
+    public const string CustomIconFileName = nameof(CustomIconFileName);
+    public const string BrandIcon = nameof(BrandIcon);
+    public const string AutomaticBrandIcon = nameof(AutomaticBrandIcon);
+    public const string BrandIconHelp = nameof(BrandIconHelp);
+    public const string CustomAccountIcon = nameof(CustomAccountIcon);
     public const string CustomIconImported = nameof(CustomIconImported);
     public const string CustomIconImportFailed = nameof(CustomIconImportFailed);
+    public const string CustomIconImportEmpty = nameof(CustomIconImportEmpty);
+    public const string CustomIconImportTooLarge = nameof(CustomIconImportTooLarge);
+    public const string CustomIconImportMalformed = nameof(CustomIconImportMalformed);
+    public const string CustomIconImportMissingPath = nameof(CustomIconImportMissingPath);
+    public const string CustomIconImportUnsafe = nameof(CustomIconImportUnsafe);
+    public const string CustomIconImportUnreadable = nameof(CustomIconImportUnreadable);
+    public const string UnsavedAccountChangesTitle = nameof(UnsavedAccountChangesTitle);
+    public const string UnsavedAccountChangesPrompt = nameof(UnsavedAccountChangesPrompt);
+    public const string DiscardChanges = nameof(DiscardChanges);
     public const string SettingsSaveFailed = nameof(SettingsSaveFailed);
     public const string BackupFileName = nameof(BackupFileName);
     public const string BackupPasswordRequired = nameof(BackupPasswordRequired);
@@ -189,6 +251,7 @@ public static class MobileStringKeys
     public const string SecretInvalid = nameof(SecretInvalid);
     public const string DuplicateAccount = nameof(DuplicateAccount);
     public const string AccountSaved = nameof(AccountSaved);
+    public const string AccountSavedIconPreferenceFailed = nameof(AccountSavedIconPreferenceFailed);
     public const string AccountSaveFailed = nameof(AccountSaveFailed);
     public const string DeleteAccountPrompt = nameof(DeleteAccountPrompt);
     public const string Delete = nameof(Delete);
@@ -246,6 +309,14 @@ public static class MobileStringKeys
         PasswordRequired,
         PasswordMinimumLength,
         PasswordMismatch,
+        ChangeMasterPassword,
+        ChangeMasterPasswordDescription,
+        CurrentPassword,
+        CurrentPasswordRequired,
+        NewPassword,
+        PasswordVerificationFailed,
+        PasswordChangeFailed,
+        PasswordChanged,
         SetupFailed,
         ExistingVaultConflict,
         UnlockTitle,
@@ -256,6 +327,36 @@ public static class MobileStringKeys
         AccountsTitle,
         Codes,
         Settings,
+        CloseSettings,
+        BackToSettings,
+        BackToTop,
+        AppearanceSettingsDescription,
+        BrandIconSettingsDescription,
+        SecuritySettingsDescription,
+        BackupSettingsDescription,
+        ImportExportSettingsDescription,
+        Miscellaneous,
+        MiscSettingsDescription,
+        LoggingLevel,
+        Faq,
+        FaqSettingsDescription,
+        FaqImportIconPacksQuestion,
+        FaqImportIconPacksAnswer,
+        FaqImportIconPacksSources,
+        FaqSimpleIconsOfficialLink,
+        FaqAegisIconPackDocsLink,
+        FaqImportIconPacksDisclaimer,
+        FaqImportFormatsQuestion,
+        FaqImportFormatsIntro,
+        FaqImportFormatsAegisTitle,
+        FaqImportFormatsAegisDescription,
+        FaqImportFormatsAegisExample,
+        FaqImportFormatsTwoFasTitle,
+        FaqImportFormatsTwoFasDescription,
+        FaqImportFormatsTwoFasExample,
+        FaqImportFormatsOtpAuthTitle,
+        FaqImportFormatsOtpAuthDescription,
+        FaqImportFormatsOtpAuthExample,
         Language,
         EnglishLanguage,
         GermanLanguage,
@@ -330,10 +431,16 @@ public static class MobileStringKeys
         QrPrivacyNotice,
         QrDisplayFailed,
         BackupTitle,
+        BackupSection,
+        RestoreSection,
         BackupDescription,
         ImportBackupDescription,
         ImportAccountFile,
         ImportAccountFileDescription,
+        ImportFormatAegis,
+        ImportFormatTwoFas,
+        ImportFormatOtpAuth,
+        ViewImportFormatsFaq,
         ExportBackupDescription,
         BackupPassword,
         ConfirmBackupPassword,
@@ -343,12 +450,18 @@ public static class MobileStringKeys
         BrandIconsDescription,
         ImportSimpleIconsPack,
         ImportingAccounts,
-        ImportingBrandIcons,
+        ImportingBrandIcons, RemovingBrandIcons, BrandIconPackStatus,
+        FilenameIndexedBrandIconPackStatus,
         NoBrandIconPackSelected,
         BrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
-        ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, ChooseCustomSvgIcon,
-        CustomIconImported, CustomIconImportFailed, SettingsSaveFailed,
+        ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, ChooseCustomSvgIcon, Or,
+        CustomIconFileName,
+        BrandIcon, AutomaticBrandIcon, BrandIconHelp, CustomAccountIcon,
+        CustomIconImported, CustomIconImportFailed, CustomIconImportEmpty,
+        CustomIconImportTooLarge, CustomIconImportMalformed, CustomIconImportMissingPath,
+        CustomIconImportUnsafe, CustomIconImportUnreadable, UnsavedAccountChangesTitle,
+        UnsavedAccountChangesPrompt, DiscardChanges, SettingsSaveFailed,
         BackupFileName,
         BackupPasswordRequired,
         BackupPasswordMinimumLength,
@@ -412,6 +525,7 @@ public static class MobileStringKeys
         SecretInvalid,
         DuplicateAccount,
         AccountSaved,
+        AccountSavedIconPreferenceFailed,
         AccountSaveFailed,
         DeleteAccountPrompt,
         Delete,

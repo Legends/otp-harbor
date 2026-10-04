@@ -32,6 +32,7 @@ public partial class MainView : UserControl
             Interval = AccountListScrollStateCheckInterval
         };
         _accountListScrollIdleTimer.Tick += AccountListScrollBecameIdle;
+        AddHandler(KeyDownEvent, MainViewKeyDown, RoutingStrategies.Tunnel);
         AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(
             AttachAccountListScrollViewer,
             DispatcherPriority.Loaded);
@@ -92,6 +93,49 @@ public partial class MainView : UserControl
                 (textBox as InputElement ?? input).Focus();
             },
             DispatcherPriority.Input);
+    }
+
+    private async void MainViewKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape || DataContext is not MobileShellViewModel viewModel) return;
+
+        if (await viewModel.TryHandleBackNavigationAsync())
+        {
+            e.Handled = true;
+            if (viewModel.IsSettingsVisible) ScrollMainViewToTop();
+        }
+    }
+
+    private void FaqSectionExpanded(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Expander expanded) return;
+
+        foreach (var section in new[] { FaqIconPacksExpander, FaqImportFormatsExpander })
+        {
+            if (!ReferenceEquals(section, expanded)) section.IsExpanded = false;
+        }
+    }
+
+    private void ScrollMainViewToTop(object? sender, RoutedEventArgs e) =>
+        ScrollMainViewToTop();
+
+    private void ScrollMainViewToTop()
+    {
+        MainScrollViewer.Offset = new Vector(MainScrollViewer.Offset.X, 0);
+        UpdateSettingsBackToTopVisibility();
+    }
+
+    private void MainScrollViewerChanged(object? sender, ScrollChangedEventArgs e) =>
+        UpdateSettingsBackToTopVisibility();
+
+    private void UpdateSettingsBackToTopVisibility()
+    {
+        SettingsBackToTopButton.IsVisible = DataContext is MobileShellViewModel
+        {
+            IsSettingsCategoryDetailVisible: true
+        }
+            && MainScrollViewer.Extent.Height > MainScrollViewer.Viewport.Height + 1
+            && MainScrollViewer.Offset.Y > 24;
     }
 
     private void HighlightUnlockMethodConfirmation(object? sender, RoutedEventArgs e)

@@ -18,6 +18,14 @@
   <data name="PasswordRequired" xml:space="preserve"><value>Enter your master password.</value></data>
   <data name="PasswordMinimumLength" xml:space="preserve"><value>The master password must contain at least {0} characters.</value></data>
   <data name="PasswordMismatch" xml:space="preserve"><value>The passwords do not match.</value></data>
+  <data name="ChangeMasterPassword" xml:space="preserve"><value>Change master password</value></data>
+  <data name="ChangeMasterPasswordDescription" xml:space="preserve"><value>Verify your current master password and choose a new one. Your accounts and configured unlock methods remain available.</value></data>
+  <data name="CurrentPassword" xml:space="preserve"><value>Current master password</value></data>
+  <data name="CurrentPasswordRequired" xml:space="preserve"><value>Enter your current master password.</value></data>
+  <data name="NewPassword" xml:space="preserve"><value>New master password</value></data>
+  <data name="PasswordVerificationFailed" xml:space="preserve"><value>The current master password could not be verified.</value></data>
+  <data name="PasswordChangeFailed" xml:space="preserve"><value>The master password could not be changed safely. Existing access remains active.</value></data>
+  <data name="PasswordChanged" xml:space="preserve"><value>Master password changed.</value></data>
   <data name="SetupFailed" xml:space="preserve"><value>The encrypted vault could not be configured.</value></data>
   <data name="ExistingVaultConflict" xml:space="preserve"><value>Existing encrypted data requires its original master password.</value></data>
   <data name="UnlockTitle" xml:space="preserve"><value>Unlock OTP Harbor</value></data>
@@ -28,6 +36,17 @@
   <data name="AccountsTitle" xml:space="preserve"><value>Accounts</value></data>
   <data name="Codes" xml:space="preserve"><value>Codes</value></data>
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="CloseSettings" xml:space="preserve"><value>Close settings</value></data>
+  <data name="BackToSettings" xml:space="preserve"><value>Back to settings</value></data>
+  <data name="BackToTop" xml:space="preserve"><value>Back to top</value></data>
+  <data name="AppearanceSettingsDescription" xml:space="preserve"><value>Change language, theme, and visual preferences.</value></data>
+  <data name="BrandIconSettingsDescription" xml:space="preserve"><value>Manage and import local icon packs.</value></data>
+  <data name="SecuritySettingsDescription" xml:space="preserve"><value>Configure encryption, app lock, and unlock methods.</value></data>
+  <data name="BackupSettingsDescription" xml:space="preserve"><value>Create or restore encrypted OTP Harbor backups.</value></data>
+  <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Import accounts from QR codes or supported files.</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>MISC</value></data>
+  <data name="MiscSettingsDescription" xml:space="preserve"><value>Configure diagnostic logging.</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Minimum logging level (applies after restart)</value></data>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>English</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>German</value></data>
@@ -83,16 +102,16 @@
   <data name="DismissQr" xml:space="preserve"><value>Hide QR code</value></data>
   <data name="QrPrivacyNotice" xml:space="preserve"><value>This QR code contains the account secret. Share it only with a trusted authenticator.</value></data>
   <data name="QrDisplayFailed" xml:space="preserve"><value>The account QR code could not be displayed safely.</value></data>
-  <data name="BackupTitle" xml:space="preserve"><value>Encrypted backup</value></data>
+  <data name="BackupTitle" xml:space="preserve"><value>Backup &amp; Restore</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Export or restore an encrypted OTP Harbor backup. Existing accounts are skipped by default; changed matches are reviewed before import.</value></data>
   <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup and enter its password. Existing accounts are skipped by default; review each changed match before any account is changed.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Import accounts from other formats</value></data>
-  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Supported formats: unencrypted OTP Harbor JSON (.json), CSV (.csv), or pipe-delimited text (.txt); unencrypted Aegis JSON (.json); unencrypted 2FAS backup (.2fas); and text (.txt) containing one standard otpauth:// TOTP URI per line.</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Supported formats:</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Create a portable, password-protected backup. Android asks where to save it. Keep the backup and password separately; restore it with Restore encrypted backup.</value></data>
   <data name="BackupPassword" xml:space="preserve"><value>Backup password</value></data>
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirm backup password</value></data>
-  <data name="ExportBackup" xml:space="preserve"><value>Export encrypted backup</value></data>
-  <data name="ImportBackup" xml:space="preserve"><value>Restore encrypted backup</value></data>
+  <data name="ExportBackup" xml:space="preserve"><value>Export</value></data>
+  <data name="ImportBackup" xml:space="preserve"><value>Restore</value></data>
   <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Enter a backup password.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>The backup password must contain at least {0} characters.</value></data>
@@ -156,6 +175,7 @@
   <data name="SecretInvalid" xml:space="preserve"><value>The account secret is not valid Base32 data.</value></data>
   <data name="DuplicateAccount" xml:space="preserve"><value>An account with this issuer and account name already exists.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Account saved.</value></data>
+  <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Account saved, but its local icon preference could not be saved.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>The account could not be saved.</value></data>
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>Delete {0}? This cannot be undone.</value></data>
   <data name="Delete" xml:space="preserve"><value>Delete</value></data>
@@ -192,7 +212,7 @@
   <data name="AppLockDisabled" xml:space="preserve"><value>App lock disabled. Codes are available to anyone using this unlocked device.</value></data>
   <data name="AppLockEnabled" xml:space="preserve"><value>App lock enabled. A master password is required the next time the app locks.</value></data>
   <data name="AppLockChangeFailed" xml:space="preserve"><value>The app-lock setting could not be changed safely.</value></data>
-  <data name="ImportExport" xml:space="preserve"><value>Import / Export</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Imports</value></data>
   <data name="ImportSection" xml:space="preserve"><value>Import</value></data>
   <data name="ExportSection" xml:space="preserve"><value>Export</value></data>
   <data name="ImportGoogleQr" xml:space="preserve"><value>Import from Google Authenticator</value></data>
@@ -210,11 +230,14 @@
   <data name="ApplyUnlockMethod" xml:space="preserve"><value>Apply</value></data>
   <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>Unlock OTP Harbor</value></data>
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Use your device screen lock (PIN, pattern, or password).</value></data>
-  <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Icon packs</value></data>
   <data name="BrandIconsDescription" xml:space="preserve"><value>Third-party icon packs and custom icons are imported and stored locally by the user. OTP Harbor does not provide or distribute these assets.&#xA;&#xA;All trademarks, logos, copyrights, licenses, and usage guidelines remain the responsibility of their respective owners and apply independently of OTP Harbor.&#xA;&#xA;Compatibility with an icon pack does not imply affiliation with, sponsorship by, or endorsement by its provider or any trademark owner. Supported ZIPs include Simple Icons releases, SVG-based Aegis packs, and filename-indexed SVG packs.</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import local icon pack ZIP…</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Importing accounts…</value></data>
   <data name="ImportingBrandIcons" xml:space="preserve"><value>Importing icon pack…</value></data>
+  <data name="RemovingBrandIcons" xml:space="preserve"><value>Removing local icons…</value></data>
+  <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} local icons installed ({1} v{2}).</value></data>
+  <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} local icons installed ({1}).</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No icon pack was selected.</value></data>
   <data name="BrandIconPackImported" xml:space="preserve"><value>Imported {0} local brand icons from {1} {2}.</value></data>
   <data name="BrandIconPackImportFailed" xml:space="preserve"><value>The icon pack is invalid or could not be installed safely.</value></data>
@@ -224,11 +247,51 @@
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Show issuer logo</value></data>
   <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Show a branded or placeholder tile beside each account.</value></data>
   <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Choose custom SVG…</value></data>
+  <data name="Or" xml:space="preserve"><value>or</value></data>
+  <data name="CustomIconFileName" xml:space="preserve"><value>Image name: {0}</value></data>
+  <data name="BrandIcon" xml:space="preserve"><value>Account icon</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatic issuer match</value></data>
+  <data name="BrandIconHelp" xml:space="preserve"><value>Choose an icon from the imported local pack or keep automatic matching. This local display preference is not included in vault backups.</value></data>
+  <data name="CustomAccountIcon" xml:space="preserve"><value>Custom SVG</value></data>
   <data name="CustomIconImported" xml:space="preserve"><value>The custom icon was applied to this account.</value></data>
   <data name="CustomIconImportFailed" xml:space="preserve"><value>The SVG is invalid or could not be stored safely.</value></data>
+  <data name="CustomIconImportEmpty" xml:space="preserve"><value>The SVG file is empty.</value></data>
+  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>The SVG must be no larger than 64 KB.</value></data>
+  <data name="CustomIconImportMalformed" xml:space="preserve"><value>The SVG is not well-formed XML.</value></data>
+  <data name="CustomIconImportMissingPath" xml:space="preserve"><value>The SVG must contain an &lt;svg&gt; root and at least one &lt;path&gt; with path data.</value></data>
+  <data name="CustomIconImportUnsafe" xml:space="preserve"><value>The SVG contains a script or an external resource reference, which is not allowed.</value></data>
+  <data name="CustomIconImportUnreadable" xml:space="preserve"><value>The SVG could not be read or stored safely.</value></data>
+  <data name="UnsavedAccountChangesTitle" xml:space="preserve"><value>Unsaved changes</value></data>
+  <data name="UnsavedAccountChangesPrompt" xml:space="preserve"><value>Would you like to save your changes before leaving?</value></data>
+  <data name="DiscardChanges" xml:space="preserve"><value>Discard changes</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Could not save this setting.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Follow system</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
+  <data name="FaqSettingsDescription" xml:space="preserve"><value>Answers to common questions about OTP Harbor.</value></data>
+  <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>How do I import icon packs?</value></data>
+  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Open Settings → Icon packs → Import local icon pack ZIP. OTP Harbor supports compatible Simple Icons releases, SVG-based Aegis-compatible icon packs, and filename-indexed SVG ZIP archives.</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Obtain compatible packs independently from their official projects:</value></data>
+  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — official repository</value></data>
+  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis — icon-pack format and community-pack information</value></data>
+  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor imports and stores the selected icons locally. OTP Harbor does not host, bundle, redistribute, or endorse third-party icon packs. Third-party assets remain subject to their respective licenses, trademark rights, and usage terms. Users are responsible for ensuring that their use complies with those terms.</value></data>
+  <data name="BackupSection" xml:space="preserve"><value>Backup</value></data>
+  <data name="RestoreSection" xml:space="preserve"><value>Restore</value></data>
+  <data name="ImportFormatAegis" xml:space="preserve"><value>1. Unencrypted Aegis JSON export (.json)</value></data>
+  <data name="ImportFormatTwoFas" xml:space="preserve"><value>2. Unencrypted 2FAS backup (.2fas)</value></data>
+  <data name="ImportFormatOtpAuth" xml:space="preserve"><value>3. Text file with one standard otpauth:// TOTP URI per line (.txt)</value></data>
+  <data name="ViewImportFormatsFaq" xml:space="preserve"><value>How should these import files be structured?</value></data>
+  <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>How do I import accounts from different formats?</value></data>
+  <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Use an original, unencrypted export from the source app. Encrypted Aegis and 2FAS exports are rejected. The following minimal structures show the required fields:</value></data>
+  <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>1. Aegis JSON (.json)</value></data>
+  <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Export the vault from Aegis without encryption and select the resulting JSON file. OTP Harbor reads TOTP entries from db.entries. Encrypted vaults, HOTP entries, and unsupported TOTP parameters are rejected.</value></data>
+  <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>
+  <data name="FaqImportFormatsTwoFasTitle" xml:space="preserve"><value>2. 2FAS backup (.2fas)</value></data>
+  <data name="FaqImportFormatsTwoFasDescription" xml:space="preserve"><value>Create an unencrypted 2FAS backup and select the .2fas file. OTP Harbor reads TOTP accounts from services. Password-protected or encrypted backups and unsupported OTP parameters are rejected.</value></data>
+  <data name="FaqImportFormatsTwoFasExample" xml:space="preserve"><value>{&#xA;  "schemaVersion": 4,&#xA;  "services": [{&#xA;    "name": "Example",&#xA;    "secret": "JBSWY3DPEHPK3PXP",&#xA;    "otp": {&#xA;      "tokenType": "TOTP",&#xA;      "issuer": "Example",&#xA;      "account": "alice@example.com",&#xA;      "algorithm": "SHA1",&#xA;      "digits": 6,&#xA;      "period": 30&#xA;    }&#xA;  }],&#xA;  "servicesEncrypted": null,&#xA;  "reference": null&#xA;}</value></data>
+  <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>3. otpauth text file (.txt)</value></data>
+  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Create a UTF-8 text file with one standard otpauth://totp URI per line. Blank lines and lines beginning with # are ignored. Every URI must contain an issuer and a valid Base32 secret and use supported SHA-1, six-digit TOTP parameters.</value></data>
+  <data name="FaqImportFormatsOtpAuthExample" xml:space="preserve"><value>otpauth://totp/Example:alice%40example.com?secret=JBSWY3DPEHPK3PXP&amp;issuer=Example&amp;period=30</value></data>
 </root>

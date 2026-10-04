@@ -17,6 +17,9 @@ public sealed class SvgIconImporter : ICustomIconImporter
                 source.Stream,
                 cancellationToken);
             var fileStem = Path.GetFileNameWithoutExtension(source.FileName ?? string.Empty);
+            var sourceFileName = Path.GetFileName(source.FileName ?? string.Empty);
+            if (!IconImportArchive.IsSafeDisplayText(sourceFileName, 256))
+                sourceFileName = null;
             var name = IconImportArchive.IsSafeDisplayText(source.DisplayName)
                 ? source.DisplayName!.Trim()
                 : IconImportArchive.IsSafeDisplayText(fileStem)
@@ -35,15 +38,27 @@ public sealed class SvgIconImporter : ICustomIconImporter
                 name,
                 data,
                 aliases,
-                "custom-svg"));
+                "custom-svg",
+                "#334155",
+                sourceFileName));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Xml.XmlException)
+        catch (IconImportArchive.SvgValidationException ex)
         {
-            return Result.Fail("The selected custom SVG is invalid or unsupported.");
+            return Result.Fail<ImportedIcon>(new CustomIconImportError(ex.Reason));
+        }
+        catch (System.Xml.XmlException)
+        {
+            return Result.Fail<ImportedIcon>(
+                new CustomIconImportError(CustomIconImportFailureReason.MalformedXml));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            return Result.Fail<ImportedIcon>(
+                new CustomIconImportError(CustomIconImportFailureReason.Unreadable));
         }
     }
 }

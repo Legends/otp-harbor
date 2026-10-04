@@ -72,17 +72,43 @@ internal static partial class IconImportArchive
     internal static string PrefixBefore(ZipArchiveEntry entry, string suffix) =>
         NormalizeEntryName(entry.FullName)[..^suffix.Length];
 
-    internal static async Task<byte[]> ReadValidatedSvgAsync(
-        ZipArchiveEntry entry,
-        CancellationToken cancellationToken)
+    internal static ZipArchiveEntry? FindEntryByPath(ZipArchive archive, string path)
     {
-        if (entry.Length is <= 0 or > MaximumSvgBytes)
-            throw new InvalidDataException("An SVG has an invalid size.");
-        await using var input = entry.Open();
-        return await ReadValidatedSvgAsync(input, cancellationToken);
+        var normalizedPath = NormalizeEntryName(path);
+        EnsureSafeRelativePath(normalizedPath);
+        return archive.Entries.SingleOrDefault(entry =>
+            NormalizeEntryName(entry.FullName).Equals(
+                normalizedPath,
+                StringComparison.OrdinalIgnoreCase));
     }
 
     internal static async Task<byte[]> ReadValidatedSvgAsync(
+        ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+        => (await ReadValidatedSvgWithMetadataAsync(entry, cancellationToken)).Data;
+
+    internal static async Task<ValidatedSvg> ReadValidatedSvgWithMetadataAsync(
+        ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+    {
+        if (entry.Length <= 0)
+            throw new SvgValidationException(
+                CustomIconImportFailureReason.Empty,
+                "An SVG is empty.");
+        if (entry.Length > MaximumSvgBytes)
+            throw new SvgValidationException(
+                CustomIconImportFailureReason.TooLarge,
+                "An SVG exceeds the supported size.");
+        await using var input = entry.Open();
+        return await ReadValidatedSvgWithMetadataAsync(input, cancellationToken);
+    }
+
+    internal static async Task<byte[]> ReadValidatedSvgAsync(
+        Stream stream,
+        CancellationToken cancellationToken)
+        => (await ReadValidatedSvgWithMetadataAsync(stream, cancellationToken)).Data;
+
+    private static async Task<ValidatedSvg> ReadValidatedSvgWithMetadataAsync(
         Stream stream,
         CancellationToken cancellationToken)
     {
@@ -94,12 +120,18 @@ internal static partial class IconImportArchive
         {
             total += read;
             if (total > MaximumSvgBytes)
-                throw new InvalidDataException("An SVG exceeds the supported size.");
+                throw new SvgValidationException(
+                    CustomIconImportFailureReason.TooLarge,
+                    "An SVG exceeds the supported size.");
             await memory.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
         }
-        if (memory.Length == 0) throw new InvalidDataException("An SVG is empty.");
+        if (memory.Length == 0)
+            throw new SvgValidationException(
+                CustomIconImportFailureReason.Empty,
+                "An SVG is empty.");
 
         memory.Position = 0;
+        string? backgroundColor = null;
         using (var reader = XmlReader.Create(memory, new XmlReaderSettings
         {
             DtdProcessing = DtdProcessing.Prohibit,
@@ -118,15 +150,27 @@ internal static partial class IconImportArchive
                 if (reader.LocalName.Equals("path", StringComparison.OrdinalIgnoreCase)
                     && !string.IsNullOrWhiteSpace(reader.GetAttribute("d")))
                     foundPath = true;
+                if (backgroundColor is null
+                    && reader.LocalName.Equals("circle", StringComparison.OrdinalIgnoreCase)
+                    && reader.GetAttribute("fill") is { } fill
+                    && fill.StartsWith('#')
+                    && IsHexColor(fill[1..]))
+                {
+                    backgroundColor = fill.ToUpperInvariant();
+                }
                 if (reader.LocalName.Equals("script", StringComparison.OrdinalIgnoreCase)
                     || reader.GetAttribute("href") is { Length: > 0 }
                     || reader.GetAttribute("href", "http://www.w3.org/1999/xlink") is { Length: > 0 })
-                    throw new InvalidDataException("External or executable SVG content is not supported.");
+                    throw new SvgValidationException(
+                        CustomIconImportFailureReason.UnsafeContent,
+                        "External or executable SVG content is not supported.");
             }
             if (!foundSvg || !foundPath)
-                throw new InvalidDataException("Unsupported SVG content.");
+                throw new SvgValidationException(
+                    CustomIconImportFailureReason.MissingVectorPath,
+                    "Unsupported SVG content.");
         }
-        return memory.ToArray();
+        return new ValidatedSvg(memory.ToArray(), backgroundColor);
     }
 
     internal static async Task<byte[]> ReadBoundedAsync(
@@ -218,4 +262,13 @@ internal static partial class IconImportArchive
 
     [GeneratedRegex("^(?:LICENSE|LICENCE|COPYING|NOTICE|DISCLAIMER)(?:\\.(?:MD|TXT))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex NoticeNameRegex();
+
+    internal sealed class SvgValidationException(
+        CustomIconImportFailureReason reason,
+        string message) : Exception(message)
+    {
+        internal CustomIconImportFailureReason Reason { get; } = reason;
+    }
+
+    internal sealed record ValidatedSvg(byte[] Data, string? BackgroundColor);
 }

@@ -63,6 +63,7 @@ public sealed class AegisIconPackImporter : IIconPackImporter
                 || iconsElement.ValueKind != JsonValueKind.Array)
                 throw new InvalidDataException("Unexpected Aegis icon-pack metadata.");
 
+            var packName = nameElement.GetString()!.Trim();
             var version = versionElement.ValueKind switch
             {
                 JsonValueKind.Number => versionElement.GetRawText(),
@@ -82,7 +83,7 @@ public sealed class AegisIconPackImporter : IIconPackImporter
                 IconImportArchive.EnsureSafeRelativePath(relativeName);
                 if (!relativeName.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
                     continue;
-                var entry = archive.GetEntry(prefix + relativeName);
+                var entry = IconImportArchive.FindEntryByPath(archive, prefix + relativeName);
                 if (entry is null) continue;
                 var fallbackName = Path.GetFileNameWithoutExtension(relativeName);
                 var displayName = item.TryGetProperty("name", out var displayNameElement)
@@ -107,14 +108,18 @@ public sealed class AegisIconPackImporter : IIconPackImporter
                         if (IconImportArchive.IsSafeDisplayText(value, 128)) aliases.Add(value!);
                     }
                 }
+                var svg = await IconImportArchive.ReadValidatedSvgWithMetadataAsync(
+                    entry,
+                    cancellationToken);
                 icons.Add(new ImportedIcon(
                     id,
                     displayName,
-                    await IconImportArchive.ReadValidatedSvgAsync(entry, cancellationToken),
+                    svg.Data,
                     aliases.OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
                         .Take(IconImportArchive.MaximumAliasesPerIcon)
                         .ToArray(),
-                    Id));
+                    Id,
+                    svg.BackgroundColor ?? "#334155"));
                 if (icons.Count > IconImportArchive.MaximumIcons)
                     throw new InvalidDataException("The Aegis icon pack contains too many SVG icons.");
             }
@@ -123,7 +128,7 @@ public sealed class AegisIconPackImporter : IIconPackImporter
 
             return Result.Ok(new IconPackImportResult(
                 Id,
-                DisplayName,
+                packName,
                 version,
                 BrandIconPackFormat.Aegis,
                 icons,
@@ -133,7 +138,11 @@ public sealed class AegisIconPackImporter : IIconPackImporter
         {
             throw;
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException or System.Xml.XmlException)
+        catch (Exception ex) when (ex is IOException
+            or InvalidDataException
+            or JsonException
+            or System.Xml.XmlException
+            or IconImportArchive.SvgValidationException)
         {
             return Result.Fail("The Aegis icon-pack archive is invalid or unsupported.");
         }

@@ -7,7 +7,7 @@ namespace TOTP.Avalonia.Desktop.Localization;
 public sealed class AvaloniaLanguageFlagProvider : ILanguageFlagProvider, IDisposable
 {
     private const string AssetRoot =
-        "avares://TOTP.UI.Avalonia.Desktop/Assets/flags/";
+        "avares://TOTP.UI.Avalonia.Shared/Assets/flags/";
     private readonly Dictionary<string, Bitmap> _flags = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
