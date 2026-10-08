@@ -2280,6 +2280,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void ClearGroupEditor()
     {
+        // Remove the editor from the visual tree before releasing its item source.
+        // Large vaults otherwise make closing wait for every account row to detach.
+        IsGroupEditorVisible = false;
         SetGroupEditorMode(null, isEditingFavorites: false);
         GroupEditorName = string.Empty;
         GroupEditorMessage = string.Empty;
@@ -2287,7 +2290,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _allGroupEditorAccounts = [];
         GroupEditorAccounts = [];
         RefreshGroupColorOptions(null);
-        IsGroupEditorVisible = false;
     }
 
     private void SetGroupEditorMode(Guid? groupId, bool isEditingFavorites)

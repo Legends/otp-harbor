@@ -407,6 +407,11 @@
                                             <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
                                             <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsHelp}" TextWrapping="Wrap" />
                                             <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsFormatHelp}" TextWrapping="Wrap" />
+                                            <HyperlinkButton
+                                                HorizontalAlignment="Left"
+                                                Content="{DynamicResource IconPackBuilderLink}"
+                                                NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
+                                                Padding="0,3" />
                                             <TextBlock
                                                 Classes="settings-label"
                                                 Text="{Binding DataContext.NativeFilePicker.BrandIconPackStatusText, ElementName=SettingsRoot}"
@@ -490,13 +495,23 @@
                                                 <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportIconPacksSources}" TextWrapping="Wrap" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
+                                                    Content="{DynamicResource IconPackBuilderLink}"
+                                                    NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
+                                                    Padding="0,3" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
                                                     Content="{DynamicResource FaqSimpleIconsOfficialLink}"
-                                                    NavigateUri="https://github.com/simple-icons/simple-icons"
+                                                    NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
                                                     Padding="0,3" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
                                                     Content="{DynamicResource FaqAegisIconPackDocsLink}"
-                                                    NavigateUri="https://github.com/beemdevelopment/Aegis/blob/master/docs/iconpacks.md"
+                                                    NavigateUri="https://github.com/aegis-icons/aegis-icons#disclaimer"
+                                                    Padding="0,3" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
+                                                    Content="{DynamicResource FaqDashboardIconsLegalLink}"
+                                                    NavigateUri="https://github.com/homarr-labs/dashboard-icons#legal"
                                                     Padding="0,3" />
                                                 <TextBlock Classes="secondary" Text="{DynamicResource FaqImportIconPacksDisclaimer}" TextWrapping="Wrap" />
                                             </StackPanel>

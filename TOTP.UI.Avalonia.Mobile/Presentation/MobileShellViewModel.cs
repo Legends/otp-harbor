@@ -1608,6 +1608,7 @@ public sealed class MobileShellViewModel :
     public string FaqImportIconPacksSourcesText => Get(MobileStringKeys.FaqImportIconPacksSources);
     public string FaqSimpleIconsOfficialLinkText => Get(MobileStringKeys.FaqSimpleIconsOfficialLink);
     public string FaqAegisIconPackDocsLinkText => Get(MobileStringKeys.FaqAegisIconPackDocsLink);
+    public string FaqDashboardIconsLegalLinkText => Get(MobileStringKeys.FaqDashboardIconsLegalLink);
     public string FaqImportIconPacksDisclaimerText => Get(MobileStringKeys.FaqImportIconPacksDisclaimer);
     public string FaqImportFormatsQuestionText => Get(MobileStringKeys.FaqImportFormatsQuestion);
     public string FaqImportFormatsIntroText => Get(MobileStringKeys.FaqImportFormatsIntro);
@@ -1693,6 +1694,7 @@ public sealed class MobileShellViewModel :
     public string ImportBackupText => Get(MobileStringKeys.ImportBackup);
     public string BrandIconsText => Get(MobileStringKeys.BrandIcons);
     public string BrandIconsDescriptionText => Get(MobileStringKeys.BrandIconsDescription);
+    public string IconPackBuilderLinkText => Get(MobileStringKeys.IconPackBuilderLink);
     public string ChooseCustomSvgIconText => Get(MobileStringKeys.ChooseCustomSvgIcon);
     public string OrText => Get(MobileStringKeys.Or);
     public string UnsavedAccountChangesTitleText =>
@@ -5295,6 +5297,7 @@ public sealed class MobileShellViewModel :
         nameof(FaqImportIconPacksSourcesText),
         nameof(FaqSimpleIconsOfficialLinkText),
         nameof(FaqAegisIconPackDocsLinkText),
+        nameof(FaqDashboardIconsLegalLinkText),
         nameof(FaqImportIconPacksDisclaimerText),
         nameof(FaqImportFormatsQuestionText),
         nameof(FaqImportFormatsIntroText),
@@ -5374,6 +5377,7 @@ public sealed class MobileShellViewModel :
         nameof(ImportBackupText),
         nameof(BrandIconsText),
         nameof(BrandIconsDescriptionText),
+        nameof(IconPackBuilderLinkText),
         nameof(ChooseCustomSvgIconText),
         nameof(OrText),
         nameof(SelectedEditorCustomIconFileName),

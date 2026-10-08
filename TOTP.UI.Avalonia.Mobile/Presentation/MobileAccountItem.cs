@@ -174,7 +174,11 @@ public sealed class MobileAccountItem(
                 && _brand.DisplayName == brand.DisplayName
                 && _brand.Initials == brand.Initials
                 && _brand.BackgroundColor == brand.BackgroundColor
-                && _brand.IconData == brand.IconData))
+                && _brand.IconData == brand.IconData
+                && Equals(_brand.IconTransform, brand.IconTransform)
+                && ReferenceEquals(_brand.IconImage, brand.IconImage)
+                && ReferenceEquals(_brand.IconLayers, brand.IconLayers)
+                && Equals(_brand.SourceTransform, brand.SourceTransform)))
         {
             return;
         }

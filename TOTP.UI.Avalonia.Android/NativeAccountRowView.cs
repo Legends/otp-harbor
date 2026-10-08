@@ -49,7 +49,7 @@ internal sealed class NativeAccountRowView : View
     private float _swipeOffset;
     private bool _horizontalGesture;
     private bool _animating;
-    private global::Android.Graphics.Path? _brandPath;
+    private NativeBrandIcon? _brandIcon;
     private string _displayIssuer = string.Empty;
     private string _displaySecondary = string.Empty;
     private string _displayCode = string.Empty;
@@ -104,7 +104,7 @@ internal sealed class NativeAccountRowView : View
         _rawCode = row.Account.Code;
         _displayCode = row.Account.DisplayCode;
         _brandColor = TryColor(row.Account.Brand.BackgroundColor, NativeAccountPalette.Current.GenericBrand);
-        PrepareBrandPath();
+        PrepareBrandIcon();
         UpdateTextLayout();
         UpdateStarPath();
         PrepareEditPath();
@@ -120,8 +120,8 @@ internal sealed class NativeAccountRowView : View
         Unsubscribe();
         _row = null;
         _swipeOffset = 0;
-        _brandPath?.Dispose();
-        _brandPath = null;
+        _brandIcon?.Dispose();
+        _brandIcon = null;
         _displayIssuer = string.Empty;
         _displaySecondary = string.Empty;
         _displayCode = string.Empty;
@@ -193,7 +193,7 @@ internal sealed class NativeAccountRowView : View
             _cardBounds.CenterY() - brandSize / 2,
             brandLeft + brandSize,
             _cardBounds.CenterY() + brandSize / 2);
-        PrepareBrandPath();
+        PrepareBrandIcon();
         UpdateTextLayout();
         UpdateStarPath();
         PrepareEditPath();
@@ -452,10 +452,9 @@ internal sealed class NativeAccountRowView : View
         _fill.Color = _brandColor;
         canvas.DrawRoundRect(bounds, Dp(10), Dp(10), _fill);
 
-        if (_brandPath is not null)
+        if (_brandIcon is not null)
         {
-            _fill.Color = Color.White;
-            canvas.DrawPath(_brandPath, _fill);
+            _brandIcon.Draw(canvas, _fill, _stroke);
             return;
         }
 
@@ -597,7 +596,7 @@ internal sealed class NativeAccountRowView : View
                     _row.Account.Brand.BackgroundColor,
                     NativeAccountPalette.Current.GenericBrand);
             }
-            PrepareBrandPath();
+            PrepareBrandIcon();
             UpdateTextLayout();
             UpdateStarPath();
         }
@@ -700,34 +699,24 @@ internal sealed class NativeAccountRowView : View
         _displaySecondary = Ellipsize(secondary, availableWidth);
     }
 
-    private void PrepareBrandPath()
+    private void PrepareBrandIcon()
     {
-        _brandPath?.Dispose();
-        _brandPath = null;
+        _brandIcon?.Dispose();
+        _brandIcon = null;
         var account = _row?.Account;
         if (account is null
             || !account.ShowIssuerLogo
-            || account.Brand.IconData is not { Length: > 0 } iconData
             || Height <= 0)
         {
             return;
         }
-
-        using var sourcePath = NativeBrandPathFactory.TryCreate(iconData);
-        if (sourcePath is null) return;
-        using var sourceBounds = new RectF();
-        sourcePath.ComputeBounds(sourceBounds, true);
-        if (sourceBounds.Width() <= 0 || sourceBounds.Height() <= 0) return;
 
         using var target = new RectF(
             _brandBounds.Left + Dp(9),
             _brandBounds.Top + Dp(9),
             _brandBounds.Right - Dp(9),
             _brandBounds.Bottom - Dp(9));
-        using var matrix = new Matrix();
-        matrix.SetRectToRect(sourceBounds, target, Matrix.ScaleToFit.Center);
-        _brandPath = new global::Android.Graphics.Path();
-        sourcePath.Transform(matrix, _brandPath);
+        _brandIcon = NativeBrandIcon.TryCreate(account.Brand, target, Color.White);
     }
 
     private void UpdateStarPath()

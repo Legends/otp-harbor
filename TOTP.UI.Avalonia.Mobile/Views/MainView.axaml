@@ -1229,6 +1229,11 @@
                                     Foreground="{DynamicResource BrushTextSecondary}"
                                     Text="{Binding BrandIconsDescriptionText}"
                                     TextWrapping="Wrap" />
+                                <HyperlinkButton
+                                    HorizontalAlignment="Left"
+                                    Content="{Binding IconPackBuilderLinkText}"
+                                    NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
+                                    Padding="0,4" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextPrimary}"
                                     FontWeight="SemiBold"
@@ -1437,13 +1442,23 @@
                                                 <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
+                                                    Content="{Binding IconPackBuilderLinkText}"
+                                                    NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
+                                                    Padding="0,4" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
                                                     Content="{Binding FaqSimpleIconsOfficialLinkText}"
-                                                    NavigateUri="https://github.com/simple-icons/simple-icons"
+                                                    NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
                                                     Padding="0,4" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
                                                     Content="{Binding FaqAegisIconPackDocsLinkText}"
-                                                    NavigateUri="https://github.com/beemdevelopment/Aegis/blob/master/docs/iconpacks.md"
+                                                    NavigateUri="https://github.com/aegis-icons/aegis-icons#disclaimer"
+                                                    Padding="0,4" />
+                                                <HyperlinkButton
+                                                    HorizontalAlignment="Left"
+                                                    Content="{Binding FaqDashboardIconsLegalLinkText}"
+                                                    NavigateUri="https://github.com/homarr-labs/dashboard-icons#legal"
                                                     Padding="0,4" />
                                                 <TextBlock
                                                     Foreground="{DynamicResource BrushTextSecondary}"

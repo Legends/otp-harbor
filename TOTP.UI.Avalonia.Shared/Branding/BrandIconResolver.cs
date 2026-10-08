@@ -65,11 +65,14 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
         string? geometry = null;
         Transform? iconTransform = null;
         IImage? iconImage = null;
+        IReadOnlyList<BrandIconLayer>? iconLayers = null;
+        BrandIconTransform? sourceTransform = null;
         if (_packService.TryGetIconLayers(definition.Id, out var layers)
-            && layers.Count > 0
-            && layers.Any(static layer => layer.FillColor is not null || layer.Stroke is not null))
+            && layers.Count > 0)
         {
-            iconImage = CreateColoredIcon(layers);
+            iconLayers = layers;
+            if (layers.Any(static layer => layer.FillColor is not null || layer.Stroke is not null))
+                iconImage = CreateColoredIcon(layers);
         }
         if (iconImage is null && _packService.TryGetIconPathData(definition.Id, out var pathData))
         {
@@ -77,6 +80,7 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
             if (_packService.TryGetIconTransform(definition.Id, out var transform)
                 && transform is not null)
             {
+                sourceTransform = transform;
                 iconTransform = new MatrixTransform(new Matrix(
                     transform.M11,
                     transform.M12,
@@ -96,7 +100,9 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
             geometry,
             iconTransform,
             iconImage,
-            isCustomIcon);
+            isCustomIcon,
+            iconLayers,
+            sourceTransform);
     }
 
     private static IImage? CreateColoredIcon(IReadOnlyList<BrandIconLayer> layers)

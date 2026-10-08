@@ -79,8 +79,10 @@ public sealed class MobileStringCatalogTests
         Assert.False(string.IsNullOrWhiteSpace(catalog.Get(MobileStringKeys.FaqImportFormatsAegisDescription)));
         Assert.False(string.IsNullOrWhiteSpace(catalog.Get(MobileStringKeys.FaqImportFormatsTwoFasDescription)));
         Assert.False(string.IsNullOrWhiteSpace(catalog.Get(MobileStringKeys.FaqImportFormatsOtpAuthDescription)));
+        Assert.Contains("OTP Harbor", catalog.Get(MobileStringKeys.IconPackBuilderLink));
         Assert.Contains("Simple Icons", catalog.Get(MobileStringKeys.FaqSimpleIconsOfficialLink));
         Assert.Contains("Aegis", catalog.Get(MobileStringKeys.FaqAegisIconPackDocsLink));
+        Assert.Contains("Dashboard Icons", catalog.Get(MobileStringKeys.FaqDashboardIconsLegalLink));
         Assert.Contains("OTP Harbor", catalog.Get(MobileStringKeys.FaqImportIconPacksDisclaimer));
     }
 

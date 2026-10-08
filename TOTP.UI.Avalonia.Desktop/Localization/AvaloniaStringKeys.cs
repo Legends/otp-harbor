@@ -58,6 +58,7 @@ public static class AvaloniaStringKeys
     public const string BrandIcons = nameof(BrandIcons);
     public const string BrandIconsHelp = nameof(BrandIconsHelp);
     public const string BrandIconsFormatHelp = nameof(BrandIconsFormatHelp);
+    public const string IconPackBuilderLink = nameof(IconPackBuilderLink);
     public const string ImportSimpleIconsPack = nameof(ImportSimpleIconsPack);
     public const string SelectSimpleIconsPack = nameof(SelectSimpleIconsPack);
     public const string SimpleIconsZipFiles = nameof(SimpleIconsZipFiles);
@@ -111,6 +112,7 @@ public static class AvaloniaStringKeys
     public const string FaqImportIconPacksSources = nameof(FaqImportIconPacksSources);
     public const string FaqSimpleIconsOfficialLink = nameof(FaqSimpleIconsOfficialLink);
     public const string FaqAegisIconPackDocsLink = nameof(FaqAegisIconPackDocsLink);
+    public const string FaqDashboardIconsLegalLink = nameof(FaqDashboardIconsLegalLink);
     public const string FaqImportIconPacksDisclaimer = nameof(FaqImportIconPacksDisclaimer);
     public const string FaqImportFormatsQuestion = nameof(FaqImportFormatsQuestion);
     public const string FaqImportFormatsIntro = nameof(FaqImportFormatsIntro);
@@ -465,7 +467,7 @@ public static class AvaloniaStringKeys
         DownloadUpdate, InstallUpdate, ReleaseNotes, VerifyAppcast, SoftwareUpdates,
         ScanQrCamera, ImportQrCode, ImportGoogleAuthenticator,
         GoogleAuthenticatorImportHelp, ChooseGoogleAuthenticatorQrImage,
-        BrandIcons, BrandIconsHelp, BrandIconsFormatHelp, ImportSimpleIconsPack, SelectSimpleIconsPack,
+        BrandIcons, BrandIconsHelp, BrandIconsFormatHelp, IconPackBuilderLink, ImportSimpleIconsPack, SelectSimpleIconsPack,
         SimpleIconsZipFiles, NoBrandIconPackSelected, BrandIconPackImported, BrandIconPacksStatus,
         FilenameIndexedBrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
@@ -481,7 +483,7 @@ public static class AvaloniaStringKeys
         CameraScanFailedSafely, CameraRuntimeUnavailable, CameraNotFound, CameraStartFailed,
         SecuritySettings, Security, Backups, ImportExport, IconPacks, Faq,
         FaqImportIconPacksQuestion, FaqImportIconPacksAnswer, FaqImportIconPacksSources,
-        FaqSimpleIconsOfficialLink, FaqAegisIconPackDocsLink, FaqImportIconPacksDisclaimer,
+        FaqSimpleIconsOfficialLink, FaqAegisIconPackDocsLink, FaqDashboardIconsLegalLink, FaqImportIconPacksDisclaimer,
         FaqImportFormatsQuestion, FaqImportFormatsIntro,
         FaqImportFormatsAegisTitle, FaqImportFormatsAegisDescription, FaqImportFormatsAegisExample,
         FaqImportFormatsTwoFasTitle, FaqImportFormatsTwoFasDescription, FaqImportFormatsTwoFasExample,

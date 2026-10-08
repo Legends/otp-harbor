@@ -154,7 +154,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
     private readonly float _scaledDensity;
     private readonly int _touchSlop;
     private MobileGroupAccountSelection? _item;
-    private global::Android.Graphics.Path? _brandPath;
+    private NativeBrandIcon? _brandIcon;
     private Color _brandColor;
     private float _downX;
     private float _downY;
@@ -196,7 +196,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         _item = item;
         _item.PropertyChanged += ItemPropertyChanged;
         _brandColor = TryColor(item.Brand.BackgroundColor, NativeAccountPalette.Current.GenericBrand);
-        PrepareBrandPath();
+        PrepareBrandIcon();
         ContentDescription = string.IsNullOrWhiteSpace(item.AccountName)
             ? item.Issuer
             : $"{item.Issuer}, {item.AccountName}";
@@ -207,8 +207,8 @@ internal sealed class NativeGroupAccountSelectionRowView : View
     {
         if (_item is not null) _item.PropertyChanged -= ItemPropertyChanged;
         _item = null;
-        _brandPath?.Dispose();
-        _brandPath = null;
+        _brandIcon?.Dispose();
+        _brandIcon = null;
     }
 
     protected override void OnDraw(Canvas canvas)
@@ -240,7 +240,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         var size = Dp(40);
         var left = Dp(56);
         _brandBounds.Set(left, (height - size) / 2f, left + size, (height + size) / 2f);
-        PrepareBrandPath();
+        PrepareBrandIcon();
     }
 
     public override bool OnTouchEvent(MotionEvent? motionEvent)
@@ -344,10 +344,9 @@ internal sealed class NativeGroupAccountSelectionRowView : View
     {
         _fill.Color = _brandColor;
         canvas.DrawRoundRect(_brandBounds, Dp(8), Dp(8), _fill);
-        if (_brandPath is not null)
+        if (_brandIcon is not null)
         {
-            _fill.Color = Color.White;
-            canvas.DrawPath(_brandPath, _fill);
+            _brandIcon.Draw(canvas, _fill, _stroke);
             return;
         }
 
@@ -393,32 +392,22 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         return low == 0 ? suffix : value[..low] + suffix;
     }
 
-    private void PrepareBrandPath()
+    private void PrepareBrandIcon()
     {
-        _brandPath?.Dispose();
-        _brandPath = null;
+        _brandIcon?.Dispose();
+        _brandIcon = null;
         if (_item is not { ShowIssuerLogo: true }
-            || _item.Brand.IconData is not { Length: > 0 } iconData
             || Height <= 0)
         {
             return;
         }
-
-        using var sourcePath = NativeBrandPathFactory.TryCreate(iconData);
-        if (sourcePath is null) return;
-        using var sourceBounds = new RectF();
-        sourcePath.ComputeBounds(sourceBounds, true);
-        if (sourceBounds.Width() <= 0 || sourceBounds.Height() <= 0) return;
 
         using var target = new RectF(
             _brandBounds.Left + Dp(8),
             _brandBounds.Top + Dp(8),
             _brandBounds.Right - Dp(8),
             _brandBounds.Bottom - Dp(8));
-        using var matrix = new Matrix();
-        matrix.SetRectToRect(sourceBounds, target, Matrix.ScaleToFit.Center);
-        _brandPath = new global::Android.Graphics.Path();
-        sourcePath.Transform(matrix, _brandPath);
+        _brandIcon = NativeBrandIcon.TryCreate(_item.Brand, target, Color.White);
     }
 
     private void ItemPropertyChanged(object? sender, PropertyChangedEventArgs args)

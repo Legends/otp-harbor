@@ -52,6 +52,7 @@ public static class MobileStringKeys
     public const string FaqImportIconPacksSources = nameof(FaqImportIconPacksSources);
     public const string FaqSimpleIconsOfficialLink = nameof(FaqSimpleIconsOfficialLink);
     public const string FaqAegisIconPackDocsLink = nameof(FaqAegisIconPackDocsLink);
+    public const string FaqDashboardIconsLegalLink = nameof(FaqDashboardIconsLegalLink);
     public const string FaqImportIconPacksDisclaimer = nameof(FaqImportIconPacksDisclaimer);
     public const string FaqImportFormatsQuestion = nameof(FaqImportFormatsQuestion);
     public const string FaqImportFormatsIntro = nameof(FaqImportFormatsIntro);
@@ -156,6 +157,7 @@ public static class MobileStringKeys
     public const string ImportBackup = nameof(ImportBackup);
     public const string BrandIcons = nameof(BrandIcons);
     public const string BrandIconsDescription = nameof(BrandIconsDescription);
+    public const string IconPackBuilderLink = nameof(IconPackBuilderLink);
     public const string ImportSimpleIconsPack = nameof(ImportSimpleIconsPack);
     public const string ImportingAccounts = nameof(ImportingAccounts);
     public const string ImportingBrandIcons = nameof(ImportingBrandIcons);
@@ -347,6 +349,7 @@ public static class MobileStringKeys
         FaqImportIconPacksSources,
         FaqSimpleIconsOfficialLink,
         FaqAegisIconPackDocsLink,
+        FaqDashboardIconsLegalLink,
         FaqImportIconPacksDisclaimer,
         FaqImportFormatsQuestion,
         FaqImportFormatsIntro,
@@ -450,6 +453,7 @@ public static class MobileStringKeys
         ImportBackup,
         BrandIcons,
         BrandIconsDescription,
+        IconPackBuilderLink,
         ImportSimpleIconsPack,
         ImportingAccounts,
         ImportingBrandIcons, RemovingBrandIcons, BrandIconPackStatus, BrandIconPacksStatus,

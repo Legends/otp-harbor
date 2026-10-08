@@ -233,6 +233,7 @@
   <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Verwenden Sie die Gerätesperre (PIN, Muster oder Passwort).</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Symbolpakete</value></data>
   <data name="BrandIconsDescription" xml:space="preserve"><value>Symbolpakete und benutzerdefinierte Symbole von Drittanbietern werden vom Benutzer importiert und lokal gespeichert. OTP Harbor stellt diese Inhalte weder bereit noch verbreitet sie.&#xA;&#xA;Alle Marken, Logos, Urheberrechte, Lizenzen und Nutzungsrichtlinien verbleiben in der Verantwortung ihrer jeweiligen Eigentümer und gelten unabhängig von OTP Harbor.&#xA;&#xA;Die Kompatibilität mit einem Symbolpaket bedeutet weder eine Verbindung oder Förderung noch eine Empfehlung durch dessen Anbieter oder einen Markeninhaber. Importiere die anbieterunabhängige .otphicons-Datei aus OTP Harbor Icon Pack Builder; OTP Harbor prüft das vollständige Paket, bevor es das installierte Paket ersetzt.</value></data>
+  <data name="IconPackBuilderLink" xml:space="preserve"><value>OTP Harbor Icon Pack Builder – Projekt und Anleitung</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>OTP-Harbor-Symbolpaket importieren…</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Konten werden importiert…</value></data>
   <data name="ImportingBrandIcons" xml:space="preserve"><value>Icon-Paket wird importiert…</value></data>
@@ -274,11 +275,12 @@
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqSettingsDescription" xml:space="preserve"><value>Antworten auf häufige Fragen zu OTP Harbor.</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>Wie importiere ich Symbolpakete?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Erstelle mit OTP Harbor Icon Pack Builder die Datei otp-harbor-icons.otphicons und öffne dann Einstellungen → Symbolpakete → OTP-Harbor-Symbolpaket importieren. Der Builder kombiniert konfigurierte Quellen; OTP Harbor bleibt offline und verwendet kanonische IDs, Ausstelleraliase, ausgewählte SVGs, Farben, Lizenzen und Herkunftsangaben aus dem Paket. Der automatische Abgleich verwendet nur den Aussteller des Kontos.</value></data>
-  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Beziehe kompatible Pakete unabhängig von ihren offiziellen Projekten:</value></data>
-  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — offizielles Repository</value></data>
-  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis — Symbolpaketformat und Informationen zu Community-Paketen</value></data>
-  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor importiert und speichert die ausgewählten Symbole lokal. OTP Harbor hostet, bündelt oder verteilt keine Symbolpakete von Drittanbietern und spricht keine Empfehlung dafür aus. Drittanbieter-Assets unterliegen weiterhin ihren jeweiligen Lizenzen, Markenrechten und Nutzungsbedingungen. Benutzer sind dafür verantwortlich, dass ihre Nutzung diese Bedingungen einhält.</value></data>
+  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Öffne das separate Projekt OTP Harbor Icon Pack Builder und folge dessen Anleitung, um otp-harbor-icons.otphicons zu erstellen. Wähle anschließend Einstellungen → Symbolpakete → OTP-Harbor-Symbolpaket importieren. OTP Harbor lädt keine Quell-Symbolsammlungen herunter und importiert keine Anbieterarchive direkt. Das erzeugte Paket dokumentiert ausgewählte Symbole, Lizenzen, Namensnennungen und Herkunftsangaben; prüfe diese Informationen vor der Nutzung oder Weitergabe. Der automatische Abgleich verwendet nur den Aussteller des Kontos.</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Builder und rechtliche Informationen der Quellen:</value></data>
+  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons – rechtlicher Hinweis</value></data>
+  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons – Lizenz- und Markenhinweis</value></data>
+  <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons – Lizenz und rechtliche Hinweise</value></data>
+  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor und der Builder bündeln oder hosten weder Symbolsammlungen von Drittanbietern noch erzeugte Pakete und gewähren keine Rechte an Symbolen, Namen oder Marken Dritter. Formatkompatibilität bedeutet keine Verbindung, Förderung oder Empfehlung. Drittanbieter-Assets unterliegen den Lizenzen, Markenregeln und Markenrichtlinien der jeweiligen Rechteinhaber. Du bist dafür verantwortlich zu klären, ob deine Nutzung oder Weitergabe zulässig ist.</value></data>
   <data name="BackupSection" xml:space="preserve"><value>Sicherung</value></data>
   <data name="RestoreSection" xml:space="preserve"><value>Wiederherstellen</value></data>
   <data name="ImportFormatAegis" xml:space="preserve"><value>1. Unverschlüsselter Aegis-JSON-Export (.json)</value></data>

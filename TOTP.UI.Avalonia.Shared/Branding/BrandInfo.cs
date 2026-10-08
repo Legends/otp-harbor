@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Avalonia.Shared.Branding;
 
@@ -11,9 +12,11 @@ public sealed record BrandInfo(
     string? IconData,
     Transform? IconTransform = null,
     IImage? IconImage = null,
-    bool IsCustomIcon = false)
+    bool IsCustomIcon = false,
+    IReadOnlyList<BrandIconLayer>? IconLayers = null,
+    BrandIconTransform? SourceTransform = null)
 {
-    public bool HasIcon => IconData is not null || IconImage is not null;
+    public bool HasIcon => IconData is not null || IconImage is not null || IconLayers is { Count: > 0 };
 
     public static BrandInfo Generic(string? issuer)
     {

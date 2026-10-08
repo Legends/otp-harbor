@@ -337,6 +337,7 @@ internal sealed record NativeAccountRow(
     string Issuer,
     string AccountName,
     string CustomPeriodLabel,
+    TOTP.Avalonia.Shared.Branding.BrandInfo Brand,
     string BrandInitials,
     string BrandBackgroundColor,
     string? BrandIconData,
@@ -349,6 +350,7 @@ internal sealed record NativeAccountRow(
         account.Issuer,
         account.AccountName,
         account.CustomPeriodLabel,
+        account.Brand,
         account.Brand.Initials,
         account.Brand.BackgroundColor,
         account.Brand.IconData,
@@ -360,6 +362,7 @@ internal sealed record NativeAccountRow(
         && Issuer == other.Issuer
         && AccountName == other.AccountName
         && CustomPeriodLabel == other.CustomPeriodLabel
+        && ReferenceEquals(Brand, other.Brand)
         && BrandInitials == other.BrandInitials
         && BrandBackgroundColor == other.BrandBackgroundColor
         && BrandIconData == other.BrandIconData

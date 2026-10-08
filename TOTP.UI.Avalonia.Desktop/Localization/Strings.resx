@@ -401,7 +401,8 @@
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Choose Google Authenticator QR image…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optional brand icons</value></data>
   <data name="BrandIconsHelp" xml:space="preserve"><value>Third-party icon packs and custom icons are imported and stored locally by the user. OTP Harbor does not provide or distribute these assets.&#xA;&#xA;All trademarks, logos, copyrights, licenses, and usage guidelines remain the responsibility of their respective owners and apply independently of OTP Harbor.&#xA;&#xA;Compatibility with an icon pack does not imply affiliation with, sponsorship by, or endorsement by its provider or any trademark owner.</value></data>
-  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Import a provider-independent OTP Harbor Icons pack (.otphicons) created by OTP Harbor Icon Pack Builder. The pack can contain selected SVGs, issuer aliases, colors, licenses, and source provenance. OTP Harbor validates the complete pack before replacing the installed pack.</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Need a pack? Use the separate OTP Harbor Icon Pack Builder to create a local .otphicons file from supported third-party sources. The builder downloads those sources only when you run it; OTP Harbor itself stays offline.</value></data>
+  <data name="IconPackBuilderLink" xml:space="preserve"><value>OTP Harbor Icon Pack Builder — project and instructions</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import OTP Harbor icon pack…</value></data>
   <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Select OTP Harbor icon pack</value></data>
   <data name="SimpleIconsZipFiles" xml:space="preserve"><value>OTP Harbor icon packs</value></data>
@@ -430,11 +431,12 @@
   <data name="IconPacks" xml:space="preserve"><value>Icon packs</value></data>
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>How do I import icon packs?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Create an otp-harbor-icons.otphicons file with OTP Harbor Icon Pack Builder, then open Settings → Icon packs → Import OTP Harbor icon pack. The builder combines configured upstream sources; OTP Harbor remains offline and uses the pack's canonical IDs, issuer aliases, selected SVGs, colors, licenses, and provenance. Automatic matching uses the account issuer only.</value></data>
-  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Obtain compatible packs independently from their official projects:</value></data>
-  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — official repository</value></data>
-  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis — icon-pack format and community-pack information</value></data>
-  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor imports and stores the selected icons locally. OTP Harbor does not host, bundle, redistribute, or endorse third-party icon packs. Third-party assets remain subject to their respective licenses, trademark rights, and usage terms. Users are responsible for ensuring that their use complies with those terms.</value></data>
+  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Open the separate OTP Harbor Icon Pack Builder project and follow its instructions to create otp-harbor-icons.otphicons. Then choose Settings → Icon packs → Import OTP Harbor icon pack. OTP Harbor does not download source icon collections or import provider archives directly. The generated pack records its selected icons, licenses, attribution, and source provenance; review that information before using or sharing it. Automatic matching uses the account issuer only.</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Builder and upstream legal information:</value></data>
+  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — legal disclaimer</value></data>
+  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons — license and trademark notice</value></data>
+  <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons — license and legal notice</value></data>
+  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor and the builder do not bundle or host third-party icon collections or generated packs, and neither grants rights to third-party icons, names, or trademarks. Format compatibility does not imply affiliation, sponsorship, or endorsement. Third-party assets remain subject to each rights holder's licenses, trademark rules, and brand guidelines. You are responsible for determining whether your use or sharing is permitted.</value></data>
   <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>How do I import accounts from different formats?</value></data>
   <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Use an original, unencrypted export from the source app. Encrypted Aegis and 2FAS exports are rejected. The following minimal structures show the required fields:</value></data>
   <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>Aegis JSON (.json)</value></data>

@@ -60,6 +60,7 @@ public sealed class BrandIconResolverTests
         Assert.Equal("github", first.Id);
         Assert.True(first.HasIcon);
         Assert.IsType<MatrixTransform>(first.IconTransform);
+        Assert.Equal(new BrandIconTransform(0.6, 0, 0, 0.6, 4.8, 4.8), first.SourceTransform);
         Assert.Same(first, second);
         pack.Verify(value => value.TryGetIconPathData("github", out It.Ref<string>.IsAny), Times.Once);
     }

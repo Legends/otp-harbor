@@ -986,9 +986,20 @@
                                                     PlaceholderText="{DynamicResource SearchAccounts}"
                                                     Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
                                                 <Border Classes="panel" Padding="4">
-                                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Hidden">
-                                                        <ItemsControl ItemsSource="{Binding GroupEditorAccounts}">
-                                                            <ItemsControl.ItemTemplate>
+                                                    <Grid Height="240">
+                                                        <ListBox
+                                                            x:Name="GroupAccountPicker"
+                                                            Classes="accounts group-account-picker"
+                                                            ItemsSource="{Binding GroupEditorAccounts}"
+                                                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                            ScrollViewer.IsScrollChainingEnabled="False"
+                                                            ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                                            <ListBox.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <VirtualizingStackPanel CacheLength="0.5" />
+                                                                </ItemsPanelTemplate>
+                                                            </ListBox.ItemsPanel>
+                                                            <ListBox.ItemTemplate>
                                                                 <DataTemplate x:DataType="presentation:GroupAccountSelectionViewModel">
                                                                     <Grid
                                                                         x:Name="GroupAccountSelectionRow"
@@ -1021,9 +1032,9 @@
                                                                         </StackPanel>
                                                                     </Grid>
                                                                 </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </ScrollViewer>
+                                                            </ListBox.ItemTemplate>
+                                                        </ListBox>
+                                                    </Grid>
                                                 </Border>
                                                 <shared:ValidationMessage Severity="Error" Text="{Binding GroupEditorMessage}" />
                                                 <Grid Margin="0,6,0,0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">

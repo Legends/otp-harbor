@@ -259,8 +259,10 @@ public sealed class MobileAccountInteractionTests
                 .Attribute("Kind")?.Value));
         Assert.Equal(
             [
-                "https://github.com/simple-icons/simple-icons",
-                "https://github.com/beemdevelopment/Aegis/blob/master/docs/iconpacks.md"
+                "https://github.com/Legends/otp-harbor-icon-pack-builder",
+                "https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md",
+                "https://github.com/aegis-icons/aegis-icons#disclaimer",
+                "https://github.com/homarr-labs/dashboard-icons#legal"
             ],
             faqSections[0]
                 .Descendants(avalonia + "HyperlinkButton")

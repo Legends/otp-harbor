@@ -21,6 +21,7 @@ public sealed class BrandIconRenderingTests
         var drawing = Assert.IsType<DrawingGroup>(image.Drawing);
         Assert.Equal(4, drawing.Children.Count);
         Assert.Null(resolved.IconData);
+        Assert.Equal(4, resolved.IconLayers?.Count);
         Assert.True(resolved.HasIcon);
     }
 
@@ -34,6 +35,7 @@ public sealed class BrandIconRenderingTests
         var image = Assert.IsType<DrawingImage>(resolved.IconImage);
         Assert.Equal(new Rect(75.37, 20.86, 442.36, 555.61), image.Viewbox);
         Assert.Null(resolved.IconData);
+        Assert.All(resolved.IconLayers!, layer => Assert.NotNull(layer.Viewport));
         Assert.True(resolved.HasIcon);
     }
 

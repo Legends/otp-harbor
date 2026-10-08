@@ -2238,7 +2238,8 @@ public sealed class MainWindowSmokeTests
                 flyout.GetLogicalDescendants().OfType<TextBox>(),
                 textBox => textBox.Name == "GroupAccountSearchBox");
             var colorList = Assert.Single(
-                flyout.GetLogicalDescendants().OfType<ListBox>());
+                flyout.GetLogicalDescendants().OfType<ListBox>(),
+                listBox => listBox.Classes.Contains("group-color-picker"));
             var groupNameIcon = Assert.Single(
                 flyout.GetLogicalDescendants().OfType<SymbolIcon>(),
                 icon => icon.Kind == SymbolIconKind.Folder);
@@ -2251,10 +2252,14 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(SelectionMode.Single, colorList.SelectionMode);
             Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(colorList));
             Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetVerticalScrollBarVisibility(colorList));
-            var accountPickerScroller = Assert.Single(
-                flyout.GetLogicalDescendants().OfType<ScrollViewer>(),
-                viewer => viewer.MaxHeight == 240);
-            Assert.Equal(ScrollBarVisibility.Hidden, accountPickerScroller.VerticalScrollBarVisibility);
+            var accountPicker = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<ListBox>(),
+                listBox => listBox.Name == "GroupAccountPicker");
+            Assert.Equal(240, Assert.IsType<Grid>(accountPicker.Parent).Height);
+            Assert.Equal(
+                ScrollBarVisibility.Hidden,
+                ScrollViewer.GetVerticalScrollBarVisibility(accountPicker));
+            Assert.Single(accountPicker.GetVisualDescendants().OfType<VirtualizingStackPanel>());
             Assert.True(flyout.Bounds.Height > 0);
         }
         finally
@@ -2363,6 +2368,50 @@ public sealed class MainWindowSmokeTests
         finally
         {
             window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void GroupEditorAccountPicker_RealizesOnlyViewportRowsForLargeVault()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 540 };
+        var accounts = Enumerable.Range(0, 800)
+            .Select(index => new GroupAccountSelectionViewModel(
+                Guid.NewGuid(),
+                $"Issuer {index:000}",
+                $"account-{index:000}",
+                TOTP.Avalonia.Shared.Branding.BrandInfo.Generic($"Issuer {index:000}"),
+                showIssuerLogo: true,
+                isSelected: false))
+            .ToArray();
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage?.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+
+            var flyout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "GroupEditorFlyout");
+            flyout.IsVisible = true;
+            var accountPicker = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<ListBox>(),
+                listBox => listBox.Name == "GroupAccountPicker");
+            accountPicker.ItemsSource = accounts;
+            templateHost.UpdateLayout();
+
+            var realizedRows = accountPicker.GetVisualDescendants().OfType<ListBoxItem>().Count();
+            Assert.InRange(realizedRows, 1, 20);
+            Assert.Equal(800, accountPicker.ItemCount);
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
         }
     }
 
@@ -2578,6 +2627,14 @@ public sealed class MainWindowSmokeTests
             Assert.Contains("wide", importButton.Classes);
             Assert.Contains("secondary", resetButton.Classes);
             Assert.Contains("wide", resetButton.Classes);
+            var builderLink = Assert.Single(
+                brandIconsPanel.GetLogicalDescendants().OfType<HyperlinkButton>());
+            Assert.Equal(
+                new Uri("https://github.com/Legends/otp-harbor-icon-pack-builder"),
+                builderLink.NavigateUri);
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.IconPackBuilderLink],
+                builderLink.Content);
             Assert.Contains(
                 brandIconsPanel.GetLogicalDescendants().OfType<TextBlock>(),
                 textBlock => Equals(
