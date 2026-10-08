@@ -10,6 +10,7 @@ using TOTP.Core.Platform;
 using TOTP.Avalonia.Desktop.Startup;
 using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Avalonia.Desktop.Platform;
+using TOTP.Infrastructure.Icons;
 using TOTP.Infrastructure.Security;
 using TOTP.Infrastructure.Services;
 using TOTP.Platform.Windows;
@@ -67,7 +68,9 @@ public sealed class AvaloniaCompositionRootTests
         var accountList = Assert.IsType<AccountListViewModel>(
             services.GetRequiredService<AccountListViewModel>());
         var brandIcons = services.GetRequiredService<IBrandIconPackService>();
-        Assert.Equal(3, services.GetServices<IIconPackImporter>().Count());
+        var iconPackImporters = services.GetServices<IIconPackImporter>().ToArray();
+        Assert.Equal(4, iconPackImporters.Length);
+        Assert.IsType<OtpHarborIconPackImporter>(iconPackImporters[0]);
         Assert.NotNull(services.GetRequiredService<IIconPackImporterResolver>());
         Assert.NotNull(services.GetRequiredService<ICustomIconImporter>());
         Assert.Equal(

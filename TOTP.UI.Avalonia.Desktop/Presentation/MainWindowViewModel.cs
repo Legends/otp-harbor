@@ -616,9 +616,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public Task HandleWindowMinimizedAsync()
     {
+        AccountList.SuspendRowCodeGeneration();
         if (!IsShellVisible || _settingsService?.Current.LockOnMinimize != true)
             return Task.CompletedTask;
         return LockAsync();
+    }
+
+    public void HandleWindowDeactivated() =>
+        AccountList.SuspendRowCodeGeneration();
+
+    public void HandleWindowActivated()
+    {
+        if (IsShellVisible && IsAccountListVisible && !IsSettingsVisible)
+            AccountList.ResumeRowCodeGeneration();
     }
 
     private void OnAutomaticLock(object? sender, EventArgs args)

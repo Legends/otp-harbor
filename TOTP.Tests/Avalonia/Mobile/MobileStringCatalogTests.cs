@@ -101,6 +101,11 @@ public sealed class MobileStringCatalogTests
         Assert.Contains(expectedOpening, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(expectedDisclaimer, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("OTP Harbor", description, StringComparison.Ordinal);
+        Assert.Contains(".otphicons", description, StringComparison.Ordinal);
+        Assert.Contains(
+            "otp-harbor-icons.otphicons",
+            catalog.Get(MobileStringKeys.FaqImportIconPacksAnswer),
+            StringComparison.Ordinal);
     }
 
     [Theory]

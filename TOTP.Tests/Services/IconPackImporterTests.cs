@@ -168,6 +168,113 @@ public sealed class IconPackImporterTests
     }
 
     [Fact]
+    public async Task OtpHarborImporter_AcceptsFormatV1AndPreservesCanonicalMetadata()
+    {
+        await using var source = CreateOtpHarborArchive();
+        var sut = new OtpHarborIconPackImporter();
+
+        var result = await sut.ImportAsync(
+            new IconPackSource
+            {
+                Stream = source,
+                FileName = "otp-harbor-icons.otphicons"
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(BrandIconPackFormat.OtpHarbor, result.Value.Format);
+        Assert.Equal("otp-harbor-icons", result.Value.ProviderId);
+        Assert.Equal("format-1", result.Value.Version);
+        var icon = Assert.Single(result.Value.Icons);
+        Assert.Equal("c-plus-plus", icon.Id);
+        Assert.Equal("#00599C", icon.BackgroundColor);
+        Assert.Contains("C++", icon.Issuers);
+        Assert.Equal("simple-icons", icon.SelectedSource?.Provider);
+        Assert.Equal("cplusplus", icon.SelectedSource?.SourceId);
+        Assert.Equal("otp-harbor-icons", result.Value.Metadata?.PackId);
+        Assert.Contains(
+            result.Value.Metadata!.IssuerAliases,
+            alias => alias.Key == "c++" && alias.BrandId == "c-plus-plus");
+        var license = Assert.Single(result.Value.Notices);
+        Assert.Equal("licenses/simple-icons/license.md", license.RelativePath);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_AllowsResolvedLocalSvgReferencesButRejectsExternalReferences()
+    {
+        const string localReferenceSvg = """
+            <svg xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="base"><stop offset="0" stop-color="#000000"/></linearGradient>
+                <linearGradient id="derived" href="#base"/>
+              </defs>
+              <path fill="url(#derived)" d="M0 0h24v24H0z"/>
+            </svg>
+            """;
+        await using var local = CreateOtpHarborArchive(localReferenceSvg);
+
+        var accepted = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = local, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(accepted.IsSuccess);
+
+        const string externalReferenceSvg = """
+            <svg xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 0h24v24H0z"/>
+              <image href="https://example.invalid/icon.png"/>
+            </svg>
+            """;
+        await using var external = CreateOtpHarborArchive(externalReferenceSvg);
+        var rejected = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = external, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(rejected.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_AcceptsValidSvgLargerThanLegacy64KiBLimit()
+    {
+        var random = new Random(17);
+        var paddingBytes = new byte[48 * 1024];
+        random.NextBytes(paddingBytes);
+        var svg = $"<svg xmlns=\"http://www.w3.org/2000/svg\"><desc>{Convert.ToHexString(paddingBytes)}</desc><path d=\"M0 0h24v24H0z\"/></svg>";
+        Assert.True(System.Text.Encoding.UTF8.GetByteCount(svg) > 64 * 1024);
+        await using var archive = CreateOtpHarborArchive(svg);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = archive, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Resolver_ClaimsMalformedOtpHarborPackWithoutLegacyFallback()
+    {
+        await using var source = CreateArchive(archive =>
+        {
+            WriteEntry(archive, "pack.json", "{\"formatVersion\":2,\"packId\":\"otp-harbor-icons\",\"issuerAliases\":[]}");
+            WriteEntry(archive, "github.svg", ValidSvg);
+        });
+        var sut = new IconPackImporterResolver(
+            [
+                new OtpHarborIconPackImporter(),
+                new SimpleIconsImporter(),
+                new AegisIconPackImporter(),
+                new FilenameIndexedIconPackImporter()
+            ],
+            NullLogger<IconPackImporterResolver>.Instance);
+
+        var result = await sut.ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
     public async Task SvgIconImporter_NormalizesSafeLocalSvgAndRejectsExternalContent()
     {
         var sut = new SvgIconImporter();
@@ -203,6 +310,56 @@ public sealed class IconPackImporterTests
         var stream = new MemoryStream();
         using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
             write(archive);
+        stream.Position = 0;
+        return stream;
+    }
+
+    private static MemoryStream CreateOtpHarborArchive(string svg = ValidSvg)
+    {
+        var stream = new MemoryStream();
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            WriteEntry(archive, "pack.json", """
+                {
+                  "formatVersion":1,
+                  "packId":"otp-harbor-icons",
+                  "name":"OTP Harbor Icons",
+                  "sources":[{
+                    "provider":"simple-icons",
+                    "inputFileName":"source.zip",
+                    "sha256":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                    "version":"16.34.0",
+                    "revision":null,
+                    "sourceUrl":"https://github.com/simple-icons/simple-icons/releases/tag/16.34.0",
+                    "metadata":{"version":"16.34.0"},
+                    "licenseFiles":["licenses/simple-icons/license.md"]
+                  }],
+                  "brands":[{
+                    "id":"c-plus-plus",
+                    "displayName":"C++",
+                    "backgroundColor":"#00599C",
+                    "icon":"icons/c-plus-plus.svg",
+                    "issuerAliases":["C++","C Plus Plus"],
+                    "selectedSource":{
+                      "provider":"simple-icons",
+                      "sourceId":"cplusplus",
+                      "metadata":{"nativeBrandColor":"#00599C"}
+                    },
+                    "sources":[{
+                      "provider":"simple-icons",
+                      "sourceId":"cplusplus",
+                      "metadata":{"nativeBrandColor":"#00599C"}
+                    }]
+                  }],
+                  "issuerAliases":[
+                    {"key":"c++","brandId":"c-plus-plus"},
+                    {"key":"c plus plus","brandId":"c-plus-plus"}
+                  ]
+                }
+                """);
+            WriteEntry(archive, "icons/c-plus-plus.svg", svg);
+            WriteEntry(archive, "licenses/simple-icons/license.md", "Synthetic license");
+        }
         stream.Position = 0;
         return stream;
     }

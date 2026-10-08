@@ -37,6 +37,36 @@ namespace TOTP.Tests.Avalonia.Headless;
 public sealed class MainWindowSmokeTests
 {
     [AvaloniaFact]
+    public void BusyOverlay_AnimatesProgressOnlyWhileBusy()
+    {
+        var overlay = new BusyOverlay { Content = new TextBlock { Text = "content" } };
+        var window = new Window { Content = overlay };
+
+        try
+        {
+            window.Show();
+            overlay.ApplyTemplate();
+            window.UpdateLayout();
+            var progress = Assert.Single(
+                overlay.GetVisualDescendants().OfType<ProgressBar>());
+
+            Assert.False(progress.IsIndeterminate);
+
+            overlay.IsBusy = true;
+
+            Assert.True(progress.IsIndeterminate);
+
+            overlay.IsBusy = false;
+
+            Assert.False(progress.IsIndeterminate);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void SettingsFaq_ExpandingOneSectionCollapsesThePreviouslyOpenSection()
     {
         var window = new SettingsWindow();
@@ -57,6 +87,45 @@ public sealed class MainWindowSmokeTests
             importFormats.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
             Assert.True(importFormats.IsExpanded);
             Assert.False(iconPacks.IsExpanded);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsFaq_ExpandingOneImportFormatCollapsesThePreviouslyOpenFormat()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var formats = window.FindControl<Expander>("FaqImportFormatsExpander");
+            var aegis = window.FindControl<Expander>("FaqImportFormatsAegisExpander");
+            var twoFas = window.FindControl<Expander>("FaqImportFormatsTwoFasExpander");
+            var otpAuth = window.FindControl<Expander>("FaqImportFormatsOtpAuthExpander");
+            Assert.NotNull(formats);
+            Assert.NotNull(aegis);
+            Assert.NotNull(twoFas);
+            Assert.NotNull(otpAuth);
+
+            formats.IsExpanded = true;
+            aegis.IsExpanded = true;
+            aegis.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(aegis.IsExpanded);
+
+            twoFas.IsExpanded = true;
+            twoFas.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(twoFas.IsExpanded);
+            Assert.False(aegis.IsExpanded);
+
+            otpAuth.IsExpanded = true;
+            otpAuth.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(otpAuth.IsExpanded);
+            Assert.False(twoFas.IsExpanded);
+            Assert.True(formats.IsExpanded);
         }
         finally
         {
@@ -189,47 +258,6 @@ public sealed class MainWindowSmokeTests
             Assert.False(input.IsRevealed);
             Assert.NotEqual('\0', textBox.PasswordChar);
             Assert.Equal(SymbolIconKind.Reveal, revealIcon.Kind);
-        }
-        finally
-        {
-            window.Close();
-        }
-    }
-
-    [AvaloniaFact]
-    public void BrandIconComboBox_QuickTypedPrefixSelectsMatchingEntry()
-    {
-        var options = new[]
-        {
-            new BrandIconOption(null, "Automatic"),
-            new BrandIconOption("paypal", "PayPal"),
-            new BrandIconOption("pr-co", "pr.co"),
-            new BrandIconOption("proton", "Proton")
-        };
-        var comboBox = new TypeAheadComboBox
-        {
-            Width = 240,
-            DisplayMemberBinding = new Binding(nameof(BrandIconOption.DisplayName)),
-            ItemsSource = options,
-            SelectedIndex = 0
-        };
-        var window = new Window { Content = comboBox };
-
-        try
-        {
-            window.Show();
-            window.UpdateLayout();
-            comboBox.Focus();
-            comboBox.IsDropDownOpen = true;
-            window.UpdateLayout();
-
-            Assert.True(comboBox.Bounds.Height > 0);
-
-            window.KeyPress(Key.P, RawInputModifiers.None, PhysicalKey.P, "p");
-            Assert.Same(options[1], comboBox.SelectedItem);
-
-            window.KeyPress(Key.R, RawInputModifiers.None, PhysicalKey.R, "r");
-            Assert.Same(options[2], comboBox.SelectedItem);
         }
         finally
         {
@@ -847,6 +875,66 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void SearchableBrandIconPicker_FiltersNamesAndKeepsPopupInsideWindow()
+    {
+        var options = new[]
+        {
+            new BrandIconOption(null, "Automatic"),
+            new BrandIconOption("paypal", "PayPal"),
+            new BrandIconOption("proton", "Proton")
+        };
+        var picker = new SearchableComboBox
+        {
+            ItemsSource = options,
+            PopupWidth = 420,
+            PreferredWidth = 420,
+            SelectedItem = options[0]
+        };
+        var window = new Window
+        {
+            Width = 380,
+            Content = new Border
+            {
+                Margin = new Thickness(30),
+                Child = picker
+            }
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            Assert.Equal(options, picker.FilteredItems);
+
+            picker.SearchText = "pro";
+
+            Assert.Equal([options[2]], picker.FilteredItems);
+            Assert.Same(options[0], picker.SelectedItem);
+
+            picker.SearchText = string.Empty;
+
+            Assert.Equal(options, picker.FilteredItems);
+
+            var dropDownButton = Assert.Single(
+                picker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            dropDownButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            var origin = picker.TranslatePoint(new Point(0, 0), window);
+
+            Assert.NotNull(origin);
+            Assert.True(picker.Bounds.Width <= 320);
+            Assert.True(
+                origin.Value.X + picker.EffectivePopupWidth
+                    <= window.ClientSize.Width - 12 + 0.01);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task AccountList_RevealScrollsImportedRowWithoutSelectingIt()
     {
         var accounts = Enumerable.Range(0, 50)
@@ -1292,7 +1380,8 @@ public sealed class MainWindowSmokeTests
             window.Show();
 
             Assert.Equal(2, window.GetVisualDescendants().OfType<Image>().Count());
-            Assert.Single(window.GetVisualDescendants().OfType<ProgressBar>());
+            var progress = Assert.Single(window.GetVisualDescendants().OfType<ProgressBar>());
+            Assert.False(progress.IsIndeterminate);
             Assert.Equal(
                 4,
                 window.GetVisualDescendants().OfType<Button>().Count(button => button.IsVisible));
@@ -1749,6 +1838,7 @@ public sealed class MainWindowSmokeTests
             window.UpdateLayout();
 
             Assert.Equal(176, menu.Width);
+            Assert.Equal(new Thickness(0, 48, 42, 0), menu.Margin);
             Assert.Equal(new Thickness(0), menu.Padding);
             Assert.True(menu.ClipToBounds);
 
@@ -1810,8 +1900,8 @@ public sealed class MainWindowSmokeTests
                 window.FindControl<TextBox>("AccountSearchBox")!,
                 window.FindControl<Button>("ClearSearchButton")!,
                 window.FindControl<ComboBox>("LanguageSelector")!,
-                window.FindControl<Button>("OpenSettingsButton")!,
-                window.FindControl<Button>("AccountSortButton")!
+                window.FindControl<Button>("AccountSortButton")!,
+                window.FindControl<Button>("OpenSettingsButton")!
             ];
             foreach (var button in expectedOrder.OfType<Button>())
                 button.Command = new TestCommand(static () => { });
@@ -1965,7 +2055,7 @@ public sealed class MainWindowSmokeTests
                 templateHost.GetLogicalDescendants().OfType<Expander>(),
                 expander => expander.Name == "AccountAdvancedOptions");
             var brandIconPicker = Assert.Single(
-                templateHost.GetLogicalDescendants().OfType<TypeAheadComboBox>(),
+                templateHost.GetLogicalDescendants().OfType<SearchableComboBox>(),
                 comboBox => comboBox.Name == "AccountBrandIconComboBox");
             var scrollViewer = Assert.Single(
                 templateHost.GetVisualDescendants().OfType<ScrollViewer>(),
@@ -1977,6 +2067,10 @@ public sealed class MainWindowSmokeTests
 
             Assert.True(brandIconPicker.IsVisible);
             Assert.True(brandIconPicker.Bounds.Height > 0);
+            Assert.True(
+                brandIconPicker.Bounds.Width
+                    <= ((Control)brandIconPicker.Parent!).Bounds.Width,
+                "The account icon picker must remain inside its advanced-options container.");
             Assert.Contains(brandIconPicker, advancedOptions.GetLogicalDescendants());
             var customSvgButton = Assert.Single(
                 advancedOptions.GetLogicalDescendants().OfType<Button>(),
@@ -2338,7 +2432,7 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(100, overlay.GetValue(Panel.ZIndexProperty));
             var progress = Assert.Single(
                 overlay.GetVisualDescendants().OfType<ProgressBar>());
-            Assert.True(progress.IsIndeterminate);
+            Assert.False(progress.IsIndeterminate);
             var panel = Assert.Single(
                 overlay.GetVisualChildren().OfType<Border>());
             Assert.Equal(

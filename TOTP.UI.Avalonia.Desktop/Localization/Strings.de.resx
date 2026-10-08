@@ -65,11 +65,13 @@
   <data name="Issuer" xml:space="preserve"><value>Anbieter</value></data>
   <data name="AccountName" xml:space="preserve"><value>Kontoname</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32-Geheimnis</value></data>
-  <data name="BrandIcon" xml:space="preserve"><value>Kontosymbol</value></data>
+  <data name="BrandIcon" xml:space="preserve"><value>Kontosymbol (Symbolpaket)</value></data>
+  <data name="SearchBrandIcons" xml:space="preserve"><value>Symbolpaket durchsuchen</value></data>
   <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatisch nach Anbieter zuordnen</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Wählen Sie ein Symbol aus dem importierten lokalen Paket oder behalten Sie die automatische Zuordnung bei. Diese lokale Anzeigeeinstellung ist nicht in Tresor-Sicherungen enthalten.</value></data>
   <data name="CustomAccountIcon" xml:space="preserve"><value>Benutzerdefiniertes SVG</value></data>
   <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Benutzerdefiniertes SVG auswählen…</value></data>
+  <data name="CustomIconFileName" xml:space="preserve"><value>Benutzerdefiniertes Bild: {0}</value></data>
   <data name="SvgIconFiles" xml:space="preserve"><value>SVG-Symboldateien</value></data>
   <data name="CustomIconImported" xml:space="preserve"><value>Das benutzerdefinierte Symbol wurde diesem Konto zugewiesen.</value></data>
   <data name="CustomIconImportFailed" xml:space="preserve"><value>Das SVG ist ungültig oder konnte nicht sicher gespeichert werden.</value></data>
@@ -399,10 +401,10 @@
   <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Google-Authenticator-QR-Bild auswählen…</value></data>
   <data name="BrandIcons" xml:space="preserve"><value>Optionale Markensymbole</value></data>
   <data name="BrandIconsHelp" xml:space="preserve"><value>Symbolpakete und benutzerdefinierte Symbole von Drittanbietern werden vom Benutzer importiert und lokal gespeichert. OTP Harbor stellt diese Inhalte weder bereit noch verbreitet sie.&#xA;&#xA;Alle Marken, Logos, Urheberrechte, Lizenzen und Nutzungsrichtlinien verbleiben in der Verantwortung ihrer jeweiligen Eigentümer und gelten unabhängig von OTP Harbor.&#xA;&#xA;Die Kompatibilität mit einem Symbolpaket bedeutet weder eine Verbindung oder Förderung noch eine Empfehlung durch dessen Anbieter oder einen Markeninhaber.</value></data>
-  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Unterstützte ZIP-Dateien: Simple-Icons-Releases, SVG-basierte Aegis-Symbolpakete oder SVG-Dateien mit kanonischen IDs als Namen, etwa github.svg. Kompatible Formaterweiterungen werden akzeptiert; unsichere Pfade, mehrdeutige Metadaten, doppelte IDs und nicht unterstützte Bildinhalte werden abgelehnt.</value></data>
-  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Lokales Symbolpaket-ZIP importieren…</value></data>
-  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Lokales Symbolpaket-ZIP auswählen</value></data>
-  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Symbolpaket-ZIP-Dateien</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>Importiere ein anbieterunabhängiges OTP-Harbor-Icons-Paket (.otphicons), das mit OTP Harbor Icon Pack Builder erstellt wurde. Das Paket kann ausgewählte SVGs, Ausstelleraliase, Farben, Lizenzen und Herkunftsangaben enthalten. OTP Harbor prüft das vollständige Paket, bevor es das installierte Paket ersetzt.</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>OTP-Harbor-Symbolpaket importieren…</value></data>
+  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>OTP-Harbor-Symbolpaket auswählen</value></data>
+  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>OTP-Harbor-Symbolpakete</value></data>
   <data name="NoBrandIconPackSelected" xml:space="preserve"><value>Es wurde kein Symbolpaket ausgewählt.</value></data>
   <data name="BrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus {1} {2} wurden importiert.</value></data>
   <data name="FilenameIndexedBrandIconPackImported" xml:space="preserve"><value>{0} lokale Markensymbole aus dem nach Dateinamen indizierten ZIP wurden importiert.</value></data>
@@ -411,6 +413,7 @@
   <data name="BrandIconPackResetFailed" xml:space="preserve"><value>Importierte Markensymbole konnten nicht entfernt werden.</value></data>
   <data name="BrandIconPackNotInstalled" xml:space="preserve"><value>Es ist kein lokales Symbolpaket installiert.</value></data>
   <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole installiert ({1} v{2}).</value></data>
+  <data name="BrandIconPacksStatus" xml:space="preserve"><value>{0} lokale Symbole aus {1} installierten Paketen verfügbar ({2}).</value></data>
   <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} lokale Symbole installiert ({1}).</value></data>
   <data name="ResetBrandIcons" xml:space="preserve"><value>Importierte Symbole entfernen</value></data>
   <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>Das importierte Symbolpaket entfernen? Kontodaten werden nicht geändert, aber Konten verwenden automatische oder allgemeine Symbole, bis ein anderes Paket importiert wird.</value></data>
@@ -427,20 +430,20 @@
   <data name="IconPacks" xml:space="preserve"><value>Symbolpakete</value></data>
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>Wie importiere ich Symbolpakete?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Öffne Einstellungen → Symbolpakete → Lokales Symbolpaket-ZIP importieren. OTP Harbor unterstützt kompatible Simple-Icons-Veröffentlichungen, SVG-basierte Aegis-kompatible Symbolpakete und nach Dateinamen indizierte SVG-ZIP-Archive.</value></data>
+  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Erstelle mit OTP Harbor Icon Pack Builder die Datei otp-harbor-icons.otphicons und öffne dann Einstellungen → Symbolpakete → OTP-Harbor-Symbolpaket importieren. Der Builder kombiniert konfigurierte Quellen; OTP Harbor bleibt offline und verwendet kanonische IDs, Ausstelleraliase, ausgewählte SVGs, Farben, Lizenzen und Herkunftsangaben aus dem Paket. Der automatische Abgleich verwendet nur den Aussteller des Kontos.</value></data>
   <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Beziehe kompatible Pakete unabhängig von ihren offiziellen Projekten:</value></data>
   <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — offizielles Repository</value></data>
   <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis — Symbolpaketformat und Informationen zu Community-Paketen</value></data>
   <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor importiert und speichert die ausgewählten Symbole lokal. OTP Harbor hostet, bündelt oder verteilt keine Symbolpakete von Drittanbietern und spricht keine Empfehlung dafür aus. Drittanbieter-Assets unterliegen weiterhin ihren jeweiligen Lizenzen, Markenrechten und Nutzungsbedingungen. Benutzer sind dafür verantwortlich, dass ihre Nutzung diese Bedingungen einhält.</value></data>
   <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>Wie importiere ich Konten aus verschiedenen Formaten?</value></data>
   <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Verwende einen unveränderten, unverschlüsselten Export der Quell-App. Verschlüsselte Aegis- und 2FAS-Exporte werden abgelehnt. Die folgenden Minimalstrukturen zeigen die erforderlichen Felder:</value></data>
-  <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>1. Aegis JSON (.json)</value></data>
+  <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>Aegis JSON (.json)</value></data>
   <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Exportiere den Tresor unverschlüsselt aus Aegis und wähle die erzeugte JSON-Datei. OTP Harbor liest TOTP-Einträge aus db.entries. Verschlüsselte Tresore, HOTP-Einträge und nicht unterstützte TOTP-Parameter werden abgelehnt.</value></data>
   <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>
-  <data name="FaqImportFormatsTwoFasTitle" xml:space="preserve"><value>2. 2FAS-Sicherung (.2fas)</value></data>
+  <data name="FaqImportFormatsTwoFasTitle" xml:space="preserve"><value>2FAS-Sicherung (.2fas)</value></data>
   <data name="FaqImportFormatsTwoFasDescription" xml:space="preserve"><value>Erstelle eine unverschlüsselte 2FAS-Sicherung und wähle die .2fas-Datei. OTP Harbor liest TOTP-Konten aus services. Passwortgeschützte oder verschlüsselte Sicherungen und nicht unterstützte OTP-Parameter werden abgelehnt.</value></data>
   <data name="FaqImportFormatsTwoFasExample" xml:space="preserve"><value>{&#xA;  "schemaVersion": 4,&#xA;  "services": [{&#xA;    "name": "Example",&#xA;    "secret": "JBSWY3DPEHPK3PXP",&#xA;    "otp": {&#xA;      "tokenType": "TOTP",&#xA;      "issuer": "Example",&#xA;      "account": "alice@example.com",&#xA;      "algorithm": "SHA1",&#xA;      "digits": 6,&#xA;      "period": 30&#xA;    }&#xA;  }],&#xA;  "servicesEncrypted": null,&#xA;  "reference": null&#xA;}</value></data>
-  <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>3. otpauth-Textdatei (.txt)</value></data>
+  <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>otpauth-Textdatei (.txt)</value></data>
   <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Erstelle eine UTF-8-Textdatei mit genau einer standardmäßigen otpauth://totp-URI pro Zeile. Leerzeilen und Zeilen, die mit # beginnen, werden ignoriert. Jede URI muss einen Aussteller und ein gültiges Base32-Geheimnis enthalten und unterstützte TOTP-Parameter mit SHA-1 und sechs Stellen verwenden.</value></data>
   <data name="FaqImportFormatsOtpAuthExample" xml:space="preserve"><value>otpauth://totp/Example:alice%40example.com?secret=JBSWY3DPEHPK3PXP&amp;issuer=Example&amp;period=30</value></data>
   <data name="BackupSection" xml:space="preserve"><value>Sicherung</value></data>

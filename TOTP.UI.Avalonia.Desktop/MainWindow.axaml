@@ -104,7 +104,7 @@
                                 <ProgressBar
                                     Height="4"
                                     VerticalAlignment="Center"
-                                    IsIndeterminate="True"
+                                    IsIndeterminate="{Binding IsQuickUnlockBusy}"
                                     IsVisible="{Binding IsQuickUnlockBusy}" />
                             </Grid>
                             <Button
@@ -322,15 +322,6 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                             <Button
-                                x:Name="OpenSettingsButton"
-                                Margin="0"
-                                automation:AutomationProperties.Name="{DynamicResource Settings}"
-                                Classes="icon"
-                                Command="{Binding ShowSettingsCommand}"
-                                ToolTip.Tip="{DynamicResource Settings}">
-                                <shared:SymbolIcon Foreground="{DynamicResource BrushTextSecondary}" IconSize="16" Kind="Settings" />
-                            </Button>
-                            <Button
                                 x:Name="AccountSortButton"
                                 Margin="0"
                                 automation:AutomationProperties.Name="{DynamicResource SortAccounts}"
@@ -339,6 +330,15 @@
                                 IsVisible="{Binding AccountList.HasMultipleAccounts}"
                                 ToolTip.Tip="{DynamicResource SortAccounts}">
                                 <shared:SymbolIcon Margin="0,2,0,0" IconSize="20" Kind="Sort" />
+                            </Button>
+                            <Button
+                                x:Name="OpenSettingsButton"
+                                Margin="0"
+                                automation:AutomationProperties.Name="{DynamicResource Settings}"
+                                Classes="icon"
+                                Command="{Binding ShowSettingsCommand}"
+                                ToolTip.Tip="{DynamicResource Settings}">
+                                <shared:SymbolIcon Foreground="{DynamicResource BrushTextSecondary}" IconSize="16" Kind="Settings" />
                             </Button>
                         </StackPanel>
                     </Grid>
@@ -540,7 +540,9 @@
                                                                         IsVisible="{Binding ShowIssuerLogo}"
                                                                         Margin="0,0,6,0"
                                                                         IconData="{Binding Brand.IconData}"
+                                                                        IconImage="{Binding Brand.IconImage}"
                                                                         IconTransform="{Binding Brand.IconTransform}"
+                                                                        IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                                         Initials="{Binding Brand.Initials}"
                                                                         TileBackground="{Binding Brand.BackgroundBrush}" />
                                                                     <shared:AccountRow
@@ -801,33 +803,40 @@
                                                             automation:AutomationProperties.Name="{DynamicResource FavoriteAccount}"
                                                             Content="{DynamicResource FavoriteAccount}"
                                                             IsChecked="{Binding EditorIsFavorite, Mode=TwoWay}" />
+                                                        <Border
+                                                            Height="1"
+                                                            Margin="0,4"
+                                                            Background="{DynamicResource BrushBorder}" />
                                                         <TextBlock
                                                             Classes="field-label"
                                                             Text="{DynamicResource BrandIcon}" />
-                                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                                            <controls:TypeAheadComboBox
-                                                                x:Name="AccountBrandIconComboBox"
-                                                                Grid.Column="0"
-                                                                Width="{Binding EditorBrandIconPickerWidth}"
-                                                                HorizontalAlignment="Left"
-                                                                automation:AutomationProperties.Name="{DynamicResource BrandIcon}"
-                                                                IsEnabled="{Binding HasBrandIconChoices}"
-                                                                ItemsSource="{Binding EditorBrandIconOptions}"
-                                                                SelectedItem="{Binding SelectedEditorBrandIconOption, Mode=TwoWay}">
-                                                                <controls:TypeAheadComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="presentation:BrandIconOption">
-                                                                        <TextBlock Text="{Binding DisplayName}" />
-                                                                    </DataTemplate>
-                                                                </controls:TypeAheadComboBox.ItemTemplate>
-                                                            </controls:TypeAheadComboBox>
+                                                        <shared:SearchableComboBox
+                                                            x:Name="AccountBrandIconComboBox"
+                                                            HorizontalAlignment="Left"
+                                                            automation:AutomationProperties.Name="{DynamicResource BrandIcon}"
+                                                            ClearSearchText="{DynamicResource ClearSearch}"
+                                                            IsEnabled="{Binding HasBrandIconChoices}"
+                                                            ItemsSource="{Binding EditorBrandIconOptions}"
+                                                            PopupMaxHeight="180"
+                                                            PopupWidth="260"
+                                                            PreferredWidth="{Binding EditorBrandIconPickerWidth}"
+                                                            SearchPlaceholder="{DynamicResource SearchBrandIcons}"
+                                                            SelectedItem="{Binding SelectedEditorBrandIconOption, Mode=TwoWay}">
+                                                            <shared:SearchableComboBox.ItemTemplate>
+                                                                <DataTemplate x:DataType="presentation:BrandIconOption">
+                                                                    <TextBlock Text="{Binding DisplayNameForDisplay}" TextTrimming="CharacterEllipsis" />
+                                                                </DataTemplate>
+                                                            </shared:SearchableComboBox.ItemTemplate>
+                                                        </shared:SearchableComboBox>
+                                                        <Border MinHeight="22">
                                                             <TextBlock
-                                                                Grid.Column="1"
                                                                 HorizontalAlignment="Left"
                                                                 VerticalAlignment="Center"
-                                                                IsVisible="{Binding HasSelectedEditorBrandIconFileName}"
-                                                                Text="{Binding SelectedEditorBrandIconFileName}"
+                                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                                IsVisible="{Binding HasSelectedEditorCustomIconFileName}"
+                                                                Text="{Binding SelectedEditorCustomIconFileName}"
                                                                 TextTrimming="CharacterEllipsis" />
-                                                        </Grid>
+                                                        </Border>
                                                         <Button
                                                             x:Name="CustomSvgIconButton"
                                                             Classes="secondary wide"
@@ -838,6 +847,10 @@
                                                             Classes="secondary"
                                                             Text="{DynamicResource BrandIconHelp}"
                                                             TextWrapping="Wrap" />
+                                                        <Border
+                                                            Height="1"
+                                                            Margin="0,4"
+                                                            Background="{DynamicResource BrushBorder}" />
                                                         <TextBlock
                                                             Classes="field-label"
                                                             Text="{DynamicResource TotpPeriod}" />
@@ -995,7 +1008,9 @@
                                                                             VerticalAlignment="Center"
                                                                             IsVisible="{Binding ShowIssuerLogo}"
                                                                             IconData="{Binding Brand.IconData}"
+                                                                            IconImage="{Binding Brand.IconImage}"
                                                                             IconTransform="{Binding Brand.IconTransform}"
+                                                                            IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                                             Initials="{Binding Brand.Initials}"
                                                                             TileBackground="{Binding Brand.BackgroundBrush}" />
                                                                         <StackPanel
@@ -1076,7 +1091,7 @@
                 x:Name="AccountSortMenu"
                 ZIndex="91"
                 Width="176"
-                Margin="0,48,8,0"
+                Margin="0,48,42,0"
                 Padding="0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"

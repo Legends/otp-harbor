@@ -46,6 +46,7 @@ public sealed class DesktopUnlockInteractionTests
             .Elements(avalonia + "ProgressBar")
             .Single();
         Assert.Equal("{Binding IsQuickUnlockBusy}", progress?.Attribute("IsVisible")?.Value);
+        Assert.Equal("{Binding IsQuickUnlockBusy}", progress?.Attribute("IsIndeterminate")?.Value);
         Assert.Equal("4", progress?.Attribute("Height")?.Value);
 
         var messageStyle = document

@@ -140,6 +140,8 @@ public sealed class AvaloniaLocalizationServiceTests
         Assert.Contains("Simple Icons", sut.Get(AvaloniaStringKeys.FaqSimpleIconsOfficialLink, culture));
         Assert.Contains("Aegis", sut.Get(AvaloniaStringKeys.FaqAegisIconPackDocsLink, culture));
         Assert.Contains("OTP Harbor", sut.Get(AvaloniaStringKeys.FaqImportIconPacksDisclaimer, culture));
+        Assert.Contains(".otphicons", sut.Get(AvaloniaStringKeys.BrandIconsFormatHelp, culture));
+        Assert.Contains("otp-harbor-icons.otphicons", sut.Get(AvaloniaStringKeys.FaqImportIconPacksAnswer, culture));
     }
 
     [Theory]

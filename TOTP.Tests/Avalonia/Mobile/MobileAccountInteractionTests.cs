@@ -52,20 +52,26 @@ public sealed class MobileAccountInteractionTests
             control => control.Attribute("IsChecked")?.Value
                 == "{Binding EditorIsFavorite, Mode=TwoWay}");
         Assert.Contains(
-            advanced.Descendants(avalonia + "ComboBox"),
+            advanced.Descendants().Where(element => element.Name.LocalName == "SearchableComboBox"),
             control => control.Attribute(xaml + "Name")?.Value
                 == "AccountBrandIconComboBox");
         Assert.Contains(
             advanced.Descendants(avalonia + "Button"),
             control => control.Attribute(xaml + "Name")?.Value
                 == "CustomSvgIconButton");
-        Assert.Contains(
+        Assert.DoesNotContain(
             advanced.Descendants(avalonia + "TextBlock"),
             control => control.Attribute("Text")?.Value == "{Binding OrText}");
         Assert.Contains(
             advanced.Descendants(avalonia + "TextBlock"),
             control => control.Attribute("Text")?.Value
                 == "{Binding SelectedEditorCustomIconFileName}");
+        Assert.Equal(
+            2,
+            advanced.Descendants(avalonia + "Border")
+                .Count(border => border.Attribute("Height")?.Value == "1"
+                    && border.Attribute("Background")?.Value
+                        == "{DynamicResource BrushBorder}"));
 
         var exitModal = document
             .Descendants(avalonia + "Grid")
@@ -229,7 +235,10 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "Border")
             .Single(element => element.Attribute("IsVisible")?.Value
                 == "{Binding IsFaqSettingsVisible}");
-        var faqSections = faq.Descendants(avalonia + "Expander").ToArray();
+        var faqSections = faq
+            .Descendants(avalonia + "Expander")
+            .Where(section => section.Attribute("Classes")?.Value == "mobile-faq-section")
+            .ToArray();
         Assert.Equal(2, faqSections.Length);
         Assert.All(
             faqSections,
@@ -260,6 +269,37 @@ public sealed class MobileAccountInteractionTests
             faqSections[1].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{Binding FaqImportFormatsAegisDescriptionText}");
+        var importFormatSections = faqSections[1]
+            .Descendants(avalonia + "Expander")
+            .Where(section => section.Attribute("Classes")?.Value == "mobile-faq-subsection")
+            .ToArray();
+        Assert.Equal(3, importFormatSections.Length);
+        Assert.All(
+            importFormatSections,
+            section => Assert.Equal(
+                "FaqImportFormatSectionExpanded",
+                section.Attribute("Expanded")?.Value));
+        Assert.Equal(
+            [
+                "{Binding FaqImportFormatsAegisTitleText}",
+                "{Binding FaqImportFormatsTwoFasTitleText}",
+                "{Binding FaqImportFormatsOtpAuthTitleText}"
+            ],
+            importFormatSections.Select(section => section
+                .Descendants(avalonia + "TextBlock")
+                .First()
+                .Attribute("Text")?.Value));
+        foreach (var state in new[] { "pointerover", "pressed" })
+        {
+            var stateStyle = document
+                .Descendants(avalonia + "Style")
+                .Single(style => style.Attribute("Selector")?.Value
+                    == $"Expander.mobile-faq-subsection /template/ ToggleButton#ExpanderHeader:{state}");
+            Assert.Contains(
+                stateStyle.Elements(avalonia + "Setter"),
+                setter => setter.Attribute("Property")?.Value == "Background"
+                    && setter.Attribute("Value")?.Value == "Transparent");
+        }
         Assert.All(
             faqSections,
             section =>

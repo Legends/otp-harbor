@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia.Media;
@@ -17,6 +18,7 @@ namespace TOTP.Avalonia.Desktop.Presentation;
 
 public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 {
+    private const int FullListCodeBindingNotificationLimit = 50;
     private readonly IAccountManager _accountManager;
     private readonly IAccountTotpService _accountTotpService;
     private readonly IAsyncClipboardService _clipboardService;
@@ -57,6 +59,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _toggleFavoritesFilterCommand;
     private readonly AsyncCommand _selectUngroupedCommand;
     private readonly AsyncCommand _toggleAllAccountsFilterCommand;
+    private readonly HashSet<Guid> _realizedAccountIds = [];
     private CancellationTokenSource? _rowCodeLifetime;
     private CancellationTokenSource? _recentHighlightLifetime;
     private CancellationTokenSource? _copyConfirmationLifetime;
@@ -82,6 +85,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private bool _isBusy;
     private bool _isFavoriteUpdateInProgress;
     private bool _isGenerating;
+    private bool _isRowCodeGenerationSuspended;
     private int _remainingSeconds;
     private int _periodSeconds;
     private AvaloniaQrImageHandle? _qrImage;
@@ -232,6 +236,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         private set
         {
             if (!SetField(ref _accounts, value)) return;
+            _realizedAccountIds.Clear();
             OnPropertyChanged(nameof(HasNoAccounts));
             OnPropertyChanged(nameof(HasNoSearchResults));
             OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
@@ -692,6 +697,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!SetField(ref _selectedEditorBrandIconOption, value)) return;
             OnPropertyChanged(nameof(SelectedEditorBrandIconFileName));
             OnPropertyChanged(nameof(HasSelectedEditorBrandIconFileName));
+            OnPropertyChanged(nameof(SelectedEditorCustomIconFileName));
+            OnPropertyChanged(nameof(HasSelectedEditorCustomIconFileName));
         }
     }
 
@@ -700,6 +707,19 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasSelectedEditorBrandIconFileName =>
         !string.IsNullOrWhiteSpace(SelectedEditorBrandIconFileName);
+
+    public bool HasSelectedEditorCustomIconFileName =>
+        SelectedEditorBrandIconOption?.Id?.StartsWith("custom_", StringComparison.Ordinal) == true
+        && HasSelectedEditorBrandIconFileName;
+
+    public string SelectedEditorCustomIconFileName =>
+        HasSelectedEditorCustomIconFileName
+            ? string.Format(
+                CultureInfo.CurrentCulture,
+                _localization.GetString(AvaloniaStringKeys.CustomIconFileName),
+                Shared.Presentation.IconNameDisplayPolicy.Truncate(
+                    SelectedEditorBrandIconFileName))
+            : string.Empty;
 
     public double EditorBrandIconPickerWidth =>
         Math.Clamp(
@@ -1940,16 +1960,49 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public void ResumeRowCodeGeneration()
     {
+        _isRowCodeGenerationSuspended = false;
         if (_autoGenerateCodeOnSelection && _allAccounts.Count > 0)
             StartRowCodeLifetime(refreshImmediately: true);
     }
 
+    public void SuspendRowCodeGeneration()
+    {
+        _isRowCodeGenerationSuspended = true;
+        StopRowCodeLifetime();
+    }
+
+    public void SetRealizedAccounts(
+        IReadOnlyCollection<AccountListItemViewModel> realizedAccounts)
+    {
+        ArgumentNullException.ThrowIfNull(realizedAccounts);
+        var currentRealizedAccounts = realizedAccounts
+            .Where(Accounts.Contains)
+            .DistinctBy(account => account.Id)
+            .ToArray();
+
+        if (Accounts.Count <= FullListCodeBindingNotificationLimit)
+        {
+            _realizedAccountIds.Clear();
+        }
+        else
+        {
+            var realizedIds = currentRealizedAccounts
+                .Select(account => account.Id)
+                .ToHashSet();
+            if (!_realizedAccountIds.SetEquals(realizedIds))
+            {
+                _realizedAccountIds.Clear();
+                _realizedAccountIds.UnionWith(realizedIds);
+            }
+        }
+
+        foreach (var account in currentRealizedAccounts)
+            account.RefreshCodeBindings();
+    }
+
     private void StartRowCodeLifetime(bool refreshImmediately)
     {
-        var previousLifetime = _rowCodeLifetime;
-        _rowCodeLifetime = null;
-        previousLifetime?.Cancel();
-        previousLifetime?.Dispose();
+        if (_isRowCodeGenerationSuspended || _rowCodeLifetime is not null) return;
 
         var lifetime = new CancellationTokenSource();
         _rowCodeLifetime = lifetime;
@@ -1974,7 +2027,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                     .Where(account => account.RemainingSeconds <= 1)
                     .ToArray();
                 foreach (var account in accounts.Except(expiringAccounts))
-                    account.Tick();
+                    account.Tick(notifyBindings: ShouldNotifyCodeBindings(account));
 
                 if (_selectedAccount is not null)
                     ProjectSelectedCode(_selectedAccount);
@@ -2011,7 +2064,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception)
         {
             foreach (var account in accounts)
-                account.ClearCode();
+                account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
             SetLocalizedCodeMessage(AvaloniaStringKeys.CodeRefreshFailed);
             return;
         }
@@ -2021,7 +2074,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         if (refreshed.IsFailed)
         {
             foreach (var account in accounts)
-                account.ClearCode();
+                account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
             SetLocalizedCodeMessage(AvaloniaStringKeys.CodeRefreshFailed);
             return;
         }
@@ -2032,7 +2085,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (!GetTrackedAccounts().Contains(account)) continue;
             if (!refreshed.Value.Codes.TryGetValue(account.Id, out var generated))
             {
-                account.ClearCode();
+                account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
                 refreshFailed = true;
                 continue;
             }
@@ -2040,7 +2093,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             account.UpdateCode(
                 generated.Code,
                 generated.RemainingSeconds,
-                generated.PeriodSeconds);
+                generated.PeriodSeconds,
+                notifyBindings: ShouldNotifyCodeBindings(account));
             if (ReferenceEquals(account, _selectedAccount))
                 ProjectSelectedCode(account);
         }
@@ -2056,6 +2110,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
         return [_selectedAccount];
     }
+
+    private bool ShouldNotifyCodeBindings(AccountListItemViewModel account) =>
+        (Accounts.Count <= FullListCodeBindingNotificationLimit && Accounts.Contains(account))
+        || _realizedAccountIds.Contains(account.Id);
 
     private void ProjectSelectedCode(AccountListItemViewModel account)
     {
@@ -2176,13 +2234,19 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void StopAndClearRowCodes()
     {
+        StopRowCodeLifetime();
+        foreach (var account in GetTrackedAccounts())
+            account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
+        _realizedAccountIds.Clear();
+        ClearSelectedCodeProjection();
+    }
+
+    private void StopRowCodeLifetime()
+    {
         var lifetime = _rowCodeLifetime;
         _rowCodeLifetime = null;
         lifetime?.Cancel();
         lifetime?.Dispose();
-        foreach (var account in GetTrackedAccounts())
-            account.ClearCode();
-        ClearSelectedCodeProjection();
     }
 
     public void NotifySettingsChanged()

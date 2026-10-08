@@ -25,8 +25,10 @@ public partial class MainWindow : Window
     private bool _initialized;
     private bool _fitScheduled;
     private bool _editorFitScheduled;
+    private bool _realizedAccountReportPending;
     private MainWindowViewModel? _observedViewModel;
     private AccountListViewModel? _observedAccountList;
+    private ContextPreservingAccountListBox? _realizedAccountList;
     private CancellationTokenSource? _heightAnimationLifetime;
     private SettingsWindow? _settingsWindow;
     private IDisposable? _settingsWindowRegistration;
@@ -44,6 +46,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Activated += MainWindowActivated;
+        Deactivated += MainWindowDeactivated;
         PositionChanged += MainWindowPositionChanged;
         ScalingChanged += MainWindowScalingChanged;
     }
@@ -91,6 +95,9 @@ public partial class MainWindow : Window
         if (DataContext is MainWindowViewModel viewModel)
         {
             ObserveViewModel(viewModel);
+            Dispatcher.UIThread.Post(
+                AttachAccountListRealizationTracking,
+                DispatcherPriority.Loaded);
             if (!_initialized)
             {
                 _initialized = true;
@@ -105,6 +112,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        DetachAccountListRealizationTracking();
         ObserveViewModel(null);
         _mainWindowActivityRegistration?.Dispose();
         _mainWindowActivityRegistration = null;
@@ -131,6 +139,18 @@ public partial class MainWindow : Window
         {
             _ = viewModel.HandleWindowMinimizedAsync();
         }
+    }
+
+    private void MainWindowActivated(object? sender, EventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+            viewModel.HandleWindowActivated();
+    }
+
+    private void MainWindowDeactivated(object? sender, EventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+            viewModel.HandleWindowDeactivated();
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -481,6 +501,7 @@ public partial class MainWindow : Window
     private void ObserveViewModel(MainWindowViewModel? viewModel)
     {
         if (ReferenceEquals(_observedViewModel, viewModel)) return;
+        DetachAccountListRealizationTracking();
         if (_observedViewModel is not null)
             _observedViewModel.PropertyChanged -= MainViewModelPropertyChanged;
         if (_observedAccountList is not null)
@@ -499,6 +520,80 @@ public partial class MainWindow : Window
             _observedAccountList.PropertyChanged += AccountListPropertyChanged;
             _observedAccountList.AccountRevealRequested += AccountRevealRequested;
         }
+
+        if (_observedViewModel is not null)
+        {
+            Dispatcher.UIThread.Post(
+                AttachAccountListRealizationTracking,
+                DispatcherPriority.Loaded);
+        }
+    }
+
+    private void AttachAccountListRealizationTracking()
+    {
+        var accountList = this.GetVisualDescendants()
+            .OfType<ContextPreservingAccountListBox>()
+            .FirstOrDefault(control => control.Name == "AccountsListBox");
+        if (ReferenceEquals(_realizedAccountList, accountList))
+        {
+            ScheduleRealizedAccountReport();
+            return;
+        }
+
+        DetachAccountListRealizationTracking();
+        _realizedAccountList = accountList;
+        if (_realizedAccountList is null) return;
+
+        _realizedAccountList.ContainerPrepared += AccountContainerPrepared;
+        _realizedAccountList.ContainerClearing += AccountContainerClearing;
+        ScheduleRealizedAccountReport();
+    }
+
+    private void DetachAccountListRealizationTracking()
+    {
+        if (_realizedAccountList is not null)
+        {
+            _realizedAccountList.ContainerPrepared -= AccountContainerPrepared;
+            _realizedAccountList.ContainerClearing -= AccountContainerClearing;
+            _realizedAccountList = null;
+        }
+
+        _observedAccountList?.SetRealizedAccounts([]);
+    }
+
+    private void AccountContainerPrepared(object? sender, ContainerPreparedEventArgs e) =>
+        ScheduleRealizedAccountReport();
+
+    private void AccountContainerClearing(object? sender, ContainerClearingEventArgs e) =>
+        ScheduleRealizedAccountReport();
+
+    private void ScheduleRealizedAccountReport()
+    {
+        if (_realizedAccountReportPending) return;
+        _realizedAccountReportPending = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _realizedAccountReportPending = false;
+            ReportRealizedAccounts();
+        }, DispatcherPriority.Background);
+    }
+
+    private void ReportRealizedAccounts()
+    {
+        if (_observedAccountList is null
+            || _observedViewModel?.IsAccountListVisible != true
+            || _realizedAccountList is null)
+        {
+            _observedAccountList?.SetRealizedAccounts([]);
+            return;
+        }
+
+        var accounts = _realizedAccountList.GetRealizedContainers()
+            .Select(container => container.DataContext)
+            .OfType<AccountListItemViewModel>()
+            .DistinctBy(account => account.Id)
+            .ToArray();
+        _observedAccountList.SetRealizedAccounts(accounts);
     }
 
     private void AccountRevealRequested(AccountListItemViewModel account)
@@ -543,9 +638,15 @@ public partial class MainWindow : Window
 
         if (e.PropertyName != nameof(MainWindowViewModel.IsAccountListVisible)) return;
         if (_observedViewModel is { IsAccountListVisible: true })
+        {
             ScheduleAccountPageFit();
+            Dispatcher.UIThread.Post(
+                AttachAccountListRealizationTracking,
+                DispatcherPriority.Loaded);
+        }
         else
         {
+            _observedAccountList?.SetRealizedAccounts([]);
             MinHeight = Math.Min(StandardMinimumHeight, MaxHeight);
             StartHeightAnimation(Math.Min(MaxHeight, DefaultPageHeight));
         }
@@ -662,6 +763,8 @@ public partial class MainWindow : Window
             or nameof(AccountListViewModel.HasCodeMessage))
         {
             ScheduleAccountPageFit();
+            if (e.PropertyName == nameof(AccountListViewModel.Accounts))
+                ScheduleRealizedAccountReport();
         }
     }
 
@@ -806,7 +909,9 @@ public partial class MainWindow : Window
             () =>
             {
                 _fitScheduled = false;
+                AttachAccountListRealizationTracking();
                 FitAccountPageHeight();
+                ScheduleRealizedAccountReport();
             },
             DispatcherPriority.Loaded);
     }

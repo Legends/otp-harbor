@@ -5,6 +5,83 @@ namespace TOTP.Tests.Avalonia.Styles;
 public sealed class SharedStylesTests
 {
     [Fact]
+    public void DesktopIndeterminateProgressBarsAnimateOnlyWhileActive()
+    {
+        var fixtureDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia");
+        var expectedBindings = new Dictionary<string, string>
+        {
+            ["SharedStyles.axaml"] = "{TemplateBinding IsBusy}",
+            ["DesktopMainWindow.axaml"] = "{Binding IsQuickUnlockBusy}",
+            ["DesktopSettingsWindow.axaml"] =
+                "{Binding NativeFilePicker.IsImportProgressVisible}",
+            ["DesktopCameraScannerDialogWindow.axaml"] =
+                "{Binding IsWaitingForPreview}"
+        };
+
+        foreach (var (fixtureName, expectedBinding) in expectedBindings)
+        {
+            var document = XDocument.Load(Path.Combine(fixtureDirectory, fixtureName));
+            var indeterminateValues = document
+                .Descendants()
+                .Where(element => element.Name.LocalName == "ProgressBar")
+                .Select(element => element.Attribute("IsIndeterminate")?.Value)
+                .Where(value => value is not null)
+                .ToArray();
+
+            Assert.DoesNotContain("True", indeterminateValues);
+            Assert.Contains(expectedBinding, indeterminateValues);
+        }
+    }
+
+    [Fact]
+    public void SearchableComboBox_UsesCenteredClearButtonInsideSearchField()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var clearButton = document
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute("Name")?.Value == "PART_ClearSearch");
+        var searchBox = document
+            .Descendants(avalonia + "TextBox")
+            .Single(element => element.Attribute("Name")?.Value == "PART_SearchBox");
+
+        Assert.Equal("Center", clearButton.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("Center", clearButton.Attribute("VerticalContentAlignment")?.Value);
+        Assert.Equal("36", clearButton.Attribute("Height")?.Value);
+        Assert.Equal("10,7,40,7", searchBox.Attribute("Padding")?.Value);
+        Assert.Equal(
+            "{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}",
+            searchBox.Attribute("Text")?.Value);
+    }
+
+    [Fact]
+    public void DesktopBrandIconPopup_UsesCompactBounds()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "DesktopMainWindow.axaml"));
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var picker = document
+            .Descendants()
+            .Single(element => element.Name.LocalName == "SearchableComboBox"
+                && element.Attribute(xaml + "Name")?.Value == "AccountBrandIconComboBox");
+
+        Assert.Equal("260", picker.Attribute("PopupWidth")?.Value);
+        Assert.Equal("180", picker.Attribute("PopupMaxHeight")?.Value);
+    }
+
+    [Fact]
     public void FluentThemeUsesStaticWindowsBlueAcrossPlatforms()
     {
         var sourcePath = Path.Combine(
@@ -90,6 +167,8 @@ public sealed class SharedStylesTests
             "BrushQrBackground",
             "BrushQrForeground",
             "BrushBrandTileForeground",
+            "BrushCustomBrandTileBackground",
+            "BrushCustomBrandTileForeground",
             "BrushOverlayLight",
             "BrushOverlayStrong"
         };
@@ -171,7 +250,10 @@ public sealed class SharedStylesTests
         var faqTab = settings
             .Descendants(avalonia + "TabItem")
             .Single(element => element.Attribute("Header")?.Value == "{DynamicResource Faq}");
-        var faqSections = faqTab.Descendants(avalonia + "Expander").ToArray();
+        var faqSections = faqTab
+            .Descendants(avalonia + "Expander")
+            .Where(section => section.Attribute("Classes")?.Value == "faq-section")
+            .ToArray();
         Assert.Equal(2, faqSections.Length);
         Assert.All(
             faqSections,
@@ -202,6 +284,37 @@ public sealed class SharedStylesTests
             faqSections[1].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{DynamicResource FaqImportFormatsAegisDescription}");
+        var importFormatSections = faqSections[1]
+            .Descendants(avalonia + "Expander")
+            .Where(section => section.Attribute("Classes")?.Value == "faq-subsection")
+            .ToArray();
+        Assert.Equal(3, importFormatSections.Length);
+        Assert.All(
+            importFormatSections,
+            section => Assert.Equal(
+                "FaqImportFormatSectionExpanded",
+                section.Attribute("Expanded")?.Value));
+        Assert.Equal(
+            [
+                "{DynamicResource FaqImportFormatsAegisTitle}",
+                "{DynamicResource FaqImportFormatsTwoFasTitle}",
+                "{DynamicResource FaqImportFormatsOtpAuthTitle}"
+            ],
+            importFormatSections.Select(section => section
+                .Descendants(avalonia + "TextBlock")
+                .First()
+                .Attribute("Text")?.Value));
+        foreach (var state in new[] { "pointerover", "pressed" })
+        {
+            var stateStyle = settings
+                .Descendants(avalonia + "Style")
+                .Single(style => style.Attribute("Selector")?.Value
+                    == $"Expander.faq-subsection /template/ ToggleButton#ExpanderHeader:{state}");
+            Assert.Contains(
+                stateStyle.Elements(avalonia + "Setter"),
+                setter => setter.Attribute("Property")?.Value == "Background"
+                    && setter.Attribute("Value")?.Value == "Transparent");
+        }
         Assert.All(
             faqSections,
             section =>

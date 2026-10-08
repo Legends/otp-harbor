@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddSingleton<IQrPayloadValidator, QrPayloadValidator>();
         services.AddSingleton<IQrAccountImportService, QrAccountImportService>();
         services.AddSingleton<IAccountImportService, AccountImportService>();
+        services.AddSingleton<IIconPackImporter, OtpHarborIconPackImporter>();
         services.AddSingleton<IIconPackImporter, SimpleIconsImporter>();
         services.AddSingleton<IIconPackImporter, AegisIconPackImporter>();
         services.AddSingleton<IIconPackImporter, FilenameIndexedIconPackImporter>();

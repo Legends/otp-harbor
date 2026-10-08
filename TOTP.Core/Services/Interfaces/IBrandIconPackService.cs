@@ -13,6 +13,8 @@ public interface IBrandIconPackService
 
     BrandIconPackStatus Status { get; }
 
+    IReadOnlyList<BrandIconPackInstallation> InstalledPacks => Status.InstalledPacks ?? [];
+
     bool ShowIssuerLogo { get; }
 
     IReadOnlyList<BrandDefinition> AvailableBrands { get; }
@@ -25,6 +27,12 @@ public interface IBrandIconPackService
     BrandDefinition? ResolveAccount(string? issuer, string? accountName, string? explicitBrandId = null);
 
     bool TryGetIconPathData(string brandId, out string pathData);
+
+    bool TryGetIconLayers(string brandId, out IReadOnlyList<BrandIconLayer> layers)
+    {
+        layers = [];
+        return false;
+    }
 
     bool TryGetIconTransform(string brandId, out BrandIconTransform? transform)
     {

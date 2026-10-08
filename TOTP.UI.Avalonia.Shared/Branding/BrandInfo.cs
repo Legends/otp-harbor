@@ -9,9 +9,11 @@ public sealed record BrandInfo(
     string BackgroundColor,
     IBrush BackgroundBrush,
     string? IconData,
-    Transform? IconTransform = null)
+    Transform? IconTransform = null,
+    IImage? IconImage = null,
+    bool IsCustomIcon = false)
 {
-    public bool HasIcon => IconData is not null;
+    public bool HasIcon => IconData is not null || IconImage is not null;
 
     public static BrandInfo Generic(string? issuer)
     {

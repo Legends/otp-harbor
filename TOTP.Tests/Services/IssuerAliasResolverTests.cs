@@ -49,6 +49,18 @@ public sealed class IssuerAliasResolverTests
         Assert.Throws<InvalidDataException>(() => IssuerAliasResolver.Load(stream));
     }
 
+    [Theory]
+    [InlineData("  C++ / R&D  ", "c++ r&d")]
+    [InlineData("ＧｉｔＨｕｂ", "github")]
+    [InlineData("Example---Cloud", "example cloud")]
+    [InlineData("AT&T", "at&t")]
+    public void OtpHarborFormatV1Normalization_MatchesBuilderContract(
+        string issuer,
+        string expected)
+    {
+        Assert.Equal(expected, OtpHarborIssuerNormalizer.Normalize(issuer));
+    }
+
     private static MemoryStream JsonStream(string json) =>
         new(Encoding.UTF8.GetBytes(json));
 }

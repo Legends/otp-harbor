@@ -551,6 +551,16 @@ public sealed class MobileShellViewModel :
         {
             var status = _brandIconPackService?.Status;
             if (status?.IsInstalled != true) return string.Empty;
+            var installedPacks = status.InstalledPacks ?? [];
+            if (installedPacks.Count > 1)
+            {
+                return string.Format(
+                    CultureInfo.CurrentCulture,
+                    Get(MobileStringKeys.BrandIconPacksStatus),
+                    status.BrandCount,
+                    installedPacks.Count,
+                    string.Join(", ", installedPacks.Select(value => value.ProviderDisplayName)));
+            }
             var providerName = string.IsNullOrWhiteSpace(status.ProviderDisplayName)
                 ? "Simple Icons"
                 : status.ProviderDisplayName;
@@ -1468,7 +1478,8 @@ public sealed class MobileShellViewModel :
             ? string.Format(
                 CultureInfo.CurrentCulture,
                 Get(MobileStringKeys.CustomIconFileName),
-                SelectedEditorBrandIconFileName)
+                Shared.Presentation.IconNameDisplayPolicy.Truncate(
+                    SelectedEditorBrandIconFileName))
             : string.Empty;
 
     public Task ClearEditorPeriodAsync()
@@ -1631,6 +1642,7 @@ public sealed class MobileShellViewModel :
         : EnableAppLockText;
     public string DisableAppLockWarningText => Get(MobileStringKeys.DisableAppLockWarning);
     public string SearchAccountsText => Get(MobileStringKeys.SearchAccounts);
+    public string SearchBrandIconsText => Get(MobileStringKeys.SearchBrandIcons);
     public string ClearSearchText => Get(MobileStringKeys.ClearSearch);
     public string FavoritesText => Get(MobileStringKeys.Favorites);
     public string FavoriteAccountText => Get(MobileStringKeys.FavoriteAccount);
@@ -5314,6 +5326,7 @@ public sealed class MobileShellViewModel :
         nameof(AppLockActionText),
         nameof(DisableAppLockWarningText),
         nameof(SearchAccountsText),
+        nameof(SearchBrandIconsText),
         nameof(ClearSearchText),
         nameof(FavoritesText),
         nameof(FavoriteAccountText),

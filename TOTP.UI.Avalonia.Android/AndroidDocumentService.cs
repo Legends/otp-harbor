@@ -90,11 +90,17 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
     {
         using var intent = new Intent(Intent.ActionOpenDocument);
         intent.AddCategory(Intent.CategoryOpenable);
-        intent.SetType("application/zip");
+        intent.SetType("*/*");
+        intent.PutExtra(Intent.ExtraMimeTypes, new[]
+        {
+            "application/octet-stream",
+            "application/zip",
+            "application/x-zip-compressed"
+        });
         var selected = await StartAsync(intent, BrandIconPackRequestCode, cancellationToken);
         if (selected is null) return null;
 
-        return OpenReadableDocument(selected, "icon-pack.zip");
+        return OpenReadableDocument(selected, "otp-harbor-icons.otphicons");
     }
 
     public async Task<MobileReadableDocument?> OpenCustomSvgIconAsync(
@@ -125,13 +131,15 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
 
         try
         {
-            var name = resolver?.GetType(selected) switch
-            {
-                "application/json" => "accounts.json",
-                "application/octet-stream" => "accounts.2fas",
-                "text/csv" or "text/comma-separated-values" or "application/csv" => "accounts.csv",
-                _ => fallbackName
-            };
+            var name = string.Equals(fallbackName, "accounts.txt", StringComparison.Ordinal)
+                ? resolver?.GetType(selected) switch
+                {
+                    "application/json" => "accounts.json",
+                    "application/octet-stream" => "accounts.2fas",
+                    "text/csv" or "text/comma-separated-values" or "application/csv" => "accounts.csv",
+                    _ => fallbackName
+                }
+                : fallbackName;
             using var cursor = resolver?.Query(
                 selected,
                 [IOpenableColumns.DisplayName],

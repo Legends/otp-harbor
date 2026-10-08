@@ -198,6 +198,20 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 - Ensure user-facing wording states that third-party assets remain subject to their own licenses, trademark rights, and usage terms, and that users are responsible for compliant use.
 - Flag unresolved or jurisdiction-specific legal risk for qualified legal counsel; professional-grade issue spotting by an agent is not a substitute for legal advice from a licensed lawyer.
 
+### Icon-pack integration direction
+
+The separate `OtpHarbor.IconPackBuilder` owns acquisition and provider-specific
+parsing for Aegis Icons, Simple Icons, and Dashboard Icons. Its current product
+specification is `E:\Repos\otp-harbor-icon-pack-builder\PROMPT.md`; its README may
+lag behind that specification and must not override it.
+
+OTP Harbor should import one provider-independent `.otphicons` file produced by
+that builder. The application must remain offline/local-first for icon resolution
+and should consume the pack's canonical brand IDs, issuer aliases, selected SVGs,
+background colors, and provenance rather than independently downloading or parsing
+the three upstream provider formats. Automatic matching uses the mandatory TOTP
+issuer; the optional account name is not an automatic icon-matching input.
+
 ### Testing rules
 
 - New behavior should come with tests.

@@ -40,6 +40,35 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
+    public void BrandIconPackStatusText_DescribesCombinedProvidersWithoutImplyingOneActivePack()
+    {
+        var installations = new[]
+        {
+            new BrandIconPackInstallation(
+                "aegis", "Aegis Icons", "2026.10", 400,
+                BrandIconPackFormat.Aegis, 100),
+            new BrandIconPackInstallation(
+                "simple-icons", "Simple Icons", "17.0.0", 3_000,
+                BrandIconPackFormat.SimpleIcons, 90)
+        };
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status)
+            .Returns(new BrandIconPackStatus(
+                true, null, 3_250, InstalledPacks: installations));
+        using var sut = Create(
+            Mock.Of<IAvaloniaFilePicker>(),
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            brandIconPackService: brandIcons.Object,
+            localization: Localization("en"));
+
+        Assert.Equal(
+            "3250 local icons available from 2 installed packs (Aegis Icons, Simple Icons).",
+            sut.BrandIconPackStatusText);
+    }
+
+    [Fact]
     public async Task ImportBrandIconsAsync_ReportsFilenameIndexedPackInActiveLocale()
     {
         var picker = new Mock<IAvaloniaFilePicker>();
@@ -100,7 +129,7 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
-    public async Task ImportBrandIconsAsync_WhenImportRunsLong_ShowsDelayedProgressUntilCompletion()
+    public async Task ImportBrandIconsAsync_WhenImportRunsLong_ShowsProgressImmediatelyUntilCompletion()
     {
         var picker = new Mock<IAvaloniaFilePicker>();
         picker.Setup(value => value.PickBrandIconPackAsync(It.IsAny<CancellationToken>()))
@@ -120,9 +149,6 @@ public sealed class NativeFilePickerViewModelTests
             localization: Localization("en"));
 
         var importTask = sut.ImportBrandIconsAsync();
-        await Task.Delay(
-            TimeSpan.FromMilliseconds(1650),
-            TestContext.Current.CancellationToken);
 
         Assert.True(sut.IsImportProgressVisible);
         Assert.Equal("Importing local icons…", sut.ImportProgressText);
@@ -165,7 +191,7 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
-    public async Task ResetBrandIconsAsync_WhenRemovalRunsLong_ShowsDelayedProgressUntilCompletion()
+    public async Task ResetBrandIconsAsync_WhenRemovalRunsLong_ShowsProgressImmediatelyUntilCompletion()
     {
         var completion = new TaskCompletionSource<Result>(
             TaskCreationOptions.RunContinuationsAsynchronously);
@@ -186,9 +212,6 @@ public sealed class NativeFilePickerViewModelTests
             localization: Localization("en"));
 
         var resetTask = sut.ResetBrandIconsAsync();
-        await Task.Delay(
-            TimeSpan.FromMilliseconds(1650),
-            TestContext.Current.CancellationToken);
 
         Assert.True(sut.IsImportProgressVisible);
         Assert.Equal("Removing local icons…", sut.ImportProgressText);

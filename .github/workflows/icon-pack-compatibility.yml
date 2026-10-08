@@ -1,0 +1,102 @@
+name: Icon Pack Compatibility
+
+on:
+  schedule:
+    - cron: '37 5 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  upstream-contracts:
+    name: Latest upstream icon packs
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            **/packages.lock.json
+            NuGet.config
+
+      - name: Restore test project
+        run: dotnet restore TOTP.Tests/TOTP.Tests.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config
+
+      - name: Download latest upstream releases
+        id: assets
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./scripts/testing/Get-LatestIconPackCompatibilityAssets.ps1 -OutputDirectory '${{ runner.temp }}/icon-pack-compatibility'
+
+      - name: Run production importer contract tests
+        id: compatibility
+        if: steps.assets.outcome == 'success'
+        continue-on-error: true
+        shell: pwsh
+        env:
+          OTP_HARBOR_AEGIS_ICON_PACK: ${{ steps.assets.outputs.aegis_path }}
+          OTP_HARBOR_SIMPLE_ICONS_PACK: ${{ steps.assets.outputs.simple_icons_path }}
+        run: >-
+          dotnet test TOTP.Tests/TOTP.Tests.csproj
+          --configuration Release
+          --no-restore
+          --nologo
+          --verbosity minimal
+          --filter "Category=IconPackCompatibility"
+
+      - name: Create or update compatibility issue
+        if: steps.assets.outcome == 'failure' || steps.compatibility.outcome == 'failure'
+        uses: actions/github-script@v8
+        env:
+          AEGIS_VERSION: ${{ steps.assets.outputs.aegis_version }}
+          SIMPLE_ICONS_VERSION: ${{ steps.assets.outputs.simple_icons_version }}
+        with:
+          script: |
+            const title = '[compatibility] Latest upstream icon pack import failed';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              'The scheduled upstream download or production-importer contract test failed.',
+              '',
+              `- aegis-icons: ${process.env.AEGIS_VERSION}`,
+              `- Simple Icons: ${process.env.SIMPLE_ICONS_VERSION}`,
+              `- Workflow run: ${runUrl}`,
+              '',
+              'Inspect the upstream archive structure before changing the importer. Add a reduced regression fixture for every newly supported format variant.'
+            ].join('\n');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            const existing = issues.find(issue => !issue.pull_request && issue.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body
+              });
+            }
+
+      - name: Fail when an upstream contract is incompatible
+        if: steps.assets.outcome == 'failure' || steps.compatibility.outcome == 'failure'
+        shell: pwsh
+        run: throw 'An upstream icon pack could not be downloaded or is incompatible with the production importer.'

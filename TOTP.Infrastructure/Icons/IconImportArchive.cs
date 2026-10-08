@@ -9,11 +9,12 @@ namespace TOTP.Infrastructure.Icons;
 
 internal static partial class IconImportArchive
 {
-    internal const int MaximumEntries = 10_000;
-    internal const long MaximumExpandedBytes = 64L * 1024 * 1024;
-    internal const int MaximumMetadataBytes = 8 * 1024 * 1024;
-    internal const int MaximumSvgBytes = 64 * 1024;
-    internal const int MaximumIcons = 5_000;
+    internal const int MaximumEntries = 100_000;
+    internal const long MaximumExpandedBytes = 512L * 1024 * 1024;
+    internal const int MaximumCompressionRatio = 200;
+    internal const int MaximumMetadataBytes = 128 * 1024 * 1024;
+    internal const int MaximumSvgBytes = 1024 * 1024;
+    internal const int MaximumIcons = 100_000;
     internal const int MaximumAliasesPerIcon = 32;
     internal const int MaximumNotices = 64;
     internal const int MaximumNoticeBytes = 128 * 1024;
@@ -45,6 +46,10 @@ internal static partial class IconImportArchive
             expanded = checked(expanded + entry.Length);
             if (expanded > MaximumExpandedBytes)
                 throw new InvalidDataException("Expanded icon archive is too large.");
+            if (entry.Length > 0
+                && (entry.CompressedLength <= 0
+                    || entry.Length / Math.Max(1d, entry.CompressedLength) > MaximumCompressionRatio))
+                throw new InvalidDataException("Icon archive compression ratio is unsafe.");
             EnsureSafeRelativePath(normalized);
         }
     }
@@ -140,13 +145,19 @@ internal static partial class IconImportArchive
             IgnoreComments = true
         }))
         {
-            var foundSvg = false;
+            reader.MoveToContent();
+            if (reader.NodeType != XmlNodeType.Element
+                || !reader.LocalName.Equals("svg", StringComparison.OrdinalIgnoreCase))
+                throw new SvgValidationException(
+                    CustomIconImportFailureReason.MalformedXml,
+                    "The SVG root element is invalid.");
+
             var foundPath = false;
-            while (reader.Read())
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var localReferences = new HashSet<string>(StringComparer.Ordinal);
+            do
             {
                 if (reader.NodeType != XmlNodeType.Element) continue;
-                if (reader.LocalName.Equals("svg", StringComparison.OrdinalIgnoreCase))
-                    foundSvg = true;
                 if (reader.LocalName.Equals("path", StringComparison.OrdinalIgnoreCase)
                     && !string.IsNullOrWhiteSpace(reader.GetAttribute("d")))
                     foundPath = true;
@@ -159,18 +170,42 @@ internal static partial class IconImportArchive
                     backgroundColor = fill.ToUpperInvariant();
                 }
                 if (reader.LocalName.Equals("script", StringComparison.OrdinalIgnoreCase)
-                    || reader.GetAttribute("href") is { Length: > 0 }
-                    || reader.GetAttribute("href", "http://www.w3.org/1999/xlink") is { Length: > 0 })
+                    || reader.LocalName.Equals("foreignObject", StringComparison.OrdinalIgnoreCase))
                     throw new SvgValidationException(
                         CustomIconImportFailureReason.UnsafeContent,
                         "External or executable SVG content is not supported.");
-            }
-            if (!foundSvg || !foundPath)
+
+                var id = reader.GetAttribute("id");
+                if (id is { Length: > 0 } && !ids.Add(id))
+                    throw new SvgValidationException(
+                        CustomIconImportFailureReason.MalformedXml,
+                        "The SVG contains duplicate identifiers.");
+                ValidateSvgReference(reader.GetAttribute("href"), localReferences);
+                ValidateSvgReference(
+                    reader.GetAttribute("href", "http://www.w3.org/1999/xlink"),
+                    localReferences);
+            } while (reader.Read());
+
+            if (!foundPath)
                 throw new SvgValidationException(
                     CustomIconImportFailureReason.MissingVectorPath,
                     "Unsupported SVG content.");
+            if (localReferences.Any(reference => !ids.Contains(reference)))
+                throw new SvgValidationException(
+                    CustomIconImportFailureReason.MalformedXml,
+                    "The SVG contains an unresolved local reference.");
         }
         return new ValidatedSvg(memory.ToArray(), backgroundColor);
+    }
+
+    private static void ValidateSvgReference(string? value, ISet<string> localReferences)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        if (!SafeLocalSvgReferenceRegex().IsMatch(value))
+            throw new SvgValidationException(
+                CustomIconImportFailureReason.UnsafeContent,
+                "External or executable SVG content is not supported.");
+        localReferences.Add(value[1..]);
     }
 
     internal static async Task<byte[]> ReadBoundedAsync(
@@ -223,6 +258,7 @@ internal static partial class IconImportArchive
     internal static void EnsureSafeRelativePath(string value)
     {
         if (string.IsNullOrWhiteSpace(value)
+            || value.Contains('\0')
             || value.StartsWith("/", StringComparison.Ordinal)
             || Path.IsPathRooted(value)
             || value.Split('/').Any(segment => segment is "." or ".."))
@@ -259,6 +295,9 @@ internal static partial class IconImportArchive
 
     [GeneratedRegex("^[0-9A-Fa-f]{6}$", RegexOptions.CultureInvariant)]
     private static partial Regex HexRegex();
+
+    [GeneratedRegex("^#[A-Za-z_][A-Za-z0-9_.:-]{0,127}$", RegexOptions.CultureInvariant)]
+    private static partial Regex SafeLocalSvgReferenceRegex();
 
     [GeneratedRegex("^(?:LICENSE|LICENCE|COPYING|NOTICE|DISCLAIMER)(?:\\.(?:MD|TXT))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex NoticeNameRegex();

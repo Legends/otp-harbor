@@ -1,19 +1,32 @@
 using System.IO.Pipes;
+using System.Buffers.Binary;
+using System.Text;
 using TOTP.Core.Platform;
 
 namespace TOTP.Infrastructure.Services;
 
 public sealed class NamedPipeActivationDispatcher(string pipeName) : IActivationDispatcher
 {
+    private const int MaximumPayloadBytes = 32 * 1024;
+
     public bool TryDispatch(ApplicationActivationRequest request)
     {
         if (!request.IsSupported) return false;
         try
         {
+            var payload = request.Payload is null
+                ? []
+                : Encoding.UTF8.GetBytes(request.Payload);
+            if (payload.Length > MaximumPayloadBytes) return false;
+
             using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
             client.Connect(1000);
-            client.WriteByte((byte)request.Version);
-            client.WriteByte((byte)request.Kind);
+            Span<byte> header = stackalloc byte[6];
+            header[0] = (byte)request.Version;
+            header[1] = (byte)request.Kind;
+            BinaryPrimitives.WriteInt32LittleEndian(header[2..], payload.Length);
+            client.Write(header);
+            if (payload.Length > 0) client.Write(payload);
             client.Flush();
             return true;
         }
@@ -30,6 +43,8 @@ public sealed class NamedPipeActivationDispatcher(string pipeName) : IActivation
 
 public sealed class NamedPipeActivationListener(string pipeName) : IActivationListener
 {
+    private const int MaximumPayloadBytes = 32 * 1024;
+    private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private readonly CancellationTokenSource _lifetime = new();
     private bool _started;
 
@@ -56,20 +71,28 @@ public sealed class NamedPipeActivationListener(string pipeName) : IActivationLi
                     PipeTransmissionMode.Byte,
                     PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 await server.WaitForConnectionAsync(cancellationToken);
-                var version = server.ReadByte();
-                var kind = server.ReadByte();
-                if (version < 0 || kind < 0) continue;
+                var header = new byte[6];
+                await server.ReadExactlyAsync(header, cancellationToken);
+                var payloadLength = BinaryPrimitives.ReadInt32LittleEndian(header.AsSpan(2));
+                if (payloadLength is < 0 or > MaximumPayloadBytes) continue;
+                var payloadBytes = new byte[payloadLength];
+                if (payloadLength > 0)
+                    await server.ReadExactlyAsync(payloadBytes, cancellationToken);
+                var payload = payloadLength == 0
+                    ? null
+                    : StrictUtf8.GetString(payloadBytes);
 
                 var request = new ApplicationActivationRequest(
-                    version,
-                    (ApplicationActivationKind)kind);
+                    header[0],
+                    (ApplicationActivationKind)header[1],
+                    payload);
                 if (request.IsSupported) onActivation(request);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 return;
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException or DecoderFallbackException)
             {
             }
         }

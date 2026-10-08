@@ -69,6 +69,7 @@ public static class AvaloniaStringKeys
     public const string BrandIconPackResetFailed = nameof(BrandIconPackResetFailed);
     public const string BrandIconPackNotInstalled = nameof(BrandIconPackNotInstalled);
     public const string BrandIconPackStatus = nameof(BrandIconPackStatus);
+    public const string BrandIconPacksStatus = nameof(BrandIconPacksStatus);
     public const string FilenameIndexedBrandIconPackStatus = nameof(FilenameIndexedBrandIconPackStatus);
     public const string ResetBrandIcons = nameof(ResetBrandIcons);
     public const string ResetBrandIconsConfirmation = nameof(ResetBrandIconsConfirmation);
@@ -264,10 +265,12 @@ public static class AvaloniaStringKeys
     public const string AccountName = nameof(AccountName);
     public const string Secret = nameof(Secret);
     public const string BrandIcon = nameof(BrandIcon);
+    public const string SearchBrandIcons = nameof(SearchBrandIcons);
     public const string AutomaticBrandIcon = nameof(AutomaticBrandIcon);
     public const string BrandIconHelp = nameof(BrandIconHelp);
     public const string CustomAccountIcon = nameof(CustomAccountIcon);
     public const string ChooseCustomSvgIcon = nameof(ChooseCustomSvgIcon);
+    public const string CustomIconFileName = nameof(CustomIconFileName);
     public const string SvgIconFiles = nameof(SvgIconFiles);
     public const string CustomIconImported = nameof(CustomIconImported);
     public const string CustomIconImportFailed = nameof(CustomIconImportFailed);
@@ -463,10 +466,10 @@ public static class AvaloniaStringKeys
         ScanQrCamera, ImportQrCode, ImportGoogleAuthenticator,
         GoogleAuthenticatorImportHelp, ChooseGoogleAuthenticatorQrImage,
         BrandIcons, BrandIconsHelp, BrandIconsFormatHelp, ImportSimpleIconsPack, SelectSimpleIconsPack,
-        SimpleIconsZipFiles, NoBrandIconPackSelected, BrandIconPackImported,
+        SimpleIconsZipFiles, NoBrandIconPackSelected, BrandIconPackImported, BrandIconPacksStatus,
         FilenameIndexedBrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
-        BrandIconPackNotInstalled, BrandIconPackStatus, FilenameIndexedBrandIconPackStatus, ResetBrandIcons,
+        BrandIconPackNotInstalled, BrandIconPackStatus, BrandIconPacksStatus, FilenameIndexedBrandIconPackStatus, ResetBrandIcons,
         ResetBrandIconsConfirmation, ImportingAccounts, ImportingBrandIcons, RemovingBrandIcons,
         ShowIssuerLogo, ShowIssuerLogoHelp,
         OpenQrImage, SelectQrImage, QrImageFiles,
@@ -519,8 +522,8 @@ public static class AvaloniaStringKeys
         PortableEnvelopeStatus, AutomaticRollbackStatus, LegacyMigrationStatus,
         AddAccount, AddAccountShortcut, EditAccount, EditAccountShortcut,
         DeleteAccount, DeleteAccountShortcut, DeleteAccountPrompt, Delete, Issuer,
-        AccountName, Secret, BrandIcon, AutomaticBrandIcon, BrandIconHelp,
-        CustomAccountIcon, ChooseCustomSvgIcon, SvgIconFiles, CustomIconImported,
+        AccountName, Secret, BrandIcon, SearchBrandIcons, AutomaticBrandIcon, BrandIconHelp,
+        CustomAccountIcon, ChooseCustomSvgIcon, CustomIconFileName, SvgIconFiles, CustomIconImported,
         CustomIconImportFailed, CustomIconImportEmpty, CustomIconImportTooLarge,
         CustomIconImportMalformed, CustomIconImportMissingPath, CustomIconImportUnsafe,
         CustomIconImportUnreadable, OtherFormatAegis, OtherFormatTwoFas, OtherFormatOtpAuth,

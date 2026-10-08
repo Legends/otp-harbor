@@ -15,7 +15,6 @@ namespace TOTP.Avalonia.Desktop.Presentation;
 
 public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposable
 {
-    private static readonly TimeSpan ImportProgressDelay = TimeSpan.FromMilliseconds(1500);
     private readonly IAvaloniaFilePicker _filePicker;
     private readonly IExportService _exportService;
     private readonly IAccountManager _accountManager;
@@ -38,7 +37,6 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private bool _isBusy;
     private bool _isImportProgressVisible;
     private string _importProgressText = string.Empty;
-    private CancellationTokenSource? _importProgressLifetime;
     private bool _disposed;
     private string? _lastBackupPath;
     private string? _lastBackupFolder;
@@ -155,6 +153,16 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             if (status?.IsInstalled != true)
                 return Localized(AvaloniaStringKeys.BrandIconPackNotInstalled);
 
+            var installedPacks = status.InstalledPacks ?? [];
+            if (installedPacks.Count > 1)
+            {
+                return Localized(
+                    AvaloniaStringKeys.BrandIconPacksStatus,
+                    status.BrandCount,
+                    installedPacks.Count,
+                    string.Join(", ", installedPacks.Select(value => value.ProviderDisplayName)));
+            }
+
             var providerName = string.IsNullOrWhiteSpace(status.ProviderDisplayName)
                 ? "Simple Icons"
                 : status.ProviderDisplayName;
@@ -187,6 +195,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             }
 
             BeginImportProgress(AvaloniaStringKeys.ImportingBrandIcons);
+            await Task.Yield();
             await using var stream = await file.OpenReadAsync();
             var imported = await _brandIconPackService.ImportAsync(stream, file.Name);
             if (imported.IsFailed)
@@ -234,6 +243,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             if (!confirmed) return;
 
             BeginImportProgress(AvaloniaStringKeys.RemovingBrandIcons);
+            await Task.Yield();
             var result = await _brandIconPackService.ResetAsync();
             SetMessage(
                 result.IsSuccess
@@ -316,6 +326,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             }
 
             BeginImportProgress(AvaloniaStringKeys.ImportingAccounts);
+            await Task.Yield();
             var imported = await ReadImportAsync(file);
             if (imported is null) return;
             var importResult = await _accountImportService.ImportAsync(
@@ -714,29 +725,11 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     {
         EndImportProgress();
         ImportProgressText = Localized(textKey);
-        var lifetime = new CancellationTokenSource();
-        _importProgressLifetime = lifetime;
-        _ = ShowImportProgressAfterDelayAsync(lifetime);
-    }
-
-    private async Task ShowImportProgressAfterDelayAsync(CancellationTokenSource lifetime)
-    {
-        try
-        {
-            await Task.Delay(ImportProgressDelay, lifetime.Token);
-            if (ReferenceEquals(_importProgressLifetime, lifetime))
-                IsImportProgressVisible = true;
-        }
-        catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
-        {
-        }
+        IsImportProgressVisible = true;
     }
 
     private void EndImportProgress()
     {
-        var lifetime = Interlocked.Exchange(ref _importProgressLifetime, null);
-        lifetime?.Cancel();
-        lifetime?.Dispose();
         IsImportProgressVisible = false;
         ImportProgressText = string.Empty;
     }

@@ -60,18 +60,44 @@
             <Setter Property="Background" Value="{DynamicResource BrushFaqHeaderBackground}" />
             <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
+        <Style Selector="Expander.faq-subsection">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="Expander.faq-subsection /template/ ToggleButton#ExpanderHeader">
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushFaqHeaderForeground}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Expander.faq-subsection /template/ ToggleButton#ExpanderHeader:pointerover">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="Expander.faq-subsection /template/ ToggleButton#ExpanderHeader:pressed">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
     </Window.Styles>
 
-    <Grid>
+    <Grid
+        x:Name="SettingsWindowSurface"
+        Background="Transparent"
+        PointerPressed="MoveWindow">
         <Grid
             Margin="16"
             Classes="settings-page"
             RowDefinitions="Auto,*">
-            <Grid ColumnDefinitions="*,Auto">
+            <Grid MinHeight="48" ColumnDefinitions="*,Auto">
                 <Border
                     Grid.Column="0"
-                    Background="Transparent"
-                    PointerPressed="MoveWindow">
+                    Background="Transparent">
                     <TextBlock Classes="page-title" Text="{DynamicResource Settings}" />
                 </Border>
                 <Button
@@ -511,21 +537,48 @@
                                             Padding="12">
                                             <StackPanel Spacing="10">
                                                 <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsIntro}" TextWrapping="Wrap" />
-                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsAegisTitle}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsAegisDescription}" TextWrapping="Wrap" />
-                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
-                                                    <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsAegisExample}" TextWrapping="Wrap" />
-                                                </Border>
-                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsTwoFasTitle}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsTwoFasDescription}" TextWrapping="Wrap" />
-                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
-                                                    <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsTwoFasExample}" TextWrapping="Wrap" />
-                                                </Border>
-                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsOtpAuthTitle}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsOtpAuthDescription}" TextWrapping="Wrap" />
-                                                <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
-                                                    <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsOtpAuthExample}" TextWrapping="Wrap" />
-                                                </Border>
+                                                <Expander
+                                                    x:Name="FaqImportFormatsAegisExpander"
+                                                    Classes="faq-subsection"
+                                                    Expanded="FaqImportFormatSectionExpanded">
+                                                    <Expander.Header>
+                                                        <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsAegisTitle}" TextWrapping="Wrap" />
+                                                    </Expander.Header>
+                                                    <StackPanel Margin="8,2,8,10" Spacing="8">
+                                                        <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsAegisDescription}" TextWrapping="Wrap" />
+                                                        <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                            <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsAegisExample}" TextWrapping="Wrap" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Expander>
+                                                <Expander
+                                                    x:Name="FaqImportFormatsTwoFasExpander"
+                                                    Classes="faq-subsection"
+                                                    Expanded="FaqImportFormatSectionExpanded">
+                                                    <Expander.Header>
+                                                        <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsTwoFasTitle}" TextWrapping="Wrap" />
+                                                    </Expander.Header>
+                                                    <StackPanel Margin="8,2,8,10" Spacing="8">
+                                                        <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsTwoFasDescription}" TextWrapping="Wrap" />
+                                                        <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                            <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsTwoFasExample}" TextWrapping="Wrap" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Expander>
+                                                <Expander
+                                                    x:Name="FaqImportFormatsOtpAuthExpander"
+                                                    Classes="faq-subsection"
+                                                    Expanded="FaqImportFormatSectionExpanded">
+                                                    <Expander.Header>
+                                                        <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportFormatsOtpAuthTitle}" TextWrapping="Wrap" />
+                                                    </Expander.Header>
+                                                    <StackPanel Margin="8,2,8,10" Spacing="8">
+                                                        <TextBlock Classes="secondary" Text="{DynamicResource FaqImportFormatsOtpAuthDescription}" TextWrapping="Wrap" />
+                                                        <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="6" Padding="8">
+                                                            <TextBlock FontFamily="Consolas" FontSize="11" Text="{DynamicResource FaqImportFormatsOtpAuthExample}" TextWrapping="Wrap" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Expander>
                                             </StackPanel>
                                         </Border>
                                     </Expander>
@@ -627,7 +680,7 @@
                 Background="{DynamicResource BrushSurface}"
                 CornerRadius="8">
                 <StackPanel Spacing="12">
-                    <ProgressBar IsIndeterminate="True" />
+                    <ProgressBar IsIndeterminate="{Binding NativeFilePicker.IsImportProgressVisible}" />
                     <TextBlock
                         HorizontalAlignment="Center"
                         Text="{Binding NativeFilePicker.ImportProgressText}"

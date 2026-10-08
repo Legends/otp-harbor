@@ -39,6 +39,7 @@ This index lists maintained documentation. Git history preserves completed migra
 - [Authorization envelope v2](security/AUTHORIZATION_ENVELOPE_V2.md)
 - [Clipboard security](security/CLIPBOARD_SECURITY.md)
 - [Platform file security](security/PLATFORM_FILE_SECURITY.md)
+- [OTP Harbor icon pack import contract](security/ICON_PACK_IMPORT_CONTRACT.md)
 - [Automatic updates](security/AUTO_UPDATE.md)
 - [Branch protection](security/BRANCH_PROTECTION.md)
 - [Signing-key rotation](security/SIGNING_KEY_ROTATION.md)

@@ -23,4 +23,14 @@ public sealed class BrandTileTests
         Assert.Same(transform, sut.IconTransform);
         Assert.Same(Brushes.Black, sut.TileBackground);
     }
+
+    [Fact]
+    public void ColoredVectorImageIsBindableWithoutLoadingAnExternalImageFile()
+    {
+        var image = new DrawingImage { Drawing = new DrawingGroup() };
+        var sut = new BrandTile { IconImage = image, IsCustomIcon = true };
+
+        Assert.Same(image, sut.IconImage);
+        Assert.True(sut.IsCustomIcon);
+    }
 }

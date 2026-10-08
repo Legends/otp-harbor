@@ -116,6 +116,23 @@ public partial class MainView : UserControl
         }
     }
 
+    private void FaqImportFormatSectionExpanded(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Expander expanded) return;
+
+        foreach (var section in new[]
+                 {
+                     FaqImportFormatsAegisExpander,
+                     FaqImportFormatsTwoFasExpander,
+                     FaqImportFormatsOtpAuthExpander
+                 })
+        {
+            if (!ReferenceEquals(section, expanded)) section.IsExpanded = false;
+        }
+
+        e.Handled = true;
+    }
+
     private void ScrollMainViewToTop(object? sender, RoutedEventArgs e) =>
         ScrollMainViewToTop();
 

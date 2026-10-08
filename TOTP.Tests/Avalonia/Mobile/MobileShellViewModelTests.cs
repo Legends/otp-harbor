@@ -2841,6 +2841,32 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public void BrandIconPackStatusText_DescribesCombinedProviders()
+    {
+        var installations = new[]
+        {
+            new BrandIconPackInstallation(
+                "aegis", "Aegis Icons", "2026.10", 400,
+                BrandIconPackFormat.Aegis, 100),
+            new BrandIconPackInstallation(
+                "simple-icons", "Simple Icons", "17.0.0", 3_000,
+                BrandIconPackFormat.SimpleIcons, 90)
+        };
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status).Returns(new BrandIconPackStatus(
+            true, null, 3_250, InstalledPacks: installations));
+        var context = CreateContext(
+            isConfigured: true,
+            cultureName: "en",
+            brandIconPackService: brandIcons.Object);
+
+        Assert.Equal(
+            "3250 local icons available from 2 installed packs (Aegis Icons, Simple Icons).",
+            context.Sut.BrandIconPackStatusText);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
     public async Task SelectThemeAsync_PersistsAndUpdatesVisibleSelection()
     {
         var context = CreateContext(isConfigured: true);
@@ -3102,7 +3128,7 @@ public sealed class MobileShellViewModelTests
         Assert.Equal("personal-mark.svg", context.Sut.SelectedEditorBrandIconFileName);
         Assert.True(context.Sut.HasSelectedEditorCustomIconFileName);
         Assert.Equal(
-            "Image name: personal-mark.svg",
+            "Custom image: personal-mark.svg",
             context.Sut.SelectedEditorCustomIconFileName);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             account.ID,

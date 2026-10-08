@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using TOTP.Core.Services.Interfaces;
@@ -11,6 +12,17 @@ namespace TOTP.Tests.Services;
 
 public sealed class SimpleIconsBrandIconPackServiceTests
 {
+    private const string AegisCompatibilityArchiveVariable = "OTP_HARBOR_AEGIS_ICON_PACK";
+    private const string SimpleIconsCompatibilityArchiveVariable = "OTP_HARBOR_SIMPLE_ICONS_PACK";
+    private const string UnifiedCompatibilityArchiveVariable = "OTP_HARBOR_UNIFIED_ICON_PACK";
+
+    public static bool LatestCompatibilityArchivesAreAvailable =>
+        File.Exists(Environment.GetEnvironmentVariable(AegisCompatibilityArchiveVariable))
+        && File.Exists(Environment.GetEnvironmentVariable(SimpleIconsCompatibilityArchiveVariable));
+
+    public static bool LatestUnifiedCompatibilityArchiveIsAvailable =>
+        File.Exists(Environment.GetEnvironmentVariable(UnifiedCompatibilityArchiveVariable));
+
     [Fact]
     public async Task ImportAsync_InstallsLocalIndexAndResolvesTitlesSlugsAndKnownAliases()
     {
@@ -180,15 +192,84 @@ public sealed class SimpleIconsBrandIconPackServiceTests
     }
 
     [Fact]
-    public async Task ResolveAccount_UsesLabelOnlyWhenIssuerIsMissing()
+    public async Task ResolveAccount_UsesIssuerOnlyAndNeverUsesAccountName()
     {
         using var temp = new TempDir();
         var sut = CreateSut(temp.Path);
         await using var archive = CreateArchive();
         Assert.True((await sut.ImportAsync(archive, TestContext.Current.CancellationToken)).IsSuccess);
 
-        Assert.Equal("github", sut.ResolveAccount(string.Empty, "github test")?.Id);
+        Assert.Null(sut.ResolveAccount(string.Empty, "github test"));
         Assert.Null(sut.ResolveAccount("Unknown issuer", "github test"));
+    }
+
+    [Fact]
+    public async Task ImportAsync_InstallsOtpHarborPackWithoutTruncatingAliasesAndPreservesProvenance()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var archive = CreateOtpHarborArchive(aliasCount: 40);
+
+        var imported = await sut.ImportAsync(
+            archive,
+            "otp-harbor-icons.otphicons",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        Assert.Equal(BrandIconPackFormat.OtpHarbor, imported.Value.Format);
+        Assert.Equal("otp-harbor-icons", imported.Value.ProviderId);
+        Assert.Equal("c-plus-plus", sut.Resolve(" C++ ")?.Id);
+        Assert.Equal("c-plus-plus", sut.Resolve("Service Alias 39")?.Id);
+        Assert.Null(sut.Resolve("Service Alias 40"));
+        Assert.Null(sut.ResolveAccount(string.Empty, "Service Alias 39"));
+
+        var packDirectory = Assert.Single(Directory.EnumerateDirectories(
+            Path.Combine(temp.Path, "BrandIcons", "packs")));
+        var index = await File.ReadAllTextAsync(
+            Path.Combine(packDirectory, "brand-index.json"),
+            TestContext.Current.CancellationToken);
+        Assert.Contains("ArchiveSha256", index, StringComparison.Ordinal);
+        Assert.Contains("SelectedSource", index, StringComparison.Ordinal);
+        Assert.Contains("Service Alias 39", index, StringComparison.Ordinal);
+        Assert.Equal(
+            "Synthetic license",
+            await File.ReadAllTextAsync(
+                Path.Combine(
+                    packDirectory,
+                    "provenance",
+                    "licenses",
+                    "simple-icons",
+                    "license.md"),
+                TestContext.Current.CancellationToken));
+
+        var reloaded = CreateSut(temp.Path);
+        Assert.Equal("c-plus-plus", reloaded.Resolve("C++")?.Id);
+        Assert.Equal("c-plus-plus", reloaded.Resolve("Service Alias 39")?.Id);
+        Assert.Equal(BrandIconPackFormat.OtpHarbor, reloaded.Status.Format);
+    }
+
+    [Fact]
+    public async Task ImportAsync_InvalidOtpHarborReplacementLeavesInstalledPackUntouched()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var valid = CreateOtpHarborArchive(aliasCount: 3);
+        Assert.True((await sut.ImportAsync(
+            valid,
+            "otp-harbor-icons.otphicons",
+            TestContext.Current.CancellationToken)).IsSuccess);
+        await using var invalid = CreateOtpHarborArchive(aliasCount: 3, invalidAliasIndex: true);
+
+        var rejected = await sut.ImportAsync(
+            invalid,
+            "otp-harbor-icons.otphicons",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(rejected.IsFailed);
+        Assert.Equal("c-plus-plus", sut.Resolve("Service Alias 02")?.Id);
+        Assert.Equal("c-plus-plus", CreateSut(temp.Path).Resolve("Service Alias 02")?.Id);
+        Assert.Single(Directory.EnumerateDirectories(
+            Path.Combine(temp.Path, "BrandIcons", "packs")));
     }
 
     [Fact]
@@ -247,6 +328,172 @@ public sealed class SimpleIconsBrandIconPackServiceTests
     }
 
     [Fact]
+    public async Task NewInstance_LoadsLegacySinglePackPointerWhenProviderRegistryDoesNotExist()
+    {
+        using var temp = new TempDir();
+        var first = CreateSut(temp.Path);
+        await using var archive = CreateArchive();
+        Assert.True((await first.ImportAsync(
+            archive,
+            TestContext.Current.CancellationToken)).IsSuccess);
+        File.Delete(Path.Combine(
+            temp.Path,
+            "BrandIcons",
+            "installed-packs.json"));
+
+        var reloaded = CreateSut(temp.Path);
+
+        Assert.True(reloaded.Status.IsInstalled);
+        Assert.Single(reloaded.InstalledPacks);
+        Assert.Equal("simple-icons", reloaded.InstalledPacks[0].ProviderId);
+        Assert.Equal("github", reloaded.Resolve("GitHub")?.Id);
+    }
+
+    [Fact]
+    public async Task ImportAsync_CombinesProvidersByPriorityAndReplacesOnlyMatchingProvider()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var aegis = CreateAegisArchive(
+            "first",
+            "github",
+            "homeassistant");
+        await using var simpleIcons = CreateArchive();
+
+        Assert.True((await sut.ImportAsync(
+            aegis,
+            "aegis-icons-first.zip",
+            TestContext.Current.CancellationToken)).IsSuccess);
+        Assert.True((await sut.ImportAsync(
+            simpleIcons,
+            "simple-icons-16.31.0.zip",
+            TestContext.Current.CancellationToken)).IsSuccess);
+
+        Assert.Equal(2, sut.InstalledPacks.Count);
+        Assert.Equal(
+            ["aegis", "simple-icons"],
+            sut.InstalledPacks.Select(value => value.ProviderId).ToArray());
+        Assert.Equal(9, sut.AvailableBrands.Count);
+        Assert.Equal("github", sut.Resolve("GitHub")?.Id);
+        Assert.Equal("#334155", sut.Resolve("GitHub")?.BackgroundColor);
+        Assert.Equal("homeassistant", sut.Resolve("Home Assistant")?.Id);
+
+        await using var replacement = CreateAegisArchive("second", "proxmox");
+        Assert.True((await sut.ImportAsync(
+            replacement,
+            "aegis-icons-second.zip",
+            TestContext.Current.CancellationToken)).IsSuccess);
+
+        Assert.Equal(2, sut.InstalledPacks.Count);
+        Assert.Null(sut.Resolve("Home Assistant"));
+        Assert.Equal("proxmox", sut.Resolve("Proxmox")?.Id);
+        Assert.Equal("#181717", sut.Resolve("GitHub")?.BackgroundColor);
+        Assert.Equal(2, Directory.EnumerateDirectories(
+            Path.Combine(temp.Path, "BrandIcons", "packs")).Count());
+
+        var reloaded = CreateSut(temp.Path);
+        Assert.Equal(2, reloaded.InstalledPacks.Count);
+        Assert.Equal("github", reloaded.Resolve("GitHub")?.Id);
+        Assert.Equal("proxmox", reloaded.Resolve("Proxmox")?.Id);
+    }
+
+    [Fact]
+    public async Task ImportAsync_DeduplicatesMatchingProviderIdsEvenWhenDisplayNamesNormalizeDifferently()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var aegis = CreateAegisArchive("first", "isc2");
+        await using var simpleIcons = CreateSimpleIconsArchive(
+            "ISC Squared",
+            "isc2",
+            "123456");
+
+        Assert.True((await sut.ImportAsync(
+            simpleIcons,
+            "simple-icons.zip",
+            TestContext.Current.CancellationToken)).IsSuccess);
+        Assert.True((await sut.ImportAsync(
+            aegis,
+            "aegis-icons.zip",
+            TestContext.Current.CancellationToken)).IsSuccess);
+
+        Assert.Equal(2, sut.InstalledPacks.Count);
+        Assert.Single(sut.AvailableBrands);
+        Assert.Equal("isc2", sut.AvailableBrands[0].Id);
+        Assert.Equal("#334155", sut.AvailableBrands[0].BackgroundColor);
+    }
+
+    [Fact(
+        Skip = "Latest upstream archives are supplied only by the compatibility workflow.",
+        SkipUnless = nameof(LatestCompatibilityArchivesAreAvailable))]
+    [Trait("Category", "IconPackCompatibility")]
+    public async Task ImportAsync_InstallsLatestAegisAndSimpleIconsTogetherInEitherOrder()
+    {
+        var aegisPath = Environment.GetEnvironmentVariable(AegisCompatibilityArchiveVariable)!;
+        var simpleIconsPath = Environment.GetEnvironmentVariable(SimpleIconsCompatibilityArchiveVariable)!;
+
+        await VerifyLatestProvidersCanCoexistAsync(simpleIconsPath, aegisPath);
+        await VerifyLatestProvidersCanCoexistAsync(aegisPath, simpleIconsPath);
+    }
+
+    [Fact(
+        Skip = "The latest OTP Harbor icon pack is supplied only by the compatibility workflow.",
+        SkipUnless = nameof(LatestUnifiedCompatibilityArchiveIsAvailable))]
+    [Trait("Category", "IconPackCompatibility")]
+    public async Task ImportAsync_LatestUnifiedPackExposesViewportAndPaintForRegressionBrands()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        var path = Environment.GetEnvironmentVariable(UnifiedCompatibilityArchiveVariable)!;
+        await using var archive = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        var imported = await sut.ImportAsync(
+            archive,
+            Path.GetFileName(path),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        foreach (var brandId in new[]
+                 {
+                     "bitdefender", "bitrise", "bitwarden", "bluesky", "diners-club",
+                     "ethereum", "firebase", "garmin", "goodreads", "google-assistant"
+                 })
+        {
+            Assert.Contains(sut.AvailableBrands, brand => brand.Id == brandId);
+            Assert.True(sut.TryGetIconLayers(brandId, out var layers), brandId);
+            Assert.NotEmpty(layers);
+            Assert.All(layers, layer => Assert.NotNull(layer.Viewport));
+            Assert.Contains(layers, layer => layer.FillColor is not null);
+        }
+    }
+
+    [Fact(
+        Skip = "The latest OTP Harbor icon pack is supplied only by the compatibility workflow.",
+        SkipUnless = nameof(LatestUnifiedCompatibilityArchiveIsAvailable))]
+    [Trait("Category", "IconPackCompatibility")]
+    public async Task ImportAsync_LatestUnifiedPackHasNoUnrenderableBrands()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        var path = Environment.GetEnvironmentVariable(UnifiedCompatibilityArchiveVariable)!;
+        await using var archive = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        var imported = await sut.ImportAsync(
+            archive,
+            Path.GetFileName(path),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        var unreadableBrands = sut.AvailableBrands
+            .Where(brand => !sut.TryGetIconLayers(brand.Id, out var layers) || layers.Count == 0)
+            .Select(brand => brand.Id)
+            .ToArray();
+        Assert.True(
+            unreadableBrands.Length == 0,
+            $"Brands without renderable path layers: {string.Join(", ", unreadableBrands.Take(50))}");
+    }
+
+    [Fact]
     public async Task ImportAsync_RejectsPathTraversalAndPreservesEmptyCatalog()
     {
         using var temp = new TempDir();
@@ -261,6 +508,47 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         var result = await sut.ImportAsync(archive, TestContext.Current.CancellationToken);
 
         Assert.True(result.IsFailed);
+        Assert.False(sut.Status.IsInstalled);
+    }
+
+    [Fact]
+    public async Task ImportAsync_RejectsAegisManifestTraversalWithoutOverwritingApplicationFiles()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        var vaultPath = Path.Combine(temp.Path, "vault.json");
+        const string originalVault = "ORIGINAL-VAULT-CONTENTS";
+        await File.WriteAllTextAsync(
+            vaultPath,
+            originalVault,
+            TestContext.Current.CancellationToken);
+        await using var archive = new MemoryStream();
+        using (var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            WriteEntry(zip, "pack.json", """
+                {
+                  "uuid":"11111111-1111-1111-1111-111111111111",
+                  "name":"Malicious traversal pack",
+                  "version":1,
+                  "icons":[
+                    {
+                      "name":"Traversal",
+                      "filename":"../../../vault.json",
+                      "issuer":["Traversal"]
+                    }
+                  ]
+                }
+                """);
+            WriteEntry(zip, "../../../vault.json", "MALICIOUS-VAULT-CONTENTS");
+        }
+        archive.Position = 0;
+
+        var result = await sut.ImportAsync(archive, TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(
+            originalVault,
+            await File.ReadAllTextAsync(vaultPath, TestContext.Current.CancellationToken));
         Assert.False(sut.Status.IsInstalled);
     }
 
@@ -421,6 +709,126 @@ public sealed class SimpleIconsBrandIconPackServiceTests
     }
 
     [Fact]
+    public async Task ImportCustomIconAsync_PreservesAllExplicitlyColoredSvgPaths()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        var accountId = Guid.NewGuid();
+        await using var svg = new MemoryStream(Encoding.UTF8.GetBytes("""
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23">
+              <path fill="#f35325" d="M1 1h10v10H1z"/>
+              <path fill="#81bc06" d="M12 1h10v10H12z"/>
+              <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+              <path fill="#ffba08" d="M12 12h10v10H12z"/>
+            </svg>
+            """));
+
+        var imported = await sut.ImportCustomIconAsync(
+            accountId,
+            svg,
+            "microsoft.svg",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        Assert.True(sut.TryGetIconLayers(imported.Value.Id, out var layers));
+        Assert.Collection(
+            layers,
+            layer => Assert.Equal("#F35325", layer.FillColor),
+            layer => Assert.Equal("#81BC06", layer.FillColor),
+            layer => Assert.Equal("#05A6F0", layer.FillColor),
+            layer => Assert.Equal("#FFBA08", layer.FillColor));
+        Assert.Equal("M1 1h10v10H1z", layers[0].PathData);
+    }
+
+    [Fact]
+    public async Task ImportCustomIconAsync_PreservesViewportInlineStylesAndInheritedPaint()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        var accountId = Guid.NewGuid();
+        await using var svg = new MemoryStream(Encoding.UTF8.GetBytes("""
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="180.06 83.35 419.87 333.3" fill="#0079be">
+              <g transform="translate(10 20) rotate(15)">
+                <path style="fill: #fff" d="M200 100h100v100H200z"/>
+              </g>
+              <path d="M300 200h100v100H300z"/>
+              <path style="fill:none" d="M0 0h1v1H0z"/>
+            </svg>
+            """));
+
+        var imported = await sut.ImportCustomIconAsync(
+            accountId,
+            svg,
+            "viewport-and-paint.svg",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        Assert.True(sut.TryGetIconLayers(imported.Value.Id, out var layers));
+        Assert.Collection(
+            layers,
+            layer =>
+            {
+                Assert.Equal("#FFFFFF", layer.FillColor);
+                Assert.NotNull(layer.Transform);
+                Assert.Equal(new BrandIconViewport(180.06, 83.35, 419.87, 333.3), layer.Viewport);
+            },
+            layer =>
+            {
+                Assert.Equal("#0079BE", layer.FillColor);
+                Assert.Null(layer.Transform);
+                Assert.Equal(new BrandIconViewport(180.06, 83.35, 419.87, 333.3), layer.Viewport);
+            });
+    }
+
+    [Fact]
+    public async Task ImportCustomIconAsync_UsesNumericDimensionsWhenViewBoxIsMissing()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var svg = new MemoryStream(Encoding.UTF8.GetBytes("""
+            <svg xmlns="http://www.w3.org/2000/svg" width="256" height="417">
+              <path fill="#343434" d="M128 0 0 212l128 76z"/>
+            </svg>
+            """));
+
+        var imported = await sut.ImportCustomIconAsync(
+            Guid.NewGuid(),
+            svg,
+            "dimensions.svg",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        Assert.True(sut.TryGetIconLayers(imported.Value.Id, out var layers));
+        Assert.Equal(new BrandIconViewport(0, 0, 256, 417), Assert.Single(layers).Viewport);
+    }
+
+    [Fact]
+    public async Task ImportCustomIconAsync_PreservesInheritedSolidStrokeWithoutAnArbitraryPathCountCap()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        var paths = string.Concat(Enumerable.Range(0, 333).Select(index =>
+            $"<path d=\"M{index} 0v10\"/>"));
+        await using var svg = new MemoryStream(Encoding.UTF8.GetBytes(
+            $"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 333 10\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"2\">{paths}</svg>"));
+
+        var imported = await sut.ImportCustomIconAsync(
+            Guid.NewGuid(),
+            svg,
+            "stroke-only.svg",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        Assert.True(sut.TryGetIconLayers(imported.Value.Id, out var layers));
+        Assert.Equal(333, layers.Count);
+        Assert.All(layers, layer =>
+        {
+            Assert.Equal("none", layer.FillColor);
+            Assert.Equal(new BrandIconStroke("#3B82F6", 2), layer.Stroke);
+        });
+    }
+
+    [Fact]
     public async Task ImportAsync_InstallsAegisSvgPackAndRestoresProviderMetadata()
     {
         using var temp = new TempDir();
@@ -538,14 +946,46 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         Assert.Equal("github", sut.Resolve("github.com")?.Id);
     }
 
-    private static SimpleIconsBrandIconPackService CreateSut(string applicationDataDirectory)
+    private static SimpleIconsBrandIconPackService CreateSut(
+        string applicationDataDirectory,
+        ILogger<SimpleIconsBrandIconPackService>? logger = null)
     {
         var paths = new Mock<IPlatformApplicationPaths>();
         paths.SetupGet(value => value.ApplicationDataDirectory).Returns(applicationDataDirectory);
         return new SimpleIconsBrandIconPackService(
             paths.Object,
             NoOpPlatformFileSecurity.Instance,
-            NullLogger<SimpleIconsBrandIconPackService>.Instance);
+            logger ?? NullLogger<SimpleIconsBrandIconPackService>.Instance);
+    }
+
+    private static async Task VerifyLatestProvidersCanCoexistAsync(
+        string firstArchivePath,
+        string secondArchivePath)
+    {
+        using var temp = new TempDir();
+        var logger = new CapturingLogger<SimpleIconsBrandIconPackService>();
+        var sut = CreateSut(temp.Path, logger);
+        await using var first = File.OpenRead(firstArchivePath);
+        var firstResult = await sut.ImportAsync(
+            first,
+            Path.GetFileName(firstArchivePath),
+            TestContext.Current.CancellationToken);
+        Assert.True(firstResult.IsSuccess, string.Join("; ", firstResult.Errors.Select(error => error.Message)));
+
+        await using var second = File.OpenRead(secondArchivePath);
+        var secondResult = await sut.ImportAsync(
+            second,
+            Path.GetFileName(secondArchivePath),
+            TestContext.Current.CancellationToken);
+        Assert.True(
+            secondResult.IsSuccess,
+            string.Join("; ", secondResult.Errors.Select(error => error.Message))
+            + Environment.NewLine
+            + logger.LastException);
+        Assert.Equal(2, sut.InstalledPacks.Count);
+        Assert.Equal(
+            ["aegis", "simple-icons"],
+            sut.InstalledPacks.Select(value => value.ProviderId).ToArray());
     }
 
     private static MemoryStream CreateArchive(bool includeMicrosoftEntra = false)
@@ -602,6 +1042,100 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         return stream;
     }
 
+    private static MemoryStream CreateSimpleIconsArchive(
+        string title,
+        string slug,
+        string hex)
+    {
+        var stream = new MemoryStream();
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            WriteEntry(archive, "package/package.json", "{\"version\":\"17.0.0\"}");
+            WriteEntry(
+                archive,
+                "package/data/simple-icons.json",
+                $"[{{\"title\":\"{title}\",\"slug\":\"{slug}\",\"hex\":\"{hex}\"}}]");
+            WriteEntry(archive, $"package/icons/{slug}.svg", ValidSvg);
+        }
+        stream.Position = 0;
+        return stream;
+    }
+
+    private static MemoryStream CreateOtpHarborArchive(
+        int aliasCount,
+        bool invalidAliasIndex = false)
+    {
+        var aliases = Enumerable.Range(0, aliasCount)
+            .Select(index => $"Service Alias {index:D2}")
+            .Prepend("C++")
+            .ToArray();
+        var aliasIndex = aliases.Select(alias => new
+        {
+            key = alias == "C++"
+                ? "c++"
+                : alias.ToLowerInvariant(),
+            brandId = invalidAliasIndex && alias == aliases[^1]
+                ? "missing-brand"
+                : "c-plus-plus"
+        }).ToArray();
+        var manifest = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            formatVersion = 1,
+            packId = "otp-harbor-icons",
+            name = "OTP Harbor Icons",
+            sources = new[]
+            {
+                new
+                {
+                    provider = "simple-icons",
+                    inputFileName = "source.zip",
+                    sha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                    version = "16.34.0",
+                    revision = (string?)null,
+                    sourceUrl = "https://github.com/simple-icons/simple-icons/releases/tag/16.34.0",
+                    metadata = new Dictionary<string, string?> { ["version"] = "16.34.0" },
+                    licenseFiles = new[] { "licenses/simple-icons/license.md" }
+                }
+            },
+            brands = new[]
+            {
+                new
+                {
+                    id = "c-plus-plus",
+                    displayName = "C++",
+                    backgroundColor = "#00599C",
+                    icon = "icons/c-plus-plus.svg",
+                    issuerAliases = aliases,
+                    selectedSource = new
+                    {
+                        provider = "simple-icons",
+                        sourceId = "cplusplus",
+                        metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#00599C" }
+                    },
+                    sources = new[]
+                    {
+                        new
+                        {
+                            provider = "simple-icons",
+                            sourceId = "cplusplus",
+                            metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#00599C" }
+                        }
+                    }
+                }
+            },
+            issuerAliases = aliasIndex
+        });
+        var stream = new MemoryStream();
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            WriteEntry(archive, "pack.json", manifest);
+            WriteEntry(archive, "icons/c-plus-plus.svg", ValidSvg);
+            WriteEntry(archive, "licenses/simple-icons/license.md", "Synthetic license");
+        }
+        stream.Position = 0;
+        return stream;
+    }
+
     private static MemoryStream CreateFilenameIndexedArchive()
     {
         var stream = new MemoryStream();
@@ -612,6 +1146,38 @@ public sealed class SimpleIconsBrandIconPackServiceTests
             WriteEntry(archive, "pack/google.svg", ValidSvg);
             WriteEntry(archive, "pack/LICENSE.md", "Synthetic generic license");
             WriteEntry(archive, "pack/legal/NOTICE.txt", "Synthetic generic notice");
+        }
+        stream.Position = 0;
+        return stream;
+    }
+
+    private static MemoryStream CreateAegisArchive(
+        string version,
+        params string[] slugs)
+    {
+        var stream = new MemoryStream();
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var icons = string.Join(
+                ',',
+                slugs.Select(slug =>
+                {
+                    var name = slug switch
+                    {
+                        "github" => "GitHub",
+                        "homeassistant" => "Home Assistant",
+                        "proxmox" => "Proxmox",
+                        _ => slug
+                    };
+                    return $"{{\"name\":\"{name}\",\"filename\":\"icons/{slug}.svg\",\"issuer\":[\"{name}\"]}}";
+                }));
+            WriteEntry(
+                archive,
+                "pack.json",
+                $"{{\"uuid\":\"c553f06f-2a17-46ca-87f5-56af90dd0500\",\"name\":\"Synthetic Aegis Pack {version}\",\"version\":1,\"icons\":[{icons}]}}");
+            foreach (var slug in slugs)
+                WriteEntry(archive, $"icons/{slug}.svg", ValidSvg);
+            WriteEntry(archive, "LICENSE", "Synthetic Aegis icon-pack license");
         }
         stream.Position = 0;
         return stream;
@@ -643,6 +1209,25 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         {
             try { Directory.Delete(Path, recursive: true); }
             catch { }
+        }
+    }
+
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public Exception? LastException { get; private set; }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            if (exception is not null) LastException = exception;
         }
     }
 }

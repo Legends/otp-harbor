@@ -68,6 +68,8 @@
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushQrForeground" Color="#1A2E4E" />
                     <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
@@ -145,6 +147,8 @@
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushQrForeground" Color="#1A2E4E" />
                     <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
@@ -222,6 +226,8 @@
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushQrForeground" Color="#1A2E4E" />
                     <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileBackground" Color="#334155" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#192B52" />
@@ -295,6 +301,8 @@
                     <SolidColorBrush x:Key="BrushQrBackground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushQrForeground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushBrandTileForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#CC000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#EE000000" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#000000" />
@@ -851,7 +859,7 @@
                             Spacing="12">
                             <ProgressBar
                                 Width="180"
-                                IsIndeterminate="True" />
+                                IsIndeterminate="{TemplateBinding IsBusy}" />
                             <TextBlock
                                 Classes="secondary"
                                 Text="{TemplateBinding BusyMessage}"
@@ -954,6 +962,103 @@
     <Style Selector="controls|RevealableSecretInput:revealed /template/ controls|SymbolIcon#PART_RevealIcon">
         <Setter Property="Kind" Value="Conceal" />
     </Style>
+    <Style Selector="controls|SearchableComboBox">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="PopupWidth" Value="320" />
+        <Setter Property="PopupMaxHeight" Value="300" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid>
+                    <Button
+                        Name="PART_DropDownButton"
+                        MinHeight="{TemplateBinding MinHeight}"
+                        Padding="12,8"
+                        HorizontalContentAlignment="Stretch"
+                        Background="{DynamicResource BrushSurface}"
+                        BorderBrush="{DynamicResource BrushControlBorder}"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <ContentPresenter
+                                VerticalAlignment="Center"
+                                Content="{TemplateBinding SelectedItem}"
+                                ContentTemplate="{TemplateBinding ItemTemplate}" />
+                            <Path
+                                Grid.Column="1"
+                                Width="12"
+                                Height="7"
+                                VerticalAlignment="Center"
+                                Data="M1,1 L6,6 L11,1"
+                                Stroke="{DynamicResource BrushTextPrimary}"
+                                StrokeThickness="1.5" />
+                        </Grid>
+                    </Button>
+                    <Popup
+                        Name="PART_Popup"
+                        IsLightDismissEnabled="True"
+                        Placement="BottomEdgeAlignedLeft"
+                        PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+                        <Border
+                            Width="{Binding EffectivePopupWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                            Padding="8"
+                            Background="{DynamicResource BrushSurface}"
+                            BorderBrush="{DynamicResource BrushControlBorder}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BoxShadow="0 4 14 0 #40000000">
+                            <Grid RowDefinitions="Auto,*" RowSpacing="6">
+                                <Grid>
+                                    <TextBox
+                                        Name="PART_SearchBox"
+                                        Padding="10,7,40,7"
+                                        automation:AutomationProperties.Name="{TemplateBinding SearchPlaceholder}"
+                                        PlaceholderText="{TemplateBinding SearchPlaceholder}"
+                                        Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                    <Button
+                                        Name="PART_ClearSearch"
+                                        Width="36"
+                                        Height="36"
+                                        MinWidth="36"
+                                        MinHeight="36"
+                                        Padding="0"
+                                        HorizontalAlignment="Right"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        automation:AutomationProperties.Name="{TemplateBinding ClearSearchText}"
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        BorderThickness="0"
+                                        Content="×"
+                                        FontSize="18"
+                                        ToolTip.Tip="{TemplateBinding ClearSearchText}" />
+                                </Grid>
+                                <ListBox
+                                    Name="PART_ItemsList"
+                                    Grid.Row="1"
+                                    MaxHeight="{TemplateBinding PopupMaxHeight}"
+                                    ItemsSource="{Binding FilteredItems, RelativeSource={RelativeSource TemplatedParent}}"
+                                    ItemTemplate="{TemplateBinding ItemTemplate}"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                            </Grid>
+                        </Border>
+                    </Popup>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="controls|SearchableComboBox /template/ Button#PART_DropDownButton:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" />
+    </Style>
+    <Style Selector="controls|SearchableComboBox /template/ Button#PART_ClearSearch:pointerover">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="controls|SearchableComboBox /template/ Button#PART_ClearSearch:pressed">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
     <Style Selector="controls|AccountRow">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="Template">
@@ -985,29 +1090,43 @@
         <Setter Property="Template">
             <ControlTemplate>
                 <Border
+                    Name="PART_Tile"
                     Width="40"
                     Height="40"
                     Background="{TemplateBinding TileBackground}"
                     CornerRadius="8">
-                    <Grid Margin="8">
-                        <TextBlock
-                            Name="PART_Initials"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontSize="13"
-                            FontWeight="Bold"
-                            Foreground="{DynamicResource BrushBrandTileForeground}"
-                            Text="{TemplateBinding Initials}" />
-                        <Viewbox Stretch="Uniform">
-                            <Path
+                    <Grid>
+                        <Border
+                            Name="PART_CustomIconBackground"
+                            Background="{DynamicResource BrushCustomBrandTileBackground}"
+                            CornerRadius="8"
+                            IsVisible="False" />
+                        <Grid Margin="8">
+                            <TextBlock
+                                Name="PART_Initials"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource BrushBrandTileForeground}"
+                                Text="{TemplateBinding Initials}" />
+                            <Viewbox Stretch="Uniform">
+                                <Path
+                                    Name="PART_IconPath"
+                                    Width="24"
+                                    Height="24"
+                                    Data="{TemplateBinding IconData}"
+                                    Fill="{DynamicResource BrushBrandTileForeground}"
+                                    RenderTransform="{TemplateBinding IconTransform}"
+                                    RenderTransformOrigin="0%,0%"
+                                    Stretch="Uniform" />
+                            </Viewbox>
+                            <Image
                                 Width="24"
                                 Height="24"
-                                Data="{TemplateBinding IconData}"
-                                Fill="{DynamicResource BrushBrandTileForeground}"
-                                RenderTransform="{TemplateBinding IconTransform}"
-                                RenderTransformOrigin="0%,0%"
+                                Source="{TemplateBinding IconImage}"
                                 Stretch="Uniform" />
-                        </Viewbox>
+                        </Grid>
                     </Grid>
                 </Border>
             </ControlTemplate>
@@ -1015,6 +1134,12 @@
     </Style>
     <Style Selector="controls|BrandTile:has-icon /template/ TextBlock#PART_Initials">
         <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="controls|BrandTile:custom-icon /template/ Border#PART_CustomIconBackground">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="controls|BrandTile:custom-icon /template/ Path#PART_IconPath">
+        <Setter Property="Fill" Value="{DynamicResource BrushCustomBrandTileForeground}" />
     </Style>
     <Style Selector="controls|NotificationBanner">
         <Setter Property="Template">

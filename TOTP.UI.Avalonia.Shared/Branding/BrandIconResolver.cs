@@ -3,6 +3,7 @@ using System.Text;
 using Avalonia;
 using Avalonia.Media;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Avalonia.Shared.Branding;
 
@@ -60,9 +61,17 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
 
     private BrandInfo CreateKnown(TOTP.Core.Services.Models.BrandDefinition definition)
     {
+        var isCustomIcon = definition.Id.StartsWith("custom_", StringComparison.Ordinal);
         string? geometry = null;
         Transform? iconTransform = null;
-        if (_packService.TryGetIconPathData(definition.Id, out var pathData))
+        IImage? iconImage = null;
+        if (_packService.TryGetIconLayers(definition.Id, out var layers)
+            && layers.Count > 0
+            && layers.Any(static layer => layer.FillColor is not null || layer.Stroke is not null))
+        {
+            iconImage = CreateColoredIcon(layers);
+        }
+        if (iconImage is null && _packService.TryGetIconPathData(definition.Id, out var pathData))
         {
             geometry = pathData;
             if (_packService.TryGetIconTransform(definition.Id, out var transform)
@@ -85,7 +94,67 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
             color,
             new SolidColorBrush(Color.Parse(color)),
             geometry,
-            iconTransform);
+            iconTransform,
+            iconImage,
+            isCustomIcon);
+    }
+
+    private static IImage? CreateColoredIcon(IReadOnlyList<BrandIconLayer> layers)
+    {
+        var group = new DrawingGroup();
+        foreach (var layer in layers)
+        {
+            IBrush? brush = Brushes.Black;
+            if (string.Equals(layer.FillColor, "none", StringComparison.OrdinalIgnoreCase))
+                brush = null;
+            else if (layer.FillColor is not null)
+            {
+                if (!Color.TryParse(layer.FillColor, out var fillColor)) continue;
+                brush = new SolidColorBrush(fillColor);
+            }
+            Pen? pen = null;
+            if (layer.Stroke is not null)
+            {
+                if (!Color.TryParse(layer.Stroke.Color, out var strokeColor)) continue;
+                pen = new Pen(new SolidColorBrush(strokeColor), layer.Stroke.Width);
+            }
+            if (brush is null && pen is null) continue;
+            try
+            {
+                var path = Geometry.Parse(layer.PathData);
+                if (layer.Transform is not null)
+                {
+                    path.Transform = new MatrixTransform(new Matrix(
+                        layer.Transform.M11,
+                        layer.Transform.M12,
+                        layer.Transform.M21,
+                        layer.Transform.M22,
+                        layer.Transform.M31,
+                        layer.Transform.M32));
+                }
+                group.Children.Add(new GeometryDrawing
+                {
+                    Geometry = path,
+                    Brush = brush,
+                    Pen = pen
+                });
+            }
+            catch (Exception exception) when (exception is FormatException or ArgumentException or InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        if (group.Children.Count == 0) return null;
+        var viewport = layers.Select(static layer => layer.Viewport).FirstOrDefault(static value => value is not null);
+        var viewbox = viewport is null
+            ? new Rect(0, 0, 24, 24)
+            : new Rect(viewport.X, viewport.Y, viewport.Width, viewport.Height);
+        return new DrawingImage
+        {
+            Drawing = group,
+            Viewbox = viewbox
+        };
     }
 
     private static BrandInfo CreateFallback(string issuer, string normalized)

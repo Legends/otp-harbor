@@ -28,6 +28,7 @@ public sealed class AccountListItemViewModel(
     private bool _showIssuerLogo = true;
     private bool _isFavorite = isFavorite;
     private string _copyConfirmation = string.Empty;
+    private bool _codeBindingsDirty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -58,19 +59,7 @@ public sealed class AccountListItemViewModel(
 
     public bool HasCopyConfirmation => CopyConfirmation.Length > 0;
 
-    public string Code
-    {
-        get => _code;
-        private set
-        {
-            if (_code == value) return;
-            _code = value;
-            OnPropertyChanged(nameof(Code));
-            OnPropertyChanged(nameof(DisplayCode));
-            OnPropertyChanged(nameof(HasCode));
-            OnPropertyChanged(nameof(IsExpiring));
-        }
-    }
+    public string Code => _code;
 
     public string DisplayCode => Code.Length < 2
         ? Code
@@ -79,30 +68,9 @@ public sealed class AccountListItemViewModel(
     public bool HasCode => Code.Length > 0;
     public bool IsExpiring => HasCode && RemainingSeconds is > 0 and <= 10;
 
-    public int RemainingSeconds
-    {
-        get => _remainingSeconds;
-        private set
-        {
-            var normalized = Math.Max(0, value);
-            if (_remainingSeconds == normalized) return;
-            _remainingSeconds = normalized;
-            OnPropertyChanged(nameof(RemainingSeconds));
-            OnPropertyChanged(nameof(IsExpiring));
-        }
-    }
+    public int RemainingSeconds => _remainingSeconds;
 
-    public int PeriodSeconds
-    {
-        get => _periodSeconds;
-        private set
-        {
-            var normalized = Math.Max(0, value);
-            if (_periodSeconds == normalized) return;
-            _periodSeconds = normalized;
-            OnPropertyChanged(nameof(PeriodSeconds));
-        }
-    }
+    public int PeriodSeconds => _periodSeconds;
 
     public bool IsRecentlyAdded
     {
@@ -151,24 +119,91 @@ public sealed class AccountListItemViewModel(
         OnPropertyChanged(nameof(CustomPeriodLabel));
     }
 
-    public void UpdateCode(string code, int remainingSeconds, int periodSeconds)
+    public void UpdateCode(
+        string code,
+        int remainingSeconds,
+        int periodSeconds,
+        bool notifyBindings = true)
     {
-        Code = code;
-        RemainingSeconds = Math.Max(1, remainingSeconds);
-        PeriodSeconds = Math.Max(RemainingSeconds, periodSeconds);
+        _code = code;
+        _remainingSeconds = Math.Max(1, remainingSeconds);
+        _periodSeconds = Math.Max(_remainingSeconds, periodSeconds);
+        if (notifyBindings)
+        {
+            _codeBindingsDirty = false;
+            NotifyCodeChanged();
+        }
+        else
+        {
+            _codeBindingsDirty = true;
+        }
     }
 
-    public void Tick()
+    public void Tick(bool notifyBindings = true)
     {
-        if (RemainingSeconds > 0)
-            RemainingSeconds--;
+        if (_remainingSeconds <= 0) return;
+
+        var wasExpiring = IsExpiring;
+        _remainingSeconds--;
+        if (!notifyBindings)
+        {
+            _codeBindingsDirty = true;
+            return;
+        }
+
+        if (_codeBindingsDirty)
+        {
+            _codeBindingsDirty = false;
+            NotifyCodeChanged();
+            return;
+        }
+
+        OnPropertyChanged(nameof(RemainingSeconds));
+        if (wasExpiring != IsExpiring)
+            OnPropertyChanged(nameof(IsExpiring));
     }
 
-    public void ClearCode()
+    public void ClearCode(bool notifyBindings = true)
     {
-        Code = string.Empty;
-        RemainingSeconds = 0;
-        PeriodSeconds = 0;
+        if (_code.Length == 0 && _remainingSeconds == 0 && _periodSeconds == 0)
+        {
+            if (notifyBindings && _codeBindingsDirty)
+            {
+                _codeBindingsDirty = false;
+                NotifyCodeChanged();
+            }
+            return;
+        }
+
+        _code = string.Empty;
+        _remainingSeconds = 0;
+        _periodSeconds = 0;
+        if (notifyBindings)
+        {
+            _codeBindingsDirty = false;
+            NotifyCodeChanged();
+        }
+        else
+        {
+            _codeBindingsDirty = true;
+        }
+    }
+
+    public void RefreshCodeBindings()
+    {
+        if (!_codeBindingsDirty) return;
+        _codeBindingsDirty = false;
+        NotifyCodeChanged();
+    }
+
+    private void NotifyCodeChanged()
+    {
+        OnPropertyChanged(nameof(Code));
+        OnPropertyChanged(nameof(DisplayCode));
+        OnPropertyChanged(nameof(HasCode));
+        OnPropertyChanged(nameof(RemainingSeconds));
+        OnPropertyChanged(nameof(PeriodSeconds));
+        OnPropertyChanged(nameof(IsExpiring));
     }
 
     private void OnPropertyChanged(string propertyName) =>

@@ -90,6 +90,7 @@ public static class MobileStringKeys
     public const string ImportGoogleQr = nameof(ImportGoogleQr);
     public const string ImportGoogleQrDescription = nameof(ImportGoogleQrDescription);
     public const string SearchAccounts = nameof(SearchAccounts);
+    public const string SearchBrandIcons = nameof(SearchBrandIcons);
     public const string ClearSearch = nameof(ClearSearch);
     public const string Favorites = nameof(Favorites);
     public const string FavoriteAccount = nameof(FavoriteAccount);
@@ -160,6 +161,7 @@ public static class MobileStringKeys
     public const string ImportingBrandIcons = nameof(ImportingBrandIcons);
     public const string RemovingBrandIcons = nameof(RemovingBrandIcons);
     public const string BrandIconPackStatus = nameof(BrandIconPackStatus);
+    public const string BrandIconPacksStatus = nameof(BrandIconPacksStatus);
     public const string FilenameIndexedBrandIconPackStatus = nameof(FilenameIndexedBrandIconPackStatus);
     public const string NoBrandIconPackSelected = nameof(NoBrandIconPackSelected);
     public const string BrandIconPackImported = nameof(BrandIconPackImported);
@@ -383,7 +385,7 @@ public static class MobileStringKeys
         ImportGoogleQr,
         ImportGoogleQrDescription,
         SearchAccounts,
-        ClearSearch,
+        SearchBrandIcons, ClearSearch,
         Favorites,
         FavoriteAccount,
         AddToFavorites,
@@ -450,7 +452,7 @@ public static class MobileStringKeys
         BrandIconsDescription,
         ImportSimpleIconsPack,
         ImportingAccounts,
-        ImportingBrandIcons, RemovingBrandIcons, BrandIconPackStatus,
+        ImportingBrandIcons, RemovingBrandIcons, BrandIconPackStatus, BrandIconPacksStatus,
         FilenameIndexedBrandIconPackStatus,
         NoBrandIconPackSelected,
         BrandIconPackImported,

@@ -312,6 +312,145 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task AccountCodeRefresh_LargeListsNotifyOnlyRealizedRows()
+    {
+        var accounts = Enumerable.Range(1, 100)
+            .Select(index => new Account(
+                Guid.NewGuid(),
+                $"Issuer {index}",
+                ValidSecret,
+                $"account-{index}"))
+            .ToArray();
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(accounts));
+        var generated = new TaskCompletionSource<Result<AccountTotpGenerationBatch>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var totp = new Mock<IAccountTotpService>();
+        totp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Returns(generated.Task);
+        using var sut = new AccountListViewModel(
+            manager.Object,
+            totp.Object,
+            Mock.Of<IAsyncClipboardService>(),
+            Mock.Of<IAccountQrCodeService>(),
+            Mock.Of<IAvaloniaQrImageFactory>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            Localization());
+        sut.EnableAutomaticCodeGenerationOnSelection();
+
+        await sut.LoadAsync();
+        var realized = sut.Accounts.Take(10).ToArray();
+        var realizedChanges = new List<string?>();
+        var offscreenChanges = new List<string?>();
+        realized[0].PropertyChanged += (_, args) => realizedChanges.Add(args.PropertyName);
+        sut.Accounts[50].PropertyChanged += (_, args) =>
+            offscreenChanges.Add(args.PropertyName);
+        sut.SetRealizedAccounts(realized);
+
+        generated.SetResult(Result.Ok(new AccountTotpGenerationBatch(
+            accounts.ToDictionary(
+                account => account.ID,
+                _ => new TotpGenerationResult("123456", 20, 30)),
+            new HashSet<Guid>())));
+        await WaitUntilAsync(() => sut.Accounts.All(account => account.HasCode));
+
+        Assert.Contains(nameof(AccountListItemViewModel.DisplayCode), realizedChanges);
+        Assert.Contains(nameof(AccountListItemViewModel.RemainingSeconds), realizedChanges);
+        Assert.DoesNotContain(nameof(AccountListItemViewModel.DisplayCode), offscreenChanges);
+        Assert.DoesNotContain(nameof(AccountListItemViewModel.RemainingSeconds), offscreenChanges);
+        Assert.Equal("123 456", sut.Accounts[50].DisplayCode);
+    }
+
+    [Fact]
+    public async Task SuspendRowCodeGeneration_StopsTicksUntilResumed()
+    {
+        var accountId = Guid.NewGuid();
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [
+                new(accountId, "Issuer", ValidSecret, "account")
+            ]));
+        var totp = new Mock<IAccountTotpService>();
+        totp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult>
+                {
+                    [accountId] = new("123456", 30, 30)
+                },
+                new HashSet<Guid>())));
+        using var sut = new AccountListViewModel(
+            manager.Object,
+            totp.Object,
+            Mock.Of<IAsyncClipboardService>(),
+            Mock.Of<IAccountQrCodeService>(),
+            Mock.Of<IAvaloniaQrImageFactory>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            Localization(),
+            TimeSpan.FromMilliseconds(10));
+        sut.EnableAutomaticCodeGenerationOnSelection();
+
+        await sut.LoadAsync();
+        await WaitUntilAsync(() => sut.Accounts.Single().HasCode);
+        sut.SuspendRowCodeGeneration();
+        var remainingWhenSuspended = sut.Accounts.Single().RemainingSeconds;
+
+        await Task.Delay(60, TestContext.Current.CancellationToken);
+
+        Assert.Equal(remainingWhenSuspended, sut.Accounts.Single().RemainingSeconds);
+
+        sut.ResumeRowCodeGeneration();
+        await WaitUntilAsync(() => totp.Invocations.Count(invocation =>
+            invocation.Method.Name == nameof(IAccountTotpService.GenerateManyAsync)) >= 2);
+    }
+
+    [Fact]
+    public async Task LoadAsync_WhileRowCodeGenerationIsSuspended_WaitsForResume()
+    {
+        var accountId = Guid.NewGuid();
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [
+                new(accountId, "Issuer", ValidSecret, "account")
+            ]));
+        var totp = new Mock<IAccountTotpService>();
+        totp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult>
+                {
+                    [accountId] = new("123456", 30, 30)
+                },
+                new HashSet<Guid>())));
+        using var sut = new AccountListViewModel(
+            manager.Object,
+            totp.Object,
+            Mock.Of<IAsyncClipboardService>(),
+            Mock.Of<IAccountQrCodeService>(),
+            Mock.Of<IAvaloniaQrImageFactory>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            Localization());
+        sut.EnableAutomaticCodeGenerationOnSelection();
+        sut.SuspendRowCodeGeneration();
+
+        await sut.LoadAsync();
+
+        totp.Verify(
+            value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()),
+            Times.Never);
+        Assert.False(sut.Accounts.Single().HasCode);
+
+        sut.ResumeRowCodeGeneration();
+        await WaitUntilAsync(() => sut.Accounts.Single().HasCode);
+
+        totp.Verify(
+            value => value.GenerateManyAsync(It.Is<IReadOnlyCollection<Guid>>(
+                ids => ids.Single() == accountId)),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task CopyAccountCodeAsync_CopiesRequestedRowWithoutChangingSelection()
     {
         var firstId = Guid.NewGuid();
@@ -1709,6 +1848,8 @@ public sealed class AccountListViewModelTests
         Assert.Equal(custom.Id, sut.SelectedEditorBrandIconOption?.Id);
         Assert.Equal("personal-mark.svg", sut.SelectedEditorBrandIconFileName);
         Assert.True(sut.HasSelectedEditorBrandIconFileName);
+        Assert.True(sut.HasSelectedEditorCustomIconFileName);
+        Assert.Equal("Custom image: personal-mark.svg", sut.SelectedEditorCustomIconFileName);
         Assert.Contains(
             sut.EditorBrandIconOptions,
             option => option.Id == custom.Id && option.DisplayName == "Custom SVG");
@@ -2164,6 +2305,26 @@ public sealed class AccountListViewModelTests
 
         sut.UpdateCode("654321", 30, 30);
         Assert.False(sut.IsExpiring);
+    }
+
+    [Fact]
+    public void AccountRow_DeferredCodeChangesNotifyOnlyWhenBindingsAreRefreshed()
+    {
+        var sut = new AccountListItemViewModel(Guid.NewGuid(), "Issuer", "account");
+        var changedProperties = new List<string?>();
+        sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        sut.UpdateCode("123456", 20, 30, notifyBindings: false);
+        sut.Tick(notifyBindings: false);
+
+        Assert.Empty(changedProperties);
+        Assert.Equal("123 456", sut.DisplayCode);
+        Assert.Equal(19, sut.RemainingSeconds);
+
+        sut.RefreshCodeBindings();
+
+        Assert.Contains(nameof(AccountListItemViewModel.DisplayCode), changedProperties);
+        Assert.Contains(nameof(AccountListItemViewModel.RemainingSeconds), changedProperties);
     }
 
     [Fact]

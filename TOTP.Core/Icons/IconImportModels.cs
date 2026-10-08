@@ -44,9 +44,39 @@ public sealed record ImportedIcon(
     IReadOnlyList<string> Issuers,
     string ProviderId,
     string BackgroundColor = "#334155",
-    string? SourceFileName = null);
+    string? SourceFileName = null,
+    IconPackSourceReference? SelectedSource = null,
+    IReadOnlyList<IconPackSourceReference>? Sources = null);
 
-public sealed record ImportedIconNotice(string FileName, byte[] Data);
+public sealed record ImportedIconNotice(
+    string FileName,
+    byte[] Data,
+    string? RelativePath = null);
+
+public sealed record IconPackSourceReference(
+    string Provider,
+    string SourceId,
+    IReadOnlyDictionary<string, string?> Metadata);
+
+public sealed record IconPackSourceProvenance(
+    string Provider,
+    string InputFileName,
+    string Sha256,
+    string? Version,
+    string? Revision,
+    string? SourceUrl,
+    IReadOnlyDictionary<string, string?> Metadata,
+    IReadOnlyList<string> LicenseFiles);
+
+public sealed record IconPackIssuerAlias(string Key, string BrandId);
+
+public sealed record IconPackMetadata(
+    int FormatVersion,
+    string PackId,
+    string Name,
+    IReadOnlyList<IconPackSourceProvenance> Sources,
+    IReadOnlyList<IconPackIssuerAlias> IssuerAliases,
+    string? ArchiveSha256 = null);
 
 public sealed record IconPackImportResult(
     string ProviderId,
@@ -54,4 +84,5 @@ public sealed record IconPackImportResult(
     string Version,
     BrandIconPackFormat Format,
     IReadOnlyList<ImportedIcon> Icons,
-    IReadOnlyList<ImportedIconNotice> Notices);
+    IReadOnlyList<ImportedIconNotice> Notices,
+    IconPackMetadata? Metadata = null);

@@ -97,7 +97,7 @@ public sealed class AvaloniaFilePicker(
             [
                 new FilePickerFileType(localization.GetString(AvaloniaStringKeys.SimpleIconsZipFiles))
                 {
-                    Patterns = ["*.zip"]
+                    Patterns = ["*.otphicons"]
                 }
             ]
         });

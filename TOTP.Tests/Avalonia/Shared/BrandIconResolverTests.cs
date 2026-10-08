@@ -65,6 +65,22 @@ public sealed class BrandIconResolverTests
     }
 
     [Fact]
+    public void Resolve_CustomSvgMarksIconForThemeAwareSurfaceAndForeground()
+    {
+        var pack = new Mock<IBrandIconPackService>();
+        pack.Setup(value => value.Resolve("Zara", null))
+            .Returns(new BrandDefinition("custom_1234", "zara", "#334155", "zara.svg"));
+        pack.Setup(value => value.TryGetIconPathData("custom_1234", out It.Ref<string>.IsAny))
+            .Returns((string _, out string path) => { path = "M0 0h24v24H0z"; return true; });
+        using var sut = new BrandIconResolver(pack.Object);
+
+        var resolved = sut.Resolve("Zara");
+
+        Assert.True(resolved.IsCustomIcon);
+        Assert.Equal("M0 0h24v24H0z", resolved.IconData);
+    }
+
+    [Fact]
     public void ResolveAccount_UsesPersistedAccountOverrideBeforeIssuerMatch()
     {
         var accountId = Guid.NewGuid();
