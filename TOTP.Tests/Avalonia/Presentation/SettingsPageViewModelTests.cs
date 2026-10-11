@@ -268,7 +268,6 @@ public sealed class SettingsPageViewModelTests
         Assert.Contains("opened", sut.LogFolderMessage, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("synthetic", sut.LogFolderMessage, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(sut.Message);
-        Assert.False(string.IsNullOrWhiteSpace(sut.VersionText));
     }
 
     [Fact]

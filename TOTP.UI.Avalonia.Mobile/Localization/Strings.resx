@@ -269,6 +269,7 @@
   <data name="DiscardChanges" xml:space="preserve"><value>Discard changes</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Could not save this setting.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Theme" xml:space="preserve"><value>Theme</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Follow system</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>

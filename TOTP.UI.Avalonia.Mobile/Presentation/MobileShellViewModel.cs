@@ -1627,6 +1627,7 @@ public sealed class MobileShellViewModel :
     public string FrenchLanguageText => Get(MobileStringKeys.FrenchLanguage);
     public string SpanishLanguageText => Get(MobileStringKeys.SpanishLanguage);
     public string AppearanceText => Get(MobileStringKeys.Appearance);
+    public string ThemeText => Get(MobileStringKeys.Theme);
     public string ThemeFollowSystemText => Get(MobileStringKeys.ThemeFollowSystem);
     public string ThemeDarkText => Get(MobileStringKeys.ThemeDark);
     public string ThemeLightText => Get(MobileStringKeys.ThemeLight);
@@ -5325,6 +5326,7 @@ public sealed class MobileShellViewModel :
         nameof(FrenchLanguageText),
         nameof(SpanishLanguageText),
         nameof(AppearanceText),
+        nameof(ThemeText),
         nameof(ThemeFollowSystemText),
         nameof(ThemeDarkText),
         nameof(ThemeLightText),

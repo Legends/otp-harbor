@@ -108,6 +108,12 @@ public sealed class MobileAccountInteractionTests
         var categoryButtons = categories.Elements(avalonia + "Button").ToArray();
         Assert.Equal(7, categoryButtons.Length);
         Assert.Equal(
+            ["Palette", "ImageStack", "Vault", "BackupRestore", "Import", "Diagnostics", "Help"],
+            categoryButtons.Select(button => button
+                .Descendants()
+                .Single(element => element.Name.LocalName == "SymbolIcon")
+                .Attribute("Kind")?.Value));
+        Assert.Equal(
             "{Binding ShowFaqSettingsCommand}",
             categoryButtons[^1].Attribute("Command")?.Value);
         Assert.Equal(
@@ -140,6 +146,9 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains(
             languagePicker.Descendants(avalonia + "ComboBox.SelectionBoxItemTemplate"),
             _ => true);
+        Assert.Contains(
+            appearance.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value == "{Binding ThemeText}");
 
         var security = document
             .Descendants(avalonia + "Border")

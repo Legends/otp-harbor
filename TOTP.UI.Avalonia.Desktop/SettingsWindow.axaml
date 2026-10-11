@@ -118,7 +118,120 @@
                         <UniformGrid Columns="4" />
                     </ItemsPanelTemplate>
                 </TabControl.ItemsPanel>
-                <TabItem Header="{DynamicResource Security}">
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="Palette" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Appearance}" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <ContentControl x:Name="AppearanceSettingsHost" Content="{Binding SettingsPage}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="presentation:SettingsPageViewModel">
+                                <Grid RowDefinitions="*,Auto">
+                                    <ScrollViewer
+                                        x:Name="AppearanceSettingsScroll"
+                                        Grid.Row="0"
+                                        HorizontalScrollBarVisibility="Disabled"
+                                        VerticalScrollBarVisibility="Auto">
+                                        <Border
+                                            x:Name="AppearanceSettingsPanel"
+                                            Margin="4,8,4,4"
+                                            VerticalAlignment="Top"
+                                            Classes="panel">
+                                            <StackPanel Spacing="8">
+                                            <TextBlock Classes="settings-label" Text="{DynamicResource Language}" />
+                                            <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="localization:LanguageOption">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <Image Width="24" Height="18" Source="{Binding Icon}" Stretch="Uniform" />
+                                                            <TextBlock VerticalAlignment="Center" Text="{Binding DisplayName}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource Theme}" />
+                                            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="presentation:SettingsPageViewModel+ThemeOption">
+                                                        <TextBlock Text="{Binding Label}" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource QrPreviewScale}" />
+                                            <NumericUpDown Increment="0.5" Maximum="6" Minimum="1" Value="{Binding QrPreviewScaleFactor, Mode=TwoWay}" />
+                                            <StackPanel IsVisible="{Binding IsInterfaceScaleAvailable}" Spacing="8">
+                                                <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource InterfaceScale}" />
+                                                <ComboBox ItemsSource="{Binding InterfaceScales}" SelectedItem="{Binding SelectedInterfaceScale, Mode=TwoWay}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="presentation:SettingsPageViewModel+InterfaceScaleOption">
+                                                            <TextBlock Text="{Binding Label}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                                <TextBlock Classes="secondary" Text="{DynamicResource InterfaceScaleHelp}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </ScrollViewer>
+                                </Grid>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+                </TabItem>
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="ImageStack" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource IconPacks}" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <ContentControl x:Name="BrandIconSettingsHost" Content="{Binding SettingsPage}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="presentation:SettingsPageViewModel">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                    <Border x:Name="BrandIconsPanel" Margin="4,8,4,4" Classes="panel">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsHelp}" TextWrapping="Wrap" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsFormatHelp}" TextWrapping="Wrap" />
+                                            <HyperlinkButton
+                                                HorizontalAlignment="Left"
+                                                Content="{DynamicResource IconPackBuilderLink}"
+                                                NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
+                                                Padding="0,3" />
+                                            <TextBlock
+                                                Classes="settings-label"
+                                                Text="{Binding DataContext.NativeFilePicker.BrandIconPackStatusText, ElementName=SettingsRoot}"
+                                                TextWrapping="Wrap" />
+                                            <Button
+                                                x:Name="BrandIconsImportButton"
+                                                Classes="wide settings-action"
+                                                Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}"
+                                                Content="{DynamicResource ImportSimpleIconsPack}" />
+                                            <Button
+                                                x:Name="BrandIconsResetButton"
+                                                Classes="secondary wide settings-action"
+                                                Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
+                                                Content="{DynamicResource ResetBrandIcons}"
+                                                IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}" />
+                                            <CheckBox Content="{DynamicResource ShowIssuerLogo}" IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource ShowIssuerLogoHelp}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </ScrollViewer>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+                </TabItem>
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="Vault" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Security}" />
+                        </StackPanel>
+                    </TabItem.Header>
                     <Grid RowDefinitions="*,Auto">
                         <ScrollViewer
                             x:Name="SecuritySettingsScroll"
@@ -215,7 +328,13 @@
                         </ScrollViewer>
                     </Grid>
                 </TabItem>
-                <TabItem Header="{DynamicResource Backups}">
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="BackupRestore" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Backups}" />
+                        </StackPanel>
+                    </TabItem.Header>
                     <ContentControl
                         x:Name="ImportExportSettingsHost"
                         Content="{Binding NativeFilePicker}">
@@ -304,7 +423,13 @@
                         </ContentControl.ContentTemplate>
                     </ContentControl>
                 </TabItem>
-                <TabItem Header="{DynamicResource ImportExport}">
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="Import" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource ImportExport}" />
+                        </StackPanel>
+                    </TabItem.Header>
                     <ContentControl x:Name="AccountImportSettingsHost" Content="{Binding NativeFilePicker}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:NativeFilePickerViewModel">
@@ -341,102 +466,13 @@
                         </ContentControl.ContentTemplate>
                     </ContentControl>
                 </TabItem>
-                <TabItem Header="{DynamicResource Appearance}">
-                    <ContentControl x:Name="AppearanceSettingsHost" Content="{Binding SettingsPage}">
-                        <ContentControl.ContentTemplate>
-                            <DataTemplate x:DataType="presentation:SettingsPageViewModel">
-                                <Grid RowDefinitions="*,Auto">
-                                    <ScrollViewer
-                                        x:Name="AppearanceSettingsScroll"
-                                        Grid.Row="0"
-                                        HorizontalScrollBarVisibility="Disabled"
-                                        VerticalScrollBarVisibility="Auto">
-                                        <Border
-                                            x:Name="AppearanceSettingsPanel"
-                                            Margin="4,8,4,4"
-                                            VerticalAlignment="Top"
-                                            Classes="panel">
-                                            <StackPanel Spacing="8">
-                                            <TextBlock Classes="settings-label" Text="{DynamicResource Language}" />
-                                            <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate x:DataType="localization:LanguageOption">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Image Width="24" Height="18" Source="{Binding Icon}" Stretch="Uniform" />
-                                                            <TextBlock VerticalAlignment="Center" Text="{Binding DisplayName}" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource Appearance}" />
-                                            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate x:DataType="presentation:SettingsPageViewModel+ThemeOption">
-                                                        <TextBlock Text="{Binding Label}" />
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource QrPreviewScale}" />
-                                            <NumericUpDown Increment="0.5" Maximum="6" Minimum="1" Value="{Binding QrPreviewScaleFactor, Mode=TwoWay}" />
-                                            <StackPanel IsVisible="{Binding IsInterfaceScaleAvailable}" Spacing="8">
-                                                <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource InterfaceScale}" />
-                                                <ComboBox ItemsSource="{Binding InterfaceScales}" SelectedItem="{Binding SelectedInterfaceScale, Mode=TwoWay}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="presentation:SettingsPageViewModel+InterfaceScaleOption">
-                                                            <TextBlock Text="{Binding Label}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                                <TextBlock Classes="secondary" Text="{DynamicResource InterfaceScaleHelp}" TextWrapping="Wrap" />
-                                            </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                    </ScrollViewer>
-                                </Grid>
-                            </DataTemplate>
-                        </ContentControl.ContentTemplate>
-                    </ContentControl>
-                </TabItem>
-                <TabItem Header="{DynamicResource IconPacks}">
-                    <ContentControl x:Name="BrandIconSettingsHost" Content="{Binding SettingsPage}">
-                        <ContentControl.ContentTemplate>
-                            <DataTemplate x:DataType="presentation:SettingsPageViewModel">
-                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                                    <Border x:Name="BrandIconsPanel" Margin="4,8,4,4" Classes="panel">
-                                        <StackPanel Spacing="8">
-                                            <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
-                                            <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsHelp}" TextWrapping="Wrap" />
-                                            <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsFormatHelp}" TextWrapping="Wrap" />
-                                            <HyperlinkButton
-                                                HorizontalAlignment="Left"
-                                                Content="{DynamicResource IconPackBuilderLink}"
-                                                NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
-                                                Padding="0,3" />
-                                            <TextBlock
-                                                Classes="settings-label"
-                                                Text="{Binding DataContext.NativeFilePicker.BrandIconPackStatusText, ElementName=SettingsRoot}"
-                                                TextWrapping="Wrap" />
-                                            <Button
-                                                x:Name="BrandIconsImportButton"
-                                                Classes="wide settings-action"
-                                                Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}"
-                                                Content="{DynamicResource ImportSimpleIconsPack}" />
-                                            <Button
-                                                x:Name="BrandIconsResetButton"
-                                                Classes="secondary wide settings-action"
-                                                Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
-                                                Content="{DynamicResource ResetBrandIcons}"
-                                                IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}" />
-                                            <CheckBox Content="{DynamicResource ShowIssuerLogo}" IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
-                                            <TextBlock Classes="secondary" Text="{DynamicResource ShowIssuerLogoHelp}" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-                                </ScrollViewer>
-                            </DataTemplate>
-                        </ContentControl.ContentTemplate>
-                    </ContentControl>
-                </TabItem>
-                <TabItem Header="{DynamicResource Miscellaneous}">
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="Diagnostics" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Miscellaneous}" />
+                        </StackPanel>
+                    </TabItem.Header>
                     <ContentControl x:Name="MiscSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:SettingsPageViewModel">
@@ -448,6 +484,11 @@
                                                 x:Name="MinimumLoggingLevelPicker"
                                                 ItemsSource="{Binding LogLevels}"
                                                 SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
+                                            <Button
+                                                x:Name="OpenLogFolderButton"
+                                                Classes="wide settings-action"
+                                                Command="{Binding OpenLogFolderCommand}"
+                                                Content="{DynamicResource OpenLogFolder}" />
                                         </StackPanel>
                                     </Border>
                                 </ScrollViewer>
@@ -455,7 +496,13 @@
                         </ContentControl.ContentTemplate>
                     </ContentControl>
                 </TabItem>
-                <TabItem Header="{DynamicResource Faq}">
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="Help" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Faq}" />
+                        </StackPanel>
+                    </TabItem.Header>
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="4,8,4,4" Spacing="10">
                                 <Border
@@ -601,22 +648,15 @@
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
-                <TabItem Header="{DynamicResource About}">
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <shared:SymbolIcon IconSize="16" Kind="Information" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource About}" />
+                        </StackPanel>
+                    </TabItem.Header>
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="4,8" Spacing="12">
-                            <ContentControl Content="{Binding SettingsPage}">
-                                <ContentControl.ContentTemplate>
-                                    <DataTemplate x:DataType="presentation:SettingsPageViewModel">
-                                        <Border Classes="panel">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="section-title" Text="{DynamicResource About}" />
-                                                <TextBlock Text="{Binding VersionText}" />
-                                                <Button Classes="settings-action" Command="{Binding OpenLogFolderCommand}" Content="{DynamicResource OpenLogFolder}" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ContentControl.ContentTemplate>
-                            </ContentControl>
                             <ContentControl Content="{Binding UpdateCheck}">
                                 <ContentControl.ContentTemplate>
                                     <DataTemplate x:DataType="presentation:UpdateCheckViewModel">

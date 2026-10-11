@@ -249,7 +249,10 @@ public sealed class SharedStylesTests
         var settings = XDocument.Load(Path.Combine(fixtureDirectory, "DesktopSettingsWindow.axaml"));
         var faqTab = settings
             .Descendants(avalonia + "TabItem")
-            .Single(element => element.Attribute("Header")?.Value == "{DynamicResource Faq}");
+            .Single(element => element
+                .Element(avalonia + "TabItem.Header")?
+                .Descendants(avalonia + "TextBlock")
+                .Any(text => text.Attribute("Text")?.Value == "{DynamicResource Faq}") == true);
         var faqSections = faqTab
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "faq-section")
@@ -274,8 +277,10 @@ public sealed class SharedStylesTests
                 .Attribute("Kind")?.Value));
         Assert.Equal(
             [
-                "https://github.com/simple-icons/simple-icons",
-                "https://github.com/beemdevelopment/Aegis/blob/master/docs/iconpacks.md"
+                "https://github.com/Legends/otp-harbor-icon-pack-builder",
+                "https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md",
+                "https://github.com/aegis-icons/aegis-icons#disclaimer",
+                "https://github.com/homarr-labs/dashboard-icons#legal"
             ],
             faqSections[0]
                 .Descendants(avalonia + "HyperlinkButton")
@@ -350,7 +355,7 @@ public sealed class SharedStylesTests
     }
 
     [Fact]
-    public void DesktopMinimumLoggingLevelLivesOnlyInMiscTab()
+    public void DesktopLoggingControlsLiveInMiscAndAboutPanelIsRemoved()
     {
         var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
@@ -362,17 +367,43 @@ public sealed class SharedStylesTests
 
         var appearanceTab = document
             .Descendants(avalonia + "TabItem")
-            .Single(element => element.Attribute("Header")?.Value == "{DynamicResource Appearance}");
+            .Single(element => element
+                .Element(avalonia + "TabItem.Header")?
+                .Descendants(avalonia + "TextBlock")
+                .Any(text => text.Attribute("Text")?.Value == "{DynamicResource Appearance}") == true);
         var miscTab = document
             .Descendants(avalonia + "TabItem")
-            .Single(element => element.Attribute("Header")?.Value == "{DynamicResource Miscellaneous}");
+            .Single(element => element
+                .Element(avalonia + "TabItem.Header")?
+                .Descendants(avalonia + "TextBlock")
+                .Any(text => text.Attribute("Text")?.Value == "{DynamicResource Miscellaneous}") == true);
+        var aboutTab = document
+            .Descendants(avalonia + "TabItem")
+            .Single(element => element
+                .Element(avalonia + "TabItem.Header")?
+                .Descendants(avalonia + "TextBlock")
+                .Any(text => text.Attribute("Text")?.Value == "{DynamicResource About}") == true);
 
         Assert.DoesNotContain(
             appearanceTab.Descendants(avalonia + "ComboBox"),
             element => element.Attribute(xaml + "Name")?.Value == "MinimumLoggingLevelPicker");
+        Assert.Contains(
+            appearanceTab.Descendants(avalonia + "TextBlock"),
+            element => element.Attribute("Text")?.Value == "{DynamicResource Theme}");
         Assert.Single(
             miscTab.Descendants(avalonia + "ComboBox"),
             element => element.Attribute(xaml + "Name")?.Value == "MinimumLoggingLevelPicker");
+        Assert.Single(
+            miscTab.Descendants(avalonia + "Button"),
+            element => element.Attribute(xaml + "Name")?.Value == "OpenLogFolderButton"
+                && element.Attribute("Command")?.Value == "{Binding OpenLogFolderCommand}");
+        Assert.DoesNotContain(
+            aboutTab.Descendants(avalonia + "TextBlock"),
+            element => element.Attribute("Classes")?.Value == "section-title"
+                && element.Attribute("Text")?.Value == "{DynamicResource About}");
+        Assert.DoesNotContain(
+            aboutTab.Descendants(avalonia + "Button"),
+            element => element.Attribute("Command")?.Value == "{Binding OpenLogFolderCommand}");
     }
 
     [Fact]

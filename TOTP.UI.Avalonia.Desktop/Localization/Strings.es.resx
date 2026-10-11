@@ -424,6 +424,7 @@
   <data name="ShowIssuerLogo" xml:space="preserve"><value>Mostrar el logotipo del emisor</value></data>
   <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Mostrar una tesela de marca o de marcador junto a cada cuenta.</value></data>
   <data name="Appearance" xml:space="preserve"><value>Apariencia</value></data>
+  <data name="Theme" xml:space="preserve"><value>Tema</value></data>
   <data name="ThemeFollowSystem" xml:space="preserve"><value>Usar configuración del sistema</value></data>
   <data name="ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
   <data name="ThemeLight" xml:space="preserve"><value>Claro</value></data>

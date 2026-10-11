@@ -885,7 +885,7 @@
                                 Click="ScrollMainViewToTop"
                                 Command="{Binding ShowAppearanceSettingsCommand}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Settings" />
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Palette" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding AppearanceText}" />
                                         <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding AppearanceSettingsDescriptionText}" TextWrapping="Wrap" />
@@ -897,7 +897,7 @@
                                 Click="ScrollMainViewToTop"
                                 Command="{Binding ShowBrandIconSettingsCommand}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Folder" />
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="ImageStack" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding BrandIconsText}" />
                                         <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding BrandIconSettingsDescriptionText}" TextWrapping="Wrap" />
@@ -909,7 +909,7 @@
                                 Click="ScrollMainViewToTop"
                                 Command="{Binding ShowSecuritySettingsCommand}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Lock" />
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Vault" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding SecurityText}" />
                                         <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding SecuritySettingsDescriptionText}" TextWrapping="Wrap" />
@@ -921,7 +921,7 @@
                                 Click="ScrollMainViewToTop"
                                 Command="{Binding ShowBackupSettingsCommand}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="FolderAdd" />
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="BackupRestore" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding BackupTitle}" />
                                         <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding BackupSettingsDescriptionText}" TextWrapping="Wrap" />
@@ -933,7 +933,7 @@
                                 Click="ScrollMainViewToTop"
                                 Command="{Binding ShowImportExportSettingsCommand}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="QrCode" />
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Import" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding ImportExportText}" />
                                         <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding ImportExportSettingsDescriptionText}" TextWrapping="Wrap" />
@@ -945,7 +945,7 @@
                                 Click="ScrollMainViewToTop"
                                 Command="{Binding ShowMiscSettingsCommand}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Settings" />
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Diagnostics" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding MiscellaneousText}" />
                                         <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding MiscSettingsDescriptionText}" TextWrapping="Wrap" />
@@ -957,7 +957,7 @@
                                 Click="ScrollMainViewToTop"
                                 Command="{Binding ShowFaqSettingsCommand}">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Information" />
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Help" />
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding FaqText}" />
                                         <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqSettingsDescriptionText}" TextWrapping="Wrap" />
@@ -1011,7 +1011,7 @@
                                     <TextBlock
                                         FontSize="18"
                                         FontWeight="SemiBold"
-                                        Text="{Binding AppearanceText}" />
+                                        Text="{Binding ThemeText}" />
                                     <StackPanel Spacing="4">
                                         <RadioButton
                                             GroupName="AppearanceTheme"

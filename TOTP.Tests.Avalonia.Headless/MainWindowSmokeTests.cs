@@ -2289,18 +2289,33 @@ public sealed class MainWindowSmokeTests
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
             var tabs = settingsTabs.GetVisualDescendants().OfType<TabItem>().ToArray();
             Assert.Equal(8, tabs.Length);
+            var tabHeaders = tabs
+                .Select(tab => Assert.IsType<StackPanel>(tab.Header))
+                .ToArray();
             Assert.Equal(
                 [
-                    Application.Current!.Resources[AvaloniaStringKeys.Security],
+                    Application.Current!.Resources[AvaloniaStringKeys.Appearance],
+                    Application.Current.Resources[AvaloniaStringKeys.IconPacks],
+                    Application.Current.Resources[AvaloniaStringKeys.Security],
                     Application.Current.Resources[AvaloniaStringKeys.Backups],
                     Application.Current.Resources[AvaloniaStringKeys.ImportExport],
-                    Application.Current.Resources[AvaloniaStringKeys.Appearance],
-                    Application.Current.Resources[AvaloniaStringKeys.IconPacks],
                     Application.Current.Resources[AvaloniaStringKeys.Miscellaneous],
                     Application.Current.Resources[AvaloniaStringKeys.Faq],
                     Application.Current.Resources[AvaloniaStringKeys.About]
                 ],
-                tabs.Select(tab => tab.Header));
+                tabHeaders.Select(header => Assert.Single(header.Children.OfType<TextBlock>()).Text));
+            Assert.Equal(
+                [
+                    SymbolIconKind.Palette,
+                    SymbolIconKind.ImageStack,
+                    SymbolIconKind.Vault,
+                    SymbolIconKind.BackupRestore,
+                    SymbolIconKind.Import,
+                    SymbolIconKind.Diagnostics,
+                    SymbolIconKind.Help,
+                    SymbolIconKind.Information
+                ],
+                tabHeaders.Select(header => Assert.Single(header.Children.OfType<SymbolIcon>()).Kind));
             Assert.True(tabs.Take(4).Sum(tab => tab.MinWidth) <= window.Width - 32);
             Assert.All(
                 tabs,
@@ -2349,6 +2364,10 @@ public sealed class MainWindowSmokeTests
         try
         {
             window.Show();
+            var settingsTabs = Assert.Single(
+                window.GetVisualDescendants().OfType<TabControl>(),
+                tabControl => tabControl.Classes.Contains("settings-tabs"));
+            settingsTabs.SelectedIndex = 2;
             window.UpdateLayout();
 
             var authorizationHost = Assert.Single(
@@ -2712,7 +2731,7 @@ public sealed class MainWindowSmokeTests
             var settingsTabs = Assert.Single(
                 window.GetVisualDescendants().OfType<TabControl>(),
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
-            settingsTabs.SelectedIndex = 0;
+            settingsTabs.SelectedIndex = 2;
             window.UpdateLayout();
             var settingsHost = Assert.Single(
                 window.GetVisualDescendants().OfType<ContentControl>(),

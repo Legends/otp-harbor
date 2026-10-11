@@ -72,6 +72,7 @@ public static class MobileStringKeys
     public const string SpanishLanguage = nameof(SpanishLanguage);
     public const string LanguageSaveFailed = nameof(LanguageSaveFailed);
     public const string Appearance = nameof(Appearance);
+    public const string Theme = nameof(Theme);
     public const string ThemeFollowSystem = nameof(ThemeFollowSystem);
     public const string ThemeDark = nameof(ThemeDark);
     public const string ThemeLight = nameof(ThemeLight);
@@ -369,6 +370,7 @@ public static class MobileStringKeys
         SpanishLanguage,
         LanguageSaveFailed,
         Appearance,
+        Theme,
         ThemeFollowSystem,
         ThemeDark,
         ThemeLight,

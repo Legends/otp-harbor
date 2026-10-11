@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Globalization;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TOTP.Avalonia.Desktop.Localization;
@@ -73,11 +72,6 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         _openLogFolderCommand = new AsyncCommand(
             OpenLogFolderAsync,
             () => !_isBusy && _applicationPaths is not null && _folderLauncher is not null);
-        VersionText = typeof(SettingsPageViewModel).Assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-            .InformationalVersion
-            ?? typeof(SettingsPageViewModel).Assembly.GetName().Version?.ToString()
-            ?? Localize(AvaloniaStringKeys.Unknown);
         Reload();
     }
 
@@ -92,7 +86,6 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         _clipboardLifetimeOptions;
     public IReadOnlyList<ThemeOption> Themes => _themes;
     public bool IsInterfaceScaleAvailable => OperatingSystem.IsLinux();
-    public string VersionText { get; }
     public ICommand OpenLogFolderCommand => _openLogFolderCommand;
     public NotificationState SettingsNotification { get; }
     public NotificationState LogFolderNotification { get; }
