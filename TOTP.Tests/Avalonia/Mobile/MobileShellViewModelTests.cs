@@ -2772,7 +2772,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task ImportBrandIconsAsync_WhenImportTakesLong_ShowsIconPackProgressAfterDelay()
+    public async Task ImportBrandIconsAsync_WhenImportTakesLong_ShowsIconPackProgressImmediately()
     {
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.SetupGet(value => value.Status)
@@ -2803,9 +2803,6 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ShowSettingsAsync();
 
         var importTask = context.Sut.ImportBrandIconsAsync();
-        await Task.Delay(
-            TimeSpan.FromMilliseconds(1650),
-            global::Xunit.TestContext.Current.CancellationToken);
 
         Assert.True(context.Sut.IsImportProgressVisible);
         Assert.Equal(
@@ -2814,6 +2811,43 @@ public sealed class MobileShellViewModelTests
 
         importing.SetResult(Result.Fail("synthetic icon import failure"));
         await importTask;
+
+        Assert.False(context.Sut.IsImportProgressVisible);
+        Assert.Empty(context.Sut.ImportProgressText);
+    }
+
+    [Fact]
+    public async Task ResetBrandIconsAsync_WhenRemovalTakesLong_ShowsProgressImmediately()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status)
+            .Returns(new BrandIconPackStatus(true, "1", 100));
+        var context = CreateContext(
+            isConfigured: true,
+            cultureName: "en",
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        var removing = new TaskCompletionSource<Result>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        brandIcons.Setup(value => value.ResetAsync(It.IsAny<CancellationToken>()))
+            .Returns(removing.Task);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        var resetTask = context.Sut.ResetBrandIconsAsync();
+
+        Assert.True(context.Sut.IsImportProgressVisible);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.RemovingBrandIcons),
+            context.Sut.ImportProgressText);
+
+        removing.SetResult(Result.Ok());
+        await resetTask;
 
         Assert.False(context.Sut.IsImportProgressVisible);
         Assert.Empty(context.Sut.ImportProgressText);

@@ -3039,7 +3039,8 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            BeginImportProgress(MobileStringKeys.ImportingBrandIcons);
+            BeginImportProgress(MobileStringKeys.ImportingBrandIcons, showImmediately: true);
+            await Task.Yield();
             var imported = await _brandIconPackService.ImportAsync(document.Stream, document.Name);
             if (imported.IsFailed)
             {
@@ -3072,7 +3073,8 @@ public sealed class MobileShellViewModel :
         IsBusy = true;
         try
         {
-            BeginImportProgress(MobileStringKeys.RemovingBrandIcons);
+            BeginImportProgress(MobileStringKeys.RemovingBrandIcons, showImmediately: true);
+            await Task.Yield();
             var result = await _brandIconPackService.ResetAsync();
             SetNotification(
                 Get(result.IsSuccess
@@ -4980,10 +4982,16 @@ public sealed class MobileShellViewModel :
     private void SetError(string key) =>
         SetNotification(Get(key), NotificationSeverity.Error);
 
-    private void BeginImportProgress(string textKey)
+    private void BeginImportProgress(string textKey, bool showImmediately = false)
     {
         EndImportProgress();
         ImportProgressText = Get(textKey);
+        if (showImmediately)
+        {
+            IsImportProgressVisible = true;
+            return;
+        }
+
         var lifetime = new CancellationTokenSource();
         _importProgressLifetime = lifetime;
         _ = ShowImportProgressAfterDelayAsync(lifetime);

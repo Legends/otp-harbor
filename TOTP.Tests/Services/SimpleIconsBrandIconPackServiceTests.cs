@@ -220,7 +220,10 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         Assert.Equal("otp-harbor-icons", imported.Value.ProviderId);
         Assert.Equal("c-plus-plus", sut.Resolve(" C++ ")?.Id);
         Assert.Equal("c-plus-plus", sut.Resolve("Service Alias 39")?.Id);
+        Assert.Null(sut.Resolve("Service Alias 39 production"));
+        Assert.Null(sut.Resolve("C++ work"));
         Assert.Null(sut.Resolve("Service Alias 40"));
+        Assert.Null(sut.Resolve("My Service Alias 39"));
         Assert.Null(sut.ResolveAccount(string.Empty, "Service Alias 39"));
 
         var packDirectory = Assert.Single(Directory.EnumerateDirectories(
@@ -245,6 +248,7 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         var reloaded = CreateSut(temp.Path);
         Assert.Equal("c-plus-plus", reloaded.Resolve("C++")?.Id);
         Assert.Equal("c-plus-plus", reloaded.Resolve("Service Alias 39")?.Id);
+        Assert.Null(reloaded.Resolve("Service Alias 39 production"));
         Assert.Equal(BrandIconPackFormat.OtpHarbor, reloaded.Status.Format);
     }
 
@@ -465,6 +469,9 @@ public sealed class SimpleIconsBrandIconPackServiceTests
             Assert.All(layers, layer => Assert.NotNull(layer.Viewport));
             Assert.Contains(layers, layer => layer.FillColor is not null);
         }
+        Assert.Null(sut.Resolve("GitHub work"));
+        Assert.Null(sut.Resolve("Firebase production"));
+        Assert.Null(sut.Resolve("Personal GitHub"));
     }
 
     [Fact(
