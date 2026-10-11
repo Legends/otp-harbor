@@ -1,4 +1,5 @@
 using Android.App;
+using Android.Content;
 using Android.Runtime;
 using Avalonia;
 using Avalonia.Android;
@@ -54,6 +55,25 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     internal Task<bool> DeleteDebugSyntheticAccountsAsync() =>
         _services?.GetService<MobileShellViewModel>()?.DeleteDebugSyntheticAccountsAsync()
         ?? Task.FromResult(false);
+
+    internal async Task<bool> ImportDebugAccountsAsync(Context context, string? filePath)
+    {
+        var viewModel = _services?.GetService<MobileShellViewModel>();
+        if (viewModel is null || string.IsNullOrWhiteSpace(filePath)) return false;
+
+        var cacheDirectory = Path.GetFullPath(context.CacheDir?.AbsolutePath ?? string.Empty);
+        var resolvedPath = Path.GetFullPath(filePath);
+        var relativePath = Path.GetRelativePath(cacheDirectory, resolvedPath);
+        if (relativePath.StartsWith("..", StringComparison.Ordinal)
+            || Path.IsPathRooted(relativePath)
+            || !Path.GetExtension(resolvedPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        await using var stream = File.OpenRead(resolvedPath);
+        return await viewModel.ImportAccountsAsync(stream, Path.GetFileName(resolvedPath));
+    }
 
     internal Task<bool> DeleteAllAccountsAsync() =>
         _services?.GetService<MobileShellViewModel>()?.DeleteAllAccountsAsync()

@@ -9,13 +9,15 @@ namespace TOTP.Avalonia.Android;
     Name = "io.github.legends.otpharbor.debug.DebugAccountDataReceiver",
     Enabled = true,
     Exported = true)]
-[IntentFilter([AddAction, DeleteAction, DeleteAllAction])]
+[IntentFilter([AddAction, DeleteAction, ImportAction, DeleteAllAction])]
 public sealed class DebugAccountDataReceiver : BroadcastReceiver
 {
     internal const string AddAction =
         "io.github.legends.otpharbor.debug.action.BULK_ADD_SYNTHETIC_ACCOUNTS";
     internal const string DeleteAction =
         "io.github.legends.otpharbor.debug.action.BULK_DELETE_SYNTHETIC_ACCOUNTS";
+    internal const string ImportAction =
+        "io.github.legends.otpharbor.debug.action.IMPORT_ACCOUNTS";
     internal const string DeleteAllAction =
         "io.github.legends.otpharbor.debug.action.DELETE_ALL_ACCOUNTS";
 
@@ -25,6 +27,7 @@ public sealed class DebugAccountDataReceiver : BroadcastReceiver
         var application = context?.ApplicationContext as OtpHarborApplication;
         var action = intent?.Action;
         var count = Math.Clamp(intent?.GetIntExtra("count", 600) ?? 600, 1, 5000);
+        var importPath = intent?.GetStringExtra("path");
         Dispatcher.UIThread.Post(async () =>
         {
             try
@@ -35,6 +38,8 @@ public sealed class DebugAccountDataReceiver : BroadcastReceiver
                         await application.AddDebugSyntheticAccountsAsync(count),
                     DeleteAction when application is not null =>
                         await application.DeleteDebugSyntheticAccountsAsync(),
+                    ImportAction when application is not null && context is not null =>
+                        await application.ImportDebugAccountsAsync(context, importPath),
                     DeleteAllAction when application is not null =>
                         await application.DeleteAllAccountsAsync(),
                     _ => false
