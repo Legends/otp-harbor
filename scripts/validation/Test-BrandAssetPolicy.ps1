@@ -30,12 +30,11 @@ $assetProvenance = Read-RepositoryFile 'docs/assets/ASSET_PROVENANCE.md'
 $brandService = Read-RepositoryFile 'TOTP.Infrastructure/Services/SimpleIconsBrandIconPackService.cs'
 $iconArchive = Read-RepositoryFile 'TOTP.Infrastructure/Icons/IconImportArchive.cs'
 $iconImporterPaths = @(
-    'TOTP.Infrastructure/Icons/SimpleIconsImporter.cs',
-    'TOTP.Infrastructure/Icons/AegisIconPackImporter.cs',
-    'TOTP.Infrastructure/Icons/FilenameIndexedIconPackImporter.cs'
+    'TOTP.Infrastructure/Icons/OtpHarborIconPackImporter.cs'
 )
 $iconImporters = ($iconImporterPaths | ForEach-Object { Read-RepositoryFile $_ }) -join "`n"
 $resolverDatabaseText = Read-RepositoryFile 'TOTP.Infrastructure/Branding/issuer-resolver.v1.json'
+$iconPackContract = Read-RepositoryFile 'docs/security/ICON_PACK_IMPORT_CONTRACT.md'
 
 foreach ($requiredText in @(
     'intentionally does not distribute third-party brand assets',
@@ -106,17 +105,27 @@ if ($brandFormatHelp.Count -ne 1) {
     throw 'The invariant BrandIconsFormatHelp disclosure is missing or duplicated.'
 }
 foreach ($requiredText in @(
-    'Simple Icons',
-    'Aegis',
-    'canonical IDs',
-    'unsafe paths',
-    'ambiguous metadata',
-    'duplicate IDs',
-    'unsupported image content',
-    'rejected'
+    'separate OTP Harbor Icon Pack Builder',
+    '.otphicons',
+    'supported third-party sources',
+    'builder downloads those sources only when you run it',
+    'OTP Harbor itself stays offline'
 )) {
     if (-not ([string]$brandFormatHelp[0].value).Contains($requiredText, [StringComparison]::Ordinal)) {
-        throw "The filename-indexed icon-pack guidance is missing: $requiredText"
+        throw "The OTP Harbor icon-pack guidance is missing: $requiredText"
+    }
+}
+
+foreach ($requiredText in @(
+    'application does not download or reinterpret',
+    'Aegis Icons, Dashboard Icons, or',
+    'The standalone builder/importer is a separate product boundary.',
+    'Automatic matching uses the mandatory TOTP issuer only.',
+    'a lookup miss stays',
+    'the app does not apply fuzzy legacy fallback matching.'
+)) {
+    if (-not $iconPackContract.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The provider-neutral icon-pack contract is missing: $requiredText"
     }
 }
 
@@ -197,10 +206,14 @@ foreach ($requiredText in @(
         throw "The icon-import archive boundary no longer preserves an upstream notice: $requiredText"
     }
 }
-foreach ($importerPath in $iconImporterPaths) {
-    $importer = Read-RepositoryFile $importerPath
-    if (-not $importer.Contains('IconImportArchive.ReadNoticesAsync', [StringComparison]::Ordinal)) {
-        throw "The icon-pack importer no longer collects upstream notices: $importerPath"
+foreach ($requiredText in @(
+    'MaximumLicenseBytes',
+    'licenses/{source.Provider}/',
+    'IconImportArchive.ReadBoundedAsync',
+    'new ImportedIconNotice('
+)) {
+    if (-not $iconImporters.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The OTP Harbor icon-pack importer no longer validates and preserves referenced licenses: $requiredText"
     }
 }
 foreach ($requiredText in @('parsed.Notices', 'File.WriteAllBytesAsync(noticePath')) {

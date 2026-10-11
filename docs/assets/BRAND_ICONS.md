@@ -1,6 +1,6 @@
 # Optional local brand icons
 
-OTP Harbor releases do not contain Simple Icons artwork or any other third-party service logos. Account rows use deterministic initial tiles until the user explicitly imports a local icon-pack ZIP that they obtained independently. The ZIP may be a Simple Icons release or a filename-indexed collection of SVG files.
+OTP Harbor releases do not contain Simple Icons artwork or any other third-party service logos. Account rows use deterministic initial tiles until the user explicitly imports a local provider-neutral `.otphicons` file produced by the separate OTP Harbor Icon Pack Builder.
 
 ## Third-party brand assets
 
@@ -26,24 +26,24 @@ Putting an icon pack in another OTP Harbor-owned repository would still make the
 
 ## Data flow
 
-1. The user selects a local `.zip` file in **Settings → Import / Export → Optional brand icons**.
-2. OTP Harbor treats the archive as untrusted input. It bounds compressed and expanded sizes, rejects unsafe or ambiguous paths, parses JSON and XML with restricted readers, and accepts either a Simple Icons release with `data/simple-icons.json` metadata or a manifest-free filename-indexed pack.
-3. A filename-indexed pack may place SVGs in nested folders, but every SVG filename must be a canonical ASCII brand identifier matching `[A-Za-z0-9_]+.svg`. Filenames are indexed case-insensitively, and duplicate identifiers, unsafe names, malformed SVGs, oversized files, or ambiguous archive entries reject the complete import. For example, `microsoft.svg`, `github.svg`, and `google.svg` become the local identifiers `microsoft`, `github`, and `google`.
-4. Valid SVG files, relevant upstream notice files, and a compact generated `brand-index.json` are copied beneath the current user's application-data directory in `BrandIcons/packs/`. A small `current.json` pointer activates the fully written pack atomically. Generic-pack notice files named `LICENSE`, `LICENCE`, `COPYING`, `NOTICE`, or `DISCLAIMER`, optionally ending in `.md` or `.txt`, are retained in the pack's local `notices/` directory.
-5. The resolver matches the issuer against exact titles/slugs, normalized titles/slugs, upstream aliases, and the embedded versioned alias database in `TOTP.Infrastructure/Branding/issuer-resolver.v1.json`. Exact aliases take precedence over broader prefixes, and an ambiguous alias is not assigned to whichever icon happened to be indexed first. It never examines the OTP secret or infers a brand from the account's email domain.
-6. When an icon pack is installed, the account editor offers **Automatic** plus the pack's locally indexed names. A user may select a stable pack identifier for that account; automatic matching remains the default.
-7. The shared Avalonia resolver caches path data, brushes, and resolved presentations. OTP timer updates do not repeat issuer resolution or access icon files.
+1. The user independently runs the separate OTP Harbor Icon Pack Builder. The builder owns provider acquisition, provider-specific parsing, source selection, SVG normalization, and package production for the current workflow. OTP Harbor does not reference the builder implementation, and its normal import UI does not accept provider archives directly.
+2. The builder creates `otp-harbor-icons.otphicons`, containing selected canonical SVGs, background colors, authoritative issuer aliases, source provenance, and referenced licenses/notices.
+3. The user selects that local file in **Settings → Icon packs → Import OTP Harbor icon pack**.
+4. OTP Harbor treats the file as untrusted input. It bounds compressed and expanded resources, rejects unsafe or ambiguous paths, and validates `pack.json`, its complete reference graph, every selected SVG, licenses, provenance, canonical IDs, and the authoritative alias index before activation. Validation is all-or-nothing.
+5. Valid SVGs, provenance, notices, and a generated `brand-index.json` are copied beneath the current user's application-data directory in `BrandIcons/packs/`. The completed staging directory and installed-pack registry are activated only after full validation succeeds.
+6. Automatic resolution uses only the mandatory issuer and requires an exact entry in the pack's authoritative normalized alias index. A lookup miss remains a miss: OTP Harbor does not use account names, substring, prefix, slug-derived, or fuzzy matching. The account editor may store an explicit stable brand ID as a display-only override.
+7. The shared Avalonia resolver caches path data, brushes, layers, and resolved presentations. OTP timer updates do not repeat issuer resolution or access icon files.
 
 Existing vault and backup formats are unchanged. Automatic matches and absolute asset paths are not persisted. Explicit account choices are stored separately in `BrandIcons/account-brand-settings.json` as an account GUID to stable brand-id mapping. That local display-only file contains no issuer, account name, OTP secret, icon path, or artwork and is excluded from vault backups and exports. Removing a pack restores the generic fallback; reimporting a pack containing the selected identifier restores the explicit icon.
 
 ## Privacy and legal scope
 
-Import is entirely local. OTP Harbor does not download icon packs, request favicons, call logo APIs, or transmit issuer/account metadata. Imported artwork is not copied into application releases, installers, backups, or exports.
+Import is entirely local. OTP Harbor does not download icon packs, request favicons, call logo APIs, or transmit issuer/account metadata. The separate builder may download supported upstream sources only when the user runs it. Imported artwork and generated packs are not copied into OTP Harbor releases, installers, backups, or exports.
 
 Resolver entries may be added only when the target identifier matches a supported local pack identifier and the alias is specific enough to avoid misleading matches. Conflicting aliases fail validation. A resolver match produces a logo only when the user has independently imported a local pack containing that identifier; otherwise the generic fallback remains in use.
 
-Simple Icons' [CC0 license](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md) covers its project/database but does not necessarily grant rights to every underlying trademark or artwork; its [disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md) calls this out explicitly. OTP Harbor preserves the imported pack's `LICENSE.md` and `DISCLAIMER.md`; users remain responsible for confirming that their local use is authorized. Brand display does not imply sponsorship, affiliation, certification, or endorsement.
+Simple Icons' [CC0 license](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md) covers its project/database but does not necessarily grant rights to every underlying trademark or artwork; its [disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md) calls this out explicitly. Dashboard Icons and Aegis Icons likewise have their own project licenses, notices, and trademark boundaries. OTP Harbor preserves referenced license and provenance files from the imported pack; users remain responsible for confirming that their acquisition, local use, and any sharing are authorized. Brand display does not imply sponsorship, affiliation, certification, or endorsement.
 
-To update icons, import a newer complete pack ZIP. The previous complete pack remains inactive in the local pack directory so a failed replacement cannot damage the active installation.
+To update icons, import a newer complete `.otphicons` file. A rejected replacement cannot damage the active installation.
 
 The settings page also provides **Remove imported icons** when a pack is installed. Deletion runs away from the UI thread, removes the local imported pack, and restores deterministic placeholder tiles; it does not modify accounts, secrets, backups, exports, or display-only account mappings. **Show issuer logo** controls whether either branded or placeholder tiles are displayed and is enabled by default. That branding-only preference is stored under `BrandIcons/display-settings.json`, outside the strict portable `preferences.json` contract used by released versions.
