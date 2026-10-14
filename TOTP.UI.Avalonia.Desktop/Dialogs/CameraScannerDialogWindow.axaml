@@ -82,17 +82,20 @@
                 <Button
                     MinWidth="100"
                     Command="{Binding StartCommand}"
-                    Content="{DynamicResource Retry}"
-                    IsVisible="{Binding !IsScanning}" />
+                    IsVisible="{Binding !IsScanning}">
+                    <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource Retry}" />
+                </Button>
                 <Button
                     MinWidth="120"
-                    Command="{Binding OpenImageCommand}"
-                    Content="{DynamicResource OpenQrImage}" />
+                    Command="{Binding OpenImageCommand}">
+                    <shared:SymbolIconLabel Kind="ImageStack" Text="{DynamicResource OpenQrImage}" />
+                </Button>
                 <Button
                     MinWidth="100"
                     Command="{Binding CancelCommand}"
-                    Content="{DynamicResource CancelScan}"
-                    IsCancel="True" />
+                    IsCancel="True">
+                    <shared:SymbolIconLabel Kind="Close" Text="{DynamicResource CancelScan}" />
+                </Button>
             </StackPanel>
         </Grid>
     </Grid>

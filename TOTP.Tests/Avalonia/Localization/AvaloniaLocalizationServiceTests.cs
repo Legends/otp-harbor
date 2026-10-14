@@ -60,6 +60,28 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en", "licenses", "trademark rights", "you are responsible")]
+    [InlineData("de", "Lizenzen", "Markenrechten", "du bist")]
+    [InlineData("fr", "licences", "droits de marque", "vous êtes responsable")]
+    [InlineData("es", "licencias", "derechos de marca", "eres responsable")]
+    public void Catalog_IconOnboardingNamesBuilderAndUserResponsibility(
+        string cultureName,
+        string expectedLicenses,
+        string expectedTrademarkRights,
+        string expectedResponsibility)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        var description = sut.Get(AvaloniaStringKeys.OnboardingIconPackDescription, culture);
+
+        Assert.Contains("OTP Harbor Icon Pack Builder", description, StringComparison.Ordinal);
+        Assert.Contains(expectedLicenses, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(expectedTrademarkRights, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(expectedResponsibility, description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
     [InlineData("en", "OTP Harbor")]
     [InlineData("de", "OTP Harbor")]
     [InlineData("fr", "OTP Harbor")]
@@ -149,21 +171,21 @@ public sealed class AvaloniaLocalizationServiceTests
     [Theory]
     [InlineData(
         "en",
-        "Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.",
+        "This password encrypts your local vault. OTP Harbor cannot reset it if you forget it, so choose one you can remember and keep it private.",
         "No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.")]
     [InlineData(
         "de",
-        "Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.",
+        "Dieses Passwort verschlüsselt Ihren lokalen Tresor. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Wählen Sie daher eines, an das Sie sich erinnern können, und halten Sie es geheim.",
         "Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.")]
     [InlineData(
         "fr",
-        "Créez un mot de passe principal pour chiffrer votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez. Créez ensuite une sauvegarde chiffrée et conservez son mot de passe séparément.",
+        "Ce mot de passe chiffre votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez ; choisissez-en donc un dont vous vous souviendrez et gardez-le confidentiel.",
         "Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.")]
     [InlineData(
         "es",
-        "Crea una contraseña maestra para cifrar tu caja fuerte local. OTP Harbor no puede restablecerla si la olvidas. Después, crea una copia de seguridad cifrada y guarda su contraseña por separado.",
+        "Esta contraseña cifra tu caja fuerte local. OTP Harbor no puede restablecerla si la olvidas, así que elige una que puedas recordar y mantenla en privado.",
         "Todavía no hay cuentas. Añade una manualmente, escanea el QR de una cuenta o exportación de Google Authenticator, o restaura una copia de seguridad cifrada desde Ajustes.")]
-    public void Catalog_OnboardingExplainsPasswordRecoveryAndFirstAccountOptions(
+    public void Catalog_OnboardingExplainsPasswordSafetyAndFirstAccountOptions(
         string cultureName,
         string expectedSetupHelp,
         string expectedEmptyState)

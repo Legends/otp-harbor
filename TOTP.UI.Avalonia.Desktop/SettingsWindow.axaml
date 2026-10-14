@@ -105,8 +105,9 @@
                     automation:AutomationProperties.Name="{DynamicResource CloseSettings}"
                     Classes="icon"
                     Command="{Binding CloseSettingsCommand}"
-                    Content="✕"
-                    ToolTip.Tip="{DynamicResource CloseSettings}" />
+                    ToolTip.Tip="{DynamicResource CloseSettings}">
+                    <shared:SymbolIcon IconSize="18" Kind="Close" />
+                </Button>
             </Grid>
             <TabControl
                 Grid.Row="1"
@@ -198,9 +199,10 @@
                                             <TextBlock Classes="secondary" Text="{DynamicResource BrandIconsFormatHelp}" TextWrapping="Wrap" />
                                             <HyperlinkButton
                                                 HorizontalAlignment="Left"
-                                                Content="{DynamicResource IconPackBuilderLink}"
                                                 NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
-                                                Padding="0,3" />
+                                                Padding="0,3">
+                                                <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource IconPackBuilderLink}" />
+                                            </HyperlinkButton>
                                             <TextBlock
                                                 Classes="settings-label"
                                                 Text="{Binding DataContext.NativeFilePicker.BrandIconPackStatusText, ElementName=SettingsRoot}"
@@ -208,14 +210,16 @@
                                             <Button
                                                 x:Name="BrandIconsImportButton"
                                                 Classes="wide settings-action"
-                                                Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}"
-                                                Content="{DynamicResource ImportSimpleIconsPack}" />
+                                                Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}">
+                                                <shared:SymbolIconLabel Kind="Import" Text="{DynamicResource ImportSimpleIconsPack}" />
+                                            </Button>
                                             <Button
                                                 x:Name="BrandIconsResetButton"
                                                 Classes="secondary wide settings-action"
                                                 Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
-                                                Content="{DynamicResource ResetBrandIcons}"
-                                                IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}" />
+                                                IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}">
+                                                <shared:SymbolIconLabel Kind="Delete" Text="{DynamicResource ResetBrandIcons}" />
+                                            </Button>
                                             <CheckBox Content="{DynamicResource ShowIssuerLogo}" IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
                                             <TextBlock Classes="secondary" Text="{DynamicResource ShowIssuerLogoHelp}" TextWrapping="Wrap" />
                                         </StackPanel>
@@ -262,8 +266,9 @@
                                                 <Button
                                                     Classes="settings-action"
                                                     Command="{Binding RefreshCommand}"
-                                                    Content="{DynamicResource Retry}"
-                                                    IsVisible="{Binding ShowQuickUnlockRetry}" />
+                                                    IsVisible="{Binding ShowQuickUnlockRetry}">
+                                                    <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource Retry}" />
+                                                </Button>
                                             </StackPanel>
                                         </Border>
                                         <Border Classes="panel">
@@ -274,8 +279,9 @@
                                                 <Button
                                                     x:Name="MasterPasswordChangeButton"
                                                     Classes="settings-action"
-                                                    Command="{Binding ChangePasswordCommand}"
-                                                    Content="{DynamicResource ChangeMasterPassword}" />
+                                                    Command="{Binding ChangePasswordCommand}">
+                                                    <shared:SymbolIconLabel Kind="Key" Text="{DynamicResource ChangeMasterPassword}" />
+                                                </Button>
                                             </StackPanel>
                                         </Border>
                                         <Border Classes="panel">
@@ -371,8 +377,9 @@
                                                             <Button
                                                                 x:Name="EncryptedBackupExportButton"
                                                                 Classes="primary wide settings-action"
-                                                                Command="{Binding ExportCommand}"
-                                                                Content="{DynamicResource ExportBackupAction}" />
+                                                                Command="{Binding ExportCommand}">
+                                                                <shared:SymbolIconLabel Kind="Export" Text="{DynamicResource ExportBackupAction}" />
+                                                            </Button>
                                                             <CheckBox
                                                                 x:Name="OpenExportAfterCheckBox"
                                                                 Content="{DynamicResource OpenExportAfter}"
@@ -381,8 +388,9 @@
                                                                 x:Name="OpenLastBackupFolderButton"
                                                                 Classes="secondary wide settings-action"
                                                                 Command="{Binding OpenLastBackupFolderCommand}"
-                                                                Content="{DynamicResource OpenLastBackupFolder}"
-                                                                IsVisible="{Binding HasLastBackupFolder}" />
+                                                                IsVisible="{Binding HasLastBackupFolder}">
+                                                                <shared:SymbolIconLabel Kind="Folder" Text="{DynamicResource OpenLastBackupFolder}" />
+                                                            </Button>
                                                         </StackPanel>
                                                     </Border>
                                                     <Border
@@ -410,8 +418,9 @@
                                                             <Button
                                                                 x:Name="EncryptedBackupRestoreButton"
                                                                 Classes="wide settings-action"
-                                                                Command="{Binding RestoreBackupCommand}"
-                                                                Content="{DynamicResource RestoreBackupAction}" />
+                                                                Command="{Binding RestoreBackupCommand}">
+                                                                <shared:SymbolIconLabel Kind="BackupRestore" Text="{DynamicResource RestoreBackupAction}" />
+                                                            </Button>
                                                         </StackPanel>
                                                     </Border>
                                                 </StackPanel>
@@ -450,14 +459,18 @@
                                                         </DataTemplate>
                                                     </ComboBox.ItemTemplate>
                                                 </ComboBox>
-                                                <Button x:Name="OtherFormatsImportButton" Classes="wide settings-action" Command="{Binding ImportCommand}" Content="{DynamicResource ChooseImportFile}" />
+                                                <Button x:Name="OtherFormatsImportButton" Classes="wide settings-action" Command="{Binding ImportCommand}">
+                                                    <shared:SymbolIconLabel Kind="Import" Text="{DynamicResource ChooseImportFile}" />
+                                                </Button>
                                             </StackPanel>
                                         </Border>
                                         <Border Classes="panel">
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource ImportGoogleAuthenticator}" />
                                                 <TextBlock Classes="secondary" Text="{DynamicResource GoogleAuthenticatorImportHelp}" TextWrapping="Wrap" />
-                                                <Button x:Name="GoogleAuthenticatorImportButton" Classes="wide settings-action" Command="{Binding ImportGoogleQrCommand}" Content="{DynamicResource ChooseGoogleAuthenticatorQrImage}" />
+                                                <Button x:Name="GoogleAuthenticatorImportButton" Classes="wide settings-action" Command="{Binding ImportGoogleQrCommand}">
+                                                    <shared:SymbolIconLabel Kind="QrCode" Text="{DynamicResource ChooseGoogleAuthenticatorQrImage}" />
+                                                </Button>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>
@@ -487,8 +500,9 @@
                                             <Button
                                                 x:Name="OpenLogFolderButton"
                                                 Classes="wide settings-action"
-                                                Command="{Binding OpenLogFolderCommand}"
-                                                Content="{DynamicResource OpenLogFolder}" />
+                                                Command="{Binding OpenLogFolderCommand}">
+                                                <shared:SymbolIconLabel Kind="Folder" Text="{DynamicResource OpenLogFolder}" />
+                                            </Button>
                                         </StackPanel>
                                     </Border>
                                 </ScrollViewer>
@@ -542,24 +556,28 @@
                                                 <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportIconPacksSources}" TextWrapping="Wrap" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{DynamicResource IconPackBuilderLink}"
                                                     NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
-                                                    Padding="0,3" />
+                                                    Padding="0,3">
+                                                    <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource IconPackBuilderLink}" />
+                                                </HyperlinkButton>
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{DynamicResource FaqSimpleIconsOfficialLink}"
                                                     NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
-                                                    Padding="0,3" />
+                                                    Padding="0,3">
+                                                    <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource FaqSimpleIconsOfficialLink}" />
+                                                </HyperlinkButton>
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{DynamicResource FaqAegisIconPackDocsLink}"
                                                     NavigateUri="https://github.com/aegis-icons/aegis-icons#disclaimer"
-                                                    Padding="0,3" />
+                                                    Padding="0,3">
+                                                    <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource FaqAegisIconPackDocsLink}" />
+                                                </HyperlinkButton>
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{DynamicResource FaqDashboardIconsLegalLink}"
                                                     NavigateUri="https://github.com/homarr-labs/dashboard-icons#legal"
-                                                    Padding="0,3" />
+                                                    Padding="0,3">
+                                                    <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource FaqDashboardIconsLegalLink}" />
+                                                </HyperlinkButton>
                                                 <TextBlock Classes="secondary" Text="{DynamicResource FaqImportIconPacksDisclaimer}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>
@@ -671,23 +689,27 @@
                                                 <Button
                                                     Classes="settings-action"
                                                     Command="{Binding CheckCommand}"
-                                                    Content="{DynamicResource VerifyAppcast}"
-                                                    IsVisible="{Binding ShowCheckAction}" />
+                                                    IsVisible="{Binding ShowCheckAction}">
+                                                    <shared:SymbolIconLabel Kind="Check" Text="{DynamicResource VerifyAppcast}" />
+                                                </Button>
                                                 <Button
                                                     Classes="settings-action"
                                                     Command="{Binding DownloadCommand}"
-                                                    Content="{DynamicResource DownloadUpdate}"
-                                                    IsVisible="{Binding ShowDownloadAction}" />
+                                                    IsVisible="{Binding ShowDownloadAction}">
+                                                    <shared:SymbolIconLabel Kind="Download" Text="{DynamicResource DownloadUpdate}" />
+                                                </Button>
                                                 <Button
                                                     Classes="settings-action"
                                                     Command="{Binding InstallCommand}"
-                                                    Content="{DynamicResource InstallUpdate}"
-                                                    IsVisible="{Binding ShowInstallAction}" />
+                                                    IsVisible="{Binding ShowInstallAction}">
+                                                    <shared:SymbolIconLabel Kind="Check" Text="{DynamicResource InstallUpdate}" />
+                                                </Button>
                                                 <Button
                                                     Classes="settings-action"
                                                     Command="{Binding CancelCommand}"
-                                                    Content="{DynamicResource Cancel}"
-                                                    IsVisible="{Binding ShowCancelAction}" />
+                                                    IsVisible="{Binding ShowCancelAction}">
+                                                    <shared:SymbolIconLabel Kind="Close" Text="{DynamicResource Cancel}" />
+                                                </Button>
                                                 <TextBlock IsVisible="{Binding HasReleaseNotes}" Text="{Binding ReleaseNotes}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>
@@ -700,7 +722,9 @@
                                         <Border Classes="panel">
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource SupportDiagnostics}" />
-                                                <Button Classes="settings-action" Command="{Binding RefreshCommand}" Content="{DynamicResource RefreshSupportInformation}" />
+                                                <Button Classes="settings-action" Command="{Binding RefreshCommand}">
+                                                    <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource RefreshSupportInformation}" />
+                                                </Button>
                                                 <TextBox AcceptsReturn="True" IsReadOnly="True" MinHeight="100" Text="{Binding SupportInformation}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>

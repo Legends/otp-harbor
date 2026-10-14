@@ -65,6 +65,18 @@
     <None Include="..\TOTP.UI.Avalonia.Mobile\MobileApp.axaml"
           Link="Fixtures\Avalonia\MobileApp.axaml"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\Resources\values\colors.xml"
+          Link="Fixtures\Android\values\colors.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\Resources\values-night\colors.xml"
+          Link="Fixtures\Android\values-night\colors.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\Resources\values\styles.xml"
+          Link="Fixtures\Android\values\styles.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\Resources\values-v31\styles.xml"
+          Link="Fixtures\Android\values-v31\styles.xml"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- In TOTP.Tests.csproj -->

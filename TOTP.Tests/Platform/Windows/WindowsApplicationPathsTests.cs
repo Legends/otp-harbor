@@ -17,8 +17,13 @@ public sealed class WindowsApplicationPathsTests
             hasPackageIdentity: false,
             hasInstalledDistributionMarker: false);
 
-        var appDataDirectory = Path.Combine(roamingDirectory, StringsConstants.AppDataDirectoryName);
+        var appDataDirectory = Path.Combine(
+            roamingDirectory,
+            WindowsApplicationPaths.ApplicationDataDirectoryName);
         Assert.Equal(executableDirectory, sut.ExecutableDirectory);
+        Assert.Equal(
+            Path.Combine(roamingDirectory, WindowsApplicationPaths.LegacyApplicationDataDirectoryName),
+            sut.LegacyApplicationDataDirectory);
         Assert.Equal(Path.Combine(executableDirectory, "appsettings.json"), sut.ConfigurationFilePath);
         Assert.Equal(appDataDirectory, sut.ApplicationDataDirectory);
         Assert.Equal(Path.Combine(appDataDirectory, "master.totp"), sut.VaultFilePath);
@@ -43,7 +48,7 @@ public sealed class WindowsApplicationPathsTests
 
         var expectedLogDirectory = Path.Combine(
             roamingDirectory,
-            StringsConstants.AppDataDirectoryName,
+            WindowsApplicationPaths.ApplicationDataDirectoryName,
             "Logs");
         Assert.Equal(expectedLogDirectory, sut.LogDirectory);
         Assert.Equal(Path.Combine(expectedLogDirectory, "app.log"), sut.LogFilePath);
@@ -63,7 +68,7 @@ public sealed class WindowsApplicationPathsTests
 
         var expectedLogDirectory = Path.Combine(
             roamingDirectory,
-            StringsConstants.AppDataDirectoryName,
+            WindowsApplicationPaths.ApplicationDataDirectoryName,
             "Logs");
         Assert.Equal(expectedLogDirectory, sut.LogDirectory);
         Assert.Equal(Path.Combine(expectedLogDirectory, "app.log"), sut.LogFilePath);
@@ -79,13 +84,13 @@ public sealed class WindowsApplicationPathsTests
     }
 
     [Fact]
-    public void DefaultConstructor_MatchesTheExistingWindowsDataDirectory()
+    public void DefaultConstructor_UsesTheOtpHarborWindowsDataDirectory()
     {
         var sut = new WindowsApplicationPaths();
 
         var expected = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "TOTP-Manager");
+            "OTP-Harbor");
 
         Assert.Equal(expected, sut.ApplicationDataDirectory);
     }

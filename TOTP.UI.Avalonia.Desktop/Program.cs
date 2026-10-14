@@ -35,7 +35,8 @@ internal static class Program
 
         try
         {
-            var platformServices = DesktopPlatformServiceFactory.Create();
+            var platformServices = DesktopPlatformServiceFactory.Create(
+                migrateLegacyApplicationData: true);
             LoggingConfigurator.SetupEarlyLogger(args, platformServices.ApplicationPaths);
             ApplyLoggingLevelPreference(platformServices);
             ApplyInterfaceScalePreference(platformServices);

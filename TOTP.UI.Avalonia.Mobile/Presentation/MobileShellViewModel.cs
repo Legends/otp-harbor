@@ -51,7 +51,11 @@ public sealed class MobileShellViewModel :
     private readonly IBrandIconResolver _brandIconResolver;
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly IAppearanceSettingsService? _appearanceSettingsService;
+    private readonly ILogSwitchService? _logSwitchService;
     private readonly MobileAsyncCommand _initializeCommand;
+    private readonly MobileAsyncCommand _previousOnboardingCommand;
+    private readonly MobileAsyncCommand _nextOnboardingCommand;
+    private readonly MobileAsyncCommand _finishOnboardingCommand;
     private readonly MobileAsyncCommand _configureCommand;
     private readonly MobileAsyncCommand _unlockCommand;
     private readonly MobileAsyncCommand _biometricUnlockCommand;
@@ -105,6 +109,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _cancelQrConflictCommand;
     private readonly MobileAsyncCommand _dismissQrCommand;
     private readonly MobileAsyncCommand _exportBackupCommand;
+    private readonly MobileAsyncCommand _exportDiagnosticLogCommand;
     private readonly MobileAsyncCommand _importBackupCommand;
     private readonly MobileAsyncCommand _importAccountFileCommand;
     private readonly MobileAsyncCommand _importBrandIconsCommand;
@@ -124,6 +129,9 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _selectLightThemeCommand;
 
     private MobileScreen _screen = MobileScreen.Starting;
+    private MobileScreen? _onboardingPreviewResumeScreen;
+    private bool _onboardingPreviewRequested;
+    private int _onboardingSlideIndex;
     private bool _isBusy;
     private bool _hasLoadedAccounts;
     private bool _startupFailed;
@@ -244,7 +252,8 @@ public sealed class MobileShellViewModel :
         TimeProvider timeProvider,
         IBrandIconResolver? brandIconResolver = null,
         IBrandIconPackService? brandIconPackService = null,
-        IAppearanceSettingsService? appearanceSettingsService = null)
+        IAppearanceSettingsService? appearanceSettingsService = null,
+        ILogSwitchService? logSwitchService = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
@@ -268,10 +277,20 @@ public sealed class MobileShellViewModel :
         _brandIconResolver = brandIconResolver ?? FallbackBrandIconResolver.Instance;
         _brandIconPackService = brandIconPackService;
         _appearanceSettingsService = appearanceSettingsService;
+        _logSwitchService = logSwitchService;
         _showIssuerLogo = _brandIconPackService?.ShowIssuerLogo ?? true;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
 
         _initializeCommand = new MobileAsyncCommand(InitializeAsync, () => !IsBusy);
+        _previousOnboardingCommand = new MobileAsyncCommand(
+            PreviousOnboardingAsync,
+            () => IsOnboardingVisible && !IsFirstOnboardingSlide && !IsBusy);
+        _nextOnboardingCommand = new MobileAsyncCommand(
+            NextOnboardingAsync,
+            () => IsOnboardingVisible && !IsLastOnboardingSlide && !IsBusy);
+        _finishOnboardingCommand = new MobileAsyncCommand(
+            FinishOnboardingAsync,
+            () => IsOnboardingVisible && !IsBusy);
         _configureCommand = new MobileAsyncCommand(ConfigureAsync, () => IsSetupVisible && !IsBusy);
         _unlockCommand = new MobileAsyncCommand(
             UnlockAsync,
@@ -422,6 +441,9 @@ public sealed class MobileShellViewModel :
         _exportBackupCommand = new MobileAsyncCommand(
             ExportBackupAsync,
             () => IsSettingsVisible && !IsBusy);
+        _exportDiagnosticLogCommand = new MobileAsyncCommand(
+            ExportDiagnosticLogAsync,
+            () => IsMiscSettingsVisible && !IsBusy);
         _importBackupCommand = new MobileAsyncCommand(
             ImportBackupAsync,
             () => IsSettingsVisible && !IsBusy);
@@ -486,6 +508,9 @@ public sealed class MobileShellViewModel :
     public ObservableCollection<BackupImportConflictItem> BackupImportConflicts { get; } = [];
 
     public ICommand InitializeCommand => _initializeCommand;
+    public ICommand PreviousOnboardingCommand => _previousOnboardingCommand;
+    public ICommand NextOnboardingCommand => _nextOnboardingCommand;
+    public ICommand FinishOnboardingCommand => _finishOnboardingCommand;
     public ICommand ConfigureCommand => _configureCommand;
     public ICommand UnlockCommand => _unlockCommand;
     public ICommand BiometricUnlockCommand => _biometricUnlockCommand;
@@ -540,6 +565,7 @@ public sealed class MobileShellViewModel :
     public ICommand CancelQrConflictCommand => _cancelQrConflictCommand;
     public ICommand DismissQrCommand => _dismissQrCommand;
     public ICommand ExportBackupCommand => _exportBackupCommand;
+    public ICommand ExportDiagnosticLogCommand => _exportDiagnosticLogCommand;
     public ICommand ImportBackupCommand => _importBackupCommand;
     public ICommand ImportAccountFileCommand => _importAccountFileCommand;
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
@@ -609,9 +635,34 @@ public sealed class MobileShellViewModel :
     public ICommand SelectLightThemeCommand => _selectLightThemeCommand;
 
     public bool IsStartingVisible => _screen == MobileScreen.Starting;
+    public bool IsOnboardingVisible => _screen == MobileScreen.Onboarding;
     public bool IsSetupVisible => _screen == MobileScreen.Setup;
     public bool IsUnlockVisible => _screen == MobileScreen.Unlock;
     public bool IsAccountsVisible => _screen == MobileScreen.Accounts;
+    public int OnboardingSlideIndex
+    {
+        get => _onboardingSlideIndex;
+        private set
+        {
+            var clamped = Math.Clamp(value, 0, 4);
+            if (!SetField(ref _onboardingSlideIndex, clamped)) return;
+            OnPropertyChanged(nameof(IsOnboardingAddAccountsVisible));
+            OnPropertyChanged(nameof(IsOnboardingMoveAccountsVisible));
+            OnPropertyChanged(nameof(IsOnboardingOrganizeAccountsVisible));
+            OnPropertyChanged(nameof(IsOnboardingIconPackVisible));
+            OnPropertyChanged(nameof(IsOnboardingQuickUnlockVisible));
+            OnPropertyChanged(nameof(IsFirstOnboardingSlide));
+            OnPropertyChanged(nameof(IsLastOnboardingSlide));
+            NotifyCommands();
+        }
+    }
+    public bool IsOnboardingAddAccountsVisible => OnboardingSlideIndex == 0;
+    public bool IsOnboardingMoveAccountsVisible => OnboardingSlideIndex == 1;
+    public bool IsOnboardingOrganizeAccountsVisible => OnboardingSlideIndex == 2;
+    public bool IsOnboardingIconPackVisible => OnboardingSlideIndex == 3;
+    public bool IsOnboardingQuickUnlockVisible => OnboardingSlideIndex == 4;
+    public bool IsFirstOnboardingSlide => OnboardingSlideIndex == 0;
+    public bool IsLastOnboardingSlide => OnboardingSlideIndex == 4;
     public bool IsAccountListVisible => IsAccountsVisible
         && !IsSettingsVisible
         && !IsEditorVisible
@@ -1529,6 +1580,30 @@ public sealed class MobileShellViewModel :
     public string StartingText => Get(MobileStringKeys.Starting);
     public string AppTitle => Get(MobileStringKeys.AppTitle);
     public string RetryText => Get(MobileStringKeys.Retry);
+    public string OnboardingAddAccountsTitleText =>
+        Get(MobileStringKeys.OnboardingAddAccountsTitle);
+    public string OnboardingAddAccountsDescriptionText =>
+        Get(MobileStringKeys.OnboardingAddAccountsDescription);
+    public string OnboardingMoveAccountsTitleText =>
+        Get(MobileStringKeys.OnboardingMoveAccountsTitle);
+    public string OnboardingMoveAccountsDescriptionText =>
+        Get(MobileStringKeys.OnboardingMoveAccountsDescription);
+    public string OnboardingOrganizeAccountsTitleText =>
+        Get(MobileStringKeys.OnboardingOrganizeAccountsTitle);
+    public string OnboardingOrganizeAccountsDescriptionText =>
+        Get(MobileStringKeys.OnboardingOrganizeAccountsDescription);
+    public string OnboardingIconPackTitleText =>
+        Get(MobileStringKeys.OnboardingIconPackTitle);
+    public string OnboardingIconPackDescriptionText =>
+        Get(MobileStringKeys.OnboardingIconPackDescription);
+    public string OnboardingQuickUnlockTitleText =>
+        Get(MobileStringKeys.OnboardingQuickUnlockTitle);
+    public string OnboardingQuickUnlockDescriptionText =>
+        Get(MobileStringKeys.OnboardingQuickUnlockDescription);
+    public string OnboardingSkipText => Get(MobileStringKeys.OnboardingSkip);
+    public string OnboardingBackText => Get(MobileStringKeys.OnboardingBack);
+    public string OnboardingNextText => Get(MobileStringKeys.OnboardingNext);
+    public string OnboardingFinishText => Get(MobileStringKeys.OnboardingFinish);
     public string SetupTitle => Get(MobileStringKeys.SetupTitle);
     public string SetupDescription => Get(MobileStringKeys.SetupDescription);
     public string MasterPasswordText => Get(MobileStringKeys.MasterPassword);
@@ -1599,6 +1674,7 @@ public sealed class MobileShellViewModel :
     public string MiscellaneousText => Get(MobileStringKeys.Miscellaneous);
     public string MiscSettingsDescriptionText => Get(MobileStringKeys.MiscSettingsDescription);
     public string LoggingLevelText => Get(MobileStringKeys.LoggingLevel);
+    public string ExportDiagnosticLogText => Get(MobileStringKeys.ExportDiagnosticLog);
     public string FaqText => Get(MobileStringKeys.Faq);
     public string FaqSettingsDescriptionText => Get(MobileStringKeys.FaqSettingsDescription);
     public string FaqImportIconPacksQuestionText =>
@@ -1760,12 +1836,59 @@ public sealed class MobileShellViewModel :
     public string RestoreAccountAutomationFormat =>
         Get(MobileStringKeys.RestoreAccountAutomationFormat);
 
+    public Task PreviousOnboardingAsync()
+    {
+        if (IsOnboardingVisible && !IsFirstOnboardingSlide)
+            OnboardingSlideIndex--;
+        return Task.CompletedTask;
+    }
+
+    public Task NextOnboardingAsync()
+    {
+        if (IsOnboardingVisible && !IsLastOnboardingSlide)
+            OnboardingSlideIndex++;
+        return Task.CompletedTask;
+    }
+
+    public Task FinishOnboardingAsync()
+    {
+        if (IsOnboardingVisible)
+        {
+            var destination = _onboardingPreviewResumeScreen ?? MobileScreen.Setup;
+            _onboardingPreviewResumeScreen = null;
+            SetScreen(destination);
+            NotifyCommands();
+        }
+        return Task.CompletedTask;
+    }
+
+    public bool ShowOnboardingPreview()
+    {
+        if (_disposed) return false;
+        if (IsBusy || _screen == MobileScreen.Starting)
+        {
+            _onboardingPreviewRequested = true;
+            return true;
+        }
+
+        OnboardingSlideIndex = 0;
+        if (!IsOnboardingVisible)
+        {
+            _onboardingPreviewResumeScreen = _screen;
+            SetScreen(MobileScreen.Onboarding);
+        }
+
+        NotifyCommands();
+        return true;
+    }
+
     public async Task InitializeAsync()
     {
         if (IsBusy || _disposed) return;
 
         IsBusy = true;
         _startupFailed = false;
+        OnboardingSlideIndex = 0;
         SetScreen(MobileScreen.Starting);
         SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
         try
@@ -1780,6 +1903,7 @@ public sealed class MobileShellViewModel :
             // ISettingsService keeps a stable mutable Current instance. Notify bindings after
             // LoadAsync applies persisted values so the UI cannot retain constructor defaults.
             NotifyAppLockChanged();
+            _logSwitchService?.SetLevel(_settings.Current.MinimumLogLevel);
             _strings.ApplyCulture(_settings.Current.CultureName);
             NotifyLocalizedTextChanged();
             SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
@@ -1808,7 +1932,7 @@ public sealed class MobileShellViewModel :
 
             SetScreen(_authorization.State.IsConfigured
                 ? MobileScreen.Unlock
-                : MobileScreen.Setup);
+                : MobileScreen.Onboarding);
         }
         catch (Exception)
         {
@@ -1817,6 +1941,11 @@ public sealed class MobileShellViewModel :
         finally
         {
             IsBusy = false;
+            if (_onboardingPreviewRequested)
+            {
+                _onboardingPreviewRequested = false;
+                ShowOnboardingPreview();
+            }
             TryStartAutomaticBiometricUnlock();
         }
     }
@@ -2882,6 +3011,74 @@ public sealed class MobileShellViewModel :
             CompleteBackupConflictResolution(null);
             IsBusy = false;
             TryStartAutomaticBiometricUnlock();
+        }
+    }
+
+    public async Task ExportDiagnosticLogAsync()
+    {
+        if (!IsMiscSettingsVisible || IsBusy) return;
+        var sourcePath = TryGetCurrentLogFilePath();
+        if (sourcePath is null)
+        {
+            SetError(MobileStringKeys.DiagnosticLogUnavailable);
+            return;
+        }
+
+        IsBusy = true;
+        MobileWritableDocument? document = null;
+        try
+        {
+            var suggestedFileName = $"otp-harbor-diagnostic-{_timeProvider.GetUtcNow():yyyyMMdd-HHmmss}.log";
+            document = await _documents.CreateDiagnosticLogAsync(suggestedFileName);
+            if (document is null) return;
+
+            await using var source = new FileStream(
+                sourcePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete,
+                81920,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            await source.CopyToAsync(document.Stream);
+            await document.Stream.FlushAsync();
+            SetSuccess(MobileStringKeys.DiagnosticLogExported);
+        }
+        catch (Exception)
+        {
+            if (document is not null) await TryDiscardAsync(document);
+            SetError(MobileStringKeys.DiagnosticLogExportFailed);
+        }
+        finally
+        {
+            document?.Dispose();
+            IsBusy = false;
+        }
+    }
+
+    private string? TryGetCurrentLogFilePath()
+    {
+        try
+        {
+            var logDirectory = Path.GetFullPath(_paths.LogDirectory);
+            if (!Directory.Exists(logDirectory)) return null;
+
+            var configuredName = Path.GetFileNameWithoutExtension(_paths.LogFilePath);
+            var extension = Path.GetExtension(_paths.LogFilePath);
+            return Directory
+                .EnumerateFiles(logDirectory, $"{configuredName}*{extension}", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFullPath)
+                .Where(path => string.Equals(
+                    Path.GetDirectoryName(path),
+                    logDirectory,
+                    OperatingSystem.IsWindows()
+                        ? StringComparison.OrdinalIgnoreCase
+                        : StringComparison.Ordinal))
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .FirstOrDefault();
+        }
+        catch (Exception)
+        {
+            return null;
         }
     }
 
@@ -4971,6 +5168,7 @@ public sealed class MobileShellViewModel :
         if (_screen == screen) return;
         _screen = screen;
         OnPropertyChanged(nameof(IsStartingVisible));
+        OnPropertyChanged(nameof(IsOnboardingVisible));
         OnPropertyChanged(nameof(IsSetupVisible));
         OnPropertyChanged(nameof(IsUnlockVisible));
         OnPropertyChanged(nameof(IsAccountsVisible));
@@ -5140,6 +5338,9 @@ public sealed class MobileShellViewModel :
     private void NotifyCommands()
     {
         _initializeCommand.NotifyCanExecuteChanged();
+        _previousOnboardingCommand.NotifyCanExecuteChanged();
+        _nextOnboardingCommand.NotifyCanExecuteChanged();
+        _finishOnboardingCommand.NotifyCanExecuteChanged();
         _configureCommand.NotifyCanExecuteChanged();
         _unlockCommand.NotifyCanExecuteChanged();
         _biometricUnlockCommand.NotifyCanExecuteChanged();
@@ -5193,6 +5394,7 @@ public sealed class MobileShellViewModel :
         _cancelQrConflictCommand.NotifyCanExecuteChanged();
         _dismissQrCommand.NotifyCanExecuteChanged();
         _exportBackupCommand.NotifyCanExecuteChanged();
+        _exportDiagnosticLogCommand.NotifyCanExecuteChanged();
         _importBackupCommand.NotifyCanExecuteChanged();
         _importAccountFileCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
@@ -5238,6 +5440,20 @@ public sealed class MobileShellViewModel :
         nameof(StartingText),
         nameof(AppTitle),
         nameof(RetryText),
+        nameof(OnboardingAddAccountsTitleText),
+        nameof(OnboardingAddAccountsDescriptionText),
+        nameof(OnboardingMoveAccountsTitleText),
+        nameof(OnboardingMoveAccountsDescriptionText),
+        nameof(OnboardingOrganizeAccountsTitleText),
+        nameof(OnboardingOrganizeAccountsDescriptionText),
+        nameof(OnboardingIconPackTitleText),
+        nameof(OnboardingIconPackDescriptionText),
+        nameof(OnboardingQuickUnlockTitleText),
+        nameof(OnboardingQuickUnlockDescriptionText),
+        nameof(OnboardingSkipText),
+        nameof(OnboardingBackText),
+        nameof(OnboardingNextText),
+        nameof(OnboardingFinishText),
         nameof(SetupTitle),
         nameof(SetupDescription),
         nameof(MasterPasswordText),
@@ -5299,6 +5515,7 @@ public sealed class MobileShellViewModel :
         nameof(MiscellaneousText),
         nameof(MiscSettingsDescriptionText),
         nameof(LoggingLevelText),
+        nameof(ExportDiagnosticLogText),
         nameof(FaqText),
         nameof(FaqSettingsDescriptionText),
         nameof(FaqImportIconPacksQuestionText),
@@ -5434,6 +5651,7 @@ public sealed class MobileShellViewModel :
     private enum MobileScreen
     {
         Starting,
+        Onboarding,
         Setup,
         Unlock,
         Accounts

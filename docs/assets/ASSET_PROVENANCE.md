@@ -23,6 +23,49 @@ OTP Harbor mark was composited where required, and the interactive fingerprint w
 the static background to keep unlock rendering efficient. The masters and derivatives were
 visually reviewed for unrelated branding, personal data, and unexpected text before inclusion.
 
+## Onboarding artwork
+
+The five dark desktop onboarding illustrations under
+`TOTP.UI.Avalonia.Shared/Assets/Onboarding` were generated specifically for OTP Harbor on
+2026-10-12 and 2026-10-13 with OpenAI's built-in image-generation tool. The corresponding
+`*-light.png` variants were generated on 2026-10-13 with the same tool, using only project-owned
+dark artwork as composition references. Dedicated mobile portrait variants were generated on
+2026-10-13 from the same project-owned references. Every mobile slide has separate light and dark
+portrait artwork; Default and Light select the light assets, while Dark and High Contrast select
+the dark assets.
+The organize slide now depicts grouping and favorites, while the separate icon-pack slide depicts
+importing a local icon pack. All variants use only generic geometric icon tiles and abstract UI.
+They were reviewed for unexpected text, personal data, third-party branding, and trademarks.
+
+The light desktop variants were generated using only each project-owned dark
+illustration as its edit target and composition reference. Both sets use generic devices and
+abstract interface elements; they were reviewed for unexpected text, personal data, third-party
+branding, and trademarks.
+
+The light-variant prompt set shared this instruction:
+
+> Use case: lighting-weather. Asset type: OTP Harbor onboarding illustration, light-theme variant.
+> Convert the referenced dark onboarding artwork into a polished light-theme version. Preserve the
+> same subjects, conceptual meaning, 16:9 composition, object positions, proportions, and complete
+> objects. Use a bright soft-white to pale ice-blue studio background, subtle daylight shadows,
+> premium glossy 3D rendering, and restrained OTP Harbor cyan, blue, and violet accents. Use generic
+> UI only. Include no company logos, trademarks, service names, legible words, watermarks, borders,
+> captions, or added text. Avoid a dark overall image.
+
+The five subject specifications were: adding an account by scanning or typing; moving encrypted
+accounts between a phone and laptop; organizing generic account cards into groups, favorites, and
+protected folders; importing a local pack of generic account icons; and quick unlock with a
+fingerprint, secure vault, and key.
+
+The two Android MainView theme captures
+`packaging/android/marketing/source/captures/10-account-list-dark-icons-blurred.png` and
+`11-account-list-light-icons-blurred.png` began as authentic Debug app/system captures populated
+only with the repository's synthetic `demo-*@otp-harbor.test` account fixture. On 2026-10-13,
+OpenAI's built-in image-generation edit tool was instructed to preserve the UI while applying a
+strong localized blur to every visible account-icon tile. The edited captures were reviewed to
+confirm that the account icon artwork is no longer recognizable. The visible issuer labels remain
+illustrative product UI and do not imply affiliation, sponsorship, or endorsement.
+
 ## Language flags
 
 `en.png` and `de.png` were rendered inside the project workspace on 2026-08-29 from geometric primitives. `fr.png` and `es.png` were rendered on 2026-09-03 by [`Generate-AdditionalLanguageFlags.ps1`](../../scripts/assets/Generate-AdditionalLanguageFlags.ps1), also from geometric primitives. They do not derive from downloaded image files:
@@ -94,6 +137,23 @@ Since 2026-09-13, the repository README presents the reviewed English five-image
 of the former small raw detail screenshots. The superseded README-only captures were removed; the
 separate authentic `docs/images/readme/app.png` capture remains in use on the public product page.
 
+## Light and dark theme showcase draft
+
+`packaging/marketing/source/theme-showcase-background-draft.png` was generated on 2026-10-13 with
+OpenAI's built-in image-generation tool. A maintainer-provided third-party marketing screenshot was
+used only as broad composition inspiration. The prompt explicitly excluded its interface, copy,
+logos, service icons, badges, and other artwork. The resulting draft is an abstract background only:
+it contains no application UI, text, logo, account icon, device, QR code, personal data, or
+third-party branding.
+
+Generation prompt:
+
+> Use case: ads-marketing. Asset type: reusable 16:9 OTP Harbor light/dark theme showcase background for both desktop and Android marketing composites. Input image: Image 1 is composition inspiration only; do not copy its UI, text, logos, service icons, badges, or artwork. Primary request: create an original premium cybersecurity campaign backdrop designed for later compositing authentic OTP Harbor light-theme and dark-theme app screenshots side by side. Scene/backdrop: deep navy-to-indigo abstract digital space with restrained cyan and violet flowing light ribbons, a subtle brighter cool daylight glow behind the future light-theme screenshot position, and a deeper night glow behind the future dark-theme screenshot position. Style/medium: polished modern software marketing background, calm and high-trust. Composition/framing: exact landscape 16:9 feel; calm copy-safe area across the left 38 percent; broad dimensional product stage across the right 62 percent sized for two overlapping app captures; generous safe margins; no important details at edges. Lighting/mood: balanced dual-theme contrast, elegant and restrained, not flashy. Constraints: background only; no text, letters, numbers, logos, icons, brands, trademarks, app UI, screens, devices, QR codes, people, badges, ratings, borders, or watermark.
+
+This source remains a draft and must not be published until new synthetic-only, authentic light- and
+dark-theme captures from the current desktop and isolated Android marketing builds have been
+reviewed and composited. Generated or recolored UI must not be substituted for those captures.
+
 ## Android website marketing campaign
 
 `packaging/android/marketing/source/android-marketing-background.png` was generated on 2026-09-12
@@ -139,6 +199,29 @@ account data. They are retained solely to exercise the offline Google Authentica
 
 | File | SHA-256 |
 | --- | --- |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account-light.png` | `837cf96bd4fad3860bb48abc0d78b2d989366b23c4bd57b2dd5e5c4fd9c4ba9e` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account.png` | `569d1f725e159973ae99cac06dfa7326b8037557705bef34fea8001270b805cd` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts-light.png` | `9a63a76b408b204dcd9ca07b5b24f2a285e8200a172189bd70025924aa6484a9` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts.png` | `eed277cf42570eecfaa1acf2090c4e5a1ed19ccdb6aec76415e8e6de39f593c4` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts-light.png` | `d27a300401442d941df2a2484cea3d6598afb2e619ef0391745c7074db8699c8` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts.png` | `190809e484c906734b8815b70f250c36bac5cbb2a26c071dadb4fc1b228875ad` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack-light.png` | `a95a5efa4d23810d21d17c606e381115839773099657bb59bdd0e92cb8db45fe` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack.png` | `3dc72dc3ed8dee5e11d6ae662d520d224ce94be631cf7ba642b4a62d6b120ec0` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-dark.png` | `6384deda547838c9c3082b1af17905ce539b950abf7870e71d76a7c85bd15be2` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-light.png` | `378e0c417584e9eaa1f080a973d04b176715365628236c1bc4e583e54c497ac8` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-dark.png` | `6ee4e887d9cf3160ef6bac89e501764f8f71e3de7a8a7a72f3dba44c1d1bfa2c` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-light.png` | `cd2d5f84643615916dbfa89c10747eee73797e6a856972038381271d3f86c48f` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-dark.png` | `2a0ef19918c870d01a60f6055e909372c50b633333b7a9358999bc7173199277` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-light.png` | `d733b032a653d59c49dc314fb13543b6941aec3e7daacc79ae8dbf0d188fcac8` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-dark.png` | `9c65e0b14b971f60dfc24c2ca9e126d74df061e9331bb3e3dfa4ecf2f6bba703` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-light.png` | `a6d466b4a6cef13bfb85fcd583e959d3d03fd843b8041792059cbb19e5a5e047` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-dark.png` | `248091880571503a480be73a8036470efbfc116ab27c002b358eda6f8a8dc404` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-light.png` | `d85bc5e8aa21bdfa78747299c20f79637dd19f03372f4d91907a2e5f5b928e31` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock-light.png` | `a538031256f03d9f343aeb71178394a665325214e3763f107c0e50ce6aa65632` |
+| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock.png` | `cf4c42dcd2c8183512d9dfe9411200f88a263172c5905de740b84c89d0c42bad` |
+| `packaging/android/marketing/source/captures/10-account-list-dark-icons-blurred.png` | `238c5306e766c905122995f23450855020420785079c5315d89c95fecbfe6265` |
+| `packaging/android/marketing/source/captures/11-account-list-light-icons-blurred.png` | `cd5ff8569f46c4d8bc37a7b9529b1dc508bb417a69fa8472fbaccaba348b5f9d` |
+| `packaging/marketing/source/theme-showcase-background-draft.png` | `affcf38996d604a03b09c9be994f55c4cba017bb4631c1ba6ffd0ff4f190740` |
 | `packaging/android/marketing/source/android-marketing-background.png` | `282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383` |
 | `packaging/android/marketing/source/captures/01-account-list.jpg` | `dc38f2fd24fe8f7dd56bdcd7ff7bc018697e077666bc48174969b539b6cf524c` |
 | `packaging/android/marketing/source/captures/02-swipe-actions.jpg` | `1baee259f20dfd4851f74872ededc900dd6e4466fcf9c3edb5cefb446e7ce258` |

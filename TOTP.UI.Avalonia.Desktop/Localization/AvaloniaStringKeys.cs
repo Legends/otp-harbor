@@ -12,6 +12,22 @@ public static class AvaloniaStringKeys
     public const string StartupCancelled = nameof(StartupCancelled);
     public const string ClosingSafely = nameof(ClosingSafely);
     public const string Retry = nameof(Retry);
+    public const string OnboardingAddAccountsTitle = nameof(OnboardingAddAccountsTitle);
+    public const string OnboardingAddAccountsDescription = nameof(OnboardingAddAccountsDescription);
+    public const string OnboardingMoveAccountsTitle = nameof(OnboardingMoveAccountsTitle);
+    public const string OnboardingMoveAccountsDescription = nameof(OnboardingMoveAccountsDescription);
+    public const string OnboardingOrganizeAccountsTitle = nameof(OnboardingOrganizeAccountsTitle);
+    public const string OnboardingOrganizeAccountsDescription = nameof(OnboardingOrganizeAccountsDescription);
+    public const string OnboardingIconPackTitle = nameof(OnboardingIconPackTitle);
+    public const string OnboardingIconPackDescription = nameof(OnboardingIconPackDescription);
+    public const string OnboardingQuickUnlockTitle = nameof(OnboardingQuickUnlockTitle);
+    public const string OnboardingQuickUnlockDescription = nameof(OnboardingQuickUnlockDescription);
+    public const string OnboardingSkip = nameof(OnboardingSkip);
+    public const string OnboardingBack = nameof(OnboardingBack);
+    public const string OnboardingNext = nameof(OnboardingNext);
+    public const string OnboardingFinish = nameof(OnboardingFinish);
+    public const string OnboardingPreviewNotice = nameof(OnboardingPreviewNotice);
+    public const string OnboardingPreviewFinish = nameof(OnboardingPreviewFinish);
     public const string MasterPassword = nameof(MasterPassword);
     public const string MasterPasswordHelp = nameof(MasterPasswordHelp);
     public const string Unlock = nameof(Unlock);
@@ -456,7 +472,15 @@ public static class AvaloniaStringKeys
     [
         AppTitle, AppHeading, StartingSafely, StartupCreateMasterPassword,
         StartupEnterMasterPassword, StartupPreferencesUnavailable, StartupFailedSafely,
-        StartupCancelled, ClosingSafely, Retry, MasterPassword, MasterPasswordHelp,
+        StartupCancelled, ClosingSafely, Retry,
+        OnboardingAddAccountsTitle, OnboardingAddAccountsDescription,
+        OnboardingMoveAccountsTitle, OnboardingMoveAccountsDescription,
+        OnboardingOrganizeAccountsTitle, OnboardingOrganizeAccountsDescription,
+        OnboardingIconPackTitle, OnboardingIconPackDescription,
+        OnboardingQuickUnlockTitle, OnboardingQuickUnlockDescription,
+        OnboardingSkip, OnboardingBack, OnboardingNext, OnboardingFinish,
+        OnboardingPreviewNotice, OnboardingPreviewFinish,
+        MasterPassword, MasterPasswordHelp,
         Unlock, Lock, LockShortcut, Accounts, Tools, Settings, ChooseImportFile, ExportEncryptedBackup,
         ImportConflictHandling, ImportAccounts, ImportOtherFormats, OtherFormatsImportHelp,
         EncryptedBackup, EncryptedBackupHelp, BackupAndRecovery, BackupSection, RestoreSection,

@@ -8,6 +8,20 @@
   <data name="Starting" xml:space="preserve"><value>Starting OTP Harbor safely…</value></data>
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor could not start safely. Your encrypted data was not changed.</value></data>
   <data name="Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Add accounts</value></data>
+  <data name="OnboardingAddAccountsDescription" xml:space="preserve"><value>Scan a QR code, import a saved QR image, or enter account details manually.</value></data>
+  <data name="OnboardingMoveAccountsTitle" xml:space="preserve"><value>Move accounts securely</value></data>
+  <data name="OnboardingMoveAccountsDescription" xml:space="preserve"><value>Import Google Authenticator transfer codes and other supported formats, or move all accounts with an encrypted OTP Harbor backup.</value></data>
+  <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Organize with groups and favorites</value></data>
+  <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Keep accounts easy to find by grouping related entries and marking the ones you use most as favorites.</value></data>
+  <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Personalize with account icons</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Add account icons by creating and importing a local pack with the OTP Harbor Icon Pack Builder. Third-party assets remain subject to their own licenses, trademark rights, and usage terms; you are responsible for compliant use.</value></data>
+  <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Set up quick unlock</value></data>
+  <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Use platform biometric quick unlock when available. Your master password remains the recovery method.</value></data>
+  <data name="OnboardingSkip" xml:space="preserve"><value>Skip introduction</value></data>
+  <data name="OnboardingBack" xml:space="preserve"><value>Back</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Next</value></data>
+  <data name="OnboardingFinish" xml:space="preserve"><value>Set up OTP Harbor</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Protect your authenticator</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Master password</value></data>
@@ -47,6 +61,10 @@
   <data name="Miscellaneous" xml:space="preserve"><value>MISC</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Configure diagnostic logging.</value></data>
   <data name="LoggingLevel" xml:space="preserve"><value>Minimum logging level (applies after restart)</value></data>
+  <data name="ExportDiagnosticLog" xml:space="preserve"><value>Export diagnostic log…</value></data>
+  <data name="DiagnosticLogExported" xml:space="preserve"><value>Diagnostic log exported.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>No diagnostic log is available yet.</value></data>
+  <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>The diagnostic log could not be exported.</value></data>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>English</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>German</value></data>

@@ -24,6 +24,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly IUiScheduler? _uiScheduler;
     private readonly IAvaloniaCameraScannerDialogService _cameraScannerDialogs;
     private readonly AsyncCommand _initializeCommand;
+    private readonly AsyncCommand _previousOnboardingCommand;
+    private readonly AsyncCommand _nextOnboardingCommand;
+    private readonly AsyncCommand _finishOnboardingCommand;
     private readonly AsyncCommand _lockCommand;
     private readonly AsyncCommand _showAccountsCommand;
     private readonly AsyncCommand _showToolsCommand;
@@ -46,6 +49,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _isQuickUnlockVisible;
     private bool _isQuickUnlockBusy;
     private string _quickUnlockMessage = string.Empty;
+    private bool _isOnboardingVisible;
+    private int _onboardingSlideIndex;
     private bool _isPasswordSetupVisible;
     private bool _isShellVisible;
     private bool _isAccountListVisible;
@@ -58,6 +63,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _disposed;
     private int _selectedSettingsTabIndex;
     private ShellResumeState? _resumeState;
+    private readonly OnboardingPreviewOptions _onboardingPreviewOptions;
+    private OnboardingPreviewResumeState? _onboardingPreviewResumeState;
 
     public MainWindowViewModel(
         IAvaloniaStartupCoordinator startupCoordinator,
@@ -77,7 +84,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         SessionLockPolicyBackgroundService? sessionLockPolicy = null,
         IUiScheduler? uiScheduler = null,
         IdleMonitoringBackgroundService? idleLockPolicy = null,
-        TimeSpan? settingsNotificationDuration = null)
+        TimeSpan? settingsNotificationDuration = null,
+        OnboardingPreviewOptions? onboardingPreviewOptions = null)
     {
         _startupCoordinator = startupCoordinator ?? throw new ArgumentNullException(nameof(startupCoordinator));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
@@ -114,6 +122,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _sessionLockPolicy = sessionLockPolicy;
         _idleLockPolicy = idleLockPolicy;
         _uiScheduler = uiScheduler;
+        _onboardingPreviewOptions = onboardingPreviewOptions
+            ?? new OnboardingPreviewOptions(false);
         if (_sessionLockPolicy is not null)
             _sessionLockPolicy.ApplicationLocked += OnAutomaticLock;
         if (_idleLockPolicy is not null)
@@ -124,6 +134,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         NativeFilePicker.AccountsChanged += OnAccountsChanged;
         SettingsPage.SettingsSaved += OnSettingsSaved;
         _initializeCommand = new AsyncCommand(InitializeAsync, () => !_isBusy);
+        _previousOnboardingCommand = new AsyncCommand(
+            PreviousOnboardingAsync,
+            () => IsOnboardingVisible && !IsFirstOnboardingSlide);
+        _nextOnboardingCommand = new AsyncCommand(
+            NextOnboardingAsync,
+            () => IsOnboardingVisible && !IsLastOnboardingSlide);
+        _finishOnboardingCommand = new AsyncCommand(
+            FinishOnboardingAsync,
+            () => IsOnboardingVisible);
         _lockCommand = new AsyncCommand(
             LockAsync,
             () => _isShellVisible && !_isSettingsVisible);
@@ -214,6 +233,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand InitializeCommand => _initializeCommand;
 
+    public ICommand PreviousOnboardingCommand => _previousOnboardingCommand;
+
+    public ICommand NextOnboardingCommand => _nextOnboardingCommand;
+
+    public ICommand FinishOnboardingCommand => _finishOnboardingCommand;
+
     public ICommand LockCommand => _lockCommand;
 
     public ICommand ShowAccountsCommand => _showAccountsCommand;
@@ -300,6 +325,43 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         private set => SetField(ref _quickUnlockMessage, value);
     }
 
+    public bool IsOnboardingVisible
+    {
+        get => _isOnboardingVisible;
+        private set
+        {
+            if (!SetField(ref _isOnboardingVisible, value)) return;
+            NotifyOnboardingCommands();
+        }
+    }
+
+    public int OnboardingSlideIndex
+    {
+        get => _onboardingSlideIndex;
+        private set
+        {
+            var normalized = Math.Clamp(value, 0, 4);
+            if (!SetField(ref _onboardingSlideIndex, normalized)) return;
+            OnPropertyChanged(nameof(IsOnboardingAddAccountsVisible));
+            OnPropertyChanged(nameof(IsOnboardingMoveAccountsVisible));
+            OnPropertyChanged(nameof(IsOnboardingOrganizeAccountsVisible));
+            OnPropertyChanged(nameof(IsOnboardingIconPackVisible));
+            OnPropertyChanged(nameof(IsOnboardingQuickUnlockVisible));
+            OnPropertyChanged(nameof(IsFirstOnboardingSlide));
+            OnPropertyChanged(nameof(IsLastOnboardingSlide));
+            NotifyOnboardingCommands();
+        }
+    }
+
+    public bool IsOnboardingAddAccountsVisible => OnboardingSlideIndex == 0;
+    public bool IsOnboardingMoveAccountsVisible => OnboardingSlideIndex == 1;
+    public bool IsOnboardingOrganizeAccountsVisible => OnboardingSlideIndex == 2;
+    public bool IsOnboardingIconPackVisible => OnboardingSlideIndex == 3;
+    public bool IsOnboardingQuickUnlockVisible => OnboardingSlideIndex == 4;
+    public bool IsFirstOnboardingSlide => OnboardingSlideIndex == 0;
+    public bool IsLastOnboardingSlide => OnboardingSlideIndex == 4;
+    public bool IsOnboardingPreview => _onboardingPreviewResumeState is not null;
+
     public bool IsPasswordSetupVisible
     {
         get => _isPasswordSetupVisible;
@@ -367,6 +429,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         IsPasswordUnlockVisible = false;
         IsQuickUnlockVisible = false;
         QuickUnlockMessage = string.Empty;
+        IsOnboardingVisible = false;
+        OnboardingSlideIndex = 0;
         IsPasswordSetupVisible = false;
         IsShellVisible = false;
         IsAccountListVisible = false;
@@ -396,11 +460,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             };
             IsPasswordUnlockVisible = outcome is AvaloniaStartupOutcome.ReadyForUnlock
                 or AvaloniaStartupOutcome.ReadyForPasswordFallback;
-            IsPasswordSetupVisible = outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup;
+            IsOnboardingVisible = outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup;
+            IsPasswordSetupVisible = false;
             if (outcome == AvaloniaStartupOutcome.ReadyUnlocked)
             {
                 await EnterAuthorizedShellAsync();
                 StartAutomaticUpdateCheck();
+            }
+            if (_onboardingPreviewOptions.ShowOnStartup
+                && outcome is AvaloniaStartupOutcome.ReadyForUnlock
+                    or AvaloniaStartupOutcome.ReadyForPasswordFallback
+                    or AvaloniaStartupOutcome.ReadyUnlocked)
+            {
+                ShowOnboardingPreview();
             }
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
@@ -481,6 +553,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private async void OnConfigured(object? sender, EventArgs e)
     {
+        IsOnboardingVisible = false;
         IsPasswordSetupVisible = false;
         IsPasswordUnlockVisible = false;
         IsQuickUnlockVisible = false;
@@ -522,6 +595,72 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _authorizationService.Lock();
         ApplyLockedUiState();
         return Task.CompletedTask;
+    }
+
+    public Task PreviousOnboardingAsync()
+    {
+        if (IsOnboardingVisible && !IsFirstOnboardingSlide)
+            OnboardingSlideIndex--;
+        return Task.CompletedTask;
+    }
+
+    public Task NextOnboardingAsync()
+    {
+        if (IsOnboardingVisible && !IsLastOnboardingSlide)
+            OnboardingSlideIndex++;
+        return Task.CompletedTask;
+    }
+
+    public Task FinishOnboardingAsync()
+    {
+        if (!IsOnboardingVisible) return Task.CompletedTask;
+        IsOnboardingVisible = false;
+        if (_onboardingPreviewResumeState is { } resumeState)
+        {
+            _onboardingPreviewResumeState = null;
+            OnPropertyChanged(nameof(IsOnboardingPreview));
+            IsPasswordUnlockVisible = resumeState.PasswordUnlockVisible;
+            IsQuickUnlockVisible = resumeState.QuickUnlockVisible;
+            IsPasswordSetupVisible = resumeState.PasswordSetupVisible;
+            IsShellVisible = resumeState.ShellVisible;
+            IsAccountListVisible = resumeState.AccountListVisible;
+            IsToolsVisible = resumeState.ToolsVisible;
+            IsSettingsVisible = resumeState.SettingsVisible;
+            IsSearchVisible = resumeState.SearchVisible;
+            StatusText = resumeState.StatusText;
+            StatusSeverity = resumeState.StatusSeverity;
+            return Task.CompletedTask;
+        }
+        IsPasswordSetupVisible = true;
+        return Task.CompletedTask;
+    }
+
+    private void ShowOnboardingPreview()
+    {
+        _onboardingPreviewResumeState = new OnboardingPreviewResumeState(
+            IsPasswordUnlockVisible,
+            IsQuickUnlockVisible,
+            IsPasswordSetupVisible,
+            IsShellVisible,
+            IsAccountListVisible,
+            IsToolsVisible,
+            IsSettingsVisible,
+            IsSearchVisible,
+            StatusText,
+            StatusSeverity);
+        OnPropertyChanged(nameof(IsOnboardingPreview));
+        IsPasswordUnlockVisible = false;
+        IsQuickUnlockVisible = false;
+        IsPasswordSetupVisible = false;
+        IsShellVisible = false;
+        IsAccountListVisible = false;
+        IsToolsVisible = false;
+        IsSettingsVisible = false;
+        IsSearchVisible = false;
+        OnboardingSlideIndex = 0;
+        IsOnboardingVisible = true;
+        StatusText = _localization.GetString(AvaloniaStringKeys.OnboardingPreviewNotice);
+        StatusSeverity = NotificationSeverity.Information;
     }
 
     private void ApplyLockedUiState()
@@ -852,6 +991,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _returnToQuickUnlockCommand?.NotifyCanExecuteChanged();
     }
 
+    private void NotifyOnboardingCommands()
+    {
+        _previousOnboardingCommand?.NotifyCanExecuteChanged();
+        _nextOnboardingCommand?.NotifyCanExecuteChanged();
+        _finishOnboardingCommand?.NotifyCanExecuteChanged();
+    }
+
     private void OnPropertyChanged(string propertyName) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
@@ -867,4 +1013,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         ShellPage ActivePage,
         bool SettingsVisible,
         AccountListResumeState AccountListState);
+
+    private sealed record OnboardingPreviewResumeState(
+        bool PasswordUnlockVisible,
+        bool QuickUnlockVisible,
+        bool PasswordSetupVisible,
+        bool ShellVisible,
+        bool AccountListVisible,
+        bool ToolsVisible,
+        bool SettingsVisible,
+        bool SearchVisible,
+        string StatusText,
+        NotificationSeverity StatusSeverity);
 }

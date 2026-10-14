@@ -158,7 +158,7 @@ public sealed class CameraScannerViewModelTests
 
         await sut.StartAsync();
 
-        Assert.Contains("Open QR image", sut.Message, StringComparison.Ordinal);
+        Assert.Contains("Import QR image", sut.Message, StringComparison.Ordinal);
         Assert.False(sut.IsScanning);
         import.Verify(value => value.ImportAsync(
             It.IsAny<string>(),
@@ -531,7 +531,7 @@ public sealed class CameraScannerViewModelTests
                 AvaloniaStringKeys.CameraActive =>
                     "Camera active. Point it at a TOTP QR code.",
                 AvaloniaStringKeys.QrMigrationCameraUseImage =>
-                    "The camera could not validate this export. Choose Open QR image below.",
+                    "The camera could not validate this export. Choose Import QR image below.",
                 AvaloniaStringKeys.CameraScanCancelled => "QR scan cancelled.",
                 AvaloniaStringKeys.CameraScanFailedSafely =>
                     "The camera scanner failed safely. No account data was changed.",

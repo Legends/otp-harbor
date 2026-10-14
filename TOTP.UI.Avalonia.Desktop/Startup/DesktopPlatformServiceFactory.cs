@@ -13,10 +13,13 @@ namespace TOTP.Avalonia.Desktop.Startup;
 
 internal static class DesktopPlatformServiceFactory
 {
-    public static DesktopPlatformServices Create()
+    public static DesktopPlatformServices Create(bool migrateLegacyApplicationData = false)
     {
 #if TOTP_PLATFORM_WINDOWS
-        return new(new WindowsApplicationPaths(), new WindowsFileSecurity());
+        var paths = new WindowsApplicationPaths();
+        if (migrateLegacyApplicationData)
+            WindowsApplicationDataMigration.MigrateLegacyDirectory(paths);
+        return new(paths, new WindowsFileSecurity());
 #elif TOTP_PLATFORM_MACOS
         return new(new MacOSApplicationPaths(), new UnixFileSecurity());
 #elif TOTP_PLATFORM_LINUX

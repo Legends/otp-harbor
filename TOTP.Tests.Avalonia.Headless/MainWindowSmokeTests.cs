@@ -539,6 +539,9 @@ public sealed class MainWindowSmokeTests
     [AvaloniaFact]
     public void DesktopAccountList_SelectedRowUsesSubtleSurfaceWithoutTextRecoloring()
     {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousThemeVariant = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Dark;
         var item = new Border
         {
             Child = new AccountRow { Issuer = "Issuer", AccountName = "account" }
@@ -573,6 +576,7 @@ public sealed class MainWindowSmokeTests
         finally
         {
             window.Close();
+            application.RequestedThemeVariant = previousThemeVariant;
         }
     }
 
@@ -1253,6 +1257,9 @@ public sealed class MainWindowSmokeTests
     [AvaloniaFact]
     public void WindowNotificationBanner_UsesSharedBottomNonInteractiveOverlay()
     {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousThemeVariant = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Dark;
         var notification = new NotificationBanner
         {
             Width = 240,
@@ -1302,6 +1309,7 @@ public sealed class MainWindowSmokeTests
         finally
         {
             window.Close();
+            application.RequestedThemeVariant = previousThemeVariant;
         }
     }
 
@@ -1960,6 +1968,132 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void DesktopOnboardingWindow_IsWideFullSurfaceWithoutScrollbars()
+    {
+        var window = new OnboardingWindow();
+
+        try
+        {
+            window.Show();
+            Assert.Equal(920, window.Width);
+            Assert.Equal(660, window.Height);
+            Assert.Equal(720, window.MinWidth);
+            Assert.Equal(500, window.MinHeight);
+            Assert.Equal(WindowStartupLocation.CenterScreen, window.WindowStartupLocation);
+            Assert.Empty(window.GetVisualDescendants().OfType<ScrollViewer>());
+            Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
+
+            var surface = window.FindControl<Grid>("OnboardingSurface");
+            Assert.NotNull(surface);
+            Assert.Equal(HorizontalAlignment.Stretch, surface.HorizontalAlignment);
+            Assert.Equal(VerticalAlignment.Stretch, surface.VerticalAlignment);
+            Assert.Equal(default(Thickness), surface.Margin);
+
+            var artworkLayer = Assert.IsType<Grid>(window.FindControl<Grid>("OnboardingArtworkLayer"));
+            Assert.Equal(0, Grid.GetRow(artworkLayer));
+            Assert.Null(artworkLayer.RenderTransform);
+
+            var contentPanel = window.FindControl<Border>("OnboardingContentPanel");
+            Assert.NotNull(contentPanel);
+            Assert.Equal(1, Grid.GetRow(contentPanel));
+            Assert.Equal(new Thickness(0, -56, 0, 0), contentPanel.Margin);
+            Assert.Equal(new Thickness(36, 72, 36, 26), contentPanel.Padding);
+            Assert.Equal(VerticalAlignment.Bottom, contentPanel.VerticalAlignment);
+            Assert.IsType<LinearGradientBrush>(contentPanel.Background);
+
+            (string Intent, string Artwork)[] slides =
+            [
+                ("OnboardingAddAccountsIntent", "OnboardingAddAccountsSlide"),
+                ("OnboardingMoveAccountsIntent", "OnboardingMoveAccountsSlide"),
+                ("OnboardingOrganizeAccountsIntent", "OnboardingOrganizeAccountsSlide"),
+                ("OnboardingIconPackIntent", "OnboardingIconPackSlide"),
+                ("OnboardingQuickUnlockIntent", "OnboardingQuickUnlockSlide")
+            ];
+
+            foreach (var (intentName, artworkName) in slides)
+            {
+                var intent = window.FindControl<TextBlock>(intentName);
+                Assert.NotNull(intent);
+                Assert.IsType<StackPanel>(intent.Parent);
+                Assert.Contains(intent, contentPanel.GetVisualDescendants());
+
+                var artwork = window.FindControl<Image>(artworkName);
+                Assert.NotNull(artwork);
+                Assert.Equal(Stretch.UniformToFill, artwork.Stretch);
+                Assert.Equal(HorizontalAlignment.Stretch, artwork.HorizontalAlignment);
+                Assert.Equal(VerticalAlignment.Stretch, artwork.VerticalAlignment);
+            }
+
+            var skipButton = window.FindControl<Button>("SkipOnboardingButton");
+            Assert.NotNull(skipButton);
+            Assert.Contains("onboarding-skip", skipButton.Classes);
+            Assert.Equal(new Thickness(1), skipButton.BorderThickness);
+            Assert.NotEqual(
+                Colors.Transparent,
+                Assert.IsType<SolidColorBrush>(skipButton.BorderBrush).Color);
+
+            var previousButton = window.FindControl<Button>("PreviousOnboardingButton");
+            Assert.NotNull(previousButton);
+            Assert.Contains("onboarding-secondary", previousButton.Classes);
+
+            var nextButton = window.FindControl<Button>("NextOnboardingButton");
+            Assert.NotNull(nextButton);
+            Assert.Contains("onboarding-primary", nextButton.Classes);
+            var finishButton = window.FindControl<Button>("FinishOnboardingButton");
+            Assert.NotNull(finishButton);
+            Assert.Contains("onboarding-primary", finishButton.Classes);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void DesktopOnboardingWindow_SwitchesArtworkWithTheActiveTheme()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var window = new OnboardingWindow();
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var image = Assert.IsType<Image>(window.FindControl<Image>("OnboardingAddAccountsSlide"));
+            var lightArtwork = Assert.IsAssignableFrom<IImage>(image.Source);
+            var intent = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("OnboardingAddAccountsIntent"));
+            var contentPanel = window.FindControl<Border>("OnboardingContentPanel");
+            Assert.NotNull(contentPanel);
+            var lightPanel = Assert.IsType<LinearGradientBrush>(contentPanel.Background);
+            Assert.Equal(
+                Color.Parse("#669FA9D9"),
+                lightPanel.GradientStops[0].Color);
+            Assert.Equal(
+                Color.Parse("#1C2944"),
+                Assert.IsType<SolidColorBrush>(intent.Foreground).Color);
+
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+            window.UpdateLayout();
+
+            var darkArtwork = Assert.IsAssignableFrom<IImage>(image.Source);
+            Assert.NotSame(lightArtwork, darkArtwork);
+            var darkPanel = Assert.IsType<LinearGradientBrush>(contentPanel.Background);
+            Assert.Equal(
+                Color.Parse("#73101A35"),
+                darkPanel.GradientStops[0].Color);
+            Assert.Equal(
+                Colors.White,
+                Assert.IsType<SolidColorBrush>(intent.Foreground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
     public void FirstAccountOnboardingCard_ProvidesDirectLocalizedAddAction()
     {
         var mainWindow = new MainWindow();
@@ -2527,8 +2661,7 @@ public sealed class MainWindowSmokeTests
             var closeButton = Assert.Single(
                 window.GetVisualDescendants().OfType<Button>(),
                 button => button.Classes.Contains("icon")
-                    && button.Content is string content
-                    && content == "✕");
+                    && button.Content is SymbolIcon { Kind: SymbolIconKind.Close });
 
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.CloseSettings],
@@ -2646,14 +2779,15 @@ public sealed class MainWindowSmokeTests
             Assert.Contains("wide", importButton.Classes);
             Assert.Contains("secondary", resetButton.Classes);
             Assert.Contains("wide", resetButton.Classes);
+            var resetButtonLabel = Assert.IsType<SymbolIconLabel>(resetButton.Content);
+            Assert.Equal(SymbolIconKind.Delete, resetButtonLabel.Kind);
             var builderLink = Assert.Single(
                 brandIconsPanel.GetLogicalDescendants().OfType<HyperlinkButton>());
             Assert.Equal(
                 new Uri("https://github.com/Legends/otp-harbor-icon-pack-builder"),
                 builderLink.NavigateUri);
-            Assert.Equal(
-                Application.Current!.Resources[AvaloniaStringKeys.IconPackBuilderLink],
-                builderLink.Content);
+            var builderLinkLabel = Assert.IsType<SymbolIconLabel>(builderLink.Content);
+            Assert.Equal(SymbolIconKind.ExternalLink, builderLinkLabel.Kind);
             Assert.Contains(
                 brandIconsPanel.GetLogicalDescendants().OfType<TextBlock>(),
                 textBlock => Equals(

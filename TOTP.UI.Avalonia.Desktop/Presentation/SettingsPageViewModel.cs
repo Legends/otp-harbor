@@ -228,7 +228,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             OpenExportFileAfterExport = _settingsService.Current.OpenExportFileAfterExport;
             ShowIssuerLogo = _brandIconPackService?.ShowIssuerLogo ?? true;
             var themePreference = _appearanceSettingsService?.ThemePreference
-                ?? AppThemePreference.Dark;
+                ?? AppThemePreference.System;
             SelectedTheme = Themes.First(option => option.Preference == themePreference);
             MinimumLogLevel = _settingsService.Current.MinimumLogLevel;
             SettingsNotification.Clear();
@@ -354,7 +354,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             nameof(SelectedLanguage));
         var preference = _selectedTheme?.Preference
             ?? _appearanceSettingsService?.ThemePreference
-            ?? AppThemePreference.Dark;
+            ?? AppThemePreference.System;
         var selectedAutoLock = _selectedAutoLock?.Timeout
             ?? _settingsService.Current.IdleTimeout;
         _autoLockOptions = CreateAutoLockOptions(selectedAutoLock);

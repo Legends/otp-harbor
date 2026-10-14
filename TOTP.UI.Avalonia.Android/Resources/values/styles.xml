@@ -3,8 +3,10 @@
   <style name="OtpHarborTheme" parent="@style/Theme.AppCompat.NoActionBar">
     <item name="android:windowActionBar">false</item>
     <item name="android:windowBackground">@drawable/splash_screen</item>
-    <item name="android:windowLightStatusBar">false</item>
+    <item name="android:windowLightStatusBar">@bool/splash_light_system_bars</item>
+    <item name="android:windowLightNavigationBar">@bool/splash_light_system_bars</item>
     <item name="android:windowNoTitle">true</item>
+    <item name="android:navigationBarColor">@color/splash_background</item>
     <item name="android:statusBarColor">@color/splash_background</item>
   </style>
 </resources>

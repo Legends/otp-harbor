@@ -19,6 +19,27 @@ public sealed class MobileStringCatalogTests
         Assert.Empty(missing);
     }
 
+    [Theory]
+    [InlineData("en", "licenses", "trademark rights", "you are responsible")]
+    [InlineData("de", "Lizenzen", "Markenrechten", "du bist")]
+    [InlineData("fr", "licences", "droits de marque", "vous êtes responsable")]
+    [InlineData("es", "licencias", "derechos de marca", "eres responsable")]
+    public void Get_IconOnboardingNamesBuilderAndUserResponsibility(
+        string cultureName,
+        string expectedLicenses,
+        string expectedTrademarkRights,
+        string expectedResponsibility)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        var description = catalog.Get(MobileStringKeys.OnboardingIconPackDescription);
+
+        Assert.Contains("OTP Harbor Icon Pack Builder", description, StringComparison.Ordinal);
+        Assert.Contains(expectedLicenses, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(expectedTrademarkRights, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(expectedResponsibility, description, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void Get_WithGermanCulture_ReturnsCompleteGermanMessage()
     {

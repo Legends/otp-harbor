@@ -8,6 +8,20 @@
   <data name="Starting" xml:space="preserve"><value>Démarrage sécurisé d’OTP Harbor…</value></data>
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor n’a pas pu démarrer de manière sécurisée. Vos données chiffrées n’ont pas été modifiées.</value></data>
   <data name="Retry" xml:space="preserve"><value>Réessayer</value></data>
+  <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Ajouter des comptes</value></data>
+  <data name="OnboardingAddAccountsDescription" xml:space="preserve"><value>Scannez un code QR, importez une image QR enregistrée ou saisissez manuellement les informations du compte.</value></data>
+  <data name="OnboardingMoveAccountsTitle" xml:space="preserve"><value>Transférer les comptes en toute sécurité</value></data>
+  <data name="OnboardingMoveAccountsDescription" xml:space="preserve"><value>Importez des codes de transfert Google Authenticator et d’autres formats pris en charge, ou transférez tous vos comptes avec une sauvegarde OTP Harbor chiffrée.</value></data>
+  <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Organiser avec des groupes et des favoris</value></data>
+  <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Retrouvez facilement vos comptes en regroupant les entrées associées et en marquant comme favoris ceux que vous utilisez le plus.</value></data>
+  <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Personnaliser avec des icônes de compte</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Ajoutez des icônes de compte en créant et important un pack local avec OTP Harbor Icon Pack Builder. Les ressources tierces restent soumises à leurs propres licences, droits de marque et conditions d’utilisation ; vous êtes responsable de leur utilisation conforme.</value></data>
+  <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Configurer le déverrouillage rapide</value></data>
+  <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Utilisez le déverrouillage biométrique de la plateforme lorsqu’il est disponible. Votre mot de passe principal reste la méthode de récupération.</value></data>
+  <data name="OnboardingSkip" xml:space="preserve"><value>Ignorer l’introduction</value></data>
+  <data name="OnboardingBack" xml:space="preserve"><value>Retour</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Suivant</value></data>
+  <data name="OnboardingFinish" xml:space="preserve"><value>Configurer OTP Harbor</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Protégez votre authentificateur</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Créez un mot de passe principal pour chiffrer votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez. Créez ensuite une sauvegarde chiffrée et conservez son mot de passe séparément.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Mot de passe principal</value></data>
@@ -47,6 +61,10 @@
   <data name="Miscellaneous" xml:space="preserve"><value>DIVERS</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Configurer la journalisation des diagnostics.</value></data>
   <data name="LoggingLevel" xml:space="preserve"><value>Niveau minimal de journalisation (appliqué après redémarrage)</value></data>
+  <data name="ExportDiagnosticLog" xml:space="preserve"><value>Exporter le journal de diagnostic…</value></data>
+  <data name="DiagnosticLogExported" xml:space="preserve"><value>Journal de diagnostic exporté.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Aucun journal de diagnostic n’est encore disponible.</value></data>
+  <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>Le journal de diagnostic n’a pas pu être exporté.</value></data>
   <data name="Language" xml:space="preserve"><value>Langue</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Anglais</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Allemand</value></data>

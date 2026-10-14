@@ -6,6 +6,20 @@ public static class MobileStringKeys
     public const string Starting = nameof(Starting);
     public const string StartupFailed = nameof(StartupFailed);
     public const string Retry = nameof(Retry);
+    public const string OnboardingAddAccountsTitle = nameof(OnboardingAddAccountsTitle);
+    public const string OnboardingAddAccountsDescription = nameof(OnboardingAddAccountsDescription);
+    public const string OnboardingMoveAccountsTitle = nameof(OnboardingMoveAccountsTitle);
+    public const string OnboardingMoveAccountsDescription = nameof(OnboardingMoveAccountsDescription);
+    public const string OnboardingOrganizeAccountsTitle = nameof(OnboardingOrganizeAccountsTitle);
+    public const string OnboardingOrganizeAccountsDescription = nameof(OnboardingOrganizeAccountsDescription);
+    public const string OnboardingIconPackTitle = nameof(OnboardingIconPackTitle);
+    public const string OnboardingIconPackDescription = nameof(OnboardingIconPackDescription);
+    public const string OnboardingQuickUnlockTitle = nameof(OnboardingQuickUnlockTitle);
+    public const string OnboardingQuickUnlockDescription = nameof(OnboardingQuickUnlockDescription);
+    public const string OnboardingSkip = nameof(OnboardingSkip);
+    public const string OnboardingBack = nameof(OnboardingBack);
+    public const string OnboardingNext = nameof(OnboardingNext);
+    public const string OnboardingFinish = nameof(OnboardingFinish);
     public const string SetupTitle = nameof(SetupTitle);
     public const string SetupDescription = nameof(SetupDescription);
     public const string MasterPassword = nameof(MasterPassword);
@@ -45,6 +59,10 @@ public static class MobileStringKeys
     public const string Miscellaneous = nameof(Miscellaneous);
     public const string MiscSettingsDescription = nameof(MiscSettingsDescription);
     public const string LoggingLevel = nameof(LoggingLevel);
+    public const string ExportDiagnosticLog = nameof(ExportDiagnosticLog);
+    public const string DiagnosticLogExported = nameof(DiagnosticLogExported);
+    public const string DiagnosticLogUnavailable = nameof(DiagnosticLogUnavailable);
+    public const string DiagnosticLogExportFailed = nameof(DiagnosticLogExportFailed);
     public const string Faq = nameof(Faq);
     public const string FaqSettingsDescription = nameof(FaqSettingsDescription);
     public const string FaqImportIconPacksQuestion = nameof(FaqImportIconPacksQuestion);
@@ -304,6 +322,20 @@ public static class MobileStringKeys
         Starting,
         StartupFailed,
         Retry,
+        OnboardingAddAccountsTitle,
+        OnboardingAddAccountsDescription,
+        OnboardingMoveAccountsTitle,
+        OnboardingMoveAccountsDescription,
+        OnboardingOrganizeAccountsTitle,
+        OnboardingOrganizeAccountsDescription,
+        OnboardingIconPackTitle,
+        OnboardingIconPackDescription,
+        OnboardingQuickUnlockTitle,
+        OnboardingQuickUnlockDescription,
+        OnboardingSkip,
+        OnboardingBack,
+        OnboardingNext,
+        OnboardingFinish,
         SetupTitle,
         SetupDescription,
         MasterPassword,
@@ -343,6 +375,10 @@ public static class MobileStringKeys
         Miscellaneous,
         MiscSettingsDescription,
         LoggingLevel,
+        ExportDiagnosticLog,
+        DiagnosticLogExported,
+        DiagnosticLogUnavailable,
+        DiagnosticLogExportFailed,
         Faq,
         FaqSettingsDescription,
         FaqImportIconPacksQuestion,

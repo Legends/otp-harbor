@@ -7,13 +7,29 @@
   <data name="AppTitle" xml:space="preserve"><value>OTP Harbor</value></data>
   <data name="AppHeading" xml:space="preserve"><value>OTP Harbor</value></data>
   <data name="StartingSafely" xml:space="preserve"><value>Starting OTP Harbor safely…</value></data>
-  <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Create a master password to protect your authenticator.</value></data>
+  <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Set up secure local storage.</value></data>
   <data name="StartupEnterMasterPassword" xml:space="preserve"><value>Enter your master password to unlock your authenticator.</value></data>
   <data name="StartupPreferencesUnavailable" xml:space="preserve"><value>Your preferences could not be loaded. Your encrypted data was not changed.</value></data>
   <data name="StartupFailedSafely" xml:space="preserve"><value>OTP Harbor could not start safely. Your encrypted data was not changed.</value></data>
   <data name="StartupCancelled" xml:space="preserve"><value>Startup cancelled.</value></data>
   <data name="ClosingSafely" xml:space="preserve"><value>OTP Harbor is closing safely.</value></data>
   <data name="Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Add accounts</value></data>
+  <data name="OnboardingAddAccountsDescription" xml:space="preserve"><value>Scan a QR code, import a saved QR image, or enter account details manually.</value></data>
+  <data name="OnboardingMoveAccountsTitle" xml:space="preserve"><value>Move accounts securely</value></data>
+  <data name="OnboardingMoveAccountsDescription" xml:space="preserve"><value>Import Google Authenticator transfer codes and other supported formats, or move all accounts with an encrypted OTP Harbor backup.</value></data>
+  <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Organize with groups and favorites</value></data>
+  <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Keep accounts easy to find by grouping related entries and marking the ones you use most as favorites.</value></data>
+  <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Personalize with account icons</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Add account icons by creating and importing a local pack with the OTP Harbor Icon Pack Builder. Third-party assets remain subject to their own licenses, trademark rights, and usage terms; you are responsible for compliant use.</value></data>
+  <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Set up quick unlock</value></data>
+  <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Use platform biometric quick unlock when available. Your master password remains the recovery method.</value></data>
+  <data name="OnboardingSkip" xml:space="preserve"><value>Skip introduction</value></data>
+  <data name="OnboardingBack" xml:space="preserve"><value>Back</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Next</value></data>
+  <data name="OnboardingFinish" xml:space="preserve"><value>Set up OTP Harbor</value></data>
+  <data name="OnboardingPreviewNotice" xml:space="preserve"><value>Onboarding preview — your existing vault will not be changed.</value></data>
+  <data name="OnboardingPreviewFinish" xml:space="preserve"><value>Close preview</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Master password</value></data>
   <data name="MasterPasswordHelp" xml:space="preserve"><value>Required to unlock the local vault.</value></data>
   <data name="Unlock" xml:space="preserve"><value>Unlock</value></data>
@@ -169,8 +185,8 @@
   <data name="VerifyAppcast" xml:space="preserve"><value>Check for updates</value></data>
   <data name="SoftwareUpdates" xml:space="preserve"><value>Software updates</value></data>
   <data name="ScanQrCamera" xml:space="preserve"><value>Scan QR with camera</value></data>
-  <data name="ImportQrCode" xml:space="preserve"><value>Import QR code</value></data>
-  <data name="OpenQrImage" xml:space="preserve"><value>Open QR image</value></data>
+  <data name="ImportQrCode" xml:space="preserve"><value>Scan QR code</value></data>
+  <data name="OpenQrImage" xml:space="preserve"><value>Import QR image</value></data>
   <data name="SelectQrImage" xml:space="preserve"><value>Select a QR code image</value></data>
   <data name="QrImageFiles" xml:space="preserve"><value>QR code images</value></data>
   <data name="QrImageReading" xml:space="preserve"><value>Reading QR code image…</value></data>
@@ -179,8 +195,8 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>The selected QR code image exceeds the safe size limit.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>The QR code image could not be read safely. No account data was changed.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No QR code image was selected.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Camera scanning supports account QR codes and attempts Google Authenticator exports, including exports containing multiple accounts, when the camera resolution is sufficient. Ensure good lighting and avoid reflections or strong backlighting. Keep the QR code steady, fully visible, and as straight as possible in front of the camera. If necessary, slowly adjust the distance until the code appears sharp. If a Google Authenticator export cannot be read reliably, use a sharp QR image and choose Open QR image below.</value></data>
-  <data name="QrMigrationCameraUseImage" xml:space="preserve"><value>The camera recognized a Google Authenticator export but could not validate it reliably. Keep the QR code steady and sharp, or choose Open QR image below.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Camera scanning supports account QR codes and attempts Google Authenticator exports, including exports containing multiple accounts, when the camera resolution is sufficient. Ensure good lighting and avoid reflections or strong backlighting. Keep the QR code steady, fully visible, and as straight as possible in front of the camera. If necessary, slowly adjust the distance until the code appears sharp. If a Google Authenticator export cannot be read reliably, use a sharp QR image and choose Import QR image below.</value></data>
+  <data name="QrMigrationCameraUseImage" xml:space="preserve"><value>The camera recognized a Google Authenticator export but could not validate it reliably. Keep the QR code steady and sharp, or choose Import QR image below.</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Cancel scan</value></data>
   <data name="CameraReconnectHint" xml:space="preserve"><value>If your camera is disabled by a privacy switch, keyboard key, or system setting, turn it on. The scanner will reconnect automatically. (Duration: &lt; 10 sec.)</value></data>
   <data name="CameraReadyToStart" xml:space="preserve"><value>Camera access starts only when you choose Scan QR.</value></data>
@@ -274,7 +290,7 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>This QR code contains the account secret. Keep it private.</value></data>
   <data name="CameraPreview" xml:space="preserve"><value>Live camera preview</value></data>
   <data name="CreatePasswordHeading" xml:space="preserve"><value>Create your master password</value></data>
-  <data name="PasswordSetupHelp" xml:space="preserve"><value>Create a master password to encrypt your local vault. OTP Harbor cannot reset it if you forget it. After setup, create an encrypted backup and store its password separately.</value></data>
+  <data name="PasswordSetupHelp" xml:space="preserve"><value>This password encrypts your local vault. OTP Harbor cannot reset it if you forget it, so choose one you can remember and keep it private.</value></data>
   <data name="NewPassword" xml:space="preserve"><value>New master password</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Confirm master password</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Create protected vault</value></data>

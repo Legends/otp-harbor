@@ -7,13 +7,29 @@
   <data name="AppTitle" xml:space="preserve"><value>OTP Harbor</value></data>
   <data name="AppHeading" xml:space="preserve"><value>OTP Harbor</value></data>
   <data name="StartingSafely" xml:space="preserve"><value>OTP Harbor wird sicher gestartet…</value></data>
-  <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Erstellen Sie ein Master-Passwort, um Ihren Authenticator zu schützen.</value></data>
+  <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Richten Sie den sicheren lokalen Speicher ein.</value></data>
   <data name="StartupEnterMasterPassword" xml:space="preserve"><value>Geben Sie Ihr Master-Passwort ein, um Ihren Authenticator zu entsperren.</value></data>
   <data name="StartupPreferencesUnavailable" xml:space="preserve"><value>Ihre Einstellungen konnten nicht geladen werden. Ihre verschlüsselten Daten wurden nicht geändert.</value></data>
   <data name="StartupFailedSafely" xml:space="preserve"><value>OTP Harbor konnte nicht sicher gestartet werden. Ihre verschlüsselten Daten wurden nicht geändert.</value></data>
   <data name="StartupCancelled" xml:space="preserve"><value>Der Start wurde abgebrochen.</value></data>
   <data name="ClosingSafely" xml:space="preserve"><value>OTP Harbor wird sicher beendet.</value></data>
   <data name="Retry" xml:space="preserve"><value>Erneut versuchen</value></data>
+  <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Konten hinzufügen</value></data>
+  <data name="OnboardingAddAccountsDescription" xml:space="preserve"><value>Scanne einen QR-Code, importiere ein gespeichertes QR-Bild oder gib die Kontodaten manuell ein.</value></data>
+  <data name="OnboardingMoveAccountsTitle" xml:space="preserve"><value>Konten sicher übertragen</value></data>
+  <data name="OnboardingMoveAccountsDescription" xml:space="preserve"><value>Importiere Übertragungs-Codes aus Google Authenticator und andere unterstützte Formate oder übertrage alle Konten mit einer verschlüsselten OTP-Harbor-Sicherung.</value></data>
+  <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Mit Gruppen und Favoriten organisieren</value></data>
+  <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Halte deine Konten übersichtlich, indem du zusammengehörige Einträge gruppierst und häufig verwendete Konten als Favoriten markierst.</value></data>
+  <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Konten mit Symbolen personalisieren</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Füge Kontosymbole hinzu, indem du mit dem OTP Harbor Icon Pack Builder ein lokales Paket erstellst und importierst. Drittanbieter-Assets unterliegen weiterhin ihren eigenen Lizenzen, Markenrechten und Nutzungsbedingungen; du bist für eine regelkonforme Nutzung verantwortlich.</value></data>
+  <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Schnellentsperrung einrichten</value></data>
+  <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Verwende die biometrische Schnellentsperrung der Plattform, sofern verfügbar. Dein Master-Passwort bleibt die Wiederherstellungsmethode.</value></data>
+  <data name="OnboardingSkip" xml:space="preserve"><value>Einführung überspringen</value></data>
+  <data name="OnboardingBack" xml:space="preserve"><value>Zurück</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Weiter</value></data>
+  <data name="OnboardingFinish" xml:space="preserve"><value>OTP Harbor einrichten</value></data>
+  <data name="OnboardingPreviewNotice" xml:space="preserve"><value>Vorschau der Einführung – dein bestehender Tresor wird nicht geändert.</value></data>
+  <data name="OnboardingPreviewFinish" xml:space="preserve"><value>Vorschau schließen</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Master-Passwort</value></data>
   <data name="MasterPasswordHelp" xml:space="preserve"><value>Zum Entsperren des lokalen Tresors erforderlich.</value></data>
   <data name="Unlock" xml:space="preserve"><value>Entsperren</value></data>
@@ -169,8 +185,8 @@
   <data name="VerifyAppcast" xml:space="preserve"><value>Nach Updates suchen</value></data>
   <data name="SoftwareUpdates" xml:space="preserve"><value>Softwareupdates</value></data>
   <data name="ScanQrCamera" xml:space="preserve"><value>QR-Code mit Kamera scannen</value></data>
-  <data name="ImportQrCode" xml:space="preserve"><value>QR-Code importieren</value></data>
-  <data name="OpenQrImage" xml:space="preserve"><value>QR-Bild öffnen</value></data>
+  <data name="ImportQrCode" xml:space="preserve"><value>QR-Code scannen</value></data>
+  <data name="OpenQrImage" xml:space="preserve"><value>QR-Bild importieren</value></data>
   <data name="SelectQrImage" xml:space="preserve"><value>QR-Code-Bild auswählen</value></data>
   <data name="QrImageFiles" xml:space="preserve"><value>QR-Code-Bilder</value></data>
   <data name="QrImageReading" xml:space="preserve"><value>QR-Code-Bild wird gelesen…</value></data>
@@ -179,8 +195,8 @@
   <data name="QrImageTooLarge" xml:space="preserve"><value>Das ausgewählte QR-Code-Bild überschreitet die sichere Größenbegrenzung.</value></data>
   <data name="QrImageReadFailedSafely" xml:space="preserve"><value>Das QR-Code-Bild konnte nicht sicher gelesen werden. Es wurden keine Kontodaten geändert.</value></data>
   <data name="QrImageSelectionCancelled" xml:space="preserve"><value>Es wurde kein QR-Code-Bild ausgewählt.</value></data>
-  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Das Scannen mit der Kamera unterstützt Konto-QR-Codes und versucht auch Google-Authenticator-Exporte einschließlich Exporten mit mehreren Konten zu lesen, sofern die Kameraauflösung ausreicht. Sorgen Sie für gute Beleuchtung und vermeiden Sie Spiegelungen oder starkes Gegenlicht. Halten Sie den QR-Code ruhig, vollständig sichtbar und möglichst gerade vor die Kamera. Passen Sie bei Bedarf langsam den Abstand an, bis der Code scharf erscheint. Wenn ein Google-Authenticator-Export nicht zuverlässig gelesen werden kann, verwenden Sie ein scharfes QR-Bild und wählen Sie unten „QR-Bild öffnen“.</value></data>
-  <data name="QrMigrationCameraUseImage" xml:space="preserve"><value>Die Kamera hat einen Google-Authenticator-Export erkannt, konnte ihn jedoch nicht zuverlässig prüfen. Halten Sie den QR-Code ruhig und scharf, oder wählen Sie unten „QR-Bild öffnen“.</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>Das Scannen mit der Kamera unterstützt Konto-QR-Codes und versucht auch Google-Authenticator-Exporte einschließlich Exporten mit mehreren Konten zu lesen, sofern die Kameraauflösung ausreicht. Sorgen Sie für gute Beleuchtung und vermeiden Sie Spiegelungen oder starkes Gegenlicht. Halten Sie den QR-Code ruhig, vollständig sichtbar und möglichst gerade vor die Kamera. Passen Sie bei Bedarf langsam den Abstand an, bis der Code scharf erscheint. Wenn ein Google-Authenticator-Export nicht zuverlässig gelesen werden kann, verwenden Sie ein scharfes QR-Bild und wählen Sie unten „QR-Bild importieren“.</value></data>
+  <data name="QrMigrationCameraUseImage" xml:space="preserve"><value>Die Kamera hat einen Google-Authenticator-Export erkannt, konnte ihn jedoch nicht zuverlässig prüfen. Halten Sie den QR-Code ruhig und scharf, oder wählen Sie unten „QR-Bild importieren“.</value></data>
   <data name="CancelScan" xml:space="preserve"><value>Scan abbrechen</value></data>
   <data name="CameraReconnectHint" xml:space="preserve"><value>Falls Ihre Kamera über einen Datenschutzschalter, eine Tastaturtaste oder eine Systemeinstellung deaktiviert ist, schalten Sie sie ein. Der Scanner stellt die Verbindung automatisch wieder her. (Dauer: &lt; 10 Sek.)</value></data>
   <data name="CameraReadyToStart" xml:space="preserve"><value>Der Kamerazugriff startet erst, wenn Sie „QR-Code scannen“ auswählen.</value></data>
@@ -274,7 +290,7 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Dieser QR-Code enthält das Kontogeheimnis. Halten Sie ihn privat.</value></data>
   <data name="CameraPreview" xml:space="preserve"><value>Live-Kameravorschau</value></data>
   <data name="CreatePasswordHeading" xml:space="preserve"><value>Master-Passwort erstellen</value></data>
-  <data name="PasswordSetupHelp" xml:space="preserve"><value>Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.</value></data>
+  <data name="PasswordSetupHelp" xml:space="preserve"><value>Dieses Passwort verschlüsselt Ihren lokalen Tresor. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Wählen Sie daher eines, an das Sie sich erinnern können, und halten Sie es geheim.</value></data>
   <data name="NewPassword" xml:space="preserve"><value>Neues Master-Passwort</value></data>
   <data name="ConfirmPassword" xml:space="preserve"><value>Master-Passwort bestätigen</value></data>
   <data name="CreateVault" xml:space="preserve"><value>Geschützten Tresor erstellen</value></data>

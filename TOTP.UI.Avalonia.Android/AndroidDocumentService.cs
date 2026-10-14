@@ -15,6 +15,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
     private const int BrandIconPackRequestCode = 0x4f57;
     private const int AccountImportRequestCode = 0x4f58;
     private const int CustomSvgIconRequestCode = 0x4f59;
+    private const int DiagnosticLogRequestCode = 0x4f5a;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
 
     public async Task<MobileReadableDocument?> OpenEncryptedBackupAsync(
@@ -47,6 +48,37 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         var resolver = activity?.ContentResolver;
         if (resolver is null) return null;
 
+        var stream = resolver.OpenOutputStream(selected, "w");
+        if (stream is null)
+        {
+            resolver.Delete(selected, null, null);
+            return null;
+        }
+
+        return new MobileWritableDocument(
+            stream,
+            _ =>
+            {
+                resolver.Delete(selected, null, null);
+                return Task.CompletedTask;
+            },
+            suggestedFileName);
+    }
+
+    public async Task<MobileWritableDocument?> CreateDiagnosticLogAsync(
+        string suggestedFileName,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(suggestedFileName);
+        using var intent = new Intent(Intent.ActionCreateDocument);
+        intent.AddCategory(Intent.CategoryOpenable);
+        intent.SetType("text/plain");
+        intent.PutExtra(Intent.ExtraTitle, suggestedFileName);
+        var selected = await StartAsync(intent, DiagnosticLogRequestCode, cancellationToken);
+        if (selected is null) return null;
+
+        var resolver = activityProvider.GetCurrent()?.ContentResolver;
+        if (resolver is null) return null;
         var stream = resolver.OpenOutputStream(selected, "w");
         if (stream is null)
         {

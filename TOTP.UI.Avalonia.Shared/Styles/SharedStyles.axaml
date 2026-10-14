@@ -50,6 +50,89 @@
                         Opacity="0.72"
                         Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png"
                         Stretch="UniformToFill" />
+                    <Bitmap x:Key="OnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-light.png</Bitmap>
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPanel"
+                        StartPoint="50%,0%"
+                        EndPoint="50%,100%">
+                        <GradientStop Color="#33FFFFFF" Offset="0" />
+                        <GradientStop Color="#80E8ECFF" Offset="0.18" />
+                        <GradientStop Color="#CCE7ECFF" Offset="0.55" />
+                        <GradientStop Color="#D9F3F9FF" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="BrushMobileOnboardingForeground" Color="#1C2944" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingSecondary" Color="#99DFE6FF" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingSecondaryHover" Color="#B3D6DEFA" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingSecondaryPressed" Color="#B3C8D2F2" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingAccentText" Color="#465682" />
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPrimary"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#CCB8EBFF" Offset="0" />
+                        <GradientStop Color="#CCD7C9FF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPrimaryHover"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#E6CAF2FF" Offset="0" />
+                        <GradientStop Color="#E6E2DAFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPrimaryPressed"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#D9A9DDEF" Offset="0" />
+                        <GradientStop Color="#D9C4B8EF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPanel"
+                        StartPoint="50%,0%"
+                        EndPoint="50%,100%">
+                        <GradientStop Color="#669FA9D9" Offset="0" />
+                        <GradientStop Color="#BFC8D0F3" Offset="0.24" />
+                        <GradientStop Color="#D9D7DDF8" Offset="0.58" />
+                        <GradientStop Color="#EBE8E9FF" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingForeground" Color="#1C2944" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#465682" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondary" Color="#99DFE6FF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryHover" Color="#B3D6DEFA" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryPressed" Color="#B3C8D2F2" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryBorder" Color="#809AA8D8" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryForeground" Color="#1C2944" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryBorder" Color="#809AA8D8" />
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimary"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#CCBFE8FF" Offset="0" />
+                        <GradientStop Color="#CCD8CCFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryHover"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#E6D4F1FF" Offset="0" />
+                        <GradientStop Color="#E6E8DFFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryPressed"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#D9ADDCEF" Offset="0" />
+                        <GradientStop Color="#D9C8BAEF" Offset="1" />
+                    </LinearGradientBrush>
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
                     <SolidColorBrush x:Key="BrushDangerPressed" Color="#8F1C13" />
@@ -72,6 +155,9 @@
                     <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
+                    <SolidColorBrush x:Key="BrushOverlayForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionBackground" Color="#F2E9EEFF" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionForeground" Color="#172033" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#F8FAFC" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#172033" />
@@ -129,6 +215,89 @@
                         Opacity="0.72"
                         Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png"
                         Stretch="UniformToFill" />
+                    <Bitmap x:Key="OnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack-light.png</Bitmap>
+                    <Bitmap x:Key="OnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-light.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-light.png</Bitmap>
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPanel"
+                        StartPoint="50%,0%"
+                        EndPoint="50%,100%">
+                        <GradientStop Color="#33FFFFFF" Offset="0" />
+                        <GradientStop Color="#80E8ECFF" Offset="0.18" />
+                        <GradientStop Color="#CCE7ECFF" Offset="0.55" />
+                        <GradientStop Color="#D9F3F9FF" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="BrushMobileOnboardingForeground" Color="#1C2944" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingSecondary" Color="#99DFE6FF" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingSecondaryHover" Color="#B3D6DEFA" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingSecondaryPressed" Color="#B3C8D2F2" />
+                    <SolidColorBrush x:Key="BrushMobileOnboardingAccentText" Color="#465682" />
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPrimary"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#CCB8EBFF" Offset="0" />
+                        <GradientStop Color="#CCD7C9FF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPrimaryHover"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#E6CAF2FF" Offset="0" />
+                        <GradientStop Color="#E6E2DAFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushMobileOnboardingPrimaryPressed"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#D9A9DDEF" Offset="0" />
+                        <GradientStop Color="#D9C4B8EF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPanel"
+                        StartPoint="50%,0%"
+                        EndPoint="50%,100%">
+                        <GradientStop Color="#669FA9D9" Offset="0" />
+                        <GradientStop Color="#BFC8D0F3" Offset="0.24" />
+                        <GradientStop Color="#D9D7DDF8" Offset="0.58" />
+                        <GradientStop Color="#EBE8E9FF" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingForeground" Color="#1C2944" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#465682" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondary" Color="#99DFE6FF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryHover" Color="#B3D6DEFA" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryPressed" Color="#B3C8D2F2" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryBorder" Color="#809AA8D8" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryForeground" Color="#1C2944" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryBorder" Color="#809AA8D8" />
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimary"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#CCBFE8FF" Offset="0" />
+                        <GradientStop Color="#CCD8CCFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryHover"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#E6D4F1FF" Offset="0" />
+                        <GradientStop Color="#E6E8DFFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryPressed"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#D9ADDCEF" Offset="0" />
+                        <GradientStop Color="#D9C8BAEF" Offset="1" />
+                    </LinearGradientBrush>
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#B42318" />
                     <SolidColorBrush x:Key="BrushDangerPressed" Color="#8F1C13" />
@@ -151,6 +320,9 @@
                     <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
+                    <SolidColorBrush x:Key="BrushOverlayForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionBackground" Color="#F2E9EEFF" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionForeground" Color="#172033" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#F8FAFC" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#172033" />
@@ -166,6 +338,43 @@
                     <BoxShadows x:Key="ElevationToast">0 10 30 0 #38000000</BoxShadows>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPanel"
+                        StartPoint="50%,0%"
+                        EndPoint="50%,100%">
+                        <GradientStop Color="#73101A35" Offset="0" />
+                        <GradientStop Color="#C2182549" Offset="0.28" />
+                        <GradientStop Color="#ED202A52" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#9BE7FF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondary" Color="#6611254A" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryHover" Color="#8A1B3768" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryPressed" Color="#A30B1734" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryBorder" Color="#809BE7FF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryForeground" Color="#172033" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryBorder" Color="#9EAEEC" />
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimary"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#BFE8FF" Offset="0" />
+                        <GradientStop Color="#D8CCFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryHover"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#D4F1FF" Offset="0" />
+                        <GradientStop Color="#E7DFFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryPressed"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#A7D7F2" Offset="0" />
+                        <GradientStop Color="#C4B7EE" Offset="1" />
+                    </LinearGradientBrush>
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#0C1C33" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushBiometricCardBackground" Color="#D610213F" />
@@ -208,6 +417,16 @@
                         Opacity="0.72"
                         Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-dark.png"
                         Stretch="UniformToFill" />
+                    <Bitmap x:Key="OnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account.png</Bitmap>
+                    <Bitmap x:Key="OnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts.png</Bitmap>
+                    <Bitmap x:Key="OnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts.png</Bitmap>
+                    <Bitmap x:Key="OnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack.png</Bitmap>
+                    <Bitmap x:Key="OnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-dark.png</Bitmap>
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="#59071C33" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#EF5350" />
                     <SolidColorBrush x:Key="BrushDangerPressed" Color="#D84340" />
@@ -230,6 +449,9 @@
                     <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#66000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#99000000" />
+                    <SolidColorBrush x:Key="BrushOverlayForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionBackground" Color="#D90C1C33" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionForeground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#192B52" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#7D7FF4" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#FFFFFF" />
@@ -245,6 +467,43 @@
                     <BoxShadows x:Key="ElevationToast">0 12 34 0 #C0000000</BoxShadows>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="{x:Static styles:AvaloniaThemeVariants.HighContrast}">
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPanel"
+                        StartPoint="50%,0%"
+                        EndPoint="50%,100%">
+                        <GradientStop Color="#99000000" Offset="0" />
+                        <GradientStop Color="#E6000000" Offset="0.28" />
+                        <GradientStop Color="#F2000000" Offset="1" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#00FFFF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondary" Color="#CC000000" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryHover" Color="#FF333333" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryPressed" Color="#FF000000" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryBorder" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingPrimaryBorder" Color="#FFFFFF" />
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimary"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#FFFF00" Offset="0" />
+                        <GradientStop Color="#FFFFFF" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryHover"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#FFFFFF" Offset="0" />
+                        <GradientStop Color="#FFFF00" Offset="1" />
+                    </LinearGradientBrush>
+                    <LinearGradientBrush
+                        x:Key="BrushDesktopOnboardingPrimaryPressed"
+                        StartPoint="0%,50%"
+                        EndPoint="100%,50%">
+                        <GradientStop Color="#FFFF00" Offset="0" />
+                        <GradientStop Color="#FFFF00" Offset="1" />
+                    </LinearGradientBrush>
                     <SolidColorBrush x:Key="BrushWindowBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushSurface" Color="#000000" />
                     <SolidColorBrush x:Key="BrushBiometricCardBackground" Color="#000000" />
@@ -283,6 +542,16 @@
                     <SolidColorBrush x:Key="BrushBiometricIconHalo" Color="Transparent" />
                     <SolidColorBrush x:Key="BrushBiometricButtonBorder" Color="#000000" />
                     <SolidColorBrush x:Key="BrushBiometricLockScreenArtwork" Color="#000000" />
+                    <Bitmap x:Key="OnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account.png</Bitmap>
+                    <Bitmap x:Key="OnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts.png</Bitmap>
+                    <Bitmap x:Key="OnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts.png</Bitmap>
+                    <Bitmap x:Key="OnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack.png</Bitmap>
+                    <Bitmap x:Key="OnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingAddAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingMoveAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingOrganizeAccountsArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingIconPackArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-dark.png</Bitmap>
+                    <Bitmap x:Key="MobileOnboardingQuickUnlockArtwork">avares://TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-dark.png</Bitmap>
                     <SolidColorBrush x:Key="BrushBiometricLockScreenOverlay" Color="Transparent" />
                     <SolidColorBrush x:Key="BrushDanger" Color="#FF8080" />
                     <SolidColorBrush x:Key="BrushDangerPressed" Color="#FF8080" />
@@ -305,6 +574,9 @@
                     <SolidColorBrush x:Key="BrushCustomBrandTileForeground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushOverlayLight" Color="#CC000000" />
                     <SolidColorBrush x:Key="BrushOverlayStrong" Color="#EE000000" />
+                    <SolidColorBrush x:Key="BrushOverlayForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionBackground" Color="#FF000000" />
+                    <SolidColorBrush x:Key="BrushOnboardingCaptionForeground" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushDialogSurface" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTitleBarBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTitleBarForeground" Color="#FFFFFF" />
@@ -321,6 +593,40 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
+            <LinearGradientBrush
+                x:Key="BrushMobileOnboardingPanel"
+                StartPoint="50%,0%"
+                EndPoint="50%,100%">
+                <GradientStop Color="#4D08142F" Offset="0" />
+                <GradientStop Color="#800B1734" Offset="0.22" />
+                <GradientStop Color="#A60B1734" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="BrushMobileOnboardingForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BrushMobileOnboardingSecondary" Color="#6611254A" />
+            <SolidColorBrush x:Key="BrushMobileOnboardingSecondaryHover" Color="#8A1B3768" />
+            <SolidColorBrush x:Key="BrushMobileOnboardingSecondaryPressed" Color="#A30B1734" />
+            <SolidColorBrush x:Key="BrushMobileOnboardingAccentText" Color="#9BE7FF" />
+            <LinearGradientBrush
+                x:Key="BrushMobileOnboardingPrimary"
+                StartPoint="0%,50%"
+                EndPoint="100%,50%">
+                <GradientStop Color="#18BDF2" Offset="0" />
+                <GradientStop Color="#7765F5" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush
+                x:Key="BrushMobileOnboardingPrimaryHover"
+                StartPoint="0%,50%"
+                EndPoint="100%,50%">
+                <GradientStop Color="#45D1FF" Offset="0" />
+                <GradientStop Color="#9184FF" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush
+                x:Key="BrushMobileOnboardingPrimaryPressed"
+                StartPoint="0%,50%"
+                EndPoint="100%,50%">
+                <GradientStop Color="#0B9FCE" Offset="0" />
+                <GradientStop Color="#5F4ED6" Offset="1" />
+            </LinearGradientBrush>
             <x:Double x:Key="Space1">4</x:Double>
             <x:Double x:Key="Space2">8</x:Double>
             <x:Double x:Key="Space3">12</x:Double>
@@ -1237,6 +1543,28 @@
                         Fill="{TemplateBinding Foreground}"
                         Stretch="Uniform" />
                 </Viewbox>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="controls|SymbolIconLabel">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <controls:SymbolIcon
+                        IconSize="{TemplateBinding IconSize}"
+                        Kind="{TemplateBinding Kind}"
+                        VerticalAlignment="Center" />
+                    <TextBlock
+                        MaxWidth="360"
+                        Text="{TemplateBinding Text}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        VerticalAlignment="Center" />
+                </StackPanel>
             </ControlTemplate>
         </Setter>
     </Style>

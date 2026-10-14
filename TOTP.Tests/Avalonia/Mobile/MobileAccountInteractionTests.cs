@@ -5,6 +5,104 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void OnboardingSlides_UseFullScreenArtworkWithLocalizedOverlayControls()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var slides = new[]
+        {
+            (Visibility: "{Binding IsOnboardingAddAccountsVisible}", Title: "{Binding OnboardingAddAccountsTitleText}", Artwork: "{DynamicResource MobileOnboardingAddAccountsArtwork}"),
+            (Visibility: "{Binding IsOnboardingMoveAccountsVisible}", Title: "{Binding OnboardingMoveAccountsTitleText}", Artwork: "{DynamicResource MobileOnboardingMoveAccountsArtwork}"),
+            (Visibility: "{Binding IsOnboardingOrganizeAccountsVisible}", Title: "{Binding OnboardingOrganizeAccountsTitleText}", Artwork: "{DynamicResource MobileOnboardingOrganizeAccountsArtwork}"),
+            (Visibility: "{Binding IsOnboardingIconPackVisible}", Title: "{Binding OnboardingIconPackTitleText}", Artwork: "{DynamicResource MobileOnboardingIconPackArtwork}"),
+            (Visibility: "{Binding IsOnboardingQuickUnlockVisible}", Title: "{Binding OnboardingQuickUnlockTitleText}", Artwork: "{DynamicResource MobileOnboardingQuickUnlockArtwork}")
+        };
+
+        var overlay = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "MobileOnboardingOverlay");
+        Assert.Equal("3", overlay.Attribute("Grid.RowSpan")?.Value);
+
+        foreach (var expected in slides)
+        {
+            var image = overlay
+                .Descendants(avalonia + "Image")
+                .Single(element => element.Attribute("IsVisible")?.Value == expected.Visibility);
+            Assert.Equal(expected.Artwork, image.Attribute("Source")?.Value);
+            Assert.Equal("UniformToFill", image.Attribute("Stretch")?.Value);
+
+            var textPanel = overlay
+                .Descendants(avalonia + "StackPanel")
+                .Single(element => element.Attribute("IsVisible")?.Value == expected.Visibility);
+            var intent = Assert.Single(
+                textPanel.Descendants(avalonia + "TextBlock"),
+                element => element.Attribute("Text")?.Value == expected.Title);
+            Assert.Equal(
+                "{DynamicResource BrushMobileOnboardingForeground}",
+                intent.Attribute("Foreground")?.Value);
+        }
+
+        var skipButton = overlay
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "SkipOnboardingButton");
+        Assert.Equal("{Binding FinishOnboardingCommand}", skipButton.Attribute("Command")?.Value);
+        Assert.Equal("{Binding IsFirstOnboardingSlide}", skipButton.Attribute("IsVisible")?.Value);
+        Assert.Equal("{Binding OnboardingSkipText}", skipButton.Attribute("Content")?.Value);
+        Assert.Equal("mobile-onboarding-skip", skipButton.Attribute("Classes")?.Value);
+        Assert.Equal("0", skipButton.Attribute("Grid.Column")?.Value);
+
+        var skipStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value == "Button.mobile-onboarding-skip");
+        var skipSetters = skipStyle
+            .Elements(avalonia + "Setter")
+            .ToDictionary(
+                element => element.Attribute("Property")?.Value ?? string.Empty,
+                element => element.Attribute("Value")?.Value ?? string.Empty);
+        Assert.Equal("1", skipSetters["BorderThickness"]);
+        Assert.Equal(
+            "{DynamicResource BrushMobileOnboardingAccentText}",
+            skipSetters["BorderBrush"]);
+
+        var navigation = Assert.IsType<XElement>(skipButton.Parent);
+        Assert.Equal("Auto,*,Auto", navigation.Attribute("ColumnDefinitions")?.Value);
+        Assert.All(
+            navigation.Elements(avalonia + "Button"),
+            button => Assert.StartsWith("mobile-onboarding-", button.Attribute("Classes")?.Value));
+
+        var contentPanel = Assert.IsType<XElement>(
+            overlay.Descendants(avalonia + "Border").Single());
+        Assert.Equal(
+            "{DynamicResource BrushMobileOnboardingPanel}",
+            contentPanel.Attribute("Background")?.Value);
+    }
+
+    [Fact]
+    public void ImportedIconRemoval_UsesDeleteSymbol()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var removeButton = document
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute("Command")?.Value == "{Binding ResetBrandIconsCommand}");
+        var label = removeButton
+            .Descendants()
+            .Single(element => element.Name.LocalName == "SymbolIconLabel");
+
+        Assert.Equal("Delete", label.Attribute("Kind")?.Value);
+    }
+
+    [Fact]
     public void AppHeader_UsesOtpHarborLogoInsteadOfLockSymbol()
     {
         var document = XDocument.Load(Path.Combine(
@@ -197,8 +295,22 @@ public sealed class MobileAccountInteractionTests
         Assert.All(importButtons, button =>
         {
             Assert.Equal("wide secondary", button.Attribute("Classes")?.Value);
-            Assert.Equal("{Binding ImportSectionText}", button.Attribute("Content")?.Value);
+            var label = Assert.Single(
+                button.Elements(),
+                element => element.Name.LocalName == "SymbolIconLabel");
+            Assert.Equal("{Binding ImportSectionText}", label.Attribute("Text")?.Value);
         });
+        Assert.Equal(
+            ["QrCode", "Import"],
+            importButtons.Select(button => button.Elements().Single().Attribute("Kind")?.Value));
+        var diagnosticExport = Assert.Single(misc.Descendants(avalonia + "Button"));
+        Assert.Equal(
+            "{Binding ExportDiagnosticLogCommand}",
+            diagnosticExport.Attribute("Command")?.Value);
+        var diagnosticLabel = Assert.Single(
+            diagnosticExport.Elements(),
+            element => element.Name.LocalName == "SymbolIconLabel");
+        Assert.Equal("Export", diagnosticLabel.Attribute("Kind")?.Value);
         Assert.Equal(
             [
                 "{Binding ImportFormatAegisText}",
@@ -263,6 +375,7 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal(
             ["Folder", "QrCode"],
             faqSections.Select(section => section
+                .Element(avalonia + "Expander.Header")!
                 .Descendants()
                 .Single(element => element.Name.LocalName == "SymbolIcon")
                 .Attribute("Kind")?.Value));

@@ -105,7 +105,8 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(
             outcome is AvaloniaStartupOutcome.ReadyForUnlock or AvaloniaStartupOutcome.ReadyForPasswordFallback,
             sut.IsPasswordUnlockVisible);
-        Assert.Equal(outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup, sut.IsPasswordSetupVisible);
+        Assert.Equal(outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup, sut.IsOnboardingVisible);
+        Assert.False(sut.IsPasswordSetupVisible);
         Assert.Equal(outcome == AvaloniaStartupOutcome.ReadyUnlocked, sut.IsShellVisible);
         Assert.Equal(
             outcome switch
@@ -117,6 +118,92 @@ public sealed class MainWindowViewModelTests
                 _ => NotificationSeverity.Information
             },
             sut.StatusSeverity);
+    }
+
+    [Fact]
+    public async Task FirstRunIntroduction_AdvancesThroughEverySlideBeforePasswordSetup()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyForPasswordSetup);
+        using var sut = CreateSut(coordinator.Object);
+
+        await sut.InitializeAsync();
+
+        Assert.True(sut.IsOnboardingAddAccountsVisible);
+        Assert.True(sut.IsFirstOnboardingSlide);
+        Assert.False(sut.IsLastOnboardingSlide);
+
+        await sut.NextOnboardingAsync();
+        Assert.True(sut.IsOnboardingMoveAccountsVisible);
+
+        await sut.NextOnboardingAsync();
+        Assert.True(sut.IsOnboardingOrganizeAccountsVisible);
+
+        await sut.NextOnboardingAsync();
+        Assert.True(sut.IsOnboardingIconPackVisible);
+
+        await sut.NextOnboardingAsync();
+        Assert.True(sut.IsOnboardingQuickUnlockVisible);
+        Assert.False(sut.IsFirstOnboardingSlide);
+        Assert.True(sut.IsLastOnboardingSlide);
+
+        await sut.FinishOnboardingAsync();
+
+        Assert.False(sut.IsOnboardingVisible);
+        Assert.True(sut.IsPasswordSetupVisible);
+    }
+
+    [Fact]
+    public async Task FirstRunIntroduction_CanBeSkippedFromFirstSlide()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyForPasswordSetup);
+        using var sut = CreateSut(coordinator.Object);
+
+        await sut.InitializeAsync();
+        Assert.True(sut.IsOnboardingAddAccountsVisible);
+
+        await sut.FinishOnboardingAsync();
+
+        Assert.False(sut.IsOnboardingVisible);
+        Assert.True(sut.IsPasswordSetupVisible);
+    }
+
+    [Theory]
+    [InlineData(AvaloniaStartupOutcome.ReadyForUnlock, true, false)]
+    [InlineData(AvaloniaStartupOutcome.ReadyUnlocked, false, true)]
+    public async Task DebugOnboardingPreview_FinishRestoresConfiguredVaultStateWithoutShowingSetup(
+        AvaloniaStartupOutcome outcome,
+        bool expectedPasswordUnlock,
+        bool expectedShell)
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(outcome);
+        using var sut = CreateSut(
+            coordinator.Object,
+            Mock.Of<IAuthorizationService>(),
+            onboardingPreviewOptions: new OnboardingPreviewOptions(true));
+
+        await sut.InitializeAsync();
+
+        Assert.True(sut.IsOnboardingVisible);
+        Assert.True(sut.IsOnboardingAddAccountsVisible);
+        Assert.False(sut.IsPasswordUnlockVisible);
+        Assert.False(sut.IsPasswordSetupVisible);
+        Assert.False(sut.IsShellVisible);
+        Assert.True(sut.IsOnboardingPreview);
+        Assert.Equal(AvaloniaStringKeys.OnboardingPreviewNotice, sut.StatusText);
+
+        await sut.FinishOnboardingAsync();
+
+        Assert.False(sut.IsOnboardingVisible);
+        Assert.False(sut.IsOnboardingPreview);
+        Assert.False(sut.IsPasswordSetupVisible);
+        Assert.Equal(expectedPasswordUnlock, sut.IsPasswordUnlockVisible);
+        Assert.Equal(expectedShell, sut.IsShellVisible);
     }
 
     [Fact]
@@ -793,7 +880,8 @@ public sealed class MainWindowViewModelTests
         IdleMonitoringBackgroundService? idleLockPolicy = null,
         UpdateCheckViewModel? updateCheck = null,
         TimeSpan? settingsNotificationDuration = null,
-        CameraScannerViewModel? cameraScanner = null) =>
+        CameraScannerViewModel? cameraScanner = null,
+        OnboardingPreviewOptions? onboardingPreviewOptions = null) =>
         new(
             coordinator,
             authorization,
@@ -816,7 +904,8 @@ public sealed class MainWindowViewModelTests
             localization ?? CreateLocalization(),
             scannerDialogs ?? Mock.Of<IAvaloniaCameraScannerDialogService>(),
             idleLockPolicy: idleLockPolicy,
-            settingsNotificationDuration: settingsNotificationDuration);
+            settingsNotificationDuration: settingsNotificationDuration,
+            onboardingPreviewOptions: onboardingPreviewOptions);
 
     private static async Task WaitUntilAsync(Func<bool> predicate)
     {

@@ -31,10 +31,14 @@ public partial class MainWindow : Window
     private ContextPreservingAccountListBox? _realizedAccountList;
     private CancellationTokenSource? _heightAnimationLifetime;
     private SettingsWindow? _settingsWindow;
+    private OnboardingWindow? _onboardingWindow;
     private IDisposable? _settingsWindowRegistration;
+    private IDisposable? _onboardingWindowRegistration;
     private IDisposable? _mainWindowActivityRegistration;
     private IDisposable? _settingsActivityRegistration;
+    private IDisposable? _onboardingActivityRegistration;
     private bool _allowSettingsWindowClose;
+    private bool _allowOnboardingWindowClose;
     private Screen? _sizeLimitScreen;
     private PixelRect _sizeLimitWorkingArea;
     private double _sizeLimitScaling;
@@ -113,6 +117,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         DetachAccountListRealizationTracking();
+        CloseOnboardingWindow();
         ObserveViewModel(null);
         _mainWindowActivityRegistration?.Dispose();
         _mainWindowActivityRegistration = null;
@@ -608,6 +613,12 @@ public partial class MainWindow : Window
 
     private void MainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainWindowViewModel.IsOnboardingVisible))
+        {
+            SyncOnboardingWindow();
+            return;
+        }
+
         if (e.PropertyName == nameof(MainWindowViewModel.IsSettingsVisible))
         {
             if (_observedViewModel?.IsSettingsVisible == true)
@@ -660,6 +671,53 @@ public partial class MainWindow : Window
                 .FirstOrDefault(control => control.Name == controlName)
                 ?.FocusInput(),
             DispatcherPriority.Loaded);
+    }
+
+    private void SyncOnboardingWindow()
+    {
+        if (_observedViewModel?.IsOnboardingVisible == true)
+        {
+            if (_onboardingWindow is { IsVisible: true })
+            {
+                _onboardingWindow.Activate();
+                return;
+            }
+
+            _onboardingWindow = new OnboardingWindow { DataContext = _observedViewModel };
+            _onboardingWindow.Closing += OnboardingWindowClosing;
+            _onboardingWindowRegistration = WindowCoordinator?.RegisterOwnedDialog(_onboardingWindow);
+            _onboardingActivityRegistration = ActivityMonitor?.Attach(_onboardingWindow);
+            _ = _onboardingWindow.ShowDialog(this);
+            return;
+        }
+
+        CloseOnboardingWindow();
+        if (IsVisible)
+            Activate();
+    }
+
+    private void OnboardingWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (_allowOnboardingWindowClose) return;
+        e.Cancel = true;
+        Dispatcher.UIThread.Post(
+            () => _observedViewModel?.FinishOnboardingCommand.Execute(null),
+            DispatcherPriority.Input);
+    }
+
+    private void CloseOnboardingWindow()
+    {
+        _onboardingWindowRegistration?.Dispose();
+        _onboardingWindowRegistration = null;
+        _onboardingActivityRegistration?.Dispose();
+        _onboardingActivityRegistration = null;
+        if (_onboardingWindow is null) return;
+
+        _allowOnboardingWindowClose = true;
+        _onboardingWindow.Closing -= OnboardingWindowClosing;
+        _onboardingWindow.Close();
+        _onboardingWindow = null;
+        _allowOnboardingWindowClose = false;
     }
 
     private void SyncSettingsWindow()

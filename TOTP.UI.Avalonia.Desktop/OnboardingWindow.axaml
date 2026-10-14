@@ -1,0 +1,220 @@
+<Window
+    x:Class="TOTP.Avalonia.Desktop.OnboardingWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation"
+    xmlns:presentation="using:TOTP.Avalonia.Desktop.Presentation"
+    x:DataType="presentation:MainWindowViewModel"
+    Title="{DynamicResource AppTitle}"
+    Width="920"
+    Height="660"
+    MinWidth="720"
+    MinHeight="500"
+    CanResize="True"
+    ShowInTaskbar="False"
+    WindowDecorations="None"
+    WindowStartupLocation="CenterScreen"
+    Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">
+
+    <Window.Styles>
+        <Style Selector="Button.onboarding-primary">
+            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingPrimaryBorder}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingPrimaryForeground}" />
+        </Style>
+        <Style Selector="Button.onboarding-primary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingPrimaryHover}" />
+        </Style>
+        <Style Selector="Button.onboarding-primary:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingPrimaryPressed}" />
+        </Style>
+        <Style Selector="Button.onboarding-secondary">
+            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingSecondary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingSecondaryBorder}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingForeground}" />
+        </Style>
+        <Style Selector="Button.onboarding-secondary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingSecondaryHover}" />
+        </Style>
+        <Style Selector="Button.onboarding-secondary:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingSecondaryPressed}" />
+        </Style>
+        <Style Selector="Button.onboarding-skip">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingSecondaryBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingAccentText}" />
+        </Style>
+    </Window.Styles>
+
+    <Grid Background="{DynamicResource BrushWindowBackground}">
+        <Grid
+            x:Name="OnboardingSurface"
+            RowDefinitions="*,Auto"
+            ClipToBounds="True">
+            <Grid
+                x:Name="OnboardingArtworkLayer"
+                Grid.Row="0">
+                <Image
+                    x:Name="OnboardingAddAccountsSlide"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingAddAccountsVisible}"
+                    Source="{DynamicResource OnboardingAddAccountsArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    x:Name="OnboardingMoveAccountsSlide"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingMoveAccountsVisible}"
+                    Source="{DynamicResource OnboardingMoveAccountsArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    x:Name="OnboardingOrganizeAccountsSlide"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingOrganizeAccountsVisible}"
+                    Source="{DynamicResource OnboardingOrganizeAccountsArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    x:Name="OnboardingIconPackSlide"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingIconPackVisible}"
+                    Source="{DynamicResource OnboardingIconPackArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    x:Name="OnboardingQuickUnlockSlide"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingQuickUnlockVisible}"
+                    Source="{DynamicResource OnboardingQuickUnlockArtwork}"
+                    Stretch="UniformToFill" />
+            </Grid>
+
+            <Border
+                x:Name="OnboardingContentPanel"
+                Grid.Row="1"
+                Margin="0,-56,0,0"
+                VerticalAlignment="Bottom"
+                Background="{DynamicResource BrushDesktopOnboardingPanel}"
+                Padding="36,72,36,26">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="20">
+                    <Grid>
+                        <StackPanel IsVisible="{Binding IsOnboardingAddAccountsVisible}" Spacing="8">
+                            <TextBlock
+                                x:Name="OnboardingAddAccountsIntent"
+                                automation:AutomationProperties.HeadingLevel="1"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                FontSize="28"
+                                FontWeight="SemiBold"
+                                Text="{DynamicResource OnboardingAddAccountsTitle}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="18"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                Text="{DynamicResource OnboardingAddAccountsDescription}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingMoveAccountsVisible}" Spacing="8">
+                            <TextBlock
+                                x:Name="OnboardingMoveAccountsIntent"
+                                automation:AutomationProperties.HeadingLevel="1"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                FontSize="28"
+                                FontWeight="SemiBold"
+                                Text="{DynamicResource OnboardingMoveAccountsTitle}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="18"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                Text="{DynamicResource OnboardingMoveAccountsDescription}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingOrganizeAccountsVisible}" Spacing="8">
+                            <TextBlock
+                                x:Name="OnboardingOrganizeAccountsIntent"
+                                automation:AutomationProperties.HeadingLevel="1"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                FontSize="28"
+                                FontWeight="SemiBold"
+                                Text="{DynamicResource OnboardingOrganizeAccountsTitle}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="18"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                Text="{DynamicResource OnboardingOrganizeAccountsDescription}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingIconPackVisible}" Spacing="8">
+                            <TextBlock
+                                x:Name="OnboardingIconPackIntent"
+                                automation:AutomationProperties.HeadingLevel="1"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                FontSize="28"
+                                FontWeight="SemiBold"
+                                Text="{DynamicResource OnboardingIconPackTitle}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="18"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                Text="{DynamicResource OnboardingIconPackDescription}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingQuickUnlockVisible}" Spacing="8">
+                            <TextBlock
+                                x:Name="OnboardingQuickUnlockIntent"
+                                automation:AutomationProperties.HeadingLevel="1"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                FontSize="28"
+                                FontWeight="SemiBold"
+                                Text="{DynamicResource OnboardingQuickUnlockTitle}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="18"
+                                Foreground="{DynamicResource BrushDesktopOnboardingForeground}"
+                                Text="{DynamicResource OnboardingQuickUnlockDescription}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid x:Name="OnboardingNavigation" Grid.Row="1" ColumnDefinitions="*,160,160" ColumnSpacing="12">
+                        <Button
+                            x:Name="SkipOnboardingButton"
+                            Grid.Column="0"
+                            Classes="onboarding-skip"
+                            Command="{Binding FinishOnboardingCommand}"
+                            Content="{DynamicResource OnboardingSkip}"
+                            IsVisible="{Binding !IsLastOnboardingSlide}" />
+                        <Button
+                            x:Name="PreviousOnboardingButton"
+                            Grid.Column="1"
+                            Classes="onboarding-secondary wide"
+                            Command="{Binding PreviousOnboardingCommand}"
+                            Content="{DynamicResource OnboardingBack}"
+                            IsVisible="{Binding !IsFirstOnboardingSlide}" />
+                        <Button
+                            x:Name="NextOnboardingButton"
+                            Grid.Column="2"
+                            Classes="onboarding-primary wide"
+                            Command="{Binding NextOnboardingCommand}"
+                            Content="{DynamicResource OnboardingNext}"
+                            IsVisible="{Binding !IsLastOnboardingSlide}" />
+                        <Button
+                            x:Name="FinishOnboardingButton"
+                            Grid.Column="2"
+                            Classes="onboarding-primary wide"
+                            Command="{Binding FinishOnboardingCommand}"
+                            IsVisible="{Binding IsLastOnboardingSlide}">
+                            <Grid>
+                                <TextBlock IsVisible="{Binding !IsOnboardingPreview}" Text="{DynamicResource OnboardingFinish}" />
+                                <TextBlock IsVisible="{Binding IsOnboardingPreview}" Text="{DynamicResource OnboardingPreviewFinish}" />
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

@@ -17,6 +17,10 @@ public interface IMobileDocumentService
     Task<MobileWritableDocument?> CreateEncryptedBackupAsync(
         string suggestedFileName,
         CancellationToken cancellationToken = default);
+
+    Task<MobileWritableDocument?> CreateDiagnosticLogAsync(
+        string suggestedFileName,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class MobileReadableDocument(Stream stream, string name = "") : IDisposable

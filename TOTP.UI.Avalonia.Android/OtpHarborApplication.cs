@@ -7,7 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using TOTP.Avalonia.Mobile;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Avalonia.Mobile.Views;
+using TOTP.Core.Enums;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Infrastructure.Logging;
 
 namespace TOTP.Avalonia.Android;
 
@@ -48,6 +50,25 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     }
 
 #if DEBUG
+    internal Task<bool> ShowOnboardingPreviewAsync() => Task.FromResult(
+        _services?.GetService<MobileShellViewModel>()?.ShowOnboardingPreview() ?? false);
+
+    internal async Task<bool> SetDebugThemeAsync(string? theme)
+    {
+        var preference = theme?.ToLowerInvariant() switch
+        {
+            "system" => AppThemePreference.System,
+            "dark" => AppThemePreference.Dark,
+            "light" => AppThemePreference.Light,
+            _ => (AppThemePreference?)null
+        };
+        var appearance = _services?.GetService<IAppearanceSettingsService>();
+        if (preference is null || appearance is null) return false;
+
+        var result = await appearance.SetThemePreferenceAsync(preference.Value);
+        return result.IsSuccess;
+    }
+
     internal Task<bool> AddDebugSyntheticAccountsAsync(int count) =>
         _services?.GetService<MobileShellViewModel>()?.AddDebugSyntheticAccountsAsync(count)
         ?? Task.FromResult(false);
@@ -108,6 +129,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
         (global::Avalonia.Application.Current as MobileApp)?.DisposeAppearance();
         _services?.Dispose();
         _services = null;
+        LoggingConfigurator.Shutdown();
         base.OnTerminate();
     }
 }

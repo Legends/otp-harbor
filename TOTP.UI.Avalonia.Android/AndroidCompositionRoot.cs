@@ -2,12 +2,15 @@ using Android.Content;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Core.Security.Interfaces;
+using TOTP.Core.Enums;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Infrastructure.Extensions;
+using TOTP.Infrastructure.Logging;
 using TOTP.Infrastructure.Services;
 using TOTP.Platform.Android;
 using TOTP.Avalonia.Shared.Branding;
@@ -24,13 +27,17 @@ internal static class AndroidCompositionRoot
         var paths = new AndroidApplicationPaths(context);
         var fileSecurity = new AndroidFileSecurity(context);
         var configuration = new ConfigurationBuilder().Build();
+        LoggingConfigurator.SetupEarlyLogger([], paths);
 
         services.AddSingleton(context);
         services.AddSingleton<IConfiguration>(configuration);
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IPlatformApplicationPaths>(paths);
+        services.AddSingleton<ILogSwitchService>(
+            new LogSwitchService(AppLogLevel.Information, isCliOverride: false));
         services.AddLogging(builder => builder
-            .SetMinimumLevel(LogLevel.Warning)
+            .SetMinimumLevel(LogLevel.Trace)
+            .AddSerilog(Log.Logger, dispose: false)
             .AddProvider(new AndroidQuickUnlockLogProvider()));
         services.AddSingleton<AndroidActivityProvider>();
         services.AddSingleton<IAndroidBiometricPrompt, AndroidBiometricPrompt>();

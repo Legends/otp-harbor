@@ -8,6 +8,8 @@ namespace TOTP.Platform.Windows;
 public sealed class WindowsApplicationPaths : IPlatformApplicationPaths
 {
     public const string InstalledDistributionMarkerFileName = "otp-harbor.installed";
+    public const string ApplicationDataDirectoryName = "OTP-Harbor";
+    public const string LegacyApplicationDataDirectoryName = "TOTP-Manager";
 
     public WindowsApplicationPaths(
         string? executableDirectory = null,
@@ -27,7 +29,10 @@ public sealed class WindowsApplicationPaths : IPlatformApplicationPaths
 
         ApplicationDataDirectory = Path.Combine(
             Path.GetFullPath(roamingRoot),
-            StringsConstants.AppDataDirectoryName);
+            ApplicationDataDirectoryName);
+        LegacyApplicationDataDirectory = Path.Combine(
+            Path.GetFullPath(roamingRoot),
+            LegacyApplicationDataDirectoryName);
 
         ConfigurationFilePath = Path.Combine(ExecutableDirectory, StringsConstants.AppSettingsFileName);
         VaultFilePath = Path.Combine(ApplicationDataDirectory, StringsConstants.TokensStorageFileName);
@@ -41,6 +46,7 @@ public sealed class WindowsApplicationPaths : IPlatformApplicationPaths
     }
 
     public string ExecutableDirectory { get; }
+    public string LegacyApplicationDataDirectory { get; }
     public string ConfigurationFilePath { get; }
     public string ApplicationDataDirectory { get; }
     public string VaultFilePath { get; }

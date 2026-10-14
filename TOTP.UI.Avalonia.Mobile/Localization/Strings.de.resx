@@ -8,6 +8,20 @@
   <data name="Starting" xml:space="preserve"><value>OTP Harbor wird sicher gestartet…</value></data>
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor konnte nicht sicher gestartet werden. Ihre verschlüsselten Daten wurden nicht verändert.</value></data>
   <data name="Retry" xml:space="preserve"><value>Erneut versuchen</value></data>
+  <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Konten hinzufügen</value></data>
+  <data name="OnboardingAddAccountsDescription" xml:space="preserve"><value>Scanne einen QR-Code, importiere ein gespeichertes QR-Bild oder gib die Kontodaten manuell ein.</value></data>
+  <data name="OnboardingMoveAccountsTitle" xml:space="preserve"><value>Konten sicher übertragen</value></data>
+  <data name="OnboardingMoveAccountsDescription" xml:space="preserve"><value>Importiere Übertragungs-Codes aus Google Authenticator und andere unterstützte Formate oder übertrage alle Konten mit einer verschlüsselten OTP-Harbor-Sicherung.</value></data>
+  <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Mit Gruppen und Favoriten organisieren</value></data>
+  <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Halte deine Konten übersichtlich, indem du zusammengehörige Einträge gruppierst und häufig verwendete Konten als Favoriten markierst.</value></data>
+  <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Konten mit Symbolen personalisieren</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Füge Kontosymbole hinzu, indem du mit dem OTP Harbor Icon Pack Builder ein lokales Paket erstellst und importierst. Drittanbieter-Assets unterliegen weiterhin ihren eigenen Lizenzen, Markenrechten und Nutzungsbedingungen; du bist für eine regelkonforme Nutzung verantwortlich.</value></data>
+  <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Schnellentsperrung einrichten</value></data>
+  <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Verwende die biometrische Schnellentsperrung der Plattform, sofern verfügbar. Dein Master-Passwort bleibt die Wiederherstellungsmethode.</value></data>
+  <data name="OnboardingSkip" xml:space="preserve"><value>Einführung überspringen</value></data>
+  <data name="OnboardingBack" xml:space="preserve"><value>Zurück</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Weiter</value></data>
+  <data name="OnboardingFinish" xml:space="preserve"><value>OTP Harbor einrichten</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Authenticator schützen</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Masterpasswort</value></data>
@@ -47,6 +61,10 @@
   <data name="Miscellaneous" xml:space="preserve"><value>SONSTIGES</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Diagnoseprotokollierung konfigurieren.</value></data>
   <data name="LoggingLevel" xml:space="preserve"><value>Minimale Protokollstufe (gilt nach Neustart)</value></data>
+  <data name="ExportDiagnosticLog" xml:space="preserve"><value>Diagnoseprotokoll exportieren…</value></data>
+  <data name="DiagnosticLogExported" xml:space="preserve"><value>Diagnoseprotokoll wurde exportiert.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Noch kein Diagnoseprotokoll verfügbar.</value></data>
+  <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>Das Diagnoseprotokoll konnte nicht exportiert werden.</value></data>
   <data name="Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Englisch</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Deutsch</value></data>

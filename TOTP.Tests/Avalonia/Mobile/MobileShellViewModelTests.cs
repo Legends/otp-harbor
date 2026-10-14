@@ -22,15 +22,71 @@ public sealed class MobileShellViewModelTests
     private const string ValidSecret = "JBSWY3DPEHPK3PXP";
 
     [Fact]
-    public async Task InitializeAsync_WhenNoEnvelopeExists_ShowsPasswordSetup()
+    public async Task InitializeAsync_WhenNoEnvelopeExists_SimulatesEveryIntroductionSlideBeforePasswordSetup()
     {
         var context = CreateContext(isConfigured: false);
 
         await context.Sut.InitializeAsync();
 
-        Assert.True(context.Sut.IsSetupVisible);
+        Assert.True(context.Sut.IsOnboardingVisible);
+        Assert.False(context.Sut.IsSetupVisible);
         Assert.False(context.Sut.IsUnlockVisible);
         Assert.Empty(context.Sut.NotificationText);
+        Assert.True(context.Sut.IsOnboardingAddAccountsVisible);
+        Assert.True(context.Sut.IsFirstOnboardingSlide);
+        Assert.False(context.Sut.IsLastOnboardingSlide);
+
+        await context.Sut.NextOnboardingAsync();
+        Assert.True(context.Sut.IsOnboardingMoveAccountsVisible);
+
+        await context.Sut.NextOnboardingAsync();
+        Assert.True(context.Sut.IsOnboardingOrganizeAccountsVisible);
+
+        await context.Sut.NextOnboardingAsync();
+        Assert.True(context.Sut.IsOnboardingIconPackVisible);
+
+        await context.Sut.NextOnboardingAsync();
+        Assert.True(context.Sut.IsOnboardingQuickUnlockVisible);
+        Assert.False(context.Sut.IsFirstOnboardingSlide);
+        Assert.True(context.Sut.IsLastOnboardingSlide);
+
+        await context.Sut.FinishOnboardingAsync();
+        Assert.True(context.Sut.IsSetupVisible);
+        Assert.False(context.Sut.IsOnboardingVisible);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WhenNoEnvelopeExists_CanSkipIntroductionFromFirstSlide()
+    {
+        var context = CreateContext(isConfigured: false);
+
+        await context.Sut.InitializeAsync();
+        Assert.True(context.Sut.IsOnboardingAddAccountsVisible);
+
+        await context.Sut.FinishOnboardingAsync();
+
+        Assert.False(context.Sut.IsOnboardingVisible);
+        Assert.True(context.Sut.IsSetupVisible);
+    }
+
+    [Fact]
+    public async Task ShowOnboardingPreview_WithExistingVault_RestoresUnlockScreenAfterFinishing()
+    {
+        var context = CreateContext(isConfigured: true);
+        await context.Sut.InitializeAsync();
+        Assert.True(context.Sut.IsUnlockVisible);
+
+        var shown = context.Sut.ShowOnboardingPreview();
+
+        Assert.True(shown);
+        Assert.True(context.Sut.IsOnboardingVisible);
+        Assert.True(context.Sut.IsFirstOnboardingSlide);
+
+        await context.Sut.NextOnboardingAsync();
+        await context.Sut.FinishOnboardingAsync();
+
+        Assert.False(context.Sut.IsOnboardingVisible);
+        Assert.True(context.Sut.IsUnlockVisible);
     }
 
     [Fact]
@@ -224,6 +280,50 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task ExportDiagnosticLogAsync_FromMiscSettingsCopiesPrivateLogToChosenDocument()
+    {
+        var logDirectory = Path.Combine(Path.GetTempPath(), $"otp-harbor-logs-{Guid.NewGuid():N}");
+        var logPath = Path.Combine(logDirectory, "app20261012.log");
+        try
+        {
+            Directory.CreateDirectory(logDirectory);
+            await File.WriteAllTextAsync(
+                logPath,
+                "redacted diagnostic entry",
+                global::Xunit.TestContext.Current.CancellationToken);
+            var context = CreateContext(
+                isConfigured: true,
+                appLockEnabled: false,
+                logFilePath: Path.Combine(logDirectory, "app.log"));
+            context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+                .Callback(context.State.Unlock)
+                .ReturnsAsync(AuthorizationResult.Success);
+            var exported = new MemoryStream();
+            context.Documents.Setup(value => value.CreateDiagnosticLogAsync(
+                    It.Is<string>(name => name.StartsWith("otp-harbor-diagnostic-", StringComparison.Ordinal)
+                        && name.EndsWith(".log", StringComparison.Ordinal)),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => new MobileWritableDocument(exported, _ => Task.CompletedTask));
+
+            await context.Sut.InitializeAsync();
+            await context.Sut.ShowSettingsAsync();
+            context.Sut.ShowMiscSettingsCommand.Execute(null);
+
+            await context.Sut.ExportDiagnosticLogAsync();
+
+            Assert.Equal("redacted diagnostic entry", System.Text.Encoding.UTF8.GetString(exported.ToArray()));
+            Assert.Equal(
+                context.Strings.Get(MobileStringKeys.DiagnosticLogExported),
+                context.Sut.NotificationText);
+        }
+        finally
+        {
+            if (Directory.Exists(logDirectory))
+                Directory.Delete(logDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Settings_MinimumLogLevelPersistsAndRollsBackOnFailure()
     {
         var context = CreateContext(isConfigured: true, appLockEnabled: false);
@@ -386,6 +486,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
 
@@ -405,6 +506,7 @@ public sealed class MobileShellViewModelTests
     {
         var context = CreateContext(isConfigured: false);
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
 
         await context.Sut.ConfigureAsync();
 
@@ -432,6 +534,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.ConfigureHelloAsync("synthetic password"))
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
 
@@ -464,6 +567,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.ConfigureHelloAsync("synthetic password"))
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
         Assert.False(context.Sut.IsBiometricAvailable);
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
@@ -492,6 +596,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
         await context.Sut.ConfigureAsync();
@@ -515,6 +620,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.ConfigureHelloAsync("synthetic password"))
             .ReturnsAsync(AuthorizationResult.Cancelled);
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
 
@@ -538,6 +644,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.ConfigureHelloAsync("synthetic password"))
             .ThrowsAsync(new InvalidOperationException("synthetic platform failure"));
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
 
@@ -3616,6 +3723,7 @@ public sealed class MobileShellViewModelTests
     private static async Task ConfigureAndBeginAddAsync(TestContext context)
     {
         await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
         await context.Sut.ConfigureAsync();
@@ -3680,7 +3788,8 @@ public sealed class MobileShellViewModelTests
             TOTP.Core.Enums.PreferredUnlockMethod.Password,
         string cultureName = "en",
         bool appLockEnabled = true,
-        IBrandIconPackService? brandIconPackService = null)
+        IBrandIconPackService? brandIconPackService = null,
+        string? logFilePath = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -3756,6 +3865,12 @@ public sealed class MobileShellViewModelTests
         var paths = new Mock<IPlatformApplicationPaths>();
         paths.SetupGet(value => value.AuthorizationEnvelopeFilePath)
             .Returns(Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.bin"));
+        paths.SetupGet(value => value.LogFilePath)
+            .Returns(logFilePath ?? Path.Combine(Path.GetTempPath(), $"missing-log-{Guid.NewGuid():N}.txt"));
+        paths.SetupGet(value => value.LogDirectory)
+            .Returns(logFilePath is null
+                ? Path.GetTempPath()
+                : Path.GetDirectoryName(logFilePath)!);
 
         var strings = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
         var time = new ManualTimeProvider();

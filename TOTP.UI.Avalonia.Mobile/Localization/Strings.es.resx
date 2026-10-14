@@ -8,6 +8,20 @@
   <data name="Starting" xml:space="preserve"><value>Iniciando OTP Harbor de forma segura…</value></data>
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor no pudo iniciarse de forma segura. Sus datos cifrados no se modificaron.</value></data>
   <data name="Retry" xml:space="preserve"><value>Reintentar</value></data>
+  <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Añadir cuentas</value></data>
+  <data name="OnboardingAddAccountsDescription" xml:space="preserve"><value>Escanea un código QR, importa una imagen QR guardada o introduce manualmente los datos de la cuenta.</value></data>
+  <data name="OnboardingMoveAccountsTitle" xml:space="preserve"><value>Transferir cuentas de forma segura</value></data>
+  <data name="OnboardingMoveAccountsDescription" xml:space="preserve"><value>Importa códigos de transferencia de Google Authenticator y otros formatos compatibles, o transfiere todas las cuentas con una copia de seguridad cifrada de OTP Harbor.</value></data>
+  <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Organizar con grupos y favoritos</value></data>
+  <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Encuentra tus cuentas fácilmente agrupando las entradas relacionadas y marcando como favoritas las que más utilizas.</value></data>
+  <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Personalizar con iconos de cuenta</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Añade iconos de cuenta creando e importando un paquete local con OTP Harbor Icon Pack Builder. Los recursos de terceros siguen sujetos a sus propias licencias, derechos de marca y condiciones de uso; eres responsable de utilizarlos correctamente.</value></data>
+  <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Configurar desbloqueo rápido</value></data>
+  <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Usa el desbloqueo biométrico de la plataforma cuando esté disponible. Tu contraseña maestra seguirá siendo el método de recuperación.</value></data>
+  <data name="OnboardingSkip" xml:space="preserve"><value>Omitir introducción</value></data>
+  <data name="OnboardingBack" xml:space="preserve"><value>Atrás</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Siguiente</value></data>
+  <data name="OnboardingFinish" xml:space="preserve"><value>Configurar OTP Harbor</value></data>
   <data name="SetupTitle" xml:space="preserve"><value>Proteja su autenticador</value></data>
   <data name="SetupDescription" xml:space="preserve"><value>Cree una contraseña maestra para cifrar su almacén local. OTP Harbor no puede restablecerla si la olvida. Después, cree una copia de seguridad cifrada y guarde su contraseña por separado.</value></data>
   <data name="MasterPassword" xml:space="preserve"><value>Contraseña maestra</value></data>
@@ -47,6 +61,10 @@
   <data name="Miscellaneous" xml:space="preserve"><value>VARIOS</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Configura el registro de diagnóstico.</value></data>
   <data name="LoggingLevel" xml:space="preserve"><value>Nivel mínimo de registro (se aplica después de reiniciar)</value></data>
+  <data name="ExportDiagnosticLog" xml:space="preserve"><value>Exportar registro de diagnóstico…</value></data>
+  <data name="DiagnosticLogExported" xml:space="preserve"><value>Registro de diagnóstico exportado.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Todavía no hay ningún registro de diagnóstico disponible.</value></data>
+  <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>No se pudo exportar el registro de diagnóstico.</value></data>
   <data name="Language" xml:space="preserve"><value>Idioma</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Inglés</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Alemán</value></data>

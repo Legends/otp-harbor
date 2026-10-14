@@ -170,7 +170,10 @@ public sealed class SharedStylesTests
             "BrushCustomBrandTileBackground",
             "BrushCustomBrandTileForeground",
             "BrushOverlayLight",
-            "BrushOverlayStrong"
+            "BrushOverlayStrong",
+            "BrushOverlayForeground",
+            "BrushOnboardingCaptionBackground",
+            "BrushOnboardingCaptionForeground"
         };
 
         Assert.Equal(4, themeDictionaries.Length);
@@ -182,6 +185,167 @@ public sealed class SharedStylesTests
                 .ToHashSet(StringComparer.Ordinal);
             Assert.All(requiredBrushes, key => Assert.Contains(key, brushKeys));
         });
+    }
+
+    [Fact]
+    public void OnboardingArtworkUsesLightAndDarkThemeSpecificAssets()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var themeDictionaries = document
+            .Descendants(avalonia + "ResourceDictionary.ThemeDictionaries")
+            .Single()
+            .Elements(avalonia + "ResourceDictionary")
+            .ToArray();
+        string[] artworkKeys =
+        [
+            "OnboardingAddAccountsArtwork",
+            "OnboardingMoveAccountsArtwork",
+            "OnboardingOrganizeAccountsArtwork",
+            "OnboardingIconPackArtwork",
+            "OnboardingQuickUnlockArtwork"
+        ];
+
+        foreach (var dictionary in themeDictionaries)
+        {
+            var variant = dictionary.Attribute(xaml + "Key")?.Value;
+            var artwork = dictionary
+                .Elements(avalonia + "Bitmap")
+                .Where(element => artworkKeys.Contains(
+                    element.Attribute(xaml + "Key")?.Value,
+                    StringComparer.Ordinal))
+                .ToArray();
+
+            Assert.Equal(artworkKeys.Length, artwork.Length);
+            Assert.All(artwork, element =>
+            {
+                var source = element.Value.Trim();
+                if (variant is "Default" or "Light")
+                    Assert.EndsWith("-light.png", source, StringComparison.Ordinal);
+                else
+                    Assert.DoesNotContain("-light.png", source, StringComparison.Ordinal);
+            });
+        }
+    }
+
+    [Fact]
+    public void MobileOnboardingArtworkUsesDedicatedPortraitAssetsForEverySlideAndTheme()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var themeDictionaries = document
+            .Descendants(avalonia + "ResourceDictionary.ThemeDictionaries")
+            .Single()
+            .Elements(avalonia + "ResourceDictionary")
+            .ToArray();
+        string[] artworkKeys =
+        [
+            "MobileOnboardingAddAccountsArtwork",
+            "MobileOnboardingMoveAccountsArtwork",
+            "MobileOnboardingOrganizeAccountsArtwork",
+            "MobileOnboardingIconPackArtwork",
+            "MobileOnboardingQuickUnlockArtwork"
+        ];
+
+        foreach (var dictionary in themeDictionaries)
+        {
+            var variant = dictionary.Attribute(xaml + "Key")?.Value;
+            var artwork = dictionary
+                .Elements(avalonia + "Bitmap")
+                .Where(element => artworkKeys.Contains(
+                    element.Attribute(xaml + "Key")?.Value,
+                    StringComparer.Ordinal))
+                .ToArray();
+
+            Assert.Equal(artworkKeys.Length, artwork.Length);
+            Assert.All(artwork, element =>
+            {
+                var source = element.Value.Trim();
+                Assert.Contains("/mobile-", source, StringComparison.Ordinal);
+                if (variant is "Default" or "Light")
+                    Assert.EndsWith("-light.png", source, StringComparison.Ordinal);
+                else
+                    Assert.EndsWith("-dark.png", source, StringComparison.Ordinal);
+            });
+        }
+    }
+
+    [Fact]
+    public void LightThemesUseTransparentPastelOnboardingPalettes()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var lightDictionaries = document
+            .Descendants(avalonia + "ResourceDictionary.ThemeDictionaries")
+            .Single()
+            .Elements(avalonia + "ResourceDictionary")
+            .Where(dictionary => dictionary.Attribute(xaml + "Key")?.Value is "Default" or "Light")
+            .ToArray();
+
+        Assert.Equal(2, lightDictionaries.Length);
+        Assert.All(lightDictionaries, dictionary =>
+        {
+            var panel = dictionary
+                .Elements(avalonia + "LinearGradientBrush")
+                .Single(element => GetResourceKey(element) == "BrushMobileOnboardingPanel");
+            Assert.Equal("50%,0%", panel.Attribute("StartPoint")?.Value);
+            Assert.Equal("50%,100%", panel.Attribute("EndPoint")?.Value);
+            Assert.All(panel.Elements(avalonia + "GradientStop"), stop =>
+                Assert.True(GetAlpha(stop) < byte.MaxValue));
+
+            var primaryButton = dictionary
+                .Elements(avalonia + "LinearGradientBrush")
+                .Single(element => GetResourceKey(element) == "BrushMobileOnboardingPrimary");
+            Assert.All(primaryButton.Elements(avalonia + "GradientStop"), stop =>
+                Assert.True(GetAlpha(stop) < byte.MaxValue));
+
+            var foreground = dictionary
+                .Elements(avalonia + "SolidColorBrush")
+                .Single(element => GetResourceKey(element) == "BrushMobileOnboardingForeground");
+            Assert.Equal("#1C2944", foreground.Attribute("Color")?.Value);
+
+            var desktopPanel = dictionary
+                .Elements(avalonia + "LinearGradientBrush")
+                .Single(element => GetResourceKey(element) == "BrushDesktopOnboardingPanel");
+            Assert.Equal("50%,0%", desktopPanel.Attribute("StartPoint")?.Value);
+            Assert.Equal("50%,100%", desktopPanel.Attribute("EndPoint")?.Value);
+            Assert.All(desktopPanel.Elements(avalonia + "GradientStop"), stop =>
+                Assert.True(GetAlpha(stop) < byte.MaxValue));
+
+            var desktopPrimaryButton = dictionary
+                .Elements(avalonia + "LinearGradientBrush")
+                .Single(element => GetResourceKey(element) == "BrushDesktopOnboardingPrimary");
+            Assert.All(desktopPrimaryButton.Elements(avalonia + "GradientStop"), stop =>
+                Assert.True(GetAlpha(stop) < byte.MaxValue));
+
+            var desktopForeground = dictionary
+                .Elements(avalonia + "SolidColorBrush")
+                .Single(element => GetResourceKey(element) == "BrushDesktopOnboardingForeground");
+            Assert.Equal("#1C2944", desktopForeground.Attribute("Color")?.Value);
+        });
+
+        static byte GetAlpha(XElement stop)
+        {
+            var color = stop.Attribute("Color")?.Value;
+            Assert.NotNull(color);
+            Assert.Matches("^#[0-9A-Fa-f]{8}$", color);
+            return Convert.ToByte(color[1..3], 16);
+        }
     }
 
     [Fact]
@@ -272,6 +436,7 @@ public sealed class SharedStylesTests
         Assert.Equal(
             ["Folder", "QrCode"],
             faqSections.Select(section => section
+                .Element(avalonia + "Expander.Header")!
                 .Descendants()
                 .Single(element => element.Name.LocalName == "SymbolIcon")
                 .Attribute("Kind")?.Value));

@@ -54,6 +54,13 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<AvaloniaStringCatalog>();
         services.AddSingleton<IAvaloniaLocalizationService, AvaloniaLocalizationService>();
         services.AddSingleton<IConfiguration>(configuration);
+#if DEBUG
+        services.AddSingleton(new OnboardingPreviewOptions(
+            bool.TryParse(configuration["Debug:ShowOnboardingOnStartup"], out var showOnboarding)
+                && showOnboarding));
+#else
+        services.AddSingleton(new OnboardingPreviewOptions(false));
+#endif
         services.AddSingleton<IPlatformApplicationPaths>(platformServices.ApplicationPaths);
         services.AddLogging(builder => builder.AddSerilog(Log.Logger, dispose: false));
 #if TOTP_PLATFORM_WINDOWS

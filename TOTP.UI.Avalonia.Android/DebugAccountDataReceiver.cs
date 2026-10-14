@@ -9,9 +9,13 @@ namespace TOTP.Avalonia.Android;
     Name = "io.github.legends.otpharbor.debug.DebugAccountDataReceiver",
     Enabled = true,
     Exported = true)]
-[IntentFilter([AddAction, DeleteAction, ImportAction, DeleteAllAction])]
+[IntentFilter([ShowOnboardingAction, SetThemeAction, AddAction, DeleteAction, ImportAction, DeleteAllAction])]
 public sealed class DebugAccountDataReceiver : BroadcastReceiver
 {
+    internal const string ShowOnboardingAction =
+        "io.github.legends.otpharbor.debug.action.SHOW_ONBOARDING";
+    internal const string SetThemeAction =
+        "io.github.legends.otpharbor.debug.action.SET_THEME";
     internal const string AddAction =
         "io.github.legends.otpharbor.debug.action.BULK_ADD_SYNTHETIC_ACCOUNTS";
     internal const string DeleteAction =
@@ -28,12 +32,17 @@ public sealed class DebugAccountDataReceiver : BroadcastReceiver
         var action = intent?.Action;
         var count = Math.Clamp(intent?.GetIntExtra("count", 600) ?? 600, 1, 5000);
         var importPath = intent?.GetStringExtra("path");
+        var theme = intent?.GetStringExtra("theme");
         Dispatcher.UIThread.Post(async () =>
         {
             try
             {
                 var succeeded = action switch
                 {
+                    ShowOnboardingAction when application is not null =>
+                        await application.ShowOnboardingPreviewAsync(),
+                    SetThemeAction when application is not null =>
+                        await application.SetDebugThemeAsync(theme),
                     AddAction when application is not null =>
                         await application.AddDebugSyntheticAccountsAsync(count),
                     DeleteAction when application is not null =>

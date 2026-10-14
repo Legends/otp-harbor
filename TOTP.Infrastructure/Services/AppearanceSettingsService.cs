@@ -17,7 +17,7 @@ public sealed class AppearanceSettingsService : IAppearanceSettingsService
     private readonly IPlatformFileSecurity _fileSecurity;
     private readonly ILogger<AppearanceSettingsService> _logger;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
-    private int _themePreference = (int)AppThemePreference.Dark;
+    private int _themePreference = (int)AppThemePreference.System;
 
     public AppearanceSettingsService(
         IPlatformApplicationPaths applicationPaths,
@@ -134,7 +134,7 @@ public sealed class AppearanceSettingsService : IAppearanceSettingsService
                                    or JsonException
                                    or InvalidOperationException)
         {
-            _logger.LogWarning(ex, "Appearance settings could not be loaded; the dark theme will be used.");
+            _logger.LogWarning(ex, "Appearance settings could not be loaded; the system theme will be used.");
         }
     }
 }

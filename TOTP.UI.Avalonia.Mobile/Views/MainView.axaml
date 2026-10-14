@@ -41,6 +41,47 @@
                 <Setter Property="Padding" Value="6" />
             </Style>
         </ContainerQuery>
+        <Style Selector="Button.mobile-onboarding-primary">
+            <Setter Property="MinWidth" Value="104" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Padding" Value="18,7" />
+            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingPrimary}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingForeground}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.mobile-onboarding-primary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingPrimaryHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingPrimaryHover}" />
+        </Style>
+        <Style Selector="Button.mobile-onboarding-primary:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingPrimaryPressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingPrimaryPressed}" />
+        </Style>
+        <Style Selector="Button.mobile-onboarding-secondary">
+            <Setter Property="MinWidth" Value="104" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Padding" Value="18,7" />
+            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingSecondary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingForeground}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.mobile-onboarding-secondary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingSecondaryHover}" />
+        </Style>
+        <Style Selector="Button.mobile-onboarding-secondary:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingSecondaryPressed}" />
+        </Style>
+        <Style Selector="Button.mobile-onboarding-skip">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
+        </Style>
         <Style Selector="controls|RevealableSecretInput.unlock-method-attention /template/ TextBox#PART_Input">
             <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
@@ -1045,6 +1086,13 @@
                                 <ComboBox
                                     ItemsSource="{Binding LogLevels}"
                                     SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
+                                <Button
+                                    Classes="wide secondary"
+                                    Command="{Binding ExportDiagnosticLogCommand}">
+                                    <controls:SymbolIconLabel
+                                        Kind="Export"
+                                        Text="{Binding ExportDiagnosticLogText}" />
+                                </Button>
                             </StackPanel>
                         </Border>
                         <Border
@@ -1090,8 +1138,9 @@
                                             Text="{Binding NewMasterPasswordConfirmation, Mode=TwoWay}" />
                                         <Button
                                             Classes="wide primary"
-                                            Command="{Binding ChangeMasterPasswordCommand}"
-                                            Content="{Binding ChangeMasterPasswordText}" />
+                                            Command="{Binding ChangeMasterPasswordCommand}">
+                                            <controls:SymbolIconLabel Kind="Key" Text="{Binding ChangeMasterPasswordText}" />
+                                        </Button>
                                     </StackPanel>
                                 </Border>
                                 <TextBlock
@@ -1112,8 +1161,9 @@
                                     Classes="wide"
                                     Classes.primary="{Binding IsAppLockDisabled}"
                                     Classes.secondary="{Binding IsAppLockEnabled}"
-                                    Command="{Binding ToggleAppLockCommand}"
-                                    Content="{Binding AppLockActionText}" />
+                                    Command="{Binding ToggleAppLockCommand}">
+                                    <controls:SymbolIconLabel Kind="Lock" Text="{Binding AppLockActionText}" />
+                                </Button>
                                 <Border
                                     Background="{DynamicResource BrushSurfaceAlternate}"
                                     CornerRadius="8"
@@ -1133,13 +1183,15 @@
                                             <Button
                                                 Grid.Column="0"
                                                 Classes="wide secondary"
-                                                Command="{Binding CancelDisableAppLockCommand}"
-                                                Content="{Binding CancelText}" />
+                                                Command="{Binding CancelDisableAppLockCommand}">
+                                                <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
+                                            </Button>
                                             <Button
                                                 Grid.Column="1"
                                                 Classes="wide danger"
-                                                Command="{Binding ConfirmDisableAppLockCommand}"
-                                                Content="{Binding DisableAppLockText}" />
+                                                Command="{Binding ConfirmDisableAppLockCommand}">
+                                                <controls:SymbolIconLabel Kind="Lock" Text="{Binding DisableAppLockText}" />
+                                            </Button>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -1205,13 +1257,15 @@
                                         <Button
                                             Grid.Column="0"
                                             Classes="wide secondary"
-                                            Command="{Binding CancelBiometricEnrollmentCommand}"
-                                            Content="{Binding CancelText}" />
+                                            Command="{Binding CancelBiometricEnrollmentCommand}">
+                                            <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
+                                        </Button>
                                         <Button
                                             Grid.Column="1"
                                             Classes="wide primary"
-                                            Command="{Binding EnableBiometricCommand}"
-                                            Content="{Binding ApplyUnlockMethodText}" />
+                                            Command="{Binding EnableBiometricCommand}">
+                                            <controls:SymbolIconLabel Kind="Check" Text="{Binding ApplyUnlockMethodText}" />
+                                        </Button>
                                     </Grid>
                                 </StackPanel>
                             </StackPanel>
@@ -1231,9 +1285,10 @@
                                     TextWrapping="Wrap" />
                                 <HyperlinkButton
                                     HorizontalAlignment="Left"
-                                    Content="{Binding IconPackBuilderLinkText}"
                                     NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
-                                    Padding="0,4" />
+                                    Padding="0,4">
+                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding IconPackBuilderLinkText}" />
+                                </HyperlinkButton>
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextPrimary}"
                                     FontWeight="SemiBold"
@@ -1242,13 +1297,15 @@
                                     TextWrapping="Wrap" />
                                 <Button
                                     Classes="wide secondary"
-                                    Command="{Binding ImportBrandIconsCommand}"
-                                    Content="{Binding ImportSimpleIconsPackText}" />
+                                    Command="{Binding ImportBrandIconsCommand}">
+                                    <controls:SymbolIconLabel Kind="Import" Text="{Binding ImportSimpleIconsPackText}" />
+                                </Button>
                                 <Button
                                     Classes="wide secondary"
                                     Command="{Binding ResetBrandIconsCommand}"
-                                    Content="{Binding ResetBrandIconsText}"
-                                    IsVisible="{Binding HasImportedBrandIcons}" />
+                                    IsVisible="{Binding HasImportedBrandIcons}">
+                                    <controls:SymbolIconLabel Kind="Delete" Text="{Binding ResetBrandIconsText}" />
+                                </Button>
                                 <CheckBox
                                     Content="{Binding ShowIssuerLogoText}"
                                     IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
@@ -1293,8 +1350,9 @@
                                             Text="{Binding BackupPasswordConfirmation, Mode=TwoWay}" />
                                         <Button
                                             Classes="wide secondary"
-                                            Command="{Binding ExportBackupCommand}"
-                                            Content="{Binding ExportBackupText}" />
+                                            Command="{Binding ExportBackupCommand}">
+                                            <controls:SymbolIconLabel Kind="Export" Text="{Binding ExportBackupText}" />
+                                        </Button>
                                     </StackPanel>
                                 </Border>
                                 <Border
@@ -1317,8 +1375,9 @@
                                             Text="{Binding ImportPassword, Mode=TwoWay}" />
                                         <Button
                                             Classes="wide secondary"
-                                            Command="{Binding ImportBackupCommand}"
-                                            Content="{Binding ImportBackupText}" />
+                                            Command="{Binding ImportBackupCommand}">
+                                            <controls:SymbolIconLabel Kind="BackupRestore" Text="{Binding ImportBackupText}" />
+                                        </Button>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -1346,8 +1405,9 @@
                                         <Button
                                             x:Name="GoogleAuthenticatorImportButton"
                                             Classes="wide secondary"
-                                            Command="{Binding ImportGoogleQrCommand}"
-                                            Content="{Binding ImportSectionText}" />
+                                            Command="{Binding ImportGoogleQrCommand}">
+                                            <controls:SymbolIconLabel Kind="QrCode" Text="{Binding ImportSectionText}" />
+                                        </Button>
                                         <Border
                                             Background="{DynamicResource BrushSurfaceAlternate}"
                                             CornerRadius="8"
@@ -1356,9 +1416,15 @@
                                             <StackPanel Spacing="10">
                                                 <TextBlock FontWeight="SemiBold" Text="{Binding QrConflictTitle}" />
                                                 <TextBlock Text="{Binding QrConflictPrompt}" TextWrapping="Wrap" />
-                                                <Button Classes="wide primary" Command="{Binding UpdateQrConflictCommand}" Content="{Binding UpdateExistingText}" />
-                                                <Button Classes="wide secondary" Command="{Binding KeepBothQrConflictCommand}" Content="{Binding KeepBothText}" />
-                                                <Button Classes="wide secondary" Command="{Binding CancelQrConflictCommand}" Content="{Binding CancelText}" />
+                                                <Button Classes="wide primary" Command="{Binding UpdateQrConflictCommand}">
+                                                    <controls:SymbolIconLabel Kind="Refresh" Text="{Binding UpdateExistingText}" />
+                                                </Button>
+                                                <Button Classes="wide secondary" Command="{Binding KeepBothQrConflictCommand}">
+                                                    <controls:SymbolIconLabel Kind="Copy" Text="{Binding KeepBothText}" />
+                                                </Button>
+                                                <Button Classes="wide secondary" Command="{Binding CancelQrConflictCommand}">
+                                                    <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
+                                                </Button>
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>
@@ -1387,13 +1453,15 @@
                                             Classes="link"
                                             Click="ScrollMainViewToTop"
                                             Command="{Binding ShowImportFormatsFaqCommand}"
-                                            Content="{Binding ViewImportFormatsFaqText}"
-                                            HorizontalAlignment="Left" />
+                                            HorizontalAlignment="Left">
+                                            <controls:SymbolIconLabel Kind="Help" Text="{Binding ViewImportFormatsFaqText}" />
+                                        </Button>
                                         <Button
                                             x:Name="OtherFormatsImportButton"
                                             Classes="wide secondary"
-                                            Command="{Binding ImportAccountFileCommand}"
-                                            Content="{Binding ImportSectionText}" />
+                                            Command="{Binding ImportAccountFileCommand}">
+                                            <controls:SymbolIconLabel Kind="Import" Text="{Binding ImportSectionText}" />
+                                        </Button>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -1442,24 +1510,28 @@
                                                 <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{Binding IconPackBuilderLinkText}"
                                                     NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
-                                                    Padding="0,4" />
+                                                    Padding="0,4">
+                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding IconPackBuilderLinkText}" />
+                                                </HyperlinkButton>
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{Binding FaqSimpleIconsOfficialLinkText}"
                                                     NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
-                                                    Padding="0,4" />
+                                                    Padding="0,4">
+                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqSimpleIconsOfficialLinkText}" />
+                                                </HyperlinkButton>
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{Binding FaqAegisIconPackDocsLinkText}"
                                                     NavigateUri="https://github.com/aegis-icons/aegis-icons#disclaimer"
-                                                    Padding="0,4" />
+                                                    Padding="0,4">
+                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqAegisIconPackDocsLinkText}" />
+                                                </HyperlinkButton>
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
-                                                    Content="{Binding FaqDashboardIconsLegalLinkText}"
                                                     NavigateUri="https://github.com/homarr-labs/dashboard-icons#legal"
-                                                    Padding="0,4" />
+                                                    Padding="0,4">
+                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqDashboardIconsLegalLinkText}" />
+                                                </HyperlinkButton>
                                                 <TextBlock
                                                     Foreground="{DynamicResource BrushTextSecondary}"
                                                     Text="{Binding FaqImportIconPacksDisclaimerText}"
@@ -1913,6 +1985,145 @@
                 ZIndex="1"
                 Severity="{Binding NotificationSeverity}"
                 Text="{Binding NotificationText}" />
+        </Grid>
+
+        <Grid
+            x:Name="MobileOnboardingOverlay"
+            Grid.RowSpan="3"
+            Panel.ZIndex="80"
+            IsVisible="{Binding IsOnboardingVisible}"
+            RowDefinitions="*,Auto">
+            <Grid Grid.RowSpan="2">
+                <Image
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingAddAccountsVisible}"
+                    Source="{DynamicResource MobileOnboardingAddAccountsArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingMoveAccountsVisible}"
+                    Source="{DynamicResource MobileOnboardingMoveAccountsArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingOrganizeAccountsVisible}"
+                    Source="{DynamicResource MobileOnboardingOrganizeAccountsArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingIconPackVisible}"
+                    Source="{DynamicResource MobileOnboardingIconPackArtwork}"
+                    Stretch="UniformToFill" />
+                <Image
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsVisible="{Binding IsOnboardingQuickUnlockVisible}"
+                    Source="{DynamicResource MobileOnboardingQuickUnlockArtwork}"
+                    Stretch="UniformToFill" />
+            </Grid>
+
+            <ScrollViewer
+                Grid.Row="1"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <Border
+                    Background="{DynamicResource BrushMobileOnboardingPanel}"
+                    Padding="20,16,20,18">
+                    <StackPanel Spacing="12">
+                        <StackPanel IsVisible="{Binding IsOnboardingAddAccountsVisible}" Spacing="6">
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                FontSize="26"
+                                FontWeight="SemiBold"
+                                Text="{Binding OnboardingAddAccountsTitleText}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                Text="{Binding OnboardingAddAccountsDescriptionText}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingMoveAccountsVisible}" Spacing="6">
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                FontSize="26"
+                                FontWeight="SemiBold"
+                                Text="{Binding OnboardingMoveAccountsTitleText}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                Text="{Binding OnboardingMoveAccountsDescriptionText}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingOrganizeAccountsVisible}" Spacing="6">
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                FontSize="26"
+                                FontWeight="SemiBold"
+                                Text="{Binding OnboardingOrganizeAccountsTitleText}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                Text="{Binding OnboardingOrganizeAccountsDescriptionText}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingIconPackVisible}" Spacing="6">
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                FontSize="26"
+                                FontWeight="SemiBold"
+                                Text="{Binding OnboardingIconPackTitleText}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                Text="{Binding OnboardingIconPackDescriptionText}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsOnboardingQuickUnlockVisible}" Spacing="6">
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                FontSize="26"
+                                FontWeight="SemiBold"
+                                Text="{Binding OnboardingQuickUnlockTitleText}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                Foreground="{DynamicResource BrushMobileOnboardingForeground}"
+                                Text="{Binding OnboardingQuickUnlockDescriptionText}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <Button
+                                x:Name="SkipOnboardingButton"
+                                Grid.Column="0"
+                                Classes="mobile-onboarding-skip"
+                                Command="{Binding FinishOnboardingCommand}"
+                                Content="{Binding OnboardingSkipText}"
+                                IsVisible="{Binding IsFirstOnboardingSlide}" />
+                            <Button
+                                Grid.Column="0"
+                                Classes="mobile-onboarding-secondary"
+                                Command="{Binding PreviousOnboardingCommand}"
+                                Content="{Binding OnboardingBackText}"
+                                IsVisible="{Binding !IsFirstOnboardingSlide}" />
+                            <Button
+                                Grid.Column="2"
+                                Classes="mobile-onboarding-primary"
+                                Command="{Binding NextOnboardingCommand}"
+                                Content="{Binding OnboardingNextText}"
+                                IsVisible="{Binding !IsLastOnboardingSlide}" />
+                            <Button
+                                Grid.Column="2"
+                                Classes="mobile-onboarding-primary"
+                                Command="{Binding FinishOnboardingCommand}"
+                                Content="{Binding OnboardingFinishText}"
+                                IsVisible="{Binding IsLastOnboardingSlide}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
         </Grid>
 
         <Grid

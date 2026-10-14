@@ -14,11 +14,11 @@ public sealed class AppearanceSettingsServiceTests : IDisposable
         $"otp-appearance-tests-{Guid.NewGuid():N}");
 
     [Fact]
-    public void Constructor_WithoutStoredPreference_UsesDarkTheme()
+    public void Constructor_WithoutStoredPreference_FollowsSystemTheme()
     {
         var sut = CreateSut();
 
-        Assert.Equal(AppThemePreference.Dark, sut.ThemePreference);
+        Assert.Equal(AppThemePreference.System, sut.ThemePreference);
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public sealed class AppearanceSettingsServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Constructor_WithMalformedPreference_UsesDarkTheme()
+    public async Task Constructor_WithMalformedPreference_FollowsSystemTheme()
     {
         Directory.CreateDirectory(_root);
         await File.WriteAllTextAsync(
@@ -53,7 +53,7 @@ public sealed class AppearanceSettingsServiceTests : IDisposable
 
         var sut = CreateSut();
 
-        Assert.Equal(AppThemePreference.Dark, sut.ThemePreference);
+        Assert.Equal(AppThemePreference.System, sut.ThemePreference);
     }
 
     public void Dispose()

@@ -21,6 +21,7 @@
   <ItemGroup>
     <AvaloniaResource Include="Assets\Biometric\*.png" />
     <AvaloniaResource Include="Assets\flags\*.png" />
+    <AvaloniaResource Include="Assets\Onboarding\*.png" />
   </ItemGroup>
 
 </Project>
