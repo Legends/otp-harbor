@@ -15,7 +15,7 @@
   <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Organiser avec des groupes et des favoris</value></data>
   <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Retrouvez facilement vos comptes en regroupant les entrées associées et en marquant comme favoris ceux que vous utilisez le plus.</value></data>
   <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Personnaliser avec des icônes de compte</value></data>
-  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Ajoutez des icônes de compte en créant et important un pack local avec OTP Harbor Icon Pack Builder. Les ressources tierces restent soumises à leurs propres licences, droits de marque et conditions d’utilisation ; vous êtes responsable de leur utilisation conforme.</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Ajoutez des icônes de compte en important un pack local créé avec OTP Harbor Icon Pack Builder (disponible sur GitHub). Les ressources tierces restent soumises à leurs propres licences, droits de marque et conditions d’utilisation ; vous êtes responsable de leur utilisation conforme.</value></data>
   <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Configurer le déverrouillage rapide</value></data>
   <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Utilisez le déverrouillage biométrique de la plateforme lorsqu’il est disponible. Votre mot de passe principal reste la méthode de récupération.</value></data>
   <data name="OnboardingSkip" xml:space="preserve"><value>Ignorer l’introduction</value></data>
@@ -277,7 +277,7 @@
   <data name="CustomIconImported" xml:space="preserve"><value>L’icône personnalisée a été appliquée à ce compte.</value></data>
   <data name="CustomIconImportFailed" xml:space="preserve"><value>Le SVG est invalide ou n’a pas pu être stocké en toute sécurité.</value></data>
   <data name="CustomIconImportEmpty" xml:space="preserve"><value>Le fichier SVG est vide.</value></data>
-  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>Le SVG ne doit pas dépasser 64 Ko.</value></data>
+  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>Le SVG ne doit pas dépasser 1 Mo.</value></data>
   <data name="CustomIconImportMalformed" xml:space="preserve"><value>Le SVG n’est pas un document XML bien formé.</value></data>
   <data name="CustomIconImportMissingPath" xml:space="preserve"><value>Le SVG doit contenir une racine &lt;svg&gt; et au moins un élément &lt;path&gt; avec des données de tracé.</value></data>
   <data name="CustomIconImportUnsafe" xml:space="preserve"><value>Le SVG contient un script ou une référence à une ressource externe, ce qui n’est pas autorisé.</value></data>
@@ -294,8 +294,12 @@
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqSettingsDescription" xml:space="preserve"><value>Réponses aux questions fréquentes sur OTP Harbor.</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>Comment importer des packs d’icônes ?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Ouvrez le projet séparé OTP Harbor Icon Pack Builder et suivez ses instructions pour créer otp-harbor-icons.otphicons. Choisissez ensuite Paramètres → Packs d’icônes → Importer un pack d’icônes OTP Harbor. OTP Harbor ne télécharge aucune collection d’icônes source et n’importe pas directement les archives des fournisseurs. Le pack généré consigne les icônes sélectionnées, les licences, les attributions et la provenance des sources ; examinez ces informations avant de l’utiliser ou de le partager. La correspondance automatique utilise uniquement l’émetteur du compte.</value></data>
-  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Générateur et informations juridiques des sources :</value></data>
+  <data name="FaqImportIconPacksStepDownload" xml:space="preserve"><value>Téléchargez OTP Harbor Icon Pack Builder (ordinateur uniquement) depuis GitHub.</value></data>
+  <data name="FaqImportIconPacksDownloadLink" xml:space="preserve"><value>Versions GitHub</value></data>
+  <data name="FaqImportIconPacksStepBuild" xml:space="preserve"><value>Exécutez le générateur. Il télécharge ses sources d’icônes testées et crée otp-harbor-icons.otphicons.</value></data>
+  <data name="FaqImportIconPacksStepImport" xml:space="preserve"><value>Dans OTP Harbor Authenticator, choisissez Paramètres → Packs d’icônes → Importer un pack d’icônes OTP Harbor, puis sélectionnez le fichier généré.</value></data>
+  <data name="FaqImportIconPacksCustomSvgTip" xml:space="preserve"><value>Pour utiliser plutôt une icône SVG individuelle, modifiez le compte, ouvrez Options avancées, puis sélectionnez l’action Sélectionner un SVG personnalisé… sous Icône du compte (pack d’icônes).</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Informations juridiques sur les icônes tierces :</value></data>
   <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — avertissement juridique</value></data>
   <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons — licence et avis sur les marques</value></data>
   <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons — licence et mentions légales</value></data>
@@ -308,6 +312,7 @@
   <data name="ViewImportFormatsFaq" xml:space="preserve"><value>Comment ces fichiers d’importation doivent-ils être structurés ?</value></data>
   <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>Comment importer des comptes depuis différents formats ?</value></data>
   <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Utilisez un export original non chiffré de l’application source. Les exports Aegis et 2FAS chiffrés sont refusés. Les structures minimales suivantes présentent les champs requis :</value></data>
+  <data name="FaqImportFormatsSupported" xml:space="preserve"><value>Imports pris en charge : codes QR TOTP otpauth:// standard, codes QR de transfert Google Authenticator, sauvegardes OTP Harbor chiffrées (.totp), exports JSON Aegis non chiffrés (.json), sauvegardes 2FAS non chiffrées (.2fas), fichiers texte UTF-8 contenant une URI TOTP otpauth:// standard par ligne (.txt), ainsi que les anciens exports OTP Harbor non chiffrés aux formats JSON (.json), texte délimité par des barres verticales (.txt) ou CSV (.csv).</value></data>
   <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>Aegis JSON (.json)</value></data>
   <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Exportez le coffre depuis Aegis sans chiffrement et sélectionnez le fichier JSON obtenu. OTP Harbor lit les entrées TOTP dans db.entries. Les coffres chiffrés, les entrées HOTP et les paramètres TOTP non pris en charge sont refusés.</value></data>
   <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>
@@ -315,6 +320,10 @@
   <data name="FaqImportFormatsTwoFasDescription" xml:space="preserve"><value>Créez une sauvegarde 2FAS non chiffrée et sélectionnez le fichier .2fas. OTP Harbor lit les comptes TOTP dans services. Les sauvegardes protégées par mot de passe ou chiffrées et les paramètres OTP non pris en charge sont refusés.</value></data>
   <data name="FaqImportFormatsTwoFasExample" xml:space="preserve"><value>{&#xA;  "schemaVersion": 4,&#xA;  "services": [{&#xA;    "name": "Example",&#xA;    "secret": "JBSWY3DPEHPK3PXP",&#xA;    "otp": {&#xA;      "tokenType": "TOTP",&#xA;      "issuer": "Example",&#xA;      "account": "alice@example.com",&#xA;      "algorithm": "SHA1",&#xA;      "digits": 6,&#xA;      "period": 30&#xA;    }&#xA;  }],&#xA;  "servicesEncrypted": null,&#xA;  "reference": null&#xA;}</value></data>
   <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>Fichier texte otpauth (.txt)</value></data>
-  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Créez un fichier texte UTF-8 contenant une URI otpauth://totp standard par ligne. Les lignes vides et celles commençant par # sont ignorées. Chaque URI doit contenir un émetteur et un secret Base32 valide, et utiliser des paramètres TOTP SHA-1 à six chiffres pris en charge.</value></data>
+  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Créez un fichier texte UTF-8 contenant une URI otpauth://totp standard par ligne. Les lignes vides et celles commençant par # sont ignorées. Chaque URI doit contenir un libellé non vide et un secret Base32 valide, et utiliser des paramètres TOTP SHA-1 à six chiffres pris en charge. Un émetteur est recommandé ; s’il est absent, OTP Harbor utilise le libellé comme émetteur.</value></data>
   <data name="FaqImportFormatsOtpAuthExample" xml:space="preserve"><value>otpauth://totp/Example:alice%40example.com?secret=JBSWY3DPEHPK3PXP&amp;issuer=Example&amp;period=30</value></data>
+  <data name="ShowNextToken" xml:space="preserve"><value>Afficher le prochain jeton</value></data>
+  <data name="ShowNextTokenHelp" xml:space="preserve"><value>Affiche le prochain jeton sous le jeton actuel pendant ses cinq dernières secondes.</value></data>
+  <data name="AllowScreenshots" xml:space="preserve"><value>Autoriser les captures d’écran</value></data>
+  <data name="AllowScreenshotsHelp" xml:space="preserve"><value>Autorise les captures et l’enregistrement d’écran Android. Ils peuvent révéler les comptes et les jetons actifs.</value></data>
 </root>

@@ -26,7 +26,9 @@ public static class AppPreferencesMapper
             ExportEncrypt = settings.ExportEncrypt,
             OpenExportFileAfterExport = settings.OpenExportFileAfterExport,
             HideSecretsByDefault = settings.HideSecretsByDefault,
-            FavoriteGroupColor = settings.FavoriteGroupColor
+            FavoriteGroupColor = settings.FavoriteGroupColor,
+            ShowNextToken = settings.ShowNextToken,
+            AllowScreenshots = settings.AllowScreenshots
         });
     }
 
@@ -55,6 +57,8 @@ public static class AppPreferencesMapper
         settings.OpenExportFileAfterExport = normalized.OpenExportFileAfterExport;
         settings.HideSecretsByDefault = normalized.HideSecretsByDefault;
         settings.FavoriteGroupColor = normalized.FavoriteGroupColor;
+        settings.ShowNextToken = normalized.ShowNextToken;
+        settings.AllowScreenshots = normalized.AllowScreenshots;
     }
 
     private static AppPreferencesV1 Normalize(AppPreferencesV1 preferences) => preferences with

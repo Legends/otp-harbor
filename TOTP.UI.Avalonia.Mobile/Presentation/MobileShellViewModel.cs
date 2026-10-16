@@ -30,6 +30,8 @@ public sealed class MobileShellViewModel :
     private static readonly TimeSpan CopyConfirmationDuration = TimeSpan.FromMilliseconds(1500);
     private static readonly TimeSpan ImportProgressDelay = TimeSpan.FromMilliseconds(1500);
     private const int FullListCodeRefreshLimit = 50;
+    private const int MaximumPendingCustomIconBytes = 1024 * 1024;
+    private const string PendingCustomIconId = "custom_pending";
 
     private readonly IAuthorizationService _authorization;
     private readonly IPasswordValidationService _passwordValidation;
@@ -199,6 +201,10 @@ public sealed class MobileShellViewModel :
     private bool _isAdvancedOptionsExpanded;
     private IReadOnlyList<MobileBrandIconOption> _editorBrandIconOptions = [];
     private MobileBrandIconOption? _selectedEditorBrandIconOption;
+    private MobileBrandIconOption? _brandIconSelectionBeforeCustomPicker;
+    private bool _isCustomIconPickerSelectionPending;
+    private byte[]? _pendingCustomIconBytes;
+    private string? _pendingCustomIconFileName;
     private AccountEditorSnapshot? _accountEditorBaseline;
     private string _editorIssuerMessage = string.Empty;
     private string _editorSecretMessage = string.Empty;
@@ -413,7 +419,6 @@ public sealed class MobileShellViewModel :
         _importCustomIconCommand = new MobileAsyncCommand(
             ImportCustomIconAsync,
             () => IsEditorVisible
-                && IsEditingExistingAccount
                 && !IsBusy
                 && _brandIconPackService is not null);
         _confirmDeleteCommand = new MobileAsyncCommand(
@@ -676,7 +681,8 @@ public sealed class MobileShellViewModel :
         && !IsDeleteConfirmationVisible;
     public bool IsNativeAccountGroupsVisible =>
         IsNativeAccountListVisible && HasAccountNavigationCards;
-    public bool IsScreenCaptureProtectionRequired => IsAccountListVisible || IsGroupEditorVisible;
+    public bool IsScreenCaptureProtectionRequired => !AllowScreenshots
+        && (IsAccountListVisible || IsGroupEditorVisible);
     public bool IsSettingsVisible => IsAccountsVisible && _isSettingsVisible;
     public bool IsSettingsCategoryListVisible =>
         IsSettingsVisible && _settingsCategory == MobileSettingsCategory.None;
@@ -872,6 +878,24 @@ public sealed class MobileShellViewModel :
         _appearanceSettingsService?.ThemePreference == AppThemePreference.Dark;
     public bool IsLightThemeSelected =>
         _appearanceSettingsService?.ThemePreference == AppThemePreference.Light;
+    public bool ShowNextToken
+    {
+        get => _settings.Current.ShowNextToken;
+        set
+        {
+            if (value == ShowNextToken) return;
+            _ = SetShowNextTokenAsync(value);
+        }
+    }
+    public bool AllowScreenshots
+    {
+        get => _settings.Current.AllowScreenshots;
+        set
+        {
+            if (value == AllowScreenshots) return;
+            _ = SetAllowScreenshotsAsync(value);
+        }
+    }
 
     public bool IsBusy
     {
@@ -1501,11 +1525,19 @@ public sealed class MobileShellViewModel :
         get => _selectedEditorBrandIconOption;
         set
         {
+            if (value?.IsCustomPickerAction == true)
+            {
+                _brandIconSelectionBeforeCustomPicker = _selectedEditorBrandIconOption;
+                _isCustomIconPickerSelectionPending = true;
+                if (_importCustomIconCommand.CanExecute(null))
+                    _importCustomIconCommand.Execute(null);
+                else
+                    RestoreBrandIconSelectionAfterCustomPicker();
+                return;
+            }
+            CompleteCustomIconPickerSelection();
             if (!SetField(ref _selectedEditorBrandIconOption, value)) return;
-            OnPropertyChanged(nameof(SelectedEditorBrandIconFileName));
-            OnPropertyChanged(nameof(HasSelectedEditorBrandIconFileName));
-            OnPropertyChanged(nameof(SelectedEditorCustomIconFileName));
-            OnPropertyChanged(nameof(HasSelectedEditorCustomIconFileName));
+            NotifySelectedBrandIconProperties();
         }
     }
 
@@ -1522,7 +1554,8 @@ public sealed class MobileShellViewModel :
     public bool HasSelectedEditorBrandIconFileName =>
         !string.IsNullOrWhiteSpace(SelectedEditorBrandIconFileName);
     public bool HasSelectedEditorCustomIconFileName =>
-        SelectedEditorBrandIconOption?.Id?.StartsWith("custom_", StringComparison.Ordinal) == true
+        (SelectedEditorBrandIconOption?.IsPendingCustomIcon == true
+            || SelectedEditorBrandIconOption?.Id?.StartsWith("custom_", StringComparison.Ordinal) == true)
         && HasSelectedEditorBrandIconFileName;
     public string SelectedEditorCustomIconFileName =>
         HasSelectedEditorCustomIconFileName
@@ -1679,8 +1712,16 @@ public sealed class MobileShellViewModel :
     public string FaqSettingsDescriptionText => Get(MobileStringKeys.FaqSettingsDescription);
     public string FaqImportIconPacksQuestionText =>
         Get(MobileStringKeys.FaqImportIconPacksQuestion);
-    public string FaqImportIconPacksAnswerText =>
-        Get(MobileStringKeys.FaqImportIconPacksAnswer);
+    public string FaqImportIconPacksStepDownloadText =>
+        Get(MobileStringKeys.FaqImportIconPacksStepDownload);
+    public string FaqImportIconPacksDownloadLinkText =>
+        Get(MobileStringKeys.FaqImportIconPacksDownloadLink);
+    public string FaqImportIconPacksStepBuildText =>
+        Get(MobileStringKeys.FaqImportIconPacksStepBuild);
+    public string FaqImportIconPacksStepImportText =>
+        Get(MobileStringKeys.FaqImportIconPacksStepImport);
+    public string FaqImportIconPacksCustomSvgTipText =>
+        Get(MobileStringKeys.FaqImportIconPacksCustomSvgTip);
     public string FaqImportIconPacksSourcesText => Get(MobileStringKeys.FaqImportIconPacksSources);
     public string FaqSimpleIconsOfficialLinkText => Get(MobileStringKeys.FaqSimpleIconsOfficialLink);
     public string FaqAegisIconPackDocsLinkText => Get(MobileStringKeys.FaqAegisIconPackDocsLink);
@@ -1688,6 +1729,7 @@ public sealed class MobileShellViewModel :
     public string FaqImportIconPacksDisclaimerText => Get(MobileStringKeys.FaqImportIconPacksDisclaimer);
     public string FaqImportFormatsQuestionText => Get(MobileStringKeys.FaqImportFormatsQuestion);
     public string FaqImportFormatsIntroText => Get(MobileStringKeys.FaqImportFormatsIntro);
+    public string FaqImportFormatsSupportedText => Get(MobileStringKeys.FaqImportFormatsSupported);
     public string FaqImportFormatsAegisTitleText => Get(MobileStringKeys.FaqImportFormatsAegisTitle);
     public string FaqImportFormatsAegisDescriptionText => Get(MobileStringKeys.FaqImportFormatsAegisDescription);
     public string FaqImportFormatsAegisExampleText => Get(MobileStringKeys.FaqImportFormatsAegisExample);
@@ -1707,6 +1749,10 @@ public sealed class MobileShellViewModel :
     public string ThemeFollowSystemText => Get(MobileStringKeys.ThemeFollowSystem);
     public string ThemeDarkText => Get(MobileStringKeys.ThemeDark);
     public string ThemeLightText => Get(MobileStringKeys.ThemeLight);
+    public string ShowNextTokenText => Get(MobileStringKeys.ShowNextToken);
+    public string ShowNextTokenHelpText => Get(MobileStringKeys.ShowNextTokenHelp);
+    public string AllowScreenshotsText => Get(MobileStringKeys.AllowScreenshots);
+    public string AllowScreenshotsHelpText => Get(MobileStringKeys.AllowScreenshotsHelp);
     public string SecurityText => Get(MobileStringKeys.Security);
     public string AppLockTitleText => Get(MobileStringKeys.AppLockTitle);
     public string AppLockEnabledDescriptionText =>
@@ -2637,6 +2683,52 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    private async Task SetShowNextTokenAsync(bool value)
+    {
+        var previous = _settings.Current.ShowNextToken;
+        _settings.Current.ShowNextToken = value;
+        OnPropertyChanged(nameof(ShowNextToken));
+        foreach (var account in _allAccounts)
+            account.UpdateNextTokenPreference(value);
+
+        try
+        {
+            var saved = await _settings.SaveAsync();
+            if (saved.IsSuccess) return;
+        }
+        catch (Exception)
+        {
+        }
+
+        _settings.Current.ShowNextToken = previous;
+        OnPropertyChanged(nameof(ShowNextToken));
+        foreach (var account in _allAccounts)
+            account.UpdateNextTokenPreference(previous);
+        SetError(MobileStringKeys.SettingsSaveFailed);
+    }
+
+    private async Task SetAllowScreenshotsAsync(bool value)
+    {
+        var previous = _settings.Current.AllowScreenshots;
+        _settings.Current.AllowScreenshots = value;
+        OnPropertyChanged(nameof(AllowScreenshots));
+        OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
+
+        try
+        {
+            var saved = await _settings.SaveAsync();
+            if (saved.IsSuccess) return;
+        }
+        catch (Exception)
+        {
+        }
+
+        _settings.Current.AllowScreenshots = previous;
+        OnPropertyChanged(nameof(AllowScreenshots));
+        OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
+        SetError(MobileStringKeys.SettingsSaveFailed);
+    }
+
     public Task ScanQrAsync() => ScanQrCoreAsync(fromSettings: false);
 
     public Task ImportGoogleQrAsync() => ScanQrCoreAsync(fromSettings: true);
@@ -3508,23 +3600,46 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
-    public Task BeginEditAsync()
+    public async Task BeginEditAsync()
     {
-        if (!CanEditAccounts() || SelectedAccount is null) return Task.CompletedTask;
-        ClearQrImage();
-        _editingAccountId = SelectedAccount.Id;
-        OnPropertyChanged(nameof(IsEditingExistingAccount));
-        EditorIssuer = SelectedAccount.Issuer;
-        EditorAccountName = SelectedAccount.AccountName;
-        EditorSecret = string.Empty;
-        EditorPeriodSeconds = SelectedAccount.ConfiguredPeriodSeconds;
-        EditorIsFavorite = SelectedAccount.IsFavorite;
-        RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(SelectedAccount.Id));
-        IsDeleteConfirmationVisible = false;
-        IsEditorVisible = true;
-        CaptureAccountEditorBaseline();
-        ClearNotification();
-        return Task.CompletedTask;
+        if (!CanEditAccounts() || SelectedAccount is null) return;
+        var selectedAccountId = SelectedAccount.Id;
+        IsBusy = true;
+        try
+        {
+            var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+            var account = loaded.IsSuccess
+                ? loaded.Value.FirstOrDefault(value => value.ID == selectedAccountId)
+                : null;
+            if (account is null)
+            {
+                SetError(MobileStringKeys.LoadingAccountsFailed);
+                return;
+            }
+
+            ClearQrImage();
+            _editingAccountId = account.ID;
+            OnPropertyChanged(nameof(IsEditingExistingAccount));
+            EditorIssuer = account.Issuer;
+            EditorAccountName = account.AccountName ?? string.Empty;
+            EditorSecret = string.Empty;
+            EditorPeriodSeconds = account.PeriodSeconds;
+            EditorIsFavorite = account.IsFavorite;
+            RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
+            IsDeleteConfirmationVisible = false;
+            IsEditorVisible = true;
+            CaptureAccountEditorBaseline();
+            ClearNotification();
+        }
+        catch (Exception)
+        {
+            ClearEditor();
+            SetError(MobileStringKeys.LoadingAccountsFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     public Task BeginEditForAccountAsync(MobileAccountItem? account)
@@ -3625,9 +3740,23 @@ public sealed class MobileShellViewModel :
             {
                 try
                 {
-                    iconPreferenceSaved = (await _brandIconPackService.SetAccountBrandIdAsync(
-                        updated.ID,
-                        SelectedEditorBrandIconOption?.Id)).IsSuccess;
+                    if (SelectedEditorBrandIconOption?.IsPendingCustomIcon == true
+                        && _pendingCustomIconBytes is { Length: > 0 })
+                    {
+                        await using var pendingIcon = new MemoryStream(
+                            _pendingCustomIconBytes,
+                            writable: false);
+                        iconPreferenceSaved = (await _brandIconPackService.ImportCustomIconAsync(
+                            updated.ID,
+                            pendingIcon,
+                            _pendingCustomIconFileName)).IsSuccess;
+                    }
+                    else
+                    {
+                        iconPreferenceSaved = (await _brandIconPackService.SetAccountBrandIdAsync(
+                            updated.ID,
+                            SelectedEditorBrandIconOption?.Id)).IsSuccess;
+                    }
                 }
                 catch (Exception)
                 {
@@ -3992,6 +4121,7 @@ public sealed class MobileShellViewModel :
             }
 
             item.UpdateLogoVisibility(ShowIssuerLogo);
+            item.UpdateNextTokenPreference(ShowNextToken);
             refreshedAccounts.Add(item);
         }
         _allAccounts.Clear();
@@ -4032,6 +4162,7 @@ public sealed class MobileShellViewModel :
                 RemoveFromFavoritesText,
                 group);
             item.UpdateLogoVisibility(ShowIssuerLogo);
+            item.UpdateNextTokenPreference(ShowNextToken);
             _allAccounts.Add(item);
         }
         else
@@ -4125,7 +4256,6 @@ public sealed class MobileShellViewModel :
     {
         if (!IsEditorVisible
             || IsBusy
-            || !_editingAccountId.HasValue
             || _brandIconPackService is null)
         {
             return;
@@ -4137,6 +4267,28 @@ public sealed class MobileShellViewModel :
         {
             using var document = await _documents.OpenCustomSvgIconAsync(operation.Token);
             if (document is null) return;
+            if (!_editingAccountId.HasValue)
+            {
+                var pending = await ReadPendingCustomIconAsync(
+                    document.Stream,
+                    operation.Token);
+                if (pending.TooLarge)
+                {
+                    SetError(MobileStringKeys.CustomIconImportTooLarge);
+                    return;
+                }
+                if (pending.Data is not { Length: > 0 })
+                {
+                    SetError(MobileStringKeys.CustomIconImportEmpty);
+                    return;
+                }
+
+                _pendingCustomIconBytes = pending.Data;
+                _pendingCustomIconFileName = document.Name;
+                RefreshBrandIconOptions(PendingCustomIconId);
+                return;
+            }
+
             var imported = await _brandIconPackService.ImportCustomIconAsync(
                 _editingAccountId.Value,
                 document.Stream,
@@ -4160,6 +4312,7 @@ public sealed class MobileShellViewModel :
         }
         finally
         {
+            RestoreBrandIconSelectionAfterCustomPicker();
             EndSensitiveOperation(operation);
             IsBusy = false;
         }
@@ -4369,6 +4522,7 @@ public sealed class MobileShellViewModel :
                 generated.Code,
                 Math.Max(1, generated.RemainingSeconds),
                 generated.PeriodSeconds,
+                generated.NextCode,
                 notifyBindings: ShouldNotifyCodeBindings(account));
         }
 
@@ -4563,7 +4717,10 @@ public sealed class MobileShellViewModel :
         EditorIsFavorite = false;
         IsAdvancedOptionsExpanded = false;
         EditorBrandIconOptions = [];
+        CompleteCustomIconPickerSelection();
         SelectedEditorBrandIconOption = null;
+        _pendingCustomIconBytes = null;
+        _pendingCustomIconFileName = null;
         EditorIssuerMessage = string.Empty;
         EditorSecretMessage = string.Empty;
         EditorPeriodMessage = string.Empty;
@@ -4589,13 +4746,31 @@ public sealed class MobileShellViewModel :
         var automatic = new MobileBrandIconOption(
             null,
             Get(MobileStringKeys.AutomaticBrandIcon));
+        var chooseCustom = new MobileBrandIconOption(
+            null,
+            Get(MobileStringKeys.ChooseCustomSvgIcon),
+            IsCustomPickerAction: true);
+        var pendingCustom = _pendingCustomIconBytes is { Length: > 0 }
+            ? new MobileBrandIconOption(
+                PendingCustomIconId,
+                Get(MobileStringKeys.CustomAccountIcon),
+                _pendingCustomIconFileName,
+                IsPendingCustomIcon: true)
+            : null;
         var available = _brandIconPackService?.AvailableBrands ?? [];
         var selectedCustom = selectedDefinition ?? (!string.IsNullOrWhiteSpace(selectedBrandId)
+            && !string.Equals(selectedBrandId, PendingCustomIconId, StringComparison.Ordinal)
             ? _brandIconPackService?.Resolve(null, selectedBrandId)
             : null);
         EditorBrandIconOptions =
         [
             automatic,
+            .. (_brandIconPackService is not null
+                ? [chooseCustom]
+                : Array.Empty<MobileBrandIconOption>()),
+            .. (pendingCustom is not null
+                ? [pendingCustom]
+                : Array.Empty<MobileBrandIconOption>()),
             .. available.Select(brand => new MobileBrandIconOption(
                 brand.Id,
                 brand.DisplayName,
@@ -4615,6 +4790,51 @@ public sealed class MobileShellViewModel :
         SelectedEditorBrandIconOption = EditorBrandIconOptions.FirstOrDefault(option =>
             string.Equals(option.Id, selectedBrandId, StringComparison.OrdinalIgnoreCase))
             ?? EditorBrandIconOptions.FirstOrDefault();
+    }
+
+    private void RestoreBrandIconSelectionAfterCustomPicker()
+    {
+        if (!_isCustomIconPickerSelectionPending) return;
+
+        var previousSelection = _brandIconSelectionBeforeCustomPicker;
+        _selectedEditorBrandIconOption = null;
+        OnPropertyChanged(nameof(SelectedEditorBrandIconOption));
+        _selectedEditorBrandIconOption = previousSelection;
+        CompleteCustomIconPickerSelection();
+        OnPropertyChanged(nameof(SelectedEditorBrandIconOption));
+        NotifySelectedBrandIconProperties();
+    }
+
+    private void CompleteCustomIconPickerSelection()
+    {
+        _brandIconSelectionBeforeCustomPicker = null;
+        _isCustomIconPickerSelectionPending = false;
+    }
+
+    private void NotifySelectedBrandIconProperties()
+    {
+        OnPropertyChanged(nameof(SelectedEditorBrandIconFileName));
+        OnPropertyChanged(nameof(HasSelectedEditorBrandIconFileName));
+        OnPropertyChanged(nameof(SelectedEditorCustomIconFileName));
+        OnPropertyChanged(nameof(HasSelectedEditorCustomIconFileName));
+    }
+
+    private static async Task<(byte[]? Data, bool TooLarge)> ReadPendingCustomIconAsync(
+        Stream stream,
+        CancellationToken cancellationToken)
+    {
+        await using var destination = new MemoryStream();
+        var buffer = new byte[81920];
+        while (true)
+        {
+            var read = await stream.ReadAsync(buffer, cancellationToken);
+            if (read == 0) break;
+            if (destination.Length + read > MaximumPendingCustomIconBytes)
+                return (null, true);
+            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+        }
+
+        return (destination.ToArray(), false);
     }
 
     private void ClearGroupEditor()
@@ -5502,6 +5722,10 @@ public sealed class MobileShellViewModel :
         nameof(DevicePinUnavailableText),
         nameof(UnlockMethodPasswordPromptText),
         nameof(ApplyUnlockMethodText),
+        nameof(ShowNextTokenText),
+        nameof(ShowNextTokenHelpText),
+        nameof(AllowScreenshotsText),
+        nameof(AllowScreenshotsHelpText),
         nameof(CodesText),
         nameof(SettingsText),
         nameof(CloseSettingsText),
@@ -5519,7 +5743,11 @@ public sealed class MobileShellViewModel :
         nameof(FaqText),
         nameof(FaqSettingsDescriptionText),
         nameof(FaqImportIconPacksQuestionText),
-        nameof(FaqImportIconPacksAnswerText),
+        nameof(FaqImportIconPacksStepDownloadText),
+        nameof(FaqImportIconPacksDownloadLinkText),
+        nameof(FaqImportIconPacksStepBuildText),
+        nameof(FaqImportIconPacksStepImportText),
+        nameof(FaqImportIconPacksCustomSvgTipText),
         nameof(FaqImportIconPacksSourcesText),
         nameof(FaqSimpleIconsOfficialLinkText),
         nameof(FaqAegisIconPackDocsLinkText),
@@ -5527,6 +5755,7 @@ public sealed class MobileShellViewModel :
         nameof(FaqImportIconPacksDisclaimerText),
         nameof(FaqImportFormatsQuestionText),
         nameof(FaqImportFormatsIntroText),
+        nameof(FaqImportFormatsSupportedText),
         nameof(FaqImportFormatsAegisTitleText),
         nameof(FaqImportFormatsAegisDescriptionText),
         nameof(FaqImportFormatsAegisExampleText),

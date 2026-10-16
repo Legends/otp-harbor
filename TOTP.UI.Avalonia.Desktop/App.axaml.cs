@@ -34,7 +34,15 @@ public partial class App : Application
                 PlatformSettings,
                 _services.GetRequiredService<IAppearanceSettingsService>(),
                 ApplyTheme);
+#if DEBUG
+            var onboardingPreviewOptions = _services.GetRequiredService<OnboardingPreviewOptions>();
+            if (onboardingPreviewOptions.ThemeOverride is null)
+                _themeService.Start();
+            else
+                ApplyTheme(onboardingPreviewOptions.ThemeOverride);
+#else
             _themeService.Start();
+#endif
             _exceptionHooks = new AvaloniaExceptionHooks(
                 global::Avalonia.Threading.Dispatcher.UIThread,
                 _services.GetRequiredService<AvaloniaExceptionBoundary>());

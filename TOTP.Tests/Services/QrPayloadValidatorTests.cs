@@ -57,12 +57,22 @@ public sealed class QrPayloadValidatorTests
         Assert.False(result.IsValid);
     }
 
-    [Theory]
-    [InlineData("otpauth://totp/alice?secret=JBSWY3DPEHPK3PXP")]
-    [InlineData("otpauth://totp/Example:alice?secret=JBSWY3DPEHPK3PXP&issuer=")]
-    public void Validate_WhenRequiredIssuerIsMissing_FailsClosed(string payload)
+    [Fact]
+    public void Validate_WhenIssuerIsAbsent_UsesLabelAsIssuer()
     {
-        var result = _sut.Validate(payload);
+        var result = _sut.Validate(
+            "otpauth://totp/user@host?secret=JBSWY3DPEHPK3PXP");
+
+        Assert.True(result.IsValid);
+        Assert.Equal("user@host", result.Issuer);
+        Assert.Empty(result.AccountName);
+    }
+
+    [Fact]
+    public void Validate_WhenIssuerIsExplicitlyEmpty_FailsClosed()
+    {
+        var result = _sut.Validate(
+            "otpauth://totp/Example:alice?secret=JBSWY3DPEHPK3PXP&issuer=");
 
         Assert.False(result.IsValid);
     }

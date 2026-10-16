@@ -45,12 +45,15 @@ public sealed class QrAccountImportService(IAccountManager accounts) : IQrAccoun
             return Result.Fail<QrAccountImportOutcome>("The QR payload is invalid.");
         }
 
-        if (!OtpAuthSupportPolicy.IsSupported(parsed))
+        if (!OtpAuthSupportPolicy.TryResolveSupportedIdentity(
+                parsed,
+                out var issuer,
+                out var accountName))
+        {
             return Result.Fail<QrAccountImportOutcome>("The TOTP parameters are unsupported.");
+        }
 
         cancellationToken.ThrowIfCancellationRequested();
-        var issuer = parsed.Issuer?.Trim() ?? string.Empty;
-        var accountName = parsed.Label.Trim();
         var loaded = await accounts.GetAllOtpEntriesSortedAsync();
         if (loaded.IsFailed)
             return Result.Fail<QrAccountImportOutcome>(loaded.Errors);
@@ -232,55 +235,28 @@ public sealed class QrAccountImportService(IAccountManager accounts) : IQrAccoun
             var backup = await accounts.BackupOtpEntriesStorageFileAsync();
             if (backup.IsFailed)
                 return Result.Fail<QrAccountImportOutcome>(backup.Errors);
-        }
-
-        var addedCount = 0;
-        var updatedCount = 0;
-        var keptBothCount = 0;
-        var failedCount = 0;
-        var lastAccountId = Guid.Empty;
-        var lastIssuer = string.Empty;
-        var lastAccountName = string.Empty;
-        foreach (var write in writes)
-        {
             cancellationToken.ThrowIfCancellationRequested();
-            var saved = write.Kind == PlannedWriteKind.Update
-                ? await accounts.UpdateAsync(write.Existing!, write.Incoming)
-                : await accounts.AddNewAsync(write.Incoming);
-            if (saved.IsFailed)
-            {
-                failedCount++;
-                continue;
-            }
-
-            lastAccountId = write.Incoming.ID;
-            lastIssuer = write.Incoming.Issuer;
-            lastAccountName = write.Incoming.AccountName ?? string.Empty;
-            switch (write.Kind)
-            {
-                case PlannedWriteKind.Add:
-                    addedCount++;
-                    break;
-                case PlannedWriteKind.Update:
-                    updatedCount++;
-                    break;
-                case PlannedWriteKind.KeepBoth:
-                    keptBothCount++;
-                    break;
-            }
+            var committed = await accounts.CommitImportAsync(working);
+            if (committed.IsFailed)
+                return Result.Fail<QrAccountImportOutcome>(committed.Errors);
         }
+
+        var addedCount = writes.Count(write => write.Kind == PlannedWriteKind.Add);
+        var updatedCount = writes.Count(write => write.Kind == PlannedWriteKind.Update);
+        var keptBothCount = writes.Count(write => write.Kind == PlannedWriteKind.KeepBoth);
+        var lastWrite = writes.LastOrDefault();
 
         return Result.Ok(new QrAccountImportOutcome(
             QrAccountImportStatus.BulkImported,
-            lastAccountId,
-            lastIssuer,
-            lastAccountName,
+            lastWrite?.Incoming.ID ?? Guid.Empty,
+            lastWrite?.Incoming.Issuer ?? string.Empty,
+            lastWrite?.Incoming.AccountName ?? string.Empty,
             migration.Accounts.Count,
             addedCount,
             updatedCount,
             keptBothCount,
             duplicateCount,
-            failedCount,
+            FailedCount: 0,
             migration.BatchIndex,
             migration.BatchSize));
     }

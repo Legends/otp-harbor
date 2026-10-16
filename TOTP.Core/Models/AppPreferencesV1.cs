@@ -70,6 +70,12 @@ public sealed record AppPreferencesV1
     [JsonPropertyName("favoriteGroupColor")]
     public string FavoriteGroupColor { get; init; } = AppSettings.DefaultFavoriteGroupColor;
 
+    [JsonPropertyName("showNextToken")]
+    public bool ShowNextToken { get; init; }
+
+    [JsonPropertyName("allowScreenshots")]
+    public bool AllowScreenshots { get; init; }
+
     // Accepted only to migrate development builds that briefly wrote this
     // branding-only value into the strict v1 preferences contract. New writes
     // omit it and persist the value under BrandIcons instead.

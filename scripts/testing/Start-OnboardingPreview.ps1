@@ -6,6 +6,9 @@ Starts the desktop or Android debug app with the onboarding preview visible.
 .\scripts\testing\Start-OnboardingPreview.ps1 -Target Desktop
 
 .EXAMPLE
+.\scripts\testing\Start-OnboardingPreview.ps1 -Target Desktop -Theme Light
+
+.EXAMPLE
 .\scripts\testing\Start-OnboardingPreview.ps1 -Target Mobile -Install
 
 .EXAMPLE
@@ -15,6 +18,9 @@ Starts the desktop or Android debug app with the onboarding preview visible.
 param(
     [ValidateSet('Desktop', 'Mobile')]
     [string]$Target = 'Desktop',
+
+    [ValidateSet('Light', 'Dark')]
+    [string]$Theme,
 
     [string]$Device,
 
@@ -26,6 +32,10 @@ Set-StrictMode -Version Latest
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
+if ($Target -ne 'Desktop' -and $PSBoundParameters.ContainsKey('Theme')) {
+    throw '-Theme is supported only with -Target Desktop.'
+}
+
 if ($Target -eq 'Desktop') {
     if (Get-Process -Name 'TOTP.UI.Avalonia.Desktop' -ErrorAction SilentlyContinue) {
         throw 'OTP Harbor is already running. Close it first so the startup preview switch can take effect.'
@@ -33,8 +43,15 @@ if ($Target -eq 'Desktop') {
 
     $projectPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj'
     $previousPreviewSetting = $env:TOTP_Debug__ShowOnboardingOnStartup
+    $previousThemeSetting = $env:TOTP_Debug__OnboardingTheme
     try {
         $env:TOTP_Debug__ShowOnboardingOnStartup = 'true'
+        if ($PSBoundParameters.ContainsKey('Theme')) {
+            $env:TOTP_Debug__OnboardingTheme = $Theme.ToLowerInvariant()
+        }
+        else {
+            Remove-Item Env:TOTP_Debug__OnboardingTheme -ErrorAction SilentlyContinue
+        }
         Start-Process -FilePath 'dotnet' `
             -ArgumentList @('run', '--project', "`"$projectPath`"", '--configuration', 'Debug') `
             -WorkingDirectory $repositoryRoot
@@ -46,9 +63,22 @@ if ($Target -eq 'Desktop') {
         else {
             $env:TOTP_Debug__ShowOnboardingOnStartup = $previousPreviewSetting
         }
+
+        if ($null -eq $previousThemeSetting) {
+            Remove-Item Env:TOTP_Debug__OnboardingTheme -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:TOTP_Debug__OnboardingTheme = $previousThemeSetting
+        }
     }
 
-    Write-Host 'Started the desktop debug app with the onboarding preview enabled.'
+    $themeDescription = if ($PSBoundParameters.ContainsKey('Theme')) {
+        " in $($Theme.ToLowerInvariant()) theme"
+    }
+    else {
+        ' using the configured theme'
+    }
+    Write-Host "Started the desktop debug app with the onboarding preview enabled$themeDescription."
     return
 }
 

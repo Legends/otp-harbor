@@ -358,6 +358,25 @@ public sealed class ExportServiceTests
     }
 
     [Fact]
+    public async Task ImportFromStreamAsync_WithIssuerlessOtpAuthUri_PreservesLabelAsIssuer()
+    {
+        const string content =
+            "otpauth://totp/user@host?secret=JBSWY3DPEHPK3PXP";
+        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            "authenticator-export.txt",
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var account = Assert.Single(result.Value);
+        Assert.Equal("user@host", account.Issuer);
+        Assert.Null(account.AccountName);
+        Assert.Equal("JBSWY3DPEHPK3PXP", account.Secret);
+    }
+
+    [Fact]
     public async Task ImportFromStreamAsync_WithPlaintextAegisVault_ImportsSupportedTotpEntries()
     {
         const string content = """

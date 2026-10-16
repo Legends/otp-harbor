@@ -21,6 +21,7 @@ public sealed class AccountListItemViewModel(
 {
     private bool _isRecentlyAdded = isRecentlyAdded;
     private string _code = string.Empty;
+    private string _nextCode = string.Empty;
     private int _remainingSeconds;
     private int _periodSeconds;
     private string _customPeriodLabel = customPeriodLabel;
@@ -29,6 +30,7 @@ public sealed class AccountListItemViewModel(
     private bool _isFavorite = isFavorite;
     private string _copyConfirmation = string.Empty;
     private bool _codeBindingsDirty;
+    private bool _showNextToken;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -54,6 +56,7 @@ public sealed class AccountListItemViewModel(
             _copyConfirmation = value;
             OnPropertyChanged(nameof(CopyConfirmation));
             OnPropertyChanged(nameof(HasCopyConfirmation));
+            OnPropertyChanged(nameof(HasVisibleNextCode));
         }
     }
 
@@ -64,6 +67,15 @@ public sealed class AccountListItemViewModel(
     public string DisplayCode => Code.Length < 2
         ? Code
         : Code.Insert(Code.Length / 2, " ");
+
+    public string DisplayNextCode => _nextCode.Length < 2
+        ? _nextCode
+        : _nextCode.Insert(_nextCode.Length / 2, " ");
+
+    public bool HasVisibleNextCode => _showNextToken
+        && !HasCopyConfirmation
+        && _nextCode.Length > 0
+        && RemainingSeconds is > 0 and <= 5;
 
     public bool HasCode => Code.Length > 0;
     public bool IsExpiring => HasCode && RemainingSeconds is > 0 and <= 10;
@@ -123,9 +135,11 @@ public sealed class AccountListItemViewModel(
         string code,
         int remainingSeconds,
         int periodSeconds,
+        string nextCode = "",
         bool notifyBindings = true)
     {
         _code = code;
+        _nextCode = nextCode;
         _remainingSeconds = Math.Max(1, remainingSeconds);
         _periodSeconds = Math.Max(_remainingSeconds, periodSeconds);
         if (notifyBindings)
@@ -144,6 +158,7 @@ public sealed class AccountListItemViewModel(
         if (_remainingSeconds <= 0) return;
 
         var wasExpiring = IsExpiring;
+        var wasShowingNextCode = HasVisibleNextCode;
         _remainingSeconds--;
         if (!notifyBindings)
         {
@@ -161,11 +176,23 @@ public sealed class AccountListItemViewModel(
         OnPropertyChanged(nameof(RemainingSeconds));
         if (wasExpiring != IsExpiring)
             OnPropertyChanged(nameof(IsExpiring));
+        if (wasShowingNextCode != HasVisibleNextCode)
+            OnPropertyChanged(nameof(HasVisibleNextCode));
+    }
+
+    public void UpdateNextTokenPreference(bool show)
+    {
+        if (_showNextToken == show) return;
+        _showNextToken = show;
+        OnPropertyChanged(nameof(HasVisibleNextCode));
     }
 
     public void ClearCode(bool notifyBindings = true)
     {
-        if (_code.Length == 0 && _remainingSeconds == 0 && _periodSeconds == 0)
+        if (_code.Length == 0
+            && _nextCode.Length == 0
+            && _remainingSeconds == 0
+            && _periodSeconds == 0)
         {
             if (notifyBindings && _codeBindingsDirty)
             {
@@ -176,6 +203,7 @@ public sealed class AccountListItemViewModel(
         }
 
         _code = string.Empty;
+        _nextCode = string.Empty;
         _remainingSeconds = 0;
         _periodSeconds = 0;
         if (notifyBindings)
@@ -200,10 +228,12 @@ public sealed class AccountListItemViewModel(
     {
         OnPropertyChanged(nameof(Code));
         OnPropertyChanged(nameof(DisplayCode));
+        OnPropertyChanged(nameof(DisplayNextCode));
         OnPropertyChanged(nameof(HasCode));
         OnPropertyChanged(nameof(RemainingSeconds));
         OnPropertyChanged(nameof(PeriodSeconds));
         OnPropertyChanged(nameof(IsExpiring));
+        OnPropertyChanged(nameof(HasVisibleNextCode));
     }
 
     private void OnPropertyChanged(string propertyName) =>

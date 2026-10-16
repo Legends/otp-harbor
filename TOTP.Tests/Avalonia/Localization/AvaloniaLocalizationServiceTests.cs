@@ -60,12 +60,13 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
-    [InlineData("en", "licenses", "trademark rights", "you are responsible")]
-    [InlineData("de", "Lizenzen", "Markenrechten", "du bist")]
-    [InlineData("fr", "licences", "droits de marque", "vous êtes responsable")]
-    [InlineData("es", "licencias", "derechos de marca", "eres responsable")]
+    [InlineData("en", "available on GitHub", "licenses", "trademark rights", "you are responsible")]
+    [InlineData("de", "auf GitHub verfügbar", "Lizenzen", "Markenrechten", "du bist")]
+    [InlineData("fr", "disponible sur GitHub", "licences", "droits de marque", "vous êtes responsable")]
+    [InlineData("es", "disponible en GitHub", "licencias", "derechos de marca", "eres responsable")]
     public void Catalog_IconOnboardingNamesBuilderAndUserResponsibility(
         string cultureName,
+        string expectedGitHubAvailability,
         string expectedLicenses,
         string expectedTrademarkRights,
         string expectedResponsibility)
@@ -76,6 +77,7 @@ public sealed class AvaloniaLocalizationServiceTests
         var description = sut.Get(AvaloniaStringKeys.OnboardingIconPackDescription, culture);
 
         Assert.Contains("OTP Harbor Icon Pack Builder", description, StringComparison.Ordinal);
+        Assert.Contains(expectedGitHubAvailability, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(expectedLicenses, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(expectedTrademarkRights, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(expectedResponsibility, description, StringComparison.OrdinalIgnoreCase);

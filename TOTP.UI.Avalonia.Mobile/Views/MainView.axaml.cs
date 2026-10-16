@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
@@ -23,6 +24,9 @@ public partial class MainView : UserControl
     private bool _isAccountListScrollActive;
     private bool _realizedAccountReportPending;
     private bool _usesNativeAccountList;
+    private bool _backNavigationInProgress;
+    private TopLevel? _backNavigationTopLevel;
+    private MobileShellViewModel? _nativeAccountListViewModel;
 
     public MainView()
     {
@@ -33,10 +37,28 @@ public partial class MainView : UserControl
         };
         _accountListScrollIdleTimer.Tick += AccountListScrollBecameIdle;
         AddHandler(KeyDownEvent, MainViewKeyDown, RoutingStrategies.Tunnel);
-        AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(
+        AddHandler(PointerPressedEvent, DismissAccountSearchFocus, RoutingStrategies.Tunnel);
+        AttachedToVisualTree += MainViewAttachedToVisualTree;
+        DetachedFromVisualTree += MainViewDetachedFromVisualTree;
+    }
+
+    private void MainViewAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        _backNavigationTopLevel = TopLevel.GetTopLevel(this);
+        if (_backNavigationTopLevel is not null)
+            _backNavigationTopLevel.BackRequested += MainViewBackRequested;
+
+        Dispatcher.UIThread.Post(
             AttachAccountListScrollViewer,
             DispatcherPriority.Loaded);
-        DetachedFromVisualTree += (_, _) => DetachAccountListScrollViewer();
+    }
+
+    private void MainViewDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        if (_backNavigationTopLevel is not null)
+            _backNavigationTopLevel.BackRequested -= MainViewBackRequested;
+        _backNavigationTopLevel = null;
+        DetachAccountListScrollViewer();
     }
 
     public void UseNativeAccountList(Control nativeAccountList)
@@ -45,9 +67,35 @@ public partial class MainView : UserControl
         _usesNativeAccountList = true;
         DetachAccountListScrollViewer();
         AccountList.IsVisible = false;
-        AccountList.ItemsSource = null;
+        AccountList.IsHitTestVisible = false;
         NativeAccountListPresenter.Content = nativeAccountList;
         NativeAccountListPresenter.IsHitTestVisible = true;
+
+        if (_nativeAccountListViewModel is not null)
+            _nativeAccountListViewModel.PropertyChanged -= NativeAccountListStateChanged;
+        _nativeAccountListViewModel = DataContext as MobileShellViewModel;
+        if (_nativeAccountListViewModel is not null)
+            _nativeAccountListViewModel.PropertyChanged += NativeAccountListStateChanged;
+        UpdateAccountListConfirmationBackdrop();
+    }
+
+    private void NativeAccountListStateChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(MobileShellViewModel.IsDeleteConfirmationVisible)
+            or nameof(MobileShellViewModel.HasAccounts))
+        {
+            UpdateAccountListConfirmationBackdrop();
+        }
+    }
+
+    private void UpdateAccountListConfirmationBackdrop()
+    {
+        if (!_usesNativeAccountList || _nativeAccountListViewModel is not { } viewModel) return;
+
+        var showFallback = viewModel.IsDeleteConfirmationVisible && viewModel.HasAccounts;
+        AccountList.IsVisible = showFallback;
+        if (showFallback && viewModel.SelectedAccount is { } selectedAccount)
+            Dispatcher.UIThread.Post(() => AccountList.ScrollIntoView(selectedAccount));
     }
 
     public void UseNativeAccountGroupStrip(Control nativeAccountGroupStrip)
@@ -95,6 +143,22 @@ public partial class MainView : UserControl
             DispatcherPriority.Input);
     }
 
+    private void DismissAccountSearchFocus(object? sender, PointerPressedEventArgs e)
+    {
+        if (!AccountSearchBox.IsKeyboardFocusWithin) return;
+
+        var pointerPosition = e.GetPosition(AccountSearchBox);
+        if (AccountSearchBox.Bounds.Contains(pointerPosition)) return;
+
+        DismissAccountSearchFocus();
+    }
+
+    public void DismissAccountSearchFocus()
+    {
+        if (AccountSearchBox.IsKeyboardFocusWithin)
+            Focus(NavigationMethod.Pointer);
+    }
+
     private async void MainViewKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key != Key.Escape || DataContext is not MobileShellViewModel viewModel) return;
@@ -103,6 +167,34 @@ public partial class MainView : UserControl
         {
             e.Handled = true;
             if (viewModel.IsSettingsVisible) ScrollMainViewToTop();
+        }
+    }
+
+    private async void MainViewBackRequested(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MobileShellViewModel viewModel
+            || !viewModel.CanHandleSystemBack)
+        {
+            return;
+        }
+
+        // Android must receive the handled result before awaiting navigation or it
+        // may finish the activity while the view model is changing screens.
+        e.Handled = true;
+        if (_backNavigationInProgress) return;
+
+        _backNavigationInProgress = true;
+        try
+        {
+            if (await viewModel.TryHandleBackNavigationAsync()
+                && viewModel.IsSettingsVisible)
+            {
+                ScrollMainViewToTop();
+            }
+        }
+        finally
+        {
+            _backNavigationInProgress = false;
         }
     }
 

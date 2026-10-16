@@ -241,7 +241,10 @@ public sealed class MobileShellViewModelTests
         context.Sut.ShowFaqSettingsCommand.Execute(null);
 
         Assert.True(context.Sut.IsFaqSettingsVisible);
-        Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksAnswerText));
+        Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksStepDownloadText));
+        Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksStepBuildText));
+        Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksStepImportText));
+        Assert.Contains("SVG", context.Sut.FaqImportIconPacksCustomSvgTipText, StringComparison.Ordinal);
 
         context.Sut.ShowSettingsCategoriesCommand.Execute(null);
         context.Sut.ShowImportExportSettingsCommand.Execute(null);
@@ -1230,6 +1233,28 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task AllowScreenshots_DisablesAndroidScreenCaptureProtectionAndPersists()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
+
+        context.Sut.AllowScreenshots = true;
+        await Task.Yield();
+
+        Assert.True(context.SettingsValue.AllowScreenshots);
+        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+        context.Settings.Verify(value => value.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
     public async Task SelectLanguageAsync_ChangesTheVisibleLanguageAndPersistsThePreference()
     {
         var context = CreateContext(isConfigured: true);
@@ -2179,9 +2204,11 @@ public sealed class MobileShellViewModelTests
 
         Assert.True(context.Sut.IsDeleteConfirmationVisible);
         Assert.False(context.Sut.IsNativeAccountListVisible);
+        Assert.Same(item, Assert.Single(context.Sut.Accounts));
         Assert.Equal(account.ID, context.Sut.SelectedAccount?.Id);
         await context.Sut.CancelDeleteAsync();
         Assert.True(context.Sut.IsNativeAccountListVisible);
+        Assert.Same(item, Assert.Single(context.Sut.Accounts));
     }
 
     [Fact]
@@ -3276,6 +3303,173 @@ public sealed class MobileShellViewModelTests
             It.IsAny<Stream>(),
             "personal-mark.svg",
             It.IsAny<CancellationToken>()), Times.Once);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AddAccount_CustomSvgPickerIsSecondAndDefersImportUntilAccountExists()
+    {
+        Account? created = null;
+        var custom = new BrandDefinition(
+            "custom_0123456789abcdef01234567",
+            "personal-mark",
+            "#334155",
+            "custom_0123456789abcdef01234567.svg",
+            "personal-mark.svg");
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
+        brandIcons.Setup(value => value.ImportCustomIconAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Stream>(),
+                "personal-mark.svg",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(custom));
+        var context = CreateContext(
+            isConfigured: false,
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => created = account)
+            .ReturnsAsync(Result.Ok());
+        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "personal-mark.svg"));
+        await ConfigureAndBeginAddAsync(context);
+
+        Assert.Null(context.Sut.EditorBrandIconOptions[0].Id);
+        var pickerOption = context.Sut.EditorBrandIconOptions[1];
+        Assert.True(pickerOption.IsCustomPickerAction);
+        Assert.Equal("Choose custom SVG…", pickerOption.DisplayName);
+        context.Sut.SelectedEditorBrandIconOption = pickerOption;
+        await WaitUntilAsync(() =>
+            context.Sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon == true);
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Stream>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = ValidSecret;
+        await context.Sut.SaveAccountAsync();
+
+        Assert.NotNull(created);
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            created.ID,
+            It.IsAny<Stream>(),
+            "personal-mark.svg",
+            It.IsAny<CancellationToken>()), Times.Once);
+        brandIcons.Verify(value => value.SetAccountBrandIdAsync(
+            created.ID,
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AddAccount_CancelingCustomSvgPickerRestoresPreviousIconSelection()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg")
+        ]);
+        var context = CreateContext(
+            isConfigured: false,
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MobileReadableDocument?)null);
+        await ConfigureAndBeginAddAsync(context);
+        var previous = context.Sut.EditorBrandIconOptions
+            .Single(option => option.Id == "github");
+        context.Sut.SelectedEditorBrandIconOption = previous;
+
+        context.Sut.SelectedEditorBrandIconOption = context.Sut.EditorBrandIconOptions[1];
+        await WaitUntilAsync(() =>
+            context.Documents.Invocations.Count == 1 && !context.Sut.IsBusy);
+
+        Assert.Same(previous, context.Sut.SelectedEditorBrandIconOption);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task EditAccount_LoadsAllAdvancedSettingsFromCurrentStoredAccount()
+    {
+        var accountId = Guid.NewGuid();
+        var initial = new Account(accountId, "Example", ValidSecret, "alice");
+        var accounts = new List<Account> { initial };
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg")
+        ]);
+        brandIcons.Setup(value => value.GetAccountBrandId(accountId)).Returns("github");
+        var context = CreateContext(
+            isConfigured: true,
+            accounts,
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        accounts[0] = new Account(
+            accountId,
+            "Example",
+            ValidSecret,
+            "alice",
+            periodSeconds: 60,
+            isFavorite: true);
+
+        await context.Sut.BeginEditAsync();
+
+        Assert.True(context.Sut.EditorIsFavorite);
+        Assert.Equal(60, context.Sut.EditorPeriodSeconds);
+        Assert.Equal("github", context.Sut.SelectedEditorBrandIconOption?.Id);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AddAccount_OversizedCustomSvgIsRejectedBeforeAccountSave()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
+        var context = CreateContext(
+            isConfigured: false,
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream(new byte[(1024 * 1024) + 1]),
+                "oversized.svg"));
+        await ConfigureAndBeginAddAsync(context);
+
+        await context.Sut.ImportCustomIconAsync();
+
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.CustomIconImportTooLarge),
+            context.Sut.NotificationText);
+        Assert.False(context.Sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Stream>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
         context.Sut.Dispose();
     }
 

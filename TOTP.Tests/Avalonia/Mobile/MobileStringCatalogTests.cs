@@ -1,5 +1,6 @@
 using System.Globalization;
 using TOTP.Avalonia.Mobile.Localization;
+using TOTP.Infrastructure.Services;
 
 namespace TOTP.Tests.Avalonia.Mobile;
 
@@ -20,12 +21,13 @@ public sealed class MobileStringCatalogTests
     }
 
     [Theory]
-    [InlineData("en", "licenses", "trademark rights", "you are responsible")]
-    [InlineData("de", "Lizenzen", "Markenrechten", "du bist")]
-    [InlineData("fr", "licences", "droits de marque", "vous êtes responsable")]
-    [InlineData("es", "licencias", "derechos de marca", "eres responsable")]
+    [InlineData("en", "available on GitHub", "licenses", "trademark rights", "you are responsible")]
+    [InlineData("de", "auf GitHub verfügbar", "Lizenzen", "Markenrechten", "du bist")]
+    [InlineData("fr", "disponible sur GitHub", "licences", "droits de marque", "vous êtes responsable")]
+    [InlineData("es", "disponible en GitHub", "licencias", "derechos de marca", "eres responsable")]
     public void Get_IconOnboardingNamesBuilderAndUserResponsibility(
         string cultureName,
+        string expectedGitHubAvailability,
         string expectedLicenses,
         string expectedTrademarkRights,
         string expectedResponsibility)
@@ -35,6 +37,7 @@ public sealed class MobileStringCatalogTests
         var description = catalog.Get(MobileStringKeys.OnboardingIconPackDescription);
 
         Assert.Contains("OTP Harbor Icon Pack Builder", description, StringComparison.Ordinal);
+        Assert.Contains(expectedGitHubAvailability, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(expectedLicenses, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(expectedTrademarkRights, description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(expectedResponsibility, description, StringComparison.OrdinalIgnoreCase);
@@ -94,6 +97,22 @@ public sealed class MobileStringCatalogTests
         Assert.DoesNotContain("OTP Harbor", formats, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(".csv", formats, StringComparison.OrdinalIgnoreCase);
 
+        var supportedImports = catalog.Get(MobileStringKeys.FaqImportFormatsSupported);
+        foreach (var supportedExtension in ExportService.SupportedImportFileExtensions)
+        {
+            Assert.Contains(supportedExtension, supportedImports, StringComparison.OrdinalIgnoreCase);
+        }
+
+        foreach (var stableFormatName in new[]
+                 {
+                     "Google Authenticator",
+                     "OTP Harbor",
+                     "otpauth://"
+                 })
+        {
+            Assert.Contains(stableFormatName, supportedImports, StringComparison.OrdinalIgnoreCase);
+        }
+
         Assert.Contains("\"entries\"", catalog.Get(MobileStringKeys.FaqImportFormatsAegisExample));
         Assert.Contains("\"services\"", catalog.Get(MobileStringKeys.FaqImportFormatsTwoFasExample));
         Assert.StartsWith("otpauth://", catalog.Get(MobileStringKeys.FaqImportFormatsOtpAuthExample));
@@ -105,6 +124,8 @@ public sealed class MobileStringCatalogTests
         Assert.Contains("Aegis", catalog.Get(MobileStringKeys.FaqAegisIconPackDocsLink));
         Assert.Contains("Dashboard Icons", catalog.Get(MobileStringKeys.FaqDashboardIconsLegalLink));
         Assert.Contains("OTP Harbor", catalog.Get(MobileStringKeys.FaqImportIconPacksDisclaimer));
+        Assert.Contains("GitHub", catalog.Get(MobileStringKeys.FaqImportIconPacksStepDownload));
+        Assert.Contains("SVG", catalog.Get(MobileStringKeys.FaqImportIconPacksCustomSvgTip));
     }
 
     [Theory]
@@ -127,7 +148,7 @@ public sealed class MobileStringCatalogTests
         Assert.Contains(".otphicons", description, StringComparison.Ordinal);
         Assert.Contains(
             "otp-harbor-icons.otphicons",
-            catalog.Get(MobileStringKeys.FaqImportIconPacksAnswer),
+            catalog.Get(MobileStringKeys.FaqImportIconPacksStepBuild),
             StringComparison.Ordinal);
     }
 

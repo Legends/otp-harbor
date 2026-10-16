@@ -26,10 +26,13 @@ public sealed class OtpNetTotpGenerator : ITotpGenerator
         try
         {
             var totp = new Totp(secretBytes, step: periodSeconds);
+            var now = DateTime.UtcNow;
+            var remainingSeconds = totp.RemainingSeconds(now);
             return new TotpGenerationResult(
-                totp.ComputeTotp(),
-                totp.RemainingSeconds(),
-                periodSeconds);
+                totp.ComputeTotp(now),
+                remainingSeconds,
+                periodSeconds,
+                totp.ComputeTotp(now.AddSeconds(remainingSeconds)));
         }
         finally
         {

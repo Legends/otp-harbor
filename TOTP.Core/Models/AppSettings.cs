@@ -41,6 +41,10 @@ public sealed class AppSettings : IAppSettings
 
     public string FavoriteGroupColor { get; set; } = DefaultFavoriteGroupColor;
 
+    public bool ShowNextToken { get; set; }
+
+    public bool AllowScreenshots { get; set; }
+
     public static bool IsSupportedInterfaceScale(int percent) =>
         percent == DefaultInterfaceScalePercent
         || percent is >= 100 and <= 300 && percent % 25 == 0;

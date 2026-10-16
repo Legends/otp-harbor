@@ -26,6 +26,8 @@ foreach ($required in @(
     '<AndroidProductionApplicationId>io.github.legends.otpharbor</AndroidProductionApplicationId>',
     '<ApplicationId Condition="''$(Configuration)'' == ''Debug''">$(AndroidProductionApplicationId).debug</ApplicationId>',
     '<AndroidPackageFormats Condition="''$(Configuration)'' == ''Release''">apk</AndroidPackageFormats>',
+    "'`$(Configuration)' == 'Debug' and '`$(EnableMarketingCapture)' == ''",
+    '<EnableMarketingCapture>true</EnableMarketingCapture>',
     "'`$(Configuration)' == 'Debug' and '`$(EnableMarketingCapture)' == 'true'",
     "'`$(Configuration)' == 'Release' and '`$(EnableMarketingCapture)' == 'true'",
     'EnableMarketingCapture is restricted to the isolated Debug package.')) {
@@ -34,8 +36,30 @@ foreach ($required in @(
     }
 }
 $activity = Read-RequiredFile "TOTP.UI.Avalonia.Android\MainActivity.cs"
+$mobileMainView = Read-RequiredFile "TOTP.UI.Avalonia.Mobile\Views\MainView.axaml.cs"
 if (-not $activity.Contains('#if OTP_HARBOR_MARKETING_CAPTURE', [StringComparison]::Ordinal)) {
-    throw 'The isolated marketing-capture mode is not compile-time restricted.'
+    throw 'The isolated Debug capture mode is not compile-time restricted.'
+}
+foreach ($requiredBackNavigationControl in @(
+    'BackRequested += MainViewBackRequested',
+    'BackRequested -= MainViewBackRequested',
+    'CanHandleSystemBack',
+    'e.Handled = true',
+    'TryHandleBackNavigationAsync()',
+    '_backNavigationInProgress')) {
+    if (-not $mobileMainView.Contains($requiredBackNavigationControl, [StringComparison]::Ordinal)) {
+        throw "Android system-back navigation is missing: $requiredBackNavigationControl"
+    }
+}
+if (-not $manifest.Contains('android:enableOnBackInvokedCallback="true"', [StringComparison]::Ordinal)) {
+    throw 'Android predictive-back integration is not enabled in the manifest.'
+}
+foreach ($obsoleteBackNavigationControl in @(
+    'override void OnBackPressed()',
+    'RegisterOnBackInvokedCallback(')) {
+    if ($activity.Contains($obsoleteBackNavigationControl, [StringComparison]::Ordinal)) {
+        throw "MainActivity bypasses Avalonia system-back routing: $obsoleteBackNavigationControl"
+    }
 }
 if (-not $manifest.Contains('android:authorities="${applicationId}.fileprovider"', [StringComparison]::Ordinal) -or
     -not $installer.Contains("`$packageName = 'io.github.legends.otpharbor.debug'", [StringComparison]::Ordinal)) {
@@ -43,14 +67,46 @@ if (-not $manifest.Contains('android:authorities="${applicationId}.fileprovider"
 }
 foreach ($requiredInstallerControl in @(
     '[int]$Port',
+    '[switch]$ForceBuild',
+    '[switch]$CleanBuild',
+    '[switch]$FastDeploy',
+    'Get-AndroidBuildInputFingerprint',
+    'Get-AndroidRuntimeIdentifier.ps1',
+    'ro.product.cpu.abi',
+    'android-development-build-state.json',
+    "`$cachedBuildMode -ceq 'IncrementalDeviceApk'",
+    '$cachedRuntimeIdentifier -ceq $runtimeIdentifier',
+    '$cachedApkHash -ceq $existingApkHash',
+    'Android build inputs are unchanged; skipping the build.',
+    '--target:Install',
+    '-p:EmbedAssembliesIntoApk=false',
+    '--runtime',
     '--no-incremental',
-    '-t:SignAndroidPackage',
+    '--target:SignAndroidPackage',
     '& $adbPath connect $device',
     '& $adbPath -s $device install -r $apkPath',
     'shell am force-stop $packageName')) {
     if (-not $installer.Contains($requiredInstallerControl, [StringComparison]::Ordinal)) {
-        throw "The Android development installer is missing a fresh-build or targeted-device control: $requiredInstallerControl"
+        throw "The Android development installer is missing a build-reuse or targeted-device control: $requiredInstallerControl"
     }
+}
+
+$runtimeIdentifierResolver = Join-Path $repositoryRoot `
+    'scripts\testing\Get-AndroidRuntimeIdentifier.ps1'
+foreach ($case in @(
+    @{ Abi = 'arm64-v8a'; RuntimeIdentifier = 'android-arm64' },
+    @{ Abi = 'x86_64'; RuntimeIdentifier = 'android-x64' })) {
+    $actualRuntimeIdentifier = & $runtimeIdentifierResolver -Abi $case.Abi
+    if ($actualRuntimeIdentifier -cne $case.RuntimeIdentifier) {
+        throw "Android ABI $($case.Abi) mapped to an unexpected runtime identifier."
+    }
+}
+try {
+    & $runtimeIdentifierResolver -Abi 'mips64' 2>$null | Out-Null
+    throw 'The Android ABI resolver accepted an unsupported ABI.'
+}
+catch {
+    if ($_.Exception.Message -eq 'The Android ABI resolver accepted an unsupported ABI.') { throw }
 }
 
 $versionCases = @(

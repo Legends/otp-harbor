@@ -45,6 +45,30 @@ public sealed class QrAccountImportServiceTests
     }
 
     [Fact]
+    public async Task ImportAsync_WhenIssuerIsAbsent_PreservesLabelAsIssuer()
+    {
+        var accounts = Manager([]);
+        Account? added = null;
+        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .ReturnsAsync((Account account) =>
+            {
+                added = account;
+                return Result.Ok();
+            });
+        var sut = new QrAccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            "otpauth://totp/user@host?secret=JBSWY3DPEHPK3PXP",
+            (_, _) => Task.FromResult(QrAccountConflictDecision.Cancel),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("user@host", added!.Issuer);
+        Assert.Null(added.AccountName);
+        Assert.Equal("JBSWY3DPEHPK3PXP", added.Secret);
+    }
+
+    [Fact]
     public async Task ImportAsync_WhenCustomPeriodIsSupported_PreservesPeriod()
     {
         var accounts = Manager([]);
@@ -187,11 +211,11 @@ public sealed class QrAccountImportServiceTests
     {
         var accounts = Manager([]);
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        var added = new List<Account>();
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
-            .ReturnsAsync((Account account) =>
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
             {
-                added.Add(account);
+                committed = snapshot;
                 return Result.Ok();
             });
         var sut = new QrAccountImportService(accounts.Object);
@@ -222,7 +246,7 @@ public sealed class QrAccountImportServiceTests
         Assert.Equal(0, result.Value.DuplicateCount);
         Assert.True(result.Value.HasMoreBatches);
         Assert.Collection(
-            added,
+            committed!,
             account =>
             {
                 Assert.Equal("Example", account.Issuer);
@@ -236,6 +260,13 @@ public sealed class QrAccountImportServiceTests
                 Assert.Equal("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", account.Secret);
             });
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
     }
 
     [Fact]
@@ -257,6 +288,83 @@ public sealed class QrAccountImportServiceTests
             TestContext.Current.CancellationToken);
 
         Assert.True(result.IsFailed);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Never);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WhenGoogleMigrationAtomicCommitFails_ReturnsFailureWithoutPerAccountWrites()
+    {
+        var accounts = Manager([]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Fail("commit failed"));
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+            [new MigrationAccount(
+                Convert.FromHexString("48656C6C6F21DEADBEEF"),
+                "Example:alice",
+                "Example")]);
+
+        var result = await sut.ImportAsync(
+            payload,
+            (_, _) => Task.FromResult(QrAccountConflictDecision.Cancel),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WhenGoogleMigrationConflictIsUpdated_CommitsResolvedSnapshotOnce()
+    {
+        var existing = new Account(
+            Guid.NewGuid(),
+            "Example",
+            "KRUGS4ZANFZSAYJA",
+            "alice",
+            isFavorite: true);
+        var accounts = Manager([existing]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
+            {
+                committed = snapshot;
+                return Result.Ok();
+            });
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+            [new MigrationAccount(
+                Convert.FromHexString("48656C6C6F21DEADBEEF"),
+                "Example:alice",
+                "Example")]);
+
+        var result = await sut.ImportAsync(
+            payload,
+            (_, _) => Task.FromResult(QrAccountConflictDecision.UpdateExisting),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.UpdatedCount);
+        var updated = Assert.Single(committed!);
+        Assert.Equal(existing.ID, updated.ID);
+        Assert.Equal("JBSWY3DPEHPK3PXP", updated.Secret);
+        Assert.True(updated.IsFavorite);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
         accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         accounts.Verify(
             value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
@@ -268,7 +376,8 @@ public sealed class QrAccountImportServiceTests
     {
         var accounts = Manager([]);
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
         var sut = new QrAccountImportService(accounts.Object);
         var payload = MigrationPayload(
             [new MigrationAccount(
@@ -294,11 +403,11 @@ public sealed class QrAccountImportServiceTests
     {
         var accounts = Manager([]);
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
-        var added = new List<Account>();
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
-            .ReturnsAsync((Account account) =>
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
             {
-                added.Add(account);
+                committed = snapshot;
                 return Result.Ok();
             });
         var sut = new QrAccountImportService(accounts.Object);
@@ -312,8 +421,12 @@ public sealed class QrAccountImportServiceTests
         Assert.Equal(QrAccountImportStatus.BulkImported, result.Value.Status);
         Assert.Equal(10, result.Value.TotalCount);
         Assert.Equal(10, result.Value.ImportedCount);
-        Assert.Equal(10, added.Count);
-        Assert.Contains(added, account => account.Issuer == "München UTF8 Test");
+        Assert.Equal(10, committed!.Count);
+        Assert.Contains(committed, account => account.Issuer == "München UTF8 Test");
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
     }
 
     [Fact]
@@ -342,6 +455,9 @@ public sealed class QrAccountImportServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(QrAccountImportStatus.Cancelled, result.Value.Status);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Never);
         accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
     }
@@ -389,6 +505,9 @@ public sealed class QrAccountImportServiceTests
         Assert.Equal(0, result.Value.ImportedCount);
         Assert.Equal(1, result.Value.DuplicateCount);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Never);
         accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
     }

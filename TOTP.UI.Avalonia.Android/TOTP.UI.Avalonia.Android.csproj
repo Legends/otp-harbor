@@ -21,6 +21,12 @@
     <AssemblyOriginatorKeyFile>..\TOTP.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(EnableMarketingCapture)' == ''">
+    <!-- Debug uses the isolated .debug application ID and permits screenshots by default.
+         Pass -p:EnableMarketingCapture=false when validating FLAG_SECURE behavior. -->
+    <EnableMarketingCapture>true</EnableMarketingCapture>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(EnableMarketingCapture)' == 'true'">
     <DefineConstants>$(DefineConstants);OTP_HARBOR_MARKETING_CAPTURE</DefineConstants>
   </PropertyGroup>

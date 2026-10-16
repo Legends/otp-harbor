@@ -1861,6 +1861,162 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task AddAccount_CustomSvgPickerIsSecondAndDefersImportUntilAccountExists()
+    {
+        Account? created = null;
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(
+                created is null ? [] : [created]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => created = account)
+            .ReturnsAsync(Result.Ok());
+        var custom = new BrandDefinition(
+            "custom_0123456789abcdef01234567",
+            "personal-mark",
+            "#334155",
+            "custom_0123456789abcdef01234567.svg",
+            "personal-mark.svg");
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
+        brandIcons.Setup(value => value.ImportCustomIconAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Stream>(),
+                "personal-mark.svg",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(custom));
+        var selectedFile = new Mock<INativeStorageFile>();
+        selectedFile.SetupGet(value => value.Name).Returns("personal-mark.svg");
+        selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MemoryStream([1, 2, 3]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(selectedFile.Object);
+        using var sut = CreateSut(
+            manager.Object,
+            brandIconPackService: brandIcons.Object,
+            filePicker: picker.Object);
+
+        await sut.BeginAddAsync();
+
+        Assert.Null(sut.EditorBrandIconOptions[0].Id);
+        var pickerOption = sut.EditorBrandIconOptions[1];
+        Assert.True(pickerOption.IsCustomPickerAction);
+        Assert.Equal("Choose custom SVG…", pickerOption.DisplayName);
+        sut.SelectedEditorBrandIconOption = pickerOption;
+        await WaitUntilAsync(() => sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon == true);
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Stream>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = ValidSecret;
+        await sut.SaveAccountAsync();
+
+        Assert.NotNull(created);
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            created.ID,
+            It.IsAny<Stream>(),
+            "personal-mark.svg",
+            It.IsAny<CancellationToken>()), Times.Once);
+        brandIcons.Verify(value => value.SetAccountBrandIdAsync(
+            created.ID,
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AddAccount_CancelingCustomSvgPickerRestoresPreviousIconSelection()
+    {
+        var manager = new Mock<IAccountManager>();
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg")
+        ]);
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((INativeStorageFile?)null);
+        using var sut = CreateSut(
+            manager.Object,
+            brandIconPackService: brandIcons.Object,
+            filePicker: picker.Object);
+        await sut.BeginAddAsync();
+        var previous = sut.EditorBrandIconOptions.Single(option => option.Id == "github");
+        sut.SelectedEditorBrandIconOption = previous;
+
+        sut.SelectedEditorBrandIconOption = sut.EditorBrandIconOptions[1];
+        await WaitUntilAsync(() =>
+            picker.Invocations.Count == 1 && !sut.IsBusy);
+
+        Assert.Same(previous, sut.SelectedEditorBrandIconOption);
+    }
+
+    [Fact]
+    public async Task EditAccount_LoadsAllAdvancedSettingsFromStoredAccount()
+    {
+        var account = new Account(
+            Guid.NewGuid(),
+            "Example",
+            ValidSecret,
+            "alice",
+            periodSeconds: 60,
+            isFavorite: true);
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg")
+        ]);
+        brandIcons.Setup(value => value.GetAccountBrandId(account.ID)).Returns("github");
+        using var sut = CreateSut(manager.Object, brandIconPackService: brandIcons.Object);
+        await sut.LoadAsync();
+        sut.SelectedAccount = Assert.Single(sut.Accounts);
+
+        await sut.BeginEditAsync();
+
+        Assert.True(sut.EditorIsFavorite);
+        Assert.Equal(60, sut.EditorPeriodSeconds);
+        Assert.Equal("github", sut.SelectedEditorBrandIconOption?.Id);
+    }
+
+    [Fact]
+    public async Task AddAccount_OversizedCustomSvgIsRejectedBeforeAccountSave()
+    {
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
+        var selectedFile = new Mock<INativeStorageFile>();
+        selectedFile.SetupGet(value => value.Name).Returns("oversized.svg");
+        selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MemoryStream(new byte[(1024 * 1024) + 1]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(selectedFile.Object);
+        using var sut = CreateSut(
+            manager.Object,
+            brandIconPackService: brandIcons.Object,
+            filePicker: picker.Object);
+        await sut.BeginAddAsync();
+
+        await sut.ImportCustomIconAsync();
+
+        Assert.Equal("The SVG must be no larger than 1 MB.", sut.EditorMessage);
+        Assert.False(sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
+        brandIcons.Verify(value => value.ImportCustomIconAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Stream>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task EditAccount_WhenCustomSvgContainsExternalContent_ExplainsValidationFailure()
     {
         var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
@@ -2305,6 +2461,28 @@ public sealed class AccountListViewModelTests
 
         sut.UpdateCode("654321", 30, 30);
         Assert.False(sut.IsExpiring);
+    }
+
+    [Fact]
+    public void AccountRow_ShowsNextTokenOnlyDuringFinalFiveSecondsWithoutChangingCurrentCode()
+    {
+        var sut = new AccountListItemViewModel(Guid.NewGuid(), "Issuer", "account");
+        sut.UpdateNextTokenPreference(true);
+        sut.UpdateCode("123456", 6, 30, "654321");
+
+        Assert.False(sut.HasVisibleNextCode);
+        Assert.Equal("123 456", sut.DisplayCode);
+
+        sut.Tick();
+
+        Assert.True(sut.HasVisibleNextCode);
+        Assert.Equal("654 321", sut.DisplayNextCode);
+        Assert.Equal("123 456", sut.DisplayCode);
+
+        sut.UpdateCode("654321", 30, 30, "111222");
+
+        Assert.False(sut.HasVisibleNextCode);
+        Assert.Equal("654 321", sut.DisplayCode);
     }
 
     [Fact]

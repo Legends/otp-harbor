@@ -17,33 +17,43 @@
     Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">
 
     <Window.Styles>
-        <Style Selector="Button.onboarding-primary">
-            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingPrimary}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingPrimaryBorder}" />
-            <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingPrimaryForeground}" />
-        </Style>
-        <Style Selector="Button.onboarding-primary:pointerover">
-            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingPrimaryHover}" />
-        </Style>
-        <Style Selector="Button.onboarding-primary:pressed">
-            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingPrimaryPressed}" />
-        </Style>
-        <Style Selector="Button.onboarding-secondary">
-            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingSecondary}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingSecondaryBorder}" />
-            <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingForeground}" />
-        </Style>
-        <Style Selector="Button.onboarding-secondary:pointerover">
-            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingSecondaryHover}" />
-        </Style>
-        <Style Selector="Button.onboarding-secondary:pressed">
-            <Setter Property="Background" Value="{DynamicResource BrushDesktopOnboardingSecondaryPressed}" />
-        </Style>
-        <Style Selector="Button.onboarding-skip">
-            <Setter Property="HorizontalAlignment" Value="Left" />
+        <Style Selector="Button.onboarding-action">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingSecondaryBorder}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingAccentText}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingAccentText}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border
+                        Name="OnboardingButtonBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter
+                            Name="OnboardingButtonContent"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Padding="{TemplateBinding Padding}"
+                            TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.onboarding-action:pointerover">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingAccentText}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingAccentText}" />
+        </Style>
+        <Style Selector="Button.onboarding-action:pressed">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushDesktopOnboardingAccentText}" />
             <Setter Property="Foreground" Value="{DynamicResource BrushDesktopOnboardingAccentText}" />
         </Style>
     </Window.Styles>
@@ -183,28 +193,29 @@
                         <Button
                             x:Name="SkipOnboardingButton"
                             Grid.Column="0"
-                            Classes="onboarding-skip"
+                            Classes="onboarding-action"
+                            HorizontalAlignment="Left"
                             Command="{Binding FinishOnboardingCommand}"
                             Content="{DynamicResource OnboardingSkip}"
                             IsVisible="{Binding !IsLastOnboardingSlide}" />
                         <Button
                             x:Name="PreviousOnboardingButton"
                             Grid.Column="1"
-                            Classes="onboarding-secondary wide"
+                            Classes="onboarding-action wide"
                             Command="{Binding PreviousOnboardingCommand}"
                             Content="{DynamicResource OnboardingBack}"
                             IsVisible="{Binding !IsFirstOnboardingSlide}" />
                         <Button
                             x:Name="NextOnboardingButton"
                             Grid.Column="2"
-                            Classes="onboarding-primary wide"
+                            Classes="onboarding-action wide"
                             Command="{Binding NextOnboardingCommand}"
                             Content="{DynamicResource OnboardingNext}"
                             IsVisible="{Binding !IsLastOnboardingSlide}" />
                         <Button
                             x:Name="FinishOnboardingButton"
                             Grid.Column="2"
-                            Classes="onboarding-primary wide"
+                            Classes="onboarding-action wide"
                             Command="{Binding FinishOnboardingCommand}"
                             IsVisible="{Binding IsLastOnboardingSlide}">
                             <Grid>

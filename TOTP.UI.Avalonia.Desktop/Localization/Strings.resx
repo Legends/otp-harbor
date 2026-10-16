@@ -21,7 +21,7 @@
   <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Organize with groups and favorites</value></data>
   <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Keep accounts easy to find by grouping related entries and marking the ones you use most as favorites.</value></data>
   <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Personalize with account icons</value></data>
-  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Add account icons by creating and importing a local pack with the OTP Harbor Icon Pack Builder. Third-party assets remain subject to their own licenses, trademark rights, and usage terms; you are responsible for compliant use.</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Add account icons by importing a local pack created with OTP Harbor Icon Pack Builder (available on GitHub). Third-party assets remain subject to their own licenses, trademark rights, and usage terms; you are responsible for compliant use.</value></data>
   <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Set up quick unlock</value></data>
   <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Use platform biometric quick unlock when available. Your master password remains the recovery method.</value></data>
   <data name="OnboardingSkip" xml:space="preserve"><value>Skip introduction</value></data>
@@ -92,7 +92,7 @@
   <data name="CustomIconImported" xml:space="preserve"><value>The custom icon was applied to this account.</value></data>
   <data name="CustomIconImportFailed" xml:space="preserve"><value>The SVG is invalid or could not be stored safely.</value></data>
   <data name="CustomIconImportEmpty" xml:space="preserve"><value>The SVG file is empty.</value></data>
-  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>The SVG must be no larger than 64 KB.</value></data>
+  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>The SVG must be no larger than 1 MB.</value></data>
   <data name="CustomIconImportMalformed" xml:space="preserve"><value>The SVG is not well-formed XML.</value></data>
   <data name="CustomIconImportMissingPath" xml:space="preserve"><value>The SVG must contain an &lt;svg&gt; root and at least one &lt;path&gt; with path data.</value></data>
   <data name="CustomIconImportUnsafe" xml:space="preserve"><value>The SVG contains a script or an external resource reference, which is not allowed.</value></data>
@@ -463,10 +463,12 @@
   <data name="FaqImportFormatsTwoFasDescription" xml:space="preserve"><value>Create an unencrypted 2FAS backup and select the .2fas file. OTP Harbor reads TOTP accounts from services. Password-protected or encrypted backups and unsupported OTP parameters are rejected.</value></data>
   <data name="FaqImportFormatsTwoFasExample" xml:space="preserve"><value>{&#xA;  "schemaVersion": 4,&#xA;  "services": [{&#xA;    "name": "Example",&#xA;    "secret": "JBSWY3DPEHPK3PXP",&#xA;    "otp": {&#xA;      "tokenType": "TOTP",&#xA;      "issuer": "Example",&#xA;      "account": "alice@example.com",&#xA;      "algorithm": "SHA1",&#xA;      "digits": 6,&#xA;      "period": 30&#xA;    }&#xA;  }],&#xA;  "servicesEncrypted": null,&#xA;  "reference": null&#xA;}</value></data>
   <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>otpauth text file (.txt)</value></data>
-  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Create a UTF-8 text file with one standard otpauth://totp URI per line. Blank lines and lines beginning with # are ignored. Every URI must contain an issuer and a valid Base32 secret and use supported SHA-1, six-digit TOTP parameters.</value></data>
+  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Create a UTF-8 text file with one standard otpauth://totp URI per line. Blank lines and lines beginning with # are ignored. Every URI must contain a non-empty label and a valid Base32 secret and use supported SHA-1, six-digit TOTP parameters. An issuer is recommended; when absent, OTP Harbor uses the label as the issuer.</value></data>
   <data name="FaqImportFormatsOtpAuthExample" xml:space="preserve"><value>otpauth://totp/Example:alice%40example.com?secret=JBSWY3DPEHPK3PXP&amp;issuer=Example&amp;period=30</value></data>
   <data name="BackupSection" xml:space="preserve"><value>Backup</value></data>
   <data name="RestoreSection" xml:space="preserve"><value>Restore</value></data>
   <data name="ExportBackupAction" xml:space="preserve"><value>Export</value></data>
   <data name="RestoreBackupAction" xml:space="preserve"><value>Restore</value></data>
+  <data name="ShowNextToken" xml:space="preserve"><value>Show next token</value></data>
+  <data name="ShowNextTokenHelp" xml:space="preserve"><value>Show the upcoming token below the current token during its final five seconds.</value></data>
 </root>

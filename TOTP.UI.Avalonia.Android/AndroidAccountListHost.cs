@@ -4,7 +4,9 @@ using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Android;
 
-internal sealed class AndroidAccountListHost(MobileShellViewModel viewModel) : AndroidNativeControlHost
+internal sealed class AndroidAccountListHost(
+    MobileShellViewModel viewModel,
+    Action dismissAccountSearchFocus) : AndroidNativeControlHost
 {
     private NativeAccountRecyclerView? _accountList;
 
@@ -12,7 +14,10 @@ internal sealed class AndroidAccountListHost(MobileShellViewModel viewModel) : A
     {
         var context = (parent as AndroidViewControlHandle)?.View.Context
             ?? global::Android.App.Application.Context;
-        _accountList = new NativeAccountRecyclerView(context, viewModel);
+        _accountList = new NativeAccountRecyclerView(
+            context,
+            viewModel,
+            dismissAccountSearchFocus);
         return new AndroidViewControlHandle(_accountList);
     }
 

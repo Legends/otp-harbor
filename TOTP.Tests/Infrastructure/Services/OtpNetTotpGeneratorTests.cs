@@ -12,6 +12,7 @@ public sealed class OtpNetTotpGeneratorTests
         var result = sut.Generate("JBSWY3DPEHPK3PXP");
 
         Assert.Matches("^[0-9]{6}$", result.Code);
+        Assert.Matches("^[0-9]{6}$", result.NextCode);
         Assert.Equal(30, result.PeriodSeconds);
         Assert.InRange(result.RemainingSeconds, 1, result.PeriodSeconds);
     }

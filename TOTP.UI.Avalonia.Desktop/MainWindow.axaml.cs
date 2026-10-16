@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private bool _initialized;
     private bool _fitScheduled;
     private bool _editorFitScheduled;
+    private bool _groupEditorOpenScheduled;
     private bool _realizedAccountReportPending;
     private MainWindowViewModel? _observedViewModel;
     private AccountListViewModel? _observedAccountList;
@@ -781,12 +782,7 @@ public partial class MainWindow : Window
                 ApplyScreenSizeLimits();
                 MinHeight = Math.Min(StandardMinimumHeight, MaxHeight);
                 StartHeightAnimation(Math.Clamp(DefaultPageHeight, MinHeight, MaxHeight));
-                Dispatcher.UIThread.Post(
-                    () => this.GetVisualDescendants()
-                        .OfType<TextBox>()
-                        .FirstOrDefault(control => control.Name == "GroupNameBox")
-                        ?.Focus(),
-                    DispatcherPriority.Input);
+                ScheduleGroupEditorOpen();
             }
             else
             {
@@ -814,8 +810,6 @@ public partial class MainWindow : Window
         if (e.PropertyName is nameof(AccountListViewModel.Accounts)
             or nameof(AccountListViewModel.Groups)
             or nameof(AccountListViewModel.HasGroups)
-            or nameof(AccountListViewModel.SelectedAccount)
-            or nameof(AccountListViewModel.HasSelectedAccount)
             or nameof(AccountListViewModel.HasNoAccounts)
             or nameof(AccountListViewModel.HasNoSearchResults)
             or nameof(AccountListViewModel.HasCodeMessage))
@@ -824,6 +818,40 @@ public partial class MainWindow : Window
             if (e.PropertyName == nameof(AccountListViewModel.Accounts))
                 ScheduleRealizedAccountReport();
         }
+    }
+
+    private void ScheduleGroupEditorOpen()
+    {
+        if (_groupEditorOpenScheduled) return;
+        _groupEditorOpenScheduled = true;
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                _groupEditorOpenScheduled = false;
+                OpenGroupEditor();
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    private void OpenGroupEditor()
+    {
+        if (_observedViewModel is not { IsAccountListVisible: true }
+            || _observedAccountList?.IsGroupEditorVisible != true)
+        {
+            return;
+        }
+
+        UpdateLayout();
+        var descendants = this.GetVisualDescendants().ToArray();
+        descendants
+            .OfType<TextBox>()
+            .FirstOrDefault(control => control.Name == "GroupNameBox")
+            ?.Focus();
+
+        var scrollViewer = descendants
+            .OfType<ScrollViewer>()
+            .FirstOrDefault(control => control.Name == "GroupEditorScrollViewer");
+        if (scrollViewer is not null) ResetScrollPosition(scrollViewer);
     }
 
     private void ScheduleAccountEditorOpen()
@@ -870,6 +898,9 @@ public partial class MainWindow : Window
         var editorContent = this.GetVisualDescendants()
             .OfType<StackPanel>()
             .FirstOrDefault(control => control.Name == "AccountEditorContent");
+        var editorHeader = this.GetVisualDescendants()
+            .OfType<Grid>()
+            .FirstOrDefault(control => control.Name == "AccountEditorHeader");
         if (flyout is null || editorContent is null) return;
 
         ApplyScreenSizeLimits();
@@ -878,10 +909,11 @@ public partial class MainWindow : Window
             0,
             flyout.Bounds.Width - flyout.Padding.Left - flyout.Padding.Right);
         editorContent.Measure(new Size(availableWidth, double.PositiveInfinity));
+        editorHeader?.Measure(new Size(availableWidth, double.PositiveInfinity));
         var windowChromeHeight = Math.Max(0, Bounds.Height - flyout.Bounds.Height);
         var targetHeight = CalculateAccountEditorWindowHeight(
             windowChromeHeight,
-            editorContent.DesiredSize.Height,
+            editorContent.DesiredSize.Height + (editorHeader?.DesiredSize.Height ?? 0),
             flyout.Padding.Top + flyout.Padding.Bottom,
             MinHeight,
             MaxHeight);
@@ -1096,8 +1128,9 @@ public partial class MainWindow : Window
     {
         if (accountCount <= 0) return 0;
 
-        var naturalHeight = (accountCount * rowHeight) + 2;
-        var minimumVisibleHeight = Math.Min(naturalHeight, rowHeight + 2);
+        const double borderSafety = 4;
+        var naturalHeight = (accountCount * rowHeight) + borderSafety;
+        var minimumVisibleHeight = Math.Min(naturalHeight, rowHeight + borderSafety);
         return Math.Min(naturalHeight, Math.Max(minimumVisibleHeight, availableHeight));
     }
 

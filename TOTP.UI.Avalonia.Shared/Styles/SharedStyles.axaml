@@ -15,6 +15,7 @@
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#E4ECF5" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#7E7E84" />
+                    <SolidColorBrush x:Key="BrushDisabledIcon" Color="#9CA3AF" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#86ACCC" />
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
@@ -105,7 +106,7 @@
                         <GradientStop Color="#EBE8E9FF" Offset="1" />
                     </LinearGradientBrush>
                     <SolidColorBrush x:Key="BrushDesktopOnboardingForeground" Color="#1C2944" />
-                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#465682" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#315F8E" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondary" Color="#99DFE6FF" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryHover" Color="#B3D6DEFA" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryPressed" Color="#B3C8D2F2" />
@@ -180,6 +181,7 @@
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#F4F6FB" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#E4ECF5" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#7E7E84" />
+                    <SolidColorBrush x:Key="BrushDisabledIcon" Color="#9CA3AF" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#86ACCC" />
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
@@ -270,7 +272,7 @@
                         <GradientStop Color="#EBE8E9FF" Offset="1" />
                     </LinearGradientBrush>
                     <SolidColorBrush x:Key="BrushDesktopOnboardingForeground" Color="#1C2944" />
-                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#465682" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#315F8E" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondary" Color="#99DFE6FF" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryHover" Color="#B3D6DEFA" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryPressed" Color="#B3C8D2F2" />
@@ -347,7 +349,7 @@
                         <GradientStop Color="#ED202A52" Offset="1" />
                     </LinearGradientBrush>
                     <SolidColorBrush x:Key="BrushDesktopOnboardingForeground" Color="#FFFFFF" />
-                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#9BE7FF" />
+                    <SolidColorBrush x:Key="BrushDesktopOnboardingAccentText" Color="#63D4FF" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondary" Color="#6611254A" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryHover" Color="#8A1B3768" />
                     <SolidColorBrush x:Key="BrushDesktopOnboardingSecondaryPressed" Color="#A30B1734" />
@@ -382,6 +384,7 @@
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#10213F" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#1A2E4E" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#CBDAF3" />
+                    <SolidColorBrush x:Key="BrushDisabledIcon" Color="#A7B0BE" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#0078D4" />
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#45546A" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
@@ -511,6 +514,7 @@
                     <SolidColorBrush x:Key="BrushDesktopAccountItemBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountItemSelectedBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushAccountName" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="BrushDisabledIcon" Color="#BFC3C9" />
                     <SolidColorBrush x:Key="BrushCountdownIndicator" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#000000" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
@@ -892,6 +896,28 @@
     <Style Selector="TextBox.search">
         <Setter Property="MinHeight" Value="30" />
         <Setter Property="Padding" Value="9,4" />
+    </Style>
+    <Style Selector="Expander.account-advanced">
+        <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Expander.account-advanced /template/ ToggleButton#ExpanderHeader">
+        <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+    </Style>
+    <Style Selector="Expander.account-advanced /template/ ToggleButton#ExpanderHeader:pointerover">
+        <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+    </Style>
+    <Style Selector="Expander.account-advanced /template/ ToggleButton#ExpanderHeader:pressed">
+        <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
     </Style>
     <Style Selector="ListBox.accounts">
         <Setter Property="Background" Value="Transparent" />
@@ -1293,6 +1319,7 @@
                                 Grid.Column="1"
                                 Width="12"
                                 Height="7"
+                                Margin="0,0,6,0"
                                 VerticalAlignment="Center"
                                 Data="M1,1 L6,6 L11,1"
                                 Stroke="{DynamicResource BrushTextPrimary}"

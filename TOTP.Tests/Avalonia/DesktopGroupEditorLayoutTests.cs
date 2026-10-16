@@ -96,4 +96,28 @@ public sealed class DesktopGroupEditorLayoutTests
             .Single();
         Assert.Equal("Center", text.Attribute("VerticalAlignment")?.Value);
     }
+
+    [Fact]
+    public void GroupEditor_UsesDedicatedScrollableSurfaceForOpenPositionReset()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "DesktopMainWindow.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var flyout = document
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "GroupEditorFlyout");
+        var scrollViewer = flyout
+            .Descendants(avalonia + "ScrollViewer")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "GroupEditorScrollViewer");
+
+        Assert.Equal("Disabled", scrollViewer.Attribute("HorizontalScrollBarVisibility")?.Value);
+        Assert.Equal("Auto", scrollViewer.Attribute("VerticalScrollBarVisibility")?.Value);
+    }
 }

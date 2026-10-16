@@ -11,6 +11,9 @@ public sealed class OpenCvQrImageDecoder : IQrImageDecoder
     public const int MaximumImageDimension = 8192;
     public const int MaximumDecodedPixels = 25_000_000;
 
+    static OpenCvQrImageDecoder() =>
+        ZxingQrImageDecoder.EnsureCharacterEncodingSupport();
+
     public async Task<QrImageDecodeResult> DecodeAsync(
         Stream image,
         CancellationToken cancellationToken = default)

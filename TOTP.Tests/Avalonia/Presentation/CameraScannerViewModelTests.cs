@@ -65,6 +65,7 @@ public sealed class CameraScannerViewModelTests
         Assert.DoesNotContain("JBSWY", sut.Message, StringComparison.Ordinal);
         Assert.All(encodedFrame, value => Assert.Equal(0, value));
         Assert.True(closeRequested);
+        Assert.False(sut.CanRetryCameraScan);
         Assert.Equal(importedAccountId, importedEvent!.AccountId);
         Assert.Equal(AvaloniaStringKeys.QrAccountAdded, importedEvent.Message);
         validator.Verify(value => value.Validate(It.Is<string>(payload => payload.Contains("secret="))), Times.Once);
@@ -219,6 +220,7 @@ public sealed class CameraScannerViewModelTests
         await sut.OpenImageAsync();
 
         Assert.Equal(NotificationSeverity.Success, sut.LastImageNotificationSeverity);
+        Assert.False(sut.CanRetryCameraScan);
         import.Verify(value => value.ImportAsync(
             payload,
             It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
@@ -227,6 +229,30 @@ public sealed class CameraScannerViewModelTests
                 It.IsAny<ConfirmationDialogRequest>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task OpenImageAsync_WhileFilePickerIsOpen_DoesNotOfferCameraRetry()
+    {
+        var pickedFile = new TaskCompletionSource<INativeStorageFile?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickQrImageAsync(It.IsAny<CancellationToken>()))
+            .Returns(pickedFile.Task);
+        using var sut = CreateSut(
+            Mock.Of<IQrScannerRunner>(),
+            filePicker: picker.Object);
+
+        var openImageTask = sut.OpenImageAsync();
+
+        Assert.True(sut.IsOpeningImage);
+        Assert.False(sut.CanRetryCameraScan);
+
+        pickedFile.SetResult(null);
+        await openImageTask;
+
+        Assert.False(sut.IsOpeningImage);
+        Assert.False(sut.CanRetryCameraScan);
     }
 
     [Fact]
@@ -296,6 +322,7 @@ public sealed class CameraScannerViewModelTests
 
         Assert.Contains(expected, sut.Message, StringComparison.OrdinalIgnoreCase);
         Assert.False(sut.IsScanning);
+        Assert.True(sut.CanRetryCameraScan);
         runner.Verify(value => value.RunAsync(
             It.IsAny<CancellationToken>(),
             It.IsAny<Action<byte[]>>(),

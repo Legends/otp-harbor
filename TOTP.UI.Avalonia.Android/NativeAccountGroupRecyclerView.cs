@@ -20,14 +20,19 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
     private readonly MobileShellViewModel _viewModel;
     private readonly NativeAccountGroupAdapter _adapter;
     private readonly LinearLayoutManager _layoutManager;
+    private readonly System.Action _dismissAccountSearchFocus;
     private int _revealRevision;
     private bool _submitPending;
     private bool _disposed;
 
-    public NativeAccountGroupRecyclerView(Context context, MobileShellViewModel viewModel)
+    public NativeAccountGroupRecyclerView(
+        Context context,
+        MobileShellViewModel viewModel,
+        System.Action dismissAccountSearchFocus)
         : base(context)
     {
         _viewModel = viewModel;
+        _dismissAccountSearchFocus = dismissAccountSearchFocus;
         _adapter = new NativeAccountGroupAdapter(viewModel);
         _layoutManager = new LinearLayoutManager(context, Horizontal, false);
         SetLayoutManager(_layoutManager);
@@ -44,6 +49,14 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
         _viewModel.PropertyChanged += ViewModelPropertyChanged;
         _adapter.ReplaceAll(CaptureRows());
         HandleRevealRequest(_viewModel.GroupRevealRequest);
+    }
+
+    public override bool DispatchTouchEvent(MotionEvent? motionEvent)
+    {
+        if (motionEvent?.ActionMasked == MotionEventActions.Down)
+            _dismissAccountSearchFocus();
+
+        return base.DispatchTouchEvent(motionEvent);
     }
 
     public void DisposeHost()

@@ -30,6 +30,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private InterfaceScaleOption? _selectedInterfaceScale;
     private bool _openExportFileAfterExport;
     private bool _showIssuerLogo;
+    private bool _showNextToken;
     private AppLogLevel _minimumLogLevel;
     private bool _isBusy;
     private bool _isReloading;
@@ -191,6 +192,16 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public bool ShowNextToken
+    {
+        get => _showNextToken;
+        set
+        {
+            if (!SetField(ref _showNextToken, value)) return;
+            QueueAutoSave();
+        }
+    }
+
     public AppLogLevel MinimumLogLevel
     {
         get => _minimumLogLevel;
@@ -227,6 +238,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
                 ?? InterfaceScales[0];
             OpenExportFileAfterExport = _settingsService.Current.OpenExportFileAfterExport;
             ShowIssuerLogo = _brandIconPackService?.ShowIssuerLogo ?? true;
+            ShowNextToken = _settingsService.Current.ShowNextToken;
             var themePreference = _appearanceSettingsService?.ThemePreference
                 ?? AppThemePreference.System;
             SelectedTheme = Themes.First(option => option.Preference == themePreference);
@@ -274,6 +286,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             _settingsService.Current.QrPreviewScaleFactor = (double)QrPreviewScaleFactor;
             _settingsService.Current.InterfaceScalePercent = SelectedInterfaceScale.Percent;
             _settingsService.Current.OpenExportFileAfterExport = OpenExportFileAfterExport;
+            _settingsService.Current.ShowNextToken = ShowNextToken;
             _settingsService.Current.MinimumLogLevel = MinimumLogLevel;
             if (SelectedLanguage is not null)
                 _settingsService.Current.CultureName = SelectedLanguage.CultureName;

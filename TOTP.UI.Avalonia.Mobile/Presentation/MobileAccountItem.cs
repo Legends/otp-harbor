@@ -22,6 +22,7 @@ public sealed class MobileAccountItem(
     private string _accountName = accountName;
     private int _configuredPeriodSeconds = configuredPeriodSeconds;
     private string _code = string.Empty;
+    private string _nextCode = string.Empty;
     private int _remainingSeconds;
     private int _periodSeconds = configuredPeriodSeconds;
     private string _customPeriodLabel = customPeriodLabel;
@@ -34,6 +35,7 @@ public sealed class MobileAccountItem(
     private bool _codeBindingsDirty;
     private bool _isCodeLoading = true;
     private AccountGroup? _group = group;
+    private bool _showNextToken;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -55,10 +57,15 @@ public sealed class MobileAccountItem(
     public bool HasAccountName => AccountName.Length > 0;
     public string Code => _code;
     public string DisplayCode => FormatCode(_code);
+    public string DisplayNextCode => FormatCode(_nextCode);
     public int RemainingSeconds => _remainingSeconds;
     public int PeriodSeconds => _periodSeconds;
     public bool IsExpiring => Code.Length > 0 && RemainingSeconds is > 0 and <= 10;
     public bool IsCodeLoading => _isCodeLoading;
+    public bool HasVisibleNextCode => _showNextToken
+        && !HasCopyConfirmation
+        && _nextCode.Length > 0
+        && RemainingSeconds is > 0 and <= 5;
 
     public string DisplayName => HasAccountName
         ? $"{Issuer} · {AccountName}"
@@ -68,11 +75,13 @@ public sealed class MobileAccountItem(
         string code,
         int remainingSeconds,
         int periodSeconds,
+        string nextCode = "",
         bool notifyBindings = true)
     {
         var wasLoading = _isCodeLoading;
         _isCodeLoading = false;
         _code = code;
+        _nextCode = nextCode;
         _remainingSeconds = Math.Max(1, remainingSeconds);
         _periodSeconds = Math.Max(_remainingSeconds, periodSeconds);
         if (notifyBindings)
@@ -124,6 +133,7 @@ public sealed class MobileAccountItem(
     {
         if (_remainingSeconds <= 0) return;
         var wasExpiring = IsExpiring;
+        var wasShowingNextCode = HasVisibleNextCode;
         _remainingSeconds--;
         if (!notifyBindings)
         {
@@ -139,6 +149,15 @@ public sealed class MobileAccountItem(
         OnPropertyChanged(nameof(RemainingSeconds));
         if (wasExpiring != IsExpiring)
             OnPropertyChanged(nameof(IsExpiring));
+        if (wasShowingNextCode != HasVisibleNextCode)
+            OnPropertyChanged(nameof(HasVisibleNextCode));
+    }
+
+    internal void UpdateNextTokenPreference(bool show)
+    {
+        if (_showNextToken == show) return;
+        _showNextToken = show;
+        OnPropertyChanged(nameof(HasVisibleNextCode));
     }
 
     internal void BeginCodeRefresh(bool notifyBindings = true)
@@ -222,6 +241,7 @@ public sealed class MobileAccountItem(
         _copyConfirmation = message;
         OnPropertyChanged(nameof(CopyConfirmation));
         OnPropertyChanged(nameof(HasCopyConfirmation));
+        OnPropertyChanged(nameof(HasVisibleNextCode));
     }
 
     internal void ClearCopyConfirmation() => ShowCopyConfirmation(string.Empty);
@@ -229,6 +249,7 @@ public sealed class MobileAccountItem(
     internal void ClearCode(bool notifyBindings = true)
     {
         if (_code.Length == 0
+            && _nextCode.Length == 0
             && _remainingSeconds == 0
             && _periodSeconds == ConfiguredPeriodSeconds
             && !_isCodeLoading)
@@ -240,6 +261,7 @@ public sealed class MobileAccountItem(
         var wasLoading = _isCodeLoading;
         _isCodeLoading = false;
         _code = string.Empty;
+        _nextCode = string.Empty;
         _remainingSeconds = 0;
         _periodSeconds = ConfiguredPeriodSeconds;
         if (notifyBindings)
@@ -265,9 +287,11 @@ public sealed class MobileAccountItem(
     {
         OnPropertyChanged(nameof(Code));
         OnPropertyChanged(nameof(DisplayCode));
+        OnPropertyChanged(nameof(DisplayNextCode));
         OnPropertyChanged(nameof(RemainingSeconds));
         OnPropertyChanged(nameof(PeriodSeconds));
         OnPropertyChanged(nameof(IsExpiring));
+        OnPropertyChanged(nameof(HasVisibleNextCode));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>

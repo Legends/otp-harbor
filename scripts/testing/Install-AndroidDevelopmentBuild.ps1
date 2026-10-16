@@ -1,11 +1,14 @@
 <#
 .SYNOPSIS
-Builds and deploys a fresh OTP Harbor Android development APK to a specific device.
+Builds when needed and deploys the OTP Harbor Android development APK to a specific device.
 
 .DESCRIPTION
 Locates adb, discovers the previously used phone through ADB mDNS and its stable
-ro.serialno value, creates a non-incremental signed Debug APK, installs the package
-without clearing app data, and relaunches its main activity for device testing.
+ro.serialno value, and fingerprints the Android build inputs. The normal path builds
+an incremental signed Debug APK only for the connected device ABI. CleanBuild retains
+the non-incremental universal-package verification path, while FastDeploy uses the
+.NET for Android Install target and external Debug assemblies. The script preserves
+app data and relaunches the main activity for device testing.
 
 .EXAMPLE
 .\scripts\testing\Install-AndroidDevelopmentBuild.ps1
@@ -15,6 +18,15 @@ without clearing app data, and relaunches its main activity for device testing.
 
 .EXAMPLE
 .\scripts\testing\Install-AndroidDevelopmentBuild.ps1 -DeviceAddress 192.168.1.13 -Port 43101
+
+.EXAMPLE
+.\scripts\testing\Install-AndroidDevelopmentBuild.ps1 -ForceBuild
+
+.EXAMPLE
+.\scripts\testing\Install-AndroidDevelopmentBuild.ps1 -CleanBuild
+
+.EXAMPLE
+.\scripts\testing\Install-AndroidDevelopmentBuild.ps1 -FastDeploy
 #>
 [CmdletBinding(DefaultParameterSetName = 'Endpoint')]
 param(
@@ -28,15 +40,31 @@ param(
 
     [Parameter(ParameterSetName = 'Components')]
     [ValidateNotNullOrEmpty()]
-    [string]$DeviceAddress = '192.168.1.13'
+    [string]$DeviceAddress = '192.168.1.13',
+
+    [Parameter()]
+    [switch]$ForceBuild,
+
+    [Parameter()]
+    [switch]$CleanBuild,
+
+    [Parameter()]
+    [switch]$FastDeploy
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+if ($CleanBuild -and $FastDeploy) {
+    throw 'CleanBuild and FastDeploy cannot be used together.'
+}
+if ($ForceBuild -and $FastDeploy) {
+    throw 'ForceBuild is unnecessary with FastDeploy because the Install target always runs.'
+}
+
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $projectPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj'
-$apkPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\bin\Debug\net10.0-android\io.github.legends.otpharbor.debug-Signed.apk'
+$debugOutputRoot = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\bin\Debug\net10.0-android'
 $packageName = 'io.github.legends.otpharbor.debug'
 $deviceWasSupplied = $PSBoundParameters.ContainsKey('Device')
 if ($deviceWasSupplied) {
@@ -95,6 +123,103 @@ function Get-AndroidPhysicalSerial([string]$TargetDevice) {
     $serial
 }
 
+function Get-AndroidDeviceAbi([string]$TargetDevice) {
+    $abi = (& $adbPath -s $TargetDevice shell getprop ro.product.cpu.abi 2>$null | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($abi)) {
+        throw "Android device $TargetDevice did not expose ro.product.cpu.abi."
+    }
+
+    $abi
+}
+
+function Get-AndroidApkAbis([string]$Path) {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [IO.Compression.ZipFile]::OpenRead($Path)
+    try {
+        @($archive.Entries |
+            Where-Object FullName -Match '^lib/[^/]+/.+\.so$' |
+            ForEach-Object { $_.FullName.Split('/')[1] } |
+            Sort-Object -Unique)
+    }
+    finally {
+        $archive.Dispose()
+    }
+}
+
+function Resolve-CachedAndroidApk([object]$State, [string]$OutputRoot) {
+    if ($null -eq $State -or
+        $State.PSObject.Properties.Name -notcontains 'ApkRelativePath') {
+        return $null
+    }
+
+    $relativePath = [string]$State.ApkRelativePath
+    if ([string]::IsNullOrWhiteSpace($relativePath) -or [IO.Path]::IsPathRooted($relativePath)) {
+        return $null
+    }
+
+    $candidate = [IO.Path]::GetFullPath((Join-Path $OutputRoot $relativePath))
+    $relativeToRoot = [IO.Path]::GetRelativePath($OutputRoot, $candidate)
+    if ($relativeToRoot.StartsWith('..', [StringComparison]::Ordinal) -or
+        [IO.Path]::IsPathRooted($relativeToRoot) -or
+        [IO.Path]::GetExtension($candidate) -cne '.apk' -or
+        -not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+        return $null
+    }
+
+    $candidate
+}
+
+function Get-AndroidBuildInputFingerprint {
+    $inputPaths = @(
+        'TOTP.Core',
+        'TOTP.DAL',
+        'TOTP.Infrastructure',
+        'TOTP.Platform.Android',
+        'TOTP.UI.Avalonia.Android',
+        'TOTP.UI.Avalonia.Mobile',
+        'TOTP.UI.Avalonia.Shared',
+        'TOTP.UI.Avalonia.Desktop\Assets\Icons\app-1024.png',
+        'Directory.Build.props',
+        'NuGet.config',
+        'global.json',
+        'LICENSE.txt',
+        'LICENSING.md',
+        'THIRD_PARTY_NOTICES.md'
+    )
+    $inputFiles = @(
+        foreach ($relativeInputPath in $inputPaths) {
+            $inputPath = Join-Path $repositoryRoot $relativeInputPath
+            if (Test-Path -LiteralPath $inputPath -PathType Leaf) {
+                Get-Item -LiteralPath $inputPath
+                continue
+            }
+
+            if (-not (Test-Path -LiteralPath $inputPath -PathType Container)) {
+                throw "Android build input was not found: $relativeInputPath"
+            }
+
+            Get-ChildItem -LiteralPath $inputPath -File -Recurse |
+                Where-Object FullName -NotMatch '[\\/](?:bin|obj)[\\/]'
+        }
+    )
+    $fingerprintRecords = @($inputFiles |
+        Sort-Object FullName |
+        ForEach-Object {
+            $relativePath = [IO.Path]::GetRelativePath($repositoryRoot, $_.FullName).Replace('\', '/')
+            $fileHash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+            "{0}`t{1}" -f $relativePath, $fileHash
+        })
+    $fingerprintBytes = [Text.Encoding]::UTF8.GetBytes(($fingerprintRecords -join "`n"))
+    $fingerprintAlgorithm = [Security.Cryptography.SHA256]::Create()
+    try {
+        -join ($fingerprintAlgorithm.ComputeHash($fingerprintBytes) |
+            ForEach-Object { $_.ToString('x2') })
+    }
+    finally {
+        $fingerprintAlgorithm.Dispose()
+    }
+}
+
 & $adbPath start-server
 if ($LASTEXITCODE -ne 0) {
     throw 'Starting the ADB server failed.'
@@ -102,6 +227,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $deviceCacheDirectory = Join-Path $env:LOCALAPPDATA 'OTP Harbor\Development'
 $deviceSerialCachePath = Join-Path $deviceCacheDirectory 'android-device-serial.txt'
+$buildStatePath = Join-Path $deviceCacheDirectory 'android-development-build-state.json'
 $physicalSerial = $null
 if ($deviceWasSupplied) {
     & $adbPath connect $device
@@ -182,30 +308,148 @@ else {
 New-Item -ItemType Directory -Path $deviceCacheDirectory -Force | Out-Null
 [IO.File]::WriteAllText($deviceSerialCachePath, $physicalSerial)
 
-$buildStartedUtc = [DateTime]::UtcNow
-dotnet build $projectPath `
-    -c Debug `
-    -t:SignAndroidPackage `
-    --no-incremental `
-    -nr:false `
-    -p:UseSharedCompilation=false
-if ($LASTEXITCODE -ne 0) {
-    throw 'The fresh signed Android development package build failed.'
+$deviceAbi = Get-AndroidDeviceAbi $device
+$runtimeIdentifier = & (Join-Path $PSScriptRoot 'Get-AndroidRuntimeIdentifier.ps1') -Abi $deviceAbi
+if ([string]::IsNullOrWhiteSpace($runtimeIdentifier)) {
+    throw "Could not map Android ABI $deviceAbi to a .NET runtime identifier."
+}
+Write-Host "Target ABI: $deviceAbi ($runtimeIdentifier)"
+
+$inputFingerprint = Get-AndroidBuildInputFingerprint
+$cachedBuildState = $null
+if (Test-Path -LiteralPath $buildStatePath -PathType Leaf) {
+    try {
+        $cachedBuildState = [IO.File]::ReadAllText($buildStatePath) | ConvertFrom-Json
+    }
+    catch {
+        Write-Verbose "Ignoring invalid Android build state: $($_.Exception.Message)"
+    }
+}
+$cachedInputFingerprint = if ($null -ne $cachedBuildState -and
+    $cachedBuildState.PSObject.Properties.Name -contains 'InputFingerprint') {
+    [string]$cachedBuildState.InputFingerprint
+}
+else {
+    $null
+}
+$cachedBuildMode = if ($null -ne $cachedBuildState -and
+    $cachedBuildState.PSObject.Properties.Name -contains 'BuildMode') {
+    [string]$cachedBuildState.BuildMode
+}
+else {
+    $null
+}
+$cachedRuntimeIdentifier = if ($null -ne $cachedBuildState -and
+    $cachedBuildState.PSObject.Properties.Name -contains 'RuntimeIdentifier') {
+    [string]$cachedBuildState.RuntimeIdentifier
+}
+else {
+    $null
+}
+$cachedApkHash = if ($null -ne $cachedBuildState -and
+    $cachedBuildState.PSObject.Properties.Name -contains 'ApkSha256') {
+    [string]$cachedBuildState.ApkSha256
+}
+else {
+    $null
+}
+$apkPath = Resolve-CachedAndroidApk $cachedBuildState $debugOutputRoot
+$existingApkHash = if ($null -ne $apkPath -and
+    (Test-Path -LiteralPath $apkPath -PathType Leaf)) {
+    (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
+}
+else {
+    $null
+}
+$canReuseApk = -not $ForceBuild -and -not $CleanBuild -and -not $FastDeploy -and
+    $cachedInputFingerprint -ceq $inputFingerprint -and
+    $cachedBuildMode -ceq 'IncrementalDeviceApk' -and
+    $cachedRuntimeIdentifier -ceq $runtimeIdentifier -and
+    $cachedApkHash -ceq $existingApkHash -and
+    -not [string]::IsNullOrWhiteSpace($existingApkHash)
+
+if ($FastDeploy) {
+    Write-Host "Fast-deploying the $deviceAbi Debug build to $device..."
+    $fastDeployArguments = @(
+        'build',
+        $projectPath,
+        '--configuration', 'Debug',
+        '--target:Install',
+        '--maxcpucount',
+        '--runtime', $runtimeIdentifier,
+        "-p:Device=$device",
+        '-p:EmbedAssembliesIntoApk=false')
+    & dotnet @fastDeployArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Fast deployment failed. Retry without FastDeploy to install a standalone Debug APK.'
+    }
+}
+elseif ($canReuseApk) {
+    Write-Host 'Android build inputs are unchanged; skipping the build.'
+}
+else {
+    $buildArguments = @(
+        'build',
+        $projectPath,
+        '--configuration', 'Debug',
+        '--target:SignAndroidPackage',
+        '--maxcpucount')
+    if ($CleanBuild) {
+        Write-Host 'Creating a clean universal Debug APK...'
+        $buildArguments += @(
+            '--no-incremental',
+            '-nr:false',
+            '-p:UseSharedCompilation=false')
+    }
+    else {
+        Write-Host "Creating an incremental $deviceAbi Debug APK..."
+        $buildArguments += @('--runtime', $runtimeIdentifier)
+    }
+
+    & dotnet @buildArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw 'The signed Android development package build failed.'
+    }
+
+    $signedApks = @(Get-ChildItem -LiteralPath $debugOutputRoot `
+        -Filter "$packageName-Signed.apk" -File -Recurse -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTimeUtc -Descending)
+    $matchingApks = @($signedApks | Where-Object {
+        $apkAbis = @(Get-AndroidApkAbis $_.FullName)
+        if ($CleanBuild) {
+            $apkAbis -contains 'arm64-v8a' -and $apkAbis -contains 'x86_64'
+        }
+        else {
+            $apkAbis.Count -eq 1 -and $apkAbis[0] -ceq $deviceAbi
+        }
+    })
+    if ($matchingApks.Count -eq 0) {
+        $expectedPackage = if ($CleanBuild) {
+            'a universal arm64-v8a/x86_64 package'
+        }
+        else {
+            "a single-ABI $deviceAbi package"
+        }
+        throw "The build did not produce $expectedPackage below $debugOutputRoot."
+    }
+    $apkPath = $matchingApks[0].FullName
+
+    $buildMode = if ($CleanBuild) { 'CleanUniversalApk' } else { 'IncrementalDeviceApk' }
+
+    $buildState = [ordered]@{
+        InputFingerprint = $inputFingerprint
+        BuildMode = $buildMode
+        RuntimeIdentifier = if ($CleanBuild) { '' } else { $runtimeIdentifier }
+        DeviceAbi = if ($CleanBuild) { 'universal' } else { $deviceAbi }
+        ApkRelativePath = [IO.Path]::GetRelativePath($debugOutputRoot, $apkPath)
+        ApkSha256 = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
+        BuiltAtUtc = [DateTime]::UtcNow.ToString('O')
+    }
+    [IO.File]::WriteAllText(
+        $buildStatePath,
+        ($buildState | ConvertTo-Json))
 }
 
-if (-not (Test-Path -LiteralPath $apkPath -PathType Leaf)) {
-    throw "The signed development APK was not found: $apkPath"
-}
-
-$apk = Get-Item -LiteralPath $apkPath
-if ($apk.LastWriteTimeUtc -lt $buildStartedUtc) {
-    throw "The Android build completed without refreshing the signed APK: $apkPath"
-}
-
-$apkHash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
-Write-Host "Installing: $($apk.FullName)"
-Write-Host "Timestamp: $($apk.LastWriteTime.ToString('O'))"
-Write-Host "SHA-256: $apkHash"
 Write-Host "Device: $device"
 
 $deviceState = (& $adbPath -s $device get-state 2>&1 | Out-String).Trim()
@@ -213,9 +457,17 @@ if ($LASTEXITCODE -ne 0 -or $deviceState -ne 'device') {
     throw "Android device $device is not connected and authorized (state: '$deviceState')."
 }
 
-& $adbPath -s $device install -r $apkPath
-if ($LASTEXITCODE -ne 0) {
-    throw 'Installing the Android development APK failed.'
+if (-not $FastDeploy) {
+    $apk = Get-Item -LiteralPath $apkPath
+    $apkHash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
+    Write-Host "Installing: $($apk.FullName)"
+    Write-Host "Timestamp: $($apk.LastWriteTime.ToString('O'))"
+    Write-Host "SHA-256: $apkHash"
+
+    & $adbPath -s $device install -r $apkPath
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Installing the Android development APK failed.'
+    }
 }
 
 & $adbPath -s $device shell am force-stop $packageName

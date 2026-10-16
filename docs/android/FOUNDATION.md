@@ -99,13 +99,22 @@ To install on one authorized Android device and launch the app:
 .\scripts\testing\Install-AndroidDevelopmentBuild.ps1 -Port 43101
 ```
 
-The script runs a non-incremental `SignAndroidPackage` build, verifies that the APK is fresh, reports
-its exact timestamp and SHA-256, connects to `192.168.1.13:<Port>`, performs an in-place development
-APK install, and relaunches it without clearing app data. Pass `-DeviceAddress` when the phone uses a
-different address. Paired wireless debugging must be enabled and the computer must be authorized on
-the device. Prefer this command over passing a previously built APK to a separate
-installer, which can silently redeploy a stale package. Development APKs embed their managed
-assemblies and therefore do not depend on IDE-specific Android Fast Deployment state.
+By default, the script detects the connected device ABI, incrementally creates a signed Debug APK
+for that ABI, and caches its build-input fingerprint. When those inputs and the target ABI are
+unchanged, it skips compilation and reinstalls the verified cached APK. It reports the installed
+APK timestamp and SHA-256, performs an in-place install, and relaunches the app without clearing app
+data. Pass `-ForceBuild` to rerun the normal incremental package target.
+
+Use `-FastDeploy` for the shortest edit/deploy loop. It invokes the device-aware Android `Install`
+target and places changed managed assemblies outside the APK. This mode is device-specific and its
+output is not a standalone package for sharing or release. Use `-CleanBuild` for the previous
+thorough path: a non-incremental universal Debug APK with embedded assemblies for both supported
+ABIs. `-CleanBuild` is the appropriate local packaging check, while the normal mode remains a
+standalone device-ABI APK.
+
+Pass `-DeviceAddress` when the phone uses a different address. Paired wireless debugging must be
+enabled and the computer must be authorized on the device. Prefer this command over passing an
+arbitrary previously built APK to a separate installer, which can silently redeploy a stale package.
 
 ## Release policy
 
@@ -131,9 +140,11 @@ reproducibility, metadata, and review gates documented in the
   account QR remains part of the account-list surface and therefore stays protected while that
   surface is visible. Unprotected views can expose revealed passwords, OTP seeds, or backup details
   if the user or another capture-capable process records them; this is an explicit usability
-  tradeoff and not a confidentiality guarantee. An explicit `EnableMarketingCapture=true` build
-  may relax the secure-window flag only for the separate Debug application ID and synthetic test
-  data; the Android project rejects that property for Release builds. The primary unlock method is
+  tradeoff and not a confidentiality guarantee. Debug builds for the separate `.debug` application
+  ID permit screenshots by default for development and synthetic marketing captures. Pass
+  `EnableMarketingCapture=false` when validating `FLAG_SECURE`; Release builds retain capture
+  protection and reject `EnableMarketingCapture=true`. Never populate a screenshot-enabled Debug
+  package with real OTP secrets or account data. The primary unlock method is
   an explicit user choice between strong biometrics, Android's secure device credential (PIN,
   password, or pattern as configured by the operating system), and the master password. OTP Harbor
   never creates or stores a separate app PIN. Biometrics remain the first-run default when available,

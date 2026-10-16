@@ -18,8 +18,19 @@ public sealed class ExportService : IExportService
 {
     private static readonly byte[] MagicBytes = Encoding.ASCII.GetBytes("TOTP");
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
+    private static readonly IReadOnlyDictionary<string, ExportFileFormat> UnencryptedImportFormats =
+        new Dictionary<string, ExportFileFormat>(StringComparer.OrdinalIgnoreCase)
+        {
+            [".json"] = ExportFileFormat.Json,
+            [".2fas"] = ExportFileFormat.Json,
+            [".txt"] = ExportFileFormat.Txt,
+            [".csv"] = ExportFileFormat.Csv
+        };
     private const int SaltSize = 16;
     private const long MaxImportFileBytes = 5 * 1024 * 1024; // 5 MiB hard limit to reduce parser/DoS risk.
+
+    public static IReadOnlyList<string> SupportedImportFileExtensions { get; } =
+        Array.AsReadOnly(UnencryptedImportFormats.Keys.Prepend(".totp").ToArray());
 
     private static readonly Argon2Parameters _argonParameters = new()
     {
@@ -489,14 +500,19 @@ public sealed class ExportService : IExportService
                 throw new FormatException("The text import mixes incompatible account formats.");
 
             var parsed = OtpauthParser.Parse(line);
-            if (!OtpAuthSupportPolicy.IsSupported(parsed))
+            if (!OtpAuthSupportPolicy.TryResolveSupportedIdentity(
+                    parsed,
+                    out var issuer,
+                    out var accountName))
+            {
                 throw new FormatException("The text import contains unsupported TOTP parameters.");
+            }
 
             result.Add(new Account(
                 Guid.NewGuid(),
-                parsed.Issuer?.Trim() ?? string.Empty,
+                issuer,
                 parsed.SecretBase32,
-                EmptyToNull(parsed.Label.Trim()),
+                EmptyToNull(accountName),
                 parsed.Period));
         }
 
@@ -628,34 +644,7 @@ public sealed class ExportService : IExportService
     }
 
     private static bool TryGetUnencryptedFormat(string extension, out ExportFileFormat format)
-    {
-        if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase))
-        {
-            format = ExportFileFormat.Json;
-            return true;
-        }
-
-        if (extension.Equals(".2fas", StringComparison.OrdinalIgnoreCase))
-        {
-            format = ExportFileFormat.Json;
-            return true;
-        }
-
-        if (extension.Equals(".txt", StringComparison.OrdinalIgnoreCase))
-        {
-            format = ExportFileFormat.Txt;
-            return true;
-        }
-
-        if (extension.Equals(".csv", StringComparison.OrdinalIgnoreCase))
-        {
-            format = ExportFileFormat.Csv;
-            return true;
-        }
-
-        format = ExportFileFormat.Json;
-        return false;
-    }
+        => UnencryptedImportFormats.TryGetValue(extension, out format);
 
     private static Result ValidateImportFileSize(string filePath)
     {

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using OpenCvSharp;
 using ZXing;
 using ZXing.Common;
@@ -7,6 +8,13 @@ namespace TOTP.Camera.OpenCv;
 
 internal static class ZxingQrImageDecoder
 {
+    static ZxingQrImageDecoder() =>
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+    internal static void EnsureCharacterEncodingSupport()
+    {
+    }
+
     public static string? Decode(Mat image)
     {
         ArgumentNullException.ThrowIfNull(image);

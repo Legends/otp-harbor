@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using OpenCvSharp;
 using TOTP.Camera.OpenCv;
 using TOTP.Core.Services.Interfaces;
@@ -122,6 +123,26 @@ public sealed class QrImageDecoderTests
         Assert.True(validation.IsValid);
         Assert.Equal(QrPayloadKind.GoogleAuthenticatorMigration, validation.Kind);
         Assert.Equal(10, validation.AccountCount);
+    }
+
+    [Fact]
+    public async Task DecodeAsync_WhenDecoderIsInitialized_RegistersShiftJisSupport()
+    {
+        var fixturePath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Qr",
+            "google-authenticator-10-account-export-2.png");
+        var sut = new OpenCvQrImageDecoder();
+        await using var stream = File.OpenRead(fixturePath);
+
+        var result = await sut.DecodeAsync(
+            stream,
+            TestContext.Current.CancellationToken);
+        var shiftJis = Encoding.GetEncoding("SJIS");
+
+        Assert.True(result.IsDecoded);
+        Assert.Equal(932, shiftJis.CodePage);
     }
 
     [Fact]

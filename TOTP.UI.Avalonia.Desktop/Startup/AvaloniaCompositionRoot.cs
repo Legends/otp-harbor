@@ -57,7 +57,13 @@ public static class AvaloniaCompositionRoot
 #if DEBUG
         services.AddSingleton(new OnboardingPreviewOptions(
             bool.TryParse(configuration["Debug:ShowOnboardingOnStartup"], out var showOnboarding)
-                && showOnboarding));
+                && showOnboarding,
+            configuration["Debug:OnboardingTheme"]?.Trim().ToLowerInvariant() switch
+            {
+                "light" => global::Avalonia.Styling.ThemeVariant.Light,
+                "dark" => global::Avalonia.Styling.ThemeVariant.Dark,
+                _ => null
+            }));
 #else
         services.AddSingleton(new OnboardingPreviewOptions(false));
 #endif

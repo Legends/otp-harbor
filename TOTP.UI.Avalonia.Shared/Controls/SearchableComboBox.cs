@@ -261,7 +261,9 @@ public sealed class SearchableComboBox : TemplatedControl
 
         if (e.Key != Key.Enter || FilteredItems.Count == 0) return;
 
-        SelectedItem = _itemsList?.SelectedItem ?? FilteredItems[0];
+        SetCurrentValue(
+            SelectedItemProperty,
+            _itemsList?.SelectedItem ?? FilteredItems[0]);
         CloseDropDown();
         e.Handled = true;
     }
@@ -277,7 +279,7 @@ public sealed class SearchableComboBox : TemplatedControl
     {
         if (_popup?.IsOpen != true || _itemsList?.SelectedItem is null) return;
 
-        SelectedItem = _itemsList.SelectedItem;
+        SetCurrentValue(SelectedItemProperty, _itemsList.SelectedItem);
         CloseDropDown();
     }
 

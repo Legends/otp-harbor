@@ -19,4 +19,6 @@ public interface IAppSettings
     bool OpenExportFileAfterExport { get; set; }
     bool HideSecretsByDefault { get; set; }
     string FavoriteGroupColor { get; set; }
+    bool ShowNextToken { get; set; }
+    bool AllowScreenshots { get; set; }
 }

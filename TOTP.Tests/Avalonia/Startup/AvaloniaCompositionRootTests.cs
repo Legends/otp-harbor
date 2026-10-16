@@ -74,8 +74,9 @@ public sealed class AvaloniaCompositionRootTests
         Assert.NotNull(services.GetRequiredService<IIconPackImporterResolver>());
         Assert.NotNull(services.GetRequiredService<ICustomIconImporter>());
         Assert.Equal(
-            brandIcons.AvailableBrands.Count + 1,
+            brandIcons.AvailableBrands.Count + 2,
             accountList.EditorBrandIconOptions.Count);
+        Assert.True(accountList.EditorBrandIconOptions[1].IsCustomPickerAction);
         Assert.IsType<AccountQrCodeService>(
             services.GetRequiredService<IAccountQrCodeService>());
         Assert.IsType<QrAccountImportService>(

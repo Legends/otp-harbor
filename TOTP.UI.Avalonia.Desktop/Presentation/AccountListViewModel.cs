@@ -19,6 +19,8 @@ namespace TOTP.Avalonia.Desktop.Presentation;
 public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 {
     private const int FullListCodeBindingNotificationLimit = 50;
+    private const int MaximumPendingCustomIconBytes = 1024 * 1024;
+    private const string PendingCustomIconId = "custom_pending";
     private readonly IAccountManager _accountManager;
     private readonly IAccountTotpService _accountTotpService;
     private readonly IAsyncClipboardService _clipboardService;
@@ -103,6 +105,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _editorMessage = string.Empty;
     private IReadOnlyList<BrandIconOption> _editorBrandIconOptions = [];
     private BrandIconOption? _selectedEditorBrandIconOption;
+    private BrandIconOption? _brandIconSelectionBeforeCustomPicker;
+    private bool _isCustomIconPickerSelectionPending;
+    private byte[]? _pendingCustomIconBytes;
+    private string? _pendingCustomIconFileName;
     private bool _isGroupEditorVisible;
     private bool _isEditingFavorites;
     private Guid? _editingGroupId;
@@ -182,7 +188,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             ImportCustomIconAsync,
             () => !IsBusy
                 && IsEditorVisible
-                && IsEditingExistingAccount
                 && _brandIconPackService is not null
                 && _filePicker is not null);
         _deleteAccountCommand = new AsyncCommand(
@@ -694,11 +699,19 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         get => _selectedEditorBrandIconOption;
         set
         {
+            if (value?.IsCustomPickerAction == true)
+            {
+                _brandIconSelectionBeforeCustomPicker = _selectedEditorBrandIconOption;
+                _isCustomIconPickerSelectionPending = true;
+                if (_importCustomIconCommand.CanExecute(null))
+                    _importCustomIconCommand.Execute(null);
+                else
+                    RestoreBrandIconSelectionAfterCustomPicker();
+                return;
+            }
+            CompleteCustomIconPickerSelection();
             if (!SetField(ref _selectedEditorBrandIconOption, value)) return;
-            OnPropertyChanged(nameof(SelectedEditorBrandIconFileName));
-            OnPropertyChanged(nameof(HasSelectedEditorBrandIconFileName));
-            OnPropertyChanged(nameof(SelectedEditorCustomIconFileName));
-            OnPropertyChanged(nameof(HasSelectedEditorCustomIconFileName));
+            NotifySelectedBrandIconProperties();
         }
     }
 
@@ -709,7 +722,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         !string.IsNullOrWhiteSpace(SelectedEditorBrandIconFileName);
 
     public bool HasSelectedEditorCustomIconFileName =>
-        SelectedEditorBrandIconOption?.Id?.StartsWith("custom_", StringComparison.Ordinal) == true
+        (SelectedEditorBrandIconOption?.IsPendingCustomIcon == true
+            || SelectedEditorBrandIconOption?.Id?.StartsWith("custom_", StringComparison.Ordinal) == true)
         && HasSelectedEditorBrandIconFileName;
 
     public string SelectedEditorCustomIconFileName =>
@@ -739,7 +753,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     {
         if (IsBusy
             || !IsEditorVisible
-            || !_editingAccountId.HasValue
             || _brandIconPackService is null
             || _filePicker is null)
         {
@@ -752,6 +765,26 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             await using var file = await _filePicker.PickCustomSvgIconAsync();
             if (file is null) return;
             await using var stream = await file.OpenReadAsync();
+            if (!_editingAccountId.HasValue)
+            {
+                var pending = await ReadPendingCustomIconAsync(stream);
+                if (pending.TooLarge)
+                {
+                    EditorMessage = _localization.GetString(AvaloniaStringKeys.CustomIconImportTooLarge);
+                    return;
+                }
+                if (pending.Data is not { Length: > 0 })
+                {
+                    EditorMessage = _localization.GetString(AvaloniaStringKeys.CustomIconImportEmpty);
+                    return;
+                }
+
+                _pendingCustomIconBytes = pending.Data;
+                _pendingCustomIconFileName = file.Name;
+                RefreshBrandIconOptions(PendingCustomIconId);
+                return;
+            }
+
             var imported = await _brandIconPackService.ImportCustomIconAsync(
                 _editingAccountId.Value,
                 stream,
@@ -773,6 +806,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
         finally
         {
+            RestoreBrandIconSelectionAfterCustomPicker();
             IsBusy = false;
         }
     }
@@ -965,7 +999,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 .Select(account =>
                 {
                     AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
-                    return new AccountListItemViewModel(
+                    var item = new AccountListItemViewModel(
                         account.ID,
                         account.Issuer,
                         account.AccountName ?? string.Empty,
@@ -980,6 +1014,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                         group,
                         account.IsFavorite,
                         _toggleAccountFavoriteCommand);
+                    item.UpdateNextTokenPreference(
+                        _settingsService?.Current.ShowNextToken == true);
+                    return item;
                 })
                 .ToArray();
             RefreshFavoriteState();
@@ -1036,7 +1073,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             requestedAccount.UpdateCode(
                 result.Value.Code,
                 result.Value.RemainingSeconds,
-                result.Value.PeriodSeconds);
+                result.Value.PeriodSeconds,
+                result.Value.NextCode);
             ProjectSelectedCode(requestedAccount);
             StartRowCodeLifetime(refreshImmediately: false);
             if (_autoGenerateCodeOnSelection
@@ -1386,9 +1424,23 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             {
                 try
                 {
-                    iconPreferenceSaved = (await _brandIconPackService.SetAccountBrandIdAsync(
-                        updated.ID,
-                        selectedBrandId)).IsSuccess;
+                    if (SelectedEditorBrandIconOption?.IsPendingCustomIcon == true
+                        && _pendingCustomIconBytes is { Length: > 0 })
+                    {
+                        await using var pendingIcon = new MemoryStream(
+                            _pendingCustomIconBytes,
+                            writable: false);
+                        iconPreferenceSaved = (await _brandIconPackService.ImportCustomIconAsync(
+                            updated.ID,
+                            pendingIcon,
+                            _pendingCustomIconFileName)).IsSuccess;
+                    }
+                    else
+                    {
+                        iconPreferenceSaved = (await _brandIconPackService.SetAccountBrandIdAsync(
+                            updated.ID,
+                            selectedBrandId)).IsSuccess;
+                    }
                 }
                 catch (Exception)
                 {
@@ -2094,6 +2146,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 generated.Code,
                 generated.RemainingSeconds,
                 generated.PeriodSeconds,
+                generated.NextCode,
                 notifyBindings: ShouldNotifyCodeBindings(account));
             if (ReferenceEquals(account, _selectedAccount))
                 ProjectSelectedCode(account);
@@ -2257,7 +2310,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(FavoriteGroupForeground));
         var visible = _brandIconResolver.ShowIssuerLogo;
         foreach (var account in _allAccounts)
+        {
             account.UpdateLogoVisibility(visible);
+            account.UpdateNextTokenPreference(
+                _settingsService?.Current.ShowNextToken == true);
+        }
     }
 
     private void ClearEditor()
@@ -2274,7 +2331,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorSecretMessage = string.Empty;
         EditorPeriodMessage = string.Empty;
         EditorMessage = string.Empty;
-        SelectBrandIconOption(null);
+        _pendingCustomIconBytes = null;
+        _pendingCustomIconFileName = null;
+        CompleteCustomIconPickerSelection();
+        RefreshBrandIconOptions(null);
         IsEditorVisible = false;
     }
 
@@ -2306,13 +2366,29 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var automatic = new BrandIconOption(
             null,
             _localization.GetString(AvaloniaStringKeys.AutomaticBrandIcon));
+        var chooseCustom = new BrandIconOption(
+            null,
+            _localization.GetString(AvaloniaStringKeys.ChooseCustomSvgIcon),
+            IsCustomPickerAction: true);
+        var pendingCustom = _pendingCustomIconBytes is { Length: > 0 }
+            ? new BrandIconOption(
+                PendingCustomIconId,
+                _localization.GetString(AvaloniaStringKeys.CustomAccountIcon),
+                _pendingCustomIconFileName,
+                IsPendingCustomIcon: true)
+            : null;
         var available = _brandIconPackService?.AvailableBrands ?? [];
         var selectedCustom = !string.IsNullOrWhiteSpace(selectedBrandId)
+            && !string.Equals(selectedBrandId, PendingCustomIconId, StringComparison.Ordinal)
             ? _brandIconPackService?.Resolve(null, selectedBrandId)
             : null;
         EditorBrandIconOptions =
         [
             automatic,
+            .. (_brandIconPackService is not null && _filePicker is not null
+                ? [chooseCustom]
+                : Array.Empty<BrandIconOption>()),
+            .. (pendingCustom is not null ? [pendingCustom] : Array.Empty<BrandIconOption>()),
             .. available.Select(brand => new BrandIconOption(
                 brand.Id,
                 brand.DisplayName,
@@ -2337,6 +2413,50 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         SelectedEditorBrandIconOption = EditorBrandIconOptions.FirstOrDefault(option =>
             string.Equals(option.Id, brandId, StringComparison.OrdinalIgnoreCase))
             ?? EditorBrandIconOptions.FirstOrDefault();
+    }
+
+    private void RestoreBrandIconSelectionAfterCustomPicker()
+    {
+        if (!_isCustomIconPickerSelectionPending) return;
+
+        var previousSelection = _brandIconSelectionBeforeCustomPicker;
+        _selectedEditorBrandIconOption = null;
+        OnPropertyChanged(nameof(SelectedEditorBrandIconOption));
+        _selectedEditorBrandIconOption = previousSelection;
+        CompleteCustomIconPickerSelection();
+        OnPropertyChanged(nameof(SelectedEditorBrandIconOption));
+        NotifySelectedBrandIconProperties();
+    }
+
+    private void CompleteCustomIconPickerSelection()
+    {
+        _brandIconSelectionBeforeCustomPicker = null;
+        _isCustomIconPickerSelectionPending = false;
+    }
+
+    private void NotifySelectedBrandIconProperties()
+    {
+        OnPropertyChanged(nameof(SelectedEditorBrandIconFileName));
+        OnPropertyChanged(nameof(HasSelectedEditorBrandIconFileName));
+        OnPropertyChanged(nameof(SelectedEditorCustomIconFileName));
+        OnPropertyChanged(nameof(HasSelectedEditorCustomIconFileName));
+    }
+
+    private static async Task<(byte[]? Data, bool TooLarge)> ReadPendingCustomIconAsync(
+        Stream stream)
+    {
+        await using var destination = new MemoryStream();
+        var buffer = new byte[81920];
+        while (true)
+        {
+            var read = await stream.ReadAsync(buffer);
+            if (read == 0) break;
+            if (destination.Length + read > MaximumPendingCustomIconBytes)
+                return (null, true);
+            await destination.WriteAsync(buffer.AsMemory(0, read));
+        }
+
+        return (destination.ToArray(), false);
     }
 
     private void RefreshGroups()

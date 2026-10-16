@@ -8,7 +8,8 @@
     xmlns:vm="using:TOTP.Avalonia.Mobile.Presentation"
     x:Name="Root"
     x:DataType="vm:MobileShellViewModel"
-    Background="{DynamicResource BrushWindowBackground}">
+    Background="{DynamicResource BrushWindowBackground}"
+    Focusable="True">
     <UserControl.Styles>
         <Style Selector="Border#MobileAppHeader">
             <Setter Property="Padding" Value="20,14" />
@@ -21,6 +22,9 @@
         </Style>
         <Style Selector="TextBlock.account-toolbar-title">
             <Setter Property="FontSize" Value="26" />
+        </Style>
+        <Style Selector="Border.editor-action-header">
+            <Setter Property="Margin" Value="20,0" />
         </Style>
         <ContainerQuery Name="MobileShell" Query="max-width:380">
             <Style Selector="Border#MobileAppHeader">
@@ -35,51 +39,55 @@
             <Style Selector="TextBlock.account-toolbar-title">
                 <Setter Property="FontSize" Value="24" />
             </Style>
+            <Style Selector="Border.editor-action-header">
+                <Setter Property="Margin" Value="12,0" />
+            </Style>
             <Style Selector="Button.account-toolbar-action">
                 <Setter Property="Width" Value="48" />
                 <Setter Property="MinWidth" Value="48" />
                 <Setter Property="Padding" Value="6" />
             </Style>
         </ContainerQuery>
-        <Style Selector="Button.mobile-onboarding-primary">
+        <Style Selector="Button.mobile-onboarding-action">
             <Setter Property="MinWidth" Value="104" />
             <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Padding" Value="18,7" />
-            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingPrimary}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingPrimary}" />
-            <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingForeground}" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.mobile-onboarding-primary:pointerover">
-            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingPrimaryHover}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingPrimaryHover}" />
-        </Style>
-        <Style Selector="Button.mobile-onboarding-primary:pressed">
-            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingPrimaryPressed}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingPrimaryPressed}" />
-        </Style>
-        <Style Selector="Button.mobile-onboarding-secondary">
-            <Setter Property="MinWidth" Value="104" />
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Padding" Value="18,7" />
-            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingSecondary}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
-            <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingForeground}" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.mobile-onboarding-secondary:pointerover">
-            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingSecondaryHover}" />
-        </Style>
-        <Style Selector="Button.mobile-onboarding-secondary:pressed">
-            <Setter Property="Background" Value="{DynamicResource BrushMobileOnboardingSecondaryPressed}" />
-        </Style>
-        <Style Selector="Button.mobile-onboarding-skip">
-            <Setter Property="MinHeight" Value="32" />
             <Setter Property="Padding" Value="12,4" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border
+                        Name="OnboardingButtonBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter
+                            Name="OnboardingButtonContent"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Padding="{TemplateBinding Padding}"
+                            TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.mobile-onboarding-action:pointerover">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
+        </Style>
+        <Style Selector="Button.mobile-onboarding-action:pressed">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
             <Setter Property="Foreground" Value="{DynamicResource BrushMobileOnboardingAccentText}" />
         </Style>
         <Style Selector="controls|RevealableSecretInput.unlock-method-attention /template/ TextBox#PART_Input">
@@ -127,7 +135,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" />
         </Style>
         <Style Selector="StackPanel.settings-root Button.wide.settings-category:pressed">
-            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+            <Setter Property="Background" Value="{DynamicResource BrushSettingsCategoryPressed}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" />
         </Style>
         <Style Selector="Button.settings-back-to-top">
@@ -144,6 +152,9 @@
         <Style Selector="Button.settings-back-to-top:pressed">
             <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentPressed}" />
+        </Style>
+        <Style Selector="controls|SearchableComboBox.account-brand-icon-picker /template/ Button#PART_DropDownButton">
+            <Setter Property="Padding" Value="12,8,20,8" />
         </Style>
         <Style Selector="Expander.mobile-faq-section">
             <Setter Property="Background" Value="Transparent" />
@@ -203,7 +214,9 @@
             Background="{DynamicResource BrushSurface}"
             BorderBrush="{DynamicResource BrushBorder}"
             BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+            <Grid
+                MinHeight="48"
+                ColumnDefinitions="Auto,*,Auto">
                 <Image
                     x:Name="MobileAppLogo"
                     Grid.Column="0"
@@ -401,7 +414,9 @@
                         </Grid>
 
                         <Grid
+                            x:Name="AccountSearchPanel"
                             Grid.Row="1"
+                            Margin="0,-4,0,8"
                             ColumnDefinitions="*,Auto"
                             RowDefinitions="Auto">
                             <TextBox
@@ -436,8 +451,8 @@
                         <Grid
                             x:Name="AccountGroupsStrip"
                             Grid.Row="2"
-                            MinHeight="64"
-                            Margin="0,6,0,6"
+                            MinHeight="56"
+                            Margin="0,2,0,6"
                             ColumnDefinitions="*"
                             IsVisible="{Binding HasAccountNavigationCards}"
                             VerticalAlignment="Center">
@@ -550,8 +565,8 @@
                         <ContentControl
                             x:Name="NativeAccountGroupsPresenter"
                             Grid.Row="2"
-                            MinHeight="64"
-                            Margin="0,6,0,6"
+                            MinHeight="56"
+                            Margin="0,2,0,6"
                             IsHitTestVisible="False"
                             IsVisible="{Binding IsNativeAccountGroupsVisible}" />
 
@@ -802,14 +817,23 @@
                                                             FontSize="25"
                                                             FontWeight="Bold"
                                                             Text="{Binding DisplayCode}" />
-                                                        <TextBlock
-                                                            HorizontalAlignment="Right"
-                                                            Foreground="{DynamicResource BrushAccent}"
-                                                            FontSize="11"
-                                                            FontWeight="SemiBold"
-                                                            MinHeight="16"
-                                                            Text="{Binding CopyConfirmation}"
-                                                            TextWrapping="NoWrap" />
+                                                        <Grid MinHeight="16">
+                                                            <TextBlock
+                                                                HorizontalAlignment="Right"
+                                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                                FontFamily="Consolas"
+                                                                FontSize="16"
+                                                                IsVisible="{Binding HasVisibleNextCode}"
+                                                                Text="{Binding DisplayNextCode}"
+                                                                TextWrapping="NoWrap" />
+                                                            <TextBlock
+                                                                HorizontalAlignment="Right"
+                                                                Foreground="{DynamicResource BrushAccent}"
+                                                                FontSize="11"
+                                                                FontWeight="SemiBold"
+                                                                Text="{Binding CopyConfirmation}"
+                                                                TextWrapping="NoWrap" />
+                                                        </Grid>
                                                     </StackPanel>
                                                     <ProgressBar
                                                         Grid.Row="1"
@@ -1010,7 +1034,7 @@
                             Classes="card"
                             IsVisible="{Binding IsAppearanceSettingsVisible}"
                             Padding="16">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="28">
+                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="28" RowSpacing="12">
                                 <StackPanel Grid.Column="0" Spacing="10">
                                     <TextBlock
                                         FontSize="18"
@@ -1071,6 +1095,13 @@
                                             IsChecked="{Binding IsLightThemeSelected, Mode=OneWay}" />
                                     </StackPanel>
                                 </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Spacing="4">
+                                    <CheckBox Content="{Binding ShowNextTokenText}" IsChecked="{Binding ShowNextToken, Mode=TwoWay}" />
+                                    <TextBlock
+                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                        Text="{Binding ShowNextTokenHelpText}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
                             </Grid>
                         </Border>
                         <Border
@@ -1095,15 +1126,9 @@
                                 </Button>
                             </StackPanel>
                         </Border>
-                        <Border
-                            Classes="card"
+                        <StackPanel
                             IsVisible="{Binding IsSecuritySettingsVisible}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <TextBlock
-                                    FontSize="18"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding SecurityText}" />
+                            Spacing="12">
                                 <Border
                                     BorderBrush="{DynamicResource BrushBorder}"
                                     BorderThickness="1"
@@ -1143,133 +1168,164 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
-                                <TextBlock
-                                    FontSize="17"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding AppLockTitleText}" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    IsVisible="{Binding IsAppLockEnabled}"
-                                    Text="{Binding AppLockEnabledDescriptionText}"
-                                    TextWrapping="Wrap" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushWarning}"
-                                    IsVisible="{Binding IsAppLockDisabled}"
-                                    Text="{Binding AppLockDisabledDescriptionText}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Classes="wide"
-                                    Classes.primary="{Binding IsAppLockDisabled}"
-                                    Classes.secondary="{Binding IsAppLockEnabled}"
-                                    Command="{Binding ToggleAppLockCommand}">
-                                    <controls:SymbolIconLabel Kind="Lock" Text="{Binding AppLockActionText}" />
-                                </Button>
                                 <Border
-                                    Background="{DynamicResource BrushSurfaceAlternate}"
+                                    x:Name="AppLockPanel"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
                                     CornerRadius="8"
-                                    IsVisible="{Binding IsDisableAppLockConfirmationVisible}"
                                     Padding="12">
                                     <StackPanel Spacing="10">
                                         <TextBlock
-                                            Text="{Binding DisableAppLockWarningText}"
+                                            FontSize="17"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding AppLockTitleText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            IsVisible="{Binding IsAppLockEnabled}"
+                                            Text="{Binding AppLockEnabledDescriptionText}"
                                             TextWrapping="Wrap" />
-                                        <controls:RevealableSecretInput
-                                            AccessibleName="{Binding MasterPasswordText}"
-                                            PlaceholderText="{Binding MasterPasswordText}"
-                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                            Text="{Binding AppLockRecoveryPassword, Mode=TwoWay}" />
-                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                            <Button
-                                                Grid.Column="0"
-                                                Classes="wide secondary"
-                                                Command="{Binding CancelDisableAppLockCommand}">
-                                                <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
-                                            </Button>
-                                            <Button
-                                                Grid.Column="1"
-                                                Classes="wide danger"
-                                                Command="{Binding ConfirmDisableAppLockCommand}">
-                                                <controls:SymbolIconLabel Kind="Lock" Text="{Binding DisableAppLockText}" />
-                                            </Button>
-                                        </Grid>
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushWarning}"
+                                            IsVisible="{Binding IsAppLockDisabled}"
+                                            Text="{Binding AppLockDisabledDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <Button
+                                            Classes="wide"
+                                            Classes.primary="{Binding IsAppLockDisabled}"
+                                            Classes.secondary="{Binding IsAppLockEnabled}"
+                                            Command="{Binding ToggleAppLockCommand}">
+                                            <controls:SymbolIconLabel Kind="Lock" Text="{Binding AppLockActionText}" />
+                                        </Button>
+                                        <Border
+                                            Background="{DynamicResource BrushSurfaceAlternate}"
+                                            CornerRadius="8"
+                                            IsVisible="{Binding IsDisableAppLockConfirmationVisible}"
+                                            Padding="12">
+                                            <StackPanel Spacing="10">
+                                                <TextBlock
+                                                    Text="{Binding DisableAppLockWarningText}"
+                                                    TextWrapping="Wrap" />
+                                                <controls:RevealableSecretInput
+                                                    AccessibleName="{Binding MasterPasswordText}"
+                                                    PlaceholderText="{Binding MasterPasswordText}"
+                                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                                    Text="{Binding AppLockRecoveryPassword, Mode=TwoWay}" />
+                                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                                    <Button
+                                                        Grid.Column="0"
+                                                        Classes="wide secondary"
+                                                        Command="{Binding CancelDisableAppLockCommand}">
+                                                        <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        Classes="wide danger"
+                                                        Command="{Binding ConfirmDisableAppLockCommand}">
+                                                        <controls:SymbolIconLabel Kind="Lock" Text="{Binding DisableAppLockText}" />
+                                                    </Button>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
                                     </StackPanel>
                                 </Border>
-                                <TextBlock
-                                    FontSize="17"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding UnlockMethodTitleText}" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding UnlockMethodDescriptionText}"
-                                    TextWrapping="Wrap" />
-                                <StackPanel
-                                    IsEnabled="{Binding IsUnlockMethodSelectionEnabled}"
-                                    Spacing="6">
-                                    <RadioButton
-                                        GroupName="UnlockMethod"
-                                        Click="HighlightUnlockMethodConfirmation"
-                                        Command="{Binding BeginBiometricEnrollmentCommand}"
-                                        Content="{Binding UnlockWithBiometricsText}"
-                                        IsChecked="{Binding IsBiometricUnlockSelected, Mode=OneWay}"
-                                        IsEnabled="{Binding IsBiometricUnlockOptionEnabled}" />
-                                    <TextBlock
-                                        Margin="28,0,0,4"
-                                        Foreground="{DynamicResource BrushTextSecondary}"
-                                        IsVisible="{Binding IsBiometricUnavailable}"
-                                        Text="{Binding BiometricUnavailableText}"
-                                        TextWrapping="Wrap" />
-                                    <RadioButton
-                                        GroupName="UnlockMethod"
-                                        Click="HighlightUnlockMethodConfirmation"
-                                        Command="{Binding BeginDeviceCredentialEnrollmentCommand}"
-                                        Content="{Binding UnlockWithDevicePinText}"
-                                        IsChecked="{Binding IsDeviceCredentialUnlockSelected, Mode=OneWay}"
-                                        IsEnabled="{Binding IsDeviceCredentialUnlockOptionEnabled}" />
-                                    <TextBlock
-                                        Margin="28,0,0,4"
-                                        Foreground="{DynamicResource BrushTextSecondary}"
-                                        IsVisible="{Binding IsDeviceCredentialUnavailable}"
-                                        Text="{Binding DevicePinUnavailableText}"
-                                        TextWrapping="Wrap" />
-                                    <RadioButton
-                                        GroupName="UnlockMethod"
-                                        Click="HighlightUnlockMethodConfirmation"
-                                        Command="{Binding SelectPasswordUnlockCommand}"
-                                        Content="{Binding UnlockWithPasswordText}"
-                                        IsChecked="{Binding IsPasswordUnlockSelected, Mode=OneWay}" />
-                                </StackPanel>
-                                <StackPanel
-                                    IsVisible="{Binding IsBiometricEnrollmentVisible}"
-                                    Spacing="10">
-                                    <TextBlock
-                                        Foreground="{DynamicResource BrushTextSecondary}"
-                                        Text="{Binding UnlockMethodPasswordPromptText}"
-                                        TextWrapping="Wrap" />
-                                    <controls:RevealableSecretInput
-                                        x:Name="UnlockMethodPasswordBox"
-                                        AccessibleName="{Binding MasterPasswordText}"
-                                        PlaceholderText="{Binding MasterPasswordText}"
-                                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                        Text="{Binding BiometricRecoveryPassword, Mode=TwoWay}" />
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                        <Button
-                                            Grid.Column="0"
-                                            Classes="wide secondary"
-                                            Command="{Binding CancelBiometricEnrollmentCommand}">
-                                            <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
-                                        </Button>
-                                        <Button
-                                            Grid.Column="1"
-                                            Classes="wide primary"
-                                            Command="{Binding EnableBiometricCommand}">
-                                            <controls:SymbolIconLabel Kind="Check" Text="{Binding ApplyUnlockMethodText}" />
-                                        </Button>
-                                    </Grid>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                                <Border
+                                    x:Name="UnlockMethodPanel"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock
+                                            FontSize="17"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding UnlockMethodTitleText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding UnlockMethodDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <StackPanel
+                                            IsEnabled="{Binding IsUnlockMethodSelectionEnabled}"
+                                            Spacing="6">
+                                            <RadioButton
+                                                GroupName="UnlockMethod"
+                                                Click="HighlightUnlockMethodConfirmation"
+                                                Command="{Binding BeginBiometricEnrollmentCommand}"
+                                                Content="{Binding UnlockWithBiometricsText}"
+                                                IsChecked="{Binding IsBiometricUnlockSelected, Mode=OneWay}"
+                                                IsEnabled="{Binding IsBiometricUnlockOptionEnabled}" />
+                                            <TextBlock
+                                                Margin="28,0,0,4"
+                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                IsVisible="{Binding IsBiometricUnavailable}"
+                                                Text="{Binding BiometricUnavailableText}"
+                                                TextWrapping="Wrap" />
+                                            <RadioButton
+                                                GroupName="UnlockMethod"
+                                                Click="HighlightUnlockMethodConfirmation"
+                                                Command="{Binding BeginDeviceCredentialEnrollmentCommand}"
+                                                Content="{Binding UnlockWithDevicePinText}"
+                                                IsChecked="{Binding IsDeviceCredentialUnlockSelected, Mode=OneWay}"
+                                                IsEnabled="{Binding IsDeviceCredentialUnlockOptionEnabled}" />
+                                            <TextBlock
+                                                Margin="28,0,0,4"
+                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                IsVisible="{Binding IsDeviceCredentialUnavailable}"
+                                                Text="{Binding DevicePinUnavailableText}"
+                                                TextWrapping="Wrap" />
+                                            <RadioButton
+                                                GroupName="UnlockMethod"
+                                                Click="HighlightUnlockMethodConfirmation"
+                                                Command="{Binding SelectPasswordUnlockCommand}"
+                                                Content="{Binding UnlockWithPasswordText}"
+                                                IsChecked="{Binding IsPasswordUnlockSelected, Mode=OneWay}" />
+                                        </StackPanel>
+                                        <StackPanel
+                                            IsVisible="{Binding IsBiometricEnrollmentVisible}"
+                                            Spacing="10">
+                                            <TextBlock
+                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                Text="{Binding UnlockMethodPasswordPromptText}"
+                                                TextWrapping="Wrap" />
+                                            <controls:RevealableSecretInput
+                                                x:Name="UnlockMethodPasswordBox"
+                                                AccessibleName="{Binding MasterPasswordText}"
+                                                PlaceholderText="{Binding MasterPasswordText}"
+                                                RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                                RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                                Text="{Binding BiometricRecoveryPassword, Mode=TwoWay}" />
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                                <Button
+                                                    Grid.Column="0"
+                                                    Classes="wide secondary"
+                                                    Command="{Binding CancelBiometricEnrollmentCommand}">
+                                                    <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
+                                                </Button>
+                                                <Button
+                                                    Grid.Column="1"
+                                                    Classes="wide primary"
+                                                    Command="{Binding EnableBiometricCommand}">
+                                                    <controls:SymbolIconLabel Kind="Check" Text="{Binding ApplyUnlockMethodText}" />
+                                                </Button>
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    x:Name="ScreenCapturePanel"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="6">
+                                        <CheckBox Content="{Binding AllowScreenshotsText}" IsChecked="{Binding AllowScreenshots, Mode=TwoWay}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding AllowScreenshotsHelpText}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                        </StackPanel>
                         <Border
                             Classes="card"
                             IsVisible="{Binding IsBrandIconSettingsVisible}"
@@ -1315,15 +1371,9 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
-                        <Border
-                            Classes="card"
+                        <StackPanel
                             IsVisible="{Binding IsBackupSettingsVisible}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding BackupDescription}"
-                                    TextWrapping="Wrap" />
+                            Spacing="12">
                                 <Border
                                     x:Name="BackupExportPanel"
                                     BorderBrush="{DynamicResource BrushBorder}"
@@ -1380,13 +1430,10 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
-                        </Border>
-                        <Border
-                            Classes="card"
+                        </StackPanel>
+                        <StackPanel
                             IsVisible="{Binding IsImportExportSettingsVisible}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
+                            Spacing="12">
                                 <Border
                                     x:Name="GoogleAuthenticatorImportPanel"
                                     BorderBrush="{DynamicResource BrushBorder}"
@@ -1464,8 +1511,7 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
-                        </Border>
+                        </StackPanel>
                         <Border
                             IsVisible="{Binding IsFaqSettingsVisible}"
                             Padding="0">
@@ -1503,17 +1549,42 @@
                                             CornerRadius="0,0,8,8"
                                             Padding="12">
                                             <StackPanel Spacing="8">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                    <TextBlock Grid.Column="0" Text="1." />
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock
+                                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                                            Text="{Binding FaqImportIconPacksStepDownloadText}"
+                                                            TextWrapping="Wrap" />
+                                                        <HyperlinkButton
+                                                            HorizontalAlignment="Left"
+                                                            NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest"
+                                                            Padding="0,4">
+                                                            <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqImportIconPacksDownloadLinkText}" />
+                                                        </HyperlinkButton>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                    <TextBlock Grid.Column="0" Text="2." />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                                        Text="{Binding FaqImportIconPacksStepBuildText}"
+                                                        TextWrapping="Wrap" />
+                                                </Grid>
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                    <TextBlock Grid.Column="0" Text="3." />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                                        Text="{Binding FaqImportIconPacksStepImportText}"
+                                                        TextWrapping="Wrap" />
+                                                </Grid>
                                                 <TextBlock
                                                     Foreground="{DynamicResource BrushTextSecondary}"
-                                                    Text="{Binding FaqImportIconPacksAnswerText}"
+                                                    Text="{Binding FaqImportIconPacksCustomSvgTipText}"
                                                     TextWrapping="Wrap" />
                                                 <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
-                                                <HyperlinkButton
-                                                    HorizontalAlignment="Left"
-                                                    NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
-                                                    Padding="0,4">
-                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding IconPackBuilderLinkText}" />
-                                                </HyperlinkButton>
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
                                                     NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
@@ -1574,6 +1645,7 @@
                                             Padding="12">
                                             <StackPanel Spacing="10">
                                                 <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqImportFormatsIntroText}" TextWrapping="Wrap" />
+                                                <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqImportFormatsSupportedText}" TextWrapping="Wrap" />
                                                 <Expander
                                                     x:Name="FaqImportFormatsAegisExpander"
                                                     Classes="mobile-faq-subsection"
@@ -1625,28 +1697,10 @@
                     </StackPanel>
 
                     <StackPanel
+                        Margin="0,64,0,0"
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsGroupEditorVisible}"
                         Spacing="14">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                FontSize="26"
-                                FontWeight="SemiBold"
-                                Text="{Binding GroupEditorTitle}" />
-                            <Button
-                                Grid.Column="1"
-                                Width="48"
-                                MinWidth="48"
-                                Padding="8"
-                                automation:AutomationProperties.Name="{Binding CancelText}"
-                                Classes="icon-action"
-                                Command="{Binding CancelGroupEditCommand}"
-                                Content="×"
-                                FontSize="26"
-                                ToolTip.Tip="{Binding CancelText}" />
-                        </Grid>
                         <TextBox
                             x:Name="GroupNameBox"
                             MaxLength="64"
@@ -1765,34 +1819,19 @@
                             </Grid>
                         </Border>
                         <controls:ValidationMessage Severity="Error" Text="{Binding GroupEditorMessage}" />
-                        <Grid ColumnDefinitions="Auto,*,*" ColumnSpacing="10">
-                            <Button
-                                Grid.Column="0"
-                                Classes="danger"
-                                Command="{Binding BeginDeleteGroupCommand}"
-                                Content="{Binding DeleteGroupText}"
-                                IsVisible="{Binding IsEditingGroup}" />
-                            <Button
-                                Grid.Column="1"
-                                Classes="wide secondary"
-                                Command="{Binding CancelGroupEditCommand}"
-                                Content="{Binding CancelText}" />
-                            <Button
-                                Grid.Column="2"
-                                Classes="wide primary"
-                                Command="{Binding SaveGroupCommand}"
-                                Content="{Binding SaveText}" />
-                        </Grid>
+                        <Button
+                            HorizontalAlignment="Left"
+                            Classes="danger"
+                            Command="{Binding BeginDeleteGroupCommand}"
+                            Content="{Binding DeleteGroupText}"
+                            IsVisible="{Binding IsEditingGroup}" />
                     </StackPanel>
 
                     <StackPanel
+                        Margin="0,64,0,0"
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsEditorVisible}"
                         Spacing="14">
-                        <TextBlock
-                            FontSize="26"
-                            FontWeight="SemiBold"
-                            Text="{Binding EditorTitle}" />
                         <TextBox
                             automation:AutomationProperties.Name="{Binding IssuerText}"
                             PlaceholderText="{Binding IssuerText}"
@@ -1811,6 +1850,7 @@
                         <controls:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
                         <Expander
                             x:Name="AccountAdvancedOptions"
+                            Classes="account-advanced"
                             Header="{Binding AdvancedOptionsText}"
                             IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">
                             <StackPanel Spacing="8">
@@ -1827,6 +1867,7 @@
                                     Text="{Binding BrandIconText}" />
                                 <controls:SearchableComboBox
                                     x:Name="AccountBrandIconComboBox"
+                                    Classes="account-brand-icon-picker"
                                     HorizontalAlignment="Left"
                                     automation:AutomationProperties.Name="{Binding BrandIconText}"
                                     ClearSearchText="{Binding ClearSearchText}"
@@ -1850,12 +1891,6 @@
                                         Text="{Binding SelectedEditorCustomIconFileName}"
                                         TextTrimming="CharacterEllipsis" />
                                 </Border>
-                                <Button
-                                    x:Name="CustomSvgIconButton"
-                                    Classes="wide secondary"
-                                    Command="{Binding ImportCustomIconCommand}"
-                                    Content="{Binding ChooseCustomSvgIconText}"
-                                    IsVisible="{Binding IsEditingExistingAccount}" />
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
                                     Text="{Binding BrandIconHelpText}"
@@ -1892,22 +1927,116 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Expander>
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button
-                                Grid.Column="0"
-                                Classes="wide secondary"
-                                Command="{Binding CancelEditCommand}"
-                                Content="{Binding CancelText}" />
-                            <Button
-                                Grid.Column="1"
-                                Classes="wide primary"
-                                Command="{Binding SaveAccountCommand}"
-                                Content="{Binding SaveText}" />
-                        </Grid>
                     </StackPanel>
                 </Grid>
             </Grid>
         </ScrollViewer>
+
+        <Border
+            x:Name="MobileGroupEditorHeader"
+            Grid.Row="1"
+            ZIndex="30"
+            MaxWidth="720"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Top"
+            Background="{DynamicResource BrushWindowBackground}"
+            BorderBrush="{DynamicResource BrushBorder}"
+            BorderThickness="0,0,0,1"
+            Classes="editor-action-header"
+            IsVisible="{Binding IsGroupEditorVisible}"
+            Padding="0,8">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="26"
+                    FontWeight="SemiBold"
+                    Text="{Binding GroupEditorTitle}" />
+                <Button
+                    Grid.Column="1"
+                    Width="48"
+                    Height="48"
+                    MinWidth="48"
+                    MinHeight="48"
+                    Padding="10"
+                    automation:AutomationProperties.Name="{Binding SaveText}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Classes="icon-action"
+                    Command="{Binding SaveGroupCommand}"
+                    ToolTip.Tip="{Binding SaveText}">
+                    <controls:SymbolIcon Foreground="{DynamicResource BrushSuccess}" IconSize="26" Kind="Check" />
+                </Button>
+                <Button
+                    Grid.Column="2"
+                    Width="48"
+                    Height="48"
+                    MinWidth="48"
+                    MinHeight="48"
+                    Padding="10"
+                    automation:AutomationProperties.Name="{Binding CancelText}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Classes="icon-action"
+                    Command="{Binding CancelGroupEditCommand}"
+                    ToolTip.Tip="{Binding CancelText}">
+                    <controls:SymbolIcon Foreground="{DynamicResource BrushDanger}" IconSize="26" Kind="Close" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <Border
+            x:Name="MobileAccountEditorHeader"
+            Grid.Row="1"
+            ZIndex="30"
+            MaxWidth="720"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Top"
+            Background="{DynamicResource BrushWindowBackground}"
+            BorderBrush="{DynamicResource BrushBorder}"
+            BorderThickness="0,0,0,1"
+            Classes="editor-action-header"
+            IsVisible="{Binding IsEditorVisible}"
+            Padding="0,8">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="26"
+                    FontWeight="SemiBold"
+                    Text="{Binding EditorTitle}" />
+                <Button
+                    Grid.Column="1"
+                    Width="48"
+                    Height="48"
+                    MinWidth="48"
+                    MinHeight="48"
+                    Padding="10"
+                    automation:AutomationProperties.Name="{Binding SaveText}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Classes="icon-action"
+                    Command="{Binding SaveAccountCommand}"
+                    ToolTip.Tip="{Binding SaveText}">
+                    <controls:SymbolIcon Foreground="{DynamicResource BrushSuccess}" IconSize="26" Kind="Check" />
+                </Button>
+                <Button
+                    Grid.Column="2"
+                    Width="48"
+                    Height="48"
+                    MinWidth="48"
+                    MinHeight="48"
+                    Padding="10"
+                    automation:AutomationProperties.Name="{Binding CancelText}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Classes="icon-action"
+                    Command="{Binding CancelEditCommand}"
+                    ToolTip.Tip="{Binding CancelText}">
+                    <controls:SymbolIcon Foreground="{DynamicResource BrushDanger}" IconSize="26" Kind="Close" />
+                </Button>
+            </Grid>
+        </Border>
 
         <Button
             x:Name="SettingsBackToTopButton"
@@ -1926,7 +2055,7 @@
             IsVisible="False"
             Padding="12"
             ToolTip.Tip="{Binding BackToTopText}">
-            <controls:SymbolIcon IconSize="18" Kind="ArrowUp" Opacity="0.65" />
+            <controls:SymbolIcon IconSize="22" Kind="ArrowUp" />
         </Button>
 
         <!-- Keep the biometric action responsive: its center is exactly in the
@@ -2098,25 +2227,25 @@
                             <Button
                                 x:Name="SkipOnboardingButton"
                                 Grid.Column="0"
-                                Classes="mobile-onboarding-skip"
+                                Classes="mobile-onboarding-action"
                                 Command="{Binding FinishOnboardingCommand}"
                                 Content="{Binding OnboardingSkipText}"
                                 IsVisible="{Binding IsFirstOnboardingSlide}" />
                             <Button
                                 Grid.Column="0"
-                                Classes="mobile-onboarding-secondary"
+                                Classes="mobile-onboarding-action"
                                 Command="{Binding PreviousOnboardingCommand}"
                                 Content="{Binding OnboardingBackText}"
                                 IsVisible="{Binding !IsFirstOnboardingSlide}" />
                             <Button
                                 Grid.Column="2"
-                                Classes="mobile-onboarding-primary"
+                                Classes="mobile-onboarding-action"
                                 Command="{Binding NextOnboardingCommand}"
                                 Content="{Binding OnboardingNextText}"
                                 IsVisible="{Binding !IsLastOnboardingSlide}" />
                             <Button
                                 Grid.Column="2"
-                                Classes="mobile-onboarding-primary"
+                                Classes="mobile-onboarding-action"
                                 Command="{Binding FinishOnboardingCommand}"
                                 Content="{Binding OnboardingFinishText}"
                                 IsVisible="{Binding IsLastOnboardingSlide}" />

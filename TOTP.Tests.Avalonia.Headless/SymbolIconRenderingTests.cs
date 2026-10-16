@@ -8,6 +8,7 @@ public sealed class SymbolIconRenderingTests
 {
     [AvaloniaTheory]
     [InlineData(SymbolIconKind.Palette)]
+    [InlineData(SymbolIconKind.ArrowUp)]
     [InlineData(SymbolIconKind.ImageStack)]
     [InlineData(SymbolIconKind.Vault)]
     [InlineData(SymbolIconKind.BackupRestore)]

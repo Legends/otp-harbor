@@ -4,7 +4,9 @@ using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Android;
 
-internal sealed class AndroidAccountGroupStripHost(MobileShellViewModel viewModel)
+internal sealed class AndroidAccountGroupStripHost(
+    MobileShellViewModel viewModel,
+    Action dismissAccountSearchFocus)
     : AndroidNativeControlHost
 {
     private NativeAccountGroupRecyclerView? _groupStrip;
@@ -13,7 +15,10 @@ internal sealed class AndroidAccountGroupStripHost(MobileShellViewModel viewMode
     {
         var context = (parent as AndroidViewControlHandle)?.View.Context
             ?? global::Android.App.Application.Context;
-        _groupStrip = new NativeAccountGroupRecyclerView(context, viewModel);
+        _groupStrip = new NativeAccountGroupRecyclerView(
+            context,
+            viewModel,
+            dismissAccountSearchFocus);
         return new AndroidViewControlHandle(_groupStrip);
     }
 

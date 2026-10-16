@@ -151,6 +151,7 @@ public sealed class SharedStylesTests
             "BrushSurface",
             "BrushTextPrimary",
             "BrushTextSecondary",
+            "BrushDisabledIcon",
             "BrushToolbarSearchIcon",
             "BrushFaqHeaderBackground",
             "BrushFaqHeaderForeground",
@@ -390,6 +391,114 @@ public sealed class SharedStylesTests
                 .ToArray();
 
             Assert.Empty(literalColors);
+        }
+    }
+
+    [Fact]
+    public void AccountAdvancedSectionsUseOnlySemanticThemeResources()
+    {
+        var fixtureDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia");
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var sharedStyles = XDocument.Load(Path.Combine(fixtureDirectory, "SharedStyles.axaml"));
+
+        var expectedSetters = new Dictionary<string, IReadOnlyDictionary<string, string>>
+        {
+            ["Expander.account-advanced"] = new Dictionary<string, string>
+            {
+                ["Background"] = "{DynamicResource BrushSurface}",
+                ["BorderBrush"] = "{DynamicResource BrushBorder}",
+                ["Foreground"] = "{DynamicResource BrushTextPrimary}"
+            },
+            ["Expander.account-advanced /template/ ToggleButton#ExpanderHeader"] = new Dictionary<string, string>
+            {
+                ["Background"] = "{DynamicResource BrushSurface}",
+                ["BorderBrush"] = "{DynamicResource BrushBorder}",
+                ["Foreground"] = "{DynamicResource BrushTextPrimary}"
+            },
+            ["Expander.account-advanced /template/ ToggleButton#ExpanderHeader:pointerover"] = new Dictionary<string, string>
+            {
+                ["Background"] = "{DynamicResource BrushSurfaceAlternate}",
+                ["BorderBrush"] = "{DynamicResource BrushBorder}",
+                ["Foreground"] = "{DynamicResource BrushTextPrimary}"
+            },
+            ["Expander.account-advanced /template/ ToggleButton#ExpanderHeader:pressed"] = new Dictionary<string, string>
+            {
+                ["Background"] = "{DynamicResource BrushSurfaceAlternate}",
+                ["BorderBrush"] = "{DynamicResource BrushBorder}",
+                ["Foreground"] = "{DynamicResource BrushTextPrimary}"
+            }
+        };
+
+        foreach (var (selector, expected) in expectedSetters)
+        {
+            var style = sharedStyles
+                .Descendants(avalonia + "Style")
+                .Single(element => element.Attribute("Selector")?.Value == selector);
+            var setters = style
+                .Elements(avalonia + "Setter")
+                .Where(setter => expected.ContainsKey(setter.Attribute("Property")?.Value ?? string.Empty))
+                .ToDictionary(
+                    setter => setter.Attribute("Property")!.Value,
+                    setter => setter.Attribute("Value")!.Value);
+
+            Assert.Equal(expected, setters);
+        }
+
+        foreach (var fixtureName in new[] { "DesktopMainWindow.axaml", "MobileMainView.axaml" })
+        {
+            var document = XDocument.Load(Path.Combine(fixtureDirectory, fixtureName));
+            var advanced = document
+                .Descendants(avalonia + "Expander")
+                .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountAdvancedOptions");
+            Assert.Equal("account-advanced", advanced.Attribute("Classes")?.Value);
+        }
+    }
+
+    [Fact]
+    public void DesktopEditorActionsStayInFixedThemeAwareHeaders()
+    {
+        var mainWindow = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "DesktopMainWindow.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        foreach (var specification in new[]
+                 {
+                     (Header: "AccountEditorHeader", Save: "{Binding SaveAccountCommand}", Cancel: "{Binding CancelEditCommand}"),
+                     (Header: "GroupEditorHeader", Save: "{Binding SaveGroupCommand}", Cancel: "{Binding CancelGroupEditCommand}")
+                 })
+        {
+            var header = mainWindow
+                .Descendants(avalonia + "Grid")
+                .Single(element => element.Attribute(xaml + "Name")?.Value == specification.Header);
+            Assert.DoesNotContain(header.Ancestors(), element => element.Name == avalonia + "ScrollViewer");
+
+            var saveButton = header
+                .Descendants(avalonia + "Button")
+                .Single(button => button.Attribute("Command")?.Value == specification.Save);
+            var cancelButton = header
+                .Descendants(avalonia + "Button")
+                .Single(button => button.Attribute("Command")?.Value == specification.Cancel);
+            Assert.Contains(
+                saveButton.Descendants(),
+                icon => icon.Name.LocalName == "SymbolIcon"
+                    && icon.Attribute("Kind")?.Value == "Check"
+                    && icon.Attribute("Foreground")?.Value == "{DynamicResource BrushSuccess}");
+            Assert.Contains(
+                cancelButton.Descendants(),
+                icon => icon.Name.LocalName == "SymbolIcon"
+                    && icon.Attribute("Kind")?.Value == "Close"
+                    && icon.Attribute("Foreground")?.Value == "{DynamicResource BrushDanger}");
+            Assert.Single(
+                mainWindow.Descendants(avalonia + "Button"),
+                button => button.Attribute("Command")?.Value == specification.Save);
         }
     }
 

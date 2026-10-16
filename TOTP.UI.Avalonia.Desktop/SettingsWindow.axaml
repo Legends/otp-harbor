@@ -160,6 +160,8 @@
                                                     </DataTemplate>
                                                 </ComboBox.ItemTemplate>
                                             </ComboBox>
+                                            <CheckBox Content="{DynamicResource ShowNextToken}" IsChecked="{Binding ShowNextToken, Mode=TwoWay}" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource ShowNextTokenHelp}" TextWrapping="Wrap" />
                                             <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource QrPreviewScale}" />
                                             <NumericUpDown Increment="0.5" Maximum="6" Minimum="1" Value="{Binding QrPreviewScaleFactor, Mode=TwoWay}" />
                                             <StackPanel IsVisible="{Binding IsInterfaceScaleAvailable}" Spacing="8">

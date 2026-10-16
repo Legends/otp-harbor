@@ -1,12 +1,14 @@
 <Application
     x:Class="TOTP.Avalonia.Mobile.MobileApp"
     xmlns="https://github.com/avaloniaui"
+    xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     RequestedThemeVariant="Default">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="BrushSettingsCategoryPressed" Color="#EDEDED" />
                     <SolidColorBrush x:Key="BrushFavoriteFilterBackground" Color="#FFF4C2" />
                     <SolidColorBrush x:Key="BrushFavoriteFilterBackgroundActive" Color="#FFE89A" />
                     <SolidColorBrush x:Key="BrushFavoriteFilterBorder" Color="#D4B95D" />
@@ -20,6 +22,7 @@
                     <SolidColorBrush x:Key="BrushSurfaceAlternate" Color="#1A2E4E" />
                     <SolidColorBrush x:Key="BrushSurfaceHover" Color="#243C63" />
                     <SolidColorBrush x:Key="BrushSurfacePressed" Color="#152744" />
+                    <SolidColorBrush x:Key="BrushSettingsCategoryPressed" Color="#35547F" />
                     <SolidColorBrush x:Key="BrushTextPrimary" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushTextSecondary" Color="#CBDAF3" />
                     <SolidColorBrush x:Key="BrushTextBrand" Color="#AA3ADA" />
@@ -71,12 +74,40 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border
+                        Name="IconActionBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter
+                            Name="IconActionContent"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Padding="{TemplateBinding Padding}"
+                            TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
         </Style>
-        <Style Selector="Button.icon-action:pointerover /template/ Border#PART_Border">
+        <Style Selector="Button.icon-action:pointerover">
             <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
         <Style Selector="Button.icon-action:disabled">
             <Setter Property="Opacity" Value="1" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushDisabledIcon}" />
+        </Style>
+        <Style Selector="Button.icon-action:disabled controls|SymbolIcon">
+            <Setter Property="Foreground" Value="{DynamicResource BrushDisabledIcon}" />
         </Style>
         <Style Selector="ToggleButton.favorites-filter">
             <Setter Property="HorizontalAlignment" Value="Stretch" />

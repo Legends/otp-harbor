@@ -29,11 +29,17 @@ public sealed class QrPayloadValidator : IQrPayloadValidator
             }
 
             var parsed = OtpauthParser.Parse(decodedPayload);
-            if (!OtpAuthSupportPolicy.IsSupported(parsed)) return Invalid(kind);
+            if (!OtpAuthSupportPolicy.TryResolveSupportedIdentity(
+                    parsed,
+                    out var issuer,
+                    out var accountName))
+            {
+                return Invalid(kind);
+            }
             return new QrPayloadValidationResult(
                 true,
-                parsed.Issuer?.Trim() ?? string.Empty,
-                parsed.Label.Trim());
+                issuer,
+                accountName);
         }
         catch (Exception)
         {

@@ -148,6 +148,8 @@ public static class AvaloniaStringKeys
     public const string ThemeFollowSystem = nameof(ThemeFollowSystem);
     public const string ThemeDark = nameof(ThemeDark);
     public const string ThemeLight = nameof(ThemeLight);
+    public const string ShowNextToken = nameof(ShowNextToken);
+    public const string ShowNextTokenHelp = nameof(ShowNextTokenHelp);
     public const string EnglishLanguage = nameof(EnglishLanguage);
     public const string GermanLanguage = nameof(GermanLanguage);
     public const string FrenchLanguage = nameof(FrenchLanguage);
@@ -514,7 +516,8 @@ public static class AvaloniaStringKeys
         FaqImportFormatsTwoFasTitle, FaqImportFormatsTwoFasDescription, FaqImportFormatsTwoFasExample,
         FaqImportFormatsOtpAuthTitle, FaqImportFormatsOtpAuthDescription, FaqImportFormatsOtpAuthExample, Miscellaneous,
         Language, EnglishLanguage, GermanLanguage, FrenchLanguage, SpanishLanguage,
-        Appearance, Theme, ThemeFollowSystem, ThemeDark, ThemeLight, IdleTimeout,
+        Appearance, Theme, ThemeFollowSystem, ThemeDark, ThemeLight,
+        ShowNextToken, ShowNextTokenHelp, IdleTimeout,
         IdleTimeoutHelp, AutoLockDisabled, AutoLockSecondsFormat, AutoLockMinutesFormat,
         LockWhenMinimized, SettingsAutoSaveHint,
         SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,

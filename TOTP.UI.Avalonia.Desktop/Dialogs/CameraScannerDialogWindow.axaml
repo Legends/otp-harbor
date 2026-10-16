@@ -82,7 +82,7 @@
                 <Button
                     MinWidth="100"
                     Command="{Binding StartCommand}"
-                    IsVisible="{Binding !IsScanning}">
+                    IsVisible="{Binding CanRetryCameraScan}">
                     <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource Retry}" />
                 </Button>
                 <Button

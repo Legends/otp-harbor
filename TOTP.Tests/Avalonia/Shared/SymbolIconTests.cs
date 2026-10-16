@@ -7,6 +7,7 @@ public sealed class SymbolIconTests
     [Theory]
     [InlineData(SymbolIconKind.Add)]
     [InlineData(SymbolIconKind.ArrowLeft)]
+    [InlineData(SymbolIconKind.ArrowUp)]
     [InlineData(SymbolIconKind.BackupRestore)]
     [InlineData(SymbolIconKind.Camera)]
     [InlineData(SymbolIconKind.Close)]

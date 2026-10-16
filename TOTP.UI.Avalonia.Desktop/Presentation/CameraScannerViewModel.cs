@@ -34,6 +34,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
     private string _statusMessage = string.Empty;
     private bool _isScanning;
     private bool _isOpeningImage;
+    private bool _canRetryCameraScan;
     private NotificationSeverity _lastImageNotificationSeverity = NotificationSeverity.Information;
     private bool _disposed;
     private long _generation;
@@ -120,6 +121,12 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public bool CanRetryCameraScan
+    {
+        get => _canRetryCameraScan;
+        private set => SetField(ref _canRetryCameraScan, value);
+    }
+
     public NotificationSeverity LastImageNotificationSeverity
     {
         get => _lastImageNotificationSeverity;
@@ -142,9 +149,11 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         _captureLifetime = new CancellationTokenSource();
         var token = _captureLifetime.Token;
         IsScanning = true;
+        CanRetryCameraScan = false;
         Message = string.Empty;
         StatusMessage = _localization.GetString(AvaloniaStringKeys.CameraSearching);
 
+        var canRetryAfterAttempt = false;
         try
         {
             var lastReportedFailure = QrScannerFailureKind.None;
@@ -172,6 +181,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
                     var validation = _payloadValidator.Validate(result.DecodedText!);
                     if (!validation.IsValid)
                     {
+                        canRetryAfterAttempt = true;
                         Message = _localization.GetString(
                             validation.Kind == QrPayloadKind.GoogleAuthenticatorMigration
                                 ? AvaloniaStringKeys.QrMigrationCameraUseImage
@@ -194,7 +204,11 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
                 }
                 Message = FailureMessage(result.Failure);
                 ClearPreview();
-                if (!ShouldReconnect(result.Failure)) return;
+                if (!ShouldReconnect(result.Failure))
+                {
+                    canRetryAfterAttempt = true;
+                    return;
+                }
 
                 isReconnecting = true;
                 StatusMessage = string.Empty;
@@ -216,6 +230,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
                 exception.GetType().FullName);
             if (!_disposed && generation == Volatile.Read(ref _generation))
             {
+                canRetryAfterAttempt = true;
                 StatusMessage = string.Empty;
                 Message = _localization.GetString(AvaloniaStringKeys.CameraScanFailedSafely);
             }
@@ -223,7 +238,10 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         finally
         {
             if (!_disposed && generation == Volatile.Read(ref _generation))
+            {
                 IsScanning = false;
+                CanRetryCameraScan = canRetryAfterAttempt;
+            }
         }
     }
 
@@ -237,6 +255,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         _captureLifetime = new CancellationTokenSource();
         var token = _captureLifetime.Token;
         IsScanning = false;
+        CanRetryCameraScan = false;
         IsOpeningImage = true;
         StatusMessage = string.Empty;
         Message = string.Empty;
@@ -324,6 +343,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         _captureLifetime = null;
         IsScanning = false;
         IsOpeningImage = false;
+        CanRetryCameraScan = false;
         StatusMessage = string.Empty;
         Message = _localization.GetString(AvaloniaStringKeys.CameraReadyToStart);
         ClearPreview();

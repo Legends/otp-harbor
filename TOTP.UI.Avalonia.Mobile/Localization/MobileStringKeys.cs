@@ -66,7 +66,11 @@ public static class MobileStringKeys
     public const string Faq = nameof(Faq);
     public const string FaqSettingsDescription = nameof(FaqSettingsDescription);
     public const string FaqImportIconPacksQuestion = nameof(FaqImportIconPacksQuestion);
-    public const string FaqImportIconPacksAnswer = nameof(FaqImportIconPacksAnswer);
+    public const string FaqImportIconPacksStepDownload = nameof(FaqImportIconPacksStepDownload);
+    public const string FaqImportIconPacksDownloadLink = nameof(FaqImportIconPacksDownloadLink);
+    public const string FaqImportIconPacksStepBuild = nameof(FaqImportIconPacksStepBuild);
+    public const string FaqImportIconPacksStepImport = nameof(FaqImportIconPacksStepImport);
+    public const string FaqImportIconPacksCustomSvgTip = nameof(FaqImportIconPacksCustomSvgTip);
     public const string FaqImportIconPacksSources = nameof(FaqImportIconPacksSources);
     public const string FaqSimpleIconsOfficialLink = nameof(FaqSimpleIconsOfficialLink);
     public const string FaqAegisIconPackDocsLink = nameof(FaqAegisIconPackDocsLink);
@@ -74,6 +78,7 @@ public static class MobileStringKeys
     public const string FaqImportIconPacksDisclaimer = nameof(FaqImportIconPacksDisclaimer);
     public const string FaqImportFormatsQuestion = nameof(FaqImportFormatsQuestion);
     public const string FaqImportFormatsIntro = nameof(FaqImportFormatsIntro);
+    public const string FaqImportFormatsSupported = nameof(FaqImportFormatsSupported);
     public const string FaqImportFormatsAegisTitle = nameof(FaqImportFormatsAegisTitle);
     public const string FaqImportFormatsAegisDescription = nameof(FaqImportFormatsAegisDescription);
     public const string FaqImportFormatsAegisExample = nameof(FaqImportFormatsAegisExample);
@@ -94,6 +99,10 @@ public static class MobileStringKeys
     public const string ThemeFollowSystem = nameof(ThemeFollowSystem);
     public const string ThemeDark = nameof(ThemeDark);
     public const string ThemeLight = nameof(ThemeLight);
+    public const string ShowNextToken = nameof(ShowNextToken);
+    public const string ShowNextTokenHelp = nameof(ShowNextTokenHelp);
+    public const string AllowScreenshots = nameof(AllowScreenshots);
+    public const string AllowScreenshotsHelp = nameof(AllowScreenshotsHelp);
     public const string Security = nameof(Security);
     public const string AppLockTitle = nameof(AppLockTitle);
     public const string AppLockEnabledDescription = nameof(AppLockEnabledDescription);
@@ -382,7 +391,11 @@ public static class MobileStringKeys
         Faq,
         FaqSettingsDescription,
         FaqImportIconPacksQuestion,
-        FaqImportIconPacksAnswer,
+        FaqImportIconPacksStepDownload,
+        FaqImportIconPacksDownloadLink,
+        FaqImportIconPacksStepBuild,
+        FaqImportIconPacksStepImport,
+        FaqImportIconPacksCustomSvgTip,
         FaqImportIconPacksSources,
         FaqSimpleIconsOfficialLink,
         FaqAegisIconPackDocsLink,
@@ -410,6 +423,10 @@ public static class MobileStringKeys
         ThemeFollowSystem,
         ThemeDark,
         ThemeLight,
+        ShowNextToken,
+        ShowNextTokenHelp,
+        AllowScreenshots,
+        AllowScreenshotsHelp,
         Security,
         AppLockTitle,
         AppLockEnabledDescription,

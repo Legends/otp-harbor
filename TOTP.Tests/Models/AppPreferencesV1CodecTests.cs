@@ -194,7 +194,9 @@ public sealed class AppPreferencesV1CodecTests
         ExportEncrypt = false,
         OpenExportFileAfterExport = false,
         HideSecretsByDefault = false,
-        FavoriteGroupColor = "#B455C7"
+        FavoriteGroupColor = "#B455C7",
+        ShowNextToken = true,
+        AllowScreenshots = true
     };
 
     internal static AppPreferencesErrorCode ErrorCode(IEnumerable<FluentResults.IError> errors) =>

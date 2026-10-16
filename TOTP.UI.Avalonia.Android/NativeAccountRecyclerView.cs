@@ -14,14 +14,19 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
     private readonly NativeAccountAdapter _adapter;
     private readonly LinearLayoutManager _layoutManager;
     private readonly AccountScrollListener _scrollListener;
+    private readonly Action _dismissAccountSearchFocus;
     private int _submitRevision;
     private int _revealRevision;
     private bool _disposed;
 
-    public NativeAccountRecyclerView(Context context, MobileShellViewModel viewModel)
+    public NativeAccountRecyclerView(
+        Context context,
+        MobileShellViewModel viewModel,
+        Action dismissAccountSearchFocus)
         : base(context)
     {
         _viewModel = viewModel;
+        _dismissAccountSearchFocus = dismissAccountSearchFocus;
         _layoutManager = new LinearLayoutManager(context, Vertical, false);
         _adapter = new NativeAccountAdapter(viewModel);
         _scrollListener = new AccountScrollListener(this);
@@ -41,6 +46,14 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
         _adapter.ReplaceAll(CaptureRows());
         Post(ReportVisibleAccounts);
         HandleRevealRequest(_viewModel.AccountRevealRequest);
+    }
+
+    public override bool DispatchTouchEvent(MotionEvent? motionEvent)
+    {
+        if (motionEvent?.ActionMasked == MotionEventActions.Down)
+            _dismissAccountSearchFocus();
+
+        return base.DispatchTouchEvent(motionEvent);
     }
 
     public void DisposeHost()

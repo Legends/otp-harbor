@@ -221,7 +221,7 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock.png` | `cf4c42dcd2c8183512d9dfe9411200f88a263172c5905de740b84c89d0c42bad` |
 | `packaging/android/marketing/source/captures/10-account-list-dark-icons-blurred.png` | `238c5306e766c905122995f23450855020420785079c5315d89c95fecbfe6265` |
 | `packaging/android/marketing/source/captures/11-account-list-light-icons-blurred.png` | `cd5ff8569f46c4d8bc37a7b9529b1dc508bb417a69fa8472fbaccaba348b5f9d` |
-| `packaging/marketing/source/theme-showcase-background-draft.png` | `affcf38996d604a03b09c9be994f55c4cba017bb4631c1ba6ffd0ff4f190740` |
+| `packaging/marketing/source/theme-showcase-background-draft.png` | `affcf38996d604a03b09c9be994f55c4cba017bb4631c1ba6ffdd0ff4f190740` |
 | `packaging/android/marketing/source/android-marketing-background.png` | `282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383` |
 | `packaging/android/marketing/source/captures/01-account-list.jpg` | `dc38f2fd24fe8f7dd56bdcd7ff7bc018697e077666bc48174969b539b6cf524c` |
 | `packaging/android/marketing/source/captures/02-swipe-actions.jpg` | `1baee259f20dfd4851f74872ededc900dd6e4466fcf9c3edb5cefb446e7ce258` |

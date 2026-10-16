@@ -707,9 +707,9 @@ public sealed class MainWindowSmokeTests
 
     [Theory]
     [InlineData(0, 42, 0, 0)]
-    [InlineData(2, 42, 0, 44)]
+    [InlineData(2, 42, 0, 46)]
     [InlineData(2, 42, 60, 60)]
-    [InlineData(2, 42, 500, 86)]
+    [InlineData(2, 42, 500, 88)]
     public void AccountListHeight_PopulatedListNeverCollapsesToZero(
         int accountCount,
         double rowHeight,
@@ -727,6 +727,26 @@ public sealed class MainWindowSmokeTests
                 null,
                 [accountCount, rowHeight, availableHeight])),
             precision: 2);
+    }
+
+    [AvaloniaFact]
+    public void AccountContainerPreparation_DoesNotScheduleAnotherWindowFit()
+    {
+        var window = new MainWindow();
+        var containerPrepared = typeof(MainWindow).GetMethod(
+            "AccountContainerPrepared",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var fitScheduled = typeof(MainWindow).GetField(
+            "_fitScheduled",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        Assert.NotNull(containerPrepared);
+        Assert.NotNull(fitScheduled);
+        Assert.False(Assert.IsType<bool>(fitScheduled.GetValue(window)));
+
+        containerPrepared.Invoke(window, [null, null]);
+
+        Assert.False(Assert.IsType<bool>(fitScheduled.GetValue(window)));
     }
 
     [Theory]
@@ -931,6 +951,59 @@ public sealed class MainWindowSmokeTests
             Assert.True(
                 origin.Value.X + picker.EffectivePopupWidth
                     <= window.ClientSize.Width - 12 + 0.01);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SearchableBrandIconPicker_UserSelectionKeepsTwoWayBindingActive()
+    {
+        var options = new[]
+        {
+            new BrandIconOption(null, "Automatic"),
+            new BrandIconOption(null, "Choose custom SVG", IsCustomPickerAction: true)
+        };
+        var selection = new TestSelectionModel(options[0], options[1]);
+        var picker = new SearchableComboBox
+        {
+            ItemsSource = options
+        };
+        picker.Bind(
+            SearchableComboBox.SelectedItemProperty,
+            new Binding(nameof(TestSelectionModel.SelectedItem))
+            {
+                Source = selection,
+                Mode = BindingMode.TwoWay
+            });
+        var window = new Window { Content = picker };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var dropDownButton = Assert.Single(
+                picker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            var popup = Assert.Single(
+                picker.GetVisualDescendants().OfType<Popup>(),
+                candidate => candidate.Name == "PART_Popup");
+
+            dropDownButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            var items = Assert.Single(
+                popup.Child!.GetVisualDescendants().OfType<ListBox>(),
+                list => list.Name == "PART_ItemsList");
+            items.SelectedItem = options[1];
+            Assert.Same(options[0], selection.SelectedItem);
+
+            selection.RestorePreviousSelection();
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Same(options[0], picker.SelectedItem);
+            Assert.Same(options[0], items.SelectedItem);
         }
         finally
         {
@@ -2026,22 +2099,30 @@ public sealed class MainWindowSmokeTests
 
             var skipButton = window.FindControl<Button>("SkipOnboardingButton");
             Assert.NotNull(skipButton);
-            Assert.Contains("onboarding-skip", skipButton.Classes);
-            Assert.Equal(new Thickness(1), skipButton.BorderThickness);
-            Assert.NotEqual(
-                Colors.Transparent,
-                Assert.IsType<SolidColorBrush>(skipButton.BorderBrush).Color);
-
             var previousButton = window.FindControl<Button>("PreviousOnboardingButton");
             Assert.NotNull(previousButton);
-            Assert.Contains("onboarding-secondary", previousButton.Classes);
-
             var nextButton = window.FindControl<Button>("NextOnboardingButton");
             Assert.NotNull(nextButton);
-            Assert.Contains("onboarding-primary", nextButton.Classes);
             var finishButton = window.FindControl<Button>("FinishOnboardingButton");
             Assert.NotNull(finishButton);
-            Assert.Contains("onboarding-primary", finishButton.Classes);
+
+            foreach (var button in new[] { skipButton, previousButton, nextButton, finishButton })
+            {
+                Assert.Contains("onboarding-action", button.Classes);
+                Assert.Equal(new Thickness(1), button.BorderThickness);
+                Assert.Equal(VerticalAlignment.Center, button.VerticalContentAlignment);
+                Assert.Equal(
+                    Colors.Transparent,
+                    Assert.IsAssignableFrom<ISolidColorBrush>(button.Background).Color);
+                Assert.NotEqual(
+                    Colors.Transparent,
+                    Assert.IsAssignableFrom<ISolidColorBrush>(button.BorderBrush).Color);
+                var contentPresenter = Assert.Single(
+                    button.GetVisualDescendants().OfType<ContentPresenter>(),
+                    presenter => presenter.Name == "OnboardingButtonContent");
+                Assert.Equal(VerticalAlignment.Stretch, contentPresenter.VerticalAlignment);
+                Assert.Equal(VerticalAlignment.Center, contentPresenter.VerticalContentAlignment);
+            }
         }
         finally
         {
@@ -2072,6 +2153,13 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Color.Parse("#1C2944"),
                 Assert.IsType<SolidColorBrush>(intent.Foreground).Color);
+            var nextButton = Assert.IsType<Button>(window.FindControl<Button>("NextOnboardingButton"));
+            Assert.Equal(
+                Color.Parse("#315F8E"),
+                Assert.IsType<SolidColorBrush>(nextButton.Foreground).Color);
+            Assert.Equal(
+                Color.Parse("#315F8E"),
+                Assert.IsType<SolidColorBrush>(nextButton.BorderBrush).Color);
 
             application.RequestedThemeVariant = ThemeVariant.Dark;
             window.UpdateLayout();
@@ -2085,10 +2173,73 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Colors.White,
                 Assert.IsType<SolidColorBrush>(intent.Foreground).Color);
+            Assert.Equal(
+                Color.Parse("#63D4FF"),
+                Assert.IsType<SolidColorBrush>(nextButton.Foreground).Color);
+            Assert.Equal(
+                Color.Parse("#63D4FF"),
+                Assert.IsType<SolidColorBrush>(nextButton.BorderBrush).Color);
         }
         finally
         {
             window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void DesktopOnboardingButtons_PreserveThemeColorsWhilePressed()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+
+        try
+        {
+            foreach (var (theme, expectedAccent) in new[]
+                     {
+                         (ThemeVariant.Light, Color.Parse("#315F8E")),
+                         (ThemeVariant.Dark, Color.Parse("#63D4FF"))
+                     })
+            {
+                application.RequestedThemeVariant = theme;
+                var window = new OnboardingWindow();
+
+                try
+                {
+                    window.Show();
+                    window.UpdateLayout();
+                    var button = Assert.IsType<Button>(window.FindControl<Button>("NextOnboardingButton"));
+                    var buttonBorder = Assert.Single(
+                        button.GetVisualDescendants().OfType<Border>(),
+                        border => border.Name == "OnboardingButtonBorder");
+                    var contentPresenter = Assert.Single(
+                        button.GetVisualDescendants().OfType<ContentPresenter>(),
+                        presenter => presenter.Name == "OnboardingButtonContent");
+                    var pseudoClasses = Assert.IsAssignableFrom<IPseudoClasses>(button.Classes);
+
+                    pseudoClasses.Add(":pressed");
+                    window.UpdateLayout();
+
+                    Assert.True(pseudoClasses.Contains(":pressed"));
+                    Assert.Equal(
+                        Colors.Transparent,
+                        Assert.IsAssignableFrom<ISolidColorBrush>(buttonBorder.Background).Color);
+                    Assert.Equal(
+                        expectedAccent,
+                        Assert.IsAssignableFrom<ISolidColorBrush>(buttonBorder.BorderBrush).Color);
+                    Assert.Equal(
+                        expectedAccent,
+                        Assert.IsAssignableFrom<ISolidColorBrush>(contentPresenter.Foreground).Color);
+
+                    pseudoClasses.Remove(":pressed");
+                }
+                finally
+                {
+                    window.Close();
+                }
+            }
+        }
+        finally
+        {
             application.RequestedThemeVariant = ThemeVariant.Dark;
         }
     }
@@ -2191,6 +2342,9 @@ public sealed class MainWindowSmokeTests
             var brandIconPicker = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<SearchableComboBox>(),
                 comboBox => comboBox.Name == "AccountBrandIconComboBox");
+            var customIconFileNameHost = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "SelectedEditorCustomIconFileNameHost");
             var scrollViewer = Assert.Single(
                 templateHost.GetVisualDescendants().OfType<ScrollViewer>(),
                 viewer => viewer.Name == "AccountEditorScrollViewer");
@@ -2206,13 +2360,11 @@ public sealed class MainWindowSmokeTests
                     <= ((Control)brandIconPicker.Parent!).Bounds.Width,
                 "The account icon picker must remain inside its advanced-options container.");
             Assert.Contains(brandIconPicker, advancedOptions.GetLogicalDescendants());
-            var customSvgButton = Assert.Single(
+            Assert.Equal(16, customIconFileNameHost.MinHeight);
+            Assert.Contains(customIconFileNameHost, advancedOptions.GetLogicalDescendants());
+            Assert.DoesNotContain(
                 advancedOptions.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "CustomSvgIconButton");
-            Assert.Same(advancedOptions, customSvgButton
-                .GetLogicalAncestors()
-                .OfType<Expander>()
-                .First());
 
             var accountEditorContent = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<StackPanel>(),
@@ -2281,9 +2433,13 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 Orientation.Horizontal,
                 Assert.IsType<StackPanel>(codeStack.Children[0]).Orientation);
-            var confirmation = Assert.IsType<TextBlock>(codeStack.Children[1]);
+            var secondaryCodeLine = Assert.IsType<Grid>(codeStack.Children[1]);
+            var confirmation = Assert.Single(
+                secondaryCodeLine.Children.OfType<TextBlock>(),
+                textBlock => textBlock.Text == "Copied");
             Assert.Equal("Copied", confirmation.Text);
-            Assert.Equal(12, confirmation.MinHeight);
+            Assert.Equal(12, secondaryCodeLine.MinHeight);
+            Assert.Equal(2, secondaryCodeLine.Children.OfType<TextBlock>().Count());
             var periodLabel = Assert.Single(
                 row.GetLogicalDescendants().OfType<TextBlock>(),
                 textBlock => textBlock.Text == "60 s");
@@ -3090,6 +3246,40 @@ public sealed class MainWindowSmokeTests
         public bool CanExecute(object? parameter) => true;
 
         public void Execute(object? parameter) => execute();
+    }
+
+    private sealed class TestSelectionModel(object? selectedItem, object? rejectedItem) :
+        System.ComponentModel.INotifyPropertyChanged
+    {
+        private object? _selectedItem = selectedItem;
+        private readonly object? _rejectedItem = rejectedItem;
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+        public object? SelectedItem
+        {
+            get => _selectedItem;
+            set
+            {
+                if (ReferenceEquals(value, _rejectedItem)) return;
+                if (ReferenceEquals(_selectedItem, value)) return;
+                _selectedItem = value;
+                NotifySelectionChanged();
+            }
+        }
+
+        public void RestorePreviousSelection()
+        {
+            var previous = _selectedItem;
+            _selectedItem = null;
+            NotifySelectionChanged();
+            _selectedItem = previous;
+            NotifySelectionChanged();
+        }
+
+        private void NotifySelectionChanged() => PropertyChanged?.Invoke(
+            this,
+            new System.ComponentModel.PropertyChangedEventArgs(nameof(SelectedItem)));
     }
 
     private sealed class TestSettingsService : ISettingsService

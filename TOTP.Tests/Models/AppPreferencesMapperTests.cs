@@ -28,6 +28,8 @@ public sealed class AppPreferencesMapperTests
         Assert.False(preferences.OpenExportFileAfterExport);
         Assert.False(preferences.HideSecretsByDefault);
         Assert.Equal("#E45757", preferences.FavoriteGroupColor);
+        Assert.True(preferences.ShowNextToken);
+        Assert.True(preferences.AllowScreenshots);
         Assert.DoesNotContain(
             typeof(AppPreferencesV1).GetProperties(),
             property => property.Name.Contains("Authorization", StringComparison.OrdinalIgnoreCase));
@@ -56,6 +58,8 @@ public sealed class AppPreferencesMapperTests
         Assert.False(settings.OpenExportFileAfterExport);
         Assert.False(settings.HideSecretsByDefault);
         Assert.Equal("#B455C7", settings.FavoriteGroupColor);
+        Assert.True(settings.ShowNextToken);
+        Assert.True(settings.AllowScreenshots);
     }
 
     [Fact]
@@ -144,6 +148,8 @@ public sealed class AppPreferencesMapperTests
         ExportEncrypt = false,
         OpenExportFileAfterExport = false,
         HideSecretsByDefault = false,
-        FavoriteGroupColor = "#E45757"
+        FavoriteGroupColor = "#E45757",
+        ShowNextToken = true,
+        AllowScreenshots = true
     };
 }

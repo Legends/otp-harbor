@@ -460,6 +460,76 @@ When making these changes, document:
 - do not "simplify" by removing security boundaries
 - optimize tool calls and test scope without reducing security, localization, regression coverage, or release confidence
 
+### Multi-task execution and requirement retention
+
+Codex must treat every requirement in a multi-part user prompt as independently
+trackable work. A task is not finished merely because the main feature works or
+a build succeeds. This protocol complements the efficiency rules below; it
+must not trigger redundant repository searches or full builds after each small
+change.
+
+#### Capture the complete request before coding
+
+For prompts with multiple independent changes, or one change with several
+acceptance criteria:
+
+1. Extract **every** requested task and meaningful sub-requirement into a
+   numbered checklist (`T1`, `T2`, ...). Include requested UI behavior,
+   edge cases, platform scope, localization, testing, and documentation where
+   applicable. Preserve the user's intent; do not silently omit or reinterpret
+   requirements.
+2. For each task, record concise, observable acceptance criteria and any
+   dependency on another task. Identify existing behavior that must remain
+   unchanged.
+3. Present a short plan or checklist before significant edits. If a detail is
+   genuinely underspecified, state the assumption or blocker rather than
+   quietly choosing a different requirement.
+4. Keep the task IDs stable throughout the run, including after context
+   compaction. New discoveries may create subtasks but must not erase the
+   original tasks.
+
+#### Keep progress durable when necessary
+
+- For small batches, maintain the checklist in the current task plan and
+  progress updates. Do not create a tracking file for every trivial edit.
+- For larger batches (typically three or more independent tasks), long-running
+  work, or work likely to cross a context-compaction/session boundary, save a
+  concise task ledger at `.codex/tasks/<descriptive-task-name>.md` within the
+  repository. Choose a unique, descriptive filename; never overwrite another
+  task's ledger. Do not put credentials, OTP seeds, or other secrets in it.
+- Record each task as `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`, or
+  `UNVERIFIED`, with its acceptance criteria and the minimum useful evidence
+  (changed files, relevant tests, or reason verification is unavailable).
+- Update the ledger as tasks progress and after consequential requirement
+  changes. Treat it as task-local working state: do not stage or commit it
+  unless the user explicitly requests that artifact be part of the change.
+- On context compaction or session resumption, reload the applicable
+  `AGENTS.md`, task ledger (if present), and current Git diff/status before
+  continuing. Reconcile completed and outstanding tasks; never assume that
+  work was completed simply because it was previously planned.
+
+#### Execute and verify without losing requirements
+
+1. Work through the checklist in dependency order. After each task, update
+   its status and review what remains; avoid repeatedly rereading unchanged
+   source files merely to refresh context.
+2. Mark a task `DONE` only when its acceptance criteria have been checked
+   with appropriate evidence. A successful compilation alone does not prove
+   UI behavior, business logic, localization, or regression correctness.
+3. Prefer focused builds and tests, grouping checks when efficient under the
+   existing **Build efficiency** and **Test efficiency** rules. For Avalonia
+   UI behavior that cannot be automated, explicitly mark the manual check
+   `UNVERIFIED` instead of claiming it passed.
+4. Do not silently skip a task, lower acceptance criteria, or replace a
+   requested change with a workaround. Mark impossible or externally blocked
+   tasks `BLOCKED`, explain the obstacle, and continue independent tasks
+   when safe.
+5. Before the final response, reconcile **every original task ID** against
+   the initial checklist and inspect the Git diff for unintended changes.
+   Report each task as `DONE`, `BLOCKED`, or `UNVERIFIED`, with concise
+   verification evidence and any remaining work. Never claim the entire
+   request is complete while items remain blocked or unverified.
+
 ### Codex Efficiency and Repository Navigation
 
 This is a multi-project .NET/Avalonia repository. Work efficiently and minimize

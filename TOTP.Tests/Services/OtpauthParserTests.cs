@@ -54,6 +54,7 @@ public sealed class OtpauthParserTests
         Assert.Equal(6, parsed.Digits);
         Assert.Equal(30, parsed.Period);
         Assert.Equal("SHA1", parsed.Algorithm);
+        Assert.Null(parsed.Issuer);
     }
 
     [Theory]

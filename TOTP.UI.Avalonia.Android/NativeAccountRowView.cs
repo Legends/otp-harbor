@@ -53,6 +53,7 @@ internal sealed class NativeAccountRowView : View
     private string _displayIssuer = string.Empty;
     private string _displaySecondary = string.Empty;
     private string _displayCode = string.Empty;
+    private string _displayNextCode = string.Empty;
     private string _rawCode = string.Empty;
     private Color _brandColor;
     private bool _isSelected;
@@ -103,6 +104,7 @@ internal sealed class NativeAccountRowView : View
         _swipeOffset = 0;
         _rawCode = row.Account.Code;
         _displayCode = row.Account.DisplayCode;
+        _displayNextCode = row.Account.DisplayNextCode;
         _brandColor = TryColor(row.Account.Brand.BackgroundColor, NativeAccountPalette.Current.GenericBrand);
         PrepareBrandIcon();
         UpdateTextLayout();
@@ -125,6 +127,7 @@ internal sealed class NativeAccountRowView : View
         _displayIssuer = string.Empty;
         _displaySecondary = string.Empty;
         _displayCode = string.Empty;
+        _displayNextCode = string.Empty;
         _rawCode = string.Empty;
         _isSelected = false;
         _starPath.Reset();
@@ -395,10 +398,20 @@ internal sealed class NativeAccountRowView : View
         _text.Color = palette.Code;
         canvas.DrawText(_displayCode, codeRight, card.Top + Dp(35), _text);
 
-        _text.SetTypeface(Typeface.DefaultBold);
-        _text.TextSize = Sp(10);
-        _text.Color = palette.CopyConfirmation;
-        canvas.DrawText(account.CopyConfirmation, codeRight, card.Top + Dp(54), _text);
+        if (account.HasVisibleNextCode)
+        {
+            _text.SetTypeface(Typeface.Monospace);
+            _text.TextSize = Sp(16);
+            _text.Color = palette.Secondary;
+            canvas.DrawText(_displayNextCode, codeRight, card.Top + Dp(55), _text);
+        }
+        else
+        {
+            _text.SetTypeface(Typeface.DefaultBold);
+            _text.TextSize = Sp(10);
+            _text.Color = palette.CopyConfirmation;
+            canvas.DrawText(account.CopyConfirmation, codeRight, card.Top + Dp(54), _text);
+        }
         _text.TextAlign = Paint.Align.Left;
 
         DrawProgress(canvas, account, left, codeRight, card.Bottom - Dp(7), palette);
@@ -582,10 +595,13 @@ internal sealed class NativeAccountRowView : View
         }
 #endif
         if (args.PropertyName is nameof(MobileAccountItem.Code)
-            or nameof(MobileAccountItem.DisplayCode))
+            or nameof(MobileAccountItem.DisplayCode)
+            or nameof(MobileAccountItem.DisplayNextCode)
+            or nameof(MobileAccountItem.HasVisibleNextCode))
         {
             _rawCode = _row?.Account.Code ?? string.Empty;
             _displayCode = _row?.Account.DisplayCode ?? string.Empty;
+            _displayNextCode = _row?.Account.DisplayNextCode ?? string.Empty;
         }
         if (args.PropertyName is nameof(MobileAccountItem.Brand)
             or nameof(MobileAccountItem.ShowIssuerLogo))
@@ -635,6 +651,7 @@ internal sealed class NativeAccountRowView : View
         {
             _rawCode = account.Code;
             _displayCode = account.DisplayCode;
+            _displayNextCode = account.DisplayNextCode;
         }
     }
 

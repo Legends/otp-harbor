@@ -53,27 +53,76 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("{Binding FinishOnboardingCommand}", skipButton.Attribute("Command")?.Value);
         Assert.Equal("{Binding IsFirstOnboardingSlide}", skipButton.Attribute("IsVisible")?.Value);
         Assert.Equal("{Binding OnboardingSkipText}", skipButton.Attribute("Content")?.Value);
-        Assert.Equal("mobile-onboarding-skip", skipButton.Attribute("Classes")?.Value);
+        Assert.Equal("mobile-onboarding-action", skipButton.Attribute("Classes")?.Value);
         Assert.Equal("0", skipButton.Attribute("Grid.Column")?.Value);
 
-        var skipStyle = document
+        var actionStyle = document
             .Descendants(avalonia + "Style")
-            .Single(element => element.Attribute("Selector")?.Value == "Button.mobile-onboarding-skip");
-        var skipSetters = skipStyle
+            .Single(element => element.Attribute("Selector")?.Value == "Button.mobile-onboarding-action");
+        var actionSetters = actionStyle
             .Elements(avalonia + "Setter")
             .ToDictionary(
                 element => element.Attribute("Property")?.Value ?? string.Empty,
                 element => element.Attribute("Value")?.Value ?? string.Empty);
-        Assert.Equal("1", skipSetters["BorderThickness"]);
+        Assert.Equal("Transparent", actionSetters["Background"]);
+        Assert.Equal("1", actionSetters["BorderThickness"]);
         Assert.Equal(
             "{DynamicResource BrushMobileOnboardingAccentText}",
-            skipSetters["BorderBrush"]);
+            actionSetters["BorderBrush"]);
+        Assert.Equal(
+            "{DynamicResource BrushMobileOnboardingAccentText}",
+            actionSetters["Foreground"]);
+        Assert.Equal("Center", actionSetters["VerticalContentAlignment"]);
+
+        var actionTemplate = actionStyle
+            .Elements(avalonia + "Setter")
+            .Single(element => element.Attribute("Property")?.Value == "Template")
+            .Descendants(avalonia + "ControlTemplate")
+            .Single();
+        var actionContent = actionTemplate
+            .Descendants(avalonia + "ContentPresenter")
+            .Single();
+        Assert.Equal("OnboardingButtonContent", actionContent.Attribute("Name")?.Value);
+        Assert.Equal(
+            "{TemplateBinding VerticalContentAlignment}",
+            actionContent.Attribute("VerticalContentAlignment")?.Value);
+        Assert.Equal(
+            "{TemplateBinding Foreground}",
+            actionContent.Attribute("TextElement.Foreground")?.Value);
+        Assert.DoesNotContain(
+            actionTemplate.Descendants(),
+            element => element.Attribute("Name")?.Value is "PART_Border" or "PART_ContentPresenter");
+
+        var pressedStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value == "Button.mobile-onboarding-action:pressed");
+        var pressedSetters = pressedStyle
+            .Elements(avalonia + "Setter")
+            .ToDictionary(
+                element => element.Attribute("Property")?.Value ?? string.Empty,
+                element => element.Attribute("Value")?.Value ?? string.Empty);
+        Assert.Equal("Transparent", pressedSetters["Background"]);
+        Assert.Equal(actionSetters["BorderBrush"], pressedSetters["BorderBrush"]);
+        Assert.Equal(actionSetters["Foreground"], pressedSetters["Foreground"]);
 
         var navigation = Assert.IsType<XElement>(skipButton.Parent);
         Assert.Equal("Auto,*,Auto", navigation.Attribute("ColumnDefinitions")?.Value);
         Assert.All(
             navigation.Elements(avalonia + "Button"),
-            button => Assert.StartsWith("mobile-onboarding-", button.Attribute("Classes")?.Value));
+            button => Assert.Equal("mobile-onboarding-action", button.Attribute("Classes")?.Value));
+        var navigationButtons = navigation.Elements(avalonia + "Button").ToArray();
+        foreach (var expected in new[]
+                 {
+                     (Command: "{Binding PreviousOnboardingCommand}", Visibility: "{Binding !IsFirstOnboardingSlide}"),
+                     (Command: "{Binding NextOnboardingCommand}", Visibility: "{Binding !IsLastOnboardingSlide}"),
+                     (Command: "{Binding FinishOnboardingCommand}", Visibility: "{Binding IsLastOnboardingSlide}")
+                 })
+        {
+            var button = navigationButtons.Single(
+                element => element.Attribute("Command")?.Value == expected.Command
+                    && element.Attribute("IsVisible")?.Value == expected.Visibility);
+            Assert.Equal("mobile-onboarding-action", button.Attribute("Classes")?.Value);
+        }
 
         var contentPanel = Assert.IsType<XElement>(
             overlay.Descendants(avalonia + "Border").Single());
@@ -119,10 +168,12 @@ public sealed class MobileAccountInteractionTests
         var logo = header
             .Descendants(avalonia + "Image")
             .Single(element => element.Attribute(xaml + "Name")?.Value == "MobileAppLogo");
+        var headerContent = Assert.Single(header.Elements(avalonia + "Grid"));
 
         Assert.Equal(
             "avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png",
             logo.Attribute("Source")?.Value);
+        Assert.Equal("48", headerContent.Attribute("MinHeight")?.Value);
         Assert.DoesNotContain(
             header.Elements(),
             element => element.Name.LocalName == "SymbolIcon"
@@ -149,11 +200,31 @@ public sealed class MobileAccountInteractionTests
             advanced.Descendants(avalonia + "CheckBox"),
             control => control.Attribute("IsChecked")?.Value
                 == "{Binding EditorIsFavorite, Mode=TwoWay}");
+        var brandIconPicker = advanced
+            .Descendants()
+            .Single(element => element.Name.LocalName == "SearchableComboBox"
+                && element.Attribute(xaml + "Name")?.Value == "AccountBrandIconComboBox");
+        Assert.Equal("account-brand-icon-picker", brandIconPicker.Attribute("Classes")?.Value);
+        var brandIconPickerButtonStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(style => style.Attribute("Selector")?.Value
+                == "controls|SearchableComboBox.account-brand-icon-picker /template/ Button#PART_DropDownButton");
         Assert.Contains(
-            advanced.Descendants().Where(element => element.Name.LocalName == "SearchableComboBox"),
-            control => control.Attribute(xaml + "Name")?.Value
-                == "AccountBrandIconComboBox");
-        Assert.Contains(
+            brandIconPickerButtonStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "Padding"
+                && setter.Attribute("Value")?.Value == "12,8,20,8");
+        var sharedStyles = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "SharedStyles.axaml"));
+        var pickerDropDownGlyph = sharedStyles
+            .Descendants(avalonia + "Style")
+            .Single(style => style.Attribute("Selector")?.Value == "controls|SearchableComboBox")
+            .Descendants(avalonia + "Path")
+            .Single(path => path.Attribute("Grid.Column")?.Value == "1");
+        Assert.Equal("0,0,6,0", pickerDropDownGlyph.Attribute("Margin")?.Value);
+        Assert.DoesNotContain(
             advanced.Descendants(avalonia + "Button"),
             control => control.Attribute(xaml + "Name")?.Value
                 == "CustomSvgIconButton");
@@ -170,6 +241,32 @@ public sealed class MobileAccountInteractionTests
                 .Count(border => border.Attribute("Height")?.Value == "1"
                     && border.Attribute("Background")?.Value
                         == "{DynamicResource BrushBorder}"));
+
+        var editorHeader = document
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "MobileAccountEditorHeader");
+        Assert.DoesNotContain(editorHeader.Ancestors(), element => element.Name == avalonia + "ScrollViewer");
+        Assert.Equal("{DynamicResource BrushWindowBackground}", editorHeader.Attribute("Background")?.Value);
+        var saveButton = editorHeader
+            .Descendants(avalonia + "Button")
+            .Single(button => button.Attribute("Command")?.Value == "{Binding SaveAccountCommand}");
+        var cancelButton = editorHeader
+            .Descendants(avalonia + "Button")
+            .Single(button => button.Attribute("Command")?.Value == "{Binding CancelEditCommand}");
+        Assert.Contains(
+            saveButton.Descendants(),
+            icon => icon.Name.LocalName == "SymbolIcon"
+                && icon.Attribute("Kind")?.Value == "Check"
+                && icon.Attribute("Foreground")?.Value == "{DynamicResource BrushSuccess}");
+        Assert.Contains(
+            cancelButton.Descendants(),
+            icon => icon.Name.LocalName == "SymbolIcon"
+                && icon.Attribute("Kind")?.Value == "Close"
+                && icon.Attribute("Foreground")?.Value == "{DynamicResource BrushDanger}");
+        Assert.Single(
+            document.Descendants(avalonia + "Button"),
+            button => button.Attribute("Command")?.Value == "{Binding SaveAccountCommand}");
 
         var exitModal = document
             .Descendants(avalonia + "Grid")
@@ -249,9 +346,28 @@ public sealed class MobileAccountInteractionTests
             text => text.Attribute("Text")?.Value == "{Binding ThemeText}");
 
         var security = document
-            .Descendants(avalonia + "Border")
+            .Descendants(avalonia + "StackPanel")
             .Single(element => element.Attribute("IsVisible")?.Value
                 == "{Binding IsSecuritySettingsVisible}");
+        Assert.Equal("12", security.Attribute("Spacing")?.Value);
+        Assert.DoesNotContain(
+            document.Descendants(avalonia + "Border"),
+            element => element.Attribute("IsVisible")?.Value
+                == "{Binding IsSecuritySettingsVisible}");
+        Assert.DoesNotContain(
+            security.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value == "{Binding SecurityText}");
+        var securitySectionPanels = new[]
+        {
+            "AppLockPanel",
+            "UnlockMethodPanel"
+        }.Select(name => security
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == name))
+            .ToArray();
+        Assert.All(
+            securitySectionPanels,
+            panel => Assert.Equal("1", panel.Attribute("BorderThickness")?.Value));
         Assert.Contains(
             security.Descendants(avalonia + "Button"),
             button => button.Attribute("Command")?.Value
@@ -268,9 +384,10 @@ public sealed class MobileAccountInteractionTests
             loggingPicker.Attribute("SelectedItem")?.Value);
 
         var imports = document
-            .Descendants(avalonia + "Border")
+            .Descendants(avalonia + "StackPanel")
             .Single(element => element.Attribute("IsVisible")?.Value
                 == "{Binding IsImportExportSettingsVisible}");
+        Assert.Null(imports.Attribute("Classes"));
         Assert.DoesNotContain(
             imports.Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value == "{Binding ImportSectionText}");
@@ -326,9 +443,13 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("link", faqLink.Attribute("Classes")?.Value);
 
         var backup = document
-            .Descendants(avalonia + "Border")
+            .Descendants(avalonia + "StackPanel")
             .Single(element => element.Attribute("IsVisible")?.Value
                 == "{Binding IsBackupSettingsVisible}");
+        Assert.Null(backup.Attribute("Classes"));
+        Assert.DoesNotContain(
+            backup.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value == "{Binding BackupDescription}");
         var backupExportPanel = backup.Descendants(avalonia + "Border").Single(element =>
             element.Attribute(xaml + "Name")?.Value == "BackupExportPanel");
         var backupRestorePanel = backup.Descendants(avalonia + "Border").Single(element =>
@@ -351,6 +472,28 @@ public sealed class MobileAccountInteractionTests
             categoryStyle.Elements(avalonia + "Setter"),
             setter => setter.Attribute("Property")?.Value == "Background"
                 && setter.Attribute("Value")?.Value == "{DynamicResource BrushSurface}");
+        var pressedCategoryStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(style => style.Attribute("Selector")?.Value
+                == "StackPanel.settings-root Button.wide.settings-category:pressed");
+        Assert.Contains(
+            pressedCategoryStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "Background"
+                && setter.Attribute("Value")?.Value
+                    == "{DynamicResource BrushSettingsCategoryPressed}");
+        var app = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileApp.axaml"));
+        Assert.Equal("#EDEDED", ThemeResourceColor(
+            app,
+            "Light",
+            "BrushSettingsCategoryPressed"));
+        Assert.Equal("#35547F", ThemeResourceColor(
+            app,
+            "Dark",
+            "BrushSettingsCategoryPressed"));
 
         var faq = document
             .Descendants(avalonia + "Border")
@@ -381,7 +524,7 @@ public sealed class MobileAccountInteractionTests
                 .Attribute("Kind")?.Value));
         Assert.Equal(
             [
-                "https://github.com/Legends/otp-harbor-icon-pack-builder",
+                "https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest",
                 "https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md",
                 "https://github.com/aegis-icons/aegis-icons#disclaimer",
                 "https://github.com/homarr-labs/dashboard-icons#legal"
@@ -389,10 +532,36 @@ public sealed class MobileAccountInteractionTests
             faqSections[0]
                 .Descendants(avalonia + "HyperlinkButton")
                 .Select(link => link.Attribute("NavigateUri")?.Value));
+        var iconPackSteps = faqSections[0]
+            .Descendants(avalonia + "Grid")
+            .Where(grid => grid.Elements(avalonia + "TextBlock").Any(text =>
+                text.Attribute("Text")?.Value is "1." or "2." or "3."))
+            .ToArray();
+        Assert.Equal(3, iconPackSteps.Length);
+        Assert.Equal(
+            [
+                "{Binding FaqImportIconPacksStepDownloadText}",
+                "{Binding FaqImportIconPacksStepBuildText}",
+                "{Binding FaqImportIconPacksStepImportText}"
+            ],
+            iconPackSteps.Select(step => step
+                .Descendants(avalonia + "TextBlock")
+                .Single(text => text.Attribute("Text")?.Value?.StartsWith(
+                    "{Binding FaqImportIconPacksStep",
+                    StringComparison.Ordinal) == true)
+                .Attribute("Text")?.Value));
+        Assert.Contains(
+            faqSections[0].Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value
+                == "{Binding FaqImportIconPacksCustomSvgTipText}");
         Assert.Contains(
             faqSections[1].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{Binding FaqImportFormatsAegisDescriptionText}");
+        Assert.Contains(
+            faqSections[1].Descendants(avalonia + "TextBlock"),
+            element => element.Attribute("Text")?.Value
+                == "{Binding FaqImportFormatsSupportedText}");
         var importFormatSections = faqSections[1]
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "mobile-faq-subsection")
@@ -447,10 +616,23 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("ScrollMainViewToTop", backToTop.Attribute("Click")?.Value);
         Assert.Equal("settings-back-to-top", backToTop.Attribute("Classes")?.Value);
         Assert.Equal("12", backToTop.Attribute("Padding")?.Value);
+        var backToTopStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(style => style.Attribute("Selector")?.Value
+                == "Button.settings-back-to-top");
+        var backToTopSetters = backToTopStyle
+            .Elements(avalonia + "Setter")
+            .ToDictionary(
+                setter => setter.Attribute("Property")?.Value ?? string.Empty,
+                setter => setter.Attribute("Value")?.Value ?? string.Empty);
+        Assert.Equal("{DynamicResource BrushSurfaceAlternate}", backToTopSetters["Background"]);
+        Assert.Equal("{DynamicResource BrushAccent}", backToTopSetters["BorderBrush"]);
+        Assert.Equal("{DynamicResource BrushAccent}", backToTopSetters["Foreground"]);
         var backToTopIcon = Assert.Single(backToTop.Descendants(), element =>
             element.Name.LocalName == "SymbolIcon");
-        Assert.Equal("18", backToTopIcon.Attribute("IconSize")?.Value);
-        Assert.Equal("0.65", backToTopIcon.Attribute("Opacity")?.Value);
+        Assert.Equal("22", backToTopIcon.Attribute("IconSize")?.Value);
+        Assert.Equal("ArrowUp", backToTopIcon.Attribute("Kind")?.Value);
+        Assert.Null(backToTopIcon.Attribute("Opacity"));
     }
 
     [Fact]
@@ -588,6 +770,28 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AccountSearch_HostCanReceiveFocusWhenTheUserTapsOutsideTheSearchBox()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var root = document.Root;
+        Assert.NotNull(root);
+        Assert.Equal("Root", root.Attribute(xaml + "Name")?.Value);
+        Assert.Equal("True", root.Attribute("Focusable")?.Value);
+
+        var searchBox = document
+            .Descendants(avalonia + "TextBox")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountSearchBox");
+        Assert.NotNull(searchBox);
+    }
+
+    [Fact]
     public void AccountList_BuffersVirtualizedRowsForSmoothMobileScrolling()
     {
         var document = XDocument.Load(Path.Combine(
@@ -647,6 +851,10 @@ public sealed class MobileAccountInteractionTests
                 button.Attribute("Classes")?.Value.Contains(
                     "account-toolbar-action",
                     StringComparison.Ordinal) == true));
+        var searchPanel = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountSearchPanel");
+        Assert.Equal("0,-4,0,8", searchPanel.Attribute("Margin")?.Value);
     }
 
     [Fact]
@@ -678,9 +886,14 @@ public sealed class MobileAccountInteractionTests
             .Single(element => element.Attribute("Text")?.Value.Contains(
                 "CopyConfirmation",
                 StringComparison.Ordinal) == true);
-        Assert.Equal("16", copyConfirmation.Attribute("MinHeight")?.Value);
+        Assert.Equal("16", copyConfirmation.Parent?.Attribute("MinHeight")?.Value);
         Assert.Equal("NoWrap", copyConfirmation.Attribute("TextWrapping")?.Value);
         Assert.Null(copyConfirmation.Attribute("IsVisible"));
+        Assert.Contains(
+            copyConfirmation.Parent!.Elements(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value == "{Binding DisplayNextCode}"
+                && text.Attribute("IsVisible")?.Value == "{Binding HasVisibleNextCode}"
+                && text.Attribute("FontSize")?.Value == "16");
 
         var countdown = document
             .Descendants(avalonia + "ProgressBar")
@@ -728,14 +941,15 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "Grid")
             .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountGroupsStrip");
         Assert.Equal("2", groupsStrip.Attribute("Grid.Row")?.Value);
-        Assert.Equal("64", groupsStrip.Attribute("MinHeight")?.Value);
-        Assert.Equal("0,6,0,6", groupsStrip.Attribute("Margin")?.Value);
+        Assert.Equal("56", groupsStrip.Attribute("MinHeight")?.Value);
+        Assert.Equal("0,2,0,6", groupsStrip.Attribute("Margin")?.Value);
         Assert.Equal("Center", groupsStrip.Attribute("VerticalAlignment")?.Value);
 
         var createGroupButton = document
             .Descendants(avalonia + "Button")
             .Single(element => element.Attribute("Command")?.Value == "{Binding BeginAddGroupCommand}");
         Assert.Equal("2", createGroupButton.Attribute("Grid.Column")?.Value);
+        Assert.Contains("icon-action", createGroupButton.Attribute("Classes")?.Value);
         Assert.Contains(
             createGroupButton.Descendants(),
             element => element.Name.LocalName == "SymbolIcon"
@@ -829,8 +1043,8 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal(
             "{Binding IsNativeAccountGroupsVisible}",
             nativeGroupStrip.Attribute("IsVisible")?.Value);
-        Assert.Equal("64", nativeGroupStrip.Attribute("MinHeight")?.Value);
-        Assert.Equal("0,6,0,6", nativeGroupStrip.Attribute("Margin")?.Value);
+        Assert.Equal("56", nativeGroupStrip.Attribute("MinHeight")?.Value);
+        Assert.Equal("0,2,0,6", nativeGroupStrip.Attribute("Margin")?.Value);
 
         var accountPicker = document
             .Descendants(avalonia + "ListBox")
@@ -872,7 +1086,28 @@ public sealed class MobileAccountInteractionTests
                 "IsSelected",
                 StringComparison.Ordinal) == true);
         Assert.Equal("Center", accountSelection.Attribute("VerticalContentAlignment")?.Value);
+        var editorHeader = document
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "MobileGroupEditorHeader");
+        Assert.DoesNotContain(editorHeader.Ancestors(), element => element.Name == avalonia + "ScrollViewer");
+        var saveButton = editorHeader
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute("Command")?.Value == "{Binding SaveGroupCommand}");
+        var cancelButton = editorHeader
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute("Command")?.Value == "{Binding CancelGroupEditCommand}");
         Assert.Contains(
+            saveButton.Descendants(),
+            icon => icon.Name.LocalName == "SymbolIcon"
+                && icon.Attribute("Kind")?.Value == "Check"
+                && icon.Attribute("Foreground")?.Value == "{DynamicResource BrushSuccess}");
+        Assert.Contains(
+            cancelButton.Descendants(),
+            icon => icon.Name.LocalName == "SymbolIcon"
+                && icon.Attribute("Kind")?.Value == "Close"
+                && icon.Attribute("Foreground")?.Value == "{DynamicResource BrushDanger}");
+        Assert.Single(
             document.Descendants(avalonia + "Button"),
             element => element.Attribute("Command")?.Value == "{Binding SaveGroupCommand}");
         Assert.Contains(
@@ -956,6 +1191,45 @@ public sealed class MobileAccountInteractionTests
             style.Elements(),
             setter => setter.Attribute("Property")?.Value == "Opacity"
                 && setter.Attribute("Value")?.Value == "1"));
+        var disabledIconActionStyle = stableDisabledSelectors.Single(
+            style => style.Attribute("Selector")?.Value == "Button.icon-action:disabled");
+        var disabledIconActionSetters = disabledIconActionStyle
+            .Elements()
+            .Where(element => element.Name.LocalName == "Setter")
+            .ToDictionary(
+                element => element.Attribute("Property")?.Value ?? string.Empty,
+                element => element.Attribute("Value")?.Value ?? string.Empty);
+        Assert.Equal("Transparent", disabledIconActionSetters["Background"]);
+        Assert.Equal("Transparent", disabledIconActionSetters["BorderBrush"]);
+        Assert.Equal(
+            "{DynamicResource BrushDisabledIcon}",
+            disabledIconActionSetters["Foreground"]);
+        var sharedStyles = XDocument.Load(Path.Combine(fixtureDirectory, "SharedStyles.axaml"));
+        Assert.Equal("#9CA3AF", ThemeResourceColor(sharedStyles, "Light", "BrushDisabledIcon"));
+        Assert.Equal("#A7B0BE", ThemeResourceColor(sharedStyles, "Dark", "BrushDisabledIcon"));
+        var iconActionStyle = app
+            .Descendants()
+            .Single(element => element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value == "Button.icon-action");
+        var iconActionTemplate = iconActionStyle
+            .Elements()
+            .Single(element => element.Name.LocalName == "Setter"
+                && element.Attribute("Property")?.Value == "Template");
+        Assert.Contains(
+            iconActionTemplate.Descendants(),
+            element => element.Attribute("Name")?.Value == "IconActionBorder");
+        Assert.DoesNotContain(
+            iconActionTemplate.Descendants(),
+            element => element.Attribute("Name")?.Value == "PART_Border");
+        var disabledSymbolStyle = app
+            .Descendants()
+            .Single(element => element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value ==
+                    "Button.icon-action:disabled controls|SymbolIcon");
+        Assert.Contains(
+            disabledSymbolStyle.Elements(),
+            setter => setter.Attribute("Property")?.Value == "Foreground"
+                && setter.Attribute("Value")?.Value == "{DynamicResource BrushDisabledIcon}");
 
         var selectedGroupStyle = app
             .Descendants()
