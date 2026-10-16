@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private bool _editorFitScheduled;
     private bool _groupEditorOpenScheduled;
     private bool _realizedAccountReportPending;
+    private bool _shellPresentationPending;
     private MainWindowViewModel? _observedViewModel;
     private AccountListViewModel? _observedAccountList;
     private ContextPreservingAccountListBox? _realizedAccountList;
@@ -614,6 +615,12 @@ public partial class MainWindow : Window
 
     private void MainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainWindowViewModel.IsShellVisible))
+        {
+            SyncShellPresentation();
+            return;
+        }
+
         if (e.PropertyName == nameof(MainWindowViewModel.IsOnboardingVisible))
         {
             SyncOnboardingWindow();
@@ -649,7 +656,8 @@ public partial class MainWindow : Window
         }
 
         if (e.PropertyName != nameof(MainWindowViewModel.IsAccountListVisible)) return;
-        if (_observedViewModel is { IsAccountListVisible: true })
+        if (_observedViewModel?.IsShellVisible != true) return;
+        if (_observedViewModel.IsAccountListVisible)
         {
             ScheduleAccountPageFit();
             Dispatcher.UIThread.Post(
@@ -662,6 +670,42 @@ public partial class MainWindow : Window
             MinHeight = Math.Min(StandardMinimumHeight, MaxHeight);
             StartHeightAnimation(Math.Min(MaxHeight, DefaultPageHeight));
         }
+    }
+
+    private void SyncShellPresentation()
+    {
+        ApplyScreenSizeLimits(force: true);
+        if (_observedViewModel?.IsShellVisible == true)
+        {
+            _shellPresentationPending = true;
+            SetAuthorizedShellPresented(true);
+            if (_observedViewModel.IsAccountListVisible)
+                ScheduleAccountPageFit();
+            else
+                StartHeightAnimation(Math.Min(MaxHeight, DefaultPageHeight));
+            return;
+        }
+
+        _shellPresentationPending = false;
+        SetAuthorizedShellPresented(false);
+        SetHeightImmediately(Math.Min(MaxHeight, DefaultPageHeight));
+    }
+
+    private void SetAuthorizedShellPresented(bool isPresented)
+    {
+        AuthorizedShell.Classes.Remove("presented");
+        if (!isPresented) return;
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_observedViewModel?.IsShellVisible == true
+                    && AuthorizedShell.IsVisible)
+                {
+                    AuthorizedShell.Classes.Add("presented");
+                }
+            },
+            DispatcherPriority.Render);
     }
 
     private void ScheduleSecretInputFocus(string controlName)
@@ -993,7 +1037,16 @@ public partial class MainWindow : Window
 
     private void ScheduleAccountPageFit()
     {
-        if (_fitScheduled || _observedViewModel?.IsSettingsVisible == true) return;
+        if (_fitScheduled
+            || _observedViewModel is not
+            {
+                IsShellVisible: true,
+                IsAccountListVisible: true,
+                IsSettingsVisible: false
+            })
+        {
+            return;
+        }
         _fitScheduled = true;
         Dispatcher.UIThread.Post(
             () =>
@@ -1009,6 +1062,7 @@ public partial class MainWindow : Window
     private void FitAccountPageHeight()
     {
         if (_observedViewModel?.IsSettingsVisible == true
+            || _observedViewModel?.IsShellVisible != true
             || !ShouldFitAccountPage(
                 _observedViewModel is { IsAccountListVisible: true },
                 _observedAccountList?.IsEditorVisible == true
@@ -1081,7 +1135,15 @@ public partial class MainWindow : Window
             windowChromeHeight + accountContent.DesiredSize.Height + 2,
             MinHeight,
             MaxHeight);
-        SetHeightImmediately(targetHeight);
+        if (_shellPresentationPending)
+        {
+            _shellPresentationPending = false;
+            StartHeightAnimation(targetHeight);
+        }
+        else
+        {
+            SetHeightImmediately(targetHeight);
+        }
         UpdateLayout();
         if (listScroller is not null)
             RestoreAccountListScrollOffset(listScroller, listOffset);
@@ -1171,12 +1233,14 @@ public partial class MainWindow : Window
         MaxWidth = screenWidthLimit;
         MaxHeight = screenHeightLimit;
         MinWidth = Math.Min(DefaultMinimumWidth, MaxWidth);
-        MinHeight = Math.Min(GetDesiredMinimumHeight(), MaxHeight);
+        MinHeight = Math.Min(GetDesiredMinimumHeight(
+            (_observedViewModel ?? DataContext as MainWindowViewModel)?.IsShellVisible), MaxHeight);
         Width = Math.Clamp(Width, MinWidth, MaxWidth);
         Height = Math.Clamp(Height, MinHeight, MaxHeight);
     }
 
-    private static double GetDesiredMinimumHeight() => StandardMinimumHeight;
+    private static double GetDesiredMinimumHeight(bool? isShellVisible) =>
+        isShellVisible == false ? DefaultPageHeight : StandardMinimumHeight;
 
     private void StartHeightAnimation(double targetHeight)
     {

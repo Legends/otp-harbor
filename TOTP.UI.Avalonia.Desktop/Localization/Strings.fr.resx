@@ -35,14 +35,16 @@
   <data name="Unlock" xml:space="preserve"><value>Déverrouiller</value></data>
   <data name="VaultUnlocked" xml:space="preserve"><value>Coffre-fort déverrouillé.</value></data>
   <data name="QuickUnlockFallback" xml:space="preserve"><value>Le déverrouillage rapide n’a pas abouti. Saisissez votre mot de passe principal pour récupérer l’accès.</value></data>
+  <data name="ChooseUnlockMethod" xml:space="preserve"><value>Choisissez comment déverrouiller</value></data>
   <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Déverrouiller avec l’identification biométrique</value></data>
-  <data name="UseMasterPassword" xml:space="preserve"><value>Utiliser le mot de passe principal</value></data>
-  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Coffre-fort verrouillé. Utilisez le déverrouillage rapide ou votre mot de passe principal pour continuer.</value></data>
+  <data name="UseMasterPassword" xml:space="preserve"><value>Déverrouiller avec le mot de passe principal</value></data>
+  <data name="UnlockMethodSeparator" xml:space="preserve"><value>ou</value></data>
+  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Coffre-fort verrouillé. Déverrouillez-le par biométrie ou avec votre mot de passe principal.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Coffre-fort verrouillé. Saisissez votre mot de passe principal pour continuer.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Le déverrouillage rapide a été annulé. Votre coffre-fort reste verrouillé.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>Le déverrouillage rapide n’a pas pu aboutir. Utilisez votre mot de passe principal pour récupérer l’accès.</value></data>
   <data name="QuickUnlock" xml:space="preserve"><value>Déverrouiller avec l’identification biométrique</value></data>
-  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Le déverrouillage biométrique est facultatif. Votre mot de passe principal reste la méthode de récupération et est requis pour activer ou modifier les paramètres de sécurité.</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Le déverrouillage biométrique est facultatif. Votre mot de passe principal reste requis pour la récupération et les paramètres de sécurité.</value></data>
   <data name="QuickUnlockAvailable" xml:space="preserve"><value>Le déverrouillage rapide est disponible sur ce système.</value></data>
   <data name="QuickUnlockUnavailable" xml:space="preserve"><value>Le déverrouillage rapide n’est pas disponible sur ce système. Le déverrouillage par mot de passe principal reste disponible.</value></data>
   <data name="EnableQuickUnlock" xml:space="preserve"><value>Activer le déverrouillage rapide</value></data>

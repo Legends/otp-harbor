@@ -17,6 +17,7 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AvaloniaPath = Avalonia.Controls.Shapes.Path;
+using System.Globalization;
 using System.Windows.Input;
 using FluentResults;
 using TOTP.Avalonia.Desktop;
@@ -36,6 +37,57 @@ namespace TOTP.Tests.Avalonia.Headless;
 
 public sealed class MainWindowSmokeTests
 {
+    [AvaloniaFact]
+    public void QuickUnlockGate_FitsStandardWindowWithoutScrolling()
+    {
+        var window = new MainWindow { Width = 380, Height = 540 };
+
+        try
+        {
+            window.Show();
+            var scroller = Assert.IsType<ScrollViewer>(window.FindControl<ScrollViewer>("AuthorizationScroller"));
+            var quickUnlockCard = Assert.IsType<Border>(window.FindControl<Border>("QuickUnlockCard"));
+            var notification = Assert.IsType<NotificationBanner>(window.FindControl<NotificationBanner>("LockScreenNotification"));
+            var masterPasswordButton = Assert.IsType<Button>(window.FindControl<Button>("MasterPasswordFallbackButton"));
+            var heading = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("QuickUnlockHeading"));
+            var recoveryNotice = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("QuickUnlockRecoveryNoticeText"));
+            var separator = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("UnlockMethodSeparatorText"));
+            var masterPasswordText = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("MasterPasswordFallbackText"));
+
+            scroller.IsVisible = true;
+            quickUnlockCard.IsVisible = true;
+            Assert.Equal(ScrollBarVisibility.Disabled, scroller.VerticalScrollBarVisibility);
+
+            var catalog = new AvaloniaStringCatalog();
+            foreach (var cultureName in new[] { "en", "de", "es", "fr" })
+            {
+                var culture = CultureInfo.GetCultureInfo(cultureName);
+                notification.Text = catalog.Get(AvaloniaStringKeys.VaultLockedQuickUnlock, culture);
+                heading.Text = catalog.Get(AvaloniaStringKeys.ChooseUnlockMethod, culture);
+                recoveryNotice.Text = catalog.Get(AvaloniaStringKeys.QuickUnlockRecoveryNotice, culture);
+                separator.Text = catalog.Get(AvaloniaStringKeys.UnlockMethodSeparator, culture);
+                masterPasswordText.Text = catalog.Get(AvaloniaStringKeys.UseMasterPassword, culture);
+                window.UpdateLayout();
+
+                var buttonBottom = masterPasswordButton.TranslatePoint(
+                    new Point(0, masterPasswordButton.Bounds.Height),
+                    scroller);
+
+                Assert.NotNull(buttonBottom);
+                Assert.True(
+                    buttonBottom.Value.Y >= 0 && buttonBottom.Value.Y <= scroller.Bounds.Height,
+                    $"Quick unlock button for '{cultureName}' ends at {buttonBottom.Value.Y} within a {scroller.Bounds.Height}-pixel viewport (extent {scroller.Extent.Height}, viewport {scroller.Viewport.Height}).");
+                Assert.True(
+                    scroller.Extent.Height <= scroller.Viewport.Height,
+                    $"Quick unlock content for '{cultureName}' exceeds the supported minimum window height.");
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public void BusyOverlay_AnimatesProgressOnlyWhileBusy()
     {
@@ -645,15 +697,49 @@ public sealed class MainWindowSmokeTests
         Assert.Equal(expected, policy.Invoke(null, [isAccountListVisible, isEditorVisible]));
     }
 
-    [Fact]
-    public void AccountPageHeightFit_UsesCompactWindowMinimum()
+    [Theory]
+    [InlineData(true, 200)]
+    [InlineData(null, 200)]
+    [InlineData(false, 540)]
+    public void AccountPageHeightFit_UsesStateAppropriateWindowMinimum(
+        bool? isShellVisible,
+        double expected)
     {
         var policy = typeof(MainWindow).GetMethod(
             "GetDesiredMinimumHeight",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         Assert.NotNull(policy);
-        Assert.Equal(200, Assert.IsType<double>(policy.Invoke(null, null)));
+        Assert.Equal(expected, Assert.IsType<double>(policy.Invoke(null, [isShellVisible])));
+    }
+
+    [AvaloniaFact]
+    public async Task AuthorizedShell_FadesInWhenShown()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+            var shell = Assert.IsType<Grid>(window.FindControl<Grid>("AuthorizedShell"));
+            shell.IsVisible = false;
+            window.UpdateLayout();
+
+            shell.IsVisible = true;
+            window.UpdateLayout();
+
+            Assert.Equal(0, shell.Opacity);
+
+            shell.Classes.Add("presented");
+
+            await WaitUntilAsync(() => shell.Opacity < 1);
+            await WaitUntilAsync(() => shell.Opacity >= 0.999);
+            Assert.InRange(shell.Opacity, 0.999, 1);
+        }
+        finally
+        {
+            window.Close();
+        }
     }
 
     [AvaloniaFact]

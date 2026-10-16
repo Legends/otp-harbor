@@ -35,14 +35,16 @@
   <data name="Unlock" xml:space="preserve"><value>Desbloquear</value></data>
   <data name="VaultUnlocked" xml:space="preserve"><value>Caja fuerte desbloqueada.</value></data>
   <data name="QuickUnlockFallback" xml:space="preserve"><value>El desbloqueo rápido no se completó. Introduce tu contraseña maestra para recuperar el acceso.</value></data>
+  <data name="ChooseUnlockMethod" xml:space="preserve"><value>Elige cómo desbloquear</value></data>
   <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Desbloquear con identificación biométrica</value></data>
-  <data name="UseMasterPassword" xml:space="preserve"><value>Usar contraseña maestra</value></data>
-  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Caja fuerte bloqueada. Usa el desbloqueo rápido o tu contraseña maestra para continuar.</value></data>
+  <data name="UseMasterPassword" xml:space="preserve"><value>Desbloquear con contraseña maestra</value></data>
+  <data name="UnlockMethodSeparator" xml:space="preserve"><value>o</value></data>
+  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Caja fuerte bloqueada. Desbloquéala con identificación biométrica o con tu contraseña maestra.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Caja fuerte bloqueada. Introduce tu contraseña maestra para continuar.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Se canceló el desbloqueo rápido. Tu caja fuerte sigue bloqueada.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>No se pudo completar el desbloqueo rápido. Usa tu contraseña maestra para recuperar el acceso.</value></data>
   <data name="QuickUnlock" xml:space="preserve"><value>Desbloquear con identificación biométrica</value></data>
-  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>El desbloqueo biométrico es opcional. Tu contraseña maestra sigue siendo el método de recuperación y es necesaria para activar o cambiar los ajustes de seguridad.</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>El desbloqueo biométrico es opcional. Tu contraseña maestra sigue siendo necesaria para la recuperación y los ajustes de seguridad.</value></data>
   <data name="QuickUnlockAvailable" xml:space="preserve"><value>El desbloqueo rápido está disponible en este sistema.</value></data>
   <data name="QuickUnlockUnavailable" xml:space="preserve"><value>El desbloqueo rápido no está disponible en este sistema. El desbloqueo mediante contraseña maestra sigue disponible.</value></data>
   <data name="EnableQuickUnlock" xml:space="preserve"><value>Activar desbloqueo rápido</value></data>

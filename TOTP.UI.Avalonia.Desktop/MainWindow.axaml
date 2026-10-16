@@ -12,7 +12,7 @@
     Width="380"
     Height="540"
     MinWidth="360"
-    MinHeight="200"
+    MinHeight="540"
     WindowDecorations="None"
     WindowStartupLocation="CenterScreen"
     Icon="avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico">
@@ -20,11 +20,51 @@
     <Window.Styles>
         <Style Selector="Border.unlock-card.biometric-card">
             <Setter Property="Background" Value="{DynamicResource BrushBiometricCardBackground}" />
+            <Setter Property="Padding" Value="12" />
         </Style>
         <Style Selector="shared|ValidationMessage.quick-unlock-message /template/ TextBlock#PART_Message">
             <Setter Property="MaxLines" Value="1" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+        <Style Selector="Button.master-password-option">
+            <Setter Property="MinHeight" Value="42" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusLarge}" />
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushAccent}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.master-password-option:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentHover}" />
+        </Style>
+        <Style Selector="Button.master-password-option:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentPressed}" />
+        </Style>
+        <Style Selector="Grid.authorized-shell">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Grid.authorized-shell.presented">
+            <Style.Animations>
+                <Animation
+                    Duration="0:0:0.28"
+                    Easing="CubicEaseInOut"
+                    FillMode="Forward"
+                    PlaybackBehavior="OnlyIfVisible">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
         <Style Selector="Button.search-clear:pointerover">
             <Setter Property="Background" Value="Transparent" />
@@ -60,26 +100,18 @@
 
             <!-- Locked and first-run presentation uses the compact authorization gate. -->
             <ScrollViewer
-                Margin="20"
+                x:Name="AuthorizationScroller"
+                Margin="20,12"
                 HorizontalScrollBarVisibility="Disabled"
                 IsVisible="{Binding !IsShellVisible}"
-                VerticalScrollBarVisibility="Hidden">
+                VerticalScrollBarVisibility="Disabled">
                 <StackPanel
                     Width="280"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Spacing="12">
-                    <Image
-                        Width="54"
-                        Height="54"
-                        HorizontalAlignment="Center"
-                        Source="/Assets/Icons/app.ico" />
-                    <TextBlock
-                        automation:AutomationProperties.HeadingLevel="1"
-                        Classes="app-title"
-                        HorizontalAlignment="Center"
-                        Text="{DynamicResource AppHeading}" />
+                    Spacing="8">
                     <shared:NotificationBanner
+                        x:Name="LockScreenNotification"
                         Severity="{Binding Notification.Severity}"
                         Text="{Binding Notification.Text}" />
                     <Button
@@ -88,14 +120,21 @@
                         Content="{DynamicResource Retry}"
                         IsVisible="{Binding CanRetry}" />
 
-                    <Border Classes="unlock-card biometric-card" IsVisible="{Binding IsQuickUnlockVisible}">
-                        <StackPanel Spacing="10">
-                            <TextBlock Classes="section-title" Text="{DynamicResource QuickUnlock}" />
+                    <Border
+                        x:Name="QuickUnlockCard"
+                        Classes="unlock-card biometric-card"
+                        IsVisible="{Binding IsQuickUnlockVisible}">
+                        <StackPanel Spacing="8">
                             <TextBlock
+                                x:Name="QuickUnlockHeading"
+                                Classes="section-title"
+                                Text="{DynamicResource ChooseUnlockMethod}" />
+                            <TextBlock
+                                x:Name="QuickUnlockRecoveryNoticeText"
                                 Classes="secondary"
                                 Text="{DynamicResource QuickUnlockRecoveryNotice}"
                                 TextWrapping="Wrap" />
-                            <Grid Height="20" ClipToBounds="True">
+                            <Grid Height="18" ClipToBounds="True">
                                 <shared:ValidationMessage
                                     VerticalAlignment="Center"
                                     Classes="quick-unlock-message"
@@ -109,21 +148,62 @@
                             </Grid>
                             <Button
                                 x:Name="BiometricUnlockButton"
-                                Width="68"
-                                Height="68"
-                                MinHeight="68"
+                                Width="64"
+                                Height="64"
+                                MinHeight="64"
                                 HorizontalAlignment="Center"
                                 Padding="8"
                                 automation:AutomationProperties.Name="{DynamicResource UnlockWithQuickUnlock}"
                                 Classes="primary biometric-unlock"
                                 Command="{Binding QuickUnlockCommand}"
                                 ToolTip.Tip="{DynamicResource UnlockWithQuickUnlock}">
-                                <shared:FingerprintIcon IconSize="50" />
+                                <shared:FingerprintIcon IconSize="48" />
                             </Button>
+                            <Grid
+                                x:Name="UnlockMethodDivider"
+                                ColumnDefinitions="*,Auto,*">
+                                <Border
+                                    Height="1"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource BrushBorder}" />
+                                <TextBlock
+                                    x:Name="UnlockMethodSeparatorText"
+                                    Grid.Column="1"
+                                    Margin="10,0"
+                                    Classes="secondary"
+                                    FontSize="11"
+                                    Text="{DynamicResource UnlockMethodSeparator}" />
+                                <Border
+                                    Grid.Column="2"
+                                    Height="1"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource BrushBorder}" />
+                            </Grid>
                             <Button
-                                Classes="link wide"
-                                Command="{Binding UsePasswordFallbackCommand}"
-                                Content="{DynamicResource UseMasterPassword}" />
+                                x:Name="MasterPasswordFallbackButton"
+                                automation:AutomationProperties.Name="{DynamicResource UseMasterPassword}"
+                                Classes="wide master-password-option"
+                                Command="{Binding UsePasswordFallbackCommand}">
+                                <Grid
+                                    x:Name="MasterPasswordFallbackContent"
+                                    ColumnDefinitions="17,*,17"
+                                    VerticalAlignment="Center">
+                                    <shared:SymbolIcon
+                                        x:Name="MasterPasswordFallbackIcon"
+                                        VerticalAlignment="Center"
+                                        IconSize="17"
+                                        Kind="Key" />
+                                    <TextBlock
+                                        x:Name="MasterPasswordFallbackText"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Text="{DynamicResource UseMasterPassword}"
+                                        TextAlignment="Center"
+                                        TextWrapping="Wrap" />
+                                </Grid>
+                            </Button>
                         </StackPanel>
                     </Border>
 
@@ -207,6 +287,7 @@
             <Grid
                 x:Name="AuthorizedShell"
                 RowDefinitions="Auto,*"
+                Classes="authorized-shell"
                 IsVisible="{Binding IsShellVisible}">
                 <Border
                     x:Name="MainToolbar"

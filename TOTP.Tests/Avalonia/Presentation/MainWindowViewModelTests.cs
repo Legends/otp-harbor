@@ -121,6 +121,35 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_WhenAlreadyAuthorized_RevealsShellAfterAccountsLoad()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var accountsLoaded = new TaskCompletionSource<Result<IReadOnlyList<Account>>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .Returns(accountsLoaded.Task);
+        using var sut = CreateSut(
+            coordinator.Object,
+            Mock.Of<IAuthorizationService>(),
+            accountManager: accounts.Object);
+
+        var initialization = sut.InitializeAsync();
+        await WaitUntilAsync(() => accounts.Invocations.Count > 0);
+
+        Assert.False(sut.IsShellVisible);
+        Assert.True(sut.IsBusy);
+
+        accountsLoaded.SetResult(Result.Ok<IReadOnlyList<Account>>([]));
+        await initialization;
+
+        Assert.True(sut.IsShellVisible);
+        Assert.False(sut.IsBusy);
+    }
+
+    [Fact]
     public async Task FirstRunIntroduction_AdvancesThroughEverySlideBeforePasswordSetup()
     {
         var coordinator = new Mock<IAvaloniaStartupCoordinator>();
@@ -414,7 +443,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.True(sut.IsQuickUnlockVisible);
         Assert.False(sut.IsPasswordUnlockVisible);
-        Assert.Contains(AvaloniaStringKeys.QuickUnlockCancelled, sut.QuickUnlockMessage);
+        Assert.Empty(sut.QuickUnlockMessage);
     }
 
     [Fact]

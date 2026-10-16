@@ -35,14 +35,16 @@
   <data name="Unlock" xml:space="preserve"><value>Unlock</value></data>
   <data name="VaultUnlocked" xml:space="preserve"><value>Vault unlocked.</value></data>
   <data name="QuickUnlockFallback" xml:space="preserve"><value>Quick unlock was not completed. Enter your master password to recover access.</value></data>
+  <data name="ChooseUnlockMethod" xml:space="preserve"><value>Choose how to unlock</value></data>
   <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Unlock using Biometric ID</value></data>
-  <data name="UseMasterPassword" xml:space="preserve"><value>Use master password</value></data>
-  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Vault locked. Use quick unlock or your master password to continue.</value></data>
+  <data name="UseMasterPassword" xml:space="preserve"><value>Unlock with master password</value></data>
+  <data name="UnlockMethodSeparator" xml:space="preserve"><value>or</value></data>
+  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Vault locked. Unlock with Biometric ID or your master password.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Vault locked. Enter your master password to continue.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Quick unlock was cancelled. Your vault remains locked.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>Quick unlock could not be completed. Use your master password to recover access.</value></data>
   <data name="QuickUnlock" xml:space="preserve"><value>Unlock using Biometric ID</value></data>
-  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Biometric ID unlock is optional. Your master password remains the recovery method and is required to enable or change security settings.</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>Biometric unlock is optional. Your master password is still required for recovery and security settings.</value></data>
   <data name="QuickUnlockAvailable" xml:space="preserve"><value>Quick unlock is available on this system.</value></data>
   <data name="QuickUnlockUnavailable" xml:space="preserve"><value>Quick unlock is unavailable on this system. Master-password unlock remains available.</value></data>
   <data name="EnableQuickUnlock" xml:space="preserve"><value>Enable quick unlock</value></data>

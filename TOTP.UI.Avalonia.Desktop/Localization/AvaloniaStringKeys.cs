@@ -239,8 +239,10 @@ public static class AvaloniaStringKeys
     public const string VaultConfigured = nameof(VaultConfigured);
     public const string VaultUnlocked = nameof(VaultUnlocked);
     public const string QuickUnlockFallback = nameof(QuickUnlockFallback);
+    public const string ChooseUnlockMethod = nameof(ChooseUnlockMethod);
     public const string UnlockWithQuickUnlock = nameof(UnlockWithQuickUnlock);
     public const string UseMasterPassword = nameof(UseMasterPassword);
+    public const string UnlockMethodSeparator = nameof(UnlockMethodSeparator);
     public const string VaultLockedQuickUnlock = nameof(VaultLockedQuickUnlock);
     public const string VaultLockedPassword = nameof(VaultLockedPassword);
     public const string QuickUnlockCancelled = nameof(QuickUnlockCancelled);
@@ -539,8 +541,8 @@ public static class AvaloniaStringKeys
         CreatePasswordHeading,
         PasswordSetupHelp, NewPassword, ConfirmPassword, CreateVault, PasswordRequired,
         PasswordMinimumLength, PasswordMismatch, PasswordSetupFailed, ExistingVaultConflict,
-        VaultConfigured, VaultUnlocked, QuickUnlockFallback, UnlockWithQuickUnlock,
-        UseMasterPassword, VaultLockedQuickUnlock, VaultLockedPassword,
+        VaultConfigured, VaultUnlocked, QuickUnlockFallback, ChooseUnlockMethod, UnlockWithQuickUnlock,
+        UseMasterPassword, UnlockMethodSeparator, VaultLockedQuickUnlock, VaultLockedPassword,
         QuickUnlockCancelled, QuickUnlockFailed, QuickUnlock,
         QuickUnlockRecoveryNotice, QuickUnlockAvailable, QuickUnlockUnavailable,
         EnableQuickUnlock, QuickUnlockAtStartup, QuickUnlockRecoveryPrompt, QuickUnlockEnrollmentCancelled,

@@ -1442,6 +1442,33 @@
         "resolved": "3.119.4",
         "contentHash": "UAyVzbqNfZsZbKbzj68zXLyUyF/SbTKmzTfOO6qDu++dtIUMMTzPBe8oOuzU/DiewpfKoUUlOSsJmqWc6blxBw=="
       }
+    },
+    "net10.0-android36.0/android-x64": {
+      "HarfBuzzSharp.NativeAssets.Android": {
+        "type": "Transitive",
+        "resolved": "8.3.1.3",
+        "contentHash": "Yte9/yYql8ngAjo7YgHlXSinLJcJXIRBM9gegVXpJ2SVYT1i2O/wMA+H3jmYiYiTQxHpHKi4exZUcMzry171MA=="
+      },
+      "HarfBuzzSharp.NativeAssets.Linux": {
+        "type": "Transitive",
+        "resolved": "8.3.1.3",
+        "contentHash": "RI6A1LgmooU30+4QIyFt5rmBCzP0VzTR+587IJSGvYIsHHWlahFufihYxtraLfsIhW7I8dn6+xX+DZGygOPKWQ=="
+      },
+      "libsodium": {
+        "type": "Transitive",
+        "resolved": "1.0.22",
+        "contentHash": "KPD9SloJFclrsjnhABu7dzWrcyYkwPbvx5l1gRSPAX/0n+OBtSiVCKtGFv4n+ecWUHU0tCG9LSSwoZZx673zBQ=="
+      },
+      "SkiaSharp.NativeAssets.Android": {
+        "type": "Transitive",
+        "resolved": "3.119.4",
+        "contentHash": "qfjNh5hZBZxpOIM1aeDByj2qNbcK2JZG5Y7YyGSeliaYnf1N/hVfsswIPUa+qzcMqS9Q0VCGk85zQLvwVXtrvQ=="
+      },
+      "SkiaSharp.NativeAssets.Linux": {
+        "type": "Transitive",
+        "resolved": "3.119.4",
+        "contentHash": "UAyVzbqNfZsZbKbzj68zXLyUyF/SbTKmzTfOO6qDu++dtIUMMTzPBe8oOuzU/DiewpfKoUUlOSsJmqWc6blxBw=="
+      }
     }
   }
 }

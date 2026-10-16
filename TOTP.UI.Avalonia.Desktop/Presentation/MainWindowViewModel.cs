@@ -543,8 +543,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private async void OnUnlocked(object? sender, EventArgs e)
     {
-        IsPasswordUnlockVisible = false;
-        IsQuickUnlockVisible = false;
         await EnterAuthorizedShellAsync();
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultUnlocked);
         StatusSeverity = NotificationSeverity.Success;
@@ -554,9 +552,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private async void OnConfigured(object? sender, EventArgs e)
     {
         IsOnboardingVisible = false;
-        IsPasswordSetupVisible = false;
-        IsPasswordUnlockVisible = false;
-        IsQuickUnlockVisible = false;
         await EnterAuthorizedShellAsync();
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultConfigured);
         StatusSeverity = NotificationSeverity.Success;
@@ -697,7 +692,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             var result = await _authorizationService.TryUnlockWithHelloAsync(_lifetime.Token);
             if (result == AuthorizationResult.Success && _authorizationService.State.IsUnlocked)
             {
-                IsQuickUnlockVisible = false;
                 await EnterAuthorizedShellAsync();
                 StatusText = _localization.GetString(AvaloniaStringKeys.VaultUnlocked);
                 StatusSeverity = NotificationSeverity.Success;
@@ -712,10 +706,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            QuickUnlockMessage = _localization.GetString(
-                result == AuthorizationResult.Cancelled
-                    ? AvaloniaStringKeys.QuickUnlockCancelled
-                    : AvaloniaStringKeys.QuickUnlockFailed);
+            if (result == AuthorizationResult.Cancelled)
+            {
+                return;
+            }
+
+            QuickUnlockMessage = _localization.GetString(AvaloniaStringKeys.QuickUnlockFailed);
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
@@ -872,9 +868,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         var resumeState = _resumeState;
         _resumeState = null;
-        IsShellVisible = true;
         var activePage = resumeState?.ActivePage ?? ShellPage.Accounts;
         SetActivePage(activePage);
+
+        await AccountList.LoadAsync();
+        if (activePage == ShellPage.Accounts && resumeState?.AccountListState is not null)
+            await AccountList.RestoreResumeStateAsync(resumeState.AccountListState);
+
+        IsPasswordUnlockVisible = false;
+        IsQuickUnlockVisible = false;
+        IsPasswordSetupVisible = false;
+        IsShellVisible = true;
 
         if (resumeState?.SettingsVisible == true)
         {
@@ -887,10 +891,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 IsSettingsVisible = false;
             }
         }
-
-        await AccountList.LoadAsync();
-        if (activePage == ShellPage.Accounts && resumeState?.AccountListState is not null)
-            await AccountList.RestoreResumeStateAsync(resumeState.AccountListState);
     }
 
     private void CaptureResumeState()
