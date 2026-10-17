@@ -3,8 +3,10 @@ using System.Diagnostics;
 using Moq;
 using Avalonia.Controls;
 using Avalonia.Media;
+using TOTP.Core.Enums;
 using TOTP.Core.Icons;
 using TOTP.Core.Models;
+using TOTP.Core.Security;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
@@ -19,7 +21,7 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class AccountListViewModelTests
 {
-    private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+    private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"; // gitleaks:allow - synthetic Base32 fixture
 
     [Fact]
     public async Task LoadAsync_WithNoStoredAccounts_ExposesEmptyState()
@@ -2292,6 +2294,133 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task AuthorizeEditorSecretAsync_PasswordSuccessGrantsAccessOncePerOpenEditor()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var state = new AuthorizationState();
+        state.SetConfiguration(true, PreferredUnlockMethod.Password);
+        var authorization = new Mock<IAuthorizationService>();
+        authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.TryUnlockWithPasswordAsync("correct password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<PasswordDialogRequest, CancellationToken>(async (request, token) =>
+            {
+                var failure = await request.ValidateAsync!("correct password", token);
+                return failure is null ? "correct password" : null;
+            });
+        using var sut = CreateSut(
+            manager.Object,
+            dialogs.Object,
+            authorizationService: authorization.Object);
+        await sut.LoadAsync();
+        sut.SelectedAccount = Assert.Single(sut.Accounts);
+        await sut.BeginEditAsync();
+
+        Assert.True(sut.RequiresEditorSecretAuthorization);
+        Assert.False(sut.IsEditorSecretRevealAuthorized);
+        Assert.False(sut.IsEditorSecretRevealed);
+
+        await sut.AuthorizeEditorSecretAsync();
+        await sut.AuthorizeEditorSecretAsync();
+
+        Assert.True(sut.IsEditorSecretRevealAuthorized);
+        Assert.True(sut.IsEditorSecretRevealed);
+        Assert.False(sut.RequiresEditorSecretAuthorization);
+        Assert.Equal(ValidSecret, sut.EditorSecret);
+        dialogs.Verify(value => value.PromptForPasswordAsync(
+            It.IsAny<PasswordDialogRequest>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+        authorization.Verify(
+            value => value.TryUnlockWithPasswordAsync("correct password"),
+            Times.Once);
+
+        await sut.CancelEditAsync();
+        await sut.BeginEditAsync();
+
+        Assert.True(sut.RequiresEditorSecretAuthorization);
+        Assert.False(sut.IsEditorSecretRevealAuthorized);
+        Assert.False(sut.IsEditorSecretRevealed);
+    }
+
+    [Fact]
+    public async Task AuthorizeEditorSecretAsync_CancelledPasswordPromptKeepsSecretProtected()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var state = new AuthorizationState();
+        state.SetConfiguration(true, PreferredUnlockMethod.Password);
+        var authorization = new Mock<IAuthorizationService>();
+        authorization.SetupGet(value => value.State).Returns(state);
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+        using var sut = CreateSut(
+            manager.Object,
+            dialogs.Object,
+            authorizationService: authorization.Object);
+        await sut.LoadAsync();
+        sut.SelectedAccount = Assert.Single(sut.Accounts);
+        await sut.BeginEditAsync();
+
+        await sut.AuthorizeEditorSecretAsync();
+
+        Assert.True(sut.RequiresEditorSecretAuthorization);
+        Assert.False(sut.IsEditorSecretRevealAuthorized);
+        Assert.False(sut.IsEditorSecretRevealed);
+        Assert.Equal(ValidSecret, sut.EditorSecret);
+        Assert.Equal(string.Empty, sut.EditorSecretMessage);
+        authorization.Verify(
+            value => value.TryUnlockWithPasswordAsync(It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_ChangedSecretWithoutEditorAuthorizationDoesNotPersist()
+    {
+        const string replacementSecret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        sut.SelectedAccount = Assert.Single(sut.Accounts);
+        await sut.BeginEditAsync();
+        sut.EditorSecret = replacementSecret;
+
+        await sut.SaveAccountAsync();
+
+        manager.Verify(value => value.UpdateAsync(
+            It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+        Assert.Equal(
+            "Authenticate before changing this account's Base32 secret.",
+            sut.EditorSecretMessage);
+        Assert.True(sut.IsEditorVisible);
+    }
+
+    [Fact]
+    public async Task BeginAddAsync_DoesNotRequireSecretEditorAuthorization()
+    {
+        using var sut = CreateSut(Mock.Of<IAccountManager>());
+
+        await sut.BeginAddAsync();
+
+        Assert.True(sut.IsEditorSecretRevealAuthorized);
+        Assert.False(sut.RequiresEditorSecretAuthorization);
+    }
+
+    [Fact]
     public async Task BeginContextEditAsync_TargetsRightClickedRowWithoutChangingSelection()
     {
         var first = new Account(Guid.NewGuid(), "First", ValidSecret, "selected");
@@ -2714,7 +2843,8 @@ public sealed class AccountListViewModelTests
         IAvaloniaLocalizationService? localization = null,
         IExportService? exportService = null,
         IAccountImportService? accountImportService = null,
-        IAvaloniaFilePicker? filePicker = null) =>
+        IAvaloniaFilePicker? filePicker = null,
+        IAuthorizationService? authorizationService = null) =>
         new(
             manager,
             accountTotpService ?? Mock.Of<IAccountTotpService>(),
@@ -2729,7 +2859,8 @@ public sealed class AccountListViewModelTests
             brandIconPackService: brandIconPackService,
             exportService: exportService,
             accountImportService: accountImportService,
-            filePicker: filePicker);
+            filePicker: filePicker,
+            authorizationService: authorizationService);
 
     private static Mock<IAsyncClipboardService> SuccessfulClipboard()
     {

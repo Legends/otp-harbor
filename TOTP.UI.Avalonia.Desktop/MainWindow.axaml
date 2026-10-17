@@ -905,7 +905,10 @@
                                                     x:Name="AccountSecretInput"
                                                     AccessibleName="{DynamicResource Secret}"
                                                     HelpText="{DynamicResource AccountSecretInvalid}"
+                                                    IsRevealAuthorized="{Binding IsEditorSecretRevealAuthorized}"
+                                                    IsRevealed="{Binding IsEditorSecretRevealed, Mode=TwoWay}"
                                                     IsRequired="True"
+                                                    RevealRequestedCommand="{Binding AuthorizeEditorSecretCommand}"
                                                     Text="{Binding EditorSecret, Mode=TwoWay}" />
                                                 <shared:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
                                                 <TextBlock

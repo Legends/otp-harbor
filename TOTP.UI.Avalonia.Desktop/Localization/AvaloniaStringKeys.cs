@@ -319,6 +319,10 @@ public static class AvaloniaStringKeys
     public const string CancelEdit = nameof(CancelEdit);
     public const string AccountIssuerRequired = nameof(AccountIssuerRequired);
     public const string AccountSecretInvalid = nameof(AccountSecretInvalid);
+    public const string AuthorizeAccountSecretEdit = nameof(AuthorizeAccountSecretEdit);
+    public const string AccountSecretAuthorizationPrompt = nameof(AccountSecretAuthorizationPrompt);
+    public const string AccountSecretAuthorizationRequired = nameof(AccountSecretAuthorizationRequired);
+    public const string AccountSecretAuthorizationFailed = nameof(AccountSecretAuthorizationFailed);
     public const string AccountDuplicate = nameof(AccountDuplicate);
     public const string AccountSaveFailed = nameof(AccountSaveFailed);
     public const string AccountSaved = nameof(AccountSaved);
@@ -565,7 +569,9 @@ public static class AvaloniaStringKeys
         OtherFormatLegacyOtpHarbor,
         AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,
-        AccountSecretInvalid, AccountDuplicate, AccountSaveFailed, AccountSaved,
+        AccountSecretInvalid, AuthorizeAccountSecretEdit, AccountSecretAuthorizationPrompt,
+        AccountSecretAuthorizationRequired, AccountSecretAuthorizationFailed,
+        AccountDuplicate, AccountSaveFailed, AccountSaved,
         AccountSavedIconPreferenceFailed,
         AccountEditLoadFailed, AccountDeleteFailed, AccountDeleted, CodeRefreshFailed,
         CodeCopied, CodeCopiedWithClear, CodeCopiedWithoutClear, ClipboardCopyUnavailable,

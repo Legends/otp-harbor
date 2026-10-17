@@ -101,6 +101,9 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _discardAccountChangesCommand;
     private readonly MobileAsyncCommand _cancelAccountNavigationCommand;
     private readonly MobileAsyncCommand _clearEditorPeriodCommand;
+    private readonly MobileAsyncCommand _authorizeEditorSecretCommand;
+    private readonly MobileAsyncCommand _confirmEditorSecretAuthorizationCommand;
+    private readonly MobileAsyncCommand _cancelEditorSecretAuthorizationCommand;
     private readonly MobileAsyncCommand _openAccountBrandIconPickerCommand;
     private readonly MobileAsyncCommand _closeAccountBrandIconPickerCommand;
     private readonly MobileAsyncCommand _clearAccountBrandIconSearchCommand;
@@ -200,6 +203,10 @@ public sealed class MobileShellViewModel :
     private string _editorIssuer = string.Empty;
     private string _editorAccountName = string.Empty;
     private string _editorSecret = string.Empty;
+    private bool _isEditorSecretAuthorized;
+    private bool _isEditorSecretRevealed;
+    private bool _isEditorSecretPasswordPromptVisible;
+    private string _editorSecretAuthorizationPassword = string.Empty;
     private int? _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
     private bool _editorIsFavorite;
     private bool _isAdvancedOptionsExpanded;
@@ -423,6 +430,17 @@ public sealed class MobileShellViewModel :
         _clearEditorPeriodCommand = new MobileAsyncCommand(
             ClearEditorPeriodAsync,
             () => IsEditorVisible && !IsBusy && EditorPeriodSeconds.HasValue);
+        _authorizeEditorSecretCommand = new MobileAsyncCommand(
+            AuthorizeEditorSecretAsync,
+            () => RequiresEditorSecretAuthorization && !IsBusy);
+        _confirmEditorSecretAuthorizationCommand = new MobileAsyncCommand(
+            ConfirmEditorSecretAuthorizationAsync,
+            () => IsEditorSecretPasswordPromptVisible
+                && EditorSecretAuthorizationPassword.Length > 0
+                && !IsBusy);
+        _cancelEditorSecretAuthorizationCommand = new MobileAsyncCommand(
+            CancelEditorSecretAuthorizationAsync,
+            () => IsEditorSecretPasswordPromptVisible && !IsBusy);
         _openAccountBrandIconPickerCommand = new MobileAsyncCommand(
             OpenAccountBrandIconPickerAsync,
             () => IsEditorVisible && HasSearchableBrandIcons && !IsBusy);
@@ -579,6 +597,11 @@ public sealed class MobileShellViewModel :
     public ICommand DiscardAccountChangesCommand => _discardAccountChangesCommand;
     public ICommand CancelAccountNavigationCommand => _cancelAccountNavigationCommand;
     public ICommand ClearEditorPeriodCommand => _clearEditorPeriodCommand;
+    public ICommand AuthorizeEditorSecretCommand => _authorizeEditorSecretCommand;
+    public ICommand ConfirmEditorSecretAuthorizationCommand =>
+        _confirmEditorSecretAuthorizationCommand;
+    public ICommand CancelEditorSecretAuthorizationCommand =>
+        _cancelEditorSecretAuthorizationCommand;
     public ICommand OpenAccountBrandIconPickerCommand => _openAccountBrandIconPickerCommand;
     public ICommand CloseAccountBrandIconPickerCommand => _closeAccountBrandIconPickerCommand;
     public ICommand ClearAccountBrandIconSearchCommand => _clearAccountBrandIconSearchCommand;
@@ -1512,6 +1535,34 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    public string EditorSecretAuthorizationPassword
+    {
+        get => _editorSecretAuthorizationPassword;
+        set
+        {
+            if (!SetField(ref _editorSecretAuthorizationPassword, value ?? string.Empty)) return;
+            EditorSecretMessage = string.Empty;
+            _confirmEditorSecretAuthorizationCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public bool IsEditorSecretPasswordPromptVisible
+    {
+        get => _isEditorSecretPasswordPromptVisible;
+        private set
+        {
+            if (!SetField(ref _isEditorSecretPasswordPromptVisible, value)) return;
+            _confirmEditorSecretAuthorizationCommand.NotifyCanExecuteChanged();
+            _cancelEditorSecretAuthorizationCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public bool IsEditorSecretRevealed
+    {
+        get => _isEditorSecretRevealed;
+        set => SetField(ref _isEditorSecretRevealed, value);
+    }
+
     public int? EditorPeriodSeconds
     {
         get => _editorPeriodSeconds;
@@ -1715,9 +1766,21 @@ public sealed class MobileShellViewModel :
 
     public bool IsEditingExistingAccount => _editingAccountId.HasValue;
 
+    public bool RequiresEditorSecretAuthorization =>
+        IsEditingExistingAccount && !_isEditorSecretAuthorized;
+
+    public bool IsEditorSecretRevealAuthorized =>
+        !IsEditingExistingAccount || _isEditorSecretAuthorized;
+
     public string EditorSecretPlaceholder => Get(_editingAccountId.HasValue
         ? MobileStringKeys.SecretOptionalOnEdit
         : MobileStringKeys.Secret);
+
+    public string AuthorizeAccountSecretEditText =>
+        Get(MobileStringKeys.AuthorizeAccountSecretEdit);
+
+    public string AccountSecretAuthorizationPromptText =>
+        Get(MobileStringKeys.AccountSecretAuthorizationPrompt);
 
     public string DeletePrompt => string.Format(
         Get(MobileStringKeys.DeleteAccountPrompt),
@@ -3749,9 +3812,10 @@ public sealed class MobileShellViewModel :
             ClearQrImage();
             _editingAccountId = account.ID;
             OnPropertyChanged(nameof(IsEditingExistingAccount));
+            NotifyEditorSecretAuthorizationChanged();
             EditorIssuer = account.Issuer;
             EditorAccountName = account.AccountName ?? string.Empty;
-            EditorSecret = string.Empty;
+            EditorSecret = account.Secret;
             EditorPeriodSeconds = account.PeriodSeconds;
             EditorIsFavorite = account.IsFavorite;
             RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
@@ -3777,6 +3841,100 @@ public sealed class MobileShellViewModel :
             return Task.CompletedTask;
 
         return BeginEditAsync();
+    }
+
+    public async Task AuthorizeEditorSecretAsync()
+    {
+        if (!RequiresEditorSecretAuthorization || IsBusy) return;
+
+        EditorSecretMessage = string.Empty;
+        if (_authorization.State.ConfiguredGate == AuthorizationGateKind.Password)
+        {
+            EditorSecretAuthorizationPassword = string.Empty;
+            IsEditorSecretPasswordPromptVisible = true;
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _authorization.TryUnlockWithHelloAsync();
+            if (result == AuthorizationResult.Success)
+            {
+                await GrantEditorSecretAccessAsync();
+            }
+            else if (result == AuthorizationResult.PasswordRequired)
+            {
+                EditorSecretAuthorizationPassword = string.Empty;
+                IsEditorSecretPasswordPromptVisible = true;
+            }
+            else if (result != AuthorizationResult.Cancelled)
+            {
+                EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
+            }
+        }
+        catch (Exception)
+        {
+            EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task ConfirmEditorSecretAuthorizationAsync()
+    {
+        if (!IsEditorSecretPasswordPromptVisible
+            || EditorSecretAuthorizationPassword.Length == 0
+            || IsBusy)
+        {
+            return;
+        }
+
+        var password = EditorSecretAuthorizationPassword;
+        EditorSecretAuthorizationPassword = string.Empty;
+        IsBusy = true;
+        try
+        {
+            var result = await _authorization.TryUnlockWithPasswordAsync(password);
+            if (result == AuthorizationResult.Success)
+            {
+                IsEditorSecretPasswordPromptVisible = false;
+                await GrantEditorSecretAccessAsync();
+            }
+            else
+            {
+                EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
+            }
+        }
+        catch (Exception)
+        {
+            EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
+        }
+        finally
+        {
+            password = string.Empty;
+            IsBusy = false;
+        }
+    }
+
+    public Task CancelEditorSecretAuthorizationAsync()
+    {
+        if (IsBusy) return Task.CompletedTask;
+        EditorSecretAuthorizationPassword = string.Empty;
+        IsEditorSecretPasswordPromptVisible = false;
+        EditorSecretMessage = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task GrantEditorSecretAccessAsync()
+    {
+        if (!_editingAccountId.HasValue) return Task.CompletedTask;
+
+        SetEditorSecretAuthorized(true);
+        IsEditorSecretRevealed = true;
+        return Task.CompletedTask;
     }
 
     public async Task SaveAccountAsync()
@@ -3810,6 +3968,14 @@ public sealed class MobileShellViewModel :
             if (_editingAccountId.HasValue && existing is null)
             {
                 SetError(MobileStringKeys.AccountSaveFailed);
+                return;
+            }
+            if (existing is not null
+                && enteredSecret.Length > 0
+                && !_isEditorSecretAuthorized
+                && !string.Equals(existing.Secret, enteredSecret, StringComparison.Ordinal))
+            {
+                EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationRequired);
                 return;
             }
 
@@ -4845,6 +5011,10 @@ public sealed class MobileShellViewModel :
         IsAccountEditorExitConfirmationVisible = false;
         _editingAccountId = null;
         OnPropertyChanged(nameof(IsEditingExistingAccount));
+        SetEditorSecretAuthorized(false);
+        NotifyEditorSecretAuthorizationChanged();
+        EditorSecretAuthorizationPassword = string.Empty;
+        IsEditorSecretPasswordPromptVisible = false;
         EditorIssuer = string.Empty;
         EditorAccountName = string.Empty;
         EditorSecret = string.Empty;
@@ -4861,6 +5031,21 @@ public sealed class MobileShellViewModel :
         EditorPeriodMessage = string.Empty;
         OnPropertyChanged(nameof(EditorTitle));
         OnPropertyChanged(nameof(EditorSecretPlaceholder));
+    }
+
+    private void SetEditorSecretAuthorized(bool value)
+    {
+        if (_isEditorSecretAuthorized == value) return;
+        _isEditorSecretAuthorized = value;
+        if (!value) IsEditorSecretRevealed = false;
+        NotifyEditorSecretAuthorizationChanged();
+    }
+
+    private void NotifyEditorSecretAuthorizationChanged()
+    {
+        OnPropertyChanged(nameof(RequiresEditorSecretAuthorization));
+        OnPropertyChanged(nameof(IsEditorSecretRevealAuthorized));
+        _authorizeEditorSecretCommand.NotifyCanExecuteChanged();
     }
 
     private void CaptureAccountEditorBaseline() =>
@@ -5762,6 +5947,9 @@ public sealed class MobileShellViewModel :
         _discardAccountChangesCommand.NotifyCanExecuteChanged();
         _cancelAccountNavigationCommand.NotifyCanExecuteChanged();
         _clearEditorPeriodCommand.NotifyCanExecuteChanged();
+        _authorizeEditorSecretCommand.NotifyCanExecuteChanged();
+        _confirmEditorSecretAuthorizationCommand.NotifyCanExecuteChanged();
+        _cancelEditorSecretAuthorizationCommand.NotifyCanExecuteChanged();
         _openAccountBrandIconPickerCommand.NotifyCanExecuteChanged();
         _closeAccountBrandIconPickerCommand.NotifyCanExecuteChanged();
         _clearAccountBrandIconSearchCommand.NotifyCanExecuteChanged();
@@ -6031,7 +6219,9 @@ public sealed class MobileShellViewModel :
         nameof(KeepAccountAutomationFormat),
         nameof(RestoreAccountAutomationFormat),
         nameof(EditorTitle),
-        nameof(EditorSecretPlaceholder)
+        nameof(EditorSecretPlaceholder),
+        nameof(AuthorizeAccountSecretEditText),
+        nameof(AccountSecretAuthorizationPromptText)
     ];
 
     private sealed record AccountEditorSnapshot(

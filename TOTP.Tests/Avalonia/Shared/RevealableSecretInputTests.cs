@@ -41,4 +41,18 @@ public sealed class RevealableSecretInputTests
 
         Assert.False(sut.IsRevealed);
     }
+
+    [Fact]
+    public void UnauthorizedInput_FailsClosedWhenDisclosureIsSetExternally()
+    {
+        var sut = new RevealableSecretInput
+        {
+            IsRevealAuthorized = false,
+            Text = "synthetic secret"
+        };
+
+        sut.IsRevealed = true;
+
+        Assert.False(sut.IsRevealed);
+    }
 }

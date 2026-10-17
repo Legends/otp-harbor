@@ -319,6 +319,50 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void RevealableSecretInput_UnauthorizedRevealRequestsAccessBeforeDisclosure()
+    {
+        var requests = 0;
+        var input = new RevealableSecretInput
+        {
+            IsRevealAuthorized = false,
+            RevealRequestedCommand = new TestCommand(() => requests++),
+            Text = "test-secret",
+            Width = 320
+        };
+        var window = new Window { Content = input };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var textBox = Assert.Single(input.GetVisualDescendants().OfType<TextBox>());
+            var revealButton = Assert.Single(input.GetVisualDescendants().OfType<Button>());
+
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(1, requests);
+            Assert.False(input.IsRevealed);
+            Assert.NotEqual('\0', textBox.PasswordChar);
+
+            input.IsRevealAuthorized = true;
+            input.IsRevealed = true;
+
+            Assert.True(input.IsRevealed);
+            Assert.Equal('\0', textBox.PasswordChar);
+
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(1, requests);
+            Assert.True(input.IsRevealed);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void TextBoxStyles_KeepSingleLineTextCenteredAndMultilineTextTopAligned()
     {
         var singleLine = new TextBox { Text = "Letters with descenders: gypq" };

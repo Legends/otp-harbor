@@ -111,6 +111,10 @@
   <data name="CancelEdit" xml:space="preserve"><value>Bearbeitung abbrechen</value></data>
   <data name="AccountIssuerRequired" xml:space="preserve"><value>Der Anbieter ist erforderlich.</value></data>
   <data name="AccountSecretInvalid" xml:space="preserve"><value>Gib ein gültiges Base32-Geheimnis ein. Geheimnisse für neue Konten müssen mindestens 26 Zeichen enthalten.</value></data>
+  <data name="AuthorizeAccountSecretEdit" xml:space="preserve"><value>Authentifizieren, um Geheimnis zu bearbeiten</value></data>
+  <data name="AccountSecretAuthorizationPrompt" xml:space="preserve"><value>Authentifiziere dich einmal, um das Base32-Geheimnis dieses Kontos anzuzeigen oder zu ändern.</value></data>
+  <data name="AccountSecretAuthorizationRequired" xml:space="preserve"><value>Authentifiziere dich, bevor du das Base32-Geheimnis dieses Kontos änderst.</value></data>
+  <data name="AccountSecretAuthorizationFailed" xml:space="preserve"><value>Authentifizierung fehlgeschlagen. Das Base32-Geheimnis bleibt geschützt.</value></data>
   <data name="AccountDuplicate" xml:space="preserve"><value>Ein Konto mit demselben Anbieter und Kontonamen ist bereits vorhanden.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>Das Konto konnte nicht sicher gespeichert werden. Vorhandene verschlüsselte Daten wurden nicht geändert.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Konto gespeichert.</value></data>

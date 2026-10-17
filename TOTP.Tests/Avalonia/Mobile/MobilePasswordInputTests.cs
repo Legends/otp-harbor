@@ -18,7 +18,7 @@ public sealed class MobilePasswordInputTests
             .Where(element => element.Name.LocalName == "RevealableSecretInput")
             .ToArray();
 
-        Assert.Equal(12, revealInputs.Length);
+        Assert.Equal(13, revealInputs.Length);
         Assert.All(revealInputs, input =>
         {
             Assert.Contains("RevealPasswordText", input.Attribute("RevealButtonAccessibleName")?.Value);

@@ -168,7 +168,8 @@ public static class AvaloniaCompositionRoot
             brandIconPackService: provider.GetRequiredService<IBrandIconPackService>(),
             filePicker: provider.GetRequiredService<IAvaloniaFilePicker>(),
             exportService: provider.GetRequiredService<IExportService>(),
-            accountImportService: provider.GetRequiredService<IAccountImportService>()));
+            accountImportService: provider.GetRequiredService<IAccountImportService>(),
+            authorizationService: provider.GetRequiredService<IAuthorizationService>()));
         services.AddSingleton<SettingsPageViewModel>();
         services.AddSingleton<AuthorizationSettingsViewModel>();
         services.AddSingleton<NativeFilePickerViewModel>();

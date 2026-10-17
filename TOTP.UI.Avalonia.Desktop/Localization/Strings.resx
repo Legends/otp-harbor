@@ -111,6 +111,10 @@
   <data name="CancelEdit" xml:space="preserve"><value>Cancel editing</value></data>
   <data name="AccountIssuerRequired" xml:space="preserve"><value>Issuer is required.</value></data>
   <data name="AccountSecretInvalid" xml:space="preserve"><value>Enter a valid Base32 secret. New account secrets must contain at least 26 characters.</value></data>
+  <data name="AuthorizeAccountSecretEdit" xml:space="preserve"><value>Authenticate to edit secret</value></data>
+  <data name="AccountSecretAuthorizationPrompt" xml:space="preserve"><value>Authenticate once to view or change this account's Base32 secret.</value></data>
+  <data name="AccountSecretAuthorizationRequired" xml:space="preserve"><value>Authenticate before changing this account's Base32 secret.</value></data>
+  <data name="AccountSecretAuthorizationFailed" xml:space="preserve"><value>Authentication failed. The Base32 secret remains protected.</value></data>
   <data name="AccountDuplicate" xml:space="preserve"><value>An account with the same issuer and account name already exists.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>The account could not be saved safely. Existing encrypted data was not changed.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Account saved.</value></data>

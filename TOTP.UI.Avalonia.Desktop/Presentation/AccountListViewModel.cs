@@ -6,9 +6,11 @@ using Avalonia.Media;
 using TOTP.Avalonia.Desktop.Platform;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
+using TOTP.Core.Enums;
 using TOTP.Core.Icons;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
+using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
@@ -33,6 +35,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly IAvaloniaFilePicker? _filePicker;
     private readonly IExportService? _exportService;
     private readonly IAccountImportService? _accountImportService;
+    private readonly IAuthorizationService? _authorizationService;
     private readonly TimeSpan _countdownTickInterval;
     private readonly TimeSpan _copyConfirmationDuration;
     private readonly ISettingsService? _settingsService;
@@ -48,6 +51,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly AsyncCommand _saveAccountCommand;
     private readonly AsyncCommand _cancelEditCommand;
     private readonly AsyncCommand _clearEditorPeriodCommand;
+    private readonly AsyncCommand _authorizeEditorSecretCommand;
     private readonly AsyncCommand _importCustomIconCommand;
     private readonly AsyncCommand _deleteAccountCommand;
     private readonly AsyncCommand _beginContextEditCommand;
@@ -103,6 +107,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _editorSecretMessage = string.Empty;
     private string _editorPeriodMessage = string.Empty;
     private string _editorMessage = string.Empty;
+    private bool _isEditorSecretAuthorized;
+    private bool _isEditorSecretRevealed;
     private IReadOnlyList<BrandIconOption> _editorBrandIconOptions = [];
     private BrandIconOption? _selectedEditorBrandIconOption;
     private BrandIconOption? _brandIconSelectionBeforeCustomPicker;
@@ -137,7 +143,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         IBrandIconPackService? brandIconPackService = null,
         IAvaloniaFilePicker? filePicker = null,
         IExportService? exportService = null,
-        IAccountImportService? accountImportService = null)
+        IAccountImportService? accountImportService = null,
+        IAuthorizationService? authorizationService = null)
     {
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountTotpService = accountTotpService ?? throw new ArgumentNullException(nameof(accountTotpService));
@@ -151,6 +158,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _filePicker = filePicker;
         _exportService = exportService;
         _accountImportService = accountImportService;
+        _authorizationService = authorizationService;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         _countdownTickInterval = countdownTickInterval ?? TimeSpan.FromSeconds(1);
         _copyConfirmationDuration = transientMessageDuration
@@ -184,6 +192,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _clearEditorPeriodCommand = new AsyncCommand(
             ClearEditorPeriodAsync,
             () => !IsBusy && IsEditorVisible && EditorPeriodSeconds.HasValue);
+        _authorizeEditorSecretCommand = new AsyncCommand(
+            AuthorizeEditorSecretAsync,
+            () => !IsBusy && RequiresEditorSecretAuthorization);
         _importCustomIconCommand = new AsyncCommand(
             ImportCustomIconAsync,
             () => !IsBusy
@@ -521,6 +532,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public ICommand SaveAccountCommand => _saveAccountCommand;
     public ICommand CancelEditCommand => _cancelEditCommand;
     public ICommand ClearEditorPeriodCommand => _clearEditorPeriodCommand;
+    public ICommand AuthorizeEditorSecretCommand => _authorizeEditorSecretCommand;
     public ICommand DeleteAccountCommand => _deleteAccountCommand;
     public ICommand BeginContextEditCommand => _beginContextEditCommand;
     public ICommand GenerateContextQrCommand => _generateContextQrCommand;
@@ -620,6 +632,18 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool IsEditingExistingAccount => _editingAccountId.HasValue;
+
+    public bool RequiresEditorSecretAuthorization =>
+        IsEditingExistingAccount && !_isEditorSecretAuthorized;
+
+    public bool IsEditorSecretRevealAuthorized =>
+        !IsEditingExistingAccount || _isEditorSecretAuthorized;
+
+    public bool IsEditorSecretRevealed
+    {
+        get => _isEditorSecretRevealed;
+        set => SetField(ref _isEditorSecretRevealed, value);
+    }
 
     public string EditorIssuer
     {
@@ -1339,6 +1363,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
             _editingAccountId = account.ID;
             OnPropertyChanged(nameof(IsEditingExistingAccount));
+            NotifyEditorSecretAuthorizationChanged();
             EditorIssuer = account.Issuer;
             EditorAccountName = account.AccountName ?? string.Empty;
             EditorSecret = account.Secret;
@@ -1358,13 +1383,84 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public async Task AuthorizeEditorSecretAsync()
+    {
+        if (IsBusy || !RequiresEditorSecretAuthorization) return;
+
+        if (_authorizationService is null)
+        {
+            EditorSecretMessage = _localization.GetString(
+                AvaloniaStringKeys.AccountSecretAuthorizationFailed);
+            return;
+        }
+
+        IsBusy = true;
+        EditorSecretMessage = string.Empty;
+        try
+        {
+            if (_authorizationService.State.ConfiguredGate is AuthorizationGateKind.Hello
+                or AuthorizationGateKind.DeviceCredential)
+            {
+                var result = await _authorizationService.TryUnlockWithHelloAsync();
+                if (result == AuthorizationResult.Success)
+                {
+                    await GrantEditorSecretAccessAsync();
+                }
+                else if (result != AuthorizationResult.Cancelled)
+                {
+                    EditorSecretMessage = _localization.GetString(
+                        AvaloniaStringKeys.AccountSecretAuthorizationFailed);
+                }
+
+                return;
+            }
+
+            string? password = await _dialogs.PromptForPasswordAsync(
+                new PasswordDialogRequest(
+                    _localization.GetString(AvaloniaStringKeys.AuthorizeAccountSecretEdit),
+                    _localization.GetString(AvaloniaStringKeys.AccountSecretAuthorizationPrompt),
+                    _localization.GetString(AvaloniaStringKeys.Confirm),
+                    _localization.GetString(AvaloniaStringKeys.Cancel),
+                    _localization.GetString(AvaloniaStringKeys.PasswordRequired),
+                    _localization.GetString(AvaloniaStringKeys.PasswordVerificationFailed),
+                    async (candidate, _) =>
+                        await _authorizationService.TryUnlockWithPasswordAsync(candidate)
+                            == AuthorizationResult.Success
+                            ? null
+                            : _localization.GetString(
+                                AvaloniaStringKeys.PasswordVerificationFailed)));
+            if (password is not null)
+                await GrantEditorSecretAccessAsync();
+            password = null;
+        }
+        catch (Exception)
+        {
+            EditorSecretMessage = _localization.GetString(
+                AvaloniaStringKeys.AccountSecretAuthorizationFailed);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private Task GrantEditorSecretAccessAsync()
+    {
+        if (!_editingAccountId.HasValue) return Task.CompletedTask;
+
+        SetEditorSecretAuthorized(true);
+        IsEditorSecretRevealed = true;
+        return Task.CompletedTask;
+    }
+
     public async Task SaveAccountAsync()
     {
         if (IsBusy || !IsEditorVisible) return;
 
         var issuer = EditorIssuer.Trim();
         var accountName = EditorAccountName.Trim();
-        var secret = EditorSecret;
+        var enteredSecret = EditorSecret;
+        string? secret = null;
         EditorSecret = string.Empty;
         if (issuer.Length == 0)
         {
@@ -1373,12 +1469,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
 
         var isNewAccount = !_editingAccountId.HasValue;
-        var isSecretValid = isNewAccount
-            ? SecretValidation.IsValidNewAccountBase32Secret(secret)
-            : SecretValidation.IsValidBase32Secret(secret);
-        if (!isSecretValid)
+        if (isNewAccount
+            && !SecretValidation.IsValidNewAccountBase32Secret(enteredSecret))
         {
             EditorSecretMessage = _localization.GetString(AvaloniaStringKeys.AccountSecretInvalid);
+            enteredSecret = string.Empty;
             return;
         }
         if (EditorPeriodSeconds is not int periodSeconds
@@ -1396,6 +1491,37 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             if (loaded.IsFailed)
             {
                 EditorMessage = _localization.GetString(AvaloniaStringKeys.AccountSaveFailed);
+                return;
+            }
+
+            var existing = _editingAccountId.HasValue
+                ? loaded.Value.FirstOrDefault(account => account.ID == _editingAccountId.Value)
+                : null;
+            if (_editingAccountId.HasValue && existing is null)
+            {
+                EditorMessage = _localization.GetString(AvaloniaStringKeys.AccountSaveFailed);
+                return;
+            }
+            if (existing is not null
+                && enteredSecret.Length > 0
+                && !_isEditorSecretAuthorized
+                && !string.Equals(existing.Secret, enteredSecret, StringComparison.Ordinal))
+            {
+                EditorSecretMessage = _localization.GetString(
+                    AvaloniaStringKeys.AccountSecretAuthorizationRequired);
+                return;
+            }
+
+            secret = enteredSecret.Length > 0
+                ? enteredSecret
+                : existing?.Secret ?? string.Empty;
+            var isSecretValid = isNewAccount
+                ? SecretValidation.IsValidNewAccountBase32Secret(secret)
+                : SecretValidation.IsValidBase32Secret(secret);
+            if (!isSecretValid)
+            {
+                EditorSecretMessage = _localization.GetString(
+                    AvaloniaStringKeys.AccountSecretInvalid);
                 return;
             }
 
@@ -1476,6 +1602,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
         finally
         {
+            enteredSecret = string.Empty;
             secret = string.Empty;
             IsBusy = false;
         }
@@ -2329,6 +2456,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     {
         _editingAccountId = null;
         OnPropertyChanged(nameof(IsEditingExistingAccount));
+        SetEditorSecretAuthorized(false);
+        NotifyEditorSecretAuthorizationChanged();
         EditorIssuer = string.Empty;
         EditorAccountName = string.Empty;
         EditorSecret = string.Empty;
@@ -2344,6 +2473,21 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         CompleteCustomIconPickerSelection();
         RefreshBrandIconOptions(null);
         IsEditorVisible = false;
+    }
+
+    private void SetEditorSecretAuthorized(bool value)
+    {
+        if (_isEditorSecretAuthorized == value) return;
+        _isEditorSecretAuthorized = value;
+        if (!value) IsEditorSecretRevealed = false;
+        NotifyEditorSecretAuthorizationChanged();
+    }
+
+    private void NotifyEditorSecretAuthorizationChanged()
+    {
+        OnPropertyChanged(nameof(RequiresEditorSecretAuthorization));
+        OnPropertyChanged(nameof(IsEditorSecretRevealAuthorized));
+        _authorizeEditorSecretCommand.NotifyCanExecuteChanged();
     }
 
     private void ClearGroupEditor()
@@ -2623,6 +2767,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _saveAccountCommand.NotifyCanExecuteChanged();
         _cancelEditCommand.NotifyCanExecuteChanged();
         _clearEditorPeriodCommand.NotifyCanExecuteChanged();
+        _authorizeEditorSecretCommand.NotifyCanExecuteChanged();
         _importCustomIconCommand.NotifyCanExecuteChanged();
         _deleteAccountCommand.NotifyCanExecuteChanged();
         _beginContextEditCommand.NotifyCanExecuteChanged();

@@ -1894,10 +1894,44 @@
                         <controls:RevealableSecretInput
                             x:Name="AccountSecretInput"
                             AccessibleName="{Binding EditorSecretPlaceholder}"
+                            IsRevealAuthorized="{Binding IsEditorSecretRevealAuthorized}"
+                            IsRevealed="{Binding IsEditorSecretRevealed, Mode=TwoWay}"
                             PlaceholderText="{Binding EditorSecretPlaceholder}"
                             RevealButtonAccessibleName="{Binding RevealPasswordText}"
                             RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                            RevealRequestedCommand="{Binding AuthorizeEditorSecretCommand}"
                             Text="{Binding EditorSecret, Mode=TwoWay}" />
+                        <Border
+                            Padding="14"
+                            Background="{DynamicResource BrushSurfaceAlternate}"
+                            BorderBrush="{DynamicResource BrushBorder}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            IsVisible="{Binding IsEditorSecretPasswordPromptVisible}">
+                            <StackPanel Spacing="10">
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding AccountSecretAuthorizationPromptText}"
+                                    TextWrapping="Wrap" />
+                                <controls:RevealableSecretInput
+                                    AccessibleName="{Binding MasterPasswordText}"
+                                    PlaceholderText="{Binding MasterPasswordText}"
+                                    RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                    RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                    Text="{Binding EditorSecretAuthorizationPassword, Mode=TwoWay}" />
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                    <Button
+                                        Grid.Column="0"
+                                        Command="{Binding CancelEditorSecretAuthorizationCommand}"
+                                        Content="{Binding CancelText}" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Classes="primary"
+                                        Command="{Binding ConfirmEditorSecretAuthorizationCommand}"
+                                        Content="{Binding AuthorizeAccountSecretEditText}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                         <controls:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
                         <Expander
                             x:Name="AccountAdvancedOptions"

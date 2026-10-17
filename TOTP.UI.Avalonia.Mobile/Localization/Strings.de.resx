@@ -181,6 +181,10 @@
   <data name="AccountName" xml:space="preserve"><value>Kontoname (optional)</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32-Geheimnis</value></data>
   <data name="SecretOptionalOnEdit" xml:space="preserve"><value>Neues Base32-Geheimnis (leer lassen, um das aktuelle beizubehalten)</value></data>
+  <data name="AuthorizeAccountSecretEdit" xml:space="preserve"><value>Authentifizieren, um Geheimnis zu bearbeiten</value></data>
+  <data name="AccountSecretAuthorizationPrompt" xml:space="preserve"><value>Authentifiziere dich einmal, um das Base32-Geheimnis dieses Kontos anzuzeigen oder zu ändern.</value></data>
+  <data name="AccountSecretAuthorizationRequired" xml:space="preserve"><value>Authentifiziere dich, bevor du das Base32-Geheimnis dieses Kontos änderst.</value></data>
+  <data name="AccountSecretAuthorizationFailed" xml:space="preserve"><value>Authentifizierung fehlgeschlagen. Das Base32-Geheimnis bleibt geschützt.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Erweiterte Optionen</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Code-Periode in Sekunden</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Code-Periode löschen</value></data>

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using System.Windows.Input;
 
 namespace TOTP.Avalonia.Shared.Controls;
 
@@ -49,12 +50,23 @@ public sealed class RevealableSecretInput : TemplatedControl
     public static readonly StyledProperty<bool> IsRevealedProperty =
         AvaloniaProperty.Register<RevealableSecretInput, bool>(nameof(IsRevealed));
 
+    public static readonly StyledProperty<bool> IsRevealAuthorizedProperty =
+        AvaloniaProperty.Register<RevealableSecretInput, bool>(
+            nameof(IsRevealAuthorized),
+            true);
+
+    public static readonly StyledProperty<ICommand?> RevealRequestedCommandProperty =
+        AvaloniaProperty.Register<RevealableSecretInput, ICommand?>(
+            nameof(RevealRequestedCommand));
+
     static RevealableSecretInput()
     {
         TextProperty.Changed.AddClassHandler<RevealableSecretInput>(
             static (control, _) => control.OnTextChanged());
         IsRevealedProperty.Changed.AddClassHandler<RevealableSecretInput>(
             static (control, _) => control.UpdateDisclosureState());
+        IsRevealAuthorizedProperty.Changed.AddClassHandler<RevealableSecretInput>(
+            static (control, _) => control.OnRevealAuthorizationChanged());
     }
 
     public string Text
@@ -102,10 +114,22 @@ public sealed class RevealableSecretInput : TemplatedControl
     public bool IsRevealed
     {
         get => GetValue(IsRevealedProperty);
-        private set => SetValue(IsRevealedProperty, value);
+        set => SetValue(IsRevealedProperty, value);
     }
 
-    public void Conceal() => IsRevealed = false;
+    public bool IsRevealAuthorized
+    {
+        get => GetValue(IsRevealAuthorizedProperty);
+        set => SetValue(IsRevealAuthorizedProperty, value);
+    }
+
+    public ICommand? RevealRequestedCommand
+    {
+        get => GetValue(RevealRequestedCommandProperty);
+        set => SetValue(RevealRequestedCommandProperty, value);
+    }
+
+    public void Conceal() => SetDisclosure(false);
 
     public void FocusInput()
     {
@@ -148,7 +172,21 @@ public sealed class RevealableSecretInput : TemplatedControl
 
     private void OnRevealClick(object? sender, RoutedEventArgs e)
     {
-        IsRevealed = !IsRevealed;
+        if (IsRevealed)
+        {
+            SetDisclosure(false);
+        }
+        else if (!IsRevealAuthorized)
+        {
+            var command = RevealRequestedCommand;
+            if (command?.CanExecute(null) == true) command.Execute(null);
+            return;
+        }
+        else
+        {
+            SetDisclosure(true);
+        }
+
         if (_textBox is null) return;
         _textBox.Focus();
         _textBox.CaretIndex = _textBox.Text?.Length ?? 0;
@@ -159,12 +197,25 @@ public sealed class RevealableSecretInput : TemplatedControl
         if (string.IsNullOrEmpty(Text)) Conceal();
     }
 
+    private void OnRevealAuthorizationChanged()
+    {
+        if (!IsRevealAuthorized) Conceal();
+    }
+
     private void UpdateDisclosureState()
     {
+        if (IsRevealed && !IsRevealAuthorized)
+        {
+            SetDisclosure(false);
+            return;
+        }
+
         PseudoClasses.Set(":revealed", IsRevealed);
         if (_textBox is not null)
         {
             _textBox.PasswordChar = IsRevealed ? '\0' : MaskCharacter;
         }
     }
+
+    private void SetDisclosure(bool value) => SetCurrentValue(IsRevealedProperty, value);
 }

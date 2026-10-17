@@ -111,6 +111,10 @@
   <data name="CancelEdit" xml:space="preserve"><value>Annuler la modification</value></data>
   <data name="AccountIssuerRequired" xml:space="preserve"><value>L’émetteur est requis.</value></data>
   <data name="AccountSecretInvalid" xml:space="preserve"><value>Saisissez un secret Base32 valide. Les secrets des nouveaux comptes doivent contenir au moins 26 caractères.</value></data>
+  <data name="AuthorizeAccountSecretEdit" xml:space="preserve"><value>S’authentifier pour modifier le secret</value></data>
+  <data name="AccountSecretAuthorizationPrompt" xml:space="preserve"><value>Authentifiez-vous une fois pour afficher ou modifier le secret Base32 de ce compte.</value></data>
+  <data name="AccountSecretAuthorizationRequired" xml:space="preserve"><value>Authentifiez-vous avant de modifier le secret Base32 de ce compte.</value></data>
+  <data name="AccountSecretAuthorizationFailed" xml:space="preserve"><value>Échec de l’authentification. Le secret Base32 reste protégé.</value></data>
   <data name="AccountDuplicate" xml:space="preserve"><value>Un compte avec le même émetteur et le même nom existe déjà.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>Le compte n’a pas pu être enregistré de manière sécurisée. Les données chiffrées existantes n’ont pas été modifiées.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Compte enregistré.</value></data>

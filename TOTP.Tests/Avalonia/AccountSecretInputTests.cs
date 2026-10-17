@@ -22,6 +22,21 @@ public sealed class AccountSecretInputTests
                 && element.Attribute(xaml + "Name")?.Value == "AccountSecretInput");
 
         Assert.Equal("{Binding EditorSecret, Mode=TwoWay}", input.Attribute("Text")?.Value);
+        Assert.Equal(
+            "{Binding IsEditorSecretRevealAuthorized}",
+            input.Attribute("IsRevealAuthorized")?.Value);
+        Assert.Equal(
+            "{Binding IsEditorSecretRevealed, Mode=TwoWay}",
+            input.Attribute("IsRevealed")?.Value);
+        Assert.Equal(
+            "{Binding AuthorizeEditorSecretCommand}",
+            input.Attribute("RevealRequestedCommand")?.Value);
+        Assert.Null(input.Attribute("IsVisible"));
         Assert.Null(input.Attribute("PasswordChar"));
+
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => element.Attribute(xaml + "Name")?.Value
+                == "AuthorizeAccountSecretEditButton");
     }
 }

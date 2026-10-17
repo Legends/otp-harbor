@@ -273,6 +273,10 @@ public static class MobileStringKeys
     public const string AccountName = nameof(AccountName);
     public const string Secret = nameof(Secret);
     public const string SecretOptionalOnEdit = nameof(SecretOptionalOnEdit);
+    public const string AuthorizeAccountSecretEdit = nameof(AuthorizeAccountSecretEdit);
+    public const string AccountSecretAuthorizationPrompt = nameof(AccountSecretAuthorizationPrompt);
+    public const string AccountSecretAuthorizationRequired = nameof(AccountSecretAuthorizationRequired);
+    public const string AccountSecretAuthorizationFailed = nameof(AccountSecretAuthorizationFailed);
     public const string AdvancedOptions = nameof(AdvancedOptions);
     public const string TotpPeriod = nameof(TotpPeriod);
     public const string ClearPeriod = nameof(ClearPeriod);
@@ -577,6 +581,10 @@ public static class MobileStringKeys
         AccountName,
         Secret,
         SecretOptionalOnEdit,
+        AuthorizeAccountSecretEdit,
+        AccountSecretAuthorizationPrompt,
+        AccountSecretAuthorizationRequired,
+        AccountSecretAuthorizationFailed,
         AdvancedOptions,
         TotpPeriod,
         ClearPeriod,

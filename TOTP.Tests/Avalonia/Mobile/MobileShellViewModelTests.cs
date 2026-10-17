@@ -19,7 +19,7 @@ namespace TOTP.Tests.Avalonia.Mobile;
 
 public sealed class MobileShellViewModelTests
 {
-    private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+    private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"; // gitleaks:allow - synthetic Base32 fixture
 
     [Fact]
     public async Task InitializeAsync_WhenNoEnvelopeExists_SimulatesEveryIntroductionSlideBeforePasswordSetup()
@@ -2543,7 +2543,7 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsEditorVisible);
         Assert.Equal(account.ID, context.Sut.SelectedAccount?.Id);
         Assert.Equal("Persisted issuer", context.Sut.EditorIssuer);
-        Assert.Empty(context.Sut.EditorSecret);
+        Assert.Equal(ValidSecret, context.Sut.EditorSecret);
     }
 
     [Fact]
@@ -3616,7 +3616,7 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.CustomIconImportTooLarge),
             context.Sut.NotificationText);
-        Assert.False(context.Sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
+        Assert.NotEqual(true, context.Sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             It.IsAny<Guid>(),
             It.IsAny<Stream>(),
@@ -3797,6 +3797,164 @@ public sealed class MobileShellViewModelTests
 
         Assert.NotNull(updated);
         Assert.False(updated.IsFavorite);
+    }
+
+    [Fact]
+    public async Task AuthorizeEditorSecretAsync_QuickUnlockGrantsAccessOncePerOpenEditor()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(
+            isConfigured: true,
+            [account],
+            biometricAvailable: true,
+            preferredUnlockMethod: PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithHelloAsync())
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+
+        Assert.True(context.Sut.RequiresEditorSecretAuthorization);
+        Assert.False(context.Sut.IsEditorSecretRevealAuthorized);
+        Assert.False(context.Sut.IsEditorSecretRevealed);
+
+        await context.Sut.AuthorizeEditorSecretAsync();
+        await context.Sut.AuthorizeEditorSecretAsync();
+
+        Assert.True(context.Sut.IsEditorSecretRevealAuthorized);
+        Assert.True(context.Sut.IsEditorSecretRevealed);
+        Assert.False(context.Sut.RequiresEditorSecretAuthorization);
+        Assert.Equal(ValidSecret, context.Sut.EditorSecret);
+        context.Authorization.Verify(
+            value => value.TryUnlockWithHelloAsync(),
+            Times.Once);
+
+        await context.Sut.CancelEditAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+
+        Assert.True(context.Sut.RequiresEditorSecretAuthorization);
+        Assert.False(context.Sut.IsEditorSecretRevealAuthorized);
+        Assert.False(context.Sut.IsEditorSecretRevealed);
+    }
+
+    [Fact]
+    public async Task AuthorizeEditorSecretAsync_CancelledQuickUnlockKeepsSecretProtected()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(
+            isConfigured: true,
+            [account],
+            biometricAvailable: true,
+            preferredUnlockMethod: PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithHelloAsync())
+            .ReturnsAsync(AuthorizationResult.Cancelled);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+
+        await context.Sut.AuthorizeEditorSecretAsync();
+
+        Assert.True(context.Sut.RequiresEditorSecretAuthorization);
+        Assert.False(context.Sut.IsEditorSecretRevealAuthorized);
+        Assert.False(context.Sut.IsEditorSecretRevealed);
+        Assert.Equal(ValidSecret, context.Sut.EditorSecret);
+        Assert.Empty(context.Sut.EditorSecretMessage);
+    }
+
+    [Fact]
+    public async Task ConfirmEditorSecretAuthorizationAsync_PasswordAllowsSecretReplacement()
+    {
+        const string replacementSecret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var stored = new List<Account> { account };
+        var context = CreateContext(isConfigured: true, stored);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.UpdateAsync(account, It.IsAny<Account>()))
+            .Callback<Account, Account>((_, updated) => stored[0] = updated)
+            .ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+
+        context.Sut.EditorSecret = replacementSecret;
+        await context.Sut.AuthorizeEditorSecretAsync();
+        Assert.True(context.Sut.IsEditorSecretPasswordPromptVisible);
+        context.Sut.EditorSecretAuthorizationPassword = "synthetic password";
+        await context.Sut.ConfirmEditorSecretAuthorizationAsync();
+        Assert.True(context.Sut.IsEditorSecretRevealed);
+        await context.Sut.SaveAccountAsync();
+
+        Assert.False(context.Sut.IsEditorSecretPasswordPromptVisible);
+        Assert.Equal(replacementSecret, stored[0].Secret);
+        context.Authorization.Verify(
+            value => value.TryUnlockWithPasswordAsync("synthetic password"),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task SaveAccountAsync_ChangedSecretWithoutEditorAuthorizationDoesNotPersist()
+    {
+        const string replacementSecret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true, [account]);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+        context.Sut.EditorSecret = replacementSecret;
+
+        await context.Sut.SaveAccountAsync();
+
+        context.AccountManager.Verify(value => value.UpdateAsync(
+            It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.AccountSecretAuthorizationRequired),
+            context.Sut.EditorSecretMessage);
+        Assert.True(context.Sut.IsEditorVisible);
+    }
+
+    [Fact]
+    public async Task BeginAddAsync_DoesNotRequireSecretEditorAuthorization()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        await context.Sut.BeginAddAsync();
+
+        Assert.True(context.Sut.IsEditorSecretRevealAuthorized);
+        Assert.False(context.Sut.RequiresEditorSecretAuthorization);
     }
 
     [Fact]
