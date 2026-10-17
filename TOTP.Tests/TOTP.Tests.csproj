@@ -62,6 +62,9 @@
     <None Include="..\TOTP.UI.Avalonia.Mobile\Views\MainView.axaml"
           Link="Fixtures\Avalonia\MobileMainView.axaml"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Mobile\Views\MainView.axaml.cs"
+          Link="Fixtures\Avalonia\MobileMainView.axaml.cs"
+          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\TOTP.UI.Avalonia.Mobile\MobileApp.axaml"
           Link="Fixtures\Avalonia\MobileApp.axaml"
           CopyToOutputDirectory="PreserveNewest" />
@@ -76,6 +79,9 @@
           CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\TOTP.UI.Avalonia.Android\Resources\values-v31\styles.xml"
           Link="Fixtures\Android\values-v31\styles.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\MainActivity.cs"
+          Link="Fixtures\Android\MainActivity.cs"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

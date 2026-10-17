@@ -207,6 +207,9 @@ public static class MobileStringKeys
     public const string BrandIcon = nameof(BrandIcon);
     public const string AutomaticBrandIcon = nameof(AutomaticBrandIcon);
     public const string BrandIconHelp = nameof(BrandIconHelp);
+    public const string NoBrandIconPackInstalled = nameof(NoBrandIconPackInstalled);
+    public const string NoBrandIconPackInstructions = nameof(NoBrandIconPackInstructions);
+    public const string NoBrandIconsMatchSearch = nameof(NoBrandIconsMatchSearch);
     public const string CustomAccountIcon = nameof(CustomAccountIcon);
     public const string CustomIconImported = nameof(CustomIconImported);
     public const string CustomIconImportFailed = nameof(CustomIconImportFailed);
@@ -518,7 +521,8 @@ public static class MobileStringKeys
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
         ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, ChooseCustomSvgIcon, Or,
         CustomIconFileName,
-        BrandIcon, AutomaticBrandIcon, BrandIconHelp, CustomAccountIcon,
+        BrandIcon, AutomaticBrandIcon, BrandIconHelp, NoBrandIconPackInstalled,
+        NoBrandIconsMatchSearch, CustomAccountIcon,
         CustomIconImported, CustomIconImportFailed, CustomIconImportEmpty,
         CustomIconImportTooLarge, CustomIconImportMalformed, CustomIconImportMissingPath,
         CustomIconImportUnsafe, CustomIconImportUnreadable, UnsavedAccountChangesTitle,

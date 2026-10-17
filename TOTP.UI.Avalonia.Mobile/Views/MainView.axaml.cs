@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Platform;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -26,6 +27,7 @@ public partial class MainView : UserControl
     private bool _usesNativeAccountList;
     private bool _backNavigationInProgress;
     private TopLevel? _backNavigationTopLevel;
+    private IInputPane? _inputPane;
     private MobileShellViewModel? _nativeAccountListViewModel;
 
     public MainView()
@@ -46,7 +48,17 @@ public partial class MainView : UserControl
     {
         _backNavigationTopLevel = TopLevel.GetTopLevel(this);
         if (_backNavigationTopLevel is not null)
+        {
             _backNavigationTopLevel.BackRequested += MainViewBackRequested;
+            _inputPane = _backNavigationTopLevel.InputPane;
+            if (_inputPane is { } inputPane)
+            {
+                inputPane.StateChanged += InputPaneStateChanged;
+                UpdateAccountBrandIconPickerInputPane(
+                    inputPane.State,
+                    inputPane.OccludedRect);
+            }
+        }
 
         Dispatcher.UIThread.Post(
             AttachAccountListScrollViewer,
@@ -55,10 +67,24 @@ public partial class MainView : UserControl
 
     private void MainViewDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
+        if (_inputPane is not null)
+            _inputPane.StateChanged -= InputPaneStateChanged;
+        _inputPane = null;
         if (_backNavigationTopLevel is not null)
             _backNavigationTopLevel.BackRequested -= MainViewBackRequested;
         _backNavigationTopLevel = null;
         DetachAccountListScrollViewer();
+    }
+
+    private void InputPaneStateChanged(object? sender, InputPaneStateEventArgs e) =>
+        UpdateAccountBrandIconPickerInputPane(e.NewState, e.EndRect);
+
+    private void UpdateAccountBrandIconPickerInputPane(InputPaneState state, Rect occludedRect)
+    {
+        var bottomInset = state == InputPaneState.Open
+            ? Math.Max(0, occludedRect.Height)
+            : 0;
+        AccountBrandIconPickerModalOverlay.Margin = new Thickness(0, 0, 0, bottomInset);
     }
 
     public void UseNativeAccountList(Control nativeAccountList)

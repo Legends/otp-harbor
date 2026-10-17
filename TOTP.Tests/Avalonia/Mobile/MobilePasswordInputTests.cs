@@ -27,5 +27,13 @@ public sealed class MobilePasswordInputTests
         Assert.DoesNotContain(
             document.Descendants(),
             element => element.Attribute("PasswordChar") is not null);
+
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var accountSecretInput = Assert.Single(
+            revealInputs,
+            input => input.Attribute(xaml + "Name")?.Value == "AccountSecretInput");
+        Assert.Equal(
+            "{Binding EditorSecret, Mode=TwoWay}",
+            accountSecretInput.Attribute("Text")?.Value);
     }
 }

@@ -302,6 +302,7 @@ public sealed class MainWindowSmokeTests
 
             Assert.True(input.IsRevealed);
             Assert.Equal('\0', textBox.PasswordChar);
+            Assert.Equal("test-secret", textBox.Text);
             Assert.True(textBox.IsFocused);
             Assert.Equal(SymbolIconKind.Conceal, revealIcon.Kind);
 
@@ -2428,6 +2429,12 @@ public sealed class MainWindowSmokeTests
             var brandIconPicker = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<SearchableComboBox>(),
                 comboBox => comboBox.Name == "AccountBrandIconComboBox");
+            var customIconButton = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "AccountCustomIconButton");
+            var noPackCallout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "NoBrandIconPackCallout");
             var customIconFileNameHost = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "SelectedEditorCustomIconFileNameHost");
@@ -2441,16 +2448,33 @@ public sealed class MainWindowSmokeTests
 
             Assert.True(brandIconPicker.IsVisible);
             Assert.True(brandIconPicker.Bounds.Height > 0);
-            Assert.True(
-                brandIconPicker.Bounds.Width
-                    <= ((Control)brandIconPicker.Parent!).Bounds.Width,
-                "The account icon picker must remain inside its advanced-options container.");
+            var brandIconPickerParent = Assert.IsAssignableFrom<Control>(brandIconPicker.Parent);
+            Assert.Equal(HorizontalAlignment.Stretch, brandIconPicker.HorizontalAlignment);
+            Assert.Equal(new Thickness(8, 0), brandIconPicker.Margin);
+            Assert.InRange(
+                Math.Abs(
+                    brandIconPicker.Bounds.Width
+                    - (brandIconPickerParent.Bounds.Width
+                        - brandIconPicker.Margin.Left
+                        - brandIconPicker.Margin.Right)),
+                0,
+                0.5);
             Assert.Contains(brandIconPicker, advancedOptions.GetLogicalDescendants());
+            Assert.Equal(new Thickness(8, 0), customIconButton.Margin);
+            Assert.Contains("account-custom-icon", customIconButton.Classes);
+            Assert.Equal(new Thickness(8, 0), noPackCallout.Margin);
+            Assert.Contains(
+                noPackCallout.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.NoBrandIconPackInstalled]));
+            Assert.Contains(
+                noPackCallout.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.NoBrandIconPackInstructions]));
             Assert.Equal(16, customIconFileNameHost.MinHeight);
             Assert.Contains(customIconFileNameHost, advancedOptions.GetLogicalDescendants());
-            Assert.DoesNotContain(
-                advancedOptions.GetLogicalDescendants().OfType<Button>(),
-                button => button.Name == "CustomSvgIconButton");
 
             var accountEditorContent = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<StackPanel>(),

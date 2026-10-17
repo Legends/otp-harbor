@@ -87,6 +87,8 @@
   <data name="SearchBrandIcons" xml:space="preserve"><value>Buscar en el paquete de iconos</value></data>
   <data name="AutomaticBrandIcon" xml:space="preserve"><value>Coincidencia automática del emisor</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Elige un icono del paquete local importado o mantén la coincidencia automática. Esta preferencia visual local no se incluye en las copias de seguridad de la caja fuerte.</value></data>
+  <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>No hay ningún paquete de iconos instalado</value></data>
+  <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Para consultar las instrucciones de importación y más opciones, ve a Ajustes → Paquetes de iconos.</value></data>
   <data name="CustomAccountIcon" xml:space="preserve"><value>SVG personalizado</value></data>
   <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Elegir SVG personalizado…</value></data>
   <data name="CustomIconFileName" xml:space="preserve"><value>Imagen personalizada: {0}</value></data>
@@ -108,7 +110,7 @@
   <data name="SaveAccount" xml:space="preserve"><value>Guardar cuenta</value></data>
   <data name="CancelEdit" xml:space="preserve"><value>Cancelar edición</value></data>
   <data name="AccountIssuerRequired" xml:space="preserve"><value>El emisor es obligatorio.</value></data>
-  <data name="AccountSecretInvalid" xml:space="preserve"><value>Introduce un secreto Base32 válido.</value></data>
+  <data name="AccountSecretInvalid" xml:space="preserve"><value>Introduce un secreto Base32 válido. Los secretos de cuentas nuevas deben contener al menos 26 caracteres.</value></data>
   <data name="AccountDuplicate" xml:space="preserve"><value>Ya existe una cuenta con el mismo emisor y nombre.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>La cuenta no se pudo guardar de forma segura. Los datos cifrados existentes no se modificaron.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Cuenta guardada.</value></data>

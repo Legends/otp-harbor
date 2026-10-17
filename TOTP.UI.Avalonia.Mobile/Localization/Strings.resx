@@ -191,7 +191,7 @@
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="IssuerRequired" xml:space="preserve"><value>Enter an issuer.</value></data>
   <data name="SecretRequired" xml:space="preserve"><value>Enter the account secret.</value></data>
-  <data name="SecretInvalid" xml:space="preserve"><value>The account secret is not valid Base32 data.</value></data>
+  <data name="SecretInvalid" xml:space="preserve"><value>Enter a valid Base32 secret. New account secrets must contain at least 26 characters.</value></data>
   <data name="DuplicateAccount" xml:space="preserve"><value>An account with this issuer and account name already exists.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Account saved.</value></data>
   <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Account saved, but its local icon preference could not be saved.</value></data>
@@ -254,7 +254,7 @@
   <data name="IconPackBuilderLink" xml:space="preserve"><value>OTP Harbor Icon Pack Builder — project and instructions</value></data>
   <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Import OTP Harbor icon pack…</value></data>
   <data name="ImportingAccounts" xml:space="preserve"><value>Importing accounts…</value></data>
-  <data name="ImportingBrandIcons" xml:space="preserve"><value>Importing icon pack…</value></data>
+  <data name="ImportingBrandIcons" xml:space="preserve"><value>Importing and validating the icon pack. This might take some time…</value></data>
   <data name="RemovingBrandIcons" xml:space="preserve"><value>Removing local icons…</value></data>
   <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} local icons installed ({1} v{2}).</value></data>
   <data name="BrandIconPacksStatus" xml:space="preserve"><value>{0} local icons available from {1} installed packs ({2}).</value></data>
@@ -273,6 +273,9 @@
   <data name="BrandIcon" xml:space="preserve"><value>Account icon (icon pack)</value></data>
   <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatic issuer match</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Choose an icon from the imported local pack or keep automatic matching. This local display preference is not included in vault backups.</value></data>
+  <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>No icon pack installed</value></data>
+  <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>For import instructions and more options, go to Settings → Icon packs.</value></data>
+  <data name="NoBrandIconsMatchSearch" xml:space="preserve"><value>No icons match your search.</value></data>
   <data name="CustomAccountIcon" xml:space="preserve"><value>Custom SVG</value></data>
   <data name="CustomIconImported" xml:space="preserve"><value>The custom icon was applied to this account.</value></data>
   <data name="CustomIconImportFailed" xml:space="preserve"><value>The SVG is invalid or could not be stored safely.</value></data>

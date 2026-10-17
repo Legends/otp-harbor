@@ -10,5 +10,8 @@ public sealed record MobileBrandIconOption(
     public string DisplayNameForDisplay =>
         Shared.Presentation.IconNameDisplayPolicy.Truncate(DisplayName);
 
+    public bool IsPickerAction => Id is null && !IsPendingCustomIcon;
+    public bool IsBrandEntry => !IsPickerAction;
+
     public override string ToString() => DisplayName;
 }

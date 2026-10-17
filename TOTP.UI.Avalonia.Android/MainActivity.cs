@@ -15,6 +15,7 @@ namespace TOTP.Avalonia.Android;
     Icon = "@drawable/app_icon",
     MainLauncher = true,
     Exported = true,
+    WindowSoftInputMode = SoftInput.AdjustResize,
     ConfigurationChanges = ConfigChanges.Orientation
         | ConfigChanges.ScreenSize
         | ConfigChanges.UiMode

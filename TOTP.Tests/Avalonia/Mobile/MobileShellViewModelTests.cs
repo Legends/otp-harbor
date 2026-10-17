@@ -19,7 +19,7 @@ namespace TOTP.Tests.Avalonia.Mobile;
 
 public sealed class MobileShellViewModelTests
 {
-    private const string ValidSecret = "JBSWY3DPEHPK3PXP";
+    private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 
     [Fact]
     public async Task InitializeAsync_WhenNoEnvelopeExists_SimulatesEveryIntroductionSlideBeforePasswordSetup()
@@ -501,6 +501,27 @@ public sealed class MobileShellViewModelTests
         Assert.Empty(context.Sut.SetupConfirmation);
         context.Authorization.Verify(
             value => value.ConfigureHelloAsync(It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfigureAsync_WhenPasswordsDoNotMatch_PreservesInputsForReview()
+    {
+        var context = CreateContext(isConfigured: false);
+        await context.Sut.InitializeAsync();
+        await context.Sut.FinishOnboardingAsync();
+        context.Sut.SetupPassword = "first synthetic password";
+        context.Sut.SetupConfirmation = "second synthetic password";
+
+        await context.Sut.ConfigureAsync();
+
+        Assert.Equal("first synthetic password", context.Sut.SetupPassword);
+        Assert.Equal("second synthetic password", context.Sut.SetupConfirmation);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.PasswordMismatch),
+            context.Sut.NotificationText);
+        context.Authorization.Verify(
+            value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()),
             Times.Never);
     }
 
@@ -2942,6 +2963,10 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.ImportingBrandIcons),
             context.Sut.ImportProgressText);
+        Assert.Contains(
+            "might take some time",
+            context.Sut.ImportProgressText,
+            StringComparison.OrdinalIgnoreCase);
 
         importing.SetResult(Result.Fail("synthetic icon import failure"));
         await importTask;
@@ -3238,7 +3263,7 @@ public sealed class MobileShellViewModelTests
         await ConfigureAndBeginAddAsync(context);
         context.Sut.EditorIssuer = "  Example  ";
         context.Sut.EditorAccountName = " user@example.test ";
-        context.Sut.EditorSecret = "JBSW Y3DP EHPK 3PXP";
+        context.Sut.EditorSecret = "GEZD GNBV GY3T QOJQ GEZD GNBV GY3T QOJQ";
         context.Sut.EditorPeriodSeconds = 600;
 
         await context.Sut.SaveAccountAsync();
@@ -3307,7 +3332,136 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task AddAccount_CustomSvgPickerIsSecondAndDefersImportUntilAccountExists()
+    public async Task AccountBrandIconPicker_SearchSelectionAndBackAreModal()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("github", "GitHub", "#181717", "github.svg"),
+            new BrandDefinition("gitlab", "GitLab", "#FC6D26", "gitlab.svg"),
+            new BrandDefinition("google", "Google", "#4285F4", "google.svg")
+        ]);
+        var context = CreateContext(
+            isConfigured: false,
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await ConfigureAndBeginAddAsync(context);
+
+        await context.Sut.OpenAccountBrandIconPickerAsync();
+
+        Assert.True(context.Sut.IsAccountBrandIconPickerVisible);
+        Assert.True(context.Sut.CanHandleSystemBack);
+        Assert.True(context.Sut.HasSearchableBrandIcons);
+        Assert.False(context.Sut.HasNoInstalledBrandIconPack);
+        Assert.Equal(360d, context.Sut.AccountBrandIconResultsMaxHeight);
+        Assert.Equal(
+            context.Sut.EditorBrandIconOptions,
+            context.Sut.FilteredEditorBrandIconOptions);
+
+        context.Sut.AccountBrandIconSearchText = "git";
+
+        Assert.Equal(
+            ["GitHub", "GitLab"],
+            context.Sut.FilteredEditorBrandIconOptions.Select(option => option.DisplayName));
+        Assert.False(context.Sut.HasNoBrandIconSearchResults);
+
+        context.Sut.AccountBrandIconSearchText = "not-installed";
+        Assert.Empty(context.Sut.FilteredEditorBrandIconOptions);
+        Assert.True(context.Sut.HasNoBrandIconSearchResults);
+
+        Assert.True(await context.Sut.TryHandleBackNavigationAsync());
+        Assert.False(context.Sut.IsAccountBrandIconPickerVisible);
+        Assert.Empty(context.Sut.AccountBrandIconSearchText);
+        Assert.True(context.Sut.IsEditorVisible);
+
+        await context.Sut.OpenAccountBrandIconPickerAsync();
+        var selected = context.Sut.EditorBrandIconOptions
+            .Single(option => option.Id == "google");
+        await context.Sut.SelectAccountBrandIconAsync(selected);
+
+        Assert.Same(selected, context.Sut.SelectedEditorBrandIconOption);
+        Assert.False(context.Sut.IsAccountBrandIconPickerVisible);
+        Assert.Empty(context.Sut.AccountBrandIconSearchText);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AccountBrandIconPicker_WithoutInstalledPackUsesDirectCustomSvgAction()
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns([]);
+        var context = CreateContext(
+            isConfigured: false,
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await ConfigureAndBeginAddAsync(context);
+
+        await context.Sut.OpenAccountBrandIconPickerAsync();
+
+        Assert.False(context.Sut.IsAccountBrandIconPickerVisible);
+        Assert.False(context.Sut.HasSearchableBrandIcons);
+        Assert.True(context.Sut.HasNoInstalledBrandIconPack);
+        Assert.False(context.Sut.HasBrandIconChoices);
+        Assert.Equal(66d, context.Sut.AccountBrandIconResultsMaxHeight);
+        Assert.Equal(
+            ["Choose custom SVG…"],
+            context.Sut.FilteredEditorBrandIconOptions.Select(option => option.DisplayName));
+        Assert.Contains("Settings", context.Sut.NoBrandIconPackInstructionsText);
+        Assert.Contains("Icon packs", context.Sut.NoBrandIconPackInstructionsText);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AccountBrandIconPicker_DeviceLockAndCancelledBiometricCannotBleedIntoUnlockScreen()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(
+        [
+            new BrandDefinition("example", "Example", "#334155", "example.svg")
+        ]);
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            biometricAvailable: true,
+            preferredUnlockMethod: PreferredUnlockMethod.PlatformQuickUnlock,
+            brandIconPackService: brandIcons.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithHelloAsync())
+            .ReturnsAsync(AuthorizationResult.Cancelled);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await context.Sut.BeginEditAsync();
+        await context.Sut.OpenAccountBrandIconPickerAsync();
+        context.Sut.AccountBrandIconSearchText = "example";
+
+        context.Sut.OnEnteredBackground(lockImmediately: true);
+        context.Sut.OnReturnedToForeground();
+        await WaitUntilAsync(() =>
+            context.Authorization.Invocations.Any(invocation =>
+                invocation.Method.Name == nameof(IAuthorizationService.TryUnlockWithHelloAsync))
+            && !context.Sut.IsBusy);
+
+        Assert.True(context.Sut.IsUnlockVisible);
+        Assert.False(context.Sut.IsAccountBrandIconPickerVisible);
+        Assert.Empty(context.Sut.AccountBrandIconSearchText);
+        Assert.Empty(context.Sut.NotificationText);
+        context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Once);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task AddAccount_DirectCustomSvgActionDefersImportUntilAccountExists()
     {
         Account? created = null;
         var custom = new BrandDefinition(
@@ -3341,13 +3495,11 @@ public sealed class MobileShellViewModelTests
                 "personal-mark.svg"));
         await ConfigureAndBeginAddAsync(context);
 
-        Assert.Null(context.Sut.EditorBrandIconOptions[0].Id);
-        var pickerOption = context.Sut.EditorBrandIconOptions[1];
+        var pickerOption = Assert.Single(context.Sut.EditorBrandIconOptions);
         Assert.True(pickerOption.IsCustomPickerAction);
         Assert.Equal("Choose custom SVG…", pickerOption.DisplayName);
-        context.Sut.SelectedEditorBrandIconOption = pickerOption;
-        await WaitUntilAsync(() =>
-            context.Sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon == true);
+        await context.Sut.ImportCustomIconAsync();
+        Assert.True(context.Sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             It.IsAny<Guid>(),
             It.IsAny<Stream>(),
@@ -3945,7 +4097,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task SaveAccountAsync_WithGoogleAuthenticatorCompatibleShortSecret_PersistsAccount()
+    public async Task SaveAccountAsync_WithPlainTextLikeSecret_DoesNotPersistNewAccount()
     {
         var context = CreateContext(isConfigured: false);
         context.Authorization
@@ -3958,12 +4110,14 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(Result.Ok());
         await ConfigureAndBeginAddAsync(context);
         context.Sut.EditorIssuer = "Example";
-        context.Sut.EditorSecret = "ORSXG5A";
+        context.Sut.EditorSecret = "anything";
 
         await context.Sut.SaveAccountAsync();
 
-        Assert.NotNull(persisted);
-        Assert.Equal("ORSXG5A", persisted.Secret);
+        Assert.Null(persisted);
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.SecretInvalid),
+            context.Sut.EditorSecretMessage);
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate)

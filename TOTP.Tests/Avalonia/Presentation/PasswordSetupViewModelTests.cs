@@ -46,6 +46,22 @@ public sealed class PasswordSetupViewModelTests
     }
 
     [Fact]
+    public async Task ConfigureAsync_WhenPasswordsDoNotMatch_PreservesInputsForReview()
+    {
+        var authorization = new Mock<IAuthorizationService>();
+        var sut = CreateSut(authorization.Object);
+        sut.Password = "first synthetic password";
+        sut.ConfirmPassword = "second synthetic password";
+
+        await sut.ConfigureAsync();
+
+        authorization.VerifyNoOtherCalls();
+        Assert.Equal("first synthetic password", sut.Password);
+        Assert.Equal("second synthetic password", sut.ConfirmPassword);
+        Assert.Contains("match", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ConfigureAsync_WhenExistingVaultConflicts_ExplainsNonDestructiveRecoveryPath()
     {
         var authorization = new Mock<IAuthorizationService>();

@@ -36,3 +36,42 @@ internal sealed class MobileAsyncCommand(
     public void NotifyCanExecuteChanged() =>
         CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }
+
+internal sealed class MobileAsyncCommand<T>(
+    Func<T, Task> execute,
+    Func<T, bool> canExecute) : ICommand
+    where T : class
+{
+    private int _isExecuting;
+
+    public event EventHandler? CanExecuteChanged;
+
+    public bool CanExecute(object? parameter) =>
+        parameter is T value
+        && Volatile.Read(ref _isExecuting) == 0
+        && canExecute(value);
+
+    public async void Execute(object? parameter)
+    {
+        if (parameter is not T value
+            || !CanExecute(value)
+            || Interlocked.CompareExchange(ref _isExecuting, 1, 0) != 0)
+        {
+            return;
+        }
+
+        NotifyCanExecuteChanged();
+        try
+        {
+            await execute(value);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isExecuting, 0);
+            NotifyCanExecuteChanged();
+        }
+    }
+
+    public void NotifyCanExecuteChanged() =>
+        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+}

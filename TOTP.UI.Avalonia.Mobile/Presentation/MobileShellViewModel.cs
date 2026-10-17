@@ -101,6 +101,10 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _discardAccountChangesCommand;
     private readonly MobileAsyncCommand _cancelAccountNavigationCommand;
     private readonly MobileAsyncCommand _clearEditorPeriodCommand;
+    private readonly MobileAsyncCommand _openAccountBrandIconPickerCommand;
+    private readonly MobileAsyncCommand _closeAccountBrandIconPickerCommand;
+    private readonly MobileAsyncCommand _clearAccountBrandIconSearchCommand;
+    private readonly MobileAsyncCommand<MobileBrandIconOption> _selectAccountBrandIconCommand;
     private readonly MobileAsyncCommand _importCustomIconCommand;
     private readonly MobileAsyncCommand _confirmDeleteCommand;
     private readonly MobileAsyncCommand _cancelDeleteCommand;
@@ -200,7 +204,10 @@ public sealed class MobileShellViewModel :
     private bool _editorIsFavorite;
     private bool _isAdvancedOptionsExpanded;
     private IReadOnlyList<MobileBrandIconOption> _editorBrandIconOptions = [];
+    private IReadOnlyList<MobileBrandIconOption> _filteredEditorBrandIconOptions = [];
     private MobileBrandIconOption? _selectedEditorBrandIconOption;
+    private bool _isAccountBrandIconPickerVisible;
+    private string _accountBrandIconSearchText = string.Empty;
     private MobileBrandIconOption? _brandIconSelectionBeforeCustomPicker;
     private bool _isCustomIconPickerSelectionPending;
     private byte[]? _pendingCustomIconBytes;
@@ -416,6 +423,18 @@ public sealed class MobileShellViewModel :
         _clearEditorPeriodCommand = new MobileAsyncCommand(
             ClearEditorPeriodAsync,
             () => IsEditorVisible && !IsBusy && EditorPeriodSeconds.HasValue);
+        _openAccountBrandIconPickerCommand = new MobileAsyncCommand(
+            OpenAccountBrandIconPickerAsync,
+            () => IsEditorVisible && HasSearchableBrandIcons && !IsBusy);
+        _closeAccountBrandIconPickerCommand = new MobileAsyncCommand(
+            CloseAccountBrandIconPickerAsync,
+            () => IsAccountBrandIconPickerVisible);
+        _clearAccountBrandIconSearchCommand = new MobileAsyncCommand(
+            ClearAccountBrandIconSearchAsync,
+            () => IsAccountBrandIconPickerVisible && HasAccountBrandIconSearchText);
+        _selectAccountBrandIconCommand = new MobileAsyncCommand<MobileBrandIconOption>(
+            SelectAccountBrandIconAsync,
+            _ => IsAccountBrandIconPickerVisible && !IsBusy);
         _importCustomIconCommand = new MobileAsyncCommand(
             ImportCustomIconAsync,
             () => IsEditorVisible
@@ -560,6 +579,10 @@ public sealed class MobileShellViewModel :
     public ICommand DiscardAccountChangesCommand => _discardAccountChangesCommand;
     public ICommand CancelAccountNavigationCommand => _cancelAccountNavigationCommand;
     public ICommand ClearEditorPeriodCommand => _clearEditorPeriodCommand;
+    public ICommand OpenAccountBrandIconPickerCommand => _openAccountBrandIconPickerCommand;
+    public ICommand CloseAccountBrandIconPickerCommand => _closeAccountBrandIconPickerCommand;
+    public ICommand ClearAccountBrandIconSearchCommand => _clearAccountBrandIconSearchCommand;
+    public ICommand SelectAccountBrandIconCommand => _selectAccountBrandIconCommand;
     public ICommand ImportCustomIconCommand => _importCustomIconCommand;
     public ICommand ConfirmDeleteCommand => _confirmDeleteCommand;
     public ICommand CancelDeleteCommand => _cancelDeleteCommand;
@@ -672,7 +695,8 @@ public sealed class MobileShellViewModel :
         && !IsSettingsVisible
         && !IsEditorVisible
         && !IsGroupEditorVisible;
-    public bool CanHandleSystemBack => IsSettingsVisible || IsEditorVisible;
+    public bool CanHandleSystemBack =>
+        IsAccountBrandIconPickerVisible || IsSettingsVisible || IsEditorVisible;
     public bool IsNativeAccountListVisible => IsAccountListVisible
         && HasAccounts
         && !IsImportProgressVisible
@@ -1515,10 +1539,63 @@ public sealed class MobileShellViewModel :
         private set
         {
             if (!SetField(ref _editorBrandIconOptions, value)) return;
+            ApplyAccountBrandIconFilter();
             OnPropertyChanged(nameof(HasBrandIconChoices));
+            OnPropertyChanged(nameof(HasSearchableBrandIcons));
+            OnPropertyChanged(nameof(HasNoInstalledBrandIconPack));
+            OnPropertyChanged(nameof(AccountBrandIconResultsMaxHeight));
             OnPropertyChanged(nameof(EditorBrandIconPickerWidth));
+            _openAccountBrandIconPickerCommand.NotifyCanExecuteChanged();
         }
     }
+
+    public IReadOnlyList<MobileBrandIconOption> FilteredEditorBrandIconOptions
+    {
+        get => _filteredEditorBrandIconOptions;
+        private set
+        {
+            if (!SetField(ref _filteredEditorBrandIconOptions, value)) return;
+            OnPropertyChanged(nameof(HasNoBrandIconSearchResults));
+        }
+    }
+
+    public bool IsAccountBrandIconPickerVisible
+    {
+        get => _isAccountBrandIconPickerVisible;
+        private set
+        {
+            if (!SetField(ref _isAccountBrandIconPickerVisible, value)) return;
+            OnPropertyChanged(nameof(CanHandleSystemBack));
+            _closeAccountBrandIconPickerCommand.NotifyCanExecuteChanged();
+            _clearAccountBrandIconSearchCommand.NotifyCanExecuteChanged();
+            _selectAccountBrandIconCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public string AccountBrandIconSearchText
+    {
+        get => _accountBrandIconSearchText;
+        set
+        {
+            if (!SetField(ref _accountBrandIconSearchText, value ?? string.Empty)) return;
+            OnPropertyChanged(nameof(HasAccountBrandIconSearchText));
+            OnPropertyChanged(nameof(HasNoBrandIconSearchResults));
+            ApplyAccountBrandIconFilter();
+            _clearAccountBrandIconSearchCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public bool HasAccountBrandIconSearchText =>
+        !string.IsNullOrWhiteSpace(AccountBrandIconSearchText);
+    public bool HasSearchableBrandIcons =>
+        _brandIconPackService?.AvailableBrands.Count > 0;
+    public bool HasNoInstalledBrandIconPack => !HasSearchableBrandIcons;
+    public bool HasNoBrandIconSearchResults =>
+        HasSearchableBrandIcons
+        && HasAccountBrandIconSearchText
+        && FilteredEditorBrandIconOptions.Count == 0;
+    public double AccountBrandIconResultsMaxHeight =>
+        HasSearchableBrandIcons ? 360d : 66d;
 
     public MobileBrandIconOption? SelectedEditorBrandIconOption
     {
@@ -1549,6 +1626,9 @@ public sealed class MobileShellViewModel :
                 : EditorBrandIconOptions.Max(option => option.DisplayName.Length)) * 8d + 32d,
             180d,
             210d);
+    public string SelectedEditorBrandIconDisplayName =>
+        SelectedEditorBrandIconOption?.DisplayNameForDisplay
+        ?? Get(MobileStringKeys.AutomaticBrandIcon);
     public string SelectedEditorBrandIconFileName =>
         SelectedEditorBrandIconOption?.FileName ?? string.Empty;
     public bool HasSelectedEditorBrandIconFileName =>
@@ -1569,6 +1649,39 @@ public sealed class MobileShellViewModel :
     public Task ClearEditorPeriodAsync()
     {
         EditorPeriodSeconds = null;
+        return Task.CompletedTask;
+    }
+
+    public Task OpenAccountBrandIconPickerAsync()
+    {
+        if (!IsEditorVisible || !HasSearchableBrandIcons || IsBusy)
+            return Task.CompletedTask;
+
+        AccountBrandIconSearchText = string.Empty;
+        IsAccountBrandIconPickerVisible = true;
+        return Task.CompletedTask;
+    }
+
+    public Task CloseAccountBrandIconPickerAsync()
+    {
+        CloseAccountBrandIconPicker();
+        return Task.CompletedTask;
+    }
+
+    public Task ClearAccountBrandIconSearchAsync()
+    {
+        AccountBrandIconSearchText = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    public Task SelectAccountBrandIconAsync(MobileBrandIconOption option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+        if (!IsAccountBrandIconPickerVisible || IsBusy)
+            return Task.CompletedTask;
+
+        CloseAccountBrandIconPicker();
+        SelectedEditorBrandIconOption = option;
         return Task.CompletedTask;
     }
 
@@ -1827,6 +1940,12 @@ public sealed class MobileShellViewModel :
     public string DiscardChangesText => Get(MobileStringKeys.DiscardChanges);
     public string BrandIconText => Get(MobileStringKeys.BrandIcon);
     public string BrandIconHelpText => Get(MobileStringKeys.BrandIconHelp);
+    public string NoBrandIconPackInstalledText =>
+        Get(MobileStringKeys.NoBrandIconPackInstalled);
+    public string NoBrandIconPackInstructionsText =>
+        Get(MobileStringKeys.NoBrandIconPackInstructions);
+    public string NoBrandIconsMatchSearchText =>
+        Get(MobileStringKeys.NoBrandIconsMatchSearch);
     public string ImportSimpleIconsPackText => Get(MobileStringKeys.ImportSimpleIconsPack);
     public string ShowIssuerLogoText => Get(MobileStringKeys.ShowIssuerLogo);
     public string ShowIssuerLogoDescriptionText => Get(MobileStringKeys.ShowIssuerLogoDescription);
@@ -2002,18 +2121,20 @@ public sealed class MobileShellViewModel :
 
         var password = SetupPassword;
         var confirmation = SetupConfirmation;
-        SetupPassword = string.Empty;
-        SetupConfirmation = string.Empty;
 
         if (string.IsNullOrWhiteSpace(password)
             || string.IsNullOrWhiteSpace(confirmation))
         {
+            SetupPassword = string.Empty;
+            SetupConfirmation = string.Empty;
             SetError(MobileStringKeys.PasswordRequired);
             return;
         }
 
         if (password.Length < _passwordValidation.MinimumLength)
         {
+            SetupPassword = string.Empty;
+            SetupConfirmation = string.Empty;
             SetNotification(
                 string.Format(
                     Get(MobileStringKeys.PasswordMinimumLength),
@@ -2028,6 +2149,8 @@ public sealed class MobileShellViewModel :
             return;
         }
 
+        SetupPassword = string.Empty;
+        SetupConfirmation = string.Empty;
         IsBusy = true;
         try
         {
@@ -2577,6 +2700,12 @@ public sealed class MobileShellViewModel :
 
     public async Task<bool> TryHandleBackNavigationAsync()
     {
+        if (IsAccountBrandIconPickerVisible)
+        {
+            CloseAccountBrandIconPicker();
+            return true;
+        }
+
         if (IsAccountEditorExitConfirmationVisible)
         {
             await CancelAccountNavigationAsync();
@@ -3693,7 +3822,10 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            if (!SecretValidation.IsValidBase32Secret(secret))
+            var isSecretValid = existing is null
+                ? SecretValidation.IsValidNewAccountBase32Secret(secret)
+                : SecretValidation.IsValidBase32Secret(secret);
+            if (!isSecretValid)
             {
                 EditorSecretMessage = Get(MobileStringKeys.SecretInvalid);
                 return;
@@ -3996,6 +4128,7 @@ public sealed class MobileShellViewModel :
 
     public void OnEnteredBackground(bool lockImmediately)
     {
+        CloseAccountBrandIconPicker();
         if (!_authorization.State.IsUnlocked || _disposed) return;
 
         CancelCodeRefresh();
@@ -4539,6 +4672,7 @@ public sealed class MobileShellViewModel :
     private void LockCore()
     {
         if (_disposed || !IsAppLockEnabled) return;
+        CloseAccountBrandIconPicker();
         CapturePostUnlockNavigation();
         _backgroundedAtTimestamp = null;
         CancelBackgroundLockTimer();
@@ -4706,6 +4840,7 @@ public sealed class MobileShellViewModel :
 
     private void ClearEditor()
     {
+        CloseAccountBrandIconPicker();
         _accountEditorBaseline = null;
         IsAccountEditorExitConfirmationVisible = false;
         _editingAccountId = null;
@@ -4764,7 +4899,9 @@ public sealed class MobileShellViewModel :
             : null);
         EditorBrandIconOptions =
         [
-            automatic,
+            .. (available.Count > 0
+                ? [automatic]
+                : Array.Empty<MobileBrandIconOption>()),
             .. (_brandIconPackService is not null
                 ? [chooseCustom]
                 : Array.Empty<MobileBrandIconOption>()),
@@ -4788,8 +4925,28 @@ public sealed class MobileShellViewModel :
                     : Array.Empty<MobileBrandIconOption>())
         ];
         SelectedEditorBrandIconOption = EditorBrandIconOptions.FirstOrDefault(option =>
-            string.Equals(option.Id, selectedBrandId, StringComparison.OrdinalIgnoreCase))
-            ?? EditorBrandIconOptions.FirstOrDefault();
+            !option.IsCustomPickerAction
+            && string.Equals(option.Id, selectedBrandId, StringComparison.OrdinalIgnoreCase))
+            ?? EditorBrandIconOptions.FirstOrDefault(option => !option.IsCustomPickerAction);
+    }
+
+    private void ApplyAccountBrandIconFilter()
+    {
+        var query = AccountBrandIconSearchText.Trim();
+        FilteredEditorBrandIconOptions = query.Length == 0
+            ? EditorBrandIconOptions
+            : EditorBrandIconOptions
+                .Where(option =>
+                    option.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    || option.Id?.Contains(query, StringComparison.OrdinalIgnoreCase) == true
+                    || option.FileName?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
+                .ToArray();
+    }
+
+    private void CloseAccountBrandIconPicker()
+    {
+        IsAccountBrandIconPickerVisible = false;
+        AccountBrandIconSearchText = string.Empty;
     }
 
     private void RestoreBrandIconSelectionAfterCustomPicker()
@@ -4813,6 +4970,7 @@ public sealed class MobileShellViewModel :
 
     private void NotifySelectedBrandIconProperties()
     {
+        OnPropertyChanged(nameof(SelectedEditorBrandIconDisplayName));
         OnPropertyChanged(nameof(SelectedEditorBrandIconFileName));
         OnPropertyChanged(nameof(HasSelectedEditorBrandIconFileName));
         OnPropertyChanged(nameof(SelectedEditorCustomIconFileName));
@@ -5604,6 +5762,10 @@ public sealed class MobileShellViewModel :
         _discardAccountChangesCommand.NotifyCanExecuteChanged();
         _cancelAccountNavigationCommand.NotifyCanExecuteChanged();
         _clearEditorPeriodCommand.NotifyCanExecuteChanged();
+        _openAccountBrandIconPickerCommand.NotifyCanExecuteChanged();
+        _closeAccountBrandIconPickerCommand.NotifyCanExecuteChanged();
+        _clearAccountBrandIconSearchCommand.NotifyCanExecuteChanged();
+        _selectAccountBrandIconCommand.NotifyCanExecuteChanged();
         _importCustomIconCommand.NotifyCanExecuteChanged();
         _confirmDeleteCommand.NotifyCanExecuteChanged();
         _cancelDeleteCommand.NotifyCanExecuteChanged();
@@ -5842,6 +6004,9 @@ public sealed class MobileShellViewModel :
         nameof(DiscardChangesText),
         nameof(BrandIconText),
         nameof(BrandIconHelpText),
+        nameof(NoBrandIconPackInstalledText),
+        nameof(NoBrandIconPackInstructionsText),
+        nameof(NoBrandIconsMatchSearchText),
         nameof(ImportSimpleIconsPackText),
         nameof(ResetBrandIconsText),
         nameof(ShowIssuerLogoText),

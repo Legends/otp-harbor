@@ -87,6 +87,8 @@
   <data name="SearchBrandIcons" xml:space="preserve"><value>Symbolpaket durchsuchen</value></data>
   <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatisch nach Anbieter zuordnen</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Wählen Sie ein Symbol aus dem importierten lokalen Paket oder behalten Sie die automatische Zuordnung bei. Diese lokale Anzeigeeinstellung ist nicht in Tresor-Sicherungen enthalten.</value></data>
+  <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>Kein Symbolpaket installiert</value></data>
+  <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Importanleitungen und weitere Optionen finden Sie unter Einstellungen → Symbolpakete.</value></data>
   <data name="CustomAccountIcon" xml:space="preserve"><value>Benutzerdefiniertes SVG</value></data>
   <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Benutzerdefiniertes SVG auswählen…</value></data>
   <data name="CustomIconFileName" xml:space="preserve"><value>Benutzerdefiniertes Bild: {0}</value></data>
@@ -108,7 +110,7 @@
   <data name="SaveAccount" xml:space="preserve"><value>Konto speichern</value></data>
   <data name="CancelEdit" xml:space="preserve"><value>Bearbeitung abbrechen</value></data>
   <data name="AccountIssuerRequired" xml:space="preserve"><value>Der Anbieter ist erforderlich.</value></data>
-  <data name="AccountSecretInvalid" xml:space="preserve"><value>Gib ein gültiges Base32-Geheimnis ein.</value></data>
+  <data name="AccountSecretInvalid" xml:space="preserve"><value>Gib ein gültiges Base32-Geheimnis ein. Geheimnisse für neue Konten müssen mindestens 26 Zeichen enthalten.</value></data>
   <data name="AccountDuplicate" xml:space="preserve"><value>Ein Konto mit demselben Anbieter und Kontonamen ist bereits vorhanden.</value></data>
   <data name="AccountSaveFailed" xml:space="preserve"><value>Das Konto konnte nicht sicher gespeichert werden. Vorhandene verschlüsselte Daten wurden nicht geändert.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Konto gespeichert.</value></data>

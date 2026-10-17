@@ -74,6 +74,14 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
+        <Style Selector="Button.account-custom-icon:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+        </Style>
+        <Style Selector="Button.account-custom-icon:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*">
@@ -894,6 +902,7 @@
                                                     Classes="field-label"
                                                     Text="{DynamicResource Secret}" />
                                                 <shared:RevealableSecretInput
+                                                    x:Name="AccountSecretInput"
                                                     AccessibleName="{DynamicResource Secret}"
                                                     HelpText="{DynamicResource AccountSecretInvalid}"
                                                     IsRequired="True"
@@ -926,14 +935,15 @@
                                                             Text="{DynamicResource BrandIcon}" />
                                                         <shared:SearchableComboBox
                                                             x:Name="AccountBrandIconComboBox"
-                                                            HorizontalAlignment="Left"
+                                                            Margin="8,0"
+                                                            HorizontalAlignment="Stretch"
                                                             automation:AutomationProperties.Name="{DynamicResource BrandIcon}"
                                                             ClearSearchText="{DynamicResource ClearSearch}"
                                                             IsEnabled="{Binding HasBrandIconChoices}"
+                                                            IsVisible="{Binding HasSearchableBrandIcons}"
                                                             ItemsSource="{Binding EditorBrandIconOptions}"
                                                             PopupMaxHeight="180"
                                                             PopupWidth="260"
-                                                            PreferredWidth="{Binding EditorBrandIconPickerWidth}"
                                                             SearchPlaceholder="{DynamicResource SearchBrandIcons}"
                                                             SelectedItem="{Binding SelectedEditorBrandIconOption, Mode=TwoWay}">
                                                             <shared:SearchableComboBox.ItemTemplate>
@@ -942,6 +952,17 @@
                                                                 </DataTemplate>
                                                             </shared:SearchableComboBox.ItemTemplate>
                                                         </shared:SearchableComboBox>
+                                                        <Button
+                                                            x:Name="AccountCustomIconButton"
+                                                            Margin="8,0"
+                                                            automation:AutomationProperties.Name="{DynamicResource ChooseCustomSvgIcon}"
+                                                            Classes="wide account-custom-icon"
+                                                            Command="{Binding ImportCustomIconCommand}"
+                                                            IsVisible="{Binding HasNoInstalledBrandIconPack}">
+                                                            <shared:SymbolIconLabel
+                                                                Kind="ImageStack"
+                                                                Text="{DynamicResource ChooseCustomSvgIcon}" />
+                                                        </Button>
                                                         <Border
                                                             x:Name="SelectedEditorCustomIconFileNameHost"
                                                             MinHeight="16"
@@ -953,8 +974,37 @@
                                                                 Text="{Binding SelectedEditorCustomIconFileName}"
                                                                 TextTrimming="CharacterEllipsis" />
                                                         </Border>
+                                                        <Border
+                                                            x:Name="NoBrandIconPackCallout"
+                                                            Margin="8,0"
+                                                            Padding="12"
+                                                            Background="{DynamicResource BrushSurfaceAlternate}"
+                                                            BorderBrush="{DynamicResource BrushAccent}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="10"
+                                                            IsVisible="{Binding HasNoInstalledBrandIconPack}">
+                                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                                <shared:SymbolIcon
+                                                                    Grid.Column="0"
+                                                                    Margin="0,2,0,0"
+                                                                    Foreground="{DynamicResource BrushAccent}"
+                                                                    IconSize="20"
+                                                                    Kind="ImageStack" />
+                                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                                    <TextBlock
+                                                                        FontWeight="SemiBold"
+                                                                        Text="{DynamicResource NoBrandIconPackInstalled}"
+                                                                        TextWrapping="Wrap" />
+                                                                    <TextBlock
+                                                                        Classes="secondary"
+                                                                        Text="{DynamicResource NoBrandIconPackInstructions}"
+                                                                        TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
                                                         <TextBlock
                                                             Classes="secondary"
+                                                            IsVisible="{Binding HasSearchableBrandIcons}"
                                                             Text="{DynamicResource BrandIconHelp}"
                                                             TextWrapping="Wrap" />
                                                         <Border

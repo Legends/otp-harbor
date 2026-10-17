@@ -19,7 +19,7 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class AccountListViewModelTests
 {
-    private const string ValidSecret = "JBSWY3DPEHPK3PXP";
+    private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 
     [Fact]
     public async Task LoadAsync_WithNoStoredAccounts_ExposesEmptyState()
@@ -1662,7 +1662,7 @@ public sealed class AccountListViewModelTests
         await sut.BeginAddAsync();
         sut.EditorIssuer = "  GitHub  ";
         sut.EditorAccountName = " alice@example.test ";
-        sut.EditorSecret = "JBSW Y3DP-EHPK3PXP";
+        sut.EditorSecret = "GEZD GNBV-GY3T QOJQ GEZD GNBV GY3T QOJQ";
 
         await sut.SaveAccountAsync();
 
@@ -1793,6 +1793,8 @@ public sealed class AccountListViewModelTests
         await sut.BeginEditAsync();
 
         Assert.True(sut.HasBrandIconChoices);
+        Assert.True(sut.HasSearchableBrandIcons);
+        Assert.False(sut.HasNoInstalledBrandIconPack);
         Assert.Equal("amazon", sut.SelectedEditorBrandIconOption?.Id);
         var pickerWidth = sut.EditorBrandIconPickerWidth;
         Assert.InRange(pickerWidth, 221, 419);
@@ -1861,7 +1863,7 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
-    public async Task AddAccount_CustomSvgPickerIsSecondAndDefersImportUntilAccountExists()
+    public async Task AddAccount_WithoutIconPackUsesDirectCustomSvgActionAndDefersImportUntilAccountExists()
     {
         Account? created = null;
         var manager = new Mock<IAccountManager>();
@@ -1899,12 +1901,14 @@ public sealed class AccountListViewModelTests
 
         await sut.BeginAddAsync();
 
-        Assert.Null(sut.EditorBrandIconOptions[0].Id);
-        var pickerOption = sut.EditorBrandIconOptions[1];
+        Assert.False(sut.HasSearchableBrandIcons);
+        Assert.True(sut.HasNoInstalledBrandIconPack);
+        Assert.False(sut.HasBrandIconChoices);
+        var pickerOption = Assert.Single(sut.EditorBrandIconOptions);
         Assert.True(pickerOption.IsCustomPickerAction);
         Assert.Equal("Choose custom SVG…", pickerOption.DisplayName);
-        sut.SelectedEditorBrandIconOption = pickerOption;
-        await WaitUntilAsync(() => sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon == true);
+        await sut.ImportCustomIconAsync();
+        Assert.True(sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             It.IsAny<Guid>(),
             It.IsAny<Stream>(),
@@ -2008,7 +2012,7 @@ public sealed class AccountListViewModelTests
         await sut.ImportCustomIconAsync();
 
         Assert.Equal("The SVG must be no larger than 1 MB.", sut.EditorMessage);
-        Assert.False(sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
+        Assert.Null(sut.SelectedEditorBrandIconOption);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             It.IsAny<Guid>(),
             It.IsAny<Stream>(),
@@ -2169,7 +2173,9 @@ public sealed class AccountListViewModelTests
         sut.EditorIssuer = "Example";
         await sut.SaveAccountAsync();
         Assert.Equal(string.Empty, sut.EditorIssuerMessage);
-        Assert.Equal("Enter a valid Base32 secret.", sut.EditorSecretMessage);
+        Assert.Equal(
+            "Enter a valid Base32 secret. New account secrets must contain at least 26 characters.",
+            sut.EditorSecretMessage);
 
         sut.EditorPeriodSeconds = null;
         await sut.CancelEditAsync();
@@ -2669,7 +2675,7 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
-    public async Task SaveAccountAsync_WithGoogleAuthenticatorCompatibleShortSecret_PersistsAccount()
+    public async Task SaveAccountAsync_WithPlainTextLikeSecret_DoesNotPersistNewAccount()
     {
         var manager = new Mock<IAccountManager>();
         Account? created = null;
@@ -2686,12 +2692,14 @@ public sealed class AccountListViewModelTests
         var sut = CreateSut(manager.Object);
         await sut.BeginAddAsync();
         sut.EditorIssuer = "Example";
-        sut.EditorSecret = "ORSXG5A";
+        sut.EditorSecret = "anything";
 
         await sut.SaveAccountAsync();
 
-        Assert.NotNull(created);
-        Assert.Equal("ORSXG5A", created.Secret);
+        Assert.Null(created);
+        Assert.Equal(
+            "Enter a valid Base32 secret. New account secrets must contain at least 26 characters.",
+            sut.EditorSecretMessage);
     }
 
     private static AccountListViewModel CreateSut(

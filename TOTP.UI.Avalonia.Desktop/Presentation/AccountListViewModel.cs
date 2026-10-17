@@ -690,6 +690,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             if (!SetField(ref _editorBrandIconOptions, value)) return;
             OnPropertyChanged(nameof(HasBrandIconChoices));
+            OnPropertyChanged(nameof(HasSearchableBrandIcons));
+            OnPropertyChanged(nameof(HasNoInstalledBrandIconPack));
             OnPropertyChanged(nameof(EditorBrandIconPickerWidth));
         }
     }
@@ -744,6 +746,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             420d);
 
     public bool HasBrandIconChoices => EditorBrandIconOptions.Count > 1;
+    public bool HasSearchableBrandIcons =>
+        _brandIconPackService?.AvailableBrands.Count > 0;
+    public bool HasNoInstalledBrandIconPack => !HasSearchableBrandIcons;
 
     public ICommand ImportCustomIconCommand => _importCustomIconCommand;
 
@@ -1367,7 +1372,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        if (!SecretValidation.IsValidBase32Secret(secret))
+        var isNewAccount = !_editingAccountId.HasValue;
+        var isSecretValid = isNewAccount
+            ? SecretValidation.IsValidNewAccountBase32Secret(secret)
+            : SecretValidation.IsValidBase32Secret(secret);
+        if (!isSecretValid)
         {
             EditorSecretMessage = _localization.GetString(AvaloniaStringKeys.AccountSecretInvalid);
             return;
@@ -1396,7 +1405,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
-            var isNewAccount = !_editingAccountId.HasValue;
             var selectedBrandId = SelectedEditorBrandIconOption?.Id;
             var selectedGroup = isNewAccount
                 ? _allGroups.FirstOrDefault(group => group.Id == _selectedGroupId)?.Group
@@ -2384,7 +2392,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             : null;
         EditorBrandIconOptions =
         [
-            automatic,
+            .. (available.Count > 0
+                ? [automatic]
+                : Array.Empty<BrandIconOption>()),
             .. (_brandIconPackService is not null && _filePicker is not null
                 ? [chooseCustom]
                 : Array.Empty<BrandIconOption>()),
@@ -2411,8 +2421,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private void SelectBrandIconOption(string? brandId)
     {
         SelectedEditorBrandIconOption = EditorBrandIconOptions.FirstOrDefault(option =>
-            string.Equals(option.Id, brandId, StringComparison.OrdinalIgnoreCase))
-            ?? EditorBrandIconOptions.FirstOrDefault();
+            !option.IsCustomPickerAction
+            && string.Equals(option.Id, brandId, StringComparison.OrdinalIgnoreCase))
+            ?? EditorBrandIconOptions.FirstOrDefault(option => !option.IsCustomPickerAction);
     }
 
     private void RestoreBrandIconSelectionAfterCustomPicker()

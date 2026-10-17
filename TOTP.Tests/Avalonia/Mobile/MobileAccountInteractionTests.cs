@@ -5,6 +5,33 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void AndroidActivity_ResizesTheAppViewportAboveTheSoftwareKeyboard()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "MainActivity.cs"));
+
+        Assert.Contains("WindowSoftInputMode = SoftInput.AdjustResize", source);
+    }
+
+    [Fact]
+    public void MobileIconPicker_AppliesAvaloniaInputPaneOcclusionToItsOverlay()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml.cs"));
+
+        Assert.Contains("inputPane.StateChanged += InputPaneStateChanged", source);
+        Assert.Contains("state == InputPaneState.Open", source);
+        Assert.Contains("Math.Max(0, occludedRect.Height)", source);
+        Assert.Contains("AccountBrandIconPickerModalOverlay.Margin", source);
+    }
+
+    [Fact]
     public void OnboardingSlides_UseFullScreenArtworkWithLocalizedOverlayControls()
     {
         var document = XDocument.Load(Path.Combine(
@@ -201,33 +228,52 @@ public sealed class MobileAccountInteractionTests
             control => control.Attribute("IsChecked")?.Value
                 == "{Binding EditorIsFavorite, Mode=TwoWay}");
         var brandIconPicker = advanced
-            .Descendants()
-            .Single(element => element.Name.LocalName == "SearchableComboBox"
-                && element.Attribute(xaml + "Name")?.Value == "AccountBrandIconComboBox");
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "AccountBrandIconPickerButton");
         Assert.Equal("account-brand-icon-picker", brandIconPicker.Attribute("Classes")?.Value);
+        Assert.Equal(
+            "{Binding OpenAccountBrandIconPickerCommand}",
+            brandIconPicker.Attribute("Command")?.Value);
+        Assert.Equal(
+            "{Binding HasSearchableBrandIcons}",
+            brandIconPicker.Attribute("IsVisible")?.Value);
+        var customIconButton = advanced
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "AccountCustomIconButton");
+        Assert.Equal(
+            "{Binding ImportCustomIconCommand}",
+            customIconButton.Attribute("Command")?.Value);
+        Assert.Equal(
+            "{Binding HasNoInstalledBrandIconPack}",
+            customIconButton.Attribute("IsVisible")?.Value);
+        var noPackCallout = advanced
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "NoBrandIconPackCallout");
+        Assert.Equal(
+            "{Binding HasNoInstalledBrandIconPack}",
+            noPackCallout.Attribute("IsVisible")?.Value);
+        Assert.Contains(
+            noPackCallout.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value
+                == "{Binding NoBrandIconPackInstalledText}");
+        Assert.Contains(
+            noPackCallout.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value
+                == "{Binding NoBrandIconPackInstructionsText}");
+        Assert.DoesNotContain(
+            advanced.Descendants(),
+            element => element.Name.LocalName == "SearchableComboBox");
         var brandIconPickerButtonStyle = document
             .Descendants(avalonia + "Style")
             .Single(style => style.Attribute("Selector")?.Value
-                == "controls|SearchableComboBox.account-brand-icon-picker /template/ Button#PART_DropDownButton");
+                == "Button.account-brand-icon-picker");
         Assert.Contains(
             brandIconPickerButtonStyle.Elements(avalonia + "Setter"),
             setter => setter.Attribute("Property")?.Value == "Padding"
-                && setter.Attribute("Value")?.Value == "12,8,20,8");
-        var sharedStyles = XDocument.Load(Path.Combine(
-            AppContext.BaseDirectory,
-            "Fixtures",
-            "Avalonia",
-            "SharedStyles.axaml"));
-        var pickerDropDownGlyph = sharedStyles
-            .Descendants(avalonia + "Style")
-            .Single(style => style.Attribute("Selector")?.Value == "controls|SearchableComboBox")
-            .Descendants(avalonia + "Path")
-            .Single(path => path.Attribute("Grid.Column")?.Value == "1");
-        Assert.Equal("0,0,6,0", pickerDropDownGlyph.Attribute("Margin")?.Value);
-        Assert.DoesNotContain(
-            advanced.Descendants(avalonia + "Button"),
-            control => control.Attribute(xaml + "Name")?.Value
-                == "CustomSvgIconButton");
+                && setter.Attribute("Value")?.Value == "12,8");
         Assert.DoesNotContain(
             advanced.Descendants(avalonia + "TextBlock"),
             control => control.Attribute("Text")?.Value == "{Binding OrText}");
@@ -283,6 +329,108 @@ public sealed class MobileAccountInteractionTests
             exitModal.Descendants(avalonia + "Button"),
             button => button.Attribute("Command")?.Value
                 == "{Binding DiscardAccountChangesCommand}");
+
+        var brandIconModal = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "AccountBrandIconPickerModalOverlay");
+        Assert.Equal("3", brandIconModal.Attribute("Grid.RowSpan")?.Value);
+        Assert.Equal("104", brandIconModal.Attribute("Panel.ZIndex")?.Value);
+        Assert.Equal(
+            "{Binding IsAccountBrandIconPickerVisible}",
+            brandIconModal.Attribute("IsVisible")?.Value);
+        Assert.Empty(brandIconModal.Ancestors(avalonia + "Popup"));
+        var modalSurface = Assert.Single(brandIconModal.Elements(avalonia + "Border"));
+        Assert.Equal("520", modalSurface.Attribute("MaxWidth")?.Value);
+        Assert.Equal("620", modalSurface.Attribute("MaxHeight")?.Value);
+        var modalLayout = Assert.Single(modalSurface.Elements(avalonia + "Grid"));
+        Assert.Equal("Auto,Auto,*", modalLayout.Attribute("RowDefinitions")?.Value);
+        var modalSearch = brandIconModal
+            .Descendants(avalonia + "TextBox")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "AccountBrandIconSearchBox");
+        Assert.Equal(
+            "{Binding AccountBrandIconSearchText, Mode=TwoWay}",
+            modalSearch.Attribute("Text")?.Value);
+        Assert.Equal(
+            "{Binding HasSearchableBrandIcons}",
+            modalSearch.Parent?.Attribute("IsVisible")?.Value);
+        Assert.Null(modalSearch.Attribute("IsFocused"));
+        Assert.DoesNotContain(
+            brandIconModal.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value
+                == "{Binding NoBrandIconPackInstalledText}");
+        var resultsScroller = brandIconModal
+            .Descendants(avalonia + "ListBox")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "AccountBrandIconResultsScroller");
+        Assert.Equal(
+            "Auto",
+            resultsScroller.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
+        Assert.Equal(
+            "{Binding AccountBrandIconResultsMaxHeight}",
+            resultsScroller.Parent?.Attribute("MaxHeight")?.Value);
+        Assert.Single(resultsScroller.Descendants(avalonia + "VirtualizingStackPanel"));
+        var resultItemStyles = resultsScroller
+            .Descendants(avalonia + "Style")
+            .Where(style => style.Attribute("Selector")?.Value?.StartsWith(
+                "ListBoxItem",
+                StringComparison.Ordinal) == true)
+            .ToArray();
+        var neutralResultItemStyle = resultItemStyles.Single(style =>
+            style.Attribute("Selector")?.Value == "ListBoxItem");
+        Assert.Single(
+            neutralResultItemStyle.Descendants(avalonia + "ControlTemplate"));
+        Assert.Contains(
+            resultItemStyles,
+            style => style.Attribute("Selector")?.Value == "ListBoxItem:selected"
+                && style.Elements(avalonia + "Setter").Any(setter =>
+                    setter.Attribute("Property")?.Value == "Background"
+                    && setter.Attribute("Value")?.Value == "Transparent"));
+        Assert.Contains(
+            resultItemStyles,
+            style => style.Attribute("Selector")?.Value == "ListBoxItem:pressed"
+                && style.Elements(avalonia + "Setter").Any(setter =>
+                    setter.Attribute("Property")?.Value == "Background"
+                    && setter.Attribute("Value")?.Value == "Transparent"));
+        var brandChoice = Assert.Single(
+            resultsScroller.Descendants(avalonia + "Button"),
+            button => button.Attribute("Classes")?.Value == "brand-icon-choice");
+        Assert.Equal(
+            "{Binding IsBrandEntry}",
+            brandChoice.Attribute("Classes.brand-entry")?.Value);
+        Assert.Equal(
+            "{Binding IsPickerAction}",
+            brandChoice.Attribute("Classes.picker-action")?.Value);
+        Assert.Equal(
+            "Center",
+            brandChoice
+                .Descendants(avalonia + "TextBlock")
+                .Single()
+                .Attribute("VerticalAlignment")?.Value);
+        var brandChoiceStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(style => style.Attribute("Selector")?.Value
+                == "Button.brand-icon-choice");
+        Assert.Single(brandChoiceStyle.Descendants(avalonia + "ControlTemplate"));
+        var pressedChoiceStyles = document
+            .Descendants(avalonia + "Style")
+            .Where(style => style.Attribute("Selector")?.Value is
+                "Button.brand-icon-choice.picker-action:pressed"
+                or "Button.brand-icon-choice.brand-entry:pressed")
+            .ToArray();
+        Assert.Equal(2, pressedChoiceStyles.Length);
+        Assert.DoesNotContain(
+            pressedChoiceStyles.SelectMany(style => style.Elements(avalonia + "Setter")),
+            setter => setter.Attribute("Value")?.Value
+                == "{DynamicResource BrushSurfacePressed}");
+        Assert.DoesNotContain(
+            brandIconModal.Descendants(avalonia + "ItemsControl"),
+            element => element.Attribute("ItemsSource")?.Value
+                == "{Binding FilteredEditorBrandIconOptions}");
+        Assert.DoesNotContain(
+            brandIconModal.Descendants(avalonia + "Button"),
+            button => button.Attribute("Content")?.Value == "{Binding CancelText}");
     }
 
     [Fact]

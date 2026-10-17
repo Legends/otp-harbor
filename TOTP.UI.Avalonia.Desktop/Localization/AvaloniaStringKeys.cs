@@ -291,6 +291,8 @@ public static class AvaloniaStringKeys
     public const string SearchBrandIcons = nameof(SearchBrandIcons);
     public const string AutomaticBrandIcon = nameof(AutomaticBrandIcon);
     public const string BrandIconHelp = nameof(BrandIconHelp);
+    public const string NoBrandIconPackInstalled = nameof(NoBrandIconPackInstalled);
+    public const string NoBrandIconPackInstructions = nameof(NoBrandIconPackInstructions);
     public const string CustomAccountIcon = nameof(CustomAccountIcon);
     public const string ChooseCustomSvgIcon = nameof(ChooseCustomSvgIcon);
     public const string CustomIconFileName = nameof(CustomIconFileName);
@@ -555,6 +557,7 @@ public static class AvaloniaStringKeys
         AddAccount, AddAccountShortcut, EditAccount, EditAccountShortcut,
         DeleteAccount, DeleteAccountShortcut, DeleteAccountPrompt, Delete, Issuer,
         AccountName, Secret, BrandIcon, SearchBrandIcons, AutomaticBrandIcon, BrandIconHelp,
+        NoBrandIconPackInstalled, NoBrandIconPackInstructions,
         CustomAccountIcon, ChooseCustomSvgIcon, CustomIconFileName, SvgIconFiles, CustomIconImported,
         CustomIconImportFailed, CustomIconImportEmpty, CustomIconImportTooLarge,
         CustomIconImportMalformed, CustomIconImportMissingPath, CustomIconImportUnsafe,

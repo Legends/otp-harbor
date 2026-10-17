@@ -153,8 +153,58 @@
             <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentPressed}" />
         </Style>
-        <Style Selector="controls|SearchableComboBox.account-brand-icon-picker /template/ Button#PART_DropDownButton">
-            <Setter Property="Padding" Value="12,8,20,8" />
+        <Style Selector="Button.account-brand-icon-picker">
+            <Setter Property="MinHeight" Value="48" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="Button.brand-icon-choice">
+            <Setter Property="MinHeight" Value="48" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Padding="{TemplateBinding Padding}"
+                            TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.brand-icon-choice.picker-action">
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style Selector="Button.brand-icon-choice.picker-action:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+        </Style>
+        <Style Selector="Button.brand-icon-choice.brand-entry">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        <Style Selector="Button.brand-icon-choice.brand-entry:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+        </Style>
+        <Style Selector="Button.brand-icon-choice.brand-entry:pressed">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
         </Style>
         <Style Selector="Expander.mobile-faq-section">
             <Setter Property="Background" Value="Transparent" />
@@ -1842,6 +1892,7 @@
                             PlaceholderText="{Binding AccountNameText}"
                             Text="{Binding EditorAccountName, Mode=TwoWay}" />
                         <controls:RevealableSecretInput
+                            x:Name="AccountSecretInput"
                             AccessibleName="{Binding EditorSecretPlaceholder}"
                             PlaceholderText="{Binding EditorSecretPlaceholder}"
                             RevealButtonAccessibleName="{Binding RevealPasswordText}"
@@ -1865,24 +1916,37 @@
                                 <TextBlock
                                     Classes="field-label"
                                     Text="{Binding BrandIconText}" />
-                                <controls:SearchableComboBox
-                                    x:Name="AccountBrandIconComboBox"
+                                <Button
+                                    x:Name="AccountBrandIconPickerButton"
                                     Classes="account-brand-icon-picker"
                                     HorizontalAlignment="Left"
                                     automation:AutomationProperties.Name="{Binding BrandIconText}"
-                                    ClearSearchText="{Binding ClearSearchText}"
-                                    IsEnabled="{Binding HasBrandIconChoices}"
-                                    ItemsSource="{Binding EditorBrandIconOptions}"
-                                    PopupWidth="300"
-                                    PreferredWidth="{Binding EditorBrandIconPickerWidth}"
-                                    SearchPlaceholder="{Binding SearchBrandIconsText}"
-                                    SelectedItem="{Binding SelectedEditorBrandIconOption, Mode=TwoWay}">
-                                    <controls:SearchableComboBox.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:MobileBrandIconOption">
-                                            <TextBlock Text="{Binding DisplayNameForDisplay}" TextTrimming="CharacterEllipsis" />
-                                        </DataTemplate>
-                                    </controls:SearchableComboBox.ItemTemplate>
-                                </controls:SearchableComboBox>
+                                    Command="{Binding OpenAccountBrandIconPickerCommand}"
+                                    IsVisible="{Binding HasSearchableBrandIcons}"
+                                    Width="{Binding EditorBrandIconPickerWidth}">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            Text="{Binding SelectedEditorBrandIconDisplayName}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            FontSize="16"
+                                            Text="⌄" />
+                                    </Grid>
+                                </Button>
+                                <Button
+                                    x:Name="AccountCustomIconButton"
+                                    Classes="account-brand-icon-picker"
+                                    HorizontalAlignment="Left"
+                                    automation:AutomationProperties.Name="{Binding ChooseCustomSvgIconText}"
+                                    Command="{Binding ImportCustomIconCommand}"
+                                    IsVisible="{Binding HasNoInstalledBrandIconPack}">
+                                    <controls:SymbolIconLabel
+                                        Kind="ImageStack"
+                                        Text="{Binding ChooseCustomSvgIconText}" />
+                                </Button>
                                 <Border MinHeight="24">
                                     <TextBlock
                                         VerticalAlignment="Center"
@@ -1891,8 +1955,36 @@
                                         Text="{Binding SelectedEditorCustomIconFileName}"
                                         TextTrimming="CharacterEllipsis" />
                                 </Border>
+                                <Border
+                                    x:Name="NoBrandIconPackCallout"
+                                    Padding="12"
+                                    Background="{DynamicResource BrushSurfaceAlternate}"
+                                    BorderBrush="{DynamicResource BrushAccent}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    IsVisible="{Binding HasNoInstalledBrandIconPack}">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                        <controls:SymbolIcon
+                                            Grid.Column="0"
+                                            Margin="0,2,0,0"
+                                            Foreground="{DynamicResource BrushAccent}"
+                                            IconSize="20"
+                                            Kind="ImageStack" />
+                                        <StackPanel Grid.Column="1" Spacing="4">
+                                            <TextBlock
+                                                FontWeight="SemiBold"
+                                                Text="{Binding NoBrandIconPackInstalledText}"
+                                                TextWrapping="Wrap" />
+                                            <TextBlock
+                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                Text="{Binding NoBrandIconPackInstructionsText}"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
                                 <TextBlock
                                     Foreground="{DynamicResource BrushTextSecondary}"
+                                    IsVisible="{Binding HasSearchableBrandIcons}"
                                     Text="{Binding BrandIconHelpText}"
                                     TextWrapping="Wrap" />
                                 <Border
@@ -2487,6 +2579,144 @@
                             Classes="wide primary"
                             Command="{Binding ConfirmBackupConflictResolutionCommand}"
                             Content="{Binding ConfirmImportText}" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid
+            x:Name="AccountBrandIconPickerModalOverlay"
+            Grid.RowSpan="3"
+            Panel.ZIndex="104"
+            Background="{DynamicResource BrushOverlayStrong}"
+            IsVisible="{Binding IsAccountBrandIconPickerVisible}">
+            <Border
+                x:Name="AccountBrandIconPickerSurface"
+                MaxWidth="520"
+                MaxHeight="620"
+                Margin="12,24"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                automation:AutomationProperties.Name="{Binding BrandIconText}"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="16">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="20"
+                            FontWeight="SemiBold"
+                            Text="{Binding BrandIconText}" />
+                        <Button
+                            Grid.Column="1"
+                            Width="48"
+                            Height="48"
+                            Padding="8"
+                            automation:AutomationProperties.Name="{Binding CancelText}"
+                            Command="{Binding CloseAccountBrandIconPickerCommand}"
+                            ToolTip.Tip="{Binding CancelText}">
+                            <controls:SymbolIcon IconSize="20" Kind="Close" />
+                        </Button>
+                    </Grid>
+                    <Grid
+                        Grid.Row="1"
+                        IsVisible="{Binding HasSearchableBrandIcons}">
+                        <TextBox
+                            x:Name="AccountBrandIconSearchBox"
+                            Padding="12,8,48,8"
+                            automation:AutomationProperties.Name="{Binding SearchBrandIconsText}"
+                            PlaceholderText="{Binding SearchBrandIconsText}"
+                            Text="{Binding AccountBrandIconSearchText, Mode=TwoWay}" />
+                        <Button
+                            Width="44"
+                            Height="44"
+                            Margin="0,2,2,2"
+                            Padding="6"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            automation:AutomationProperties.Name="{Binding ClearSearchText}"
+                            Command="{Binding ClearAccountBrandIconSearchCommand}"
+                            Content="×"
+                            IsVisible="{Binding HasAccountBrandIconSearchText}"
+                            ToolTip.Tip="{Binding ClearSearchText}" />
+                    </Grid>
+                    <Grid
+                        Grid.Row="2"
+                        MaxHeight="{Binding AccountBrandIconResultsMaxHeight}">
+                        <ListBox
+                            x:Name="AccountBrandIconResultsScroller"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ItemsSource="{Binding FilteredEditorBrandIconOptions}"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Template">
+                                        <ControlTemplate>
+                                            <ContentPresenter
+                                                Background="Transparent"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
+                                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                Content="{TemplateBinding Content}"
+                                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                Padding="{TemplateBinding Padding}" />
+                                        </ControlTemplate>
+                                    </Setter>
+                                </Style>
+                                <Style Selector="ListBoxItem:pointerover">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                </Style>
+                                <Style Selector="ListBoxItem:pressed">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                </Style>
+                                <Style Selector="ListBoxItem:selected">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                </Style>
+                            </ListBox.Styles>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel CacheLength="0.5" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:MobileBrandIconOption">
+                                    <Button
+                                        Classes="brand-icon-choice"
+                                        Classes.brand-entry="{Binding IsBrandEntry}"
+                                        Classes.picker-action="{Binding IsPickerAction}"
+                                        x:CompileBindings="False"
+                                        Command="{Binding DataContext.SelectAccountBrandIconCommand, ElementName=Root}"
+                                        CommandParameter="{Binding}">
+                                        <TextBlock
+                                            Text="{Binding DisplayNameForDisplay}"
+                                            TextTrimming="CharacterEllipsis"
+                                            VerticalAlignment="Center" />
+                                    </Button>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock
+                            Margin="8,16"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Foreground="{DynamicResource BrushTextSecondary}"
+                            IsVisible="{Binding HasNoBrandIconSearchResults}"
+                            Text="{Binding NoBrandIconsMatchSearchText}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
                     </Grid>
                 </Grid>
             </Border>

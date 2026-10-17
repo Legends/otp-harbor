@@ -76,17 +76,19 @@ public sealed class PasswordSetupViewModel : INotifyPropertyChanged
 
         var password = Password;
         var confirmation = ConfirmPassword;
-        Password = string.Empty;
-        ConfirmPassword = string.Empty;
 
         if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(confirmation))
         {
+            Password = string.Empty;
+            ConfirmPassword = string.Empty;
             Message = _localization.GetString(AvaloniaStringKeys.PasswordRequired);
             return;
         }
 
         if (password.Length < _passwordValidation.MinimumLength)
         {
+            Password = string.Empty;
+            ConfirmPassword = string.Empty;
             Message = string.Format(
                 _localization.GetString(AvaloniaStringKeys.PasswordMinimumLength),
                 _passwordValidation.MinimumLength);
@@ -99,6 +101,8 @@ public sealed class PasswordSetupViewModel : INotifyPropertyChanged
             return;
         }
 
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
         IsBusy = true;
         try
         {
