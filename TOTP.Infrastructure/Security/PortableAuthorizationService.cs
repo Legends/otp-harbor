@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using TOTP.Core.Enums;
+using TOTP.Core.Backup;
 using TOTP.Core.Security;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
@@ -22,6 +23,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
     private readonly IPasswordValidationService _passwordValidation;
     private readonly ISecurityContext _securityContext;
     private readonly ILogger<PortableAuthorizationService> _logger;
+    private readonly IAutomaticBackupCoordinator? _automaticBackup;
 
     public PortableAuthorizationService(
         ISettingsService settingsService,
@@ -33,7 +35,8 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         ISecurityContext securityContext,
         AuthorizationState state,
         ILogger<PortableAuthorizationService> logger,
-        IPlatformUnattendedUnlockEnrollment? unattendedUnlockEnrollment = null)
+        IPlatformUnattendedUnlockEnrollment? unattendedUnlockEnrollment = null,
+        IAutomaticBackupCoordinator? automaticBackup = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _session = session ?? throw new ArgumentNullException(nameof(session));
@@ -46,6 +49,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         _securityContext = securityContext ?? throw new ArgumentNullException(nameof(securityContext));
         State = state ?? throw new ArgumentNullException(nameof(state));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _automaticBackup = automaticBackup;
     }
 
     public AuthorizationState State { get; }
@@ -145,6 +149,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         if (!ActivateContext(vaultKey)) return AuthorizationResult.Failed;
         ApplySessionState();
         State.Unlock();
+        _automaticBackup?.RequestBackup();
         return AuthorizationResult.Success;
     }
 
@@ -248,6 +253,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
 
         ApplySessionState();
         State.Unlock();
+        _automaticBackup?.RequestBackup();
         return AuthorizationResult.Success;
     }
 

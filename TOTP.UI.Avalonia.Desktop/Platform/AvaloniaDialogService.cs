@@ -63,6 +63,7 @@ public sealed class AvaloniaDialogService(
             var owner = windows.GetRequiredDialogOwner();
             using var viewModel = new PasswordDialogViewModel(request, cancellationToken);
             var dialog = new PasswordDialogWindow { DataContext = viewModel };
+            DialogWindowSizing.FitToOwner(dialog, owner);
             string? confirmedPassword = null;
             viewModel.CloseRequested += Close;
             using var ownership = windows.RegisterOwnedDialog(dialog);
@@ -105,6 +106,7 @@ public sealed class AvaloniaDialogService(
             var owner = windows.GetRequiredDialogOwner();
             var viewModel = new ChoiceDialogViewModel(request);
             var dialog = new ChoiceDialogWindow { DataContext = viewModel };
+            DialogWindowSizing.FitToOwner(dialog, owner);
             var requestedResult = ChoiceDialogResult.Cancel;
             viewModel.CloseRequested += Close;
             using var ownership = windows.RegisterOwnedDialog(dialog);

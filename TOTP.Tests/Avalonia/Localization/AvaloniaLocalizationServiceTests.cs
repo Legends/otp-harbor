@@ -29,6 +29,10 @@ public sealed class AvaloniaLocalizationServiceTests
         Assert.Equal("Erneut versuchen", resources[AvaloniaStringKeys.Retry]);
         Assert.Equal("Master-Passwort", resources[AvaloniaStringKeys.MasterPassword]);
         Assert.Equal("Anzeigen", resources[AvaloniaStringKeys.RevealSecret]);
+        Assert.Equal("Sonstiges", resources[AvaloniaStringKeys.Miscellaneous]);
+        Assert.Equal(
+            "Microsoft, Outlook, GitHub usw.",
+            resources[AvaloniaStringKeys.IssuerPlaceholder]);
         Assert.Equal("Vorhandene Konten überspringen", resources[AvaloniaStringKeys.ImportSkipExisting]);
         Assert.Equal(1, cultureChanged);
     }
@@ -57,6 +61,49 @@ public sealed class AvaloniaLocalizationServiceTests
         Assert.Empty(sut.GetMissingKeys(System.Globalization.CultureInfo.GetCultureInfo("de")));
         Assert.Empty(sut.GetMissingKeys(System.Globalization.CultureInfo.GetCultureInfo("fr")));
         Assert.Empty(sut.GetMissingKeys(System.Globalization.CultureInfo.GetCultureInfo("es")));
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("es")]
+    public void Catalog_RestoreConfirmationsUseStructuredMultilineCopy(string cultureName)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        foreach (var key in new[]
+                 {
+                     AvaloniaStringKeys.ImportConfirmationMessage,
+                     AvaloniaStringKeys.ImportSkipExistingConfirmation,
+                     AvaloniaStringKeys.ImportNewAccountsConfirmation,
+                     AvaloniaStringKeys.ImportNothingToImport
+                 })
+        {
+            var message = sut.Get(key, culture);
+            Assert.Contains("\n", message, StringComparison.Ordinal);
+            Assert.DoesNotContain("\n\n", message, StringComparison.Ordinal);
+        }
+    }
+
+    [Theory]
+    [InlineData("en", "master password", "quick-unlock")]
+    [InlineData("de", "Master-Passwort", "Schnellentsperrdaten")]
+    [InlineData("fr", "mot de passe principal", "déverrouillage rapide")]
+    [InlineData("es", "contraseña maestra", "desbloqueo rápido")]
+    public void Catalog_AutomaticBackupDescriptionExplainsPortableRecoveryBoundary(
+        string cultureName,
+        string expectedPasswordTerm,
+        string expectedQuickUnlockTerm)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var description = sut.Get(
+            AvaloniaStringKeys.AutomaticBackupDescription,
+            System.Globalization.CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Contains(expectedPasswordTerm, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(expectedQuickUnlockTerm, description, StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]
@@ -327,6 +374,21 @@ public sealed class AvaloniaLocalizationServiceTests
         Assert.Equal(expectedDelete, sut.Get(AvaloniaStringKeys.DeleteAccountShortcut, culture));
         Assert.Equal(expectedCopy, sut.Get(AvaloniaStringKeys.CopyTimedClearShortcut, culture));
         Assert.Equal(expectedLock, sut.Get(AvaloniaStringKeys.LockShortcut, culture));
+    }
+
+    [Theory]
+    [InlineData("en", "Search")]
+    [InlineData("de", "Suchen")]
+    [InlineData("fr", "Rechercher")]
+    [InlineData("es", "Buscar")]
+    public void Catalog_AccountSearchPlaceholderIsShortAndLocalized(
+        string cultureName,
+        string expected)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        Assert.Equal(expected, sut.Get(AvaloniaStringKeys.Search, culture));
     }
 
     [Theory]

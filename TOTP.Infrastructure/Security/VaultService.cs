@@ -6,12 +6,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using TOTP.Core.Models;
+using TOTP.Core.Backup;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
+using FluentResults;
 
 namespace TOTP.Infrastructure.Security;
 
-public sealed class VaultService : IVaultService, IVaultKeyVerifier
+public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnapshotReader
 {
     private readonly ISecurityContext _securityContext;
     private static readonly AeadAlgorithm Algorithm = AeadAlgorithm.Aes256Gcm;
@@ -54,36 +56,67 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier
     public List<Account> DecryptVault(byte[] encryptedBlob)
     {
         if (!_securityContext.IsUnlocked) throw new InvalidOperationException("Security context locked.");
-
-        int minSize = FileHeader.Length + Algorithm.NonceSize;
-        if (encryptedBlob.Length < minSize) throw new CryptographicException("Data is too small/corrupted.");
-
-        if (!encryptedBlob.Take(FileHeader.Length).SequenceEqual(FileHeader))
-            throw new CryptographicException("Invalid file header.");
-
-        byte[] nonce = encryptedBlob.Skip(FileHeader.Length).Take(Algorithm.NonceSize).ToArray();
-        byte[] ciphertext = encryptedBlob.Skip(FileHeader.Length + Algorithm.NonceSize).ToArray();
-
         var dek = _securityContext.GetDekCopy();
-        byte[]? decrypted;
         try
         {
-            using var key = Key.Import(Algorithm, dek, KeyBlobFormat.RawSymmetricKey);
-            decrypted = Algorithm.Decrypt(key, nonce, null, ciphertext);
+            return DecryptVaultWithKey(encryptedBlob, dek);
         }
         finally
         {
-            Array.Clear(dek, 0, dek.Length);
+            CryptographicOperations.ZeroMemory(dek);
         }
+    }
 
-        if (decrypted == null) throw new CryptographicException("Decryption failed (Wrong key or tampered data).");
-
+    public Result<IReadOnlyList<Account>> ReadAccounts(
+        ReadOnlySpan<byte> encryptedVault,
+        ReadOnlySpan<byte> vaultKey)
+    {
         try
         {
-            var json = Encoding.UTF8.GetString(decrypted);
-            return JsonSerializer.Deserialize<List<Account>>(json) ?? [];
+            return Result.Ok<IReadOnlyList<Account>>(
+                DecryptVaultWithKey(encryptedVault, vaultKey));
         }
-        finally { Array.Clear(decrypted, 0, decrypted.Length); }
+        catch (Exception ex) when (ex is CryptographicException or JsonException)
+        {
+            return Result.Fail<IReadOnlyList<Account>>(
+                new AutomaticBackupError(
+                    AutomaticBackupErrorCode.InvalidVault,
+                    "Automatic backup vault authentication failed.",
+                    ex));
+        }
+    }
+
+    private static List<Account> DecryptVaultWithKey(
+        ReadOnlySpan<byte> encryptedBlob,
+        ReadOnlySpan<byte> vaultKey)
+    {
+        var minimumSize = FileHeader.Length + Algorithm.NonceSize + Algorithm.TagSize;
+        if (encryptedBlob.Length < minimumSize)
+            throw new CryptographicException("Data is too small or corrupted.");
+
+        if (!encryptedBlob[..FileHeader.Length].SequenceEqual(FileHeader))
+            throw new CryptographicException("Invalid file header.");
+
+        if (vaultKey.Length != VaultKeySize)
+            throw new CryptographicException("Invalid vault key.");
+
+        var nonce = encryptedBlob.Slice(FileHeader.Length, Algorithm.NonceSize);
+        var ciphertext = encryptedBlob[(FileHeader.Length + Algorithm.NonceSize)..];
+        byte[]? decrypted = null;
+        try
+        {
+            using var key = Key.Import(Algorithm, vaultKey, KeyBlobFormat.RawSymmetricKey);
+            decrypted = Algorithm.Decrypt(key, nonce, ReadOnlySpan<byte>.Empty, ciphertext);
+            if (decrypted is null)
+                throw new CryptographicException("Decryption failed.");
+
+            return JsonSerializer.Deserialize<List<Account>>(decrypted)
+                ?? throw new JsonException("Vault account payload is null.");
+        }
+        finally
+        {
+            if (decrypted is not null) CryptographicOperations.ZeroMemory(decrypted);
+        }
     }
 
     public VaultKeyVerificationStatus Verify(

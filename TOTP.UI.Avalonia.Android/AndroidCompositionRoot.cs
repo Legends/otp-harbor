@@ -14,6 +14,7 @@ using TOTP.Infrastructure.Logging;
 using TOTP.Infrastructure.Services;
 using TOTP.Platform.Android;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Core.Backup;
 
 namespace TOTP.Avalonia.Android;
 
@@ -66,6 +67,8 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IPlatformQuickUnlock>(provider =>
             provider.GetRequiredService<AndroidPlatformQuickUnlock>());
         services.AddInfrastructure(configuration, paths, fileSecurity);
+        services.AddSingleton<IAutomaticBackupDestinationAdapter,
+            AndroidAutomaticBackupDestinationAdapter>();
         services.AddSingleton<IAsyncPlatformClipboard, AndroidPlatformClipboard>();
         services.AddSingleton<AsyncClipboardService>();
         services.AddSingleton<IAsyncClipboardService>(provider =>

@@ -442,6 +442,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
+            await NativeFilePicker.InitializeAutomaticBackupsAsync();
             var outcome = await _startupCoordinator.InitializeAsync(_lifetime.Token);
             (StatusText, CanRetry, StatusSeverity) = outcome switch
             {

@@ -18,6 +18,7 @@ using TOTP.Camera.OpenCv;
 using TOTP.Avalonia.Desktop.Localization;
 using Serilog;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Core.Backup;
 using AppLifetime = TOTP.Core.Services.Interfaces.IApplicationLifetime;
 #if TOTP_PLATFORM_WINDOWS
 using TOTP.Platform.Windows;
@@ -124,6 +125,8 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IAvaloniaQrPreviewDialogService,
             AvaloniaQrPreviewDialogService>();
         services.AddSingleton<IAvaloniaFilePicker, AvaloniaFilePicker>();
+        services.AddSingleton<IAutomaticBackupDestinationAdapter,
+            AvaloniaAutomaticBackupDestinationAdapter>();
         services.AddSingleton<IAvaloniaQrImageFactory, AvaloniaQrImageFactory>();
         services.AddSingleton<IBrandIconResolver, BrandIconResolver>();
         services.AddSingleton<IPlatformFolderLauncher, AvaloniaPlatformFolderLauncher>();
@@ -169,7 +172,8 @@ public static class AvaloniaCompositionRoot
             filePicker: provider.GetRequiredService<IAvaloniaFilePicker>(),
             exportService: provider.GetRequiredService<IExportService>(),
             accountImportService: provider.GetRequiredService<IAccountImportService>(),
-            authorizationService: provider.GetRequiredService<IAuthorizationService>()));
+            authorizationService: provider.GetRequiredService<IAuthorizationService>(),
+            automaticBackup: provider.GetRequiredService<IAutomaticBackupCoordinator>()));
         services.AddSingleton<SettingsPageViewModel>();
         services.AddSingleton<AuthorizationSettingsViewModel>();
         services.AddSingleton<NativeFilePickerViewModel>();

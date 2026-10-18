@@ -6,8 +6,10 @@ using System.Security.Cryptography;
 using System.Windows.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
+using FluentResults;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
+using TOTP.Core.Backup;
 using TOTP.Core.Icons;
 using TOTP.Core.Enums;
 using TOTP.Core.Models;
@@ -54,6 +56,8 @@ public sealed class MobileShellViewModel :
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly IAppearanceSettingsService? _appearanceSettingsService;
     private readonly ILogSwitchService? _logSwitchService;
+    private readonly IAutomaticBackupCoordinator? _automaticBackup;
+    private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
     private readonly MobileAsyncCommand _initializeCommand;
     private readonly MobileAsyncCommand _previousOnboardingCommand;
     private readonly MobileAsyncCommand _nextOnboardingCommand;
@@ -118,6 +122,9 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _cancelQrConflictCommand;
     private readonly MobileAsyncCommand _dismissQrCommand;
     private readonly MobileAsyncCommand _exportBackupCommand;
+    private readonly MobileAsyncCommand _configureAutomaticBackupCommand;
+    private readonly MobileAsyncCommand _automaticBackupNowCommand;
+    private readonly MobileAsyncCommand _disableAutomaticBackupCommand;
     private readonly MobileAsyncCommand _exportDiagnosticLogCommand;
     private readonly MobileAsyncCommand _importBackupCommand;
     private readonly MobileAsyncCommand _importAccountFileCommand;
@@ -197,6 +204,7 @@ public sealed class MobileShellViewModel :
     private bool _isEditorVisible;
     private bool _isAccountEditorExitConfirmationVisible;
     private bool _isDeleteConfirmationVisible;
+    private bool _isDeleteWithoutBackupWarning;
     private Guid? _pendingDeleteAccountId;
     private string _pendingDeleteDisplayName = string.Empty;
     private Guid? _editingAccountId;
@@ -273,7 +281,9 @@ public sealed class MobileShellViewModel :
         IBrandIconResolver? brandIconResolver = null,
         IBrandIconPackService? brandIconPackService = null,
         IAppearanceSettingsService? appearanceSettingsService = null,
-        ILogSwitchService? logSwitchService = null)
+        ILogSwitchService? logSwitchService = null,
+        IAutomaticBackupCoordinator? automaticBackup = null,
+        IAutomaticBackupSnapshotService? automaticBackupSnapshots = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
@@ -298,8 +308,12 @@ public sealed class MobileShellViewModel :
         _brandIconPackService = brandIconPackService;
         _appearanceSettingsService = appearanceSettingsService;
         _logSwitchService = logSwitchService;
+        _automaticBackup = automaticBackup;
+        _automaticBackupSnapshots = automaticBackupSnapshots;
         _showIssuerLogo = _brandIconPackService?.ShowIssuerLogo ?? true;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
+        if (_automaticBackup is not null)
+            _automaticBackup.StatusChanged += AutomaticBackupStatusChanged;
 
         _initializeCommand = new MobileAsyncCommand(InitializeAsync, () => !IsBusy);
         _previousOnboardingCommand = new MobileAsyncCommand(
@@ -483,6 +497,19 @@ public sealed class MobileShellViewModel :
         _exportBackupCommand = new MobileAsyncCommand(
             ExportBackupAsync,
             () => IsSettingsVisible && !IsBusy);
+        _configureAutomaticBackupCommand = new MobileAsyncCommand(
+            ConfigureAutomaticBackupAsync,
+            () => IsBackupSettingsVisible && !IsBusy && _automaticBackup is not null);
+        _automaticBackupNowCommand = new MobileAsyncCommand(
+            AutomaticBackupNowAsync,
+            () => IsBackupSettingsVisible
+                && !IsBusy
+                && _automaticBackup?.Status.IsConfigured == true);
+        _disableAutomaticBackupCommand = new MobileAsyncCommand(
+            DisableAutomaticBackupAsync,
+            () => IsBackupSettingsVisible
+                && !IsBusy
+                && _automaticBackup?.Status.IsConfigured == true);
         _exportDiagnosticLogCommand = new MobileAsyncCommand(
             ExportDiagnosticLogAsync,
             () => IsMiscSettingsVisible && !IsBusy);
@@ -616,6 +643,9 @@ public sealed class MobileShellViewModel :
     public ICommand CancelQrConflictCommand => _cancelQrConflictCommand;
     public ICommand DismissQrCommand => _dismissQrCommand;
     public ICommand ExportBackupCommand => _exportBackupCommand;
+    public ICommand ConfigureAutomaticBackupCommand => _configureAutomaticBackupCommand;
+    public ICommand AutomaticBackupNowCommand => _automaticBackupNowCommand;
+    public ICommand DisableAutomaticBackupCommand => _disableAutomaticBackupCommand;
     public ICommand ExportDiagnosticLogCommand => _exportDiagnosticLogCommand;
     public ICommand ImportBackupCommand => _importBackupCommand;
     public ICommand ImportAccountFileCommand => _importAccountFileCommand;
@@ -1495,9 +1525,12 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
             if (!value)
             {
+                _isDeleteWithoutBackupWarning = false;
                 _pendingDeleteAccountId = null;
                 _pendingDeleteDisplayName = string.Empty;
+                OnPropertyChanged(nameof(DeleteConfirmTitle));
                 OnPropertyChanged(nameof(DeletePrompt));
+                OnPropertyChanged(nameof(DeleteConfirmationActionText));
             }
             NotifyCommands();
         }
@@ -1782,9 +1815,9 @@ public sealed class MobileShellViewModel :
     public string AccountSecretAuthorizationPromptText =>
         Get(MobileStringKeys.AccountSecretAuthorizationPrompt);
 
-    public string DeletePrompt => string.Format(
-        Get(MobileStringKeys.DeleteAccountPrompt),
-        _pendingDeleteDisplayName);
+    public string DeletePrompt => _isDeleteWithoutBackupWarning
+        ? Get(MobileStringKeys.DeleteWithoutBackupPrompt)
+        : string.Format(Get(MobileStringKeys.DeleteAccountPrompt), _pendingDeleteDisplayName);
 
     public string StartingText => Get(MobileStringKeys.Starting);
     public string AppTitle => Get(MobileStringKeys.AppTitle);
@@ -1836,6 +1869,7 @@ public sealed class MobileShellViewModel :
     public string DeleteAccountText => Get(MobileStringKeys.DeleteAccount);
     public string LockText => Get(MobileStringKeys.Lock);
     public string IssuerText => Get(MobileStringKeys.Issuer);
+    public string IssuerPlaceholderText => Get(MobileStringKeys.IssuerPlaceholder);
     public string AccountNameText => Get(MobileStringKeys.AccountName);
     public string AdvancedOptionsText => Get(MobileStringKeys.AdvancedOptions);
     public string TotpPeriodText => Get(MobileStringKeys.TotpPeriod);
@@ -1844,7 +1878,12 @@ public sealed class MobileShellViewModel :
     public string SaveText => Get(MobileStringKeys.Save);
     public string CancelText => Get(MobileStringKeys.Cancel);
     public string CopyCodeText => Get(MobileStringKeys.CopyCode);
-    public string DeleteConfirmTitle => Get(MobileStringKeys.DeleteConfirmTitle);
+    public string DeleteConfirmTitle => Get(_isDeleteWithoutBackupWarning
+        ? MobileStringKeys.DeleteWithoutBackupTitle
+        : MobileStringKeys.DeleteConfirmTitle);
+    public string DeleteConfirmationActionText => Get(_isDeleteWithoutBackupWarning
+        ? MobileStringKeys.DeleteAnyway
+        : MobileStringKeys.Delete);
     public string DeleteText => Get(MobileStringKeys.Delete);
     public string BiometricUnlockText => IsDeviceCredentialUnlockSelected
         ? Get(MobileStringKeys.UnlockWithDevicePin)
@@ -1973,6 +2012,56 @@ public sealed class MobileShellViewModel :
     public string DismissQrText => Get(MobileStringKeys.DismissQr);
     public string QrPrivacyNoticeText => Get(MobileStringKeys.QrPrivacyNotice);
     public string BackupTitle => Get(MobileStringKeys.BackupTitle);
+    public bool IsAutomaticBackupConfigured => _automaticBackup?.Status.IsConfigured == true;
+    public string AutomaticBackupsText => Get(MobileStringKeys.AutomaticBackups);
+    public string AutomaticBackupDescriptionText => Get(MobileStringKeys.AutomaticBackupDescription);
+    public string AutomaticBackupStatusText => (_automaticBackup?.Status.Kind ?? AutomaticBackupStatusKind.NotConfigured) switch
+    {
+        AutomaticBackupStatusKind.BackingUp => Get(MobileStringKeys.AutomaticBackupRunning),
+        AutomaticBackupStatusKind.UpToDate => Get(MobileStringKeys.AutomaticBackupUpToDate),
+        AutomaticBackupStatusKind.Succeeded => Get(MobileStringKeys.AutomaticBackupCreated),
+        AutomaticBackupStatusKind.Failed => Get(MobileStringKeys.AutomaticBackupFailed),
+        AutomaticBackupStatusKind.DestinationUnavailable => Get(MobileStringKeys.AutomaticBackupDestinationUnavailable),
+        AutomaticBackupStatusKind.Ready => Get(MobileStringKeys.AutomaticBackupReady),
+        _ => Get(MobileStringKeys.AutomaticBackupNotConfigured)
+    };
+    public string AutomaticBackupDestinationText => IsAutomaticBackupConfigured
+        ? string.Format(
+            CultureInfo.CurrentCulture,
+            Get(MobileStringKeys.AutomaticBackupDestinationFormat),
+            _automaticBackup?.Status.DestinationDisplayName ?? string.Empty)
+        : string.Empty;
+    public string AutomaticBackupLastSuccessText => _automaticBackup?.Status.LastSuccessfulUtc is { } lastSuccess
+        ? string.Format(
+            CultureInfo.CurrentCulture,
+            Get(MobileStringKeys.AutomaticBackupLastSuccessFormat),
+            lastSuccess.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+        : Get(MobileStringKeys.AutomaticBackupNever);
+    public bool HasAutomaticBackupFailure => _automaticBackup?.Status.LastFailureKind.HasValue == true;
+    public string AutomaticBackupDestinationAccessText => (_automaticBackup?.Status.DestinationAccess
+        ?? AutomaticBackupDestinationAccess.Unknown) switch
+    {
+        AutomaticBackupDestinationAccess.Accessible => Get(MobileStringKeys.AutomaticBackupDestinationAccessible),
+        AutomaticBackupDestinationAccess.Unavailable => Get(MobileStringKeys.AutomaticBackupDestinationUnavailableHealth),
+        _ => Get(MobileStringKeys.AutomaticBackupDestinationUnknown)
+    };
+    public string AutomaticBackupLastFailureText => _automaticBackup?.Status is
+        { LastFailureKind: { } failure, LastFailureUtc: { } failedUtc }
+        ? string.Format(
+            CultureInfo.CurrentCulture,
+            Get(MobileStringKeys.AutomaticBackupLastFailureFormat),
+            failedUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
+            Get(AutomaticBackupFailureTextKey(failure)))
+        : string.Empty;
+    public string AutomaticBackupActionText => Get(HasAutomaticBackupFailure
+        ? MobileStringKeys.RetryAutomaticBackup
+        : MobileStringKeys.AutomaticBackupNow);
+    public string AutomaticBackupFolderGuidanceTitleText => Get(MobileStringKeys.AutomaticBackupFolderGuidanceTitle);
+    public string AutomaticBackupFolderGuidanceText => Get(MobileStringKeys.AutomaticBackupFolderGuidance);
+    public string ConfigureAutomaticBackupText => Get(MobileStringKeys.ConfigureAutomaticBackup);
+    public string ChangeAutomaticBackupFolderText => Get(MobileStringKeys.ChangeAutomaticBackupFolder);
+    public string AutomaticBackupNowText => Get(MobileStringKeys.AutomaticBackupNow);
+    public string DisableAutomaticBackupText => Get(MobileStringKeys.DisableAutomaticBackup);
     public string BackupSectionText => Get(MobileStringKeys.BackupSection);
     public string RestoreSectionText => Get(MobileStringKeys.RestoreSection);
     public string BackupDescription => Get(MobileStringKeys.BackupDescription);
@@ -2135,6 +2224,12 @@ public sealed class MobileShellViewModel :
             _strings.ApplyCulture(_settings.Current.CultureName);
             NotifyLocalizedTextChanged();
             SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
+
+            if (_automaticBackup is not null)
+            {
+                await _automaticBackup.InitializeAsync();
+                NotifyAutomaticBackupChanged();
+            }
 
             await _authorization.InitializeAsync();
             await RefreshUnlockMethodAvailabilityAsync();
@@ -3110,6 +3205,96 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
+    public async Task ConfigureAutomaticBackupAsync()
+    {
+        if (_automaticBackup is null || !IsBackupSettingsVisible || IsBusy) return;
+
+        IsBusy = true;
+        using var operation = BeginSensitiveOperation();
+        try
+        {
+            var result = await _automaticBackup.ConfigureAsync(operation.Token);
+            if (result.IsFailed)
+            {
+                SetError(MobileStringKeys.AutomaticBackupFailed);
+            }
+            else if (result.Value.Status == AutomaticBackupRunStatus.NotConfigured)
+            {
+                SetNotification(
+                    Get(MobileStringKeys.AutomaticBackupSetupCancelled),
+                    NotificationSeverity.Information);
+            }
+            else
+            {
+                SetNotification(
+                    Get(result.Value.Status == AutomaticBackupRunStatus.Created
+                        ? MobileStringKeys.AutomaticBackupConfigured
+                        : MobileStringKeys.AutomaticBackupUpToDate),
+                    NotificationSeverity.Success);
+            }
+        }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            EndSensitiveOperation(operation);
+            NotifyAutomaticBackupChanged();
+            IsBusy = false;
+            TryStartAutomaticBiometricUnlock();
+        }
+    }
+
+    public async Task AutomaticBackupNowAsync()
+    {
+        if (_automaticBackup is null || !IsBackupSettingsVisible || IsBusy) return;
+
+        IsBusy = true;
+        using var operation = BeginSensitiveOperation();
+        try
+        {
+            var result = await _automaticBackup.BackupNowAsync(operation.Token);
+            SetNotification(
+                Get(result.IsSuccess && result.Value.Status == AutomaticBackupRunStatus.UpToDate
+                    ? MobileStringKeys.AutomaticBackupUpToDate
+                    : result.IsSuccess
+                        ? MobileStringKeys.AutomaticBackupCreated
+                        : MobileStringKeys.AutomaticBackupFailed),
+                result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Error);
+        }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            EndSensitiveOperation(operation);
+            NotifyAutomaticBackupChanged();
+            IsBusy = false;
+            TryStartAutomaticBiometricUnlock();
+        }
+    }
+
+    public async Task DisableAutomaticBackupAsync()
+    {
+        if (_automaticBackup is null || !IsBackupSettingsVisible || IsBusy) return;
+
+        IsBusy = true;
+        try
+        {
+            var result = await _automaticBackup.DisableAsync();
+            SetNotification(
+                Get(result.IsSuccess
+                    ? MobileStringKeys.AutomaticBackupDisabled
+                    : MobileStringKeys.AutomaticBackupFailed),
+                result.IsSuccess ? NotificationSeverity.Information : NotificationSeverity.Error);
+        }
+        finally
+        {
+            NotifyAutomaticBackupChanged();
+            IsBusy = false;
+        }
+    }
+
     public async Task ExportBackupAsync()
     {
         if (!IsSettingsVisible || IsBusy) return;
@@ -3232,13 +3417,39 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            var decoded = await _exportService.ImportFromEncryptedStreamAsync(
-                password,
-                document.Stream,
-                operation.Token);
+            Result<IReadOnlyList<Account>> decoded;
+            if (Path.GetExtension(document.Name).Equals(
+                    ".otphbackup",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                decoded = _automaticBackupSnapshots is null
+                    ? Result.Fail<IReadOnlyList<Account>>("Automatic backup restore is unavailable.")
+                    : await _automaticBackupSnapshots.ReadAccountsAsync(
+                        document.Stream,
+                        password,
+                        operation.Token);
+            }
+            else
+            {
+                var importedBackup = await _exportService.ImportFromEncryptedStreamAsync(
+                    password,
+                    document.Stream,
+                    operation.Token);
+                decoded = importedBackup.IsSuccess
+                    ? Result.Ok<IReadOnlyList<Account>>(importedBackup.Value)
+                    : Result.Fail<IReadOnlyList<Account>>(importedBackup.Errors);
+            }
             if (decoded.IsFailed)
             {
                 SetError(MobileStringKeys.BackupImportRejected);
+                return;
+            }
+
+            if (decoded.Value.Count == 0)
+            {
+                SetNotification(
+                    Get(MobileStringKeys.BackupContainsNoAccounts),
+                    NotificationSeverity.Information);
                 return;
             }
 
@@ -4148,6 +4359,32 @@ public sealed class MobileShellViewModel :
         IsBusy = true;
         try
         {
+            if (!_isDeleteWithoutBackupWarning && _automaticBackup?.Status.IsConfigured == true)
+            {
+                var checkpointSucceeded = false;
+                try
+                {
+                    var checkpoint = await _automaticBackup.EnsureCurrentCheckpointAsync();
+                    checkpointSucceeded = checkpoint.IsSuccess
+                        && checkpoint.Value.Status is AutomaticBackupRunStatus.Created
+                            or AutomaticBackupRunStatus.UpToDate
+                            or AutomaticBackupRunStatus.NotConfigured;
+                }
+                catch (Exception)
+                {
+                    checkpointSucceeded = false;
+                }
+
+                if (!checkpointSucceeded)
+                {
+                    _isDeleteWithoutBackupWarning = true;
+                    OnPropertyChanged(nameof(DeleteConfirmTitle));
+                    OnPropertyChanged(nameof(DeletePrompt));
+                    OnPropertyChanged(nameof(DeleteConfirmationActionText));
+                    return;
+                }
+            }
+
             var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
             var account = loaded.IsSuccess
                 ? loaded.Value.FirstOrDefault(value => value.ID == accountId)
@@ -4355,6 +4592,8 @@ public sealed class MobileShellViewModel :
         if (_disposed) return;
         _disposed = true;
         _brandIconResolver.CatalogChanged -= BrandCatalogChanged;
+        if (_automaticBackup is not null)
+            _automaticBackup.StatusChanged -= AutomaticBackupStatusChanged;
         _sensitiveOperationLifetime?.Cancel();
         EndImportProgress();
         CancelNotificationLifetime();
@@ -5428,6 +5667,39 @@ public sealed class MobileShellViewModel :
                 account.AccountName));
     }
 
+    private void AutomaticBackupStatusChanged(object? sender, EventArgs args)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+            NotifyAutomaticBackupChanged();
+        else
+            Dispatcher.UIThread.Post(NotifyAutomaticBackupChanged);
+    }
+
+    private void NotifyAutomaticBackupChanged()
+    {
+        OnPropertyChanged(nameof(IsAutomaticBackupConfigured));
+        OnPropertyChanged(nameof(AutomaticBackupStatusText));
+        OnPropertyChanged(nameof(AutomaticBackupDestinationText));
+        OnPropertyChanged(nameof(AutomaticBackupLastSuccessText));
+        OnPropertyChanged(nameof(HasAutomaticBackupFailure));
+        OnPropertyChanged(nameof(AutomaticBackupDestinationAccessText));
+        OnPropertyChanged(nameof(AutomaticBackupLastFailureText));
+        OnPropertyChanged(nameof(AutomaticBackupActionText));
+        _configureAutomaticBackupCommand.NotifyCanExecuteChanged();
+        _automaticBackupNowCommand.NotifyCanExecuteChanged();
+        _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
+    }
+
+    private static string AutomaticBackupFailureTextKey(AutomaticBackupFailureKind failure) => failure switch
+    {
+        AutomaticBackupFailureKind.DestinationUnavailable => MobileStringKeys.AutomaticBackupFailureDestinationUnavailable,
+        AutomaticBackupFailureKind.VaultUnavailable => MobileStringKeys.AutomaticBackupFailureVaultUnavailable,
+        AutomaticBackupFailureKind.WriteFailed => MobileStringKeys.AutomaticBackupFailureWriteFailed,
+        AutomaticBackupFailureKind.ConfigurationFailed => MobileStringKeys.AutomaticBackupFailureConfigurationFailed,
+        AutomaticBackupFailureKind.RecoveryPointMissing => MobileStringKeys.AutomaticBackupFailureRecoveryPointMissing,
+        _ => MobileStringKeys.AutomaticBackupFailureUnexpected
+    };
+
     private void UpdateLogoVisibility()
     {
         foreach (var account in _allAccounts)
@@ -5964,6 +6236,9 @@ public sealed class MobileShellViewModel :
         _cancelQrConflictCommand.NotifyCanExecuteChanged();
         _dismissQrCommand.NotifyCanExecuteChanged();
         _exportBackupCommand.NotifyCanExecuteChanged();
+        _configureAutomaticBackupCommand.NotifyCanExecuteChanged();
+        _automaticBackupNowCommand.NotifyCanExecuteChanged();
+        _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
         _exportDiagnosticLogCommand.NotifyCanExecuteChanged();
         _importBackupCommand.NotifyCanExecuteChanged();
         _importAccountFileCommand.NotifyCanExecuteChanged();
@@ -6046,6 +6321,7 @@ public sealed class MobileShellViewModel :
         nameof(DeleteAccountText),
         nameof(LockText),
         nameof(IssuerText),
+        nameof(IssuerPlaceholderText),
         nameof(AccountNameText),
         nameof(AdvancedOptionsText),
         nameof(TotpPeriodText),
@@ -6166,6 +6442,21 @@ public sealed class MobileShellViewModel :
         nameof(DismissQrText),
         nameof(QrPrivacyNoticeText),
         nameof(BackupTitle),
+        nameof(AutomaticBackupsText),
+        nameof(AutomaticBackupDescriptionText),
+        nameof(AutomaticBackupStatusText),
+        nameof(AutomaticBackupDestinationText),
+        nameof(AutomaticBackupLastSuccessText),
+        nameof(HasAutomaticBackupFailure),
+        nameof(AutomaticBackupDestinationAccessText),
+        nameof(AutomaticBackupLastFailureText),
+        nameof(AutomaticBackupActionText),
+        nameof(AutomaticBackupFolderGuidanceTitleText),
+        nameof(AutomaticBackupFolderGuidanceText),
+        nameof(ConfigureAutomaticBackupText),
+        nameof(ChangeAutomaticBackupFolderText),
+        nameof(AutomaticBackupNowText),
+        nameof(DisableAutomaticBackupText),
         nameof(BackupSectionText),
         nameof(RestoreSectionText),
         nameof(BackupDescription),

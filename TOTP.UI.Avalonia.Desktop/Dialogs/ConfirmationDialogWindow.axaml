@@ -3,39 +3,35 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dialogs="using:TOTP.Avalonia.Desktop.Presentation.Dialogs"
-    xmlns:shared="using:TOTP.Avalonia.Shared.Controls"
     x:DataType="dialogs:ConfirmationDialogViewModel"
     Background="{DynamicResource BrushDialogSurface}"
     CanResize="False"
     Classes="dialog"
     Classes.destructive="{Binding IsDestructive}"
     ShowInTaskbar="False"
-    SizeToContent="WidthAndHeight"
+    SizeToContent="Height"
+    Width="520"
     WindowDecorations="None"
     WindowStartupLocation="CenterOwner"
     Title="{DynamicResource AppTitle}">
-    <Window.Styles>
-        <Style Selector="Window.dialog.destructive">
-            <Setter Property="Width" Value="320" />
-            <Setter Property="MinWidth" Value="300" />
-        </Style>
-    </Window.Styles>
     <StackPanel Classes="dialog-content" Spacing="16">
         <TextBlock
             Classes="heading"
             Text="{Binding Title}"
             TextWrapping="Wrap" />
-        <shared:NotificationBanner
-            Severity="{Binding Severity}"
-            Text="{Binding Message}" />
+        <Border
+            x:Name="DialogMessageCard"
+            Classes="dialog-message-card">
+            <TextBlock Text="{Binding Message}" />
+        </Border>
         <StackPanel
             Classes="dialog-actions">
-                <Button
-                    Classes="secondary"
-                    Command="{Binding CancelCommand}"
-                    Content="{Binding CancelText}"
-                    IsCancel="True"
-                    IsVisible="{Binding ShowCancel}" />
+            <Button
+                Classes="secondary"
+                Command="{Binding CancelCommand}"
+                Content="{Binding CancelText}"
+                IsCancel="True"
+                IsVisible="{Binding ShowCancel}" />
             <Button
                 Classes.danger="{Binding IsDestructive}"
                 Classes.primary="{Binding !IsDestructive}"

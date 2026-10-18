@@ -21,6 +21,23 @@ public sealed class MobileStringCatalogTests
     }
 
     [Theory]
+    [InlineData("en", "master password", "quick-unlock")]
+    [InlineData("de", "Master-Passwort", "Schnellentsperrdaten")]
+    [InlineData("fr", "mot de passe principal", "déverrouillage rapide")]
+    [InlineData("es", "contraseña maestra", "desbloqueo rápido")]
+    public void Get_AutomaticBackupDescriptionExplainsPortableRecoveryBoundary(
+        string cultureName,
+        string expectedPasswordTerm,
+        string expectedQuickUnlockTerm)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+        var description = catalog.Get(MobileStringKeys.AutomaticBackupDescription);
+
+        Assert.Contains(expectedPasswordTerm, description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(expectedQuickUnlockTerm, description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
     [InlineData("en", "available on GitHub", "licenses", "trademark rights", "you are responsible")]
     [InlineData("de", "auf GitHub verfügbar", "Lizenzen", "Markenrechten", "du bist")]
     [InlineData("fr", "disponible sur GitHub", "licences", "droits de marque", "vous êtes responsable")]
@@ -52,6 +69,10 @@ public sealed class MobileStringCatalogTests
 
         Assert.Contains("Masterpasswort", message, StringComparison.Ordinal);
         Assert.DoesNotContain("encrypted local vault", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Sonstiges", catalog.Get(MobileStringKeys.Miscellaneous));
+        Assert.Equal(
+            "Microsoft, Outlook, GitHub usw.",
+            catalog.Get(MobileStringKeys.IssuerPlaceholder));
     }
 
     [Fact]

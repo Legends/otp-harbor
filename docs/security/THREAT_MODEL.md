@@ -16,6 +16,7 @@
   - Password-wrapped authorization envelope (`authorization-envelope.bin`)
   - AES-GCM encrypted account vault
   - Local encrypted export files (`.totp`)
+  - Versioned automatic recovery copies (`.otphbackup`) in a user-selected folder or Android document tree
 - Security services:
   - Recovery-password authorization and platform quick unlock
   - Versioned key wrapping, envelope activation, and vault-key verification
@@ -43,6 +44,7 @@
 |---|---|---|---|
 | Spoofing | Unattended or injected input reaches import/export workflows | Authorized-shell boundary, owned native dialogs, password-protected export/import, explicit conflict/confirmation paths | Validate native dialog ownership physically |
 | Tampering | Modified encrypted export payload | Bounded authenticated decryption, wrong-password/tamper result, round-trip and fuzz regressions | External parser/crypto review |
+| Tampering | Modified, partial, or rolled-back automatic backup generation | Bounded strict package codec, encrypted-vault authentication, SHA-256 publication check, unique immutable generation names, write/read verification, and multi-generation retention | User-selected providers can still delete or roll back every generation; keep an independent copy for high-value recovery |
 | Tampering | Replaced, corrupted, or rolled-back authorization envelope | Strict bounded codec, authenticated password wrapper, candidate-key vault verification, atomic replacement, one bounded backup | Add explicit rollback-version policy before multi-device synchronization |
 | Tampering | Substituted update feed, payload, or target package | Ed25519 feed/payload verification, target/channel matching, signed manifest, platform signing, bounded transactional replacement and rollback | Physical signed handoff plus external review |
 | Repudiation | No trace of security-sensitive actions | Allowlisted startup/security status and typed failure logging with centralized rendered-text redaction | Release-log review; never add secret-bearing audit fields |
@@ -57,6 +59,7 @@
 - Import file parsing (`.totp`, `.json`, `.txt`, `.csv`)
 - QR parsing (`otpauth://` and bounded Google Authenticator `otpauth-migration://` payloads)
 - Export path handling
+- Automatic-backup folder/document-provider permissions, generation rotation, and restore parsing
 - Password prompt and validation flows
 - Authorization-envelope and preferences file replacement
 - Windows Hello/TPM and macOS Keychain/LocalAuthentication registration, reset, and unlock
@@ -91,6 +94,7 @@
 - Loss or reset of Windows Hello/TPM or macOS Keychain state disables quick unlock; recovery remains dependent on the master password
 - Linux desktop D-Bus and Secret Service behavior varies by distribution/session; unsupported or misconfigured environments remain password/manual-lock capable and are reported explicitly
 - Third-party dependency risk remains ongoing and must be continuously monitored
+- Automatic backups share the vault master password's recovery boundary. Loss of that password, loss of all selected-provider generations, or a hostile provider that deletes or rolls back every generation remains unrecoverable.
 
 ## 8. Review Cadence
 - Update this model:
@@ -104,3 +108,10 @@
 - **Data-flow impact:** Export streams account data through `IExportService` to the native save destination, then hardens local files for the current user. Restore streams the selected file through password validation and encrypted import, then delegates account changes to the existing pre-import-backup workflow. Provider-backed files remain under the document provider's ownership and are not passed through local ACL hardening.
 - **Compatibility/migration impact:** The `.totp` format, vault format, account schema, and generic import formats are unchanged. This change adds a dedicated desktop restore picker and presentation-only backup-location state; no migration is required. Existing encrypted exports remain the supported recovery artifact.
 - **Verification evidence:** Full solution Debug build completed with zero warnings and errors. The full solution test run passed 1,034 core tests, 110 Avalonia headless tests, and 13 Unix tests (five expected platform skips). Focused backup/recovery coverage includes 16 `NativeFilePickerViewModelTests` and dedicated settings UI structure coverage.
+
+## 10. Automatic backup workflow review (2026-10-18)
+
+- **Threat impact:** Automatic backups are opt-in and are written only to a desktop folder or Android Storage Access Framework document tree explicitly selected by the user. A generation contains the already encrypted vault plus only the portable master-password wrapper. Platform quick-unlock, biometric, device-credential, and unattended-unlock wrappers are deliberately stripped. Package/configuration parsing is bounded and strict, ambiguous properties fail closed, completed writes are read back and hash-verified, and filenames are unique so an interrupted write cannot overwrite the last known-good generation. The destination path or URI is non-secret configuration, protected for the current user where the platform permits, and is never included in diagnostic messages.
+- **Data-flow impact:** Successful account mutations and master-password changes enqueue a one-second coalesced snapshot. Unlock retries pending state safely. The coordinator fingerprints encrypted vault plus portable envelope, skips unchanged content only after confirming that the exact last successful generation is still present, retains the five newest generations plus the newest generation from each of the seven newest UTC days, and records success only after publication and configuration persistence. Android retention deletes provider-owned generations through `DocumentsContract.DeleteDocument`; a provider rejection stops that retention pass after the first failure, preserving the remaining generations and bounding failure work and logging. Destination access, the last typed failure, and its timestamp are persisted without provider exception text or paths and are exposed with a manual retry. Before account deletion, a synchronous checkpoint verifies the current vault revision; a failed checkpoint produces a separate destructive confirmation rather than making external storage a hard dependency. Restore requires the master password that protected the selected generation, validates/decrypts into an independent account collection, and then enters the existing preview/conflict/recovery-backup import workflow; it never replaces the active vault file directly.
+- **Compatibility/migration impact:** The encrypted vault and authorization-envelope formats are unchanged. Automatic backups add a versioned `.otphbackup` container and additive health fields in the versioned non-secret destination configuration. Existing configurations without health or recovery-file identity are accepted and create a fresh verified generation on the next backup attempt. Existing `.totp` manual backups remain supported. Older OTP Harbor versions ignore these files and settings; disabling the feature deletes only its destination configuration and never deletes previously created recovery generations.
+- **Verification evidence:** Codec regressions cover round trip, tampering, ambiguous JSON, and rejection of device-specific wrappers. Snapshot regressions verify wrapper stripping, master-password restore, wrong-password failure, and independent vault-key use. Coordinator regressions cover publication, verified deduplication, missing-generation recreation, inaccessible-destination health, and failed-write state. Account-deletion regressions cover the failed-checkpoint second-confirmation boundary on desktop and Android. Account-manager regressions verify that only successful mutations request a backup. Localized desktop/Android UI structure and resource-completeness tests cover setup, health, retry, backup-now, and disable actions. Android receives a best-effort `Documents` initial-location hint and localized subfolder guidance; document providers may ignore the hint. Persisted SAF permission behavior and lifecycle recovery still require physical-device validation.

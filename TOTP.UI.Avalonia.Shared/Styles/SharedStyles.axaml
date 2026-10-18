@@ -1531,6 +1531,19 @@
             </ControlTemplate>
         </Setter>
     </Style>
+    <Style Selector="Border.dialog-message-card">
+        <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+        <Setter Property="BorderThickness" Value="4,1,1,1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
+        <Setter Property="Padding" Value="14,12" />
+    </Style>
+    <Style Selector="Border.dialog-message-card TextBlock">
+        <Setter Property="Width" Value="420" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
     <Style Selector="controls|NotificationBanner:information /template/ Border#PART_Banner">
         <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
     </Style>
@@ -1663,8 +1676,9 @@
         </Style.Animations>
     </Style>
     <Style Selector="Window.dialog">
-        <Setter Property="Width" Value="460" />
-        <Setter Property="MinWidth" Value="360" />
+        <Setter Property="Width" Value="520" />
+        <Setter Property="MinWidth" Value="320" />
+        <Setter Property="MaxWidth" Value="560" />
         <Setter Property="SizeToContent" Value="Height" />
         <Setter Property="CanResize" Value="False" />
         <Setter Property="ShowInTaskbar" Value="False" />
@@ -1673,13 +1687,26 @@
         <Setter Property="WindowDecorations" Value="None" />
     </Style>
     <Style Selector="StackPanel.dialog-content">
-        <Setter Property="Margin" Value="24" />
-        <Setter Property="Spacing" Value="16" />
+        <Setter Property="Margin" Value="28" />
+        <Setter Property="Spacing" Value="18" />
     </Style>
     <Style Selector="StackPanel.dialog-actions">
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="Orientation" Value="Horizontal" />
         <Setter Property="Spacing" Value="8" />
+    </Style>
+    <Style Selector="StackPanel.dialog-actions Button">
+        <Setter Property="MinWidth" Value="112" />
+        <Setter Property="MaxWidth" Value="220" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Grid.dialog-choice-actions Button">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="TextBlock.dialog-description">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="LineHeight" Value="21" />
     </Style>
     <Style Selector="Grid.settings-page TextBlock.page-title">
         <Setter Property="FontSize" Value="20" />

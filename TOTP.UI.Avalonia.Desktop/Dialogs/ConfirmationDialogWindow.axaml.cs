@@ -6,7 +6,6 @@ namespace TOTP.Avalonia.Desktop.Dialogs;
 
 public partial class ConfirmationDialogWindow : Window
 {
-    private const double DestructiveDialogHorizontalMargin = 16;
     private Window? _positionOwner;
 
     public ConfirmationDialogWindow()
@@ -17,17 +16,9 @@ public partial class ConfirmationDialogWindow : Window
     internal void ConfigureForOwner(Window owner, bool isDestructive)
     {
         ArgumentNullException.ThrowIfNull(owner);
+        _ = isDestructive;
         _positionOwner = owner;
-        if (!isDestructive) return;
-
-        var availableWidth = Math.Max(
-            0,
-            owner.ClientSize.Width - (DestructiveDialogHorizontalMargin * 2));
-        if (availableWidth <= 0) return;
-
-        MinWidth = Math.Min(300, availableWidth);
-        Width = Math.Min(320, availableWidth);
-        MaxWidth = availableWidth;
+        DialogWindowSizing.FitToOwner(this, owner);
     }
 
     protected override void OnOpened(EventArgs e)

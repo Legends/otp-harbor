@@ -25,6 +25,7 @@ public partial class MainView : UserControl
     private bool _isAccountListScrollActive;
     private bool _realizedAccountReportPending;
     private bool _usesNativeAccountList;
+    private bool _usesNativeAccountGroupStrip;
     private bool _backNavigationInProgress;
     private TopLevel? _backNavigationTopLevel;
     private IInputPane? _inputPane;
@@ -120,6 +121,12 @@ public partial class MainView : UserControl
 
         var showFallback = viewModel.IsDeleteConfirmationVisible && viewModel.HasAccounts;
         AccountList.IsVisible = showFallback;
+        if (_usesNativeAccountGroupStrip)
+        {
+            AccountGroupsFallbackPresenter.IsVisible = showFallback
+                && viewModel.HasAccountNavigationCards;
+        }
+
         if (showFallback && viewModel.SelectedAccount is { } selectedAccount)
             Dispatcher.UIThread.Post(() => AccountList.ScrollIntoView(selectedAccount));
     }
@@ -127,10 +134,11 @@ public partial class MainView : UserControl
     public void UseNativeAccountGroupStrip(Control nativeAccountGroupStrip)
     {
         ArgumentNullException.ThrowIfNull(nativeAccountGroupStrip);
-        if (AccountGroupsStrip.Parent is Panel parent)
-            parent.Children.Remove(AccountGroupsStrip);
+        _usesNativeAccountGroupStrip = true;
+        AccountGroupsFallbackPresenter.IsVisible = false;
         NativeAccountGroupsPresenter.Content = nativeAccountGroupStrip;
         NativeAccountGroupsPresenter.IsHitTestVisible = true;
+        UpdateAccountListConfirmationBackdrop();
     }
 
     public void UseNativeGroupAccountPicker(Control nativeGroupAccountPicker)

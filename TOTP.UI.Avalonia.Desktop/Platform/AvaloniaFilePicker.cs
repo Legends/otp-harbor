@@ -143,7 +143,7 @@ public sealed class AvaloniaFilePicker(
             [
                 new FilePickerFileType(localization.GetString(AvaloniaStringKeys.EncryptedTotpBackupFile))
                 {
-                    Patterns = ["*.totp"]
+                    Patterns = ["*.totp", "*.otphbackup"]
                 }
             ]
         });

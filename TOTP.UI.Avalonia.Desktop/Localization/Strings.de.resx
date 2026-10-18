@@ -81,6 +81,7 @@
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;Der verschlüsselte Kontoeintrag wird dauerhaft entfernt.&#10;Dies kann nicht rückgängig gemacht werden.</value></data>
   <data name="Delete" xml:space="preserve"><value>Löschen</value></data>
   <data name="Issuer" xml:space="preserve"><value>Anbieter</value></data>
+  <data name="IssuerPlaceholder" xml:space="preserve"><value>Microsoft, Outlook, GitHub usw.</value></data>
   <data name="AccountName" xml:space="preserve"><value>Kontoname</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32-Geheimnis</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Kontosymbol (Symbolpaket)</value></data>
@@ -185,6 +186,26 @@
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Ordner der letzten Sicherung öffnen</value></data>
   <data name="BackupFolderOpenFailed" xml:space="preserve"><value>Der Sicherungsordner konnte nicht geöffnet werden.</value></data>
   <data name="NoBackupFileSelected" xml:space="preserve"><value>Keine Sicherungsdatei ausgewählt.</value></data>
+  <data name="AutomaticBackups" xml:space="preserve"><value>Automatische Sicherungen</value></data>
+  <data name="AutomaticBackupDescription" xml:space="preserve"><value>Speichert verschlüsselte Wiederherstellungskopien, wenn sich der Tresor ändert. Die Sicherungen enthalten keine gerätespezifischen Schnellentsperrdaten und benötigen das bei ihrer Erstellung verwendete Master-Passwort.</value></data>
+  <data name="AutomaticBackupNotConfigured" xml:space="preserve"><value>Automatische Sicherungen sind nicht eingerichtet.</value></data>
+  <data name="AutomaticBackupReady" xml:space="preserve"><value>Automatische Sicherungen sind einsatzbereit.</value></data>
+  <data name="AutomaticBackupRunning" xml:space="preserve"><value>Automatische Sicherung wird erstellt…</value></data>
+  <data name="AutomaticBackupUpToDate" xml:space="preserve"><value>Die automatische Sicherung ist aktuell.</value></data>
+  <data name="AutomaticBackupCreated" xml:space="preserve"><value>Automatische Sicherung wurde erstellt.</value></data>
+  <data name="AutomaticBackupFailed" xml:space="preserve"><value>Die automatische Sicherung konnte nicht erstellt werden. Vorhandene Wiederherstellungskopien wurden beibehalten.</value></data>
+  <data name="AutomaticBackupDestinationUnavailable" xml:space="preserve"><value>Der eingerichtete Sicherungsordner ist nicht verfügbar. Wählen Sie den Ordner erneut aus.</value></data>
+  <data name="AutomaticBackupDestinationFormat" xml:space="preserve"><value>Ziel: {0}</value></data>
+  <data name="AutomaticBackupLastSuccessFormat" xml:space="preserve"><value>Letzte erfolgreiche Sicherung: {0}</value></data>
+  <data name="AutomaticBackupNever" xml:space="preserve"><value>Es wurde noch keine automatische Sicherung erstellt.</value></data>
+  <data name="ConfigureAutomaticBackup" xml:space="preserve"><value>Sicherungsordner auswählen</value></data>
+  <data name="ChangeAutomaticBackupFolder" xml:space="preserve"><value>Sicherungsordner ändern</value></data>
+  <data name="AutomaticBackupNow" xml:space="preserve"><value>Jetzt sichern</value></data>
+  <data name="DisableAutomaticBackup" xml:space="preserve"><value>Deaktivieren</value></data>
+  <data name="AutomaticBackupConfigured" xml:space="preserve"><value>Automatische Sicherungen sind aktiviert und die erste Wiederherstellungskopie wurde erstellt.</value></data>
+  <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Automatische Sicherungen sind deaktiviert. Vorhandene Sicherungsdateien wurden nicht gelöscht.</value></data>
+  <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>Die Einrichtung der automatischen Sicherung wurde abgebrochen.</value></data>
+  <data name="SelectAutomaticBackupFolder" xml:space="preserve"><value>Ordner für automatische Sicherungen auswählen</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Support-Diagnose</value></data>
   <data name="RefreshSupportInformation" xml:space="preserve"><value>Support-Informationen aktualisieren</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Update herunterladen</value></data>
@@ -219,7 +240,7 @@
   <data name="SecuritySettings" xml:space="preserve"><value>Sicherheitseinstellungen</value></data>
   <data name="Security" xml:space="preserve"><value>Sicherheit</value></data>
   <data name="ImportExport" xml:space="preserve"><value>Importe</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>SONSTIGES</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Sonstiges</value></data>
   <data name="Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Englisch</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Deutsch</value></data>
@@ -234,6 +255,7 @@
   <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Änderungen werden automatisch gespeichert.</value></data>
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Einstellungen automatisch gespeichert.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Die Einstellungen konnten nicht gespeichert werden. Die bisherigen Einstellungen bleiben aktiv.</value></data>
+  <data name="Search" xml:space="preserve"><value>Suchen</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Aussteller oder Konto suchen</value></data>
   <data name="SearchAccountsShortcut" xml:space="preserve"><value>Aussteller oder Konto suchen (Strg+F)</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Suche löschen</value></data>
@@ -340,10 +362,10 @@
   <data name="UpdateInstallCancelled" xml:space="preserve"><value>Die Update-Installation wurde abgebrochen.</value></data>
   <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>Der Plattform-Installer konnte nicht sicher gestartet werden.</value></data>
   <data name="ImportWorkflowFailed" xml:space="preserve"><value>Der Import ist sicher fehlgeschlagen. Es wurden keine geheimen Details offengelegt.</value></data>
-  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Zu importierende Konten: {0}. Konflikte: {1}. Konfliktbehandlung: „{2}“. Zuerst wird eine Wiederherstellungssicherung erstellt.</value></data>
-  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Vorhandene Konten übersprungen: {0}. Neue zu importierende Konten: {1}. Zuerst wird eine Wiederherstellungssicherung erstellt.</value></data>
-  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Neue zu importierende Konten: {0}. Zuerst wird eine Wiederherstellungssicherung erstellt.</value></data>
-  <data name="ImportNothingToImport" xml:space="preserve"><value>Empfangene Konten: {0}. Vorhandene Konten übersprungen: {0}. Es gibt nichts zu importieren.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Zu importierende Konten: {0}&#x0A;Zu prüfende Konflikte: {1}&#x0A;Konfliktbehandlung: {2}&#x0A;Vor allen Änderungen wird eine Wiederherstellungssicherung erstellt.</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Neue zu importierende Konten: {1}&#x0A;Vorhandene Konten übersprungen: {0}&#x0A;Vor allen Änderungen wird eine Wiederherstellungssicherung erstellt.</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Neue zu importierende Konten: {0}&#x0A;Vor allen Änderungen wird eine Wiederherstellungssicherung erstellt.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Empfangene Konten: {0}&#x0A;Vorhandene Konten übersprungen: {0}&#x0A;Es gibt nichts zu importieren.</value></data>
   <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>Die Konten konnten für den Export nicht geladen werden.</value></data>
   <data name="EncryptedExportTitle" xml:space="preserve"><value>Verschlüsselter Export</value></data>
   <data name="ExportPasswordHelp" xml:space="preserve"><value>Erstellen und bestätigen Sie ein Passwort für diese portable verschlüsselte Sicherung. Dieses Passwort kann nicht wiederhergestellt werden.</value></data>
@@ -479,4 +501,18 @@
   <data name="RestoreBackupAction" xml:space="preserve"><value>Wiederherstellen</value></data>
   <data name="ShowNextToken" xml:space="preserve"><value>Nächstes Token anzeigen</value></data>
   <data name="ShowNextTokenHelp" xml:space="preserve"><value>Zeigt das kommende Token in den letzten fünf Sekunden unter dem aktuellen Token an.</value></data>
+  <data name="AutomaticBackupDestinationAccessible" xml:space="preserve"><value>Zugriff auf Sicherungsordner: verfügbar</value></data>
+  <data name="AutomaticBackupDestinationUnavailableHealth" xml:space="preserve"><value>Zugriff auf Sicherungsordner: nicht verfügbar</value></data>
+  <data name="AutomaticBackupDestinationUnknown" xml:space="preserve"><value>Zugriff auf Sicherungsordner: noch nicht geprüft</value></data>
+  <data name="AutomaticBackupLastFailureFormat" xml:space="preserve"><value>Letzter Fehler ({0}): {1}</value></data>
+  <data name="AutomaticBackupFailureDestinationUnavailable" xml:space="preserve"><value>Auf den ausgewählten Sicherungsordner kann nicht mehr zugegriffen werden.</value></data>
+  <data name="AutomaticBackupFailureVaultUnavailable" xml:space="preserve"><value>Der verschlüsselte Tresor war beim Sicherungsversuch nicht verfügbar.</value></data>
+  <data name="AutomaticBackupFailureWriteFailed" xml:space="preserve"><value>Die verschlüsselte Sicherung konnte nicht geschrieben oder überprüft werden.</value></data>
+  <data name="AutomaticBackupFailureConfigurationFailed" xml:space="preserve"><value>Der Zustand der automatischen Sicherung konnte nicht gespeichert werden.</value></data>
+  <data name="AutomaticBackupFailureRecoveryPointMissing" xml:space="preserve"><value>Die neueste Wiederherstellungsdatei fehlt. Versuchen Sie erneut, einen neuen Prüfpunkt zu erstellen.</value></data>
+  <data name="AutomaticBackupFailureUnexpected" xml:space="preserve"><value>Die Sicherung ist unerwartet fehlgeschlagen.</value></data>
+  <data name="RetryAutomaticBackup" xml:space="preserve"><value>Sicherung erneut versuchen</value></data>
+  <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Sicherungsprüfpunkt fehlgeschlagen</value></data>
+  <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor konnte keinen aktuellen Wiederherstellungsprüfpunkt erstellen oder überprüfen. Sie können abbrechen und es erneut versuchen oder das Konto ausdrücklich ohne aktuelle Sicherung löschen.</value></data>
+  <data name="DeleteAnyway" xml:space="preserve"><value>Trotzdem löschen</value></data>
 </root>

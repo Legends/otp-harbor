@@ -6,6 +6,7 @@ using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Platform;
 using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
+using TOTP.Core.Backup;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
@@ -432,6 +433,85 @@ public sealed class NativeFilePickerViewModelTests
             batch.Count == 1 && batch.Single().Secret == imported.Secret)), Times.Once);
         Assert.Equal(1, changed);
         Assert.Contains("1 added", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task RestoreEncryptedBackupAsync_AutomaticBackup_UsesMasterPasswordSnapshotReader()
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickEncryptedBackupFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("backup.otphbackup", content: [4, 5, 6]));
+        var restored = new Account(Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "user");
+        var snapshots = new Mock<IAutomaticBackupSnapshotService>();
+        snapshots.Setup(value => value.ReadAccountsAsync(
+                It.IsAny<Stream>(), "master-password", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([restored]));
+        var accounts = new Mock<IAccountManager>(MockBehavior.Strict);
+        var sequence = new MockSequence();
+        accounts.InSequence(sequence).Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.InSequence(sequence).Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Ok());
+        accounts.InSequence(sequence).Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async (PasswordDialogRequest request, CancellationToken token) =>
+            {
+                Assert.NotNull(request.ValidateAsync);
+                Assert.Null(await request.ValidateAsync("master-password", token));
+                return "master-password";
+            });
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        using var sut = Create(
+            picker.Object,
+            Mock.Of<IExportService>(),
+            accounts.Object,
+            dialogs.Object,
+            automaticBackupSnapshots: snapshots.Object);
+
+        await sut.RestoreEncryptedBackupAsync();
+
+        snapshots.Verify(value => value.ReadAccountsAsync(
+            It.IsAny<Stream>(), "master-password", It.IsAny<CancellationToken>()), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(It.Is<IReadOnlyCollection<Account>>(batch =>
+            batch.Count == 1 && batch.Single().ID == restored.ID)), Times.Once);
+    }
+
+    [Fact]
+    public async Task DisableAutomaticBackupAsync_ReenablesConfigureCommandAfterOperationCompletes()
+    {
+        var status = new AutomaticBackupStatus(
+            true,
+            false,
+            "Backups",
+            DateTimeOffset.UtcNow,
+            AutomaticBackupStatusKind.Ready);
+        var automaticBackup = new Mock<IAutomaticBackupCoordinator>();
+        automaticBackup.SetupGet(value => value.Status).Returns(() => status);
+        automaticBackup.Setup(value => value.DisableAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => status = AutomaticBackupStatus.NotConfigured)
+            .ReturnsAsync(Result.Ok());
+        using var sut = Create(
+            Mock.Of<IAvaloniaFilePicker>(),
+            Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(),
+            Mock.Of<IAvaloniaDialogService>(),
+            automaticBackup: automaticBackup.Object);
+        var observedCanExecute = new List<bool>();
+        sut.ConfigureAutomaticBackupCommand.CanExecuteChanged += (_, _) =>
+            observedCanExecute.Add(sut.ConfigureAutomaticBackupCommand.CanExecute(null));
+
+        await sut.DisableAutomaticBackupAsync();
+
+        Assert.Equal([false, true], observedCanExecute);
+        Assert.True(sut.ConfigureAutomaticBackupCommand.CanExecute(null));
+        Assert.False(sut.IsAutomaticBackupConfigured);
     }
 
     [Fact]
@@ -870,7 +950,9 @@ public sealed class NativeFilePickerViewModelTests
         TimeSpan? transientMessageDuration = null,
         CameraScannerViewModel? cameraScanner = null,
         IBrandIconPackService? brandIconPackService = null,
-        IAvaloniaLocalizationService? localization = null)
+        IAvaloniaLocalizationService? localization = null,
+        IAutomaticBackupSnapshotService? automaticBackupSnapshots = null,
+        IAutomaticBackupCoordinator? automaticBackup = null)
     {
         var passwordValidation = new Mock<IPasswordValidationService>();
         passwordValidation.SetupGet(value => value.MinimumLength).Returns(8);
@@ -897,7 +979,9 @@ public sealed class NativeFilePickerViewModelTests
             localization ?? Localization(),
             transientMessageDuration,
             cameraScanner,
-            brandIconPackService);
+            brandIconPackService,
+            automaticBackup: automaticBackup,
+            automaticBackupSnapshots: automaticBackupSnapshots);
     }
 
     private static IAvaloniaLocalizationService Localization(string culture = "en")

@@ -81,6 +81,7 @@
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;L’entrée de compte chiffrée sera supprimée définitivement.&#10;Cette action est irréversible.</value></data>
   <data name="Delete" xml:space="preserve"><value>Supprimer</value></data>
   <data name="Issuer" xml:space="preserve"><value>Émetteur</value></data>
+  <data name="IssuerPlaceholder" xml:space="preserve"><value>Microsoft, Outlook, GitHub, etc.</value></data>
   <data name="AccountName" xml:space="preserve"><value>Nom du compte</value></data>
   <data name="Secret" xml:space="preserve"><value>Secret Base32</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Icône du compte (pack d’icônes)</value></data>
@@ -185,6 +186,26 @@
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Ouvrir le dossier de la dernière sauvegarde</value></data>
   <data name="BackupFolderOpenFailed" xml:space="preserve"><value>Le dossier de sauvegarde n’a pas pu être ouvert.</value></data>
   <data name="NoBackupFileSelected" xml:space="preserve"><value>Aucun fichier de sauvegarde sélectionné.</value></data>
+  <data name="AutomaticBackups" xml:space="preserve"><value>Sauvegardes automatiques</value></data>
+  <data name="AutomaticBackupDescription" xml:space="preserve"><value>Enregistre des copies de récupération chiffrées lorsque le coffre change. Elles ne contiennent aucune donnée de déverrouillage rapide propre à l’appareil et nécessitent le mot de passe principal utilisé lors de leur création.</value></data>
+  <data name="AutomaticBackupNotConfigured" xml:space="preserve"><value>Les sauvegardes automatiques ne sont pas configurées.</value></data>
+  <data name="AutomaticBackupReady" xml:space="preserve"><value>Les sauvegardes automatiques sont prêtes.</value></data>
+  <data name="AutomaticBackupRunning" xml:space="preserve"><value>Création d’une sauvegarde automatique…</value></data>
+  <data name="AutomaticBackupUpToDate" xml:space="preserve"><value>La sauvegarde automatique est à jour.</value></data>
+  <data name="AutomaticBackupCreated" xml:space="preserve"><value>Sauvegarde automatique créée.</value></data>
+  <data name="AutomaticBackupFailed" xml:space="preserve"><value>La sauvegarde automatique n’a pas pu être créée. Les copies précédentes ont été conservées.</value></data>
+  <data name="AutomaticBackupDestinationUnavailable" xml:space="preserve"><value>Le dossier de sauvegarde configuré est indisponible. Sélectionnez-le à nouveau.</value></data>
+  <data name="AutomaticBackupDestinationFormat" xml:space="preserve"><value>Destination : {0}</value></data>
+  <data name="AutomaticBackupLastSuccessFormat" xml:space="preserve"><value>Dernière sauvegarde réussie : {0}</value></data>
+  <data name="AutomaticBackupNever" xml:space="preserve"><value>Aucune sauvegarde automatique n’a encore été créée.</value></data>
+  <data name="ConfigureAutomaticBackup" xml:space="preserve"><value>Choisir le dossier de sauvegarde</value></data>
+  <data name="ChangeAutomaticBackupFolder" xml:space="preserve"><value>Changer le dossier de sauvegarde</value></data>
+  <data name="AutomaticBackupNow" xml:space="preserve"><value>Sauvegarder maintenant</value></data>
+  <data name="DisableAutomaticBackup" xml:space="preserve"><value>Désactiver</value></data>
+  <data name="AutomaticBackupConfigured" xml:space="preserve"><value>Les sauvegardes automatiques sont activées et la première copie de récupération a été créée.</value></data>
+  <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Les sauvegardes automatiques sont désactivées. Les fichiers existants n’ont pas été supprimés.</value></data>
+  <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>La configuration de la sauvegarde automatique a été annulée.</value></data>
+  <data name="SelectAutomaticBackupFolder" xml:space="preserve"><value>Choisir le dossier des sauvegardes automatiques</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Diagnostics d’assistance</value></data>
   <data name="RefreshSupportInformation" xml:space="preserve"><value>Actualiser les informations d’assistance</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Télécharger la mise à jour</value></data>
@@ -219,7 +240,7 @@
   <data name="SecuritySettings" xml:space="preserve"><value>Paramètres de sécurité</value></data>
   <data name="Security" xml:space="preserve"><value>Sécurité</value></data>
   <data name="ImportExport" xml:space="preserve"><value>Importations</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>DIVERS</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Divers</value></data>
   <data name="Language" xml:space="preserve"><value>Langue</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Anglais</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Allemand</value></data>
@@ -234,6 +255,7 @@
   <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Les modifications sont enregistrées automatiquement.</value></data>
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Paramètres enregistrés automatiquement.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Les paramètres n’ont pas pu être enregistrés. Les paramètres existants restent actifs.</value></data>
+  <data name="Search" xml:space="preserve"><value>Rechercher</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Rechercher un émetteur ou un compte</value></data>
   <data name="SearchAccountsShortcut" xml:space="preserve"><value>Rechercher un émetteur ou un compte (Ctrl+F)</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Effacer la recherche</value></data>
@@ -340,10 +362,10 @@
   <data name="UpdateInstallCancelled" xml:space="preserve"><value>Installation de la mise à jour annulée.</value></data>
   <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>L’installateur de la plateforme n’a pas pu démarrer de manière sécurisée.</value></data>
   <data name="ImportWorkflowFailed" xml:space="preserve"><value>Le processus d’importation a échoué de manière sécurisée. Aucun détail secret n’a été exposé.</value></data>
-  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Comptes à importer : {0}. Conflits : {1}. Gestion des conflits : « {2} ». Une sauvegarde de récupération sera d’abord créée.</value></data>
-  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Comptes existants ignorés : {0}. Nouveaux comptes à importer : {1}. Une sauvegarde de récupération sera d’abord créée.</value></data>
-  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Nouveaux comptes à importer : {0}. Une sauvegarde de récupération sera d’abord créée.</value></data>
-  <data name="ImportNothingToImport" xml:space="preserve"><value>Comptes reçus : {0}. Comptes existants ignorés : {0}. Il n’y a rien à importer.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Comptes à importer : {0}&#x0A;Conflits à vérifier : {1}&#x0A;Gestion des conflits : {2}&#x0A;Une sauvegarde de récupération sera créée avant toute modification.</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Nouveaux comptes à importer : {1}&#x0A;Comptes existants ignorés : {0}&#x0A;Une sauvegarde de récupération sera créée avant toute modification.</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Nouveaux comptes à importer : {0}&#x0A;Une sauvegarde de récupération sera créée avant toute modification.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Comptes reçus : {0}&#x0A;Comptes existants ignorés : {0}&#x0A;Il n’y a rien à importer.</value></data>
   <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>Les comptes n’ont pas pu être chargés pour l’exportation.</value></data>
   <data name="EncryptedExportTitle" xml:space="preserve"><value>Exportation chiffrée</value></data>
   <data name="ExportPasswordHelp" xml:space="preserve"><value>Créez et confirmez un mot de passe pour cette sauvegarde chiffrée portable. Ce mot de passe ne peut pas être récupéré.</value></data>
@@ -479,4 +501,18 @@
   <data name="RestoreBackupAction" xml:space="preserve"><value>Restaurer</value></data>
   <data name="ShowNextToken" xml:space="preserve"><value>Afficher le prochain jeton</value></data>
   <data name="ShowNextTokenHelp" xml:space="preserve"><value>Affiche le prochain jeton sous le jeton actuel pendant ses cinq dernières secondes.</value></data>
+  <data name="AutomaticBackupDestinationAccessible" xml:space="preserve"><value>Accès au dossier de sauvegarde : disponible</value></data>
+  <data name="AutomaticBackupDestinationUnavailableHealth" xml:space="preserve"><value>Accès au dossier de sauvegarde : indisponible</value></data>
+  <data name="AutomaticBackupDestinationUnknown" xml:space="preserve"><value>Accès au dossier de sauvegarde : pas encore vérifié</value></data>
+  <data name="AutomaticBackupLastFailureFormat" xml:space="preserve"><value>Dernier échec ({0}) : {1}</value></data>
+  <data name="AutomaticBackupFailureDestinationUnavailable" xml:space="preserve"><value>Le dossier de sauvegarde sélectionné n’est plus accessible.</value></data>
+  <data name="AutomaticBackupFailureVaultUnavailable" xml:space="preserve"><value>Le coffre chiffré n’était pas disponible lors de la tentative de sauvegarde.</value></data>
+  <data name="AutomaticBackupFailureWriteFailed" xml:space="preserve"><value>La sauvegarde chiffrée n’a pas pu être écrite ou vérifiée.</value></data>
+  <data name="AutomaticBackupFailureConfigurationFailed" xml:space="preserve"><value>L’état de la sauvegarde automatique n’a pas pu être enregistré.</value></data>
+  <data name="AutomaticBackupFailureRecoveryPointMissing" xml:space="preserve"><value>Le dernier fichier de récupération est manquant. Réessayez pour créer un nouveau point de contrôle.</value></data>
+  <data name="AutomaticBackupFailureUnexpected" xml:space="preserve"><value>La sauvegarde a échoué de manière inattendue.</value></data>
+  <data name="RetryAutomaticBackup" xml:space="preserve"><value>Réessayer la sauvegarde</value></data>
+  <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Échec du point de contrôle de sauvegarde</value></data>
+  <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor n’a pas pu créer ou vérifier un point de récupération à jour. Vous pouvez annuler et réessayer, ou confirmer la suppression du compte sans sauvegarde à jour.</value></data>
+  <data name="DeleteAnyway" xml:space="preserve"><value>Supprimer quand même</value></data>
 </root>

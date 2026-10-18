@@ -17,6 +17,19 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AndroidAutomaticBackupRetention_UsesTheSafDocumentDeleteContract()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "AndroidAutomaticBackupDestinationAdapter.cs"));
+
+        Assert.Contains("DocumentsContract.DeleteDocument(resolver, documentUri)", source);
+        Assert.DoesNotContain("resolver.Delete(documentUri", source);
+    }
+
+    [Fact]
     public void MobileIconPicker_AppliesAvaloniaInputPaneOcclusionToItsOverlay()
     {
         var source = File.ReadAllText(Path.Combine(
@@ -29,6 +42,22 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains("state == InputPaneState.Open", source);
         Assert.Contains("Math.Max(0, occludedRect.Height)", source);
         Assert.Contains("AccountBrandIconPickerModalOverlay.Margin", source);
+    }
+
+    [Fact]
+    public void AndroidDeleteConfirmation_KeepsAccountAndGroupFallbacksMountedBehindTheDialog()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml.cs"));
+
+        Assert.DoesNotContain("parent.Children.Remove(AccountGroupsStrip)", source);
+        Assert.Contains("_usesNativeAccountGroupStrip = true", source);
+        Assert.Contains("AccountGroupsFallbackPresenter.IsVisible = false", source);
+        Assert.Contains("AccountGroupsFallbackPresenter.IsVisible = showFallback", source);
+        Assert.Contains("&& viewModel.HasAccountNavigationCards", source);
     }
 
     [Fact]
@@ -620,6 +649,13 @@ public sealed class MobileAccountInteractionTests
             categoryStyle.Elements(avalonia + "Setter"),
             setter => setter.Attribute("Property")?.Value == "Background"
                 && setter.Attribute("Value")?.Value == "{DynamicResource BrushSurface}");
+        var categoryBaseStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(style => style.Attribute("Selector")?.Value == "Button.settings-category");
+        Assert.Contains(
+            categoryBaseStyle.Descendants(avalonia + "ControlTemplate"),
+            template => template.Descendants(avalonia + "Border").Any(border =>
+                border.Attribute("Background")?.Value == "{TemplateBinding Background}"));
         var pressedCategoryStyle = document
             .Descendants(avalonia + "Style")
             .Single(style => style.Attribute("Selector")?.Value
@@ -1088,10 +1124,15 @@ public sealed class MobileAccountInteractionTests
         var groupsStrip = document
             .Descendants(avalonia + "Grid")
             .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountGroupsStrip");
-        Assert.Equal("2", groupsStrip.Attribute("Grid.Row")?.Value);
-        Assert.Equal("56", groupsStrip.Attribute("MinHeight")?.Value);
-        Assert.Equal("0,2,0,6", groupsStrip.Attribute("Margin")?.Value);
-        Assert.Equal("Center", groupsStrip.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("{Binding HasAccountNavigationCards}", groupsStrip.Attribute("IsVisible")?.Value);
+        var groupsFallbackPresenter = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == "AccountGroupsFallbackPresenter");
+        Assert.Equal("2", groupsFallbackPresenter.Attribute("Grid.Row")?.Value);
+        Assert.Equal("56", groupsFallbackPresenter.Attribute("MinHeight")?.Value);
+        Assert.Equal("0,2,0,6", groupsFallbackPresenter.Attribute("Margin")?.Value);
+        Assert.Equal("Center", groupsFallbackPresenter.Attribute("VerticalAlignment")?.Value);
+        Assert.Null(groupsFallbackPresenter.Attribute("IsVisible"));
 
         var createGroupButton = document
             .Descendants(avalonia + "Button")

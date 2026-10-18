@@ -1,4 +1,5 @@
 using FluentResults;
+using TOTP.Core.Backup;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
 
@@ -9,35 +10,37 @@ namespace TOTP.Infrastructure.Services;
 /// </summary>
 /// <param name="otpDal">The data access layer used to persist and retrieve otp information.</param>
 public class AccountManager(
-    IAccountDAL otpDal) : IAccountManager
+    IAccountDAL otpDal,
+    IAutomaticBackupCoordinator? automaticBackup = null) : IAccountManager
 {
     public async Task<Result> AddNewAsync(Account newItem)
     {
-        return await otpDal.AddNewAsync(newItem);
+        return TrackMutation(await otpDal.AddNewAsync(newItem));
     }
 
-    public Task<Result> CommitImportAsync(IReadOnlyCollection<Account> accounts)
+    public async Task<Result> CommitImportAsync(IReadOnlyCollection<Account> accounts)
     {
         ArgumentNullException.ThrowIfNull(accounts);
-        return otpDal.CommitImportAsync(accounts);
+        return TrackMutation(await otpDal.CommitImportAsync(accounts));
     }
 
     public async Task<Result> UpdateAsync(Account previous, Account updated)
     {
         ArgumentNullException.ThrowIfNull(previous);
         ArgumentNullException.ThrowIfNull(updated);
-        return await otpDal.UpdateAsync(updated.WithGroup(updated.Group ?? previous.Group));
+        return TrackMutation(await otpDal.UpdateAsync(updated.WithGroup(updated.Group ?? previous.Group)));
     }
 
-    public Task<Result> SaveFavoritesAsync(IReadOnlyCollection<Guid> accountIds)
+    public async Task<Result> SaveFavoritesAsync(IReadOnlyCollection<Guid> accountIds)
     {
         ArgumentNullException.ThrowIfNull(accountIds);
-        return accountIds.Count == 0
-            ? Task.FromResult(Result.Fail("At least one favorite account is required."))
-            : otpDal.SaveFavoritesAsync(accountIds);
+        if (accountIds.Count == 0)
+            return Result.Fail("At least one favorite account is required.");
+
+        return TrackMutation(await otpDal.SaveFavoritesAsync(accountIds));
     }
 
-    public Task<Result> SaveGroupAsync(AccountGroup group, IReadOnlyCollection<Guid> accountIds)
+    public async Task<Result> SaveGroupAsync(AccountGroup group, IReadOnlyCollection<Guid> accountIds)
     {
         ArgumentNullException.ThrowIfNull(group);
         ArgumentNullException.ThrowIfNull(accountIds);
@@ -45,13 +48,14 @@ public class AccountManager(
             || normalized is null
             || accountIds.Count == 0)
         {
-            return Task.FromResult(Result.Fail("Account group is invalid."));
+            return Result.Fail("Account group is invalid.");
         }
 
-        return otpDal.SaveGroupAsync(normalized, accountIds);
+        return TrackMutation(await otpDal.SaveGroupAsync(normalized, accountIds));
     }
 
-    public Task<Result> DeleteGroupAsync(Guid groupId) => otpDal.DeleteGroupAsync(groupId);
+    public async Task<Result> DeleteGroupAsync(Guid groupId) =>
+        TrackMutation(await otpDal.DeleteGroupAsync(groupId));
 
     public async Task<Result<IReadOnlyList<Account>>> GetAllOtpEntriesSortedAsync()
     {
@@ -68,12 +72,18 @@ public class AccountManager(
 
     public async Task<Result> DeleteAsync(Account item)
     {
-        return await otpDal.DeleteAsync(item);
+        return TrackMutation(await otpDal.DeleteAsync(item));
     }
 
     public async Task<Result> BackupOtpEntriesStorageFileAsync()
     {
         return await otpDal.BackupOtpEntriesStorageFileAsync();
+    }
+
+    private Result TrackMutation(Result result)
+    {
+        if (result.IsSuccess) automaticBackup?.RequestBackup();
+        return result;
     }
 
 }

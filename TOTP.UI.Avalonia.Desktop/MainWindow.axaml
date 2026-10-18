@@ -358,7 +358,7 @@
                                 Padding="7,2,22,2"
                                 automation:AutomationProperties.Name="{DynamicResource SearchAccounts}"
                                 Classes="search"
-                                PlaceholderText="{DynamicResource SearchAccounts}"
+                                PlaceholderText="{DynamicResource Search}"
                                 Text="{Binding AccountList.SearchText, Mode=TwoWay}" />
                             <Button
                                 x:Name="ClearSearchButton"
@@ -653,7 +653,7 @@
                                                                                 <shared:SymbolIcon IconSize="10" Kind="Copy" />
                                                                                 <TextBlock Text="{Binding DisplayCode}" />
                                                                             </StackPanel>
-                                                                            <Grid MinHeight="12">
+                                                                            <Grid Height="16">
                                                                                 <TextBlock
                                                                                     HorizontalAlignment="Right"
                                                                                     FontFamily="Consolas"
@@ -895,6 +895,7 @@
                                                 <TextBox
                                                     x:Name="AccountIssuerBox"
                                                     automation:AutomationProperties.Name="{DynamicResource Issuer}"
+                                                    PlaceholderText="{DynamicResource IssuerPlaceholder}"
                                                     Text="{Binding EditorIssuer, Mode=TwoWay}" />
                                                 <shared:ValidationMessage Severity="Error" Text="{Binding EditorIssuerMessage}" />
                                                 <TextBlock
@@ -908,6 +909,7 @@
                                                     IsRevealAuthorized="{Binding IsEditorSecretRevealAuthorized}"
                                                     IsRevealed="{Binding IsEditorSecretRevealed, Mode=TwoWay}"
                                                     IsRequired="True"
+                                                    PlaceholderText="{DynamicResource Secret}"
                                                     RevealRequestedCommand="{Binding AuthorizeEditorSecretCommand}"
                                                     Text="{Binding EditorSecret, Mode=TwoWay}" />
                                                 <shared:ValidationMessage Severity="Error" Text="{Binding EditorSecretMessage}" />
@@ -1168,7 +1170,7 @@
                                                 <TextBox
                                                     x:Name="GroupAccountSearchBox"
                                                     automation:AutomationProperties.Name="{DynamicResource SearchAccounts}"
-                                                    PlaceholderText="{DynamicResource SearchAccounts}"
+                                                    PlaceholderText="{DynamicResource Search}"
                                                     Text="{Binding GroupEditorSearchText, Mode=TwoWay}" />
                                                 <Border Classes="panel" Padding="4">
                                                     <Grid Height="240">

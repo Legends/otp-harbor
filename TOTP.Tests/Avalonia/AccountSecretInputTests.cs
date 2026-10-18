@@ -31,6 +31,11 @@ public sealed class AccountSecretInputTests
         Assert.Equal(
             "{Binding AuthorizeEditorSecretCommand}",
             input.Attribute("RevealRequestedCommand")?.Value);
+        Assert.Equal(
+            fixtureName == "DesktopMainWindow.axaml"
+                ? "{DynamicResource Secret}"
+                : "{Binding EditorSecretPlaceholder}",
+            input.Attribute("PlaceholderText")?.Value);
         Assert.Null(input.Attribute("IsVisible"));
         Assert.Null(input.Attribute("PasswordChar"));
 
@@ -38,5 +43,27 @@ public sealed class AccountSecretInputTests
             document.Descendants(),
             element => element.Attribute(xaml + "Name")?.Value
                 == "AuthorizeAccountSecretEditButton");
+    }
+
+    [Theory]
+    [InlineData("DesktopMainWindow.axaml", "{DynamicResource IssuerPlaceholder}")]
+    [InlineData("MobileMainView.axaml", "{Binding IssuerPlaceholderText}")]
+    public void AccountEditorIssuer_UsesLocalizedExamplesPlaceholder(
+        string fixtureName,
+        string expectedPlaceholder)
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            fixtureName));
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var input = document
+            .Descendants()
+            .Single(element => element.Name.LocalName == "TextBox"
+                && element.Attribute(xaml + "Name")?.Value == "AccountIssuerBox");
+
+        Assert.Equal(expectedPlaceholder, input.Attribute("PlaceholderText")?.Value);
     }
 }

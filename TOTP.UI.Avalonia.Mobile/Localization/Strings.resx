@@ -58,7 +58,7 @@
   <data name="SecuritySettingsDescription" xml:space="preserve"><value>Configure encryption, app lock, and unlock methods.</value></data>
   <data name="BackupSettingsDescription" xml:space="preserve"><value>Create or restore encrypted OTP Harbor backups.</value></data>
   <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Import accounts from QR codes or supported files.</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>MISC</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Misc</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Configure diagnostic logging.</value></data>
   <data name="LoggingLevel" xml:space="preserve"><value>Minimum logging level (applies after restart)</value></data>
   <data name="ExportDiagnosticLog" xml:space="preserve"><value>Export diagnostic log…</value></data>
@@ -122,8 +122,28 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>This QR code contains the account secret. Share it only with a trusted authenticator.</value></data>
   <data name="QrDisplayFailed" xml:space="preserve"><value>The account QR code could not be displayed safely.</value></data>
   <data name="BackupTitle" xml:space="preserve"><value>Backup &amp; Restore</value></data>
+  <data name="AutomaticBackups" xml:space="preserve"><value>Automatic backups</value></data>
+  <data name="AutomaticBackupDescription" xml:space="preserve"><value>Save encrypted recovery copies whenever your vault changes. Backups contain no device-specific quick-unlock data and require the master password used when they were created.</value></data>
+  <data name="AutomaticBackupNotConfigured" xml:space="preserve"><value>Automatic backups are not configured.</value></data>
+  <data name="AutomaticBackupReady" xml:space="preserve"><value>Automatic backups are ready.</value></data>
+  <data name="AutomaticBackupRunning" xml:space="preserve"><value>Creating an automatic backup…</value></data>
+  <data name="AutomaticBackupUpToDate" xml:space="preserve"><value>Your automatic backup is up to date.</value></data>
+  <data name="AutomaticBackupCreated" xml:space="preserve"><value>Automatic backup created.</value></data>
+  <data name="AutomaticBackupFailed" xml:space="preserve"><value>The automatic backup could not be created. The previous recovery copies were kept.</value></data>
+  <data name="AutomaticBackupDestinationUnavailable" xml:space="preserve"><value>The configured backup folder is unavailable. Choose the folder again.</value></data>
+  <data name="AutomaticBackupDestinationFormat" xml:space="preserve"><value>Destination: {0}</value></data>
+  <data name="AutomaticBackupLastSuccessFormat" xml:space="preserve"><value>Last successful backup: {0}</value></data>
+  <data name="AutomaticBackupNever" xml:space="preserve"><value>No automatic backup has been created yet.</value></data>
+  <data name="ConfigureAutomaticBackup" xml:space="preserve"><value>Choose backup folder</value></data>
+  <data name="ChangeAutomaticBackupFolder" xml:space="preserve"><value>Change backup folder</value></data>
+  <data name="AutomaticBackupNow" xml:space="preserve"><value>Back up now</value></data>
+  <data name="DisableAutomaticBackup" xml:space="preserve"><value>Disable</value></data>
+  <data name="AutomaticBackupConfigured" xml:space="preserve"><value>Automatic backups are enabled and the first recovery copy was created.</value></data>
+  <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Automatic backups are disabled. Existing backup files were not deleted.</value></data>
+  <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>Automatic backup setup was cancelled.</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Export or restore an encrypted OTP Harbor backup. Existing accounts are skipped by default; changed matches are reviewed before import.</value></data>
-  <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup and enter its password. Existing accounts are skipped by default; review each changed match before any account is changed.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor backup. For .totp files, enter the export password. For automatic .otphbackup files, enter the master password that was active when the backup was created. Existing accounts are skipped by default; review each changed match before any account is changed.</value></data>
+  <data name="BackupContainsNoAccounts" xml:space="preserve"><value>This backup contains no accounts to restore.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Import accounts from other formats</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Supported formats:</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Create a portable, password-protected backup. Android asks where to save it. Keep the backup and password separately; restore it with Restore encrypted backup.</value></data>
@@ -178,6 +198,7 @@
   <data name="DeleteAccount" xml:space="preserve"><value>Delete</value></data>
   <data name="Lock" xml:space="preserve"><value>Lock</value></data>
   <data name="Issuer" xml:space="preserve"><value>Issuer</value></data>
+  <data name="IssuerPlaceholder" xml:space="preserve"><value>Microsoft, Outlook, GitHub, etc.</value></data>
   <data name="AccountName" xml:space="preserve"><value>Account name (optional)</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32 secret</value></data>
   <data name="SecretOptionalOnEdit" xml:space="preserve"><value>New Base32 secret (leave empty to keep the current secret)</value></data>
@@ -333,4 +354,20 @@
   <data name="ShowNextTokenHelp" xml:space="preserve"><value>Show the upcoming token below the current token during its final five seconds.</value></data>
   <data name="AllowScreenshots" xml:space="preserve"><value>Allow screenshots</value></data>
   <data name="AllowScreenshotsHelp" xml:space="preserve"><value>Allows Android screenshots and screen recording. Captures may expose account details and active tokens.</value></data>
+  <data name="AutomaticBackupDestinationAccessible" xml:space="preserve"><value>Backup folder access: available</value></data>
+  <data name="AutomaticBackupDestinationUnavailableHealth" xml:space="preserve"><value>Backup folder access: unavailable</value></data>
+  <data name="AutomaticBackupDestinationUnknown" xml:space="preserve"><value>Backup folder access: not checked yet</value></data>
+  <data name="AutomaticBackupLastFailureFormat" xml:space="preserve"><value>Last failure ({0}): {1}</value></data>
+  <data name="AutomaticBackupFailureDestinationUnavailable" xml:space="preserve"><value>The selected backup folder is no longer accessible.</value></data>
+  <data name="AutomaticBackupFailureVaultUnavailable" xml:space="preserve"><value>The encrypted vault was unavailable when the backup was attempted.</value></data>
+  <data name="AutomaticBackupFailureWriteFailed" xml:space="preserve"><value>The encrypted backup could not be written or verified.</value></data>
+  <data name="AutomaticBackupFailureConfigurationFailed" xml:space="preserve"><value>Backup health information could not be saved.</value></data>
+  <data name="AutomaticBackupFailureRecoveryPointMissing" xml:space="preserve"><value>The latest recovery file is missing. Retry to create a new checkpoint.</value></data>
+  <data name="AutomaticBackupFailureUnexpected" xml:space="preserve"><value>The backup failed unexpectedly.</value></data>
+  <data name="RetryAutomaticBackup" xml:space="preserve"><value>Retry backup</value></data>
+  <data name="AutomaticBackupFolderGuidanceTitle" xml:space="preserve"><value>Choose a dedicated backup folder</value></data>
+  <data name="AutomaticBackupFolderGuidance" xml:space="preserve"><value>Choose or create a subfolder, for example Documents/OTP Harbor Backups. Android protects the root of internal storage and will not allow it to be selected.</value></data>
+  <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Backup checkpoint failed</value></data>
+  <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor could not create or verify a current recovery checkpoint. You can cancel and retry, or explicitly delete the account without a current backup.</value></data>
+  <data name="DeleteAnyway" xml:space="preserve"><value>Delete anyway</value></data>
 </root>

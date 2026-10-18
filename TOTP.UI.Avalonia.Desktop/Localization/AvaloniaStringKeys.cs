@@ -59,6 +59,40 @@ public static class AvaloniaStringKeys
     public const string OpenLastBackupFolder = nameof(OpenLastBackupFolder);
     public const string BackupFolderOpenFailed = nameof(BackupFolderOpenFailed);
     public const string NoBackupFileSelected = nameof(NoBackupFileSelected);
+    public const string AutomaticBackups = nameof(AutomaticBackups);
+    public const string AutomaticBackupDescription = nameof(AutomaticBackupDescription);
+    public const string AutomaticBackupNotConfigured = nameof(AutomaticBackupNotConfigured);
+    public const string AutomaticBackupReady = nameof(AutomaticBackupReady);
+    public const string AutomaticBackupRunning = nameof(AutomaticBackupRunning);
+    public const string AutomaticBackupUpToDate = nameof(AutomaticBackupUpToDate);
+    public const string AutomaticBackupCreated = nameof(AutomaticBackupCreated);
+    public const string AutomaticBackupFailed = nameof(AutomaticBackupFailed);
+    public const string AutomaticBackupDestinationUnavailable = nameof(AutomaticBackupDestinationUnavailable);
+    public const string AutomaticBackupDestinationFormat = nameof(AutomaticBackupDestinationFormat);
+    public const string AutomaticBackupLastSuccessFormat = nameof(AutomaticBackupLastSuccessFormat);
+    public const string AutomaticBackupNever = nameof(AutomaticBackupNever);
+    public const string ConfigureAutomaticBackup = nameof(ConfigureAutomaticBackup);
+    public const string ChangeAutomaticBackupFolder = nameof(ChangeAutomaticBackupFolder);
+    public const string AutomaticBackupNow = nameof(AutomaticBackupNow);
+    public const string DisableAutomaticBackup = nameof(DisableAutomaticBackup);
+    public const string AutomaticBackupConfigured = nameof(AutomaticBackupConfigured);
+    public const string AutomaticBackupDisabled = nameof(AutomaticBackupDisabled);
+    public const string AutomaticBackupSetupCancelled = nameof(AutomaticBackupSetupCancelled);
+    public const string SelectAutomaticBackupFolder = nameof(SelectAutomaticBackupFolder);
+    public const string AutomaticBackupDestinationAccessible = nameof(AutomaticBackupDestinationAccessible);
+    public const string AutomaticBackupDestinationUnavailableHealth = nameof(AutomaticBackupDestinationUnavailableHealth);
+    public const string AutomaticBackupDestinationUnknown = nameof(AutomaticBackupDestinationUnknown);
+    public const string AutomaticBackupLastFailureFormat = nameof(AutomaticBackupLastFailureFormat);
+    public const string AutomaticBackupFailureDestinationUnavailable = nameof(AutomaticBackupFailureDestinationUnavailable);
+    public const string AutomaticBackupFailureVaultUnavailable = nameof(AutomaticBackupFailureVaultUnavailable);
+    public const string AutomaticBackupFailureWriteFailed = nameof(AutomaticBackupFailureWriteFailed);
+    public const string AutomaticBackupFailureConfigurationFailed = nameof(AutomaticBackupFailureConfigurationFailed);
+    public const string AutomaticBackupFailureRecoveryPointMissing = nameof(AutomaticBackupFailureRecoveryPointMissing);
+    public const string AutomaticBackupFailureUnexpected = nameof(AutomaticBackupFailureUnexpected);
+    public const string RetryAutomaticBackup = nameof(RetryAutomaticBackup);
+    public const string DeleteWithoutBackupTitle = nameof(DeleteWithoutBackupTitle);
+    public const string DeleteWithoutBackupPrompt = nameof(DeleteWithoutBackupPrompt);
+    public const string DeleteAnyway = nameof(DeleteAnyway);
     public const string SupportDiagnostics = nameof(SupportDiagnostics);
     public const string RefreshSupportInformation = nameof(RefreshSupportInformation);
     public const string DownloadUpdate = nameof(DownloadUpdate);
@@ -163,6 +197,7 @@ public static class AvaloniaStringKeys
     public const string SettingsAutoSaveHint = nameof(SettingsAutoSaveHint);
     public const string SettingsSavedAutomatically = nameof(SettingsSavedAutomatically);
     public const string SettingsSaveFailed = nameof(SettingsSaveFailed);
+    public const string Search = nameof(Search);
     public const string SearchAccounts = nameof(SearchAccounts);
     public const string SearchAccountsShortcut = nameof(SearchAccountsShortcut);
     public const string ClearSearch = nameof(ClearSearch);
@@ -285,6 +320,7 @@ public static class AvaloniaStringKeys
     public const string DeleteAccountPrompt = nameof(DeleteAccountPrompt);
     public const string Delete = nameof(Delete);
     public const string Issuer = nameof(Issuer);
+    public const string IssuerPlaceholder = nameof(IssuerPlaceholder);
     public const string AccountName = nameof(AccountName);
     public const string Secret = nameof(Secret);
     public const string BrandIcon = nameof(BrandIcon);
@@ -498,6 +534,19 @@ public static class AvaloniaStringKeys
         BackupDestinationBeforeExport, LastBackupLocation, ProviderManagedBackupLocation,
         RestoreBackupHelp, RestoreEncryptedBackup, RestoreBackup, OpenLastBackupFolder,
         BackupFolderOpenFailed, NoBackupFileSelected,
+        AutomaticBackups, AutomaticBackupDescription, AutomaticBackupNotConfigured,
+        AutomaticBackupReady, AutomaticBackupRunning, AutomaticBackupUpToDate,
+        AutomaticBackupCreated, AutomaticBackupFailed, AutomaticBackupDestinationUnavailable,
+        AutomaticBackupDestinationFormat, AutomaticBackupLastSuccessFormat, AutomaticBackupNever,
+        ConfigureAutomaticBackup, ChangeAutomaticBackupFolder, AutomaticBackupNow,
+        DisableAutomaticBackup, AutomaticBackupConfigured, AutomaticBackupDisabled,
+        AutomaticBackupSetupCancelled, SelectAutomaticBackupFolder,
+        AutomaticBackupDestinationAccessible, AutomaticBackupDestinationUnavailableHealth,
+        AutomaticBackupDestinationUnknown, AutomaticBackupLastFailureFormat,
+        AutomaticBackupFailureDestinationUnavailable, AutomaticBackupFailureVaultUnavailable,
+        AutomaticBackupFailureWriteFailed, AutomaticBackupFailureConfigurationFailed,
+        AutomaticBackupFailureRecoveryPointMissing, AutomaticBackupFailureUnexpected,
+        RetryAutomaticBackup, DeleteWithoutBackupTitle, DeleteWithoutBackupPrompt, DeleteAnyway,
         SupportDiagnostics, RefreshSupportInformation,
         DownloadUpdate, InstallUpdate, ReleaseNotes, VerifyAppcast, SoftwareUpdates,
         ScanQrCamera, ImportQrCode, ImportGoogleAuthenticator,
@@ -528,7 +577,7 @@ public static class AvaloniaStringKeys
         ShowNextToken, ShowNextTokenHelp, IdleTimeout,
         IdleTimeoutHelp, AutoLockDisabled, AutoLockSecondsFormat, AutoLockMinutesFormat,
         LockWhenMinimized, SettingsAutoSaveHint,
-        SettingsSavedAutomatically, SettingsSaveFailed, SearchAccounts, SearchAccountsShortcut, ClearSearch,
+        SettingsSavedAutomatically, SettingsSaveFailed, Search, SearchAccounts, SearchAccountsShortcut, ClearSearch,
         ManageGroups, Groups, AllAccounts, UngroupedAccounts, FavoriteAccounts, FavoriteAccount,
         AddToFavorites, RemoveFromFavorites, FavoriteUpdateFailed, EditFavorites,
         FavoritesSaveFailed, FavoritesSaved,
@@ -560,6 +609,7 @@ public static class AvaloniaStringKeys
         PortableEnvelopeStatus, AutomaticRollbackStatus, LegacyMigrationStatus,
         AddAccount, AddAccountShortcut, EditAccount, EditAccountShortcut,
         DeleteAccount, DeleteAccountShortcut, DeleteAccountPrompt, Delete, Issuer,
+        IssuerPlaceholder,
         AccountName, Secret, BrandIcon, SearchBrandIcons, AutomaticBrandIcon, BrandIconHelp,
         NoBrandIconPackInstalled, NoBrandIconPackInstructions,
         CustomAccountIcon, ChooseCustomSvgIcon, CustomIconFileName, SvgIconFiles, CustomIconImported,

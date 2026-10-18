@@ -361,8 +361,77 @@
                                                         Classes="secondary"
                                                         Text="{DynamicResource BackupSecuritySummary}"
                                                         TextWrapping="Wrap" />
+                                                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                                                    <Border
+                                                        x:Name="AutomaticBackupPanel"
+                                                        Grid.Row="2"
+                                                        Background="{DynamicResource BrushSurfaceAlternate}"
+                                                        CornerRadius="{DynamicResource RadiusSmall}"
+                                                        Padding="10">
+                                                        <StackPanel Spacing="7">
+                                                            <TextBlock Classes="settings-label" Text="{DynamicResource AutomaticBackups}" />
+                                                            <TextBlock
+                                                                Classes="secondary"
+                                                                Text="{DynamicResource AutomaticBackupDescription}"
+                                                                TextWrapping="Wrap" />
+                                                            <TextBlock
+                                                                FontWeight="SemiBold"
+                                                                Text="{Binding AutomaticBackupStatusText}"
+                                                                TextWrapping="Wrap" />
+                                                            <TextBlock
+                                                                Classes="secondary"
+                                                                IsVisible="{Binding IsAutomaticBackupConfigured}"
+                                                                Text="{Binding AutomaticBackupDestinationText}"
+                                                                TextWrapping="Wrap" />
+                                                            <TextBlock
+                                                                Classes="secondary"
+                                                                IsVisible="{Binding IsAutomaticBackupConfigured}"
+                                                                Text="{Binding AutomaticBackupLastSuccessText}"
+                                                                TextWrapping="Wrap" />
+                                                            <TextBlock
+                                                                Classes="secondary"
+                                                                IsVisible="{Binding IsAutomaticBackupConfigured}"
+                                                                Text="{Binding AutomaticBackupDestinationAccessText}"
+                                                                TextWrapping="Wrap" />
+                                                            <TextBlock
+                                                                Foreground="{DynamicResource BrushDanger}"
+                                                                IsVisible="{Binding HasAutomaticBackupFailure}"
+                                                                Text="{Binding AutomaticBackupLastFailureText}"
+                                                                TextWrapping="Wrap" />
+                                                            <Button
+                                                                x:Name="ConfigureAutomaticBackupButton"
+                                                                Classes="primary wide settings-action"
+                                                                Command="{Binding ConfigureAutomaticBackupCommand}"
+                                                                IsVisible="{Binding !IsAutomaticBackupConfigured}">
+                                                                <shared:SymbolIconLabel Kind="Folder" Text="{DynamicResource ConfigureAutomaticBackup}" />
+                                                            </Button>
+                                                            <Button
+                                                                Classes="secondary wide settings-action"
+                                                                Command="{Binding ConfigureAutomaticBackupCommand}"
+                                                                IsVisible="{Binding IsAutomaticBackupConfigured}">
+                                                                <shared:SymbolIconLabel Kind="Folder" Text="{DynamicResource ChangeAutomaticBackupFolder}" />
+                                                            </Button>
+                                                            <Grid
+                                                                ColumnDefinitions="*,*"
+                                                                ColumnSpacing="8"
+                                                                IsVisible="{Binding IsAutomaticBackupConfigured}">
+                                                                <Button
+                                                                    Classes="primary wide settings-action"
+                                                                    Command="{Binding AutomaticBackupNowCommand}">
+                                                                    <shared:SymbolIconLabel Kind="BackupRestore" Text="{Binding AutomaticBackupActionText}" />
+                                                                </Button>
+                                                                <Button
+                                                                    Grid.Column="1"
+                                                                    Classes="secondary wide settings-action"
+                                                                    Command="{Binding DisableAutomaticBackupCommand}">
+                                                                    <shared:SymbolIconLabel Kind="Close" Text="{DynamicResource DisableAutomaticBackup}" />
+                                                                </Button>
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </Border>
                                                     <Border
                                                         x:Name="EncryptedBackupExportPanel"
+                                                        Grid.Row="0"
                                                         Background="{DynamicResource BrushSurfaceAlternate}"
                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                         Padding="10">
@@ -397,6 +466,7 @@
                                                     </Border>
                                                     <Border
                                                         x:Name="EncryptedBackupRestorePanel"
+                                                        Grid.Row="1"
                                                         Background="{DynamicResource BrushSurfaceAlternate}"
                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                         Padding="10">
@@ -425,6 +495,7 @@
                                                             </Button>
                                                         </StackPanel>
                                                     </Border>
+                                                    </Grid>
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>

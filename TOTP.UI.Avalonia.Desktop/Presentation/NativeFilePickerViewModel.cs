@@ -5,6 +5,7 @@ using FluentResults;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Platform;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
+using TOTP.Core.Backup;
 using TOTP.Core.Common;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
@@ -30,10 +31,16 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private readonly AsyncCommand _importGoogleQrCommand;
     private readonly AsyncCommand _exportCommand;
     private readonly AsyncCommand _openLastBackupFolderCommand;
+    private readonly AsyncCommand _configureAutomaticBackupCommand;
+    private readonly AsyncCommand _automaticBackupNowCommand;
+    private readonly AsyncCommand _disableAutomaticBackupCommand;
     private readonly AsyncCommand _importBrandIconsCommand;
     private readonly AsyncCommand _resetBrandIconsCommand;
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly CameraScannerViewModel? _cameraScanner;
+    private readonly IAutomaticBackupCoordinator? _automaticBackup;
+    private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
+    private readonly IUiScheduler? _uiScheduler;
     private bool _isBusy;
     private bool _isImportProgressVisible;
     private string _importProgressText = string.Empty;
@@ -58,7 +65,10 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         IAvaloniaLocalizationService localization,
         TimeSpan? transientMessageDuration = null,
         CameraScannerViewModel? cameraScanner = null,
-        IBrandIconPackService? brandIconPackService = null)
+        IBrandIconPackService? brandIconPackService = null,
+        IAutomaticBackupCoordinator? automaticBackup = null,
+        IAutomaticBackupSnapshotService? automaticBackupSnapshots = null,
+        IUiScheduler? uiScheduler = null)
     {
         _filePicker = filePicker ?? throw new ArgumentNullException(nameof(filePicker));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
@@ -72,6 +82,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _cameraScanner = cameraScanner;
         _brandIconPackService = brandIconPackService;
+        _automaticBackup = automaticBackup;
+        _automaticBackupSnapshots = automaticBackupSnapshots;
+        _uiScheduler = uiScheduler;
         Notification = new NotificationState(transientMessageDuration);
         _backupLocationText = Localized(AvaloniaStringKeys.BackupDestinationBeforeExport);
         ConflictStrategies = CreateConflictStrategies();
@@ -86,6 +99,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _openLastBackupFolderCommand = new AsyncCommand(
             OpenLastBackupFolderAsync,
             () => !_isBusy && _lastBackupFolder is not null);
+        _configureAutomaticBackupCommand = new AsyncCommand(
+            ConfigureAutomaticBackupAsync,
+            () => !_isBusy && _automaticBackup is not null);
+        _automaticBackupNowCommand = new AsyncCommand(
+            AutomaticBackupNowAsync,
+            () => !_isBusy && _automaticBackup?.Status.IsConfigured == true);
+        _disableAutomaticBackupCommand = new AsyncCommand(
+            DisableAutomaticBackupAsync,
+            () => !_isBusy && _automaticBackup?.Status.IsConfigured == true);
         _importBrandIconsCommand = new AsyncCommand(
             ImportBrandIconsAsync,
             () => !_isBusy && _brandIconPackService is not null);
@@ -94,6 +116,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             () => !_isBusy && _brandIconPackService?.Status.IsInstalled == true);
         if (_brandIconPackService is not null)
             _brandIconPackService.CatalogChanged += BrandCatalogChanged;
+        if (_automaticBackup is not null)
+            _automaticBackup.StatusChanged += AutomaticBackupStatusChanged;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -142,9 +166,51 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     public ICommand ImportGoogleQrCommand => _importGoogleQrCommand;
     public ICommand ExportCommand => _exportCommand;
     public ICommand OpenLastBackupFolderCommand => _openLastBackupFolderCommand;
+    public ICommand ConfigureAutomaticBackupCommand => _configureAutomaticBackupCommand;
+    public ICommand AutomaticBackupNowCommand => _automaticBackupNowCommand;
+    public ICommand DisableAutomaticBackupCommand => _disableAutomaticBackupCommand;
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
     public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
     public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
+    public bool IsAutomaticBackupConfigured => _automaticBackup?.Status.IsConfigured == true;
+    public string AutomaticBackupStatusText => (_automaticBackup?.Status.Kind ?? AutomaticBackupStatusKind.NotConfigured) switch
+    {
+        AutomaticBackupStatusKind.BackingUp => Localized(AvaloniaStringKeys.AutomaticBackupRunning),
+        AutomaticBackupStatusKind.UpToDate => Localized(AvaloniaStringKeys.AutomaticBackupUpToDate),
+        AutomaticBackupStatusKind.Succeeded => Localized(AvaloniaStringKeys.AutomaticBackupCreated),
+        AutomaticBackupStatusKind.Failed => Localized(AvaloniaStringKeys.AutomaticBackupFailed),
+        AutomaticBackupStatusKind.DestinationUnavailable => Localized(AvaloniaStringKeys.AutomaticBackupDestinationUnavailable),
+        AutomaticBackupStatusKind.Ready => Localized(AvaloniaStringKeys.AutomaticBackupReady),
+        _ => Localized(AvaloniaStringKeys.AutomaticBackupNotConfigured)
+    };
+    public string AutomaticBackupDestinationText => IsAutomaticBackupConfigured
+        ? Localized(
+            AvaloniaStringKeys.AutomaticBackupDestinationFormat,
+            _automaticBackup?.Status.DestinationDisplayName ?? string.Empty)
+        : string.Empty;
+    public string AutomaticBackupLastSuccessText => _automaticBackup?.Status.LastSuccessfulUtc is { } lastSuccess
+        ? Localized(
+            AvaloniaStringKeys.AutomaticBackupLastSuccessFormat,
+            lastSuccess.ToLocalTime().ToString("g"))
+        : Localized(AvaloniaStringKeys.AutomaticBackupNever);
+    public bool HasAutomaticBackupFailure => _automaticBackup?.Status.LastFailureKind.HasValue == true;
+    public string AutomaticBackupDestinationAccessText => (_automaticBackup?.Status.DestinationAccess
+        ?? AutomaticBackupDestinationAccess.Unknown) switch
+    {
+        AutomaticBackupDestinationAccess.Accessible => Localized(AvaloniaStringKeys.AutomaticBackupDestinationAccessible),
+        AutomaticBackupDestinationAccess.Unavailable => Localized(AvaloniaStringKeys.AutomaticBackupDestinationUnavailableHealth),
+        _ => Localized(AvaloniaStringKeys.AutomaticBackupDestinationUnknown)
+    };
+    public string AutomaticBackupLastFailureText => _automaticBackup?.Status is
+        { LastFailureKind: { } failure, LastFailureUtc: { } failedUtc }
+        ? Localized(
+            AvaloniaStringKeys.AutomaticBackupLastFailureFormat,
+            failedUtc.ToLocalTime().ToString("g"),
+            Localized(FailureTextKey(failure)))
+        : string.Empty;
+    public string AutomaticBackupActionText => HasAutomaticBackupFailure
+        ? Localized(AvaloniaStringKeys.RetryAutomaticBackup)
+        : Localized(AvaloniaStringKeys.AutomaticBackupNow);
     public string BrandIconPackStatusText
     {
         get
@@ -316,8 +382,10 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 return;
             }
 
+            var selectedExtension = Path.GetExtension(file.Name);
             if (isBackupRestore
-                && !Path.GetExtension(file.Name).Equals(".totp", StringComparison.OrdinalIgnoreCase))
+                && !selectedExtension.Equals(".totp", StringComparison.OrdinalIgnoreCase)
+                && !selectedExtension.Equals(".otphbackup", StringComparison.OrdinalIgnoreCase))
             {
                 SetMessage(
                     Localized(AvaloniaStringKeys.BackupInvalidOrUnavailable),
@@ -521,6 +589,84 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         }
     }
 
+    public async Task InitializeAutomaticBackupsAsync()
+    {
+        if (_automaticBackup is null) return;
+        await _automaticBackup.InitializeAsync();
+        RefreshAutomaticBackupState();
+    }
+
+    public async Task ConfigureAutomaticBackupAsync()
+    {
+        if (_automaticBackup is null || !BeginOperation()) return;
+        try
+        {
+            var result = await _automaticBackup.ConfigureAsync();
+            if (result.IsFailed)
+            {
+                SetMessage(Localized(AvaloniaStringKeys.AutomaticBackupFailed), NotificationSeverity.Error);
+                return;
+            }
+
+            if (result.Value.Status == AutomaticBackupRunStatus.NotConfigured)
+            {
+                ShowTransientMessage(Localized(AvaloniaStringKeys.AutomaticBackupSetupCancelled), NotificationSeverity.Information);
+                return;
+            }
+
+            SetMessage(
+                Localized(result.Value.Status == AutomaticBackupRunStatus.Created
+                    ? AvaloniaStringKeys.AutomaticBackupConfigured
+                    : AvaloniaStringKeys.AutomaticBackupUpToDate),
+                NotificationSeverity.Success);
+        }
+        finally
+        {
+            RefreshAutomaticBackupState();
+            EndOperation();
+        }
+    }
+
+    public async Task AutomaticBackupNowAsync()
+    {
+        if (_automaticBackup is null || !BeginOperation()) return;
+        try
+        {
+            var result = await _automaticBackup.BackupNowAsync();
+            SetMessage(
+                Localized(result.IsSuccess && result.Value.Status == AutomaticBackupRunStatus.UpToDate
+                    ? AvaloniaStringKeys.AutomaticBackupUpToDate
+                    : result.IsSuccess
+                        ? AvaloniaStringKeys.AutomaticBackupCreated
+                        : AvaloniaStringKeys.AutomaticBackupFailed),
+                result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Error);
+        }
+        finally
+        {
+            RefreshAutomaticBackupState();
+            EndOperation();
+        }
+    }
+
+    public async Task DisableAutomaticBackupAsync()
+    {
+        if (_automaticBackup is null || !BeginOperation()) return;
+        try
+        {
+            var result = await _automaticBackup.DisableAsync();
+            SetMessage(
+                Localized(result.IsSuccess
+                    ? AvaloniaStringKeys.AutomaticBackupDisabled
+                    : AvaloniaStringKeys.AutomaticBackupFailed),
+                result.IsSuccess ? NotificationSeverity.Information : NotificationSeverity.Error);
+        }
+        finally
+        {
+            RefreshAutomaticBackupState();
+            EndOperation();
+        }
+    }
+
     private void UpdateLastBackupLocation(INativeStorageFile file)
     {
         _lastBackupPath = file.LocalPath;
@@ -531,6 +677,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         RefreshBackupLocationText();
         OnPropertyChanged(nameof(HasLastBackupFolder));
         _openLastBackupFolderCommand.NotifyCanExecuteChanged();
+        _configureAutomaticBackupCommand.NotifyCanExecuteChanged();
+        _automaticBackupNowCommand.NotifyCanExecuteChanged();
+        _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
     }
 
     private void RefreshBackupLocationText()
@@ -545,7 +694,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private async Task<List<Account>?> ReadImportAsync(INativeStorageFile file)
     {
         Result<List<Account>> result;
-        if (Path.GetExtension(file.Name).Equals(".totp", StringComparison.OrdinalIgnoreCase))
+        var extension = Path.GetExtension(file.Name);
+        if (extension.Equals(".totp", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".otphbackup", StringComparison.OrdinalIgnoreCase))
         {
             Result<List<Account>>? validatedResult = null;
             var password = await _dialogs.PromptForPasswordAsync(new PasswordDialogRequest(
@@ -558,9 +709,34 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 async (candidate, token) =>
                 {
                     await using var stream = await file.OpenReadAsync(token);
-                    validatedResult = await _exportService.ImportFromStreamAsync(
-                        stream, file.Name, candidate, token);
+                    if (extension.Equals(".otphbackup", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (_automaticBackupSnapshots is null)
+                        {
+                            validatedResult = Result.Fail<List<Account>>(
+                                "Automatic backup restore is unavailable.");
+                        }
+                        else
+                        {
+                            var restored = await _automaticBackupSnapshots.ReadAccountsAsync(
+                                stream,
+                                candidate,
+                                token);
+                            validatedResult = restored.IsSuccess
+                                ? Result.Ok(restored.Value.ToList())
+                                : Result.Fail<List<Account>>(restored.Errors);
+                        }
+                    }
+                    else
+                    {
+                        validatedResult = await _exportService.ImportFromStreamAsync(
+                            stream, file.Name, candidate, token);
+                    }
+                    var automaticBackupError = validatedResult.Errors
+                        .OfType<AutomaticBackupError>()
+                        .FirstOrDefault();
                     return validatedResult.GetErrorCode() == AppErrorCode.ImportWrongPasswordOrTampered
+                        || automaticBackupError?.Code == AutomaticBackupErrorCode.InvalidPassword
                         ? Localized(AvaloniaStringKeys.BackupWrongPasswordOrModified)
                         : validatedResult.IsFailed
                             ? Localized(AvaloniaStringKeys.BackupInvalidOrUnavailable)
@@ -636,6 +812,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
         _openLastBackupFolderCommand.NotifyCanExecuteChanged();
+        _configureAutomaticBackupCommand.NotifyCanExecuteChanged();
+        _automaticBackupNowCommand.NotifyCanExecuteChanged();
+        _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
         return true;
@@ -650,6 +829,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _importGoogleQrCommand.NotifyCanExecuteChanged();
         _exportCommand.NotifyCanExecuteChanged();
         _openLastBackupFolderCommand.NotifyCanExecuteChanged();
+        _configureAutomaticBackupCommand.NotifyCanExecuteChanged();
+        _automaticBackupNowCommand.NotifyCanExecuteChanged();
+        _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
     }
@@ -701,12 +883,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         SelectedConflictStrategyOption = ConflictStrategies.First(option => option.Strategy == selectedStrategy);
         RefreshBackupLocationText();
         OnPropertyChanged(nameof(BrandIconPackStatusText));
+        RefreshAutomaticBackupState();
     }
 
     public void Dispose()
     {
         if (_brandIconPackService is not null)
             _brandIconPackService.CatalogChanged -= BrandCatalogChanged;
+        if (_automaticBackup is not null)
+            _automaticBackup.StatusChanged -= AutomaticBackupStatusChanged;
         if (_disposed) return;
         _disposed = true;
         EndImportProgress();
@@ -720,6 +905,38 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         OnPropertyChanged(nameof(BrandIconPackStatusText));
         _resetBrandIconsCommand.NotifyCanExecuteChanged();
     }
+
+    private void AutomaticBackupStatusChanged(object? sender, EventArgs args)
+    {
+        if (_uiScheduler is null || _uiScheduler.CheckAccess())
+            RefreshAutomaticBackupState();
+        else
+            _uiScheduler.Post(RefreshAutomaticBackupState);
+    }
+
+    private void RefreshAutomaticBackupState()
+    {
+        OnPropertyChanged(nameof(IsAutomaticBackupConfigured));
+        OnPropertyChanged(nameof(AutomaticBackupStatusText));
+        OnPropertyChanged(nameof(AutomaticBackupDestinationText));
+        OnPropertyChanged(nameof(AutomaticBackupLastSuccessText));
+        OnPropertyChanged(nameof(HasAutomaticBackupFailure));
+        OnPropertyChanged(nameof(AutomaticBackupDestinationAccessText));
+        OnPropertyChanged(nameof(AutomaticBackupLastFailureText));
+        OnPropertyChanged(nameof(AutomaticBackupActionText));
+        _automaticBackupNowCommand.NotifyCanExecuteChanged();
+        _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
+    }
+
+    private static string FailureTextKey(AutomaticBackupFailureKind failure) => failure switch
+    {
+        AutomaticBackupFailureKind.DestinationUnavailable => AvaloniaStringKeys.AutomaticBackupFailureDestinationUnavailable,
+        AutomaticBackupFailureKind.VaultUnavailable => AvaloniaStringKeys.AutomaticBackupFailureVaultUnavailable,
+        AutomaticBackupFailureKind.WriteFailed => AvaloniaStringKeys.AutomaticBackupFailureWriteFailed,
+        AutomaticBackupFailureKind.ConfigurationFailed => AvaloniaStringKeys.AutomaticBackupFailureConfigurationFailed,
+        AutomaticBackupFailureKind.RecoveryPointMissing => AvaloniaStringKeys.AutomaticBackupFailureRecoveryPointMissing,
+        _ => AvaloniaStringKeys.AutomaticBackupFailureUnexpected
+    };
 
     private void BeginImportProgress(string textKey)
     {

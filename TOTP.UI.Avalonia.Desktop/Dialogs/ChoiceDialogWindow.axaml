@@ -3,29 +3,52 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dialogs="using:TOTP.Avalonia.Desktop.Presentation.Dialogs"
-    xmlns:shared="using:TOTP.Avalonia.Shared.Controls"
     x:DataType="dialogs:ChoiceDialogViewModel"
     Background="{DynamicResource BrushDialogSurface}"
     Classes="dialog"
+    Width="520"
     WindowDecorations="None"
     Title="{Binding Title}">
     <StackPanel Classes="dialog-content" Spacing="20">
         <TextBlock Classes="heading" Text="{Binding Title}" TextWrapping="Wrap" />
-        <shared:NotificationBanner Severity="{Binding Severity}" Text="{Binding Message}" />
-        <StackPanel Classes="dialog-actions">
+        <Border Classes="dialog-message-card">
+            <TextBlock Text="{Binding Message}" />
+        </Border>
+        <Grid
+            Classes="dialog-choice-actions"
+            ColumnDefinitions="*,*,*"
+            ColumnSpacing="8">
             <Button
+                Grid.Column="0"
                 Classes="secondary"
                 Command="{Binding CancelCommand}"
-                Content="{Binding CancelText}"
-                IsCancel="True" />
+                IsCancel="True">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Text="{Binding CancelText}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </Button>
             <Button
-                Command="{Binding SecondaryCommand}"
-                Content="{Binding SecondaryText}" />
+                Grid.Column="1"
+                Command="{Binding SecondaryCommand}">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Text="{Binding SecondaryText}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </Button>
             <Button
+                Grid.Column="2"
                 Classes="primary"
                 Command="{Binding PrimaryCommand}"
-                Content="{Binding PrimaryText}"
-                IsDefault="True" />
-        </StackPanel>
+                IsDefault="True">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Text="{Binding PrimaryText}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+            </Button>
+        </Grid>
     </StackPanel>
 </Window>

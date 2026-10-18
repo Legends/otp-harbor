@@ -81,6 +81,7 @@
   <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#10;The encrypted account entry will be permanently removed.&#10;This cannot be undone.</value></data>
   <data name="Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Issuer" xml:space="preserve"><value>Issuer</value></data>
+  <data name="IssuerPlaceholder" xml:space="preserve"><value>Microsoft, Outlook, GitHub, etc.</value></data>
   <data name="AccountName" xml:space="preserve"><value>Account name</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32 secret</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Account icon (icon pack)</value></data>
@@ -185,6 +186,26 @@
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Open last backup folder</value></data>
   <data name="BackupFolderOpenFailed" xml:space="preserve"><value>The backup folder could not be opened.</value></data>
   <data name="NoBackupFileSelected" xml:space="preserve"><value>No backup file selected.</value></data>
+  <data name="AutomaticBackups" xml:space="preserve"><value>Automatic backups</value></data>
+  <data name="AutomaticBackupDescription" xml:space="preserve"><value>Save encrypted recovery copies whenever your vault changes. Backups contain no device-specific quick-unlock data and require the master password used when they were created.</value></data>
+  <data name="AutomaticBackupNotConfigured" xml:space="preserve"><value>Automatic backups are not configured.</value></data>
+  <data name="AutomaticBackupReady" xml:space="preserve"><value>Automatic backups are ready.</value></data>
+  <data name="AutomaticBackupRunning" xml:space="preserve"><value>Creating an automatic backup…</value></data>
+  <data name="AutomaticBackupUpToDate" xml:space="preserve"><value>Your automatic backup is up to date.</value></data>
+  <data name="AutomaticBackupCreated" xml:space="preserve"><value>Automatic backup created.</value></data>
+  <data name="AutomaticBackupFailed" xml:space="preserve"><value>The automatic backup could not be created. The previous recovery copies were kept.</value></data>
+  <data name="AutomaticBackupDestinationUnavailable" xml:space="preserve"><value>The configured backup folder is unavailable. Choose the folder again.</value></data>
+  <data name="AutomaticBackupDestinationFormat" xml:space="preserve"><value>Destination: {0}</value></data>
+  <data name="AutomaticBackupLastSuccessFormat" xml:space="preserve"><value>Last successful backup: {0}</value></data>
+  <data name="AutomaticBackupNever" xml:space="preserve"><value>No automatic backup has been created yet.</value></data>
+  <data name="ConfigureAutomaticBackup" xml:space="preserve"><value>Choose backup folder</value></data>
+  <data name="ChangeAutomaticBackupFolder" xml:space="preserve"><value>Change backup folder</value></data>
+  <data name="AutomaticBackupNow" xml:space="preserve"><value>Back up now</value></data>
+  <data name="DisableAutomaticBackup" xml:space="preserve"><value>Disable</value></data>
+  <data name="AutomaticBackupConfigured" xml:space="preserve"><value>Automatic backups are enabled and the first recovery copy was created.</value></data>
+  <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Automatic backups are disabled. Existing backup files were not deleted.</value></data>
+  <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>Automatic backup setup was cancelled.</value></data>
+  <data name="SelectAutomaticBackupFolder" xml:space="preserve"><value>Choose automatic backup folder</value></data>
   <data name="SupportDiagnostics" xml:space="preserve"><value>Support diagnostics</value></data>
   <data name="RefreshSupportInformation" xml:space="preserve"><value>Refresh support information</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Download update</value></data>
@@ -219,7 +240,7 @@
   <data name="SecuritySettings" xml:space="preserve"><value>Security settings</value></data>
   <data name="Security" xml:space="preserve"><value>Security</value></data>
   <data name="ImportExport" xml:space="preserve"><value>Imports</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>MISC</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Misc</value></data>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>English</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>German</value></data>
@@ -234,6 +255,7 @@
   <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Changes are saved automatically.</value></data>
   <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Settings saved automatically.</value></data>
   <data name="SettingsSaveFailed" xml:space="preserve"><value>Settings could not be saved. Existing settings remain active.</value></data>
+  <data name="Search" xml:space="preserve"><value>Search</value></data>
   <data name="SearchAccounts" xml:space="preserve"><value>Search issuer or account</value></data>
   <data name="SearchAccountsShortcut" xml:space="preserve"><value>Search issuer or account (Ctrl+F)</value></data>
   <data name="ClearSearch" xml:space="preserve"><value>Clear search</value></data>
@@ -340,10 +362,10 @@
   <data name="UpdateInstallCancelled" xml:space="preserve"><value>Update installation cancelled.</value></data>
   <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>The platform installer failed to start safely.</value></data>
   <data name="ImportWorkflowFailed" xml:space="preserve"><value>The import workflow failed safely. No secret details were exposed.</value></data>
-  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Accounts to import: {0}. Conflicts: {1}. Conflict handling: '{2}'. A recovery backup will be created first.</value></data>
-  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Existing accounts skipped: {0}. New accounts to import: {1}. A recovery backup will be created first.</value></data>
-  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>New accounts to import: {0}. A recovery backup will be created first.</value></data>
-  <data name="ImportNothingToImport" xml:space="preserve"><value>Accounts received: {0}. Existing accounts skipped: {0}. There is nothing to import.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Accounts to import: {0}&#x0A;Conflicts requiring review: {1}&#x0A;Conflict handling: {2}&#x0A;A recovery backup will be created before any changes are made.</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>New accounts to import: {1}&#x0A;Existing accounts skipped: {0}&#x0A;A recovery backup will be created before any changes are made.</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>New accounts to import: {0}&#x0A;A recovery backup will be created before any changes are made.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Accounts received: {0}&#x0A;Existing accounts skipped: {0}&#x0A;There is nothing to import.</value></data>
   <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>Accounts could not be loaded for export.</value></data>
   <data name="EncryptedExportTitle" xml:space="preserve"><value>Encrypted export</value></data>
   <data name="ExportPasswordHelp" xml:space="preserve"><value>Create and confirm a password for this portable encrypted backup. This password cannot be recovered.</value></data>
@@ -479,4 +501,18 @@
   <data name="RestoreBackupAction" xml:space="preserve"><value>Restore</value></data>
   <data name="ShowNextToken" xml:space="preserve"><value>Show next token</value></data>
   <data name="ShowNextTokenHelp" xml:space="preserve"><value>Show the upcoming token below the current token during its final five seconds.</value></data>
+  <data name="AutomaticBackupDestinationAccessible" xml:space="preserve"><value>Backup folder access: available</value></data>
+  <data name="AutomaticBackupDestinationUnavailableHealth" xml:space="preserve"><value>Backup folder access: unavailable</value></data>
+  <data name="AutomaticBackupDestinationUnknown" xml:space="preserve"><value>Backup folder access: not checked yet</value></data>
+  <data name="AutomaticBackupLastFailureFormat" xml:space="preserve"><value>Last failure ({0}): {1}</value></data>
+  <data name="AutomaticBackupFailureDestinationUnavailable" xml:space="preserve"><value>The selected backup folder is no longer accessible.</value></data>
+  <data name="AutomaticBackupFailureVaultUnavailable" xml:space="preserve"><value>The encrypted vault was unavailable when the backup was attempted.</value></data>
+  <data name="AutomaticBackupFailureWriteFailed" xml:space="preserve"><value>The encrypted backup could not be written or verified.</value></data>
+  <data name="AutomaticBackupFailureConfigurationFailed" xml:space="preserve"><value>Backup health information could not be saved.</value></data>
+  <data name="AutomaticBackupFailureRecoveryPointMissing" xml:space="preserve"><value>The latest recovery file is missing. Retry to create a new checkpoint.</value></data>
+  <data name="AutomaticBackupFailureUnexpected" xml:space="preserve"><value>The backup failed unexpectedly.</value></data>
+  <data name="RetryAutomaticBackup" xml:space="preserve"><value>Retry backup</value></data>
+  <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Backup checkpoint failed</value></data>
+  <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor could not create or verify a current recovery checkpoint. You can cancel and retry, or explicitly delete the account without a current backup.</value></data>
+  <data name="DeleteAnyway" xml:space="preserve"><value>Delete anyway</value></data>
 </root>

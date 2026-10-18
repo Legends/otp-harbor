@@ -58,7 +58,7 @@
   <data name="SecuritySettingsDescription" xml:space="preserve"><value>Verschlüsselung, App-Sperre und Entsperrmethoden konfigurieren.</value></data>
   <data name="BackupSettingsDescription" xml:space="preserve"><value>Verschlüsselte OTP-Harbor-Sicherungen erstellen oder wiederherstellen.</value></data>
   <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Konten aus QR-Codes oder unterstützten Dateien importieren.</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>SONSTIGES</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Sonstiges</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Diagnoseprotokollierung konfigurieren.</value></data>
   <data name="LoggingLevel" xml:space="preserve"><value>Minimale Protokollstufe (gilt nach Neustart)</value></data>
   <data name="ExportDiagnosticLog" xml:space="preserve"><value>Diagnoseprotokoll exportieren…</value></data>
@@ -122,8 +122,28 @@
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Dieser QR-Code enthält das Kontogeheimnis. Teilen Sie ihn nur mit einem vertrauenswürdigen Authenticator.</value></data>
   <data name="QrDisplayFailed" xml:space="preserve"><value>Der Konto-QR-Code konnte nicht sicher angezeigt werden.</value></data>
   <data name="BackupTitle" xml:space="preserve"><value>Sichern &amp; Wiederherstellen</value></data>
+  <data name="AutomaticBackups" xml:space="preserve"><value>Automatische Sicherungen</value></data>
+  <data name="AutomaticBackupDescription" xml:space="preserve"><value>Speichert verschlüsselte Wiederherstellungskopien, wenn sich der Tresor ändert. Die Sicherungen enthalten keine gerätespezifischen Schnellentsperrdaten und benötigen das bei ihrer Erstellung verwendete Master-Passwort.</value></data>
+  <data name="AutomaticBackupNotConfigured" xml:space="preserve"><value>Automatische Sicherungen sind nicht eingerichtet.</value></data>
+  <data name="AutomaticBackupReady" xml:space="preserve"><value>Automatische Sicherungen sind einsatzbereit.</value></data>
+  <data name="AutomaticBackupRunning" xml:space="preserve"><value>Automatische Sicherung wird erstellt…</value></data>
+  <data name="AutomaticBackupUpToDate" xml:space="preserve"><value>Die automatische Sicherung ist aktuell.</value></data>
+  <data name="AutomaticBackupCreated" xml:space="preserve"><value>Automatische Sicherung wurde erstellt.</value></data>
+  <data name="AutomaticBackupFailed" xml:space="preserve"><value>Die automatische Sicherung konnte nicht erstellt werden. Vorhandene Wiederherstellungskopien wurden beibehalten.</value></data>
+  <data name="AutomaticBackupDestinationUnavailable" xml:space="preserve"><value>Der eingerichtete Sicherungsordner ist nicht verfügbar. Wählen Sie den Ordner erneut aus.</value></data>
+  <data name="AutomaticBackupDestinationFormat" xml:space="preserve"><value>Ziel: {0}</value></data>
+  <data name="AutomaticBackupLastSuccessFormat" xml:space="preserve"><value>Letzte erfolgreiche Sicherung: {0}</value></data>
+  <data name="AutomaticBackupNever" xml:space="preserve"><value>Es wurde noch keine automatische Sicherung erstellt.</value></data>
+  <data name="ConfigureAutomaticBackup" xml:space="preserve"><value>Sicherungsordner auswählen</value></data>
+  <data name="ChangeAutomaticBackupFolder" xml:space="preserve"><value>Sicherungsordner ändern</value></data>
+  <data name="AutomaticBackupNow" xml:space="preserve"><value>Jetzt sichern</value></data>
+  <data name="DisableAutomaticBackup" xml:space="preserve"><value>Deaktivieren</value></data>
+  <data name="AutomaticBackupConfigured" xml:space="preserve"><value>Automatische Sicherungen sind aktiviert und die erste Wiederherstellungskopie wurde erstellt.</value></data>
+  <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Automatische Sicherungen sind deaktiviert. Vorhandene Sicherungsdateien wurden nicht gelöscht.</value></data>
+  <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>Die Einrichtung der automatischen Sicherung wurde abgebrochen.</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Exportieren Sie eine verschlüsselte OTP-Harbor-Sicherung oder stellen Sie sie wieder her. Vorhandene Konten werden standardmäßig übersprungen; geänderte Treffer werden vor dem Import geprüft.</value></data>
-  <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-.totp-Sicherung und geben Sie ihr Passwort ein. Vorhandene Konten werden standardmäßig übersprungen; prüfen Sie jeden geänderten Treffer, bevor ein Konto geändert wird.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-Sicherung. Geben Sie für .totp-Dateien das Exportpasswort ein. Geben Sie für automatische .otphbackup-Dateien das Masterpasswort ein, das bei der Erstellung der Sicherung aktiv war. Vorhandene Konten werden standardmäßig übersprungen; prüfen Sie jeden geänderten Treffer, bevor ein Konto geändert wird.</value></data>
+  <data name="BackupContainsNoAccounts" xml:space="preserve"><value>Diese Sicherung enthält keine Konten zum Wiederherstellen.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Konten aus anderen Formaten importieren</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Unterstützte Formate:</value></data>
   <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie eine portable, passwortgeschützte Sicherung. Android fragt nach dem Speicherort. Bewahren Sie Sicherung und Passwort getrennt auf; verwenden Sie zur Wiederherstellung „Verschlüsselte Sicherung wiederherstellen“.</value></data>
@@ -178,6 +198,7 @@
   <data name="DeleteAccount" xml:space="preserve"><value>Löschen</value></data>
   <data name="Lock" xml:space="preserve"><value>Sperren</value></data>
   <data name="Issuer" xml:space="preserve"><value>Anbieter</value></data>
+  <data name="IssuerPlaceholder" xml:space="preserve"><value>Microsoft, Outlook, GitHub usw.</value></data>
   <data name="AccountName" xml:space="preserve"><value>Kontoname (optional)</value></data>
   <data name="Secret" xml:space="preserve"><value>Base32-Geheimnis</value></data>
   <data name="SecretOptionalOnEdit" xml:space="preserve"><value>Neues Base32-Geheimnis (leer lassen, um das aktuelle beizubehalten)</value></data>
@@ -333,4 +354,20 @@
   <data name="ShowNextTokenHelp" xml:space="preserve"><value>Zeigt das kommende Token in den letzten fünf Sekunden unter dem aktuellen Token an.</value></data>
   <data name="AllowScreenshots" xml:space="preserve"><value>Screenshots erlauben</value></data>
   <data name="AllowScreenshotsHelp" xml:space="preserve"><value>Erlaubt Android-Screenshots und Bildschirmaufnahmen. Aufnahmen können Kontodaten und aktive Tokens offenlegen.</value></data>
+  <data name="AutomaticBackupDestinationAccessible" xml:space="preserve"><value>Zugriff auf Sicherungsordner: verfügbar</value></data>
+  <data name="AutomaticBackupDestinationUnavailableHealth" xml:space="preserve"><value>Zugriff auf Sicherungsordner: nicht verfügbar</value></data>
+  <data name="AutomaticBackupDestinationUnknown" xml:space="preserve"><value>Zugriff auf Sicherungsordner: noch nicht geprüft</value></data>
+  <data name="AutomaticBackupLastFailureFormat" xml:space="preserve"><value>Letzter Fehler ({0}): {1}</value></data>
+  <data name="AutomaticBackupFailureDestinationUnavailable" xml:space="preserve"><value>Auf den ausgewählten Sicherungsordner kann nicht mehr zugegriffen werden.</value></data>
+  <data name="AutomaticBackupFailureVaultUnavailable" xml:space="preserve"><value>Der verschlüsselte Tresor war beim Sicherungsversuch nicht verfügbar.</value></data>
+  <data name="AutomaticBackupFailureWriteFailed" xml:space="preserve"><value>Die verschlüsselte Sicherung konnte nicht geschrieben oder überprüft werden.</value></data>
+  <data name="AutomaticBackupFailureConfigurationFailed" xml:space="preserve"><value>Der Zustand der automatischen Sicherung konnte nicht gespeichert werden.</value></data>
+  <data name="AutomaticBackupFailureRecoveryPointMissing" xml:space="preserve"><value>Die neueste Wiederherstellungsdatei fehlt. Versuchen Sie erneut, einen neuen Prüfpunkt zu erstellen.</value></data>
+  <data name="AutomaticBackupFailureUnexpected" xml:space="preserve"><value>Die Sicherung ist unerwartet fehlgeschlagen.</value></data>
+  <data name="RetryAutomaticBackup" xml:space="preserve"><value>Sicherung erneut versuchen</value></data>
+  <data name="AutomaticBackupFolderGuidanceTitle" xml:space="preserve"><value>Eigenen Sicherungsordner auswählen</value></data>
+  <data name="AutomaticBackupFolderGuidance" xml:space="preserve"><value>Wählen oder erstellen Sie einen Unterordner, zum Beispiel „Dokumente/OTP Harbor Backups“. Android schützt das Stammverzeichnis des internen Speichers und lässt dessen Auswahl nicht zu.</value></data>
+  <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Sicherungsprüfpunkt fehlgeschlagen</value></data>
+  <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor konnte keinen aktuellen Wiederherstellungsprüfpunkt erstellen oder überprüfen. Sie können abbrechen und es erneut versuchen oder das Konto ausdrücklich ohne aktuelle Sicherung löschen.</value></data>
+  <data name="DeleteAnyway" xml:space="preserve"><value>Trotzdem löschen</value></data>
 </root>

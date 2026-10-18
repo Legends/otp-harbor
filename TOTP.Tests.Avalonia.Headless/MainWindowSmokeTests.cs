@@ -1674,11 +1674,11 @@ public sealed class MainWindowSmokeTests
 
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             Assert.Equal(WindowStartupLocation.CenterOwner, window.WindowStartupLocation);
-            Assert.Equal(SizeToContent.WidthAndHeight, window.SizeToContent);
+            Assert.Equal(SizeToContent.Height, window.SizeToContent);
             Assert.False(window.CanResize);
             Assert.False(window.ShowInTaskbar);
-            Assert.Equal(460, window.Width);
-            Assert.Equal(360, window.MinWidth);
+            Assert.Equal(520, window.Width);
+            Assert.Equal(320, window.MinWidth);
             Assert.Equal(
                 Color.Parse("#192B52"),
                 Assert.IsType<SolidColorBrush>(window.Background).Color);
@@ -1745,7 +1745,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void DestructiveConfirmationDialog_LeavesMarginsInsideMinimumMainWindowWidth()
+    public void ConfirmationDialog_UsesTheSameReadableWidthForDestructiveActions()
     {
         var window = new ConfirmationDialogWindow
         {
@@ -1764,9 +1764,47 @@ public sealed class MainWindowSmokeTests
             window.UpdateLayout();
 
             Assert.Contains("destructive", window.Classes);
-            Assert.Equal(320, window.Width);
-            Assert.Equal(300, window.MinWidth);
+            Assert.Equal(520, window.Width);
+            Assert.Equal(320, window.MinWidth);
             Assert.Equal(WindowStartupLocation.CenterOwner, window.WindowStartupLocation);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ConfirmationDialog_FormatsLongMessagesAsReadableMultilineContent()
+    {
+        const string message = "New accounts to import: 4\nExisting accounts skipped: 16\n"
+            + "A recovery backup will be created before any changes are made.";
+        var window = new ConfirmationDialogWindow
+        {
+            DataContext = new ConfirmationDialogViewModel(new ConfirmationDialogRequest(
+                "Restore backup",
+                message,
+                NotificationSeverity.Warning,
+                "Restore backup",
+                "Cancel"))
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var messageCard = window.FindControl<Border>("DialogMessageCard");
+            Assert.NotNull(messageCard);
+            Assert.Contains("dialog-message-card", messageCard.Classes);
+            var messageText = Assert.IsType<TextBlock>(messageCard.Child);
+            Assert.Equal(TextAlignment.Left, messageText.TextAlignment);
+            Assert.Equal(TextWrapping.Wrap, messageText.TextWrapping);
+            Assert.True(messageText.Bounds.Height >= 63);
+            Assert.True(window.Bounds.Width <= 520);
+            Assert.All(
+                window.GetVisualDescendants().OfType<Button>(),
+                button => Assert.True(button.MinWidth >= 112));
         }
         finally
         {
@@ -1964,6 +2002,13 @@ public sealed class MainWindowSmokeTests
             var manageGroupsButton = window.FindControl<Button>("ManageGroupsButton")!;
             var toggleSearchButton = window.FindControl<Button>("ToggleSearchButton")!;
             var clearSearchButton = window.FindControl<Button>("ClearSearchButton")!;
+            var accountSearchBox = window.FindControl<TextBox>("AccountSearchBox")!;
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Search],
+                accountSearchBox.PlaceholderText);
+            Assert.Equal(
+                Application.Current.Resources[AvaloniaStringKeys.SearchAccounts],
+                AutomationProperties.GetName(accountSearchBox));
             Assert.Equal(2, Grid.GetColumn(manageGroupsButton));
             Assert.Equal(3, Grid.GetColumn(toggleSearchButton));
             Assert.Equal(
@@ -2545,7 +2590,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void AccountRow_ReservesCopyConfirmationDirectlyBelowGeneratedCode()
+    public void AccountRow_ReservesSecondaryCodeLineWithoutChangingHeight()
     {
         var mainWindow = new MainWindow();
         var templateHost = new Window { Width = 380, Height = 160 };
@@ -2569,14 +2614,23 @@ public sealed class MainWindowSmokeTests
                 "Issuer",
                 "account");
             account.UpdateCustomPeriodLabel("60 s");
-            account.UpdateCode("123456", 20, 60);
-            account.ShowCopyConfirmation("Copied");
+            account.UpdateNextTokenPreference(true);
+            account.UpdateCode("123456", 6, 60, "654321");
             var row = accountRowTemplate.Build(account)
                 ?? throw new InvalidOperationException("The account row could not be built.");
             row.DataContext = account;
             templateHost.Content = row;
             templateHost.Show();
             templateHost.UpdateLayout();
+            var initialHeight = row.Bounds.Height;
+
+            account.Tick();
+            templateHost.UpdateLayout();
+            var nextTokenHeight = row.Bounds.Height;
+
+            account.ShowCopyConfirmation("Copied");
+            templateHost.UpdateLayout();
+            var confirmationHeight = row.Bounds.Height;
 
             var codeButton = Assert.Single(
                 row.GetLogicalDescendants().OfType<Button>(),
@@ -2592,8 +2646,10 @@ public sealed class MainWindowSmokeTests
                 secondaryCodeLine.Children.OfType<TextBlock>(),
                 textBlock => textBlock.Text == "Copied");
             Assert.Equal("Copied", confirmation.Text);
-            Assert.Equal(12, secondaryCodeLine.MinHeight);
+            Assert.Equal(16, secondaryCodeLine.Height);
             Assert.Equal(2, secondaryCodeLine.Children.OfType<TextBlock>().Count());
+            Assert.Equal(initialHeight, nextTokenHeight, precision: 2);
+            Assert.Equal(initialHeight, confirmationHeight, precision: 2);
             var periodLabel = Assert.Single(
                 row.GetLogicalDescendants().OfType<TextBlock>(),
                 textBlock => textBlock.Text == "60 s");

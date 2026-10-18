@@ -168,10 +168,46 @@ public static class MobileStringKeys
     public const string QrPrivacyNotice = nameof(QrPrivacyNotice);
     public const string QrDisplayFailed = nameof(QrDisplayFailed);
     public const string BackupTitle = nameof(BackupTitle);
+    public const string AutomaticBackups = nameof(AutomaticBackups);
+    public const string AutomaticBackupDescription = nameof(AutomaticBackupDescription);
+    public const string AutomaticBackupNotConfigured = nameof(AutomaticBackupNotConfigured);
+    public const string AutomaticBackupReady = nameof(AutomaticBackupReady);
+    public const string AutomaticBackupRunning = nameof(AutomaticBackupRunning);
+    public const string AutomaticBackupUpToDate = nameof(AutomaticBackupUpToDate);
+    public const string AutomaticBackupCreated = nameof(AutomaticBackupCreated);
+    public const string AutomaticBackupFailed = nameof(AutomaticBackupFailed);
+    public const string AutomaticBackupDestinationUnavailable = nameof(AutomaticBackupDestinationUnavailable);
+    public const string AutomaticBackupDestinationFormat = nameof(AutomaticBackupDestinationFormat);
+    public const string AutomaticBackupLastSuccessFormat = nameof(AutomaticBackupLastSuccessFormat);
+    public const string AutomaticBackupNever = nameof(AutomaticBackupNever);
+    public const string ConfigureAutomaticBackup = nameof(ConfigureAutomaticBackup);
+    public const string ChangeAutomaticBackupFolder = nameof(ChangeAutomaticBackupFolder);
+    public const string AutomaticBackupNow = nameof(AutomaticBackupNow);
+    public const string DisableAutomaticBackup = nameof(DisableAutomaticBackup);
+    public const string AutomaticBackupConfigured = nameof(AutomaticBackupConfigured);
+    public const string AutomaticBackupDisabled = nameof(AutomaticBackupDisabled);
+    public const string AutomaticBackupSetupCancelled = nameof(AutomaticBackupSetupCancelled);
+    public const string AutomaticBackupDestinationAccessible = nameof(AutomaticBackupDestinationAccessible);
+    public const string AutomaticBackupDestinationUnavailableHealth = nameof(AutomaticBackupDestinationUnavailableHealth);
+    public const string AutomaticBackupDestinationUnknown = nameof(AutomaticBackupDestinationUnknown);
+    public const string AutomaticBackupLastFailureFormat = nameof(AutomaticBackupLastFailureFormat);
+    public const string AutomaticBackupFailureDestinationUnavailable = nameof(AutomaticBackupFailureDestinationUnavailable);
+    public const string AutomaticBackupFailureVaultUnavailable = nameof(AutomaticBackupFailureVaultUnavailable);
+    public const string AutomaticBackupFailureWriteFailed = nameof(AutomaticBackupFailureWriteFailed);
+    public const string AutomaticBackupFailureConfigurationFailed = nameof(AutomaticBackupFailureConfigurationFailed);
+    public const string AutomaticBackupFailureRecoveryPointMissing = nameof(AutomaticBackupFailureRecoveryPointMissing);
+    public const string AutomaticBackupFailureUnexpected = nameof(AutomaticBackupFailureUnexpected);
+    public const string RetryAutomaticBackup = nameof(RetryAutomaticBackup);
+    public const string AutomaticBackupFolderGuidanceTitle = nameof(AutomaticBackupFolderGuidanceTitle);
+    public const string AutomaticBackupFolderGuidance = nameof(AutomaticBackupFolderGuidance);
+    public const string DeleteWithoutBackupTitle = nameof(DeleteWithoutBackupTitle);
+    public const string DeleteWithoutBackupPrompt = nameof(DeleteWithoutBackupPrompt);
+    public const string DeleteAnyway = nameof(DeleteAnyway);
     public const string BackupSection = nameof(BackupSection);
     public const string RestoreSection = nameof(RestoreSection);
     public const string BackupDescription = nameof(BackupDescription);
     public const string ImportBackupDescription = nameof(ImportBackupDescription);
+    public const string BackupContainsNoAccounts = nameof(BackupContainsNoAccounts);
     public const string ImportAccountFile = nameof(ImportAccountFile);
     public const string ImportAccountFileDescription = nameof(ImportAccountFileDescription);
     public const string ImportFormatAegis = nameof(ImportFormatAegis);
@@ -270,6 +306,7 @@ public static class MobileStringKeys
     public const string DeleteAccount = nameof(DeleteAccount);
     public const string Lock = nameof(Lock);
     public const string Issuer = nameof(Issuer);
+    public const string IssuerPlaceholder = nameof(IssuerPlaceholder);
     public const string AccountName = nameof(AccountName);
     public const string Secret = nameof(Secret);
     public const string SecretOptionalOnEdit = nameof(SecretOptionalOnEdit);
@@ -498,10 +535,46 @@ public static class MobileStringKeys
         QrPrivacyNotice,
         QrDisplayFailed,
         BackupTitle,
+        AutomaticBackups,
+        AutomaticBackupDescription,
+        AutomaticBackupNotConfigured,
+        AutomaticBackupReady,
+        AutomaticBackupRunning,
+        AutomaticBackupUpToDate,
+        AutomaticBackupCreated,
+        AutomaticBackupFailed,
+        AutomaticBackupDestinationUnavailable,
+        AutomaticBackupDestinationFormat,
+        AutomaticBackupLastSuccessFormat,
+        AutomaticBackupNever,
+        ConfigureAutomaticBackup,
+        ChangeAutomaticBackupFolder,
+        AutomaticBackupNow,
+        DisableAutomaticBackup,
+        AutomaticBackupConfigured,
+        AutomaticBackupDisabled,
+        AutomaticBackupSetupCancelled,
+        AutomaticBackupDestinationAccessible,
+        AutomaticBackupDestinationUnavailableHealth,
+        AutomaticBackupDestinationUnknown,
+        AutomaticBackupLastFailureFormat,
+        AutomaticBackupFailureDestinationUnavailable,
+        AutomaticBackupFailureVaultUnavailable,
+        AutomaticBackupFailureWriteFailed,
+        AutomaticBackupFailureConfigurationFailed,
+        AutomaticBackupFailureRecoveryPointMissing,
+        AutomaticBackupFailureUnexpected,
+        RetryAutomaticBackup,
+        AutomaticBackupFolderGuidanceTitle,
+        AutomaticBackupFolderGuidance,
+        DeleteWithoutBackupTitle,
+        DeleteWithoutBackupPrompt,
+        DeleteAnyway,
         BackupSection,
         RestoreSection,
         BackupDescription,
         ImportBackupDescription,
+        BackupContainsNoAccounts,
         ImportAccountFile,
         ImportAccountFileDescription,
         ImportFormatAegis,
@@ -578,6 +651,7 @@ public static class MobileStringKeys
         DeleteAccount,
         Lock,
         Issuer,
+        IssuerPlaceholder,
         AccountName,
         Secret,
         SecretOptionalOnEdit,

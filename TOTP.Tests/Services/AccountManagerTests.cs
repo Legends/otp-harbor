@@ -1,4 +1,5 @@
 using Moq;
+using TOTP.Core.Backup;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Infrastructure.Services;
@@ -67,5 +68,35 @@ public sealed class AccountManagerTests
 
         Assert.True(result.IsSuccess);
         dal.Verify(value => value.UpdateAsync(It.Is<Account>(account => account.Group == group)), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddNewAsync_AfterSuccessfulMutation_RequestsAutomaticBackup()
+    {
+        var account = new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP");
+        var dal = new Mock<IAccountDAL>();
+        dal.Setup(value => value.AddNewAsync(account)).ReturnsAsync(FluentResults.Result.Ok());
+        var backup = new Mock<IAutomaticBackupCoordinator>();
+        var sut = new AccountManager(dal.Object, backup.Object);
+
+        var result = await sut.AddNewAsync(account);
+
+        Assert.True(result.IsSuccess);
+        backup.Verify(value => value.RequestBackup(), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddNewAsync_AfterFailedMutation_DoesNotRequestAutomaticBackup()
+    {
+        var account = new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP");
+        var dal = new Mock<IAccountDAL>();
+        dal.Setup(value => value.AddNewAsync(account)).ReturnsAsync(FluentResults.Result.Fail("failed"));
+        var backup = new Mock<IAutomaticBackupCoordinator>();
+        var sut = new AccountManager(dal.Object, backup.Object);
+
+        var result = await sut.AddNewAsync(account);
+
+        Assert.True(result.IsFailed);
+        backup.Verify(value => value.RequestBackup(), Times.Never);
     }
 }

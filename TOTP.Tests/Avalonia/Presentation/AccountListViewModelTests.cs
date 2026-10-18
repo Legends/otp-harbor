@@ -1,4 +1,5 @@
 using FluentResults;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using Moq;
 using Avalonia.Controls;
@@ -16,6 +17,7 @@ using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Core.Backup;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
@@ -2505,13 +2507,57 @@ public sealed class AccountListViewModelTests
         await sut.LoadAsync();
         sut.SelectedAccount = sut.Accounts[0];
         sut.ContextAccount = sut.Accounts[1];
+        var originalProjection = sut.Accounts;
+        var collectionChanges = new List<NotifyCollectionChangedAction>();
+        var observableProjection = Assert.IsAssignableFrom<INotifyCollectionChanged>(originalProjection);
+        observableProjection.CollectionChanged += (_, args) => collectionChanges.Add(args.Action);
 
         await sut.DeleteContextAccountAsync();
 
         manager.Verify(value => value.DeleteAsync(second), Times.Once);
         manager.Verify(value => value.DeleteAsync(first), Times.Never);
+        manager.Verify(value => value.GetAllOtpEntriesSortedAsync(), Times.Exactly(2));
+        Assert.Same(originalProjection, sut.Accounts);
+        Assert.Equal([NotifyCollectionChangedAction.Remove], collectionChanges);
         Assert.Single(sut.Accounts);
         Assert.Equal(first.ID, sut.Accounts[0].Id);
+        Assert.Equal(first.ID, sut.SelectedAccount?.Id);
+    }
+
+    [Fact]
+    public async Task DeleteAccountAsync_WhenCheckpointFails_RequiresExplicitSecondConfirmation()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var remaining = new List<Account> { account };
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(remaining.ToArray()));
+        manager.Setup(value => value.DeleteAsync(account))
+            .Callback(() => remaining.Clear())
+            .ReturnsAsync(Result.Ok());
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        var requests = new List<ConfirmationDialogRequest>();
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ConfirmationDialogRequest, CancellationToken>((request, _) => requests.Add(request))
+            .ReturnsAsync(() => requests.Count <= 2);
+        var backup = new Mock<IAutomaticBackupCoordinator>();
+        backup.SetupGet(value => value.Status).Returns(new AutomaticBackupStatus(
+            true, false, "Backups", null, AutomaticBackupStatusKind.Ready));
+        backup.Setup(value => value.EnsureCurrentCheckpointAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail<AutomaticBackupRunResult>("unavailable"));
+        using var sut = CreateSut(manager.Object, dialogs.Object, automaticBackup: backup.Object);
+        await sut.LoadAsync();
+        sut.SelectedAccount = Assert.Single(sut.Accounts);
+
+        await sut.DeleteAccountAsync();
+
+        manager.Verify(value => value.DeleteAsync(account), Times.Once);
+        backup.Verify(value => value.EnsureCurrentCheckpointAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(2, requests.Count);
+        Assert.Equal("Backup checkpoint failed", requests[1].Title);
+        Assert.Equal("Delete anyway", requests[1].ConfirmText);
     }
 
     [Fact]
@@ -2844,7 +2890,8 @@ public sealed class AccountListViewModelTests
         IExportService? exportService = null,
         IAccountImportService? accountImportService = null,
         IAvaloniaFilePicker? filePicker = null,
-        IAuthorizationService? authorizationService = null) =>
+        IAuthorizationService? authorizationService = null,
+        IAutomaticBackupCoordinator? automaticBackup = null) =>
         new(
             manager,
             accountTotpService ?? Mock.Of<IAccountTotpService>(),
@@ -2860,7 +2907,8 @@ public sealed class AccountListViewModelTests
             exportService: exportService,
             accountImportService: accountImportService,
             filePicker: filePicker,
-            authorizationService: authorizationService);
+            authorizationService: authorizationService,
+            automaticBackup: automaticBackup);
 
     private static Mock<IAsyncClipboardService> SuccessfulClipboard()
     {

@@ -5,6 +5,7 @@ using Moq;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
+using TOTP.Core.Backup;
 using TOTP.Core.Icons;
 using TOTP.Core.Models;
 using TOTP.Core.Enums;
@@ -2272,6 +2273,41 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task DeleteConfirmation_WhenCheckpointFails_RequiresExplicitSecondConfirmation()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
+        var backup = new Mock<IAutomaticBackupCoordinator>();
+        backup.SetupGet(value => value.Status).Returns(new AutomaticBackupStatus(
+            true, false, "Backups", null, AutomaticBackupStatusKind.Ready));
+        backup.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok());
+        backup.Setup(value => value.EnsureCurrentCheckpointAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail<AutomaticBackupRunResult>("unavailable"));
+        var context = CreateContext(isConfigured: true, [account], automaticBackup: backup.Object);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp.Setup(value => value.GenerateAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        context.AccountManager.Setup(value => value.DeleteAsync(account)).ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginDeleteForAccountAsync(Assert.Single(context.Sut.Accounts));
+
+        await context.Sut.ConfirmDeleteAsync();
+
+        Assert.True(context.Sut.IsDeleteConfirmationVisible);
+        Assert.Equal("Backup checkpoint failed", context.Sut.DeleteConfirmTitle);
+        Assert.Equal("Delete anyway", context.Sut.DeleteConfirmationActionText);
+        context.AccountManager.Verify(value => value.DeleteAsync(account), Times.Never);
+
+        await context.Sut.ConfirmDeleteAsync();
+
+        context.AccountManager.Verify(value => value.DeleteAsync(account), Times.Once);
+        backup.Verify(value => value.EnsureCurrentCheckpointAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ScanQrAsync_WhenScannerIsUnavailable_OffersManualFallback()
     {
         var context = CreateContext(isConfigured: true);
@@ -2836,6 +2872,86 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.IsImportConfirmationVisible);
         Assert.Empty(context.Sut.ImportPassword);
         Assert.Empty(context.Sut.NotificationText);
+    }
+
+    [Fact]
+    public async Task ImportBackupAsync_AutomaticBackup_UsesMasterPasswordSnapshotReader()
+    {
+        var importedAccount = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenEncryptedBackupAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "backup.otphbackup"));
+        context.AutomaticBackupSnapshots.Setup(value => value.ReadAccountsAsync(
+                It.IsAny<Stream>(),
+                "master-password",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([importedAccount]));
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+                It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new AccountImportOutcome(
+                AccountImportStatus.Completed,
+                Added: 1)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ImportPassword = "master-password";
+
+        await context.Sut.ImportBackupAsync();
+
+        context.AutomaticBackupSnapshots.Verify(value => value.ReadAccountsAsync(
+            It.IsAny<Stream>(),
+            "master-password",
+            It.IsAny<CancellationToken>()), Times.Once);
+        context.ExportService.Verify(value => value.ImportFromEncryptedStreamAsync(
+            It.IsAny<string>(),
+            It.IsAny<Stream>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportBackupAsync_EmptyAutomaticBackup_ShowsSafeNoOpInsteadOfError()
+    {
+        var context = CreateContext(isConfigured: true, cultureName: "de");
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenEncryptedBackupAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "empty.otphbackup"));
+        context.AutomaticBackupSnapshots.Setup(value => value.ReadAccountsAsync(
+                It.IsAny<Stream>(),
+                "master-password",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ImportPassword = "master-password";
+
+        await context.Sut.ImportBackupAsync();
+
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.BackupContainsNoAccounts),
+            context.Sut.NotificationText);
+        Assert.Equal(NotificationSeverity.Information, context.Sut.NotificationSeverity);
+        context.AccountImport.Verify(value => value.ImportWithConflictResolutionAsync(
+            It.IsAny<IReadOnlyList<Account>>(),
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -4295,7 +4411,8 @@ public sealed class MobileShellViewModelTests
         string cultureName = "en",
         bool appLockEnabled = true,
         IBrandIconPackService? brandIconPackService = null,
-        string? logFilePath = null)
+        string? logFilePath = null,
+        IAutomaticBackupCoordinator? automaticBackup = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -4355,6 +4472,7 @@ public sealed class MobileShellViewModelTests
         var documents = new Mock<IMobileDocumentService>();
         var exportService = new Mock<IExportService>();
         var accountImport = new Mock<IAccountImportService>();
+        var automaticBackupSnapshots = new Mock<IAutomaticBackupSnapshotService>();
 
         var settingsValue = new AppSettings
         {
@@ -4409,7 +4527,9 @@ public sealed class MobileShellViewModelTests
             strings,
             time,
             brandIconPackService: brandIconPackService,
-            appearanceSettingsService: appearance.Object);
+            appearanceSettingsService: appearance.Object,
+            automaticBackup: automaticBackup,
+            automaticBackupSnapshots: automaticBackupSnapshots.Object);
         return new TestContext(
             sut,
             state,
@@ -4429,7 +4549,8 @@ public sealed class MobileShellViewModelTests
             settingsValue,
             strings,
             time,
-            appearance);
+            appearance,
+            automaticBackupSnapshots);
     }
 
     private sealed record TestContext(
@@ -4451,7 +4572,8 @@ public sealed class MobileShellViewModelTests
         AppSettings SettingsValue,
         MobileStringCatalog Strings,
         ManualTimeProvider Time,
-        Mock<IAppearanceSettingsService> Appearance);
+        Mock<IAppearanceSettingsService> Appearance,
+        Mock<IAutomaticBackupSnapshotService> AutomaticBackupSnapshots);
 
     private sealed class ManualTimeProvider : TimeProvider
     {

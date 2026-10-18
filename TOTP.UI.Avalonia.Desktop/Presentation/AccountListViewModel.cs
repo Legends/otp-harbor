@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -15,6 +16,7 @@ using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Core.Backup;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
@@ -36,6 +38,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private readonly IExportService? _exportService;
     private readonly IAccountImportService? _accountImportService;
     private readonly IAuthorizationService? _authorizationService;
+    private readonly IAutomaticBackupCoordinator? _automaticBackup;
     private readonly TimeSpan _countdownTickInterval;
     private readonly TimeSpan _copyConfirmationDuration;
     private readonly ISettingsService? _settingsService;
@@ -144,7 +147,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         IAvaloniaFilePicker? filePicker = null,
         IExportService? exportService = null,
         IAccountImportService? accountImportService = null,
-        IAuthorizationService? authorizationService = null)
+        IAuthorizationService? authorizationService = null,
+        IAutomaticBackupCoordinator? automaticBackup = null)
     {
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountTotpService = accountTotpService ?? throw new ArgumentNullException(nameof(accountTotpService));
@@ -159,6 +163,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         _exportService = exportService;
         _accountImportService = accountImportService;
         _authorizationService = authorizationService;
+        _automaticBackup = automaticBackup;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         _countdownTickInterval = countdownTickInterval ?? TimeSpan.FromSeconds(1);
         _copyConfirmationDuration = transientMessageDuration
@@ -253,10 +258,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             if (!SetField(ref _accounts, value)) return;
             _realizedAccountIds.Clear();
-            OnPropertyChanged(nameof(HasNoAccounts));
-            OnPropertyChanged(nameof(HasNoSearchResults));
-            OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
-            OnPropertyChanged(nameof(SearchResultSummary));
+            NotifyAccountProjectionChanged();
         }
     }
 
@@ -1683,6 +1685,47 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
+        if (_automaticBackup?.Status.IsConfigured == true)
+        {
+            var checkpointSucceeded = false;
+            try
+            {
+                var checkpoint = await _automaticBackup.EnsureCurrentCheckpointAsync();
+                checkpointSucceeded = checkpoint.IsSuccess
+                    && checkpoint.Value.Status is AutomaticBackupRunStatus.Created
+                        or AutomaticBackupRunStatus.UpToDate
+                        or AutomaticBackupRunStatus.NotConfigured;
+            }
+            catch (Exception)
+            {
+                checkpointSucceeded = false;
+            }
+
+            if (!checkpointSucceeded)
+            {
+                try
+                {
+                    confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                        _localization.GetString(AvaloniaStringKeys.DeleteWithoutBackupTitle),
+                        _localization.GetString(AvaloniaStringKeys.DeleteWithoutBackupPrompt),
+                        NotificationSeverity.Warning,
+                        _localization.GetString(AvaloniaStringKeys.DeleteAnyway),
+                        _localization.GetString(AvaloniaStringKeys.Cancel),
+                        IsDestructive: true));
+                }
+                catch (Exception)
+                {
+                    confirmed = false;
+                }
+
+                if (!confirmed)
+                {
+                    IsBusy = false;
+                    return;
+                }
+            }
+        }
+
         try
         {
             var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
@@ -1707,9 +1750,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 }
             }
 
-            SelectedAccount = null;
-            IsBusy = false;
-            await LoadAsync();
+            RemoveDeletedAccountFromPresentation(selected);
             if (!HasMessage)
                 ShowTransientMessage(_localization.GetString(AvaloniaStringKeys.AccountDeleted));
         }
@@ -2108,12 +2149,55 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             _selectedGroupId,
             _showFavoritesOnly,
             _showAllAccounts);
-        Accounts = SortAccounts(filteredAccounts);
+        Accounts = new ObservableCollection<AccountListItemViewModel>(
+            SortAccounts(filteredAccounts));
         var selectionIsVisible = SelectedAccount is not null
             && Accounts.Any(account => account.Id == SelectedAccount.Id);
         if (selectionIsVisible) return;
 
         SelectedAccount = null;
+    }
+
+    private void RemoveDeletedAccountFromPresentation(AccountListItemViewModel deletedAccount)
+    {
+        var previousSelectedGroupId = _selectedGroupId;
+        var wasShowingFavoritesOnly = _showFavoritesOnly;
+
+        if (SelectedAccount?.Id == deletedAccount.Id)
+            SelectedAccount = null;
+        if (ContextAccount?.Id == deletedAccount.Id)
+            ContextAccount = null;
+
+        _allAccounts = _allAccounts
+            .Where(account => account.Id != deletedAccount.Id)
+            .ToArray();
+        _realizedAccountIds.Remove(deletedAccount.Id);
+        RefreshFavoriteState();
+        RefreshGroups();
+
+        var activeFilterChanged = previousSelectedGroupId != _selectedGroupId
+            || wasShowingFavoritesOnly != _showFavoritesOnly;
+        if (!activeFilterChanged
+            && _accounts is ObservableCollection<AccountListItemViewModel> visibleAccounts)
+        {
+            var visibleAccount = visibleAccounts.FirstOrDefault(
+                account => account.Id == deletedAccount.Id);
+            if (visibleAccount is not null)
+                visibleAccounts.Remove(visibleAccount);
+            NotifyAccountProjectionChanged();
+        }
+        else
+        {
+            ApplyFilter();
+        }
+    }
+
+    private void NotifyAccountProjectionChanged()
+    {
+        OnPropertyChanged(nameof(HasNoAccounts));
+        OnPropertyChanged(nameof(HasNoSearchResults));
+        OnPropertyChanged(nameof(ShouldShowAccountNavigationCards));
+        OnPropertyChanged(nameof(SearchResultSummary));
     }
 
     private IReadOnlyList<AccountListItemViewModel> SortAccounts(

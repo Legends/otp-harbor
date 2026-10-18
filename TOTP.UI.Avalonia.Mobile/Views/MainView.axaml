@@ -98,6 +98,25 @@
         <Style Selector="Button.settings-category">
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Padding" Value="14,12" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Padding="{TemplateBinding Padding}"
+                            TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
         </Style>
         <Style Selector="StackPanel.settings-root Button.wide">
             <Setter Property="Background" Value="{DynamicResource BrushAccent}" />
@@ -499,117 +518,120 @@
                         </Grid>
 
                         <Grid
-                            x:Name="AccountGroupsStrip"
+                            x:Name="AccountGroupsFallbackPresenter"
                             Grid.Row="2"
                             MinHeight="56"
                             Margin="0,2,0,6"
                             ColumnDefinitions="*"
-                            IsVisible="{Binding HasAccountNavigationCards}"
                             VerticalAlignment="Center">
-                            <ScrollViewer
-                                Grid.Column="0"
-                                HorizontalScrollBarVisibility="Hidden"
-                                VerticalAlignment="Center"
-                                VerticalScrollBarVisibility="Disabled">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border
-                                        Width="160"
-                                        Height="52"
-                                        Margin="2"
-                                        Background="{DynamicResource BrushFavoriteFilterBackground}"
-                                        Classes="favorite-group-card group-card"
-                                        Classes.selected="{Binding IsFavoritesFilterSelected}"
-                                        CornerRadius="7"
-                                        IsVisible="{Binding HasFavoriteAccounts}">
-                                        <ToggleButton
-                                            automation:AutomationProperties.Name="{Binding FavoritesText}"
-                                            Classes="favorites-filter"
-                                            Command="{Binding ToggleFavoritesFilterCommand}"
-                                            IsChecked="{Binding IsFavoritesFilterSelected, Mode=OneWay}"
-                                            ToolTip.Tip="{Binding FavoritesText}">
-                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="7">
-                                                <controls:SymbolIcon
-                                                    Grid.Column="0"
-                                                    Foreground="{DynamicResource BrushFavoriteFilterIcon}"
-                                                    IconSize="20"
-                                                    Kind="Favorite" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    FontWeight="SemiBold"
-                                                    Text="{Binding FavoritesText}"
-                                                    TextTrimming="CharacterEllipsis"
-                                                    TextWrapping="NoWrap" />
-                                                <TextBlock
-                                                    Grid.Column="2"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="12"
-                                                    Text="{Binding FavoriteCount}" />
-                                            </Grid>
-                                        </ToggleButton>
-                                    </Border>
-                                    <ItemsControl ItemsSource="{Binding Groups}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:MobileAccountGroupItem">
-                                                <Border
-                                                    Width="180"
-                                                    Height="52"
-                                                    Margin="2"
-                                                    Background="{Binding Background}"
-                                                    Classes="group-card"
-                                                    Classes.selected="{Binding IsSelected}"
-                                                    CornerRadius="7">
-                                                    <Grid ColumnDefinitions="*,40">
-                                                        <Button
-                                                            Grid.Column="0"
-                                                            automation:AutomationProperties.Name="{Binding Name}"
-                                                            Classes="account-group group-card-hit-target"
-                                                            Command="{Binding SelectCommand}"
-                                                            ToolTip.Tip="{Binding Name}">
-                                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="7">
-                                                                <controls:SymbolIcon
-                                                                    Grid.Column="0"
-                                                                    Foreground="{Binding Foreground}"
-                                                                    IconSize="20"
-                                                                    Kind="Folder" />
-                                                                <TextBlock
-                                                                    Grid.Column="1"
-                                                                    VerticalAlignment="Center"
-                                                                    FontWeight="SemiBold"
-                                                                    Text="{Binding Name}"
-                                                                    TextTrimming="CharacterEllipsis"
-                                                                    TextWrapping="NoWrap" />
-                                                                <TextBlock
-                                                                    Grid.Column="2"
-                                                                    VerticalAlignment="Center"
-                                                                    FontSize="12"
-                                                                    Text="{Binding AccountCount}" />
-                                                            </Grid>
-                                                        </Button>
-                                                        <Button
-                                                            Grid.Column="1"
-                                                            Width="40"
-                                                            MinWidth="40"
-                                                            Margin="0"
-                                                            Padding="8"
-                                                            automation:AutomationProperties.Name="{Binding DataContext.EditGroupText, ElementName=Root}"
-                                                            Classes="icon-action"
-                                                            Command="{Binding EditCommand}"
-                                                            ToolTip.Tip="{Binding DataContext.EditGroupText, ElementName=Root}">
-                                                            <controls:SymbolIcon IconSize="16" Kind="Edit" />
-                                                        </Button>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </ScrollViewer>
+                            <Grid
+                                x:Name="AccountGroupsStrip"
+                                IsVisible="{Binding HasAccountNavigationCards}">
+                                <ScrollViewer
+                                    Grid.Column="0"
+                                    HorizontalScrollBarVisibility="Hidden"
+                                    VerticalAlignment="Center"
+                                    VerticalScrollBarVisibility="Disabled">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border
+                                            Width="160"
+                                            Height="52"
+                                            Margin="2"
+                                            Background="{DynamicResource BrushFavoriteFilterBackground}"
+                                            Classes="favorite-group-card group-card"
+                                            Classes.selected="{Binding IsFavoritesFilterSelected}"
+                                            CornerRadius="7"
+                                            IsVisible="{Binding HasFavoriteAccounts}">
+                                            <ToggleButton
+                                                automation:AutomationProperties.Name="{Binding FavoritesText}"
+                                                Classes="favorites-filter"
+                                                Command="{Binding ToggleFavoritesFilterCommand}"
+                                                IsChecked="{Binding IsFavoritesFilterSelected, Mode=OneWay}"
+                                                ToolTip.Tip="{Binding FavoritesText}">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="7">
+                                                    <controls:SymbolIcon
+                                                        Grid.Column="0"
+                                                        Foreground="{DynamicResource BrushFavoriteFilterIcon}"
+                                                        IconSize="20"
+                                                        Kind="Favorite" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        FontWeight="SemiBold"
+                                                        Text="{Binding FavoritesText}"
+                                                        TextTrimming="CharacterEllipsis"
+                                                        TextWrapping="NoWrap" />
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="{Binding FavoriteCount}" />
+                                                </Grid>
+                                            </ToggleButton>
+                                        </Border>
+                                        <ItemsControl ItemsSource="{Binding Groups}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:MobileAccountGroupItem">
+                                                    <Border
+                                                        Width="180"
+                                                        Height="52"
+                                                        Margin="2"
+                                                        Background="{Binding Background}"
+                                                        Classes="group-card"
+                                                        Classes.selected="{Binding IsSelected}"
+                                                        CornerRadius="7">
+                                                        <Grid ColumnDefinitions="*,40">
+                                                            <Button
+                                                                Grid.Column="0"
+                                                                automation:AutomationProperties.Name="{Binding Name}"
+                                                                Classes="account-group group-card-hit-target"
+                                                                Command="{Binding SelectCommand}"
+                                                                ToolTip.Tip="{Binding Name}">
+                                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="7">
+                                                                    <controls:SymbolIcon
+                                                                        Grid.Column="0"
+                                                                        Foreground="{Binding Foreground}"
+                                                                        IconSize="20"
+                                                                        Kind="Folder" />
+                                                                    <TextBlock
+                                                                        Grid.Column="1"
+                                                                        VerticalAlignment="Center"
+                                                                        FontWeight="SemiBold"
+                                                                        Text="{Binding Name}"
+                                                                        TextTrimming="CharacterEllipsis"
+                                                                        TextWrapping="NoWrap" />
+                                                                    <TextBlock
+                                                                        Grid.Column="2"
+                                                                        VerticalAlignment="Center"
+                                                                        FontSize="12"
+                                                                        Text="{Binding AccountCount}" />
+                                                                </Grid>
+                                                            </Button>
+                                                            <Button
+                                                                Grid.Column="1"
+                                                                Width="40"
+                                                                MinWidth="40"
+                                                                Margin="0"
+                                                                Padding="8"
+                                                                automation:AutomationProperties.Name="{Binding DataContext.EditGroupText, ElementName=Root}"
+                                                                Classes="icon-action"
+                                                                Command="{Binding EditCommand}"
+                                                                ToolTip.Tip="{Binding DataContext.EditGroupText, ElementName=Root}">
+                                                                <controls:SymbolIcon IconSize="16" Kind="Edit" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
                         </Grid>
 
                         <ContentControl
@@ -1421,11 +1443,98 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
-                        <StackPanel
-                            IsVisible="{Binding IsBackupSettingsVisible}"
-                            Spacing="12">
+                        <StackPanel IsVisible="{Binding IsBackupSettingsVisible}">
+                            <Grid
+                                RowDefinitions="Auto,Auto,Auto"
+                                RowSpacing="12">
+                                <Border
+                                    x:Name="AutomaticBackupPanel"
+                                    Grid.Row="2"
+                                    BorderBrush="{DynamicResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock
+                                            FontSize="17"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding AutomaticBackupsText}" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            Text="{Binding AutomaticBackupDescriptionText}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{Binding AutomaticBackupStatusText}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            IsVisible="{Binding IsAutomaticBackupConfigured}"
+                                            Text="{Binding AutomaticBackupDestinationText}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            IsVisible="{Binding IsAutomaticBackupConfigured}"
+                                            Text="{Binding AutomaticBackupLastSuccessText}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextSecondary}"
+                                            IsVisible="{Binding IsAutomaticBackupConfigured}"
+                                            Text="{Binding AutomaticBackupDestinationAccessText}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushDanger}"
+                                            IsVisible="{Binding HasAutomaticBackupFailure}"
+                                            Text="{Binding AutomaticBackupLastFailureText}"
+                                            TextWrapping="Wrap" />
+                                        <Border
+                                            Padding="12"
+                                            Background="{DynamicResource BrushSurfaceAlternate}"
+                                            CornerRadius="8"
+                                            IsVisible="{Binding !IsAutomaticBackupConfigured}">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock
+                                                    FontWeight="SemiBold"
+                                                    Text="{Binding AutomaticBackupFolderGuidanceTitleText}" />
+                                                <TextBlock
+                                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                                    Text="{Binding AutomaticBackupFolderGuidanceText}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Button
+                                            Classes="wide primary"
+                                            Command="{Binding ConfigureAutomaticBackupCommand}"
+                                            IsVisible="{Binding !IsAutomaticBackupConfigured}">
+                                            <controls:SymbolIconLabel Kind="Folder" Text="{Binding ConfigureAutomaticBackupText}" />
+                                        </Button>
+                                        <Button
+                                            Classes="wide secondary"
+                                            Command="{Binding ConfigureAutomaticBackupCommand}"
+                                            IsVisible="{Binding IsAutomaticBackupConfigured}">
+                                            <controls:SymbolIconLabel Kind="Folder" Text="{Binding ChangeAutomaticBackupFolderText}" />
+                                        </Button>
+                                        <Grid
+                                            ColumnDefinitions="*,*"
+                                            ColumnSpacing="8"
+                                            IsVisible="{Binding IsAutomaticBackupConfigured}">
+                                            <Button
+                                                Classes="wide primary"
+                                                Command="{Binding AutomaticBackupNowCommand}">
+                                                <controls:SymbolIconLabel Kind="BackupRestore" Text="{Binding AutomaticBackupActionText}" />
+                                            </Button>
+                                            <Button
+                                                Grid.Column="1"
+                                                Classes="wide secondary"
+                                                Command="{Binding DisableAutomaticBackupCommand}">
+                                                <controls:SymbolIconLabel Kind="Close" Text="{Binding DisableAutomaticBackupText}" />
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                                 <Border
                                     x:Name="BackupExportPanel"
+                                    Grid.Row="0"
                                     BorderBrush="{DynamicResource BrushBorder}"
                                     BorderThickness="1"
                                     CornerRadius="8"
@@ -1457,6 +1566,7 @@
                                 </Border>
                                 <Border
                                     x:Name="BackupRestorePanel"
+                                    Grid.Row="1"
                                     BorderBrush="{DynamicResource BrushBorder}"
                                     BorderThickness="1"
                                     CornerRadius="8"
@@ -1480,6 +1590,7 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
+                            </Grid>
                         </StackPanel>
                         <StackPanel
                             IsVisible="{Binding IsImportExportSettingsVisible}"
@@ -1883,8 +1994,9 @@
                         IsVisible="{Binding IsEditorVisible}"
                         Spacing="14">
                         <TextBox
+                            x:Name="AccountIssuerBox"
                             automation:AutomationProperties.Name="{Binding IssuerText}"
-                            PlaceholderText="{Binding IssuerText}"
+                            PlaceholderText="{Binding IssuerPlaceholderText}"
                             Text="{Binding EditorIssuer, Mode=TwoWay}" />
                         <controls:ValidationMessage Severity="Error" Text="{Binding EditorIssuerMessage}" />
                         <TextBox
@@ -2868,7 +2980,7 @@
                             Grid.Column="1"
                             Classes="wide danger"
                             Command="{Binding ConfirmDeleteCommand}"
-                            Content="{Binding DeleteText}" />
+                            Content="{Binding DeleteConfirmationActionText}" />
                     </Grid>
                 </StackPanel>
             </Border>

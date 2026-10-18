@@ -83,6 +83,9 @@
     <None Include="..\TOTP.UI.Avalonia.Android\MainActivity.cs"
           Link="Fixtures\Android\MainActivity.cs"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\AndroidAutomaticBackupDestinationAdapter.cs"
+          Link="Fixtures\Android\AndroidAutomaticBackupDestinationAdapter.cs"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- In TOTP.Tests.csproj -->

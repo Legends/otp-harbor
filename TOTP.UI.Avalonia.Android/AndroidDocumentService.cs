@@ -27,9 +27,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         var selected = await StartAsync(intent, OpenRequestCode, cancellationToken);
         if (selected is null) return null;
 
-        var activity = activityProvider.GetCurrent();
-        var stream = activity?.ContentResolver?.OpenInputStream(selected);
-        return stream is null ? null : new MobileReadableDocument(stream);
+        return OpenReadableDocument(selected, "backup.totp");
     }
 
     public async Task<MobileWritableDocument?> CreateEncryptedBackupAsync(

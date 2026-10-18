@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using TOTP.Core.Backup;
 using TOTP.Core.Common;
 using TOTP.Core.Security;
 using TOTP.Core.Security.Interfaces;
@@ -25,6 +26,9 @@ public static class DependencyInjection
     {
         services.TryAddSingleton<IPlatformUnattendedUnlock,
             UnavailablePlatformUnattendedUnlock>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton<IAutomaticBackupDestinationAdapter,
+            UnavailableAutomaticBackupDestinationAdapter>();
         ArgumentNullException.ThrowIfNull(fileSecurity);
         services.AddSingleton(fileSecurity);
 
@@ -47,6 +51,13 @@ public static class DependencyInjection
             var fileSecurity = sp.GetRequiredService<IPlatformFileSecurity>();
             return new AppPreferencesStore(applicationPaths.PreferencesFilePath, logger, fileSecurity);
         });
+        services.AddSingleton<IAutomaticBackupConfigurationStore>(sp =>
+            new AutomaticBackupConfigurationStore(
+                Path.Combine(
+                    applicationPaths.ApplicationDataDirectory,
+                    AutomaticBackupConfigurationStore.FileName),
+                sp.GetRequiredService<ILogger<AutomaticBackupConfigurationStore>>(),
+                sp.GetRequiredService<IPlatformFileSecurity>()));
 
         services.AddSingleton<ISettingsService, PortableSettingsService>();
         services.AddSingleton<IAppearanceSettingsService>(sp =>
@@ -97,12 +108,23 @@ public static class DependencyInjection
         services.AddSingleton<VaultService>();
         services.AddSingleton<IVaultService>(sp => sp.GetRequiredService<VaultService>());
         services.AddSingleton<IVaultKeyVerifier>(sp => sp.GetRequiredService<VaultService>());
+        services.AddSingleton<IVaultSnapshotReader>(sp => sp.GetRequiredService<VaultService>());
         services.AddSingleton<IStoredVaultKeyVerifier>(sp => new StoredVaultKeyVerifier(
             resolvedVaultPath,
             sp.GetRequiredService<IVaultKeyVerifier>(),
             sp.GetRequiredService<ILogger<StoredVaultKeyVerifier>>(),
             sp.GetRequiredService<IPlatformFileSecurity>()));
         services.AddSingleton<IExportService, ExportService>();
+        services.AddSingleton<IAutomaticBackupSnapshotService>(sp =>
+            new AutomaticBackupSnapshotService(
+                resolvedVaultPath,
+                sp.GetRequiredService<IAuthorizationEnvelopeStore>(),
+                sp.GetRequiredService<IMasterPasswordService>(),
+                sp.GetRequiredService<IVaultSnapshotReader>(),
+                sp.GetRequiredService<IPlatformFileSecurity>(),
+                sp.GetRequiredService<TimeProvider>(),
+                sp.GetRequiredService<ILogger<AutomaticBackupSnapshotService>>()));
+        services.AddSingleton<IAutomaticBackupCoordinator, AutomaticBackupCoordinator>();
 
         services.AddSingleton<IAccountDAL>(sp =>
         {
