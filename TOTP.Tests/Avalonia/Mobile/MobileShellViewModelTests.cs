@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections.Specialized;
 using Avalonia.Media;
 using FluentResults;
 using Moq;
@@ -2225,12 +2226,21 @@ public sealed class MobileShellViewModelTests
         await context.Sut.BeginDeleteForAccountAsync(item);
 
         Assert.True(context.Sut.IsDeleteConfirmationVisible);
+        Assert.True(context.Sut.IsSharedDeleteConfirmationVisible);
         Assert.False(context.Sut.IsNativeAccountListVisible);
         Assert.Same(item, Assert.Single(context.Sut.Accounts));
         Assert.Equal(account.ID, context.Sut.SelectedAccount?.Id);
         await context.Sut.CancelDeleteAsync();
         Assert.True(context.Sut.IsNativeAccountListVisible);
         Assert.Same(item, Assert.Single(context.Sut.Accounts));
+
+        context.Sut.UseNativeDeleteConfirmation();
+        await context.Sut.BeginDeleteForAccountAsync(item);
+
+        Assert.True(context.Sut.IsDeleteConfirmationVisible);
+        Assert.False(context.Sut.IsSharedDeleteConfirmationVisible);
+        Assert.True(context.Sut.IsNativeAccountListVisible);
+        await context.Sut.CancelDeleteAsync();
     }
 
     [Fact]
@@ -2254,6 +2264,9 @@ public sealed class MobileShellViewModelTests
         await context.Sut.UnlockAsync();
         var firstItem = context.Sut.Accounts.Single(account => account.Id == first.ID);
         var secondItem = context.Sut.Accounts.Single(account => account.Id == second.ID);
+        var collectionChanges = new List<NotifyCollectionChangedAction>();
+        context.Sut.Accounts.CollectionChanged += (_, args) =>
+            collectionChanges.Add(args.Action);
 
         await context.Sut.BeginDeleteForAccountAsync(firstItem);
         context.Sut.SelectedAccount = secondItem;
@@ -2270,6 +2283,8 @@ public sealed class MobileShellViewModelTests
         context.AccountManager.Verify(
             value => value.DeleteAsync(It.Is<Account>(account => account.ID == second.ID)),
             Times.Never);
+        Assert.Equal([NotifyCollectionChangedAction.Remove], collectionChanges);
+        Assert.Same(secondItem, Assert.Single(context.Sut.Accounts));
     }
 
     [Fact]

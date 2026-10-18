@@ -30,6 +30,20 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AndroidAccountSwipe_OpensDeletePromptWithoutQueueingBehindDispatcherWork()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeAccountRowView.cs"));
+
+        Assert.Contains("if (Dispatcher.UIThread.CheckAccess())", source);
+        Assert.Contains("_ = action();", source);
+        Assert.Contains("BeginDeleteForAccountAsync(_row?.Account)", source);
+    }
+
+    [Fact]
     public void MobileIconPicker_AppliesAvaloniaInputPaneOcclusionToItsOverlay()
     {
         var source = File.ReadAllText(Path.Combine(
@@ -45,19 +59,47 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
-    public void AndroidDeleteConfirmation_KeepsAccountAndGroupFallbacksMountedBehindTheDialog()
+    public void AndroidDeleteConfirmation_KeepsTheNativeAccountListBehindANativeDialog()
     {
-        var source = File.ReadAllText(Path.Combine(
+        var viewSource = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
             "Fixtures",
             "Avalonia",
             "MobileMainView.axaml.cs"));
+        var dialogSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeDeleteConfirmationDialog.cs"));
+        var applicationSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "OtpHarborApplication.cs"));
 
-        Assert.DoesNotContain("parent.Children.Remove(AccountGroupsStrip)", source);
-        Assert.Contains("_usesNativeAccountGroupStrip = true", source);
-        Assert.Contains("AccountGroupsFallbackPresenter.IsVisible = false", source);
-        Assert.Contains("AccountGroupsFallbackPresenter.IsVisible = showFallback", source);
-        Assert.Contains("&& viewModel.HasAccountNavigationCards", source);
+        Assert.Contains("AccountList.IsVisible = false", viewSource);
+        Assert.Contains("viewModel.IsSharedDeleteConfirmationVisible", viewSource);
+        Assert.Contains("viewModel.UseNativeDeleteConfirmation()", applicationSource);
+        Assert.Contains("new AlertDialog.Builder", dialogSource);
+        Assert.Contains("builder.SetView(CreateContent())", dialogSource);
+        Assert.Contains("CreateRoundedBackground", dialogSource);
+        Assert.Contains("window.SetLayout(width", dialogSource);
+        Assert.Contains("content.SetPadding(Dp(22)", dialogSource);
+        Assert.Contains("Color.ParseColor(\"#B42318\")", dialogSource);
+        Assert.Contains("ConfirmDeleteAsync()", dialogSource);
+        Assert.Contains("CancelDeleteAsync()", dialogSource);
+
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        var deleteOverlay = document
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute("IsVisible")?.Value ==
+                "{Binding IsSharedDeleteConfirmationVisible}");
+        Assert.Equal("101", deleteOverlay.Attribute("Panel.ZIndex")?.Value);
     }
 
     [Fact]
@@ -1132,7 +1174,9 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("56", groupsFallbackPresenter.Attribute("MinHeight")?.Value);
         Assert.Equal("0,2,0,6", groupsFallbackPresenter.Attribute("Margin")?.Value);
         Assert.Equal("Center", groupsFallbackPresenter.Attribute("VerticalAlignment")?.Value);
-        Assert.Null(groupsFallbackPresenter.Attribute("IsVisible"));
+        Assert.Equal(
+            "{Binding HasAccountNavigationCards}",
+            groupsFallbackPresenter.Attribute("IsVisible")?.Value);
 
         var createGroupButton = document
             .Descendants(avalonia + "Button")

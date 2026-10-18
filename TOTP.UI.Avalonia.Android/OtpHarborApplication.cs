@@ -34,6 +34,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
             app.ConfigureAppearance(_services.GetRequiredService<IAppearanceSettingsService>());
             app.MainViewFactory = () =>
             {
+                viewModel.UseNativeDeleteConfirmation();
                 var view = new MainView { DataContext = viewModel };
                 view.UseNativeAccountList(new AndroidAccountListHost(
                     viewModel,

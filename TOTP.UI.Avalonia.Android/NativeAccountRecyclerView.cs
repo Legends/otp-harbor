@@ -15,6 +15,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
     private readonly LinearLayoutManager _layoutManager;
     private readonly AccountScrollListener _scrollListener;
     private readonly Action _dismissAccountSearchFocus;
+    private readonly NativeDeleteConfirmationDialog _deleteConfirmationDialog;
     private int _submitRevision;
     private int _revealRevision;
     private bool _disposed;
@@ -43,6 +44,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
 
         _viewModel.Accounts.CollectionChanged += AccountsChanged;
         _viewModel.PropertyChanged += ViewModelPropertyChanged;
+        _deleteConfirmationDialog = new NativeDeleteConfirmationDialog(this, viewModel);
         _adapter.ReplaceAll(CaptureRows());
         Post(ReportVisibleAccounts);
         HandleRevealRequest(_viewModel.AccountRevealRequest);
@@ -63,6 +65,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
         Interlocked.Increment(ref _submitRevision);
         _viewModel.Accounts.CollectionChanged -= AccountsChanged;
         _viewModel.PropertyChanged -= ViewModelPropertyChanged;
+        _deleteConfirmationDialog.Dispose();
         RemoveOnScrollListener(_scrollListener);
         _viewModel.SetAccountListScrolling(false);
         _viewModel.SetRealizedAccounts([]);

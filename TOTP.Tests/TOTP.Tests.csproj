@@ -86,6 +86,15 @@
     <None Include="..\TOTP.UI.Avalonia.Android\AndroidAutomaticBackupDestinationAdapter.cs"
           Link="Fixtures\Android\AndroidAutomaticBackupDestinationAdapter.cs"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\NativeAccountRowView.cs"
+          Link="Fixtures\Android\NativeAccountRowView.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\NativeDeleteConfirmationDialog.cs"
+          Link="Fixtures\Android\NativeDeleteConfirmationDialog.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\OtpHarborApplication.cs"
+          Link="Fixtures\Android\OtpHarborApplication.cs"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- In TOTP.Tests.csproj -->

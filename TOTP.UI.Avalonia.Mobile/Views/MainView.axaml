@@ -523,6 +523,7 @@
                             MinHeight="56"
                             Margin="0,2,0,6"
                             ColumnDefinitions="*"
+                            IsVisible="{Binding HasAccountNavigationCards}"
                             VerticalAlignment="Center">
                             <Grid
                                 x:Name="AccountGroupsStrip"
@@ -2950,7 +2951,7 @@
             Grid.RowSpan="3"
             Panel.ZIndex="101"
             Background="{DynamicResource BrushOverlayStrong}"
-            IsVisible="{Binding IsDeleteConfirmationVisible}">
+            IsVisible="{Binding IsSharedDeleteConfirmationVisible}">
             <Border
                 MaxWidth="420"
                 Margin="24"

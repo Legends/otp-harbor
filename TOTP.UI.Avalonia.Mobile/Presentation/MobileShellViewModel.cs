@@ -204,6 +204,7 @@ public sealed class MobileShellViewModel :
     private bool _isEditorVisible;
     private bool _isAccountEditorExitConfirmationVisible;
     private bool _isDeleteConfirmationVisible;
+    private bool _usesNativeDeleteConfirmation;
     private bool _isDeleteWithoutBackupWarning;
     private Guid? _pendingDeleteAccountId;
     private string _pendingDeleteDisplayName = string.Empty;
@@ -755,9 +756,11 @@ public sealed class MobileShellViewModel :
         && !IsImportProgressVisible
         && !IsImportConfirmationVisible
         && !IsBackupConflictResolutionVisible
-        && !IsDeleteConfirmationVisible;
+        && (!IsDeleteConfirmationVisible || _usesNativeDeleteConfirmation);
     public bool IsNativeAccountGroupsVisible =>
         IsNativeAccountListVisible && HasAccountNavigationCards;
+    public bool IsSharedDeleteConfirmationVisible =>
+        IsDeleteConfirmationVisible && !_usesNativeDeleteConfirmation;
     public bool IsScreenCaptureProtectionRequired => !AllowScreenshots
         && (IsAccountListVisible || IsGroupEditorVisible);
     public bool IsSettingsVisible => IsAccountsVisible && _isSettingsVisible;
@@ -1523,6 +1526,7 @@ public sealed class MobileShellViewModel :
             if (!SetField(ref _isDeleteConfirmationVisible, value)) return;
             OnPropertyChanged(nameof(IsNativeAccountListVisible));
             OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
+            OnPropertyChanged(nameof(IsSharedDeleteConfirmationVisible));
             if (!value)
             {
                 _isDeleteWithoutBackupWarning = false;
@@ -1534,6 +1538,15 @@ public sealed class MobileShellViewModel :
             }
             NotifyCommands();
         }
+    }
+
+    public void UseNativeDeleteConfirmation()
+    {
+        if (_usesNativeDeleteConfirmation) return;
+        _usesNativeDeleteConfirmation = true;
+        OnPropertyChanged(nameof(IsNativeAccountListVisible));
+        OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
+        OnPropertyChanged(nameof(IsSharedDeleteConfirmationVisible));
     }
 
     public string EditorIssuer
@@ -4408,7 +4421,7 @@ public sealed class MobileShellViewModel :
             }
 
             IsDeleteConfirmationVisible = false;
-            await LoadAccountsAsync();
+            ApplyDeletedAccount(accountId);
             SetSuccess(MobileStringKeys.AccountDeleted);
         }
         catch (Exception)
@@ -4727,6 +4740,22 @@ public sealed class MobileShellViewModel :
             _showFavoritesOnly = false;
         RefreshFavoriteState();
         ApplyAccountFilter(account.ID);
+    }
+
+    private void ApplyDeletedAccount(Guid accountId)
+    {
+        var item = _allAccounts.FirstOrDefault(account => account.Id == accountId);
+        if (item is not null)
+        {
+            _allAccounts.Remove(item);
+            var visibleIndex = _accounts.IndexOf(item);
+            if (visibleIndex >= 0)
+                _accounts.RemoveAt(visibleIndex);
+        }
+        _realizedAccountIds.Remove(accountId);
+        RefreshFavoriteState();
+        RefreshGroups();
+        ApplyAccountFilter();
     }
 
     private void RepositionAccountByIssuer(MobileAccountItem item)

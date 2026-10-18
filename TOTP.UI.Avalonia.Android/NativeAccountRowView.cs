@@ -661,7 +661,16 @@ internal sealed class NativeAccountRowView : View
         _viewModel.PropertyChanged -= ViewModelPropertyChanged;
     }
 
-    private void Invoke(Func<Task> action) => Dispatcher.UIThread.Post(() => _ = action());
+    private void Invoke(Func<Task> action)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            _ = action();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() => _ = action());
+    }
 
     private RectF CardBounds => _cardBounds;
 

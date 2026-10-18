@@ -119,7 +119,7 @@ public partial class MainView : UserControl
     {
         if (!_usesNativeAccountList || _nativeAccountListViewModel is not { } viewModel) return;
 
-        var showFallback = viewModel.IsDeleteConfirmationVisible && viewModel.HasAccounts;
+        var showFallback = viewModel.IsSharedDeleteConfirmationVisible && viewModel.HasAccounts;
         AccountList.IsVisible = showFallback;
         if (_usesNativeAccountGroupStrip)
         {
