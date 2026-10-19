@@ -44,6 +44,37 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AndroidGroupStrip_RedrawsRegularGroupsWithAnOpaqueStableBackground()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeAccountGroupRecyclerView.cs"));
+
+        Assert.Contains(
+            ": BlendOver(_groupColor, palette.WindowBackground, 52);",
+            source);
+        Assert.Contains("Color WindowBackground", source);
+        Assert.DoesNotContain(": WithAlpha(_groupColor, 52);", source);
+    }
+
+    [Fact]
+    public void AndroidGroupStrip_RebindsTheCompleteSmallDataSetAfterGroupChanges()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeAccountGroupRecyclerView.cs"));
+
+        Assert.Contains("internal void Submit(NativeAccountGroupRow[] items)", source);
+        Assert.Equal(2, source.Split("NotifyDataSetChanged();").Length - 1);
+        Assert.DoesNotContain("DiffUtil.CalculateDiff", source);
+        Assert.DoesNotContain("GroupDiffCallback", source);
+    }
+
+    [Fact]
     public void MobileIconPicker_AppliesAvaloniaInputPaneOcclusionToItsOverlay()
     {
         var source = File.ReadAllText(Path.Combine(

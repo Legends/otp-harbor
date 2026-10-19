@@ -188,6 +188,7 @@
   <data name="SecretField" xml:space="preserve"><value>secret</value></data>
   <data name="PeriodField" xml:space="preserve"><value>time period</value></data>
   <data name="FavoriteField" xml:space="preserve"><value>favorite</value></data>
+  <data name="GroupMembershipField" xml:space="preserve"><value>groups</value></data>
   <data name="ApplyToAll" xml:space="preserve"><value>Apply to all</value></data>
   <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Keep the current version of {0}</value></data>
   <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Use the imported version of {0}</value></data>

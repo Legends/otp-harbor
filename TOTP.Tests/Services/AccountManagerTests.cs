@@ -54,10 +54,19 @@ public sealed class AccountManagerTests
     }
 
     [Fact]
-    public async Task UpdateAsync_PreservesExistingGroupForNonGroupAccountEdits()
+    public async Task UpdateAsync_PreservesAllExistingGroupsForNonGroupAccountEdits()
     {
-        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
-        var previous = new Account(Guid.NewGuid(), "Old", "AAAA", "alice", group: group);
+        var groups = new[]
+        {
+            new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED"),
+            new AccountGroup(Guid.NewGuid(), "Personal", "#18A999")
+        };
+        var previous = new Account(
+            Guid.NewGuid(),
+            "Old",
+            "AAAA",
+            "alice",
+            groups: groups);
         var updated = new Account(previous.ID, "New", "BBBB", "alice");
         var dal = new Mock<IAccountDAL>();
         dal.Setup(value => value.UpdateAsync(It.IsAny<Account>()))
@@ -67,7 +76,8 @@ public sealed class AccountManagerTests
         var result = await sut.UpdateAsync(previous, updated);
 
         Assert.True(result.IsSuccess);
-        dal.Verify(value => value.UpdateAsync(It.Is<Account>(account => account.Group == group)), Times.Once);
+        dal.Verify(value => value.UpdateAsync(It.Is<Account>(account =>
+            account.Groups.SequenceEqual(groups))), Times.Once);
     }
 
     [Fact]

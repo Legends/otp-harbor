@@ -6,6 +6,7 @@ using TOTP.Core.Backup;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
+using TOTP.Infrastructure.Security;
 using TOTP.Infrastructure.Services;
 using TOTP.Tests.Common;
 using TOTP.Tests.Security;
@@ -14,6 +15,66 @@ namespace TOTP.Tests.Backup;
 
 public sealed class AutomaticBackupSnapshotServiceTests
 {
+    [Fact]
+    public async Task CreateThenRead_V2Container_PreservesLinkedMultiGroupProfile()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var directory = CreateTemporaryDirectory();
+        var key = RandomNumberGenerator.GetBytes(32);
+        try
+        {
+            using var security = new SecurityContext();
+            security.SetDek(key);
+            var vaultService = new VaultService(security);
+            var firstGroup = new AccountGroup(Guid.NewGuid(), "test1", "#4C956C");
+            var secondGroup = new AccountGroup(Guid.NewGuid(), "test2", "#4F6BED");
+            var account = new Account(
+                Guid.NewGuid(),
+                "Issuer",
+                "JBSWY3DPEHPK3PXP",
+                groups: [firstGroup, secondGroup]);
+            var vaultPath = Path.Combine(directory, "vault.dat");
+            await File.WriteAllBytesAsync(
+                vaultPath,
+                vaultService.EncryptVault([account]),
+                cancellationToken);
+            var store = new Mock<IAuthorizationEnvelopeStore>();
+            store.Setup(value => value.LoadAsync(cancellationToken))
+                .ReturnsAsync(Result.Ok<AuthorizationEnvelopeV2?>(CreateDeviceEnvelope()));
+            var password = new Mock<IMasterPasswordService>();
+            password.Setup(value => value.UnwrapKeyV2Async(
+                    It.IsAny<PasswordKeyWrapperV2>(),
+                    "correct password",
+                    cancellationToken))
+                .ReturnsAsync(() => key.ToArray());
+            var sut = CreateService(vaultPath, store.Object, password.Object, vaultService);
+
+            using var snapshot = (await sut.CreateAsync(cancellationToken)).Value;
+            var package = AutomaticBackupPackageV2Codec.Deserialize(snapshot.Payload);
+            await using var backupStream = new MemoryStream(snapshot.Payload.ToArray(), writable: false);
+            var restored = await sut.ReadAccountsAsync(
+                backupStream,
+                "correct password",
+                cancellationToken);
+
+            Assert.True(package.IsSuccess);
+            Assert.NotEqual(Guid.Empty, package.Value.BackupId);
+            Assert.NotEmpty(package.Value.EncryptedAccounts);
+            Assert.NotEmpty(package.Value.EncryptedProfile);
+            Assert.Null(package.Value.AuthorizationEnvelope.QuickUnlockWrapper);
+            Assert.True(restored.IsSuccess);
+            var restoredAccount = Assert.Single(restored.Value);
+            Assert.Equal(
+                new[] { firstGroup.Id, secondGroup.Id },
+                restoredAccount.Groups.Select(group => group.Id));
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task CreateAsync_RemovesDeviceQuickUnlockWrapperFromPortableSnapshot()
     {

@@ -121,6 +121,33 @@ public sealed class AccountDalIntegrationTests
     }
 
     [Fact]
+    public async Task SaveGroup_AllowsOneAccountInSeveralGroupsWithoutReplacingMemberships()
+    {
+        using var temp = new TempDir();
+        var storagePath = Path.Combine(temp.Path, "master.totp");
+        var sut = CreateSut(storagePath, new EchoVaultService());
+        var account = new Account(Guid.NewGuid(), "GitHub", "AAAA", "alice");
+        Assert.True((await sut.AddNewAsync(account)).IsSuccess);
+        var test1 = new AccountGroup(Guid.NewGuid(), "test1", "#4C956C");
+        var test2 = new AccountGroup(Guid.NewGuid(), "test2", "#4F6BED");
+        var test3 = new AccountGroup(Guid.NewGuid(), "test3", "#E45757");
+
+        Assert.True((await sut.SaveGroupAsync(test1, [account.ID])).IsSuccess);
+        Assert.True((await sut.SaveGroupAsync(test2, [account.ID])).IsSuccess);
+        Assert.True((await sut.SaveGroupAsync(test3, [account.ID])).IsSuccess);
+
+        var stored = Assert.Single((await sut.GetAllAsync()).Value);
+        Assert.Equal(3, stored.Groups.Count);
+        Assert.Contains(test1, stored.Groups);
+        Assert.Contains(test2, stored.Groups);
+        Assert.Contains(test3, stored.Groups);
+
+        Assert.True((await sut.DeleteGroupAsync(test2.Id)).IsSuccess);
+        stored = Assert.Single((await sut.GetAllAsync()).Value);
+        Assert.Equal([test1.Id, test3.Id], stored.Groups.Select(group => group.Id));
+    }
+
+    [Fact]
     public async Task SaveFavorites_UpdatesEverySelectionWithoutChangingGroupMetadata()
     {
         using var temp = new TempDir();

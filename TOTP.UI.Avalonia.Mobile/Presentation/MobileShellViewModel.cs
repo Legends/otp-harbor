@@ -2161,6 +2161,7 @@ public sealed class MobileShellViewModel :
     public string SecretFieldText => Get(MobileStringKeys.SecretField);
     public string PeriodFieldText => Get(MobileStringKeys.PeriodField);
     public string FavoriteFieldText => Get(MobileStringKeys.FavoriteField);
+    public string GroupMembershipFieldText => Get(MobileStringKeys.GroupMembershipField);
     public string KeepAccountAutomationFormat =>
         Get(MobileStringKeys.KeepAccountAutomationFormat);
     public string RestoreAccountAutomationFormat =>
@@ -3466,7 +3467,7 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            var imported = await _accountImport.ImportWithConflictResolutionAsync(
+            var imported = await _accountImport.RestoreBackupWithConflictResolutionAsync(
                 decoded.Value,
                 ResolveBackupImportAsync,
                 operation.Token);
@@ -3923,10 +3924,7 @@ public sealed class MobileShellViewModel :
             var selectedIds = selectedAccountIds.ToHashSet();
             foreach (var account in _allAccounts)
             {
-                if (selectedIds.Contains(account.Id))
-                    account.UpdateGroup(group);
-                else if (account.Group?.Id == group.Id)
-                    account.UpdateGroup(null);
+                account.UpdateGroupMembership(group, selectedIds.Contains(account.Id));
             }
 
             ClearGroupEditor();
@@ -4246,8 +4244,8 @@ public sealed class MobileShellViewModel :
                 secret,
                 accountName.Length == 0 ? null : accountName,
                 periodSeconds,
-                group: existing?.Group,
-                isFavorite: EditorIsFavorite);
+                isFavorite: EditorIsFavorite,
+                groups: existing?.Groups);
             var saved = existing is null
                 ? await _accountManager.AddNewAsync(updated)
                 : await _accountManager.UpdateAsync(existing, updated);
@@ -4639,7 +4637,7 @@ public sealed class MobileShellViewModel :
         var refreshedAccounts = new List<MobileAccountItem>(loaded.Value.Count);
         foreach (var account in loaded.Value)
         {
-            AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
+            AccountGroupPolicy.TryNormalizeStoredGroups(account.Groups, out var groups);
             var accountName = account.AccountName ?? string.Empty;
             MobileAccountItem item;
             if (existingAccounts.TryGetValue(account.ID, out var existing)
@@ -4651,7 +4649,7 @@ public sealed class MobileShellViewModel :
                 item.UpdateCustomPeriodLabel(FormatCustomPeriod(account.PeriodSeconds));
                 item.UpdateFavorite(account.IsFavorite);
                 item.UpdateFavoriteLocalization(AddToFavoritesText, RemoveFromFavoritesText);
-                item.UpdateGroup(group);
+                item.UpdateGroups(groups);
             }
             else
             {
@@ -4668,7 +4666,7 @@ public sealed class MobileShellViewModel :
                     account.IsFavorite,
                     AddToFavoritesText,
                     RemoveFromFavoritesText,
-                    group);
+                    groups: groups);
             }
 
             item.UpdateLogoVisibility(ShowIssuerLogo);
@@ -4692,7 +4690,7 @@ public sealed class MobileShellViewModel :
 
     private void ApplySavedAccount(Account account)
     {
-        AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
+        AccountGroupPolicy.TryNormalizeStoredGroups(account.Groups, out var groups);
         var accountName = account.AccountName ?? string.Empty;
         var item = _allAccounts.FirstOrDefault(value => value.Id == account.ID);
         var previousIssuer = item?.Issuer;
@@ -4711,7 +4709,7 @@ public sealed class MobileShellViewModel :
                 account.IsFavorite,
                 AddToFavoritesText,
                 RemoveFromFavoritesText,
-                group);
+                groups: groups);
             item.UpdateLogoVisibility(ShowIssuerLogo);
             item.UpdateNextTokenPreference(ShowNextToken);
             _allAccounts.Add(item);
@@ -4728,7 +4726,7 @@ public sealed class MobileShellViewModel :
                     account.Issuer,
                     account.AccountName));
             item.UpdateFavorite(account.IsFavorite);
-            item.UpdateGroup(group);
+            item.UpdateGroups(groups);
         }
 
         if (previousIssuer is null
@@ -4775,13 +4773,14 @@ public sealed class MobileShellViewModel :
         var query = SearchText.Trim();
         var matches = _allAccounts.Where(account =>
             (!_showFavoritesOnly || account.IsFavorite)
-            && (!_selectedGroupId.HasValue || account.Group?.Id == _selectedGroupId)
+            && (!_selectedGroupId.HasValue
+                || account.Groups.Any(group => group.Id == _selectedGroupId))
             && (query.Length == 0
                 || account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
                 || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                || (account.Group?.Name.Contains(
+                || account.Groups.Any(group => group.Name.Contains(
                     query,
-                    StringComparison.CurrentCultureIgnoreCase) ?? false)))
+                    StringComparison.CurrentCultureIgnoreCase))))
             .ToArray();
 
         var visibleSequenceChanged = _accounts.Count != matches.Length;
@@ -4903,11 +4902,11 @@ public sealed class MobileShellViewModel :
     private void RefreshGroups()
     {
         var groups = _allAccounts
-            .Where(account => account.Group is not null)
-            .GroupBy(account => account.Group!.Id)
+            .SelectMany(account => account.Groups.Select(group => (Account: account, Group: group)))
+            .GroupBy(membership => membership.Group.Id)
             .Select(group =>
             {
-                var stored = group.First().Group!;
+                var stored = group.First().Group;
                 var normalized = new AccountGroup(
                     stored.Id,
                     stored.Name,
@@ -5475,7 +5474,7 @@ public sealed class MobileShellViewModel :
                 account.AccountName,
                 account.Brand,
                 account.ShowIssuerLogo,
-                groupId.HasValue && account.Group?.Id == groupId));
+                groupId.HasValue && account.Groups.Any(group => group.Id == groupId)));
         }
 
         ApplyGroupEditorSearch();
@@ -5638,6 +5637,7 @@ public sealed class MobileShellViewModel :
                 SecretFieldText,
                 PeriodFieldText,
                 FavoriteFieldText,
+                GroupMembershipFieldText,
                 KeepAccountAutomationFormat,
                 RestoreAccountAutomationFormat);
             item.PropertyChanged += OnBackupConflictSelectionChanged;
@@ -6536,6 +6536,7 @@ public sealed class MobileShellViewModel :
         nameof(SecretFieldText),
         nameof(PeriodFieldText),
         nameof(FavoriteFieldText),
+        nameof(GroupMembershipFieldText),
         nameof(KeepAccountAutomationFormat),
         nameof(RestoreAccountAutomationFormat),
         nameof(EditorTitle),

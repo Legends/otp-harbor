@@ -296,6 +296,7 @@ public static class MobileStringKeys
     public const string SecretField = nameof(SecretField);
     public const string PeriodField = nameof(PeriodField);
     public const string FavoriteField = nameof(FavoriteField);
+    public const string GroupMembershipField = nameof(GroupMembershipField);
     public const string ApplyToAll = nameof(ApplyToAll);
     public const string KeepAccountAutomationFormat = nameof(KeepAccountAutomationFormat);
     public const string RestoreAccountAutomationFormat = nameof(RestoreAccountAutomationFormat);
@@ -641,6 +642,7 @@ public static class MobileStringKeys
         SecretField,
         PeriodField,
         FavoriteField,
+        GroupMembershipField,
         ApplyToAll,
         KeepAccountAutomationFormat,
         RestoreAccountAutomationFormat,

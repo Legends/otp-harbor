@@ -61,6 +61,54 @@ public static class AccountGroupPolicy
         return true;
     }
 
+    public static bool TryNormalizeStoredGroups(
+        IEnumerable<AccountGroup>? groups,
+        out IReadOnlyList<AccountGroup> normalized)
+    {
+        var result = new List<AccountGroup>();
+        foreach (var group in groups ?? [])
+        {
+            if (!TryNormalizeStored(group, out var candidate) || candidate is null)
+            {
+                normalized = [];
+                return false;
+            }
+
+            var existingIndex = result.FindIndex(value => value.Id == candidate.Id);
+            if (existingIndex >= 0)
+                result[existingIndex] = candidate;
+            else
+                result.Add(candidate);
+        }
+
+        normalized = result;
+        return true;
+    }
+
+    public static bool TryNormalizeGroups(
+        IEnumerable<AccountGroup>? groups,
+        out IReadOnlyList<AccountGroup> normalized)
+    {
+        var result = new List<AccountGroup>();
+        foreach (var group in groups ?? [])
+        {
+            if (!TryNormalize(group, out var candidate) || candidate is null)
+            {
+                normalized = [];
+                return false;
+            }
+
+            var existingIndex = result.FindIndex(value => value.Id == candidate.Id);
+            if (existingIndex >= 0)
+                result[existingIndex] = candidate;
+            else
+                result.Add(candidate);
+        }
+
+        normalized = result;
+        return true;
+    }
+
     public static string NormalizeColor(string? color)
     {
         var candidate = color?.Trim();

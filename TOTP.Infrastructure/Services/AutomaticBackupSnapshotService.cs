@@ -72,6 +72,37 @@ public sealed class AutomaticBackupSnapshotService : IAutomaticBackupSnapshotSer
                 return Fail<AutomaticBackupSnapshot>(AutomaticBackupErrorCode.InvalidFormat, "The password recovery wrapper is invalid.");
 
             encodedEnvelope = serializedEnvelope.Value;
+            if (VaultService.TrySplitEncryptedVault(
+                    vault,
+                    out var encryptedAccounts,
+                    out var encryptedProfile))
+            {
+                try
+                {
+                    var packageV2ToWrite = new AutomaticBackupPackageV2
+                    {
+                        BackupId = Guid.NewGuid(),
+                        CreatedUtc = _timeProvider.GetUtcNow(),
+                        EncryptedAccounts = encryptedAccounts,
+                        EncryptedProfile = encryptedProfile,
+                        AuthorizationEnvelope = envelope
+                    };
+                    var encodedV2 = AutomaticBackupPackageV2Codec.Serialize(packageV2ToWrite);
+                    if (encodedV2.IsFailed)
+                        return Result.Fail<AutomaticBackupSnapshot>(encodedV2.Errors);
+                    var fingerprintV2 = AutomaticBackupPackageV2Codec.ComputeFingerprint(
+                        encryptedAccounts,
+                        encryptedProfile,
+                        encodedEnvelope);
+                    return Result.Ok(new AutomaticBackupSnapshot(encodedV2.Value, fingerprintV2));
+                }
+                finally
+                {
+                    CryptographicOperations.ZeroMemory(encryptedAccounts);
+                    CryptographicOperations.ZeroMemory(encryptedProfile);
+                }
+            }
+
             var fingerprint = AutomaticBackupPackageV1Codec.ComputeVaultFingerprint(vault, encodedEnvelope);
             var vaultHash = SHA256.HashData(vault);
             string vaultHashText;
@@ -124,16 +155,37 @@ public sealed class AutomaticBackupSnapshotService : IAutomaticBackupSnapshotSer
 
         byte[]? payload = null;
         byte[]? vaultKey = null;
+        byte[]? combinedVault = null;
         AutomaticBackupPackageV1? package = null;
+        AutomaticBackupPackageV2? packageV2 = null;
         try
         {
             payload = await ReadBoundedAsync(
                 source,
                 AutomaticBackupPackageV1Codec.MaximumPayloadSize,
                 cancellationToken);
+            if (AutomaticBackupPackageV2Codec.IsContainer(payload))
+            {
+                var decodedV2 = AutomaticBackupPackageV2Codec.Deserialize(payload);
+                if (decodedV2.IsFailed)
+                    return Result.Fail<IReadOnlyList<Account>>(decodedV2.Errors);
+
+                packageV2 = decodedV2.Value;
+                vaultKey = await _passwordService.UnwrapKeyV2Async(
+                    packageV2.AuthorizationEnvelope.PasswordWrapper,
+                    masterPassword,
+                    cancellationToken);
+                if (vaultKey is null)
+                    return Fail<IReadOnlyList<Account>>(AutomaticBackupErrorCode.InvalidPassword, "The automatic backup could not be unlocked.");
+
+                combinedVault = VaultService.CombineEncryptedVault(
+                    packageV2.EncryptedAccounts,
+                    packageV2.EncryptedProfile);
+                return _vaultReader.ReadAccounts(combinedVault, vaultKey);
+            }
+
             var decoded = AutomaticBackupPackageV1Codec.Deserialize(payload);
             if (decoded.IsFailed) return Result.Fail<IReadOnlyList<Account>>(decoded.Errors);
-
             package = decoded.Value;
             vaultKey = await _passwordService.UnwrapKeyV2Async(
                 package.AuthorizationEnvelope.PasswordWrapper,
@@ -160,10 +212,17 @@ public sealed class AutomaticBackupSnapshotService : IAutomaticBackupSnapshotSer
         finally
         {
             if (vaultKey is not null) CryptographicOperations.ZeroMemory(vaultKey);
+            if (combinedVault is not null) CryptographicOperations.ZeroMemory(combinedVault);
             if (package is not null)
             {
                 CryptographicOperations.ZeroMemory(package.EncryptedVault);
                 AuthorizationEnvelopeBufferCleaner.Clear(package.AuthorizationEnvelope);
+            }
+            if (packageV2 is not null)
+            {
+                CryptographicOperations.ZeroMemory(packageV2.EncryptedAccounts);
+                CryptographicOperations.ZeroMemory(packageV2.EncryptedProfile);
+                AuthorizationEnvelopeBufferCleaner.Clear(packageV2.AuthorizationEnvelope);
             }
             if (payload is not null) CryptographicOperations.ZeroMemory(payload);
         }

@@ -24,6 +24,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             conflictStrategy,
             confirmAsync,
             null,
+            profileAuthoritative: false,
             cancellationToken);
     }
 
@@ -40,6 +41,42 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             null,
             null,
             resolveAsync,
+            profileAuthoritative: false,
+            cancellationToken);
+    }
+
+    public async Task<Result<AccountImportOutcome>> RestoreBackupAsync(
+        IReadOnlyList<Account> importedAccounts,
+        ImportConflictStrategy conflictStrategy,
+        Func<AccountImportPreview, CancellationToken, Task<bool>> confirmAsync,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(importedAccounts);
+        ArgumentNullException.ThrowIfNull(confirmAsync);
+
+        return await ImportCoreAsync(
+            importedAccounts,
+            conflictStrategy,
+            confirmAsync,
+            null,
+            profileAuthoritative: true,
+            cancellationToken);
+    }
+
+    public async Task<Result<AccountImportOutcome>> RestoreBackupWithConflictResolutionAsync(
+        IReadOnlyList<Account> importedAccounts,
+        Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolveAsync,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(importedAccounts);
+        ArgumentNullException.ThrowIfNull(resolveAsync);
+
+        return await ImportCoreAsync(
+            importedAccounts,
+            null,
+            null,
+            resolveAsync,
+            profileAuthoritative: true,
             cancellationToken);
     }
 
@@ -48,6 +85,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         ImportConflictStrategy? requestedStrategy,
         Func<AccountImportPreview, CancellationToken, Task<bool>>? confirmAsync,
         Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>? resolveAsync,
+        bool profileAuthoritative,
         CancellationToken cancellationToken)
     {
 
@@ -67,10 +105,11 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     Existing: FindMatch(account, currentResult.Value)))
                 .ToList();
             var unchanged = matches.Count(value =>
-                value.Existing is not null && SamePayload(value.Existing, value.Incoming));
+                value.Existing is not null
+                && SamePayload(value.Existing, value.Incoming, profileAuthoritative));
             var changedConflicts = matches
                 .Where(value => value.Existing is not null
-                    && !SamePayload(value.Existing, value.Incoming))
+                    && !SamePayload(value.Existing, value.Incoming, profileAuthoritative))
                 .Select(value => new AccountImportConflict(
                     value.ImportIndex,
                     value.Existing!.Issuer,
@@ -81,7 +120,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     !SameAccountName(value.Existing, value.Incoming),
                     !SameSecret(value.Existing, value.Incoming),
                     value.Existing.PeriodSeconds != value.Incoming.PeriodSeconds,
-                    value.Incoming.IsFavorite && !value.Existing.IsFavorite))
+                    value.Incoming.IsFavorite && !value.Existing.IsFavorite,
+                    GroupsChanged(value.Existing, value.Incoming, profileAuthoritative)))
                 .ToList();
             var newCount = validated.Count - unchanged - changedConflicts.Count;
             var conflicts = unchanged + changedConflicts.Count;
@@ -146,6 +186,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 currentResult.Value,
                 conflictStrategy,
                 perAccountResolution,
+                profileAuthoritative,
                 cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -163,6 +204,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         IReadOnlyList<Account> existing,
         ImportConflictStrategy strategy,
         IReadOnlyDictionary<int, AccountImportConflictAction>? perAccountResolution,
+        bool profileAuthoritative,
         CancellationToken cancellationToken)
     {
         var plan = await Task.Run(
@@ -171,6 +213,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 existing,
                 strategy,
                 perAccountResolution,
+                profileAuthoritative,
                 cancellationToken),
             cancellationToken).ConfigureAwait(false);
 
@@ -196,6 +239,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         IReadOnlyList<Account> existing,
         ImportConflictStrategy strategy,
         IReadOnlyDictionary<int, AccountImportConflictAction>? perAccountResolution,
+        bool profileAuthoritative,
         CancellationToken cancellationToken)
     {
         var working = existing.ToList();
@@ -211,7 +255,7 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 && perAccountResolution.TryGetValue(importIndex, out var action)
                     ? action
                     : (AccountImportConflictAction?)null;
-            if (match is not null && (SamePayload(match, incoming)
+            if (match is not null && (SamePayload(match, incoming, profileAuthoritative)
                                       || resolvedAction == AccountImportConflictAction.Skip
                                       || (resolvedAction is null
                                           && strategy == ImportConflictStrategy.SkipExisting)))
@@ -230,8 +274,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                     incoming.Secret,
                     incoming.AccountName,
                     incoming.PeriodSeconds,
-                    incoming.Group,
-                    incoming.IsFavorite || match.IsFavorite);
+                    isFavorite: incoming.IsFavorite || match.IsFavorite,
+                    groups: ResolveGroups(match, incoming, profileAuthoritative));
                 working.Remove(match);
                 working.Add(replacement);
                 replacedCount++;
@@ -245,8 +289,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                         incoming.Secret,
                         incoming.AccountName,
                         incoming.PeriodSeconds,
-                        incoming.Group,
-                        incoming.IsFavorite)
+                        isFavorite: incoming.IsFavorite,
+                        groups: incoming.Groups)
                     : CreateKeepBoth(incoming, working);
                 working.Add(added);
                 addedCount++;
@@ -269,13 +313,13 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         {
             var issuer = account.Issuer?.Trim();
             var accountName = account.AccountName?.Trim();
-            var validGroup = AccountGroupPolicy.TryNormalize(account.Group, out var group);
+            var validGroups = AccountGroupPolicy.TryNormalizeGroups(account.Groups, out var groups);
             if (string.IsNullOrWhiteSpace(issuer)
                 || issuer.Length > 256
                 || (accountName?.Length ?? 0) > 256
                 || !SecretValidation.IsValidBase32Secret(account.Secret)
                 || !TotpPeriodPolicy.IsSupported(account.PeriodSeconds)
-                || !validGroup)
+                || !validGroups)
             {
                 validated.Clear();
                 return false;
@@ -287,8 +331,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 SecretValidation.NormalizeBase32Secret(account.Secret),
                 string.IsNullOrWhiteSpace(accountName) ? null : accountName,
                 account.PeriodSeconds,
-                group,
-                account.IsFavorite));
+                isFavorite: account.IsFavorite,
+                groups: groups));
         }
 
         return true;
@@ -303,12 +347,35 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
                 (incoming.AccountName ?? string.Empty).Trim(),
                 StringComparison.OrdinalIgnoreCase));
 
-    private static bool SamePayload(Account left, Account right) =>
+    private static bool SamePayload(
+        Account left,
+        Account right,
+        bool profileAuthoritative) =>
         SameIssuer(left, right)
         && SameAccountName(left, right)
         && SameSecret(left, right)
         && left.PeriodSeconds == right.PeriodSeconds
-        && (!right.IsFavorite || left.IsFavorite);
+        && (!right.IsFavorite || left.IsFavorite)
+        && !GroupsChanged(left, right, profileAuthoritative);
+
+    private static bool GroupsChanged(
+        Account left,
+        Account right,
+        bool profileAuthoritative)
+    {
+        if (!profileAuthoritative && right.Groups.Count == 0) return false;
+        return !left.Groups
+            .OrderBy(group => group.Id)
+            .SequenceEqual(right.Groups.OrderBy(group => group.Id));
+    }
+
+    private static IReadOnlyList<AccountGroup> ResolveGroups(
+        Account existing,
+        Account incoming,
+        bool profileAuthoritative) =>
+        profileAuthoritative || incoming.Groups.Count > 0
+            ? incoming.Groups
+            : existing.Groups;
 
     private static bool SameIssuer(Account left, Account right) =>
         string.Equals(
@@ -381,8 +448,8 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
             incoming.Secret,
             incoming.AccountName,
             incoming.PeriodSeconds,
-            incoming.Group,
-            incoming.IsFavorite);
+            isFavorite: incoming.IsFavorite,
+            groups: incoming.Groups);
     }
 
     private sealed record ImportPlan(

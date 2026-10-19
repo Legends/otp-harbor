@@ -28,7 +28,8 @@ public class AccountManager(
     {
         ArgumentNullException.ThrowIfNull(previous);
         ArgumentNullException.ThrowIfNull(updated);
-        return TrackMutation(await otpDal.UpdateAsync(updated.WithGroup(updated.Group ?? previous.Group)));
+        return TrackMutation(await otpDal.UpdateAsync(
+            updated.WithGroups(updated.Groups.Count > 0 ? updated.Groups : previous.Groups)));
     }
 
     public async Task<Result> SaveFavoritesAsync(IReadOnlyCollection<Guid> accountIds)

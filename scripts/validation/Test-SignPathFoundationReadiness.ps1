@@ -3,7 +3,7 @@
 Validates the repository's SignPath and code-signing readiness controls.
 
 .DESCRIPTION
-Checks policy, privacy, README, workflow, CODEOWNERS, build metadata, signing validation, and asset provenance for the exact governance and supply-chain statements required by the SignPath foundation process.
+Checks policy, privacy, developer documentation, workflow, CODEOWNERS, build metadata, signing validation, and asset provenance for the exact governance and supply-chain statements required by the SignPath foundation process.
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -21,7 +21,7 @@ function Read-RepositoryFile {
     return [IO.File]::ReadAllText($path)
 }
 
-$readme = Read-RepositoryFile "readme.md"
+$developmentGuide = Read-RepositoryFile "docs/DEVELOPMENT.md"
 $policy = Read-RepositoryFile "CODE_SIGNING_POLICY.md"
 $privacy = Read-RepositoryFile "PRIVACY.md"
 $workflow = Read-RepositoryFile ".github/workflows/build-and-test.yml"
@@ -31,15 +31,13 @@ $buildMetadata = Read-RepositoryFile "Directory.Build.props"
 $desktopProject = Read-RepositoryFile "TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj"
 $assetProvenance = Read-RepositoryFile "docs/assets/ASSET_PROVENANCE.md"
 
-$requiredReadmeText = @(
-    "## Code signing policy",
-    "The previous SignPath Foundation application was not approved at this stage.",
-    "stable GitHub releases do not attach unsigned Windows binaries.",
-    "[OTP Harbor privacy policy](PRIVACY.md)"
+$requiredDevelopmentGuideText = @(
+    "[Code-signing policy](../CODE_SIGNING_POLICY.md)",
+    "SignPath"
 )
-foreach ($requiredText in $requiredReadmeText) {
-    if (-not $readme.Contains($requiredText, [StringComparison]::Ordinal)) {
-        throw "The README is missing required code-signing text: $requiredText"
+foreach ($requiredText in $requiredDevelopmentGuideText) {
+    if (-not $developmentGuide.Contains($requiredText, [StringComparison]::Ordinal)) {
+        throw "The developer guide is missing required code-signing guidance: $requiredText"
     }
 }
 

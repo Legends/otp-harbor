@@ -2,17 +2,21 @@
 
 This index lists maintained documentation. Git history preserves completed migration plans and superseded implementation notes; they are intentionally not retained as parallel sources of truth.
 
-## Users and contributors
+## User documentation
 
 - [Product agenda](PRODUCT_AGENDA.md)
 - [Recovery guide](RECOVERY.md)
+- [Public Android user guide](https://legends.github.io/otp-harbor/android/guide/)
+
+## Development and contribution
+
+- [Developer guide and complete PowerShell script catalog](DEVELOPMENT.md)
 - [Contribution guide](../CONTRIBUTING.md)
 - [Desktop test commands](testing/DESKTOP_APP_TEST_COMMANDS.md)
 - [Android development preview](android/FOUNDATION.md)
 - [F-Droid readiness](android/FDROID_READINESS.md)
 - [F-Droid dependency audit](android/FDROID_DEPENDENCY_AUDIT.md)
 - [F-Droid signing and update channels](android/FDROID_SIGNING_AND_UPDATES.md)
-- [Public Android user guide](https://legends.github.io/otp-harbor/android/guide/)
 - [Microsoft Store release](release/MICROSOFT_STORE.md)
 - [Android release and signing](release/ANDROID.md)
 - [Website indexing](release/WEBSITE_INDEXING.md)

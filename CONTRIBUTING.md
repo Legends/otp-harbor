@@ -4,21 +4,7 @@ OTP Harbor is a security-sensitive .NET 10/Avalonia desktop application. Contrib
 
 ## Setup
 
-Install Git and the .NET 10 SDK. Platform-specific UI or packaging work should also be tested on the affected operating system.
-
-```powershell
-git clone https://github.com/Legends/otp-harbor.git
-cd otp-harbor
-dotnet restore TOTP.sln --configfile NuGet.config
-dotnet build TOTP.sln -c Debug
-dotnet test TOTP.sln -c Debug
-```
-
-Run the desktop application with:
-
-```powershell
-dotnet run --project .\TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj
-```
+Start with the [developer guide](docs/DEVELOPMENT.md). It documents the required and optional tools, project boundaries, setup and test commands, platform workflows, and the complete PowerShell script catalog. Platform-specific UI or packaging work should also be tested on the affected operating system.
 
 ## Engineering rules
 
@@ -63,4 +49,4 @@ Changes to password handling, key derivation, vault/envelope formats, imports/ex
 
 ## Release-sensitive changes
 
-Release tags, package policies, signatures, manifests, and appcasts are product behavior. Do not bypass validation or commit private keys, certificates, tokens, real backups, or personal test artifacts. Start with the [documentation index](docs/README.md) and the relevant security runbook before modifying those paths.
+Release tags, package policies, signatures, manifests, and appcasts are product behavior. Do not bypass validation or commit private keys, certificates, tokens, real backups, or personal test artifacts. Start with the [developer guide](docs/DEVELOPMENT.md), [documentation index](docs/README.md), and the relevant security runbook before modifying those paths.

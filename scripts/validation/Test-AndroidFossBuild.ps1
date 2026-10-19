@@ -42,12 +42,30 @@ $lockFiles = @(
     'TOTP.UI.Avalonia.Shared\packages.lock.json',
     'TOTP.UI.Avalonia.Mobile\packages.lock.json',
     'TOTP.UI.Avalonia.Android\packages.lock.json')
+$expectedLockTargets = [ordered]@{
+    'TOTP.Core\packages.lock.json' = @('net10.0')
+    'TOTP.DAL\packages.lock.json' = @('net10.0')
+    'TOTP.Infrastructure\packages.lock.json' = @('net10.0')
+    'TOTP.Platform.Android\packages.lock.json' = @('net10.0-android36.0')
+    'TOTP.UI.Avalonia.Shared\packages.lock.json' = @('net10.0')
+    'TOTP.UI.Avalonia.Mobile\packages.lock.json' = @('net10.0')
+    'TOTP.UI.Avalonia.Android\packages.lock.json' = @(
+        'net10.0-android36.0',
+        'net10.0-android36.0/android-arm64',
+        'net10.0-android36.0/android-x64')
+}
 $packageIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
 foreach ($lockFile in $lockFiles) {
     $lock = Read-RequiredFile $lockFile | ConvertFrom-Json -AsHashtable
     if ([int]$lock.version -ne 1 -or $lock.dependencies.Count -eq 0) {
         throw "Android dependency lock file is empty or unsupported: $lockFile"
+    }
+
+    $actualTargets = @($lock.dependencies.Keys | Sort-Object)
+    $expectedTargets = @($expectedLockTargets[$lockFile] | Sort-Object)
+    if ([string]::Join('|', $actualTargets) -cne [string]::Join('|', $expectedTargets)) {
+        throw "Android dependency lock file has stale or incomplete runtime targets: $lockFile. Expected '$([string]::Join(', ', $expectedTargets))'; found '$([string]::Join(', ', $actualTargets))'."
     }
 
     foreach ($framework in $lock.dependencies.Values) {
@@ -59,6 +77,19 @@ foreach ($lockFile in $lockFiles) {
                 throw "Locked package '$($dependency.Key)' in '$lockFile' lacks a version or content hash."
             }
             $null = $packageIds.Add([string]$dependency.Key)
+        }
+    }
+}
+
+foreach ($localRidBuildScript in @(
+    'scripts\testing\Install-AndroidDevelopmentBuild.ps1',
+    'scripts\dev\Publish-And-Run-AvaloniaWindows.ps1')) {
+    $localRidBuild = Read-RequiredFile $localRidBuildScript
+    foreach ($requiredLockIsolationControl in @(
+        'NuGetLockFilePath',
+        '$(MSBuildProjectDirectory)/obj/otp-harbor-local-runtime.lock.json')) {
+        if (-not $localRidBuild.Contains($requiredLockIsolationControl, [StringComparison]::Ordinal)) {
+            throw "RID-specific local build can rewrite canonical dependency locks: $localRidBuildScript"
         }
     }
 }

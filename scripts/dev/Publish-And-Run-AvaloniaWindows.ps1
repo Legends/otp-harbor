@@ -55,6 +55,7 @@ if ($StopRunningInstance) {
 }
 
 $selfContainedValue = if ($SelfContained) { "true" } else { "false" }
+$isolatedNuGetLockFilePath = '$(MSBuildProjectDirectory)/obj/otp-harbor-local-runtime.lock.json'
 
 Write-Host "Publishing OTP Harbor Avalonia for Windows ($Configuration, $Runtime)..."
 & dotnet publish $projectPath `
@@ -65,6 +66,7 @@ Write-Host "Publishing OTP Harbor Avalonia for Windows ($Configuration, $Runtime
     --verbosity minimal `
     -p:PublishSingleFile=false `
     -p:PublishTrimmed=false `
+    "-p:NuGetLockFilePath=$isolatedNuGetLockFilePath" `
     --output $OutputPath
 
 if ($LASTEXITCODE -ne 0) {

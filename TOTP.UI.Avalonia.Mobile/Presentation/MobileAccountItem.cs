@@ -16,7 +16,8 @@ public sealed class MobileAccountItem(
     bool isFavorite = false,
     string addToFavoritesText = "",
     string removeFromFavoritesText = "",
-    AccountGroup? group = null) : INotifyPropertyChanged
+    AccountGroup? group = null,
+    IReadOnlyList<AccountGroup>? groups = null) : INotifyPropertyChanged
 {
     private string _issuer = issuer;
     private string _accountName = accountName;
@@ -34,7 +35,7 @@ public sealed class MobileAccountItem(
     private string _copyConfirmation = string.Empty;
     private bool _codeBindingsDirty;
     private bool _isCodeLoading = true;
-    private AccountGroup? _group = group;
+    private IReadOnlyList<AccountGroup> _groups = ResolveGroups(group, groups);
     private bool _showNextToken;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -47,7 +48,8 @@ public sealed class MobileAccountItem(
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
-    public AccountGroup? Group => _group;
+    public AccountGroup? Group => _groups.FirstOrDefault();
+    public IReadOnlyList<AccountGroup> Groups => _groups;
     public bool IsFavorite => _isFavorite;
     public string FavoriteActionText => IsFavorite
         ? _removeFromFavoritesText
@@ -222,9 +224,22 @@ public sealed class MobileAccountItem(
 
     internal void UpdateGroup(AccountGroup? group)
     {
-        if (Equals(_group, group)) return;
-        _group = group;
+        UpdateGroups(group is null ? [] : [group]);
+    }
+
+    internal void UpdateGroups(IReadOnlyList<AccountGroup> groups)
+    {
+        if (_groups.SequenceEqual(groups)) return;
+        _groups = groups.ToArray();
         OnPropertyChanged(nameof(Group));
+        OnPropertyChanged(nameof(Groups));
+    }
+
+    internal void UpdateGroupMembership(AccountGroup group, bool isMember)
+    {
+        var updated = _groups.Where(existing => existing.Id != group.Id).ToList();
+        if (isMember) updated.Add(group);
+        UpdateGroups(updated);
     }
 
     internal void UpdateFavoriteLocalization(string addText, string removeText)
@@ -274,6 +289,20 @@ public sealed class MobileAccountItem(
         {
             _codeBindingsDirty = true;
         }
+    }
+
+    private static IReadOnlyList<AccountGroup> ResolveGroups(
+        AccountGroup? group,
+        IReadOnlyList<AccountGroup>? groups)
+    {
+        var resolved = new List<AccountGroup>();
+        if (group is not null) resolved.Add(group);
+        foreach (var candidate in groups ?? [])
+        {
+            if (resolved.All(existing => existing.Id != candidate.Id))
+                resolved.Add(candidate);
+        }
+        return resolved;
     }
 
     private static string FormatCode(string code)

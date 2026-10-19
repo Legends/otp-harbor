@@ -89,6 +89,9 @@
     <None Include="..\TOTP.UI.Avalonia.Android\NativeAccountRowView.cs"
           Link="Fixtures\Android\NativeAccountRowView.cs"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\NativeAccountGroupRecyclerView.cs"
+          Link="Fixtures\Android\NativeAccountGroupRecyclerView.cs"
+          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\TOTP.UI.Avalonia.Android\NativeDeleteConfirmationDialog.cs"
           Link="Fixtures\Android\NativeDeleteConfirmationDialog.cs"
           CopyToOutputDirectory="PreserveNewest" />

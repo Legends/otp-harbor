@@ -17,7 +17,8 @@ public sealed class AccountListItemViewModel(
     BrandInfo? brand = null,
     AccountGroup? group = null,
     bool isFavorite = false,
-    ICommand? toggleFavoriteCommand = null) : INotifyPropertyChanged
+    ICommand? toggleFavoriteCommand = null,
+    IReadOnlyList<AccountGroup>? groups = null) : INotifyPropertyChanged
 {
     private bool _isRecentlyAdded = isRecentlyAdded;
     private string _code = string.Empty;
@@ -43,7 +44,8 @@ public sealed class AccountListItemViewModel(
     public string CustomPeriodLabel => _customPeriodLabel;
     public BrandInfo Brand => _brand;
     public bool ShowIssuerLogo => _showIssuerLogo;
-    public AccountGroup? Group { get; } = group;
+    public IReadOnlyList<AccountGroup> Groups { get; } = ResolveGroups(group, groups);
+    public AccountGroup? Group => Groups.FirstOrDefault();
     public bool IsFavorite => _isFavorite;
     public ICommand? ToggleFavoriteCommand { get; } = toggleFavoriteCommand;
 
@@ -122,6 +124,20 @@ public sealed class AccountListItemViewModel(
         if (_showIssuerLogo == visible) return;
         _showIssuerLogo = visible;
         OnPropertyChanged(nameof(ShowIssuerLogo));
+    }
+
+    private static IReadOnlyList<AccountGroup> ResolveGroups(
+        AccountGroup? group,
+        IReadOnlyList<AccountGroup>? groups)
+    {
+        var resolved = new List<AccountGroup>();
+        if (group is not null) resolved.Add(group);
+        foreach (var candidate in groups ?? [])
+        {
+            if (resolved.All(existing => existing.Id != candidate.Id))
+                resolved.Add(candidate);
+        }
+        return resolved;
     }
 
     public void UpdateCustomPeriodLabel(string label)

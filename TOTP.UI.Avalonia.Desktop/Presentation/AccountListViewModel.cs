@@ -458,7 +458,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     public bool HasSelectedGroup => _selectedGroupId.HasValue;
 
-    public int UngroupedCount => _allAccounts.Count(account => account.Group is null);
+    public int UngroupedCount => _allAccounts.Count(account => account.Groups.Count == 0);
 
     public bool HasUngroupedAccounts => UngroupedCount > 0;
 
@@ -1029,7 +1029,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             _allAccounts = result.Value
                 .Select(account =>
                 {
-                    AccountGroupPolicy.TryNormalizeStored(account.Group, out var group);
+                    AccountGroupPolicy.TryNormalizeStoredGroups(account.Groups, out var groups);
                     var item = new AccountListItemViewModel(
                         account.ID,
                         account.Issuer,
@@ -1042,9 +1042,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                             account.ID,
                             account.Issuer,
                             account.AccountName),
-                        group,
+                        groups.FirstOrDefault(),
                         account.IsFavorite,
-                        _toggleAccountFavoriteCommand);
+                        _toggleAccountFavoriteCommand,
+                        groups);
                     item.UpdateNextTokenPreference(
                         _settingsService?.Current.ShowNextToken == true);
                     return item;
@@ -1631,7 +1632,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         {
             _showFavoritesOnly = false;
             _showAllAccounts = false;
-            _selectedGroupId = revealed.Group?.Id;
+            _selectedGroupId = revealed.Groups.FirstOrDefault()?.Id;
             RefreshFavoriteState();
             RefreshGroups();
             ApplyFilter();
@@ -2113,7 +2114,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 account.AccountName,
                 account.Brand,
                 account.ShowIssuerLogo,
-                account.Group?.Id == groupId && groupId.HasValue))
+                groupId.HasValue && account.Groups.Any(group => group.Id == groupId)))
             .ToArray();
 
     private IReadOnlyList<GroupAccountSelectionViewModel> CreateFavoriteAccountSelections() =>
@@ -2701,11 +2702,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private void RefreshGroups()
     {
         _allGroups = _allAccounts
-            .Where(account => account.Group is not null)
-            .GroupBy(account => account.Group!.Id)
+            .SelectMany(account => account.Groups.Select(group => (Account: account, Group: group)))
+            .GroupBy(membership => membership.Group.Id)
             .Select(group =>
             {
-                var stored = group.First().Group!;
+                var stored = group.First().Group;
                 var normalized = new AccountGroup(
                     stored.Id,
                     stored.Name,
@@ -2809,7 +2810,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 .Where(group => terms.All(term =>
                     group.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || _allAccounts.Any(account =>
-                        account.Group?.Id == group.Id
+                        account.Groups.Any(membership => membership.Id == group.Id)
                         && (account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
                             || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)))))
                 .ToArray();

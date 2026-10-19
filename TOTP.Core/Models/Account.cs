@@ -25,6 +25,9 @@ namespace TOTP.Core.Models
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public AccountGroup? Group { get; }
 
+        [JsonPropertyName("groups")]
+        public IReadOnlyList<AccountGroup> Groups { get; }
+
         [JsonPropertyName("favorite")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsFavorite { get; }
@@ -38,22 +41,66 @@ namespace TOTP.Core.Models
             string? accountName = null,
             int periodSeconds = TotpPeriodPolicy.DefaultSeconds,
             AccountGroup? group = null,
-            bool isFavorite = false)
+            bool isFavorite = false,
+            IReadOnlyList<AccountGroup>? groups = null)
         {
             ID = id;
             Issuer = issuer;
             Secret = secret;
             AccountName = accountName;
             PeriodSeconds = periodSeconds;
-            Group = group;
+            var resolvedGroups = new List<AccountGroup>();
+            if (group is not null) resolvedGroups.Add(group);
+            if (groups is not null)
+            {
+                foreach (var candidate in groups)
+                {
+                    if (candidate is not null
+                        && resolvedGroups.All(existing => existing.Id != candidate.Id))
+                    {
+                        resolvedGroups.Add(candidate);
+                    }
+                }
+            }
+            Groups = resolvedGroups.ToArray();
+            Group = Groups.FirstOrDefault();
             IsFavorite = isFavorite;
         }
 
         public Account WithGroup(AccountGroup? group) =>
-            new(ID, Issuer, Secret, AccountName, PeriodSeconds, group, IsFavorite);
+            WithGroups(group is null ? [] : [group]);
+
+        public Account WithGroups(IEnumerable<AccountGroup> groups) =>
+            new(
+                ID,
+                Issuer,
+                Secret,
+                AccountName,
+                PeriodSeconds,
+                isFavorite: IsFavorite,
+                groups: groups.ToArray());
+
+        public Account WithGroupMembership(AccountGroup group, bool isMember)
+        {
+            ArgumentNullException.ThrowIfNull(group);
+            var updated = Groups
+                .Where(existing => existing.Id != group.Id)
+                .ToList();
+            if (isMember) updated.Add(group);
+            return WithGroups(updated);
+        }
+
+        public bool IsInGroup(Guid groupId) => Groups.Any(group => group.Id == groupId);
 
         public Account WithFavorite(bool isFavorite) =>
-            new(ID, Issuer, Secret, AccountName, PeriodSeconds, Group, isFavorite);
+            new(
+                ID,
+                Issuer,
+                Secret,
+                AccountName,
+                PeriodSeconds,
+                isFavorite: isFavorite,
+                groups: Groups);
 
         public bool Equals(Account? other) => other is not null && ID == other.ID;
         public override bool Equals(object? obj) => Equals(obj as Account);

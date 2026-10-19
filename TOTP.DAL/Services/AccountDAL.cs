@@ -192,11 +192,11 @@ public sealed class AccountDAL : IAccountDAL
                 var account = list[index];
                 if (selectedIds.Contains(account.ID))
                 {
-                    list[index] = account.WithGroup(group);
+                    list[index] = account.WithGroupMembership(group, true);
                 }
-                else if (account.Group?.Id == group.Id)
+                else if (account.IsInGroup(group.Id))
                 {
-                    list[index] = account.WithGroup(null);
+                    list[index] = account.WithGroupMembership(group, false);
                 }
             }
         }, AppErrorCode.OtpUpdateFailed, "Failed to save account group.");
@@ -207,8 +207,11 @@ public sealed class AccountDAL : IAccountDAL
         {
             for (var index = 0; index < list.Count; index++)
             {
-                if (list[index].Group?.Id == groupId)
-                    list[index] = list[index].WithGroup(null);
+                if (list[index].IsInGroup(groupId))
+                {
+                    var stored = list[index].Groups.First(group => group.Id == groupId);
+                    list[index] = list[index].WithGroupMembership(stored, false);
+                }
             }
         }, AppErrorCode.OtpUpdateFailed, "Failed to delete account group.");
 

@@ -1578,9 +1578,9 @@ public sealed class MobileShellViewModelTests
                 It.IsAny<IReadOnlyCollection<Guid>>()))
             .Callback<AccountGroup, IReadOnlyCollection<Guid>>((group, accountIds) =>
                 storedAccounts = storedAccounts
-                    .Select(value => accountIds.Contains(value.ID)
-                        ? value.WithGroup(group)
-                        : value)
+                    .Select(value => value.WithGroupMembership(
+                        group,
+                        accountIds.Contains(value.ID)))
                     .ToArray())
             .ReturnsAsync(Result.Ok());
         context.AccountTotp
@@ -1655,6 +1655,67 @@ public sealed class MobileShellViewModelTests
         context.AccountManager.Verify(
             value => value.GetAllOtpEntriesSortedAsync(),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task GroupEditor_SequentialCreatesAllowSameAccountInDistinctGroups()
+    {
+        var firstAccount = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        var secondAccount = new Account(Guid.NewGuid(), "Microsoft", ValidSecret, "bob");
+        IReadOnlyList<Account> storedAccounts = [firstAccount, secondAccount];
+        var context = CreateContext(isConfigured: true, storedAccounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager
+            .Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(storedAccounts));
+        context.AccountManager
+            .Setup(value => value.SaveGroupAsync(
+                It.IsAny<AccountGroup>(),
+                It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Callback<AccountGroup, IReadOnlyCollection<Guid>>((group, accountIds) =>
+            {
+                var selectedIds = accountIds.ToHashSet();
+                storedAccounts = storedAccounts
+                    .Select(account => account.WithGroupMembership(
+                        group,
+                        selectedIds.Contains(account.ID)))
+                    .ToArray();
+            })
+            .ReturnsAsync(Result.Ok());
+        context.AccountTotp
+            .Setup(value => value.GenerateAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        await context.Sut.BeginAddGroupAsync();
+        foreach (var groupName in new[] { "test1", "test2", "test3" })
+        {
+            await context.Sut.BeginAddGroupAsync();
+            context.Sut.GroupEditorName = groupName;
+            Assert.True(context.Sut.IsCreatingGroup);
+            Assert.All(context.Sut.GroupEditorAccounts, candidate => Assert.False(candidate.IsSelected));
+            Assert.Single(
+                    context.Sut.GroupEditorAccounts,
+                    candidate => candidate.AccountId == firstAccount.ID)
+                .IsSelected = true;
+            await context.Sut.SaveGroupAsync();
+        }
+
+        Assert.Equal(3, context.Sut.Groups.Count);
+        Assert.Equal(3, context.Sut.Groups.Select(group => group.Id).Distinct().Count());
+        Assert.Equal(
+            new[] { "test1", "test2", "test3" },
+            context.Sut.Groups.Select(group => group.Name).Order(StringComparer.Ordinal));
+        Assert.Equal(3, storedAccounts.Single(account => account.ID == firstAccount.ID).Groups.Count);
+        Assert.Empty(storedAccounts.Single(account => account.ID == secondAccount.ID).Groups);
+        context.AccountManager.Verify(value => value.SaveGroupAsync(
+            It.IsAny<AccountGroup>(),
+            It.IsAny<IReadOnlyCollection<Guid>>()), Times.Exactly(3));
+        context.Sut.Dispose();
     }
 
     [Fact]
@@ -2839,7 +2900,7 @@ public sealed class MobileShellViewModelTests
                 It.IsAny<Stream>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new List<Account> { importedAccount }));
-        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+        context.AccountImport.Setup(value => value.RestoreBackupWithConflictResolutionAsync(
                 It.IsAny<IReadOnlyList<Account>>(),
                 It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
@@ -2908,7 +2969,7 @@ public sealed class MobileShellViewModelTests
                 "master-password",
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([importedAccount]));
-        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+        context.AccountImport.Setup(value => value.RestoreBackupWithConflictResolutionAsync(
                 It.IsAny<IReadOnlyList<Account>>(),
                 It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
@@ -2963,7 +3024,7 @@ public sealed class MobileShellViewModelTests
             context.Strings.Get(MobileStringKeys.BackupContainsNoAccounts),
             context.Sut.NotificationText);
         Assert.Equal(NotificationSeverity.Information, context.Sut.NotificationSeverity);
-        context.AccountImport.Verify(value => value.ImportWithConflictResolutionAsync(
+        context.AccountImport.Verify(value => value.RestoreBackupWithConflictResolutionAsync(
             It.IsAny<IReadOnlyList<Account>>(),
             It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Never);
@@ -3229,7 +3290,7 @@ public sealed class MobileShellViewModelTests
                 It.IsAny<Stream>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new List<Account> { importedAccount }));
-        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+        context.AccountImport.Setup(value => value.RestoreBackupWithConflictResolutionAsync(
                 It.IsAny<IReadOnlyList<Account>>(),
                 It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))

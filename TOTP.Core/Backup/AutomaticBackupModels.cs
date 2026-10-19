@@ -34,6 +34,15 @@ public sealed record AutomaticBackupPackageV1
     public required AuthorizationEnvelopeV2 AuthorizationEnvelope { get; init; }
 }
 
+public sealed record AutomaticBackupPackageV2
+{
+    public required Guid BackupId { get; init; }
+    public required DateTimeOffset CreatedUtc { get; init; }
+    public required byte[] EncryptedAccounts { get; init; }
+    public required byte[] EncryptedProfile { get; init; }
+    public required AuthorizationEnvelopeV2 AuthorizationEnvelope { get; init; }
+}
+
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record AutomaticBackupConfigurationV1
 {

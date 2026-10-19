@@ -315,6 +315,10 @@ if ([string]::IsNullOrWhiteSpace($runtimeIdentifier)) {
 }
 Write-Host "Target ABI: $deviceAbi ($runtimeIdentifier)"
 
+# RID-specific convenience builds must not rewrite the repository's canonical,
+# RID-neutral lock files used by CI. Each project gets an ignored local lock path.
+$isolatedNuGetLockFilePath = '$(MSBuildProjectDirectory)/obj/otp-harbor-local-runtime.lock.json'
+
 $inputFingerprint = Get-AndroidBuildInputFingerprint
 $cachedBuildState = $null
 if (Test-Path -LiteralPath $buildStatePath -PathType Leaf) {
@@ -377,6 +381,7 @@ if ($FastDeploy) {
         '--target:Install',
         '--maxcpucount',
         '--runtime', $runtimeIdentifier,
+        "-p:NuGetLockFilePath=$isolatedNuGetLockFilePath",
         "-p:Device=$device",
         '-p:EmbedAssembliesIntoApk=false')
     & dotnet @fastDeployArguments
@@ -393,7 +398,8 @@ else {
         $projectPath,
         '--configuration', 'Debug',
         '--target:SignAndroidPackage',
-        '--maxcpucount')
+        '--maxcpucount',
+        "-p:NuGetLockFilePath=$isolatedNuGetLockFilePath")
     if ($CleanBuild) {
         Write-Host 'Creating a clean universal Debug APK...'
         $buildArguments += @(

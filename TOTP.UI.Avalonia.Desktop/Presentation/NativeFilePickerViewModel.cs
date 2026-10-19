@@ -397,10 +397,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             await Task.Yield();
             var imported = await ReadImportAsync(file);
             if (imported is null) return;
-            var importResult = await _accountImportService.ImportAsync(
-                imported,
-                ConflictStrategy,
-                ConfirmImportAsync);
+            var importResult = isBackupRestore
+                ? await _accountImportService.RestoreBackupAsync(
+                    imported,
+                    ConflictStrategy,
+                    ConfirmImportAsync)
+                : await _accountImportService.ImportAsync(
+                    imported,
+                    ConflictStrategy,
+                    ConfirmImportAsync);
             if (importResult.IsFailed)
             {
                 SetMessage(

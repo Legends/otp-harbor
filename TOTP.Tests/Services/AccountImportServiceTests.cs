@@ -258,6 +258,89 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
+    public async Task ImportAsync_WhenPlainFormatHasNoGroups_PreservesExistingMemberships()
+    {
+        var groups = new[]
+        {
+            new AccountGroup(Guid.NewGuid(), "test1", "#4C956C"),
+            new AccountGroup(Guid.NewGuid(), "test2", "#4F6BED")
+        };
+        var existing = new Account(
+            Guid.NewGuid(),
+            "Issuer",
+            "JBSWY3DPEHPK3PXP",
+            "user",
+            groups: groups);
+        var incoming = new Account(
+            existing.ID,
+            existing.Issuer,
+            "KRSXG5DSNFXGOIDB",
+            existing.AccountName);
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.ImportAsync(
+            [incoming],
+            ImportConflictStrategy.ReplaceExisting,
+            (_, _) => Task.FromResult(true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Single().Groups.SequenceEqual(groups))), Times.Once);
+    }
+
+    [Fact]
+    public async Task RestoreBackupWithConflictResolutionAsync_ProfileDifferenceIsAuthoritative()
+    {
+        var existingGroup = new AccountGroup(Guid.NewGuid(), "Current", "#4C956C");
+        var existing = new Account(
+            Guid.NewGuid(),
+            "Issuer",
+            "JBSWY3DPEHPK3PXP",
+            "user",
+            groups: [existingGroup]);
+        var incoming = new Account(
+            existing.ID,
+            existing.Issuer,
+            existing.Secret,
+            existing.AccountName);
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.RestoreBackupWithConflictResolutionAsync(
+            [incoming],
+            (preview, _) =>
+            {
+                var conflict = Assert.Single(preview.ChangedConflicts);
+                Assert.True(conflict.GroupMembershipChanged);
+                Assert.False(conflict.SecretChanged);
+                return Task.FromResult<AccountImportResolution?>(new AccountImportResolution(
+                    [new AccountImportConflictResolution(
+                        conflict.ImportIndex,
+                        AccountImportConflictAction.Replace)]));
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.Replaced);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Count == 1 && batch.Single().Groups.Count == 0)), Times.Once);
+    }
+
+    [Fact]
     public async Task ImportAsync_WithInvalidGroupMetadata_RejectsBeforeVaultRead()
     {
         var invalidGroup = new AccountGroup(Guid.NewGuid(), "Work", "#123456");

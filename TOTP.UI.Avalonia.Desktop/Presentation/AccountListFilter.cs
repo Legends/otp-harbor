@@ -15,16 +15,19 @@ internal static class AccountListFilter
         if (terms.Length == 0 && !favoritesOnly)
             return groupId is null
                 ? accounts.ToArray()
-                : accounts.Where(account => account.Group?.Id == groupId).ToArray();
+                : accounts.Where(account => account.Groups.Any(group => group.Id == groupId)).ToArray();
 
         return accounts
             .Where(account =>
                 (!favoritesOnly || account.IsFavorite)
-                && (favoritesOnly || groupId is null || account.Group?.Id == groupId)
+                && (favoritesOnly || groupId is null
+                    || account.Groups.Any(group => group.Id == groupId))
                 && terms.All(term =>
                     account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || (account.Group?.Name.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)))
+                    || account.Groups.Any(group => group.Name.Contains(
+                        term,
+                        StringComparison.OrdinalIgnoreCase))))
             .ToArray();
     }
 }

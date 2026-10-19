@@ -68,15 +68,19 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportToStreamAsync_ThenImportFromStreamAsync_JsonPreservesOtpHarborMetadata()
     {
-        var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
+        var groups = new[]
+        {
+            new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED"),
+            new AccountGroup(Guid.NewGuid(), "Personal", "#18A999")
+        };
         var input = new Account(
             Guid.NewGuid(),
             "Example",
             "JBSWY3DPEHPK3PXP",
             "alice",
             60,
-            group,
-            isFavorite: true);
+            isFavorite: true,
+            groups: groups);
         await using var stream = new MemoryStream();
 
         Assert.True((await _sut.ExportToStreamAsync(
@@ -91,7 +95,7 @@ public sealed class ExportServiceTests
             cancellationToken: TestContext.Current.CancellationToken);
 
         var imported = Assert.Single(result.Value);
-        Assert.Equal(group, imported.Group);
+        Assert.Equal(groups, imported.Groups);
         Assert.True(imported.IsFavorite);
     }
 

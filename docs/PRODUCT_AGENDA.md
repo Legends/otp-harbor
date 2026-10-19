@@ -15,7 +15,7 @@ license compliance take priority over convenience or distribution reach.
    well-tested.
 3. **Large-vault navigation — in progress.** Desktop search supports multiple terms, while both
    platforms match issuer, account, and group names. Desktop and Android users can create
-   color-coded groups, assign or move accounts, and filter from horizontally scrollable group cards
+   color-coded groups, assign accounts to one or several groups, and filter from horizontally scrollable group cards
    without deleting grouped accounts. Desktop additionally provides group editing and deletion
    from a right-click menu. The default list shows all accounts without dedicated All accounts or
    Ungrouped cards. Favorites are available on both platforms; on desktop the built-in Favorites

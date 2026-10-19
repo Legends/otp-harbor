@@ -164,9 +164,8 @@ internal sealed class NativeAccountGroupAdapter : RecyclerView.Adapter
 
     internal void Submit(NativeAccountGroupRow[] items)
     {
-        var diff = DiffUtil.CalculateDiff(new GroupDiffCallback(_items, items), false);
         _items = items;
-        diff.DispatchUpdatesTo(this);
+        NotifyDataSetChanged();
     }
 
     internal int FindPosition(Guid groupId)
@@ -185,18 +184,6 @@ internal sealed class NativeAccountGroupAdapter : RecyclerView.Adapter
         public void Bind(NativeAccountGroupRow item) => Row.Bind(item);
     }
 
-}
-
-internal sealed class GroupDiffCallback(
-    NativeAccountGroupRow[] oldItems,
-    NativeAccountGroupRow[] newItems) : DiffUtil.Callback
-{
-    public override int OldListSize => oldItems.Length;
-    public override int NewListSize => newItems.Length;
-    public override bool AreItemsTheSame(int oldItemPosition, int newItemPosition) =>
-        oldItems[oldItemPosition].Id == newItems[newItemPosition].Id;
-    public override bool AreContentsTheSame(int oldItemPosition, int newItemPosition) =>
-        oldItems[oldItemPosition].VisualIdentity == newItems[newItemPosition].VisualIdentity;
 }
 
 internal sealed record NativeAccountGroupRow(
@@ -332,7 +319,7 @@ internal sealed class NativeAccountGroupView : View
 
         _fill.Color = row.IsFavorites
             ? (row.IsSelected ? palette.FavoriteSelected : palette.FavoriteBackground)
-            : WithAlpha(_groupColor, 52);
+            : BlendOver(_groupColor, palette.WindowBackground, 52);
         canvas.DrawRoundRect(_cardBounds, Dp(7), Dp(7), _fill);
         if (row.IsSelected)
         {
@@ -531,11 +518,18 @@ internal sealed class NativeAccountGroupView : View
         catch (ArgumentException) { return fallback; }
     }
 
-    private static Color WithAlpha(Color value, byte alpha) =>
-        Color.Argb(alpha, value.R, value.G, value.B);
+    private static Color BlendOver(Color foreground, Color background, byte alpha)
+    {
+        var inverseAlpha = 255 - alpha;
+        return Color.Rgb(
+            (foreground.R * alpha + background.R * inverseAlpha + 127) / 255,
+            (foreground.G * alpha + background.G * inverseAlpha + 127) / 255,
+            (foreground.B * alpha + background.B * inverseAlpha + 127) / 255);
+    }
 }
 
 internal sealed record NativeGroupPalette(
+    Color WindowBackground,
     Color Primary,
     Color Accent,
     Color FavoriteBackground,
@@ -544,15 +538,15 @@ internal sealed record NativeGroupPalette(
     Color FavoriteIcon)
 {
     private static readonly NativeGroupPalette Light = new(
-        Color.ParseColor("#172033"), Color.ParseColor("#168AE0"),
+        Color.White, Color.ParseColor("#172033"), Color.ParseColor("#168AE0"),
         Color.ParseColor("#FFF4C2"), Color.ParseColor("#FFE89A"),
         Color.ParseColor("#9CA3AF"), Color.ParseColor("#FABD62"));
     private static readonly NativeGroupPalette Dark = new(
-        Color.White, Color.ParseColor("#7D7FF4"),
+        Color.ParseColor("#0C1C33"), Color.White, Color.ParseColor("#7D7FF4"),
         Color.ParseColor("#40361F"), Color.ParseColor("#514526"),
         Color.ParseColor("#E5E7EB"), Color.ParseColor("#FFD58A"));
     private static readonly NativeGroupPalette HighContrast = new(
-        Color.White, Color.Yellow, Color.Black, Color.Black,
+        Color.Black, Color.White, Color.Yellow, Color.Black, Color.Black,
         Color.White, Color.Yellow);
 
     public static NativeGroupPalette Current

@@ -27,7 +27,8 @@ public sealed record AccountImportConflict(
     bool AccountNameChanged,
     bool SecretChanged,
     bool PeriodChanged,
-    bool FavoriteChanged = false);
+    bool FavoriteChanged = false,
+    bool GroupMembershipChanged = false);
 
 public sealed record AccountImportConflictResolution(
     int ImportIndex,

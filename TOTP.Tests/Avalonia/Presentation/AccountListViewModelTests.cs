@@ -892,12 +892,11 @@ public sealed class AccountListViewModelTests
             .Callback<AccountGroup, IReadOnlyCollection<Guid>>((group, selectedIds) =>
             {
                 var ids = selectedIds.ToHashSet();
-                accounts = accounts.Select(account =>
-                    ids.Contains(account.ID)
-                        ? account.WithGroup(group)
-                        : account.Group?.Id == group.Id
-                            ? account.WithGroup(null)
-                            : account).ToArray();
+                accounts = accounts
+                    .Select(account => account.WithGroupMembership(
+                        group,
+                        ids.Contains(account.ID)))
+                    .ToArray();
             })
             .ReturnsAsync(Result.Ok());
         using var sut = CreateSut(manager.Object);
@@ -931,6 +930,45 @@ public sealed class AccountListViewModelTests
         Assert.Equal(2, edited.AccountCount);
         Assert.DoesNotContain(accounts, account => account.ID == first.ID && account.Group is not null);
         Assert.Contains(accounts, account => account.ID == third.ID && account.Group?.Id == edited.Id);
+    }
+
+    [Fact]
+    public async Task SaveGroup_AllowsSameAccountInSeveralDesktopGroups()
+    {
+        var account = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
+        IReadOnlyList<Account> accounts = [account];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok(accounts));
+        manager.Setup(value => value.SaveGroupAsync(
+                It.IsAny<AccountGroup>(),
+                It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Callback<AccountGroup, IReadOnlyCollection<Guid>>((group, selectedIds) =>
+            {
+                var ids = selectedIds.ToHashSet();
+                accounts = accounts
+                    .Select(candidate => candidate.WithGroupMembership(
+                        group,
+                        ids.Contains(candidate.ID)))
+                    .ToArray();
+            })
+            .ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        foreach (var name in new[] { "test1", "test2", "test3" })
+        {
+            await sut.BeginAddGroupAsync();
+            sut.GroupEditorName = name;
+            Assert.Single(sut.GroupEditorAccounts).IsSelected = true;
+            await sut.SaveGroupAsync();
+        }
+
+        Assert.Equal(3, sut.Groups.Count);
+        Assert.Equal(
+            new[] { "test1", "test2", "test3" },
+            sut.Groups.Select(group => group.Name).Order(StringComparer.Ordinal));
+        Assert.Equal(3, Assert.Single(accounts).Groups.Count);
     }
 
     [Fact]

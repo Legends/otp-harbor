@@ -80,6 +80,7 @@ foreach ($requiredInstallerControl in @(
     'Android build inputs are unchanged; skipping the build.',
     '--target:Install',
     '-p:EmbedAssembliesIntoApk=false',
+    'NuGetLockFilePath',
     '--runtime',
     '--no-incremental',
     '--target:SignAndroidPackage',

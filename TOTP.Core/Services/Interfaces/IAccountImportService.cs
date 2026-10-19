@@ -16,4 +16,15 @@ public interface IAccountImportService
         IReadOnlyList<Account> importedAccounts,
         Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolveAsync,
         CancellationToken cancellationToken = default);
+
+    Task<Result<AccountImportOutcome>> RestoreBackupAsync(
+        IReadOnlyList<Account> importedAccounts,
+        ImportConflictStrategy conflictStrategy,
+        Func<AccountImportPreview, CancellationToken, Task<bool>> confirmAsync,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AccountImportOutcome>> RestoreBackupWithConflictResolutionAsync(
+        IReadOnlyList<Account> importedAccounts,
+        Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolveAsync,
+        CancellationToken cancellationToken = default);
 }

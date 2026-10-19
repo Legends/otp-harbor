@@ -3,9 +3,6 @@
 **The local-first authenticator for desktop and Android.**
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-5C6BC0)](https://github.com/Legends/otp-harbor)
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
-[![Build](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/build-and-test.yml)
-[![Security](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml/badge.svg)](https://github.com/Legends/otp-harbor/actions/workflows/security-audit.yml)
 [![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-2.0.1-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE.txt)
 
@@ -25,10 +22,28 @@
 - Automatic clipboard clearing and idle/session locking
 - Encrypted `.totp` backup, restore, and conflict handling
 - English, German, French, and Spanish UI
-- Native Avalonia desktop application for Windows, macOS, and Linux
+- Desktop application for Windows, macOS, and Linux
 - Focused Android app with strong-biometric, device-screen-lock (PIN, pattern, or password), or master-password unlock,
   camera-based QR import, swipe actions, and the
   same encrypted backup format as desktop
+
+## System requirements
+
+### Android
+
+- Android 9 (API level 28) or newer
+- Internal device storage for the encrypted local vault; OTP Harbor does not require a cloud account
+- A master password, which is required during first-run setup and remains the recovery method
+- Optional quick unlock requires either Android-supported strong biometrics or a configured secure device screen lock; the master password works without either feature
+- Camera permission is required only for live QR scanning; accounts can still be entered or imported without granting camera access
+- Manual and automatic backups use Android's system file or folder picker. Automatic backups require a writable folder selected by the user; Android may reject protected locations such as the root of internal storage
+- Installing the GitHub APK may require allowing APK installation for the browser or file manager used to open it. Future in-place updates must come from an APK signed by the same distribution channel
+
+### Desktop
+
+- Windows 10 or 11 on x64 for the Microsoft Store edition
+- Ubuntu 24.04 on x64 for the published DEB and portable Linux packages
+- macOS on ARM64 is supported by the application, but no supported public installer is currently offered
 
 The public [Android product page](https://legends.github.io/otp-harbor/android/) presents the mobile edition, while the dedicated [Android user guide](https://legends.github.io/otp-harbor/android/guide/) explains first-run setup, tap-to-copy, left/right swipe actions, camera and Google Authenticator QR workflows, per-account QR display, encrypted backup conflict handling, unlock-method recovery, and the optional app-lock setting.
 
@@ -89,59 +104,22 @@ All accounts, codes, and QR payloads shown in the marketing artwork are syntheti
 | --- | --- |
 | Windows 10/11 x64 | Public Microsoft Store MSIX only; Microsoft signs accepted packages and manages updates |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
-| macOS ARM64 | Structural artifacts are built in CI; production distribution still requires signing and notarization |
+| macOS ARM64 | No supported public installer is currently available |
 | Android 9 or newer | Production-signed universal APK from an independent `android-vX.Y.Z` GitHub release; manual installation with in-place upgrade support |
 
 After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.
 
-Maintainers can follow the [Microsoft Store release guide](docs/release/MICROSOFT_STORE.md) and [Android release guide](docs/release/ANDROID.md). The unsigned MSIX produced by the repository is exclusively a Partner Center submission input and must never be sideloaded or attached to a GitHub Release.
+Only install Windows builds from the Microsoft Store. Repository-generated unsigned MSIX files are not end-user packages and must not be sideloaded. For Android, use a production-signed APK from an `android-vX.Y.Z` GitHub release.
 
 ## Security and recovery
 
 The master password is the portable recovery path. Quick unlock is a convenience and never replaces it. Keep an external encrypted export and test restoration periodically.
 
 - [Security policy](SECURITY.md)
-- [Threat model](docs/security/THREAT_MODEL.md)
-- [Security verification](docs/security/SECURITY_VERIFICATION.md)
 - [Recovery guide](docs/RECOVERY.md)
 - [Privacy policy](PRIVACY.md)
 
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Never attach real secrets, vaults, backups, or unreviewed logs.
-
-## Code signing policy
-
-**Windows code-signing status:** The previous SignPath Foundation application was not approved at this stage. Reapplication is deferred until the project has materially stronger public adoption signals, including GitHub stars and verified download usage. Windows is therefore distributed only through Microsoft Store certification; stable GitHub releases do not attach unsigned Windows binaries.
-
-The Store and optional future direct-download trust models are defined in the [code signing policy](CODE_SIGNING_POLICY.md). Data handling is described in the [OTP Harbor privacy policy](PRIVACY.md).
-
-## Build
-
-Install the .NET 10 SDK, then run:
-
-```powershell
-git clone https://github.com/Legends/otp-harbor.git
-cd otp-harbor
-dotnet restore TOTP.sln --configfile NuGet.config
-dotnet build TOTP.sln -c Debug
-dotnet test TOTP.sln -c Debug
-dotnet run --project .\TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj
-```
-
-### Keep a source build current
-
-Users who intentionally run OTP Harbor from source can use the repository launcher:
-
-```powershell
-.\Start-OTP-Harbor.ps1
-```
-
-The launcher checks the official `origin/master` branch on every invocation. When a newer commit exists, it applies only a fast-forward update, restores dependencies, compiles the desktop app in Release mode, and starts it. When the source revision and the launcher's verified build are already current, it starts that build without compiling again. Git and the .NET 10 SDK are required.
-
-For safety, the launcher refuses to update a modified, ahead, or diverged checkout and never discards local files. It is a convenience for source users, not a signed binary update channel; Microsoft Store installations use Store updates, while portable Linux packages use the signed appcast.
-
-The Android host remains in the dedicated [Android solution](TOTP.Android.sln), so desktop-only development does not require the Android workload. Stable `android-vX.Y.Z` tags publish its signed APK without republishing desktop artifacts. See the [Android development guide](docs/android/FOUNDATION.md) for its implemented scope, security notes, and build commands.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for engineering rules and [docs/README.md](docs/README.md) for the maintained documentation map.
 
 ## License
 
