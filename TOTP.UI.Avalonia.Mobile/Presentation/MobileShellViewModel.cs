@@ -19,6 +19,7 @@ using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Avalonia.Shared.Presentation;
 
 namespace TOTP.Avalonia.Mobile.Presentation;
 
@@ -5384,15 +5385,10 @@ public sealed class MobileShellViewModel :
 
     private void ApplyAccountBrandIconFilter()
     {
-        var query = AccountBrandIconSearchText.Trim();
-        FilteredEditorBrandIconOptions = query.Length == 0
-            ? EditorBrandIconOptions
-            : EditorBrandIconOptions
-                .Where(option =>
-                    option.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)
-                    || option.Id?.Contains(query, StringComparison.OrdinalIgnoreCase) == true
-                    || option.FileName?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
-                .ToArray();
+        FilteredEditorBrandIconOptions = RankedTextFilter.Apply(
+            EditorBrandIconOptions,
+            AccountBrandIconSearchText,
+            static option => [option.DisplayName, option.Id, option.FileName]);
     }
 
     private void CloseAccountBrandIconPicker()

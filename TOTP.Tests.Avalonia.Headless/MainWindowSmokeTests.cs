@@ -1090,6 +1090,76 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void SearchableBrandIconPicker_RanksExactPrefixAndPartialMatches()
+    {
+        var options = new[]
+        {
+            new BrandIconOption("digitalocean", "DigitalOcean"),
+            new BrandIconOption("gitlab", "GitLab"),
+            new BrandIconOption("git", "Git"),
+            new BrandIconOption("github", "GitHub")
+        };
+        var picker = new SearchableComboBox { ItemsSource = options };
+
+        picker.SearchText = "git";
+
+        Assert.Equal(
+            [options[2], options[1], options[3], options[0]],
+            picker.FilteredItems);
+    }
+
+    [AvaloniaTheory]
+    [InlineData("a")]
+    [InlineData("e")]
+    [InlineData("i")]
+    [InlineData("o")]
+    [InlineData("u")]
+    public void SearchableBrandIconPicker_FilteringSelectedItemDoesNotClosePopup(
+        string searchText)
+    {
+        var options = new[]
+        {
+            new BrandIconOption(null, "Automatic issuer match"),
+            new BrandIconOption("github", "GitHub"),
+            new BrandIconOption("paypal", "PayPal")
+        };
+        var picker = new SearchableComboBox
+        {
+            ItemsSource = options,
+            SelectedItem = options[0]
+        };
+        var window = new Window { Content = picker };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var dropDownButton = Assert.Single(
+                picker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            var popup = Assert.Single(
+                picker.GetVisualDescendants().OfType<Popup>(),
+                candidate => candidate.Name == "PART_Popup");
+
+            dropDownButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            Assert.True(popup.IsOpen);
+
+            picker.SearchText = searchText;
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+
+            Assert.True(popup.IsOpen);
+            Assert.Same(options[0], picker.SelectedItem);
+            Assert.Contains(options[0], picker.FilteredItems);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void SearchableBrandIconPicker_UserSelectionKeepsTwoWayBindingActive()
     {
         var options = new[]
@@ -1128,6 +1198,8 @@ public sealed class MainWindowSmokeTests
                 popup.Child!.GetVisualDescendants().OfType<ListBox>(),
                 list => list.Name == "PART_ItemsList");
             items.SelectedItem = options[1];
+
+            Assert.False(popup.IsOpen);
             Assert.Same(options[0], selection.SelectedItem);
 
             selection.RestorePreviousSelection();

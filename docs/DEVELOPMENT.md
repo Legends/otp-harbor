@@ -150,7 +150,7 @@ Password handling, KDF parameters, vault/envelope formats, import/export formats
 
 ## PowerShell script catalog
 
-This catalog covers all 58 version-controlled PowerShell scripts currently maintained by the repository. Run scripts from the repository root unless their help states otherwise. Use `Get-Help <path> -Full` to inspect parameters and examples. Release and security scripts can change packages, credentials, or remote repository policy; do not run them speculatively.
+This catalog covers all 59 version-controlled PowerShell scripts currently maintained by the repository. Run scripts from the repository root unless their help states otherwise. Use `Get-Help <path> -Full` to inspect parameters and examples. Release and security scripts can change packages, credentials, or remote repository policy; do not run them speculatively.
 
 ### Root launcher
 
@@ -212,6 +212,7 @@ This catalog covers all 58 version-controlled PowerShell scripts currently maint
 | Script | Purpose |
 | --- | --- |
 | [`scripts/testing/Ensure-UbuntuHyperVNetwork.ps1`](../scripts/testing/Ensure-UbuntuHyperVNetwork.ps1) | Creates or repairs the guarded internal Hyper-V switch, host address, static VM adapter, and NAT used by the Ubuntu test VM. Requires elevation. |
+| [`scripts/testing/Generate-BrandAccountFixture.ps1`](../scripts/testing/Generate-BrandAccountFixture.ps1) | Creates deterministic synthetic account fixtures from the display names in a user-supplied `.otphicons` pack, ensuring every generated issuer is resolvable by that same imported pack. |
 | [`scripts/testing/Generate-ProminentPlatformAccountFixture.ps1`](../scripts/testing/Generate-ProminentPlatformAccountFixture.ps1) | Downloads a pinned Tranco ranking and creates deterministic synthetic TOTP account fixtures for large-list and performance testing. |
 | [`scripts/testing/Get-AndroidRuntimeIdentifier.ps1`](../scripts/testing/Get-AndroidRuntimeIdentifier.ps1) | Maps supported device ABIs (`arm64-v8a`, `x86_64`) to the corresponding .NET Android runtime identifier and rejects unsupported ABIs. |
 | [`scripts/testing/Get-LatestIconPackCompatibilityAssets.ps1`](../scripts/testing/Get-LatestIconPackCompatibilityAssets.ps1) | Downloads bounded latest-release Aegis Icons and Simple Icons archives, records versions and SHA-256 values, and exposes paths to CI compatibility tests. |

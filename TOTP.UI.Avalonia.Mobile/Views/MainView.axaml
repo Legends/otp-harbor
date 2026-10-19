@@ -2743,7 +2743,7 @@
                 MaxHeight="620"
                 Margin="12,24"
                 HorizontalAlignment="Stretch"
-                VerticalAlignment="Center"
+                VerticalAlignment="Top"
                 automation:AutomationProperties.Name="{Binding BrandIconText}"
                 Background="{DynamicResource BrushSurface}"
                 BorderBrush="{DynamicResource BrushBorder}"
@@ -2778,17 +2778,21 @@
                             PlaceholderText="{Binding SearchBrandIconsText}"
                             Text="{Binding AccountBrandIconSearchText, Mode=TwoWay}" />
                         <Button
+                            x:Name="AccountBrandIconClearSearchButton"
                             Width="44"
                             Height="44"
                             Margin="0,2,2,2"
-                            Padding="6"
+                            Padding="0"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
                             automation:AutomationProperties.Name="{Binding ClearSearchText}"
                             Command="{Binding ClearAccountBrandIconSearchCommand}"
-                            Content="×"
                             IsVisible="{Binding HasAccountBrandIconSearchText}"
-                            ToolTip.Tip="{Binding ClearSearchText}" />
+                            ToolTip.Tip="{Binding ClearSearchText}">
+                            <controls:SymbolIcon Kind="Close" />
+                        </Button>
                     </Grid>
                     <Grid
                         Grid.Row="2"

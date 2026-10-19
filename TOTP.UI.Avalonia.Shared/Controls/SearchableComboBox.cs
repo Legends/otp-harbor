@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using TOTP.Avalonia.Shared.Presentation;
 
 namespace TOTP.Avalonia.Shared.Controls;
 
@@ -20,6 +21,7 @@ public sealed class SearchableComboBox : TemplatedControl
     private TextBox? _searchBox;
     private double _effectivePopupWidth = 320d;
     private IReadOnlyList<object> _filteredItems = [];
+    private int _selectionSynchronizationDepth;
 
     public static readonly StyledProperty<IEnumerable?> ItemsSourceProperty =
         AvaloniaProperty.Register<SearchableComboBox, IEnumerable?>(nameof(ItemsSource));
@@ -277,7 +279,12 @@ public sealed class SearchableComboBox : TemplatedControl
 
     private void SelectItem(object? sender, SelectionChangedEventArgs e)
     {
-        if (_popup?.IsOpen != true || _itemsList?.SelectedItem is null) return;
+        if (_selectionSynchronizationDepth > 0
+            || _popup?.IsOpen != true
+            || _itemsList?.SelectedItem is null)
+        {
+            return;
+        }
 
         SetCurrentValue(SelectedItemProperty, _itemsList.SelectedItem);
         CloseDropDown();
@@ -295,20 +302,35 @@ public sealed class SearchableComboBox : TemplatedControl
     {
         var searchText = SearchText.Trim();
         var items = ItemsSource?.Cast<object>() ?? [];
-        FilteredItems = string.IsNullOrEmpty(searchText)
-            ? items.ToArray()
-            : items.Where(item =>
-                    item.ToString()?.Contains(
-                        searchText,
-                        StringComparison.CurrentCultureIgnoreCase) == true)
-                .ToArray();
-        SyncSelectedItem();
+        SynchronizeSelection(() =>
+        {
+            FilteredItems = RankedTextFilter.Apply(
+                items,
+                searchText,
+                static item => [item.ToString()]);
+            SyncSelectedItemCore();
+        });
     }
 
-    private void SyncSelectedItem()
+    private void SyncSelectedItem() => SynchronizeSelection(SyncSelectedItemCore);
+
+    private void SyncSelectedItemCore()
     {
         if (_itemsList is not null && !Equals(_itemsList.SelectedItem, SelectedItem))
             _itemsList.SelectedItem = SelectedItem;
+    }
+
+    private void SynchronizeSelection(Action action)
+    {
+        _selectionSynchronizationDepth++;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            _selectionSynchronizationDepth--;
+        }
     }
 
     private void UpdateClearButton()

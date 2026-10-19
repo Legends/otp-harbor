@@ -3529,7 +3529,9 @@ public sealed class MobileShellViewModelTests
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.SetupGet(value => value.AvailableBrands).Returns(
         [
+            new BrandDefinition("digitalocean", "DigitalOcean", "#0080FF", "digitalocean.svg"),
             new BrandDefinition("github", "GitHub", "#181717", "github.svg"),
+            new BrandDefinition("git", "Git", "#F05032", "git.svg"),
             new BrandDefinition("gitlab", "GitLab", "#FC6D26", "gitlab.svg"),
             new BrandDefinition("google", "Google", "#4285F4", "google.svg")
         ]);
@@ -3555,7 +3557,7 @@ public sealed class MobileShellViewModelTests
         context.Sut.AccountBrandIconSearchText = "git";
 
         Assert.Equal(
-            ["GitHub", "GitLab"],
+            ["Git", "GitHub", "GitLab", "DigitalOcean"],
             context.Sut.FilteredEditorBrandIconOptions.Select(option => option.DisplayName));
         Assert.False(context.Sut.HasNoBrandIconSearchResults);
 

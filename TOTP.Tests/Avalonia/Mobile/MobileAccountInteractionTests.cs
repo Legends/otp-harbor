@@ -319,6 +319,7 @@ public sealed class MobileAccountInteractionTests
             "MobileMainView.axaml"));
         XNamespace avalonia = "https://github.com/avaloniaui";
         XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        XNamespace controls = "using:TOTP.Avalonia.Shared.Controls";
 
         var advanced = document
             .Descendants(avalonia + "Expander")
@@ -445,6 +446,7 @@ public sealed class MobileAccountInteractionTests
         var modalSurface = Assert.Single(brandIconModal.Elements(avalonia + "Border"));
         Assert.Equal("520", modalSurface.Attribute("MaxWidth")?.Value);
         Assert.Equal("620", modalSurface.Attribute("MaxHeight")?.Value);
+        Assert.Equal("Top", modalSurface.Attribute("VerticalAlignment")?.Value);
         var modalLayout = Assert.Single(modalSurface.Elements(avalonia + "Grid"));
         Assert.Equal("Auto,Auto,*", modalLayout.Attribute("RowDefinitions")?.Value);
         var modalSearch = brandIconModal
@@ -458,6 +460,17 @@ public sealed class MobileAccountInteractionTests
             "{Binding HasSearchableBrandIcons}",
             modalSearch.Parent?.Attribute("IsVisible")?.Value);
         Assert.Null(modalSearch.Attribute("IsFocused"));
+        var clearSearchButton = brandIconModal
+            .Descendants(avalonia + "Button")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "AccountBrandIconClearSearchButton");
+        Assert.Equal("Center", clearSearchButton.Attribute("HorizontalContentAlignment")?.Value);
+        Assert.Equal("Center", clearSearchButton.Attribute("VerticalContentAlignment")?.Value);
+        Assert.Equal("0", clearSearchButton.Attribute("Padding")?.Value);
+        var clearSearchIcon = Assert.Single(
+            clearSearchButton.Elements(controls + "SymbolIcon"));
+        Assert.Equal("Close", clearSearchIcon.Attribute("Kind")?.Value);
+        Assert.Null(clearSearchIcon.Attribute("IconSize"));
         Assert.DoesNotContain(
             brandIconModal.Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value
