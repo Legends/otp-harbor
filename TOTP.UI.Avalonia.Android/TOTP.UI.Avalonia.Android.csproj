@@ -69,7 +69,7 @@
   <Target Name="CenterVisualStudioAndroidEmulator"
           AfterTargets="Build"
           Condition="'$(BuildingInsideVisualStudio)' == 'true' and '$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true'">
-    <Exec Command="pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\scripts\Android_Emulator_Move-to-screen-center.ps1&quot; -WaitSeconds 0 -IgnoreMissing"
+    <Exec Command="pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\scripts\Android_Emulator_Move-to-screen-center.ps1&quot; -WaitSeconds 120 -StabilizeSeconds 15 -RunInBackground -IgnoreMissing"
           ContinueOnError="WarnAndContinue" />
   </Target>
 
