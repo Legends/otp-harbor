@@ -99,7 +99,11 @@ public class MainActivity : AvaloniaMainActivity
 
     private void ApplyScreenCapturePolicy()
     {
+#if OTP_HARBOR_MARKETING_CAPTURE
+        const bool protectionRequired = false;
+#else
         var protectionRequired = _screenCapturePolicy?.IsScreenCaptureProtectionRequired != false;
+#endif
         RunOnUiThread(() =>
         {
             var window = Window;

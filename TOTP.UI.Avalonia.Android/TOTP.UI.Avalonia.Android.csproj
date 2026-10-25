@@ -27,7 +27,7 @@
     <EnableMarketingCapture>false</EnableMarketingCapture>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$( EnableMarketingCapture)' == 'true'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(EnableMarketingCapture)' == 'true'">
     <DefineConstants>$(DefineConstants);OTP_HARBOR_MARKETING_CAPTURE</DefineConstants>
   </PropertyGroup>
 
