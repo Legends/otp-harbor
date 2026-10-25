@@ -11,6 +11,7 @@ using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Validation;
 using TOTP.Infrastructure.Common;
 using TOTP.Infrastructure.Parser;
+using TOTP.Infrastructure.Security;
 
 namespace TOTP.Infrastructure.Services;
 
@@ -44,7 +45,6 @@ public sealed class ExportService : IExportService
     };
 
     private static readonly Argon2id _kdf = PasswordBasedKeyDerivationAlgorithm.Argon2id(in _argonParameters);
-    private static readonly AeadAlgorithm _algoAead = AeadAlgorithm.Aes256Gcm;
     private readonly ILogger<ExportService> _logger;
 
     public ExportService(ILogger<ExportService> logger)
@@ -170,6 +170,7 @@ public sealed class ExportService : IExportService
         byte[]? passwordBytes = null;
         byte[]? salt = null;
         byte[]? nonce = null;
+        byte[]? keyBytes = null;
         byte[]? ciphertextWithTag = null;
 
         try
@@ -177,10 +178,14 @@ public sealed class ExportService : IExportService
             plaintext = Encoding.UTF8.GetBytes(SerializeTokens(accounts, format));
             passwordBytes = Encoding.UTF8.GetBytes(password);
             salt = RandomNumberGenerator.GetBytes(SaltSize);
-            nonce = RandomNumberGenerator.GetBytes(_algoAead.NonceSize);
+            nonce = RandomNumberGenerator.GetBytes(VaultAesGcm.NonceSize);
 
-            using var key = _kdf.DeriveKey(passwordBytes, salt, _algoAead);
-            ciphertextWithTag = _algoAead.Encrypt(key, nonce, default, plaintext);
+            keyBytes = _kdf.DeriveBytes(passwordBytes, salt, VaultAesGcm.KeySize);
+            ciphertextWithTag = VaultAesGcm.Encrypt(
+                keyBytes,
+                nonce,
+                default,
+                plaintext);
 
             await destination.WriteAsync(MagicBytes, cancellationToken);
             await destination.WriteAsync(new byte[] { (byte)format }, cancellationToken);
@@ -205,6 +210,7 @@ public sealed class ExportService : IExportService
             Clear(passwordBytes);
             Clear(salt);
             Clear(nonce);
+            Clear(keyBytes);
             Clear(ciphertextWithTag);
         }
     }
@@ -270,17 +276,18 @@ public sealed class ExportService : IExportService
         ArgumentNullException.ThrowIfNull(password);
         ArgumentNullException.ThrowIfNull(source);
         byte[]? passwordBytes = null;
+        byte[]? keyBytes = null;
         byte[]? decryptedBytes = null;
         byte[]? fileBytes = null;
 
         try
         {
             (fileBytes, var fileLength) = await ReadBoundedAsync(source, cancellationToken);
-            int nonceSize = _algoAead.NonceSize;
+            int nonceSize = VaultAesGcm.NonceSize;
             int legacyHeaderSize = MagicBytes.Length + SaltSize + nonceSize;
             int versionedHeaderSize = MagicBytes.Length + 1 + SaltSize + nonceSize;
 
-            if (fileLength < legacyHeaderSize + _algoAead.TagSize)
+            if (fileLength < legacyHeaderSize + VaultAesGcm.TagSize)
             {
                 return Result.Fail(new AppError(AppErrorCode.ImportInvalidFile, "Encrypted import file is invalid."));
             }
@@ -293,7 +300,7 @@ public sealed class ExportService : IExportService
             ExportFileFormat format = ExportFileFormat.Json;
             int offset = MagicBytes.Length;
 
-            if (fileLength >= versionedHeaderSize + _algoAead.TagSize)
+            if (fileLength >= versionedHeaderSize + VaultAesGcm.TagSize)
             {
                 var marker = fileBytes[offset];
                 if (marker is (byte)ExportFileFormat.Json or (byte)ExportFileFormat.Txt or (byte)ExportFileFormat.Csv)
@@ -308,12 +315,20 @@ public sealed class ExportService : IExportService
             var encryptedData = fileBytes.AsSpan(offset + SaltSize + nonceSize, fileLength - offset - SaltSize - nonceSize);
 
             passwordBytes = Encoding.UTF8.GetBytes(password);
-            using var key = _kdf.DeriveKey(passwordBytes, salt, _algoAead);
-
-            decryptedBytes = new byte[encryptedData.Length - _algoAead.TagSize];
-            if (!_algoAead.Decrypt(key, nonce, default, encryptedData, decryptedBytes))
+            keyBytes = _kdf.DeriveBytes(passwordBytes, salt, VaultAesGcm.KeySize);
+            try
             {
-                return Result.Fail(new AppError(AppErrorCode.ImportWrongPasswordOrTampered, "Import decryption failed."));
+                decryptedBytes = VaultAesGcm.Decrypt(
+                    keyBytes,
+                    nonce,
+                    default,
+                    encryptedData);
+            }
+            catch (CryptographicException)
+            {
+                return Result.Fail(new AppError(
+                    AppErrorCode.ImportWrongPasswordOrTampered,
+                    "Import decryption failed."));
             }
 
             var content = StrictUtf8.GetString(decryptedBytes);
@@ -335,6 +350,7 @@ public sealed class ExportService : IExportService
         finally
         {
             Clear(passwordBytes);
+            Clear(keyBytes);
             Clear(decryptedBytes);
             Clear(fileBytes);
         }

@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSec.Cryptography;
 using TOTP.Core.Security.Models;
 using TOTP.Infrastructure.Security;
 
@@ -97,6 +99,65 @@ public sealed class MasterPasswordServiceTests
             {
                 CryptographicOperations.ZeroMemory(unwrapped);
             }
+        }
+    }
+
+    [Fact]
+    public async Task UnwrapKeyV2Async_WhenWrappedByNsecAesGcm_RemainsCompatible()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var dek = RandomNumberGenerator.GetBytes(32);
+        var salt = RandomNumberGenerator.GetBytes(16);
+        var nonce = RandomNumberGenerator.GetBytes(12);
+        var passwordBytes = Encoding.UTF8.GetBytes("existing-vault-password");
+        byte[]? ciphertext = null;
+        byte[]? unwrapped = null;
+
+        try
+        {
+            var parameters = new Argon2Parameters
+            {
+                NumberOfPasses = 3,
+                MemorySize = 64 * 1024,
+                DegreeOfParallelism = 1
+            };
+            var derivation = PasswordBasedKeyDerivationAlgorithm.Argon2id(parameters);
+            var algorithm = AeadAlgorithm.Aes256Gcm;
+            using var key = derivation.DeriveKey(passwordBytes, salt, algorithm);
+            ciphertext = algorithm.Encrypt(
+                key,
+                nonce,
+                Encoding.UTF8.GetBytes(AesGcmWrappedKeyV2.AssociatedDataContext),
+                dek);
+            var existingWrapper = new PasswordKeyWrapperV2
+            {
+                Kdf = new Argon2idParametersV2
+                {
+                    Salt = salt,
+                    Passes = 3,
+                    MemoryKiB = 64 * 1024,
+                    Parallelism = 1
+                },
+                WrappedKey = new AesGcmWrappedKeyV2
+                {
+                    Nonce = nonce,
+                    Ciphertext = ciphertext
+                }
+            };
+
+            unwrapped = await _sut.UnwrapKeyV2Async(
+                existingWrapper,
+                "existing-vault-password",
+                cancellationToken);
+
+            Assert.Equal(dek, unwrapped);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(dek);
+            CryptographicOperations.ZeroMemory(passwordBytes);
+            if (ciphertext is not null) CryptographicOperations.ZeroMemory(ciphertext);
+            if (unwrapped is not null) CryptographicOperations.ZeroMemory(unwrapped);
         }
     }
 

@@ -1,4 +1,3 @@
-using NSec.Cryptography;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -17,12 +16,11 @@ namespace TOTP.Infrastructure.Security;
 public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnapshotReader
 {
     private readonly ISecurityContext _securityContext;
-    private static readonly AeadAlgorithm Algorithm = AeadAlgorithm.Aes256Gcm;
     private static readonly byte[] LegacyFileHeader = "TVLT"u8.ToArray();
     private static readonly byte[] FileHeader = "TVL2"u8.ToArray();
     private static readonly byte[] AccountsAssociatedData = "TVL2:accounts"u8.ToArray();
     private static readonly byte[] ProfileAssociatedData = "TVL2:profile"u8.ToArray();
-    private const int VaultKeySize = 32;
+    private const int VaultKeySize = VaultAesGcm.KeySize;
     private const int ProfileVersion = 1;
 
     public VaultService(ISecurityContext securityContext)
@@ -39,8 +37,8 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         byte[]? profileData = null;
         byte[]? encryptedAccounts = null;
         byte[]? encryptedProfile = null;
-        byte[] accountsNonce = RandomNumberGenerator.GetBytes(Algorithm.NonceSize);
-        byte[] profileNonce = RandomNumberGenerator.GetBytes(Algorithm.NonceSize);
+        byte[] accountsNonce = RandomNumberGenerator.GetBytes(VaultAesGcm.NonceSize);
+        byte[] profileNonce = RandomNumberGenerator.GetBytes(VaultAesGcm.NonceSize);
         var dek = _securityContext.GetDekCopy();
         try
         {
@@ -50,14 +48,13 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
                 entries.Select(VaultAccountPayload.FromAccount).ToArray()));
             profileData = JsonSerializer.SerializeToUtf8Bytes(
                 VaultProfilePayload.FromAccounts(revisionId, entries));
-            using var key = Key.Import(Algorithm, dek, KeyBlobFormat.RawSymmetricKey);
-            encryptedAccounts = Algorithm.Encrypt(
-                key,
+            encryptedAccounts = VaultAesGcm.Encrypt(
+                dek,
                 accountsNonce,
                 AccountsAssociatedData,
                 accountsData);
-            encryptedProfile = Algorithm.Encrypt(
-                key,
+            encryptedProfile = VaultAesGcm.Encrypt(
+                dek,
                 profileNonce,
                 ProfileAssociatedData,
                 profileData);
@@ -130,7 +127,7 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         ReadOnlySpan<byte> encryptedBlob,
         ReadOnlySpan<byte> vaultKey)
     {
-        var legacyMinimumSize = LegacyFileHeader.Length + Algorithm.NonceSize + Algorithm.TagSize;
+        var legacyMinimumSize = LegacyFileHeader.Length + VaultAesGcm.NonceSize + VaultAesGcm.TagSize;
         if (encryptedBlob.Length < legacyMinimumSize)
             throw new CryptographicException("Data is too small or corrupted.");
 
@@ -150,15 +147,16 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         ReadOnlySpan<byte> encryptedBlob,
         ReadOnlySpan<byte> vaultKey)
     {
-        var nonce = encryptedBlob.Slice(LegacyFileHeader.Length, Algorithm.NonceSize);
-        var ciphertext = encryptedBlob[(LegacyFileHeader.Length + Algorithm.NonceSize)..];
+        var nonce = encryptedBlob.Slice(LegacyFileHeader.Length, VaultAesGcm.NonceSize);
+        var ciphertext = encryptedBlob[(LegacyFileHeader.Length + VaultAesGcm.NonceSize)..];
         byte[]? decrypted = null;
         try
         {
-            using var key = Key.Import(Algorithm, vaultKey, KeyBlobFormat.RawSymmetricKey);
-            decrypted = Algorithm.Decrypt(key, nonce, ReadOnlySpan<byte>.Empty, ciphertext);
-            if (decrypted is null)
-                throw new CryptographicException("Decryption failed.");
+            decrypted = VaultAesGcm.Decrypt(
+                vaultKey,
+                nonce,
+                ReadOnlySpan<byte>.Empty,
+                ciphertext);
 
             return JsonSerializer.Deserialize<List<Account>>(decrypted)
                 ?? throw new JsonException("Vault account payload is null.");
@@ -173,43 +171,40 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         ReadOnlySpan<byte> encryptedBlob,
         ReadOnlySpan<byte> vaultKey)
     {
-        var prefixLength = FileHeader.Length + sizeof(int) + (Algorithm.NonceSize * 2);
-        if (encryptedBlob.Length < prefixLength + (Algorithm.TagSize * 2))
+        var prefixLength = FileHeader.Length + sizeof(int) + (VaultAesGcm.NonceSize * 2);
+        if (encryptedBlob.Length < prefixLength + (VaultAesGcm.TagSize * 2))
             throw new CryptographicException("Data is too small or corrupted.");
 
         var accountsLength = BinaryPrimitives.ReadInt32LittleEndian(
             encryptedBlob.Slice(FileHeader.Length, sizeof(int)));
         var availableCiphertext = encryptedBlob.Length - prefixLength;
-        if (accountsLength < Algorithm.TagSize
-            || accountsLength > availableCiphertext - Algorithm.TagSize)
+        if (accountsLength < VaultAesGcm.TagSize
+            || accountsLength > availableCiphertext - VaultAesGcm.TagSize)
         {
             throw new CryptographicException("Vault section length is invalid.");
         }
 
         var offset = FileHeader.Length + sizeof(int);
-        var accountsNonce = encryptedBlob.Slice(offset, Algorithm.NonceSize);
-        offset += Algorithm.NonceSize;
-        var profileNonce = encryptedBlob.Slice(offset, Algorithm.NonceSize);
-        offset += Algorithm.NonceSize;
+        var accountsNonce = encryptedBlob.Slice(offset, VaultAesGcm.NonceSize);
+        offset += VaultAesGcm.NonceSize;
+        var profileNonce = encryptedBlob.Slice(offset, VaultAesGcm.NonceSize);
+        offset += VaultAesGcm.NonceSize;
         var accountsCiphertext = encryptedBlob.Slice(offset, accountsLength);
         var profileCiphertext = encryptedBlob[(offset + accountsLength)..];
         byte[]? accountsData = null;
         byte[]? profileData = null;
         try
         {
-            using var key = Key.Import(Algorithm, vaultKey, KeyBlobFormat.RawSymmetricKey);
-            accountsData = Algorithm.Decrypt(
-                key,
+            accountsData = VaultAesGcm.Decrypt(
+                vaultKey,
                 accountsNonce,
                 AccountsAssociatedData,
                 accountsCiphertext);
-            profileData = Algorithm.Decrypt(
-                key,
+            profileData = VaultAesGcm.Decrypt(
+                vaultKey,
                 profileNonce,
                 ProfileAssociatedData,
                 profileCiphertext);
-            if (accountsData is null || profileData is null)
-                throw new CryptographicException("Decryption failed.");
 
             var accounts = JsonSerializer.Deserialize<VaultAccountsPayload>(accountsData)
                 ?? throw new JsonException("Vault account payload is null.");
@@ -233,7 +228,7 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         if (candidateKey.Length != VaultKeySize)
             return VaultKeyVerificationStatus.InvalidCandidateKey;
 
-        var minimumSize = LegacyFileHeader.Length + Algorithm.NonceSize + Algorithm.TagSize;
+        var minimumSize = LegacyFileHeader.Length + VaultAesGcm.NonceSize + VaultAesGcm.TagSize;
         if (encryptedVault.Length < minimumSize
             || (!encryptedVault[..FileHeader.Length].SequenceEqual(FileHeader)
                 && !encryptedVault[..LegacyFileHeader.Length].SequenceEqual(LegacyFileHeader)))
@@ -263,8 +258,8 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
     {
         encryptedAccounts = [];
         encryptedProfile = [];
-        var prefixLength = FileHeader.Length + sizeof(int) + (Algorithm.NonceSize * 2);
-        if (encryptedVault.Length < prefixLength + (Algorithm.TagSize * 2)
+        var prefixLength = FileHeader.Length + sizeof(int) + (VaultAesGcm.NonceSize * 2);
+        if (encryptedVault.Length < prefixLength + (VaultAesGcm.TagSize * 2)
             || !encryptedVault[..FileHeader.Length].SequenceEqual(FileHeader))
         {
             return false;
@@ -273,17 +268,17 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         var accountsCiphertextLength = BinaryPrimitives.ReadInt32LittleEndian(
             encryptedVault.Slice(FileHeader.Length, sizeof(int)));
         var availableCiphertext = encryptedVault.Length - prefixLength;
-        if (accountsCiphertextLength < Algorithm.TagSize
-            || accountsCiphertextLength > availableCiphertext - Algorithm.TagSize)
+        if (accountsCiphertextLength < VaultAesGcm.TagSize
+            || accountsCiphertextLength > availableCiphertext - VaultAesGcm.TagSize)
         {
             return false;
         }
 
         var offset = FileHeader.Length + sizeof(int);
-        var accountsNonce = encryptedVault.Slice(offset, Algorithm.NonceSize);
-        offset += Algorithm.NonceSize;
-        var profileNonce = encryptedVault.Slice(offset, Algorithm.NonceSize);
-        offset += Algorithm.NonceSize;
+        var accountsNonce = encryptedVault.Slice(offset, VaultAesGcm.NonceSize);
+        offset += VaultAesGcm.NonceSize;
+        var profileNonce = encryptedVault.Slice(offset, VaultAesGcm.NonceSize);
+        offset += VaultAesGcm.NonceSize;
         var accountsCiphertext = encryptedVault.Slice(offset, accountsCiphertextLength);
         var profileCiphertext = encryptedVault[(offset + accountsCiphertextLength)..];
 
@@ -300,15 +295,15 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         ReadOnlySpan<byte> encryptedAccounts,
         ReadOnlySpan<byte> encryptedProfile)
     {
-        if (encryptedAccounts.Length < Algorithm.NonceSize + Algorithm.TagSize
-            || encryptedProfile.Length < Algorithm.NonceSize + Algorithm.TagSize)
+        if (encryptedAccounts.Length < VaultAesGcm.NonceSize + VaultAesGcm.TagSize
+            || encryptedProfile.Length < VaultAesGcm.NonceSize + VaultAesGcm.TagSize)
         {
             throw new CryptographicException("Encrypted vault section is invalid.");
         }
 
-        var accountsCiphertextLength = encryptedAccounts.Length - Algorithm.NonceSize;
-        var profileCiphertextLength = encryptedProfile.Length - Algorithm.NonceSize;
-        var prefixLength = FileHeader.Length + sizeof(int) + (Algorithm.NonceSize * 2);
+        var accountsCiphertextLength = encryptedAccounts.Length - VaultAesGcm.NonceSize;
+        var profileCiphertextLength = encryptedProfile.Length - VaultAesGcm.NonceSize;
+        var prefixLength = FileHeader.Length + sizeof(int) + (VaultAesGcm.NonceSize * 2);
         var result = new byte[
             prefixLength + accountsCiphertextLength + profileCiphertextLength];
         FileHeader.CopyTo(result, 0);
@@ -316,13 +311,13 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
             result.AsSpan(FileHeader.Length, sizeof(int)),
             accountsCiphertextLength);
         var offset = FileHeader.Length + sizeof(int);
-        encryptedAccounts[..Algorithm.NonceSize].CopyTo(result.AsSpan(offset));
-        offset += Algorithm.NonceSize;
-        encryptedProfile[..Algorithm.NonceSize].CopyTo(result.AsSpan(offset));
-        offset += Algorithm.NonceSize;
-        encryptedAccounts[Algorithm.NonceSize..].CopyTo(result.AsSpan(offset));
+        encryptedAccounts[..VaultAesGcm.NonceSize].CopyTo(result.AsSpan(offset));
+        offset += VaultAesGcm.NonceSize;
+        encryptedProfile[..VaultAesGcm.NonceSize].CopyTo(result.AsSpan(offset));
+        offset += VaultAesGcm.NonceSize;
+        encryptedAccounts[VaultAesGcm.NonceSize..].CopyTo(result.AsSpan(offset));
         offset += accountsCiphertextLength;
-        encryptedProfile[Algorithm.NonceSize..].CopyTo(result.AsSpan(offset));
+        encryptedProfile[VaultAesGcm.NonceSize..].CopyTo(result.AsSpan(offset));
         return result;
     }
 

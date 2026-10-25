@@ -4,6 +4,7 @@ using Android.Runtime;
 using Avalonia;
 using Avalonia.Android;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using TOTP.Avalonia.Mobile;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Avalonia.Mobile.Views;
@@ -28,27 +29,41 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     {
         return base.CustomizeAppBuilder(builder).AfterSetup(_ =>
         {
-            _services = AndroidCompositionRoot.Build(this);
-            var brandIconCache = _brandIconCache ??= new NativeBrandIconCache();
-            var viewModel = _services.GetRequiredService<MobileShellViewModel>();
-            var app = global::Avalonia.Application.Current as MobileApp
-                ?? throw new InvalidOperationException("The mobile Avalonia application is unavailable.");
-            app.ConfigureAppearance(_services.GetRequiredService<IAppearanceSettingsService>());
-            app.MainViewFactory = () =>
+            try
             {
-                viewModel.UseNativeDeleteConfirmation();
-                var view = new MainView { DataContext = viewModel };
-                view.UseNativeAccountList(new AndroidAccountListHost(
-                    viewModel,
-                    brandIconCache,
-                    view.DismissAccountSearchFocus));
-                view.UseNativeAccountGroupStrip(new AndroidAccountGroupStripHost(
-                    viewModel,
-                    view.DismissAccountSearchFocus));
-                view.UseNativeGroupAccountPicker(new AndroidGroupAccountPickerHost(viewModel));
-                viewModel.InitializeCommand.Execute(null);
-                return view;
-            };
+                _services = AndroidCompositionRoot.Build(this);
+                var brandIconCache = _brandIconCache ??= new NativeBrandIconCache();
+                var viewModel = _services.GetRequiredService<MobileShellViewModel>();
+                var app = global::Avalonia.Application.Current as MobileApp
+                    ?? throw new InvalidOperationException("The mobile Avalonia application is unavailable.");
+                app.ConfigureAppearance(_services.GetRequiredService<IAppearanceSettingsService>());
+                app.MainViewFactory = () =>
+                {
+                    viewModel.UseNativeDeleteConfirmation();
+                    var view = new MainView { DataContext = viewModel };
+                    view.UseNativeAccountList(new AndroidAccountListHost(
+                        viewModel,
+                        brandIconCache,
+                        view.DismissAccountSearchFocus));
+                    view.UseNativeAccountGroupStrip(new AndroidAccountGroupStripHost(
+                        viewModel,
+                        view.DismissAccountSearchFocus));
+                    view.UseNativeGroupAccountPicker(new AndroidGroupAccountPickerHost(viewModel));
+                    viewModel.InitializeCommand.Execute(null);
+                    return view;
+                };
+            }
+            catch (Exception exception)
+            {
+                Log.Fatal(
+                    exception,
+                    "Android application startup failed with exception type {ExceptionType}.",
+                    exception.GetType().FullName);
+                global::Android.Util.Log.Error(
+                    "OtpHarborStartup",
+                    SensitiveTextRedactor.Sanitize(exception.ToString()));
+                throw;
+            }
         });
     }
 

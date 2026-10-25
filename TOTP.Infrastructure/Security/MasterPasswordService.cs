@@ -75,15 +75,19 @@ public sealed class MasterPasswordService : IMasterPasswordService
                 // This is where it was crashing due to the 64GB request
                 var argon2 = PasswordBasedKeyDerivationAlgorithm.Argon2id(argonParams);
                 byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+                byte[]? kekBytes = null;
 
                 try
                 {
-                    // 3. Derive KEK specifically for Aes256Gcm
-                    using var kek = argon2.DeriveKey(passwordBytes, salt, AeadAlgorithm.Aes256Gcm);
+                    // 3. Derive the 256-bit KEK used by the AES-GCM wrapper.
+                    kekBytes = argon2.DeriveBytes(passwordBytes, salt, VaultAesGcm.KeySize);
 
                     // 4. Wrap DEK
-                    var aes = AeadAlgorithm.Aes256Gcm;
-                    byte[] wrappedDek = aes.Encrypt(kek, nonce, null, rawDek);
+                    byte[] wrappedDek = VaultAesGcm.Encrypt(
+                        kekBytes,
+                        nonce,
+                        default,
+                        rawDek);
 
                     _logger.LogInformation("Key wrapping completed successfully.");
 
@@ -91,7 +95,8 @@ public sealed class MasterPasswordService : IMasterPasswordService
                 }
                 finally
                 {
-                    Array.Clear(passwordBytes, 0, passwordBytes.Length);
+                    CryptographicOperations.ZeroMemory(passwordBytes);
+                    if (kekBytes is not null) CryptographicOperations.ZeroMemory(kekBytes);
                 }
             }
             catch (Exception ex)
@@ -130,17 +135,21 @@ public sealed class MasterPasswordService : IMasterPasswordService
 
                 var argon2 = PasswordBasedKeyDerivationAlgorithm.Argon2id(argonParams);
                 byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+                byte[]? kekBytes = null;
 
                 try
                 {
-                    using var kek = argon2.DeriveKey(passwordBytes, salt, AeadAlgorithm.Aes256Gcm);
-
-                    var aes = AeadAlgorithm.Aes256Gcm;
-                    return aes.Decrypt(kek, nonce, null, wrappedDek);
+                    kekBytes = argon2.DeriveBytes(passwordBytes, salt, VaultAesGcm.KeySize);
+                    return VaultAesGcm.Decrypt(
+                        kekBytes,
+                        nonce,
+                        default,
+                        wrappedDek);
                 }
                 finally
                 {
-                    Array.Clear(passwordBytes, 0, passwordBytes.Length);
+                    CryptographicOperations.ZeroMemory(passwordBytes);
+                    if (kekBytes is not null) CryptographicOperations.ZeroMemory(kekBytes);
                 }
             }
             catch (CryptographicException)
@@ -184,12 +193,17 @@ public sealed class MasterPasswordService : IMasterPasswordService
             };
             var argon2 = PasswordBasedKeyDerivationAlgorithm.Argon2id(argonParams);
             var passwordBytes = Encoding.UTF8.GetBytes(password);
+            byte[]? kekBytes = null;
 
             try
             {
-                using var kek = argon2.DeriveKey(passwordBytes, salt, AeadAlgorithm.Aes256Gcm);
+                kekBytes = argon2.DeriveBytes(passwordBytes, salt, VaultAesGcm.KeySize);
                 cancellationToken.ThrowIfCancellationRequested();
-                var ciphertext = AeadAlgorithm.Aes256Gcm.Encrypt(kek, nonce, V2AssociatedData, rawDek);
+                var ciphertext = VaultAesGcm.Encrypt(
+                    kekBytes,
+                    nonce,
+                    V2AssociatedData,
+                    rawDek);
 
                 return new PasswordKeyWrapperV2
                 {
@@ -210,6 +224,7 @@ public sealed class MasterPasswordService : IMasterPasswordService
             finally
             {
                 CryptographicOperations.ZeroMemory(passwordBytes);
+                if (kekBytes is not null) CryptographicOperations.ZeroMemory(kekBytes);
             }
         }, cancellationToken);
     }
@@ -234,17 +249,18 @@ public sealed class MasterPasswordService : IMasterPasswordService
                 DegreeOfParallelism = wrapper.Kdf.Parallelism
             };
             var passwordBytes = Encoding.UTF8.GetBytes(password);
+            byte[]? kekBytes = null;
 
             try
             {
                 var argon2 = PasswordBasedKeyDerivationAlgorithm.Argon2id(argonParams);
-                using var kek = argon2.DeriveKey(
+                kekBytes = argon2.DeriveBytes(
                     passwordBytes,
                     wrapper.Kdf.Salt,
-                    AeadAlgorithm.Aes256Gcm);
+                    VaultAesGcm.KeySize);
                 cancellationToken.ThrowIfCancellationRequested();
-                return AeadAlgorithm.Aes256Gcm.Decrypt(
-                    kek,
+                return VaultAesGcm.Decrypt(
+                    kekBytes,
                     wrapper.WrappedKey.Nonce,
                     V2AssociatedData,
                     wrapper.WrappedKey.Ciphertext);
@@ -262,6 +278,7 @@ public sealed class MasterPasswordService : IMasterPasswordService
             finally
             {
                 CryptographicOperations.ZeroMemory(passwordBytes);
+                if (kekBytes is not null) CryptographicOperations.ZeroMemory(kekBytes);
             }
         }, cancellationToken);
     }
@@ -296,7 +313,7 @@ public sealed class MasterPasswordService : IMasterPasswordService
             return false;
         }
 
-        return wrappedDek.Length >= AeadAlgorithm.Aes256Gcm.TagSize;
+        return wrappedDek.Length >= VaultAesGcm.TagSize;
     }
 
     private static bool IsValidV2Wrapper(PasswordKeyWrapperV2? wrapper)

@@ -14,6 +14,67 @@ namespace TOTP.Tests.Services;
 public sealed class VaultServiceTests
 {
     [Fact]
+    public void VaultAesGcm_ProducesNsecCompatibleCiphertextInBothDirections()
+    {
+        var keyBytes = Enumerable.Range(0, VaultAesGcm.KeySize)
+            .Select(value => (byte)value)
+            .ToArray();
+        var nonce = Enumerable.Range(32, VaultAesGcm.NonceSize)
+            .Select(value => (byte)value)
+            .ToArray();
+        var associatedData = "OTP Harbor vault compatibility"u8.ToArray();
+        var plaintext = "cross-platform AES-GCM payload"u8.ToArray();
+        var nsecAlgorithm = AeadAlgorithm.Aes256Gcm;
+        byte[]? nsecEncrypted = null;
+        byte[]? platformEncrypted = null;
+        byte[]? nsecDecrypted = null;
+        byte[]? platformDecrypted = null;
+
+        try
+        {
+            using var nsecKey = Key.Import(
+                nsecAlgorithm,
+                keyBytes,
+                KeyBlobFormat.RawSymmetricKey);
+            nsecEncrypted = nsecAlgorithm.Encrypt(
+                nsecKey,
+                nonce,
+                associatedData,
+                plaintext);
+            platformEncrypted = VaultAesGcm.Encrypt(
+                keyBytes,
+                nonce,
+                associatedData,
+                plaintext);
+
+            Assert.Equal(nsecEncrypted, platformEncrypted);
+
+            nsecDecrypted = nsecAlgorithm.Decrypt(
+                nsecKey,
+                nonce,
+                associatedData,
+                platformEncrypted);
+            platformDecrypted = VaultAesGcm.Decrypt(
+                keyBytes,
+                nonce,
+                associatedData,
+                nsecEncrypted);
+
+            Assert.Equal(plaintext, nsecDecrypted);
+            Assert.Equal(plaintext, platformDecrypted);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(keyBytes);
+            CryptographicOperations.ZeroMemory(plaintext);
+            if (nsecEncrypted is not null) CryptographicOperations.ZeroMemory(nsecEncrypted);
+            if (platformEncrypted is not null) CryptographicOperations.ZeroMemory(platformEncrypted);
+            if (nsecDecrypted is not null) CryptographicOperations.ZeroMemory(nsecDecrypted);
+            if (platformDecrypted is not null) CryptographicOperations.ZeroMemory(platformDecrypted);
+        }
+    }
+
+    [Fact]
     public void EncryptVault_WhenSecurityContextLocked_ThrowsInvalidOperationException()
     {
         var security = new Mock<ISecurityContext>();
