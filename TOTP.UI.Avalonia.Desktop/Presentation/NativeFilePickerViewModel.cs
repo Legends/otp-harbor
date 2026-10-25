@@ -383,9 +383,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             }
 
             var selectedExtension = Path.GetExtension(file.Name);
-            if (isBackupRestore
-                && !selectedExtension.Equals(".totp", StringComparison.OrdinalIgnoreCase)
-                && !selectedExtension.Equals(".otphbackup", StringComparison.OrdinalIgnoreCase))
+            if (isBackupRestore && !BackupFileExtensions.IsSupportedBackup(selectedExtension))
             {
                 SetMessage(
                     Localized(AvaloniaStringKeys.BackupInvalidOrUnavailable),
@@ -505,7 +503,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 return;
             }
 
-            var suggestedName = $"totp-backup-{DateTime.UtcNow:yyyy-MM-dd}.totp";
+            var suggestedName =
+                $"totp-backup-{DateTime.UtcNow:yyyy-MM-dd}{BackupFileExtensions.EncryptedBackup}";
             await using var file = await _filePicker.PickEncryptedExportFileAsync(suggestedName);
             if (file is null)
             {
@@ -700,8 +699,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     {
         Result<List<Account>> result;
         var extension = Path.GetExtension(file.Name);
-        if (extension.Equals(".totp", StringComparison.OrdinalIgnoreCase)
-            || extension.Equals(".otphbackup", StringComparison.OrdinalIgnoreCase))
+        if (BackupFileExtensions.IsSupportedBackup(extension))
         {
             Result<List<Account>>? validatedResult = null;
             var password = await _dialogs.PromptForPasswordAsync(new PasswordDialogRequest(
@@ -714,7 +712,9 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 async (candidate, token) =>
                 {
                     await using var stream = await file.OpenReadAsync(token);
-                    if (extension.Equals(".otphbackup", StringComparison.OrdinalIgnoreCase))
+                    if (extension.Equals(
+                            BackupFileExtensions.AutomaticBackup,
+                            StringComparison.OrdinalIgnoreCase))
                     {
                         if (_automaticBackupSnapshots is null)
                         {

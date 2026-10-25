@@ -16,6 +16,7 @@ using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Avalonia.Shared.Presentation;
 using TOTP.Core.Backup;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
@@ -2130,28 +2131,23 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplyGroupEditorSearch()
     {
-        var terms = GroupEditorSearchText.Split(
-            (char[]?)null,
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        GroupEditorAccounts = terms.Length == 0
-            ? _allGroupEditorAccounts
-            : _allGroupEditorAccounts
-                .Where(account => terms.All(term =>
-                    account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)))
-                .ToArray();
+        GroupEditorAccounts = RankedTextFilter.ApplyTerms(
+            _allGroupEditorAccounts,
+            GroupEditorSearchText,
+            static _ => 2,
+            static (account, index) => index == 0 ? account.Issuer : account.AccountName);
     }
 
     private void ApplyFilter()
     {
         var filteredAccounts = AccountListFilter.Apply(
-            _allAccounts,
+            SortAccounts(_allAccounts),
             SearchText,
             _selectedGroupId,
             _showFavoritesOnly,
             _showAllAccounts);
         Accounts = new ObservableCollection<AccountListItemViewModel>(
-            SortAccounts(filteredAccounts));
+            filteredAccounts);
         var selectionIsVisible = SelectedAccount is not null
             && Accounts.Any(account => account.Id == SelectedAccount.Id);
         if (selectionIsVisible) return;
@@ -2801,19 +2797,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplyGroupSearch()
     {
-        var terms = SearchText.Split(
-            (char[]?)null,
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        Groups = terms.Length == 0
-            ? _allGroups
-            : _allGroups
-                .Where(group => terms.All(term =>
-                    group.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || _allAccounts.Any(account =>
-                        account.Groups.Any(membership => membership.Id == group.Id)
-                        && (account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
-                            || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)))))
-                .ToArray();
+        Groups = RankedTextFilter.ApplyTerms(
+            _allGroups,
+            SearchText,
+            group => _allAccounts
+                .Where(account => account.Groups.Any(membership => membership.Id == group.Id))
+                .SelectMany(static account => new string?[] { account.Issuer, account.AccountName })
+                .Prepend(group.Name));
     }
 
     private void RefreshGroupColorOptions(string? selectedColor)

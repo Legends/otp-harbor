@@ -96,6 +96,38 @@ public sealed class MobileStringCatalogTests
     }
 
     [Theory]
+    [InlineData("en", "Scan QR code", "Upload QR code image")]
+    [InlineData("de", "QR-Code scannen", "QR-Code-Bild hochladen")]
+    [InlineData("fr", "Scanner un code QR", "Importer une image de code QR")]
+    [InlineData("es", "Escanear código QR", "Subir imagen de código QR")]
+    public void Get_QrScannerActions_AreConciseAndLocalized(
+        string cultureName,
+        string expectedScan,
+        string expectedUpload)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Equal(expectedScan, catalog.Get(MobileStringKeys.ScanQr));
+        Assert.Equal(expectedUpload, catalog.Get(MobileStringKeys.UploadQrImage));
+    }
+
+    [Theory]
+    [InlineData("en", "Add account", "Edit account")]
+    [InlineData("de", "Konto hinzufügen", "Konto bearbeiten")]
+    [InlineData("fr", "Ajouter un compte", "Modifier le compte")]
+    [InlineData("es", "Añadir cuenta", "Editar cuenta")]
+    public void Get_AccountEditorTitles_AreConciseAndLocalized(
+        string cultureName,
+        string expectedAdd,
+        string expectedEdit)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Equal(expectedAdd, catalog.Get(MobileStringKeys.EditorAddTitle));
+        Assert.Equal(expectedEdit, catalog.Get(MobileStringKeys.EditorEditTitle));
+    }
+
+    [Theory]
     [InlineData("en")]
     [InlineData("de")]
     [InlineData("fr")]

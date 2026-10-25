@@ -27,7 +27,7 @@ foreach ($required in @(
     '<ApplicationId Condition="''$(Configuration)'' == ''Debug''">$(AndroidProductionApplicationId).debug</ApplicationId>',
     '<AndroidPackageFormats Condition="''$(Configuration)'' == ''Release''">apk</AndroidPackageFormats>',
     "'`$(Configuration)' == 'Debug' and '`$(EnableMarketingCapture)' == ''",
-    '<EnableMarketingCapture>true</EnableMarketingCapture>',
+    '<EnableMarketingCapture>false</EnableMarketingCapture>',
     "'`$(Configuration)' == 'Debug' and '`$(EnableMarketingCapture)' == 'true'",
     "'`$(Configuration)' == 'Release' and '`$(EnableMarketingCapture)' == 'true'",
     'EnableMarketingCapture is restricted to the isolated Debug package.')) {
@@ -84,7 +84,12 @@ foreach ($requiredInstallerControl in @(
     '--runtime',
     '--no-incremental',
     '--target:SignAndroidPackage',
-    '& $adbPath connect $device',
+    '& $adbPath connect $TargetDevice',
+    'Test-AndroidTcpEndpoint $TargetDevice',
+    '_adb-tls-pairing\._tcp',
+    'Enter the six-digit code when ADB prompts for the pairing code.',
+    '& $adbPath pair $pairingEndpoint',
+    'Pairing succeeded, but Android device',
     '& $adbPath -s $device install -r $apkPath',
     'shell am force-stop $packageName')) {
     if (-not $installer.Contains($requiredInstallerControl, [StringComparison]::Ordinal)) {

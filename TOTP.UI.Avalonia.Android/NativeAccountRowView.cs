@@ -9,6 +9,7 @@ using AndroidX.Core.Graphics;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using TOTP.Avalonia.Mobile.Presentation;
+using TOTP.Avalonia.Shared.Branding;
 using TOTP.Avalonia.Shared.Styles;
 
 namespace TOTP.Avalonia.Android;
@@ -26,8 +27,9 @@ internal sealed class NativeAccountRowView : View
     private const int DeleteAccessibilityAction = 0x01020004;
 
     private readonly MobileShellViewModel _viewModel;
+    private readonly NativeBrandIconCache _brandIcons;
     private readonly Action<NativeAccountRowView> _openRowChanged;
-    private readonly Paint _fill = new(PaintFlags.AntiAlias);
+    private readonly Paint _fill = new(PaintFlags.AntiAlias | PaintFlags.FilterBitmap);
     private readonly Paint _stroke = new(PaintFlags.AntiAlias) { StrokeWidth = 1 };
     private readonly Paint _text = new(PaintFlags.AntiAlias);
     private readonly Paint _icon = new(PaintFlags.AntiAlias);
@@ -49,6 +51,7 @@ internal sealed class NativeAccountRowView : View
     private float _swipeOffset;
     private bool _horizontalGesture;
     private bool _animating;
+    private bool _isListScrolling;
     private NativeBrandIcon? _brandIcon;
     private string _displayIssuer = string.Empty;
     private string _displaySecondary = string.Empty;
@@ -61,10 +64,12 @@ internal sealed class NativeAccountRowView : View
     public NativeAccountRowView(
         Context context,
         MobileShellViewModel viewModel,
+        NativeBrandIconCache brandIcons,
         Action<NativeAccountRowView> openRowChanged)
         : base(context)
     {
         _viewModel = viewModel;
+        _brandIcons = brandIcons;
         _openRowChanged = openRowChanged;
         _density = Resources?.DisplayMetrics?.Density ?? 1f;
         _scaledDensity = _density * (Resources?.Configuration?.FontScale ?? 1f);
@@ -86,18 +91,35 @@ internal sealed class NativeAccountRowView : View
         return (int)MathF.Round(84f * density);
     }
 
-    public void Bind(NativeAccountRow row)
+    public static RectF CreateBrandIconTarget(Context context)
+    {
+        var density = context.Resources?.DisplayMetrics?.Density ?? 1f;
+        int Dp(float value) => (int)MathF.Round(value * density);
+        var centerY = RowHeight(context) / 2f;
+        var brandLeft = Dp(2) + Dp(10);
+        var brandTop = centerY - Dp(44) / 2f;
+        return new RectF(
+            brandLeft + Dp(9),
+            brandTop + Dp(9),
+            brandLeft + Dp(44) - Dp(9),
+            brandTop + Dp(44) - Dp(9));
+    }
+
+    public void Bind(NativeAccountRow row, bool isListScrolling)
     {
         if (ReferenceEquals(_row?.Account, row.Account))
         {
             _row = row;
+            SetListScrolling(isListScrolling);
             UpdateAccessibilityDescription();
             Invalidate();
             return;
         }
 
+        StopAnimating();
         Unsubscribe();
         _row = row;
+        _isListScrolling = isListScrolling;
         _row.Account.PropertyChanged += AccountPropertyChanged;
         _viewModel.PropertyChanged += ViewModelPropertyChanged;
         _isSelected = _viewModel.SelectedAccount?.Id == row.Id;
@@ -130,6 +152,7 @@ internal sealed class NativeAccountRowView : View
         _displayNextCode = string.Empty;
         _rawCode = string.Empty;
         _isSelected = false;
+        _isListScrolling = false;
         _starPath.Reset();
         ContentDescription = string.Empty;
         _settleAnimator?.Cancel();
@@ -140,12 +163,39 @@ internal sealed class NativeAccountRowView : View
 
     public void StartAnimating()
     {
-        if (_animating || _row is null) return;
+        if (_animating || _row is null || _isListScrolling) return;
         _animating = true;
         PostInvalidateOnAnimation();
     }
 
     public void StopAnimating() => _animating = false;
+
+    public void SetListScrolling(bool isScrolling)
+    {
+        if (_isListScrolling == isScrolling) return;
+        _isListScrolling = isScrolling;
+        if (isScrolling)
+        {
+            StopAnimating();
+            return;
+        }
+
+        if (_brandIcon is null) PrepareBrandIcon();
+        StartAnimating();
+        Invalidate();
+    }
+
+    public void RefreshBrandIcon(string brandId)
+    {
+        if (_row?.Account.Brand.Id is not { } currentId
+            || !string.Equals(currentId, brandId, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        PrepareBrandIcon();
+        Invalidate();
+    }
 
     public void CloseActions() => SettleTo(0);
 
@@ -742,7 +792,26 @@ internal sealed class NativeAccountRowView : View
             _brandBounds.Top + Dp(9),
             _brandBounds.Right - Dp(9),
             _brandBounds.Bottom - Dp(9));
-        _brandIcon = NativeBrandIcon.TryCreate(account.Brand, target, Color.White);
+        BrandInfo brand;
+        if (account.Brand.RuntimeIcon is not null)
+        {
+            brand = account.Brand;
+        }
+        else if (_isListScrolling)
+        {
+            if (!_viewModel.TryGetMaterializedBrand(account.Brand, out brand)) return;
+        }
+        else
+        {
+            brand = _viewModel.MaterializeBrand(account.Brand);
+        }
+
+        _brandIcon = _brandIcons.TryCreate(
+            brand,
+            target,
+            Color.White,
+            allowTemplateCreation: !_isListScrolling,
+            requireRuntimeIconOnFirstDraw: true);
     }
 
     private void UpdateStarPath()

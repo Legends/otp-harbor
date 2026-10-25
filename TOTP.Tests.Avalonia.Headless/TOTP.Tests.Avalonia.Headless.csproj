@@ -29,6 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\TOTP.Tests\Services\OtpHarborRuntimePngTestData.cs" Link="TestData\OtpHarborRuntimePngTestData.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

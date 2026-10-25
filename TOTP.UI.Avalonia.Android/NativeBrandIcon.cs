@@ -6,9 +6,35 @@ namespace TOTP.Avalonia.Android;
 
 internal sealed class NativeBrandIcon : IDisposable
 {
-    private readonly Layer[] _layers;
+    private readonly Layer[] _layers = [];
+    private readonly Bitmap? _bitmap;
+    private readonly RectF? _bitmapTarget;
+    private Action? _releaseBitmap;
 
     private NativeBrandIcon(Layer[] layers) => _layers = layers;
+
+    private NativeBrandIcon(Bitmap bitmap, RectF target, Action releaseBitmap)
+    {
+        _bitmap = bitmap;
+        _bitmapTarget = new RectF(target);
+        _releaseBitmap = releaseBitmap;
+    }
+
+    internal static NativeBrandIcon FromBitmap(
+        Bitmap bitmap,
+        RectF target,
+        Action releaseBitmap) => new(bitmap, target, releaseBitmap);
+
+    public NativeBrandIcon Clone()
+    {
+        if (_bitmap is not null)
+            throw new InvalidOperationException("Runtime bitmap icons are acquired from their cache entry.");
+        return new(_layers.Select(static layer => new Layer(
+            new global::Android.Graphics.Path(layer.Path),
+            layer.FillColor,
+            layer.StrokeColor,
+            layer.StrokeWidth)).ToArray());
+    }
 
     public static NativeBrandIcon? TryCreate(
         BrandInfo brand,
@@ -43,6 +69,12 @@ internal sealed class NativeBrandIcon : IDisposable
 
     public void Draw(Canvas canvas, Paint fill, Paint stroke)
     {
+        if (_bitmap is not null && _bitmapTarget is not null)
+        {
+            canvas.DrawBitmap(_bitmap, null, _bitmapTarget, fill);
+            return;
+        }
+
         foreach (var layer in _layers)
         {
             if (layer.FillColor is Color fillColor)
@@ -61,6 +93,8 @@ internal sealed class NativeBrandIcon : IDisposable
     public void Dispose()
     {
         foreach (var layer in _layers) layer.Path.Dispose();
+        _bitmapTarget?.Dispose();
+        Interlocked.Exchange(ref _releaseBitmap, null)?.Invoke();
     }
 
     private static NativeBrandIcon? TryCreateLayers(

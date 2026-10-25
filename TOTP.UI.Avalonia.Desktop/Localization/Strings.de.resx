@@ -180,7 +180,7 @@
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Speicherort: Wählen Sie das Ziel im Systemdialog. OTP Harbor lädt die Sicherung nicht hoch und kopiert sie nicht automatisch.</value></data>
   <data name="LastBackupLocation" xml:space="preserve"><value>Letzte Sicherung: {0}</value></data>
   <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Letzte Sicherung: am im Systemdialog gewählten Speicherort gespeichert.</value></data>
-  <data name="RestoreBackupHelp" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-.totp-Sicherung und geben Sie ihr Passwort ein. Vorhandene Konten werden standardmäßig übersprungen. Wählen Sie unten die Konfliktbehandlung; Änderungen müssen anschließend bestätigt werden.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-.otphbp-Sicherung (ältere .totp-Dateien werden ebenfalls unterstützt) und geben Sie ihr Passwort ein. Vorhandene Konten werden standardmäßig übersprungen. Wählen Sie unten die Konfliktbehandlung; Änderungen müssen anschließend bestätigt werden.</value></data>
   <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Verschlüsselte Sicherung wiederherstellen…</value></data>
   <data name="RestoreBackup" xml:space="preserve"><value>Sicherung wiederherstellen</value></data>
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Ordner der letzten Sicherung öffnen</value></data>

@@ -20,7 +20,7 @@ foreach ($required in @(
     'F-Droid-managed signing',
     'will not be uploaded or disclosed to F-Droid',
     'Android will reject an in-place install from a differently signed channel',
-    'Export a password-protected encrypted `.totp` backup',
+    'Export a password-protected encrypted `.otphbp` backup',
     'Android system backup is disabled',
     'cross-channel in-place updates remain unsupported')) {
     if (-not $policy.Contains($required, [StringComparison]::OrdinalIgnoreCase)) {

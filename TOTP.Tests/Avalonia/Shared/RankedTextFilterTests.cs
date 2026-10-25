@@ -17,7 +17,11 @@ public sealed class RankedTextFilterTests
             "Git"
         ];
 
-        var result = RankedTextFilter.Apply(items, "gIt", static item => [item]);
+        var result = RankedTextFilter.Apply(
+            items,
+            "gIt",
+            static item => [item],
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(
             ["git", "Git", "GitLab", "GitHub", "DigitalOcean", "Legit Security"],
@@ -37,9 +41,82 @@ public sealed class RankedTextFilterTests
         var result = RankedTextFilter.Apply(
             items,
             "target",
-            static item => [item.DisplayName, item.Id, item.FileName]);
+            static item => [item.DisplayName, item.Id, item.FileName],
+            TestContext.Current.CancellationToken);
 
         Assert.Equal([items[2], items[1], items[0]], result);
+    }
+
+    [Fact]
+    public void ApplyTerms_RequiresEveryTermAndRanksExactPrefixThenPartialMatches()
+    {
+        SearchItem[] items =
+        [
+            new("DigitalOcean", "alice", "work"),
+            new("GitLab", "alice", "work"),
+            new("Git", "alice", "work"),
+            new("GitHub", "bob", "work"),
+            new("GitHub", "alice", "private")
+        ];
+
+        var result = RankedTextFilter.ApplyTerms(
+            items,
+            "git alice",
+            static item => [item.DisplayName, item.Id, item.FileName],
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([items[2], items[1], items[4], items[0]], result);
+    }
+
+    [Fact]
+    public void ApplyTerms_IndexedFieldsVisitsEachFieldOncePerItem()
+    {
+        var items = Enumerable.Range(0, 600)
+            .Select(index => new SearchItem($"Issuer {index:D3}", $"user-{index:D3}", "Work"))
+            .ToArray();
+        var fieldReads = 0;
+
+        var result = RankedTextFilter.ApplyTerms(
+            items,
+            "Issuer 599",
+            static _ => 3,
+            (item, index) =>
+            {
+                fieldReads++;
+                return index switch
+                {
+                    0 => item.DisplayName,
+                    1 => item.Id,
+                    _ => item.FileName
+                };
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(items.Length * 3, fieldReads);
+        Assert.Same(items[599], Assert.Single(result));
+    }
+
+    [Fact]
+    public void ApplyTerms_CancelledSearchStopsBeforeReadingFields()
+    {
+        SearchItem[] items = [new("GitHub", "alice", "Work")];
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken);
+        cancellation.Cancel();
+        var fieldReads = 0;
+
+        Assert.Throws<OperationCanceledException>(() => RankedTextFilter.ApplyTerms(
+            items,
+            "git",
+            static _ => 3,
+            (_, _) =>
+            {
+                fieldReads++;
+                return "GitHub";
+            },
+            cancellation.Token));
+
+        Assert.Equal(0, fieldReads);
     }
 
     [Theory]
@@ -49,7 +126,11 @@ public sealed class RankedTextFilterTests
     {
         string[] items = ["Contains Git", "GitHub", "Git"];
 
-        var result = RankedTextFilter.Apply(items, query, static item => [item]);
+        var result = RankedTextFilter.Apply(
+            items,
+            query,
+            static item => [item],
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(items, result);
     }

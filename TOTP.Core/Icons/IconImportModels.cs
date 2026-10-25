@@ -40,13 +40,22 @@ public sealed class CustomIconImportError(CustomIconImportFailureReason reason)
 public sealed record ImportedIcon(
     string Id,
     string Name,
-    byte[] SvgData,
+    byte[]? SvgData,
     IReadOnlyList<string> Issuers,
     string ProviderId,
     string BackgroundColor = "#334155",
     string? SourceFileName = null,
     IconPackSourceReference? SelectedSource = null,
-    IReadOnlyList<IconPackSourceReference>? Sources = null);
+    IReadOnlyList<IconPackSourceReference>? Sources = null,
+    ImportedRuntimeIcon? RuntimeIcon = null);
+
+public sealed record ImportedRuntimeIcon(
+    string ArchivePath,
+    string MediaType,
+    int Width,
+    int Height,
+    string Sha256,
+    string RenderProfile);
 
 public sealed record ImportedIconNotice(
     string FileName,

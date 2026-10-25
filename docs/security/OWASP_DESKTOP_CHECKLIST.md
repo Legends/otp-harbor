@@ -15,7 +15,7 @@ Modules:
 ## Checklist
 | ID | OWASP-aligned control | UI | Core | Infra | DAL | DevSecOps | Evidence |
 |---|---|---|---|---|---|---|---|
-| DS-01 | Sensitive local data encrypted at rest | Implemented | Implemented | Implemented | Implemented | Implemented | AES-GCM vault, authorization envelope v2, encrypted `.totp` export, plaintext-preference allowlist |
+| DS-01 | Sensitive local data encrypted at rest | Implemented | Implemented | Implemented | Implemented | Implemented | AES-GCM vault, authorization envelope v2, encrypted `.otphbp` export, plaintext-preference allowlist |
 | DS-02 | Sensitive keys isolated in memory and cleared | Partial | Implemented | Implemented | Implemented | Implemented | `SecurityContext`, `SensitiveBuffer`, provider/camera/QR/updater temporary clearing; managed UI strings remain a platform limitation |
 | DS-03 | Modern crypto + authenticated encryption (AEAD) | Implemented | Implemented | Implemented | Implemented | Implemented | AES-256-GCM, Argon2id, Ed25519 release verification |
 | DS-04 | KDF parameters validated against abuse bounds | Implemented | Implemented | Implemented | Implemented | Implemented | Strict algorithm/iteration/memory/parallelism/salt/nonce bounds and hostile-parameter tests |

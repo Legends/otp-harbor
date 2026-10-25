@@ -5,8 +5,8 @@ Use synthetic data when rehearsing these steps. Before changing any application-
 ## Recovery principles
 
 - The master password is the authoritative recovery method. Windows Hello and macOS quick unlock are conveniences, not replacements for it.
-- An encrypted `.totp` export plus its separate export password is the preferred migration and disaster-recovery backup.
-- Local `master.totp.bak1` through `.bak5` files protect against some recent local write/corruption failures. They are stored beside the vault and are not a substitute for an external backup.
+- An encrypted `.otphbp` export plus its separate export password is the preferred migration and disaster-recovery backup. Legacy `.totp` exports remain importable.
+- Local `master.vault.bak1` through `.bak5` files protect against some recent local write/corruption failures. They are stored beside the vault and are not a substitute for an external backup.
 - There is no password bypass, recovery key, cloud copy, or plaintext fallback. Losing both the master password and a usable external encrypted backup is unrecoverable by design.
 - Do not install an unsigned build or bypass Gatekeeper/Authenticode to recover data. Preserve the files and use a verified compatible release.
 
@@ -14,7 +14,7 @@ Use synthetic data when rehearsing these steps. Before changing any application-
 
 1. Verify that the application came from the expected signed release and start it normally.
 2. Create or unlock the destination vault with its master password.
-3. Open Settings, choose Import / Export, and use **Restore encrypted backup** to select the encrypted `.totp` export through the native file picker.
+3. Open Settings, choose Import / Export, and use **Restore encrypted backup** to select the encrypted `.otphbp` export through the native file picker. Older `.totp` exports are accepted as well.
 4. Enter the export password when requested and review the conflict policy before confirming.
 5. Confirm that expected synthetic accounts are present and generate a code from a non-production test account.
 6. Keep the original backup unchanged until a restart and second unlock have succeeded.
@@ -23,21 +23,21 @@ A wrong password, modified file, unsupported format, oversized payload, or faile
 
 ## Recover from a rotating local vault backup
 
-Use this only when the current `master.totp` is unreadable and no newer tested encrypted export is available.
+Use this only when the current `master.vault` is unreadable and no newer tested encrypted export is available.
 
 1. Close OTP Harbor and make a protected copy of the entire application-data directory.
 2. Locate the vault directory for the platform:
 
-   - Windows: `%APPDATA%\TOTP-Manager`
+   - Windows: `%APPDATA%\OTP-Harbor`
    - macOS: `~/Library/Application Support/TOTP-Manager`
    - Linux: `$XDG_DATA_HOME/totp-manager`, or `~/.local/share/totp-manager` when `XDG_DATA_HOME` is unset
 
-   These legacy directory names are intentionally retained after the OTP Harbor rebrand so existing vaults remain discoverable without migration.
+   The macOS and Linux directory names are compatibility identifiers retained after the OTP Harbor rebrand.
 
-3. Preserve `master.totp`, `authorization-envelope.bin`, and every `master.totp.bak*` file. Do not edit the authorization envelope.
-4. Starting with `master.totp.bak1`, copy one candidate to a temporary file named `master.totp`, preserving the original files outside the directory. On Unix, keep the file readable/writable only by the current user.
+3. Preserve `master.vault`, `authorization-envelope.bin`, and every `master.vault.bak*` file. If a pre-migration `master.totp` or `master.totp.bak*` remains, preserve that too. Do not edit the authorization envelope.
+4. Starting with `master.vault.bak1`, copy one candidate to a temporary file named `master.vault`, preserving the original files outside the directory. On Unix, keep the file readable/writable only by the current user.
 5. Start the same or a newer compatible signed application and unlock with the master password. If the candidate fails, close the app, restore the protected directory copy, and try the next generation.
-6. After a successful unlock, immediately create and test a new external encrypted `.totp` export.
+6. After a successful unlock, immediately create and test a new external encrypted `.otphbp` export.
 
 Local backups remain encrypted with the vault DEK. Resetting or replacing the authorization envelope cannot make an old vault decryptable and may permanently remove the password path to it.
 
@@ -52,7 +52,7 @@ Do not repeatedly recreate the vault or authorization envelope in response to a 
 
 ## Preferences or startup failure
 
-The non-secret Avalonia preference file is separate from the encrypted vault and authorization envelope. If support diagnostics identify only a corrupt `preferences.json`, close the app, preserve the full data/config directories, and move that one preference file aside so reviewed defaults can be recreated. Do not move or delete `master.totp` or `authorization-envelope.bin` as a startup troubleshooting step.
+The non-secret Avalonia preference file is separate from the encrypted vault and authorization envelope. If support diagnostics identify only a corrupt `preferences.json`, close the app, preserve the full data/config directories, and move that one preference file aside so reviewed defaults can be recreated. Do not move or delete `master.vault`, a legacy `master.totp`, or `authorization-envelope.bin` as a startup troubleshooting step.
 
 For a failed binary update, leave the data directory untouched and re-extract the exact signed self-contained package into a clean user-writable application directory. The Windows updater attempts transactional rollback, but interruption by power loss or hostile filesystem software can still require manual re-extraction.
 

@@ -6,8 +6,10 @@ using TOTP.Camera.OpenCv;
 using TOTP.Infrastructure.Logging;
 using TOTP.DAL.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Text.Json;
+using TOTP.Infrastructure.Storage;
 
 namespace TOTP.Avalonia.Desktop;
 
@@ -51,6 +53,16 @@ internal static class Program
                 Environment.ExitCode = 1;
                 return;
             }
+
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                .AddEnvironmentVariables("TOTP_")
+                .Build();
+            VaultFileNameMigration.MigrateIfUsingDefaultPath(
+                configuration,
+                platformServices.ApplicationPaths,
+                platformServices.FileSecurity);
 
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }

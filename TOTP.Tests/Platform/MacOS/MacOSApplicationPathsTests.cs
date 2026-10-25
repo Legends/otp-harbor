@@ -15,7 +15,7 @@ public sealed class MacOSApplicationPathsTests
         var dataDirectory = Path.Combine(homeDirectory, "Library", "Application Support", "TOTP-Manager");
         Assert.Equal(Path.Combine(executableDirectory, "appsettings.json"), sut.ConfigurationFilePath);
         Assert.Equal(dataDirectory, sut.ApplicationDataDirectory);
-        Assert.Equal(Path.Combine(dataDirectory, "master.totp"), sut.VaultFilePath);
+        Assert.Equal(Path.Combine(dataDirectory, "master.vault"), sut.VaultFilePath);
         Assert.Equal(Path.Combine(dataDirectory, "authorization-envelope.bin"), sut.AuthorizationEnvelopeFilePath);
         Assert.Equal(Path.Combine(dataDirectory, "preferences.json"), sut.PreferencesFilePath);
         Assert.Equal(Path.Combine(dataDirectory, "Backups"), sut.BackupDirectory);

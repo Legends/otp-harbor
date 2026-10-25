@@ -2,6 +2,7 @@ using Android.App;
 using Android.Content;
 using Android.Provider;
 using TOTP.Avalonia.Mobile.Platform;
+using TOTP.Core.Common;
 using AndroidResult = Android.App.Result;
 
 namespace TOTP.Avalonia.Android;
@@ -27,7 +28,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         var selected = await StartAsync(intent, OpenRequestCode, cancellationToken);
         if (selected is null) return null;
 
-        return OpenReadableDocument(selected, "backup.totp");
+        return OpenReadableDocument(selected, $"backup{BackupFileExtensions.EncryptedBackup}");
     }
 
     public async Task<MobileWritableDocument?> CreateEncryptedBackupAsync(

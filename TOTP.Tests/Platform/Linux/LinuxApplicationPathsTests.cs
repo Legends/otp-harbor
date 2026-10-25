@@ -24,7 +24,7 @@ public sealed class LinuxApplicationPathsTests
         var stateDirectory = Path.Combine(stateRoot, "totp-manager");
         Assert.Equal(Path.Combine(executableDirectory, "appsettings.json"), sut.ConfigurationFilePath);
         Assert.Equal(dataDirectory, sut.ApplicationDataDirectory);
-        Assert.Equal(Path.Combine(dataDirectory, "master.totp"), sut.VaultFilePath);
+        Assert.Equal(Path.Combine(dataDirectory, "master.vault"), sut.VaultFilePath);
         Assert.Equal(Path.Combine(dataDirectory, "authorization-envelope.bin"), sut.AuthorizationEnvelopeFilePath);
         Assert.Equal(Path.Combine(configurationRoot, "totp-manager", "preferences.json"), sut.PreferencesFilePath);
         Assert.Equal(Path.Combine(dataDirectory, "backups"), sut.BackupDirectory);

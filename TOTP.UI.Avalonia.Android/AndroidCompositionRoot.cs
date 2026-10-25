@@ -12,6 +12,7 @@ using TOTP.Core.Services.Interfaces;
 using TOTP.Infrastructure.Extensions;
 using TOTP.Infrastructure.Logging;
 using TOTP.Infrastructure.Services;
+using TOTP.Infrastructure.Storage;
 using TOTP.Platform.Android;
 using TOTP.Avalonia.Shared.Branding;
 using TOTP.Core.Backup;
@@ -29,6 +30,10 @@ internal static class AndroidCompositionRoot
         var fileSecurity = new AndroidFileSecurity(context);
         var configuration = new ConfigurationBuilder().Build();
         LoggingConfigurator.SetupEarlyLogger([], paths);
+        VaultFileNameMigration.MigrateIfUsingDefaultPath(
+            configuration,
+            paths,
+            fileSecurity);
 
         services.AddSingleton(context);
         services.AddSingleton<IConfiguration>(configuration);

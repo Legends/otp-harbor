@@ -6,7 +6,9 @@ using Moq;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
+using TOTP.Avalonia.Shared.Branding;
 using TOTP.Core.Backup;
+using TOTP.Core.Common;
 using TOTP.Core.Icons;
 using TOTP.Core.Models;
 using TOTP.Core.Enums;
@@ -72,6 +74,131 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_ConfiguredPassword_DoesNotWaitForOptionalStartupWork()
+    {
+        var iconInitialization = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var backupInitialization = new TaskCompletionSource<Result>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .Returns(iconInitialization.Task);
+        var backup = new Mock<IAutomaticBackupCoordinator>();
+        backup.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .Returns(backupInitialization.Task);
+        var context = CreateContext(
+            isConfigured: true,
+            preferredUnlockMethod: PreferredUnlockMethod.Password,
+            brandIconPackService: brandIcons.Object,
+            automaticBackup: backup.Object);
+
+        await context.Sut.InitializeAsync().WaitAsync(
+            TimeSpan.FromSeconds(2),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.True(context.Sut.IsUnlockVisible);
+        context.Authorization.Verify(value => value.IsHelloAvailableAsync(), Times.Never);
+        context.Authorization.Verify(
+            value => value.IsUnlockMethodAvailableAsync(It.IsAny<PreferredUnlockMethod>()),
+            Times.Never);
+        brandIcons.Verify(
+            value => value.InitializeAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+        backup.Verify(
+            value => value.InitializeAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        iconInitialization.SetResult();
+        backupInitialization.SetResult(Result.Ok());
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task BrandIconInitialization_WhenCatalogBecomesAvailable_NotifiesAccountListConsumers()
+    {
+        var iconInitialization = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var catalogRevisionChanged = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .Returns(iconInitialization.Task);
+        var context = CreateContext(
+            isConfigured: true,
+            preferredUnlockMethod: PreferredUnlockMethod.Password,
+            brandIconPackService: brandIcons.Object);
+        context.Sut.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(MobileShellViewModel.AccountBrandCatalogRevision))
+                catalogRevisionChanged.TrySetResult();
+        };
+
+        await context.Sut.InitializeAsync();
+        Assert.Equal(0, context.Sut.AccountBrandCatalogRevision);
+
+        iconInitialization.SetResult();
+        await catalogRevisionChanged.Task.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, context.Sut.AccountBrandCatalogRevision);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public void MobileAccountItem_WhenRuntimeIconBecomesAvailable_UpdatesBrandBinding()
+    {
+        var initialBrand = BrandInfo.Generic("GitHub") with
+        {
+            Id = "github",
+            DisplayName = "GitHub"
+        };
+        var runtimeIcon = new BrandRuntimeIcon(
+            "github:sha256",
+            "runtime/foreground-128/github.png",
+            new string('a', 64),
+            128,
+            128);
+        var updatedBrand = initialBrand with { RuntimeIcon = runtimeIcon };
+        var account = new MobileAccountItem(
+            Guid.NewGuid(),
+            "GitHub",
+            "account@example.invalid",
+            brand: initialBrand);
+        var changedProperties = new List<string?>();
+        account.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        var updateBrand = typeof(MobileAccountItem).GetMethod(
+            "UpdateBrand",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.NotNull(updateBrand);
+        updateBrand.Invoke(account, [updatedBrand]);
+
+        Assert.Same(runtimeIcon, account.Brand.RuntimeIcon);
+        Assert.Contains(nameof(MobileAccountItem.Brand), changedProperties);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_QuickUnlock_QueriesOnlyRequiredPlatformMethod()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: true,
+            deviceCredentialAvailable: true,
+            preferredUnlockMethod: PreferredUnlockMethod.PlatformQuickUnlock);
+
+        await context.Sut.InitializeAsync();
+
+        Assert.True(context.Sut.IsBiometricUnlockVisible);
+        context.Authorization.Verify(value => value.IsHelloAvailableAsync(), Times.Once);
+        context.Authorization.Verify(
+            value => value.IsUnlockMethodAvailableAsync(
+                PreferredUnlockMethod.PlatformDeviceCredential),
+            Times.Never);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
     public async Task ShowOnboardingPreview_WithExistingVault_RestoresUnlockScreenAfterFinishing()
     {
         var context = CreateContext(isConfigured: true);
@@ -110,6 +237,10 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.IsManualLockVisible);
         Assert.Single(context.Sut.Accounts);
         context.Authorization.Verify(value => value.TryUnlockOnStartupAsync(), Times.Once);
+        context.Authorization.Verify(value => value.IsHelloAvailableAsync(), Times.Never);
+        context.Authorization.Verify(
+            value => value.IsUnlockMethodAvailableAsync(It.IsAny<PreferredUnlockMethod>()),
+            Times.Never);
     }
 
     [Fact]
@@ -459,9 +590,9 @@ public sealed class MobileShellViewModelTests
                 string.Empty,
                 QrPayloadKind.GoogleAuthenticatorMigration,
                 2));
-        context.QrImport.Setup(value => value.ImportAsync(
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.BulkImported,
@@ -477,9 +608,10 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ImportGoogleQrAsync();
 
         Assert.False(context.Sut.IsImportConfirmationVisible);
-        context.QrImport.Verify(value => value.ImportAsync(
+        Assert.True(context.Sut.IsQrImportResultVisible);
+        context.QrImport.Verify(value => value.ImportWithConflictResolutionAsync(
             payload,
-            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -720,6 +852,47 @@ public sealed class MobileShellViewModelTests
         context.AccountTotp.Verify(
             value => value.GenerateAsync(It.IsAny<Guid>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task UnlockAsync_WithSnapshotService_UsesPreparedCodesWithoutSecondVaultLoad()
+    {
+        var firstId = Guid.NewGuid();
+        var secondId = Guid.NewGuid();
+        var snapshots = new Mock<IAccountListSnapshotService>();
+        snapshots.Setup(value => value.LoadAsync()).ReturnsAsync(Result.Ok(
+            new AccountListSnapshot(
+            [
+                new(firstId, "First", "one", 30, false, [],
+                    new TotpGenerationResult("123456", 20, 30, "234567")),
+                new(secondId, "Second", "two", 30, true, [],
+                    new TotpGenerationResult("654321", 20, 30, "765432"))
+            ],
+            new HashSet<Guid>())));
+        var context = CreateContext(
+            isConfigured: true,
+            accountListSnapshots: snapshots.Object);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+
+        await context.Sut.UnlockAsync();
+
+        Assert.Collection(
+            context.Sut.Accounts,
+            account => Assert.Equal("123 456", account.DisplayCode),
+            account => Assert.Equal("654 321", account.DisplayCode));
+        snapshots.Verify(value => value.LoadAsync(), Times.Once);
+        context.AccountManager.Verify(
+            value => value.GetAllOtpEntriesSortedAsync(),
+            Times.Never);
+        context.AccountTotp.Verify(
+            value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()),
+            Times.Never);
+        context.Sut.Dispose();
     }
 
     [Fact]
@@ -1204,7 +1377,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task ScreenCaptureProtection_IsRequiredOnlyWhileAccountListIsVisible()
+    public async Task ScreenCaptureProtection_IsRequiredAcrossTheEntireAppWhenScreenshotsAreNotAllowed()
     {
         var context = CreateContext(isConfigured: true);
         context.Authorization
@@ -1213,7 +1386,7 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
 
-        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
         var policyChanges = new List<bool>();
         context.Sut.PropertyChanged += (_, args) =>
         {
@@ -1233,7 +1406,7 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ShowSettingsAsync();
 
         Assert.True(context.Sut.IsSettingsVisible);
-        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
 
         await context.Sut.ShowAccountsAsync();
 
@@ -1242,7 +1415,7 @@ public sealed class MobileShellViewModelTests
         await context.Sut.BeginAddAsync();
 
         Assert.True(context.Sut.IsEditorVisible);
-        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
 
         await context.Sut.CancelEditAsync();
 
@@ -1251,8 +1424,8 @@ public sealed class MobileShellViewModelTests
         await context.Sut.LockAsync();
 
         Assert.True(context.Sut.IsUnlockVisible);
-        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
-        Assert.Equal([true, false, true, false, true, false], policyChanges);
+        Assert.True(context.Sut.IsScreenCaptureProtectionRequired);
+        Assert.Empty(policyChanges);
     }
 
     [Fact]
@@ -1275,6 +1448,30 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.SettingsValue.AllowScreenshots);
         Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
         context.Settings.Verify(value => value.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_ReappliesPersistedScreenshotPolicyAfterSettingsLoad()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Settings
+            .Setup(value => value.LoadAsync())
+            .Callback(() => context.SettingsValue.AllowScreenshots = true)
+            .ReturnsAsync(Result.Ok<IAppSettings>(context.SettingsValue));
+        var policyChanges = new List<bool>();
+        context.Sut.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(
+                    MobileShellViewModel.IsScreenCaptureProtectionRequired))
+            {
+                policyChanges.Add(context.Sut.IsScreenCaptureProtectionRequired);
+            }
+        };
+
+        await context.Sut.InitializeAsync();
+
+        Assert.False(context.Sut.IsScreenCaptureProtectionRequired);
+        Assert.Contains(false, policyChanges);
     }
 
     [Fact]
@@ -1432,6 +1629,32 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task SearchText_RanksExactThenPrefixThenPartialMatches()
+    {
+        var accounts = new[]
+        {
+            new Account(Guid.NewGuid(), "DigitalOcean", ValidSecret, "alice"),
+            new Account(Guid.NewGuid(), "GitLab", ValidSecret, "bob"),
+            new Account(Guid.NewGuid(), "Git", ValidSecret, "carol"),
+            new Account(Guid.NewGuid(), "GitHub", ValidSecret, "dave")
+        };
+        var context = CreateContext(isConfigured: true, accounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        context.Sut.SearchText = "git";
+
+        Assert.Equal(
+            ["Git", "GitLab", "GitHub", "DigitalOcean"],
+            context.Sut.Accounts.Select(account => account.Issuer));
+        context.Sut.Dispose();
+    }
+
+    [Fact]
     public async Task Groups_FilterAccountsAndSearchReturnsToAllAccounts()
     {
         var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");
@@ -1536,6 +1759,15 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(accounts[427].ID, context.Sut.AccountRevealRequest?.AccountId);
         Assert.False(context.Sut.AccountRevealRequest?.Highlight);
         Assert.True(context.Sut.AccountRevealRequest?.AlignToTop);
+        var initialReveal = context.Sut.AccountRevealRequest;
+        var unrelatedCommandNotifications = 0;
+        context.Sut.ShowSettingsCommand.CanExecuteChanged += (_, _) =>
+            unrelatedCommandNotifications++;
+
+        context.Sut.SearchText = "needle service";
+
+        Assert.Same(initialReveal, context.Sut.AccountRevealRequest);
+        Assert.Equal(0, unrelatedCommandNotifications);
 
         await context.Sut.ClearSearchAsync();
         await context.Sut.ToggleFavoritesFilterAsync();
@@ -2402,9 +2634,9 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.QrScannerUnavailable),
             context.Sut.NotificationText);
-        context.QrImport.Verify(value => value.ImportAsync(
+        context.QrImport.Verify(value => value.ImportWithConflictResolutionAsync(
             It.IsAny<string>(),
-            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -2423,9 +2655,9 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(MobileQrScanResult.Successful(payload));
-        context.QrImport.Setup(value => value.ImportAsync(
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.Added,
@@ -2441,9 +2673,15 @@ public sealed class MobileShellViewModelTests
 
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.QrAccountAdded),
-            context.Sut.NotificationText);
+            context.Sut.QrImportResultText);
+        Assert.True(context.Sut.IsQrImportResultVisible);
         Assert.Equal(importedId, context.Sut.AccountRevealRequest?.AccountId);
         Assert.Empty(context.Sut.SearchText);
+
+        await context.Sut.DismissQrImportResultAsync();
+
+        Assert.False(context.Sut.IsQrImportResultVisible);
+        Assert.Empty(context.Sut.QrImportResultText);
     }
 
     [Fact]
@@ -2461,9 +2699,9 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(MobileQrScanResult.Successful(payload));
-        context.QrImport.Setup(value => value.ImportAsync(
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.DuplicateUnchanged,
@@ -2481,7 +2719,8 @@ public sealed class MobileShellViewModelTests
         Assert.Empty(context.Sut.SearchText);
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.QrAccountDuplicate),
-            context.Sut.NotificationText);
+            context.Sut.QrImportResultText);
+        Assert.True(context.Sut.IsQrImportResultVisible);
     }
 
     [Fact]
@@ -2503,9 +2742,9 @@ public sealed class MobileShellViewModelTests
                 "user",
                 QrPayloadKind.GoogleAuthenticatorMigration,
                 3));
-        context.QrImport.Setup(value => value.ImportAsync(
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.BulkImported,
@@ -2530,13 +2769,17 @@ public sealed class MobileShellViewModelTests
                 1,
                 2,
                 2,
+                0,
+                0,
                 1,
+                0,
                 0),
-            context.Sut.NotificationText);
-        Assert.DoesNotContain("Scan the next", context.Sut.NotificationText, StringComparison.Ordinal);
-        context.QrImport.Verify(value => value.ImportAsync(
+            context.Sut.QrImportResultText);
+        Assert.True(context.Sut.IsQrImportResultVisible);
+        Assert.DoesNotContain("Scan the next", context.Sut.QrImportResultText, StringComparison.Ordinal);
+        context.QrImport.Verify(value => value.ImportWithConflictResolutionAsync(
             payload,
-            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -2555,20 +2798,27 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(MobileQrScanResult.Successful(payload));
         var conflictRequested = new TaskCompletionSource(
             TaskCreationOptions.RunContinuationsAsynchronously);
-        context.QrImport.Setup(value => value.ImportAsync(
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns(async (
                 string _,
-                Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>> resolve,
+                Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>> resolve,
                 CancellationToken cancellationToken) =>
             {
                 conflictRequested.TrySetResult();
-                var decision = await resolve(
-                    new QrAccountConflict("Example", "user"),
+                var resolution = await resolve(
+                    new QrAccountImportPreview(
+                        1,
+                        0,
+                        0,
+                        [new QrAccountConflict(0, "Example", "user", true, false)],
+                        0,
+                        1),
                     cancellationToken);
-                Assert.Equal(QrAccountConflictDecision.UpdateExisting, decision);
+                var decision = Assert.Single(resolution!.Conflicts);
+                Assert.Equal(QrAccountConflictDecision.UpdateExisting, decision.Decision);
                 return Result.Ok(new QrAccountImportOutcome(
                     QrAccountImportStatus.Updated,
                     importedId,
@@ -2584,23 +2834,90 @@ public sealed class MobileShellViewModelTests
             TimeSpan.FromSeconds(2),
             global::Xunit.TestContext.Current.CancellationToken);
 
-        Assert.True(context.Sut.IsQrConflictVisible);
+        Assert.True(context.Sut.IsQrImportResolutionVisible);
         Assert.Equal(
             string.Format(
-                context.Strings.Get(MobileStringKeys.QrConflictPrompt),
-                "Example: user"),
-            context.Sut.QrConflictPrompt);
-        Assert.DoesNotContain("Choose how", context.Sut.QrConflictPrompt, StringComparison.Ordinal);
+                context.Strings.Get(MobileStringKeys.QrImportReviewSummary),
+                1,
+                0,
+                0,
+                1),
+            context.Sut.QrImportResolutionText);
+        var conflict = Assert.Single(context.Sut.QrImportConflicts);
+        Assert.Equal("Example: user", conflict.DisplayName);
+        Assert.DoesNotContain(ValidSecret, conflict.ChangedFieldsText, StringComparison.Ordinal);
 
-        await context.Sut.ResolveQrConflictAsync(QrAccountConflictDecision.UpdateExisting);
+        await context.Sut.SelectAllQrConflictsAsync(QrAccountConflictDecision.UpdateExisting);
+        await context.Sut.ConfirmQrImportResolutionAsync();
         await scanTask.WaitAsync(
             TimeSpan.FromSeconds(2),
             global::Xunit.TestContext.Current.CancellationToken);
 
-        Assert.False(context.Sut.IsQrConflictVisible);
+        Assert.False(context.Sut.IsQrImportResolutionVisible);
+        Assert.True(context.Sut.IsQrImportResultVisible);
         Assert.Equal(
             context.Strings.Get(MobileStringKeys.QrAccountUpdated),
-            context.Sut.NotificationText);
+            context.Sut.QrImportResultText);
+    }
+
+    [Fact]
+    public async Task ScanQrAsync_WhenConflictReviewIsCancelled_ClosesWithoutResult()
+    {
+        const string payload =
+            "otpauth://totp/Example:user?secret=JBSWY3DPEHPK3PXP&issuer=Example";
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MobileQrScanResult.Successful(payload));
+        var conflictRequested = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(
+                payload,
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async (
+                string _,
+                Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>> resolve,
+                CancellationToken cancellationToken) =>
+            {
+                conflictRequested.TrySetResult();
+                var resolution = await resolve(
+                    new QrAccountImportPreview(
+                        1,
+                        0,
+                        0,
+                        [new QrAccountConflict(0, "Example", "user", true, false)],
+                        0,
+                        1),
+                    cancellationToken);
+                Assert.Null(resolution);
+                return Result.Ok(new QrAccountImportOutcome(
+                    QrAccountImportStatus.Cancelled,
+                    Guid.Empty,
+                    "Example",
+                    "user"));
+            });
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+
+        var scanTask = context.Sut.ScanQrAsync();
+        await conflictRequested.Task.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.True(context.Sut.IsQrImportResolutionVisible);
+        await context.Sut.CancelQrImportResolutionAsync();
+        await scanTask.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            global::Xunit.TestContext.Current.CancellationToken);
+
+        Assert.False(context.Sut.IsQrImportResolutionVisible);
+        Assert.False(context.Sut.IsQrImportResultVisible);
+        Assert.Empty(context.Sut.QrImportResultText);
     }
 
     [Fact]
@@ -2801,12 +3118,14 @@ public sealed class MobileShellViewModelTests
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
         context.Documents.Setup(value => value.CreateEncryptedBackupAsync(
-                It.Is<string>(name => name.EndsWith(".totp", StringComparison.Ordinal)),
+                It.Is<string>(name => name.EndsWith(
+                    BackupFileExtensions.EncryptedBackup,
+                    StringComparison.Ordinal)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MobileWritableDocument(
                 new MemoryStream(),
                 _ => Task.CompletedTask,
-                "otp-harbor-20260920.totp"));
+                "otp-harbor-20260920.otphbp"));
         context.ExportService.Setup(value => value.ExportToEncryptedStreamAsync(
                 It.IsAny<IEnumerable<Account>>(),
                 "backup-password",
@@ -2828,7 +3147,7 @@ public sealed class MobileShellViewModelTests
         Assert.Equal(
             string.Format(
                 context.Strings.Get(MobileStringKeys.BackupExported),
-                "otp-harbor-20260920.totp"),
+                "otp-harbor-20260920.otphbp"),
             context.Sut.NotificationText);
         context.ExportService.Verify(value => value.ExportToStreamAsync(
             It.IsAny<IEnumerable<Account>>(),
@@ -2894,7 +3213,9 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         context.Documents.Setup(value => value.OpenEncryptedBackupAsync(
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1, 2, 3])));
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "backup.otphbp"));
         context.ExportService.Setup(value => value.ImportFromEncryptedStreamAsync(
                 "backup-password",
                 It.IsAny<Stream>(),
@@ -2948,6 +3269,41 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.IsImportConfirmationVisible);
         Assert.Empty(context.Sut.ImportPassword);
         Assert.Empty(context.Sut.NotificationText);
+    }
+
+    [Fact]
+    public async Task ImportBackupAsync_WhenExtensionIsUnsupported_RejectsBeforeDecoding()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenEncryptedBackupAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "backup.json"));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ImportPassword = "backup-password";
+
+        await context.Sut.ImportBackupAsync();
+
+        Assert.Equal(
+            context.Strings.Get(MobileStringKeys.BackupImportRejected),
+            context.Sut.NotificationText);
+        Assert.False(context.Sut.IsBusy);
+        context.ExportService.Verify(value => value.ImportFromEncryptedStreamAsync(
+            It.IsAny<string>(),
+            It.IsAny<Stream>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        context.AutomaticBackupSnapshots.Verify(value => value.ReadAccountsAsync(
+            It.IsAny<Stream>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -3205,7 +3561,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public void BrandIconPackStatusText_IncludesInstalledProviderAndVersion()
+    public async Task BrandIconPackStatusText_IncludesInstalledProviderAndVersion()
     {
         var brandIcons = new Mock<IBrandIconPackService>();
         brandIcons.SetupGet(value => value.Status).Returns(new BrandIconPackStatus(
@@ -3219,6 +3575,8 @@ public sealed class MobileShellViewModelTests
             cultureName: "en",
             brandIconPackService: brandIcons.Object);
 
+        await context.Sut.InitializeAsync();
+
         Assert.Equal(
             "3460 local icons installed (Aegis Simple Icons v264).",
             context.Sut.BrandIconPackStatusText);
@@ -3226,7 +3584,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public void BrandIconPackStatusText_DescribesCombinedProviders()
+    public async Task BrandIconPackStatusText_DescribesCombinedProviders()
     {
         var installations = new[]
         {
@@ -3244,6 +3602,8 @@ public sealed class MobileShellViewModelTests
             isConfigured: true,
             cultureName: "en",
             brandIconPackService: brandIcons.Object);
+
+        await context.Sut.InitializeAsync();
 
         Assert.Equal(
             "3250 local icons available from 2 installed packs (Aegis Icons, Simple Icons).",
@@ -3284,7 +3644,9 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         context.Documents.Setup(value => value.OpenEncryptedBackupAsync(
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1, 2, 3])));
+            .ReturnsAsync(new MobileReadableDocument(
+                new MemoryStream([1, 2, 3]),
+                "backup.totp"));
         context.ExportService.Setup(value => value.ImportFromEncryptedStreamAsync(
                 "backup-password",
                 It.IsAny<Stream>(),
@@ -3850,7 +4212,6 @@ public sealed class MobileShellViewModelTests
         await context.Sut.BeginEditAsync();
 
         Assert.Equal(original.Id, context.Sut.SelectedEditorBrandIconOption?.Id);
-        Assert.InRange(context.Sut.EditorBrandIconPickerWidth, 180d, 260d);
         context.Sut.SelectedEditorBrandIconOption = context.Sut.EditorBrandIconOptions
             .Single(option => option.Id == selected.Id);
 
@@ -4490,7 +4851,8 @@ public sealed class MobileShellViewModelTests
         bool appLockEnabled = true,
         IBrandIconPackService? brandIconPackService = null,
         string? logFilePath = null,
-        IAutomaticBackupCoordinator? automaticBackup = null)
+        IAutomaticBackupCoordinator? automaticBackup = null,
+        IAccountListSnapshotService? accountListSnapshots = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -4607,7 +4969,8 @@ public sealed class MobileShellViewModelTests
             brandIconPackService: brandIconPackService,
             appearanceSettingsService: appearance.Object,
             automaticBackup: automaticBackup,
-            automaticBackupSnapshots: automaticBackupSnapshots.Object);
+            automaticBackupSnapshots: automaticBackupSnapshots.Object,
+            accountListSnapshots: accountListSnapshots);
         return new TestContext(
             sut,
             state,

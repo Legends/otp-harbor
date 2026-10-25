@@ -644,36 +644,6 @@
                             IsVisible="{Binding IsNativeAccountGroupsVisible}" />
 
                         <Border
-                            Grid.Row="3"
-                            Margin="0,0,0,14"
-                            Background="{DynamicResource BrushSurfaceAlternate}"
-                            CornerRadius="8"
-                            IsVisible="{Binding IsQrConflictVisible}"
-                            Padding="16">
-                            <StackPanel Spacing="12">
-                                <TextBlock
-                                    FontSize="18"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding QrConflictTitle}" />
-                                <TextBlock
-                                    Text="{Binding QrConflictPrompt}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Classes="wide primary"
-                                    Command="{Binding UpdateQrConflictCommand}"
-                                    Content="{Binding UpdateExistingText}" />
-                                <Button
-                                    Classes="wide secondary"
-                                    Command="{Binding KeepBothQrConflictCommand}"
-                                    Content="{Binding KeepBothText}" />
-                                <Button
-                                    Classes="wide secondary"
-                                    Command="{Binding CancelQrConflictCommand}"
-                                    Content="{Binding CancelText}" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border
                             x:Name="FirstAccountOnboardingCard"
                             Grid.Row="4"
                             Padding="18"
@@ -824,6 +794,7 @@
                                                         IsVisible="{Binding ShowIssuerLogo}"
                                                             IconData="{Binding Brand.IconData}"
                                                             IconImage="{Binding Brand.IconImage}"
+                                                            RuntimeIcon="{Binding Brand.RuntimeIcon}"
                                                             IconTransform="{Binding Brand.IconTransform}"
                                                             IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                         Initials="{Binding Brand.Initials}"
@@ -1617,25 +1588,6 @@
                                             Command="{Binding ImportGoogleQrCommand}">
                                             <controls:SymbolIconLabel Kind="QrCode" Text="{Binding ImportSectionText}" />
                                         </Button>
-                                        <Border
-                                            Background="{DynamicResource BrushSurfaceAlternate}"
-                                            CornerRadius="8"
-                                            IsVisible="{Binding IsQrConflictVisible}"
-                                            Padding="12">
-                                            <StackPanel Spacing="10">
-                                                <TextBlock FontWeight="SemiBold" Text="{Binding QrConflictTitle}" />
-                                                <TextBlock Text="{Binding QrConflictPrompt}" TextWrapping="Wrap" />
-                                                <Button Classes="wide primary" Command="{Binding UpdateQrConflictCommand}">
-                                                    <controls:SymbolIconLabel Kind="Refresh" Text="{Binding UpdateExistingText}" />
-                                                </Button>
-                                                <Button Classes="wide secondary" Command="{Binding KeepBothQrConflictCommand}">
-                                                    <controls:SymbolIconLabel Kind="Copy" Text="{Binding KeepBothText}" />
-                                                </Button>
-                                                <Button Classes="wide secondary" Command="{Binding CancelQrConflictCommand}">
-                                                    <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
-                                                </Button>
-                                            </StackPanel>
-                                        </Border>
                                     </StackPanel>
                                 </Border>
                                 <Border
@@ -1954,6 +1906,7 @@
                                                         IsVisible="{Binding ShowIssuerLogo}"
                                                             IconData="{Binding Brand.IconData}"
                                                             IconImage="{Binding Brand.IconImage}"
+                                                            RuntimeIcon="{Binding Brand.RuntimeIcon}"
                                                             IconTransform="{Binding Brand.IconTransform}"
                                                             IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                         Initials="{Binding Brand.Initials}"
@@ -2066,11 +2019,10 @@
                                 <Button
                                     x:Name="AccountBrandIconPickerButton"
                                     Classes="account-brand-icon-picker"
-                                    HorizontalAlignment="Left"
+                                    HorizontalAlignment="Stretch"
                                     automation:AutomationProperties.Name="{Binding BrandIconText}"
                                     Command="{Binding OpenAccountBrandIconPickerCommand}"
-                                    IsVisible="{Binding HasSearchableBrandIcons}"
-                                    Width="{Binding EditorBrandIconPickerWidth}">
+                                    IsVisible="{Binding HasSearchableBrandIcons}">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                         <TextBlock
                                             VerticalAlignment="Center"
@@ -2579,6 +2531,157 @@
                         Command="{Binding ConfirmImportCommand}"
                         Content="{Binding ConfirmImportText}"
                         IsVisible="{Binding IsImportConfirmationAcknowledgementOnly}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid
+            Grid.RowSpan="3"
+            Panel.ZIndex="102"
+            Background="{DynamicResource BrushOverlayStrong}"
+            IsVisible="{Binding IsQrImportResolutionVisible}">
+            <Border
+                MaxWidth="560"
+                MaxHeight="720"
+                Margin="12,18"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                automation:AutomationProperties.Name="{Binding QrImportReviewTitle}"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="18">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="12">
+                    <TextBlock
+                        Grid.Row="0"
+                        FontSize="20"
+                        FontWeight="SemiBold"
+                        Text="{Binding QrImportReviewTitle}" />
+                    <TextBlock
+                        Grid.Row="1"
+                        FontSize="13"
+                        Foreground="{DynamicResource BrushTextSecondary}"
+                        Text="{Binding QrImportResolutionText}"
+                        TextWrapping="Wrap" />
+                    <Border
+                        Grid.Row="2"
+                        Background="{DynamicResource BrushSurfaceAlternate}"
+                        CornerRadius="8"
+                        IsVisible="{Binding HasQrImportConflicts}"
+                        Padding="10">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Text="{Binding ApplyToAllText}" />
+                            <RadioButton
+                                Command="{Binding SkipAllQrConflictsCommand}"
+                                Content="{Binding SkipAllText}"
+                                FontSize="12"
+                                IsChecked="{Binding IsAllQrConflictsSkipped, Mode=OneWay}" />
+                            <RadioButton
+                                Command="{Binding ReplaceAllQrConflictsCommand}"
+                                Content="{Binding OverrideAllText}"
+                                FontSize="12"
+                                IsChecked="{Binding IsAllQrConflictsReplaced, Mode=OneWay}" />
+                            <RadioButton
+                                Command="{Binding KeepBothAllQrConflictsCommand}"
+                                Content="{Binding KeepBothAllText}"
+                                FontSize="12"
+                                IsChecked="{Binding IsAllQrConflictsKeptBoth, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock
+                        Grid.Row="3"
+                        FontSize="12"
+                        FontWeight="SemiBold"
+                        IsVisible="{Binding HasQrImportConflicts}"
+                        Text="{Binding QrImportChangedAccountsText}" />
+                    <ScrollViewer
+                        Grid.Row="4"
+                        MaxHeight="320"
+                        IsVisible="{Binding HasQrImportConflicts}"
+                        VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding QrImportConflicts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:QrImportConflictItem">
+                                    <Border
+                                        BorderBrush="{DynamicResource BrushBorder}"
+                                        BorderThickness="0,0,0,1"
+                                        Padding="4,10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding DisplayName}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="Wrap" />
+                                            <TextBlock
+                                                FontSize="11"
+                                                Foreground="{DynamicResource BrushAccent}"
+                                                Text="{Binding ChangedFieldsText}"
+                                                TextWrapping="Wrap" />
+                                            <RadioButton
+                                                automation:AutomationProperties.Name="{Binding SkipAutomationName}"
+                                                Content="{Binding DataContext.SkipText, ElementName=Root}"
+                                                IsChecked="{Binding IsSkipSelected, Mode=TwoWay}" />
+                                            <RadioButton
+                                                automation:AutomationProperties.Name="{Binding ReplaceAutomationName}"
+                                                Content="{Binding DataContext.OverrideText, ElementName=Root}"
+                                                IsChecked="{Binding IsReplaceSelected, Mode=TwoWay}" />
+                                            <RadioButton
+                                                automation:AutomationProperties.Name="{Binding KeepBothAutomationName}"
+                                                Content="{Binding DataContext.KeepBothText, ElementName=Root}"
+                                                IsChecked="{Binding IsKeepBothSelected, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <StackPanel Grid.Row="5" Spacing="8">
+                        <Button
+                            Classes="wide primary"
+                            Command="{Binding ConfirmQrImportResolutionCommand}"
+                            Content="{Binding ConfirmImportText}" />
+                        <Button
+                            Classes="wide secondary"
+                            Command="{Binding CancelQrImportResolutionCommand}"
+                            Content="{Binding ImportCancelText}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid
+            Grid.RowSpan="3"
+            Panel.ZIndex="103"
+            Background="{DynamicResource BrushOverlayStrong}"
+            IsVisible="{Binding IsQrImportResultVisible}">
+            <Border
+                MaxWidth="520"
+                Margin="18"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                automation:AutomationProperties.Name="{Binding QrImportResultTitle}"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="22">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        FontSize="20"
+                        FontWeight="SemiBold"
+                        Text="{Binding QrImportResultTitle}" />
+                    <TextBlock
+                        Text="{Binding QrImportResultText}"
+                        TextWrapping="Wrap" />
+                    <Button
+                        Classes="wide primary"
+                        Command="{Binding DismissQrImportResultCommand}"
+                        Content="{Binding CloseText}" />
                 </StackPanel>
             </Border>
         </Grid>

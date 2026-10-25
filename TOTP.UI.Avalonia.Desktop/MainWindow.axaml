@@ -630,6 +630,7 @@
                                                                         Margin="0,0,6,0"
                                                                         IconData="{Binding Brand.IconData}"
                                                                         IconImage="{Binding Brand.IconImage}"
+                                                                        RuntimeIcon="{Binding Brand.RuntimeIcon}"
                                                                         IconTransform="{Binding Brand.IconTransform}"
                                                                         IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                                         Initials="{Binding Brand.Initials}"
@@ -940,8 +941,8 @@
                                                             Text="{DynamicResource BrandIcon}" />
                                                         <shared:SearchableComboBox
                                                             x:Name="AccountBrandIconComboBox"
-                                                            Margin="8,0"
                                                             HorizontalAlignment="Stretch"
+                                                            Width="{Binding Bounds.Width, ElementName=AccountSecretInput}"
                                                             automation:AutomationProperties.Name="{DynamicResource BrandIcon}"
                                                             ClearSearchText="{DynamicResource ClearSearch}"
                                                             IsEnabled="{Binding HasBrandIconChoices}"
@@ -1207,6 +1208,7 @@
                                                                             IsVisible="{Binding ShowIssuerLogo}"
                                                                             IconData="{Binding Brand.IconData}"
                                                                             IconImage="{Binding Brand.IconImage}"
+                                                                            RuntimeIcon="{Binding Brand.RuntimeIcon}"
                                                                             IconTransform="{Binding Brand.IconTransform}"
                                                                             IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                                             Initials="{Binding Brand.Initials}"

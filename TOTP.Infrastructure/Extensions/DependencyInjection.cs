@@ -67,6 +67,7 @@ public static class DependencyInjection
                 sp.GetRequiredService<ILogger<AppearanceSettingsService>>()));
         services.AddSingleton<ITotpGenerator, OtpNetTotpGenerator>();
         services.AddSingleton<IAccountTotpService, AccountTotpService>();
+        services.AddSingleton<IAccountListSnapshotService, AccountListSnapshotService>();
         services.AddSingleton<IQrCodeService, QrCodeService>();
         services.AddSingleton<IAccountQrCodeService, AccountQrCodeService>();
         services.AddSingleton<IQrPayloadValidator, QrPayloadValidator>();

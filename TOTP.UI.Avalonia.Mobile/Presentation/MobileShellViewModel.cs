@@ -10,6 +10,7 @@ using FluentResults;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Core.Backup;
+using TOTP.Core.Common;
 using TOTP.Core.Icons;
 using TOTP.Core.Enums;
 using TOTP.Core.Models;
@@ -32,6 +33,7 @@ public sealed class MobileShellViewModel :
     private static readonly TimeSpan NotificationDuration = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan CopyConfirmationDuration = TimeSpan.FromMilliseconds(1500);
     private static readonly TimeSpan ImportProgressDelay = TimeSpan.FromMilliseconds(1500);
+    private const int BackgroundBrandSearchThreshold = 250;
     private const int FullListCodeRefreshLimit = 50;
     private const int MaximumPendingCustomIconBytes = 1024 * 1024;
     private const string PendingCustomIconId = "custom_pending";
@@ -40,6 +42,7 @@ public sealed class MobileShellViewModel :
     private readonly IPasswordValidationService _passwordValidation;
     private readonly IAccountManager _accountManager;
     private readonly IAccountTotpService _accountTotp;
+    private readonly IAccountListSnapshotService? _accountListSnapshots;
     private readonly IAsyncClipboardService _clipboard;
     private readonly IMobileQrScanner _qrScanner;
     private readonly IQrPayloadValidator _qrPayloadValidator;
@@ -59,6 +62,8 @@ public sealed class MobileShellViewModel :
     private readonly ILogSwitchService? _logSwitchService;
     private readonly IAutomaticBackupCoordinator? _automaticBackup;
     private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
+    private Task _brandIconInitializationTask = Task.CompletedTask;
+    private Task _automaticBackupInitializationTask = Task.CompletedTask;
     private readonly MobileAsyncCommand _initializeCommand;
     private readonly MobileAsyncCommand _previousOnboardingCommand;
     private readonly MobileAsyncCommand _nextOnboardingCommand;
@@ -118,9 +123,12 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _cancelDeleteCommand;
     private readonly MobileAsyncCommand _scanQrCommand;
     private readonly MobileAsyncCommand _importGoogleQrCommand;
-    private readonly MobileAsyncCommand _updateQrConflictCommand;
-    private readonly MobileAsyncCommand _keepBothQrConflictCommand;
-    private readonly MobileAsyncCommand _cancelQrConflictCommand;
+    private readonly MobileAsyncCommand _skipAllQrConflictsCommand;
+    private readonly MobileAsyncCommand _replaceAllQrConflictsCommand;
+    private readonly MobileAsyncCommand _keepBothAllQrConflictsCommand;
+    private readonly MobileAsyncCommand _confirmQrImportResolutionCommand;
+    private readonly MobileAsyncCommand _cancelQrImportResolutionCommand;
+    private readonly MobileAsyncCommand _dismissQrImportResultCommand;
     private readonly MobileAsyncCommand _dismissQrCommand;
     private readonly MobileAsyncCommand _exportBackupCommand;
     private readonly MobileAsyncCommand _configureAutomaticBackupCommand;
@@ -173,6 +181,10 @@ public sealed class MobileShellViewModel :
     private bool _isSettingsVisible;
     private MobileSettingsCategory _settingsCategory;
     private bool _showIssuerLogo = true;
+    private bool _brandIconCatalogInitialized;
+    private bool _brandIconInitializationStarted;
+    private long _accountBrandCatalogRevision;
+    private bool _automaticBackupInitializationStarted;
     private long _showIssuerLogoRevision;
     private string _searchText = string.Empty;
     private bool _showFavoritesOnly;
@@ -233,9 +245,11 @@ public sealed class MobileShellViewModel :
     private string _editorIssuerMessage = string.Empty;
     private string _editorSecretMessage = string.Empty;
     private string _editorPeriodMessage = string.Empty;
-    private bool _isQrConflictVisible;
-    private string _qrConflictDisplayName = string.Empty;
-    private TaskCompletionSource<QrAccountConflictDecision>? _qrConflictCompletion;
+    private bool _isQrImportResolutionVisible;
+    private string _qrImportResolutionText = string.Empty;
+    private TaskCompletionSource<QrAccountImportResolution?>? _qrImportResolutionCompletion;
+    private bool _isQrImportResultVisible;
+    private string _qrImportResultText = string.Empty;
     private MobileQrImageHandle? _qrImage;
     private string _backupPassword = string.Empty;
     private string _backupPasswordConfirmation = string.Empty;
@@ -254,6 +268,7 @@ public sealed class MobileShellViewModel :
     private CancellationTokenSource? _notificationLifetime;
     private CancellationTokenSource? _copyConfirmationLifetime;
     private CancellationTokenSource? _importProgressLifetime;
+    private CancellationTokenSource? _brandIconSearchLifetime;
     private MobileAccountItem? _copyConfirmationAccount;
     private long? _backgroundedAtTimestamp;
     private ITimer? _backgroundLockTimer;
@@ -285,13 +300,15 @@ public sealed class MobileShellViewModel :
         IAppearanceSettingsService? appearanceSettingsService = null,
         ILogSwitchService? logSwitchService = null,
         IAutomaticBackupCoordinator? automaticBackup = null,
-        IAutomaticBackupSnapshotService? automaticBackupSnapshots = null)
+        IAutomaticBackupSnapshotService? automaticBackupSnapshots = null,
+        IAccountListSnapshotService? accountListSnapshots = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
             ?? throw new ArgumentNullException(nameof(passwordValidation));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
         _accountTotp = accountTotp ?? throw new ArgumentNullException(nameof(accountTotp));
+        _accountListSnapshots = accountListSnapshots;
         _clipboard = clipboard ?? throw new ArgumentNullException(nameof(clipboard));
         _qrScanner = qrScanner ?? throw new ArgumentNullException(nameof(qrScanner));
         _qrPayloadValidator = qrPayloadValidator
@@ -312,7 +329,6 @@ public sealed class MobileShellViewModel :
         _logSwitchService = logSwitchService;
         _automaticBackup = automaticBackup;
         _automaticBackupSnapshots = automaticBackupSnapshots;
-        _showIssuerLogo = _brandIconPackService?.ShowIssuerLogo ?? true;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged += AutomaticBackupStatusChanged;
@@ -484,15 +500,24 @@ public sealed class MobileShellViewModel :
         _importGoogleQrCommand = new MobileAsyncCommand(
             ImportGoogleQrAsync,
             () => IsSettingsVisible && !IsBusy);
-        _updateQrConflictCommand = new MobileAsyncCommand(
-            () => ResolveQrConflictAsync(QrAccountConflictDecision.UpdateExisting),
-            () => IsQrConflictVisible);
-        _keepBothQrConflictCommand = new MobileAsyncCommand(
-            () => ResolveQrConflictAsync(QrAccountConflictDecision.KeepBoth),
-            () => IsQrConflictVisible);
-        _cancelQrConflictCommand = new MobileAsyncCommand(
-            () => ResolveQrConflictAsync(QrAccountConflictDecision.Cancel),
-            () => IsQrConflictVisible);
+        _skipAllQrConflictsCommand = new MobileAsyncCommand(
+            () => SelectAllQrConflictsAsync(QrAccountConflictDecision.Skip),
+            () => IsQrImportResolutionVisible && HasQrImportConflicts);
+        _replaceAllQrConflictsCommand = new MobileAsyncCommand(
+            () => SelectAllQrConflictsAsync(QrAccountConflictDecision.UpdateExisting),
+            () => IsQrImportResolutionVisible && HasQrImportConflicts);
+        _keepBothAllQrConflictsCommand = new MobileAsyncCommand(
+            () => SelectAllQrConflictsAsync(QrAccountConflictDecision.KeepBoth),
+            () => IsQrImportResolutionVisible && HasQrImportConflicts);
+        _confirmQrImportResolutionCommand = new MobileAsyncCommand(
+            ConfirmQrImportResolutionAsync,
+            () => IsQrImportResolutionVisible);
+        _cancelQrImportResolutionCommand = new MobileAsyncCommand(
+            CancelQrImportResolutionAsync,
+            () => IsQrImportResolutionVisible);
+        _dismissQrImportResultCommand = new MobileAsyncCommand(
+            DismissQrImportResultAsync,
+            () => IsQrImportResultVisible);
         _dismissQrCommand = new MobileAsyncCommand(
             DismissQrAsync,
             () => HasQrImage);
@@ -526,7 +551,10 @@ public sealed class MobileShellViewModel :
             () => IsSettingsVisible && !IsBusy && _brandIconPackService is not null);
         _resetBrandIconsCommand = new MobileAsyncCommand(
             ResetBrandIconsAsync,
-            () => IsSettingsVisible && !IsBusy && _brandIconPackService?.Status.IsInstalled == true);
+            () => IsSettingsVisible
+                && !IsBusy
+                && _brandIconCatalogInitialized
+                && _brandIconPackService?.Status.IsInstalled == true);
         _confirmImportCommand = new MobileAsyncCommand(
             () => ResolveImportConfirmationAsync(true),
             () => IsImportConfirmationVisible);
@@ -572,11 +600,13 @@ public sealed class MobileShellViewModel :
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<MobileAccountItem> Accounts => _accounts;
+    public long AccountBrandCatalogRevision => _accountBrandCatalogRevision;
     public ObservableCollection<MobileAccountGroupItem> Groups => _groups;
     public ObservableCollection<MobileGroupAccountSelection> GroupEditorAccounts =>
         _groupEditorAccounts;
 
     public ObservableCollection<BackupImportConflictItem> BackupImportConflicts { get; } = [];
+    public ObservableCollection<QrImportConflictItem> QrImportConflicts { get; } = [];
 
     public ICommand InitializeCommand => _initializeCommand;
     public ICommand PreviousOnboardingCommand => _previousOnboardingCommand;
@@ -640,9 +670,12 @@ public sealed class MobileShellViewModel :
     public ICommand CancelDeleteCommand => _cancelDeleteCommand;
     public ICommand ScanQrCommand => _scanQrCommand;
     public ICommand ImportGoogleQrCommand => _importGoogleQrCommand;
-    public ICommand UpdateQrConflictCommand => _updateQrConflictCommand;
-    public ICommand KeepBothQrConflictCommand => _keepBothQrConflictCommand;
-    public ICommand CancelQrConflictCommand => _cancelQrConflictCommand;
+    public ICommand SkipAllQrConflictsCommand => _skipAllQrConflictsCommand;
+    public ICommand ReplaceAllQrConflictsCommand => _replaceAllQrConflictsCommand;
+    public ICommand KeepBothAllQrConflictsCommand => _keepBothAllQrConflictsCommand;
+    public ICommand ConfirmQrImportResolutionCommand => _confirmQrImportResolutionCommand;
+    public ICommand CancelQrImportResolutionCommand => _cancelQrImportResolutionCommand;
+    public ICommand DismissQrImportResultCommand => _dismissQrImportResultCommand;
     public ICommand DismissQrCommand => _dismissQrCommand;
     public ICommand ExportBackupCommand => _exportBackupCommand;
     public ICommand ConfigureAutomaticBackupCommand => _configureAutomaticBackupCommand;
@@ -653,11 +686,13 @@ public sealed class MobileShellViewModel :
     public ICommand ImportAccountFileCommand => _importAccountFileCommand;
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
     public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
-    public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
+    public bool HasImportedBrandIcons => _brandIconCatalogInitialized
+        && _brandIconPackService?.Status.IsInstalled == true;
     public string BrandIconPackStatusText
     {
         get
         {
+            if (!_brandIconCatalogInitialized) return string.Empty;
             var status = _brandIconPackService?.Status;
             if (status?.IsInstalled != true) return string.Empty;
             var installedPacks = status.InstalledPacks ?? [];
@@ -757,13 +792,14 @@ public sealed class MobileShellViewModel :
         && !IsImportProgressVisible
         && !IsImportConfirmationVisible
         && !IsBackupConflictResolutionVisible
+        && !IsQrImportResolutionVisible
+        && !IsQrImportResultVisible
         && (!IsDeleteConfirmationVisible || _usesNativeDeleteConfirmation);
     public bool IsNativeAccountGroupsVisible =>
         IsNativeAccountListVisible && HasAccountNavigationCards;
     public bool IsSharedDeleteConfirmationVisible =>
         IsDeleteConfirmationVisible && !_usesNativeDeleteConfirmation;
-    public bool IsScreenCaptureProtectionRequired => !AllowScreenshots
-        && (IsAccountListVisible || IsGroupEditorVisible);
+    public bool IsScreenCaptureProtectionRequired => !AllowScreenshots;
     public bool IsSettingsVisible => IsAccountsVisible && _isSettingsVisible;
     public bool IsSettingsCategoryListVisible =>
         IsSettingsVisible && _settingsCategory == MobileSettingsCategory.None;
@@ -843,14 +879,44 @@ public sealed class MobileShellViewModel :
         IsBiometricUnlockSelected && IsBiometricAvailable
         || IsDeviceCredentialUnlockSelected && IsDeviceCredentialAvailable;
     public bool IsUnlockMethodSelectionEnabled => IsSettingsVisible && IsAppLockEnabled;
-    public bool IsQrConflictVisible
+    public bool IsQrImportResolutionVisible
     {
-        get => _isQrConflictVisible;
+        get => _isQrImportResolutionVisible;
         private set
         {
-            if (!SetField(ref _isQrConflictVisible, value)) return;
+            if (!SetField(ref _isQrImportResolutionVisible, value)) return;
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
             NotifyCommands();
         }
+    }
+    public bool HasQrImportConflicts => QrImportConflicts.Count > 0;
+    public bool IsAllQrConflictsSkipped =>
+        HasQrImportConflicts && QrImportConflicts.All(value => value.IsSkipSelected);
+    public bool IsAllQrConflictsReplaced =>
+        HasQrImportConflicts && QrImportConflicts.All(value => value.IsReplaceSelected);
+    public bool IsAllQrConflictsKeptBoth =>
+        HasQrImportConflicts && QrImportConflicts.All(value => value.IsKeepBothSelected);
+    public string QrImportResolutionText
+    {
+        get => _qrImportResolutionText;
+        private set => SetField(ref _qrImportResolutionText, value);
+    }
+    public bool IsQrImportResultVisible
+    {
+        get => _isQrImportResultVisible;
+        private set
+        {
+            if (!SetField(ref _isQrImportResultVisible, value)) return;
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
+            NotifyCommands();
+        }
+    }
+    public string QrImportResultText
+    {
+        get => _qrImportResultText;
+        private set => SetField(ref _qrImportResultText, value);
     }
     public bool IsImportConfirmationVisible
     {
@@ -1099,6 +1165,8 @@ public sealed class MobileShellViewModel :
         get => _searchText;
         set
         {
+            var hadEffectiveSearch = _searchText.Trim().Length > 0;
+            var previousFirstAccountId = Accounts.FirstOrDefault()?.Id;
             if (!SetField(ref _searchText, value ?? string.Empty)) return;
             if (_searchText.Length > 0 && _selectedGroupId.HasValue)
             {
@@ -1110,12 +1178,17 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(HasSearchText));
             OnPropertyChanged(nameof(HasActiveAccountFilter));
             _clearSearchCommand.NotifyCanExecuteChanged();
-            ApplyAccountFilter();
-            if (_searchText.Trim().Length > 0 && Accounts.Count > 0)
+            ApplyAccountFilter(notifyCommands: false);
+            var firstAccount = Accounts.FirstOrDefault();
+            if (_searchText.Trim().Length > 0
+                && firstAccount is not null
+                && (!hadEffectiveSearch || previousFirstAccountId != firstAccount.Id))
+            {
                 RequestAccountReveal(
-                    Accounts[0].Id,
+                    firstAccount.Id,
                     highlight: false,
                     alignToTop: true);
+            }
         }
     }
 
@@ -1416,7 +1489,6 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(IsAccountListVisible));
             OnPropertyChanged(nameof(IsNativeAccountListVisible));
             OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
-            OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             OnPropertyChanged(nameof(GroupEditorTitle));
             OnPropertyChanged(nameof(IsCreatingGroup));
             OnPropertyChanged(nameof(IsEditingGroup));
@@ -1496,7 +1568,6 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(IsAccountListVisible));
             OnPropertyChanged(nameof(IsNativeAccountListVisible));
             OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
-            OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             OnPropertyChanged(nameof(CanHandleSystemBack));
             OnPropertyChanged(nameof(EditorTitle));
             OnPropertyChanged(nameof(EditorSecretPlaceholder));
@@ -1642,7 +1713,6 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(HasSearchableBrandIcons));
             OnPropertyChanged(nameof(HasNoInstalledBrandIconPack));
             OnPropertyChanged(nameof(AccountBrandIconResultsMaxHeight));
-            OnPropertyChanged(nameof(EditorBrandIconPickerWidth));
             _openAccountBrandIconPickerCommand.NotifyCanExecuteChanged();
         }
     }
@@ -1685,8 +1755,8 @@ public sealed class MobileShellViewModel :
 
     public bool HasAccountBrandIconSearchText =>
         !string.IsNullOrWhiteSpace(AccountBrandIconSearchText);
-    public bool HasSearchableBrandIcons =>
-        _brandIconPackService?.AvailableBrands.Count > 0;
+    public bool HasSearchableBrandIcons => _brandIconCatalogInitialized
+        && _brandIconPackService?.AvailableBrands.Count > 0;
     public bool HasNoInstalledBrandIconPack => !HasSearchableBrandIcons;
     public bool HasNoBrandIconSearchResults =>
         HasSearchableBrandIcons
@@ -1717,13 +1787,6 @@ public sealed class MobileShellViewModel :
     }
 
     public bool HasBrandIconChoices => EditorBrandIconOptions.Count > 1;
-    public double EditorBrandIconPickerWidth =>
-        Math.Clamp(
-            (EditorBrandIconOptions.Count == 0
-                ? Get(MobileStringKeys.AutomaticBrandIcon).Length
-                : EditorBrandIconOptions.Max(option => option.DisplayName.Length)) * 8d + 32d,
-            180d,
-            210d);
     public string SelectedEditorBrandIconDisplayName =>
         SelectedEditorBrandIconOption?.DisplayNameForDisplay
         ?? Get(MobileStringKeys.AutomaticBrandIcon);
@@ -2016,10 +2079,13 @@ public sealed class MobileShellViewModel :
     public string ImportGoogleQrText => Get(MobileStringKeys.ImportGoogleQr);
     public string ImportGoogleQrDescriptionText =>
         Get(MobileStringKeys.ImportGoogleQrDescription);
-    public string QrConflictTitle => Get(MobileStringKeys.QrConflictTitle);
-    public string QrConflictPrompt => string.Format(
-        Get(MobileStringKeys.QrConflictPrompt),
-        _qrConflictDisplayName);
+    public string QrImportReviewTitle => Get(MobileStringKeys.QrImportReviewTitle);
+    public string QrImportChangedAccountsText =>
+        Get(MobileStringKeys.QrImportChangedAccounts);
+    public string QrImportResultTitle => Get(MobileStringKeys.QrImportResultTitle);
+    public string ImportCancelText => Get(MobileStringKeys.ImportCancel);
+    public string CloseText => Get(MobileStringKeys.Close);
+    public string KeepBothAllText => Get(MobileStringKeys.KeepBothAll);
     public string UpdateExistingText => Get(MobileStringKeys.UpdateExisting);
     public string KeepBothText => Get(MobileStringKeys.KeepBoth);
     public string ShowQrText => Get(MobileStringKeys.ShowQr);
@@ -2235,20 +2301,16 @@ public sealed class MobileShellViewModel :
             // ISettingsService keeps a stable mutable Current instance. Notify bindings after
             // LoadAsync applies persisted values so the UI cannot retain constructor defaults.
             NotifyAppLockChanged();
+            OnPropertyChanged(nameof(AllowScreenshots));
+            OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             _logSwitchService?.SetLevel(_settings.Current.MinimumLogLevel);
             _strings.ApplyCulture(_settings.Current.CultureName);
             NotifyLocalizedTextChanged();
             SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
 
-            if (_automaticBackup is not null)
-            {
-                await _automaticBackup.InitializeAsync();
-                NotifyAutomaticBackupChanged();
-            }
+            StartBrandIconInitialization();
 
             await _authorization.InitializeAsync();
-            await RefreshUnlockMethodAvailabilityAsync();
-            RefreshUnlockMethodState();
             if (!_authorization.State.IsConfigured
                 && File.Exists(_paths.AuthorizationEnvelopeFilePath))
             {
@@ -2262,12 +2324,15 @@ public sealed class MobileShellViewModel :
                 var automaticUnlock = await _authorization.TryUnlockOnStartupAsync();
                 if (automaticUnlock == AuthorizationResult.Success)
                 {
+                    RefreshUnlockMethodState();
                     SetScreen(MobileScreen.Accounts);
                     await LoadAccountsAsync();
                     return;
                 }
             }
 
+            await RefreshStartupUnlockMethodAvailabilityAsync();
+            RefreshUnlockMethodState();
             SetScreen(_authorization.State.IsConfigured
                 ? MobileScreen.Unlock
                 : MobileScreen.Onboarding);
@@ -2285,6 +2350,64 @@ public sealed class MobileShellViewModel :
                 ShowOnboardingPreview();
             }
             TryStartAutomaticBiometricUnlock();
+            StartAutomaticBackupInitialization();
+        }
+    }
+
+    private void StartBrandIconInitialization()
+    {
+        if (_brandIconInitializationStarted || _brandIconPackService is null) return;
+        _brandIconInitializationStarted = true;
+        _brandIconInitializationTask = InitializeBrandIconsCoreAsync();
+    }
+
+    private async Task InitializeBrandIconsCoreAsync()
+    {
+        try
+        {
+            await _brandIconPackService!.InitializeAsync();
+        }
+        catch (Exception)
+        {
+            // The icon pack is optional. Accounts remain usable with generated initials.
+        }
+        finally
+        {
+            if (!_disposed)
+            {
+                _brandIconCatalogInitialized = true;
+                BrandCatalogChanged(this, EventArgs.Empty);
+                OnPropertyChanged(nameof(HasSearchableBrandIcons));
+            }
+        }
+    }
+
+    private async Task EnsureBrandIconCatalogInitializedAsync()
+    {
+        StartBrandIconInitialization();
+        await _brandIconInitializationTask;
+    }
+
+    private void StartAutomaticBackupInitialization()
+    {
+        if (_automaticBackupInitializationStarted || _automaticBackup is null) return;
+        _automaticBackupInitializationStarted = true;
+        _automaticBackupInitializationTask = InitializeAutomaticBackupCoreAsync();
+    }
+
+    private async Task InitializeAutomaticBackupCoreAsync()
+    {
+        try
+        {
+            await _automaticBackup!.InitializeAsync();
+        }
+        catch (Exception)
+        {
+            // StatusChanged and the coordinator's status expose recoverable failures.
+        }
+        finally
+        {
+            if (!_disposed) NotifyAutomaticBackupChanged();
         }
     }
 
@@ -2539,24 +2662,54 @@ public sealed class MobileShellViewModel :
 
     private async Task RefreshUnlockMethodAvailabilityAsync()
     {
-        try
+        var biometric = QueryBiometricAvailabilityAsync();
+        var deviceCredential = QueryDeviceCredentialAvailabilityAsync();
+        await Task.WhenAll(biometric, deviceCredential);
+        IsBiometricAvailable = biometric.Result;
+        IsDeviceCredentialAvailable = deviceCredential.Result;
+    }
+
+    private async Task RefreshStartupUnlockMethodAvailabilityAsync()
+    {
+        if (!_authorization.State.IsConfigured)
         {
-            IsBiometricAvailable = await _authorization.IsHelloAvailableAsync();
-        }
-        catch (Exception)
-        {
-            IsBiometricAvailable = false;
+            await RefreshUnlockMethodAvailabilityAsync();
+            return;
         }
 
+        switch (_authorization.State.PreferredUnlockMethod)
+        {
+            case PreferredUnlockMethod.PlatformQuickUnlock:
+                IsBiometricAvailable = await QueryBiometricAvailabilityAsync();
+                break;
+            case PreferredUnlockMethod.PlatformDeviceCredential:
+                IsDeviceCredentialAvailable = await QueryDeviceCredentialAvailabilityAsync();
+                break;
+        }
+    }
+
+    private async Task<bool> QueryBiometricAvailabilityAsync()
+    {
         try
         {
-            IsDeviceCredentialAvailable =
-                await _authorization.IsUnlockMethodAvailableAsync(
-                    PreferredUnlockMethod.PlatformDeviceCredential);
+            return await _authorization.IsHelloAvailableAsync();
         }
         catch (Exception)
         {
-            IsDeviceCredentialAvailable = false;
+            return false;
+        }
+    }
+
+    private async Task<bool> QueryDeviceCredentialAvailabilityAsync()
+    {
+        try
+        {
+            return await _authorization.IsUnlockMethodAvailableAsync(
+                PreferredUnlockMethod.PlatformDeviceCredential);
+        }
+        catch (Exception)
+        {
+            return false;
         }
     }
 
@@ -3081,9 +3234,9 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            var imported = await _qrImport.ImportAsync(
+            var imported = await _qrImport.ImportWithConflictResolutionAsync(
                 payload,
-                ResolveQrConflictAsync,
+                ResolveQrImportAsync,
                 operation.Token);
             if (imported.IsFailed)
             {
@@ -3092,49 +3245,48 @@ public sealed class MobileShellViewModel :
             }
 
             var outcome = imported.Value;
+            payload = null;
+            string? resultText = null;
             switch (outcome.Status)
             {
                 case QrAccountImportStatus.Added:
                     ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
                     RequestAccountReveal(outcome.AccountId);
-                    SetSuccess(MobileStringKeys.QrAccountAdded);
+                    resultText = Get(MobileStringKeys.QrAccountAdded);
                     break;
                 case QrAccountImportStatus.Updated:
                     ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
                     RequestAccountReveal(outcome.AccountId);
-                    SetSuccess(MobileStringKeys.QrAccountUpdated);
+                    resultText = Get(MobileStringKeys.QrAccountUpdated);
                     break;
                 case QrAccountImportStatus.KeptBoth:
                     ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
                     RequestAccountReveal(outcome.AccountId);
-                    SetSuccess(MobileStringKeys.QrAccountKeptBoth);
+                    resultText = Get(MobileStringKeys.QrAccountKeptBoth);
+                    break;
+                case QrAccountImportStatus.Skipped:
+                    resultText = Get(MobileStringKeys.QrAccountSkipped);
                     break;
                 case QrAccountImportStatus.DuplicateUnchanged:
                     ClearAccountFiltersForReveal();
                     await LoadAccountsAsync(outcome.AccountId);
                     RequestAccountReveal(outcome.AccountId);
-                    SetNotification(
-                        Get(MobileStringKeys.QrAccountDuplicate),
-                        NotificationSeverity.Information);
+                    resultText = Get(MobileStringKeys.QrAccountDuplicate);
                     break;
                 case QrAccountImportStatus.Cancelled:
-                    SetNotification(
-                        Get(MobileStringKeys.QrImportCancelled),
-                        NotificationSeverity.Information);
-                    break;
+                    return;
                 case QrAccountImportStatus.BulkImported:
                     if (outcome.ImportedCount > 0)
                         await LoadAccountsAsync(outcome.AccountId);
-                    SetNotification(
-                        FormatBulkImportMessage(outcome),
-                        outcome.FailedCount > 0
-                            ? NotificationSeverity.Warning
-                            : NotificationSeverity.Success);
+                    resultText = FormatBulkImportMessage(outcome);
                     break;
             }
+
+            if (!string.IsNullOrWhiteSpace(resultText))
+                ShowQrImportResult(resultText);
         }
         catch (OperationCanceledException)
         {
@@ -3147,7 +3299,7 @@ public sealed class MobileShellViewModel :
         {
             EndSensitiveOperation(operation);
             payload = null;
-            CompleteQrConflict(QrAccountConflictDecision.Cancel);
+            CompleteQrImportResolution(null);
             CompleteImportConfirmation(false);
             IsBusy = false;
             TryStartAutomaticBiometricUnlock();
@@ -3162,15 +3314,21 @@ public sealed class MobileShellViewModel :
                 Get(MobileStringKeys.QrBulkImportedMore),
                 outcome.BatchIndex + 1,
                 outcome.BatchSize,
-                outcome.ImportedCount,
+                outcome.AddedCount,
+                outcome.UpdatedCount,
+                outcome.KeptBothCount,
                 outcome.DuplicateCount,
+                outcome.SkippedCount,
                 outcome.FailedCount);
         }
 
         return string.Format(
             Get(MobileStringKeys.QrBulkImported),
-            outcome.ImportedCount,
+            outcome.AddedCount,
+            outcome.UpdatedCount,
+            outcome.KeptBothCount,
             outcome.DuplicateCount,
+            outcome.SkippedCount,
             outcome.FailedCount);
     }
 
@@ -3425,6 +3583,12 @@ public sealed class MobileShellViewModel :
         {
             using var document = await _documents.OpenEncryptedBackupAsync(operation.Token);
             if (document is null) return;
+            var extension = Path.GetExtension(document.Name);
+            if (!BackupFileExtensions.IsSupportedBackup(extension))
+            {
+                SetError(MobileStringKeys.BackupImportRejected);
+                return;
+            }
             BeginImportProgress(MobileStringKeys.ImportingAccounts);
             if (!_authorization.State.IsUnlocked || !IsSettingsVisible)
             {
@@ -3433,8 +3597,8 @@ public sealed class MobileShellViewModel :
             }
 
             Result<IReadOnlyList<Account>> decoded;
-            if (Path.GetExtension(document.Name).Equals(
-                    ".otphbackup",
+            if (extension.Equals(
+                    BackupFileExtensions.AutomaticBackup,
                     StringComparison.OrdinalIgnoreCase))
             {
                 decoded = _automaticBackupSnapshots is null
@@ -3836,9 +4000,33 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
-    public Task ResolveQrConflictAsync(QrAccountConflictDecision decision)
+    public Task SelectAllQrConflictsAsync(QrAccountConflictDecision decision)
     {
-        CompleteQrConflict(decision);
+        if (!IsQrImportResolutionVisible) return Task.CompletedTask;
+        foreach (var conflict in QrImportConflicts)
+            conflict.Select(decision);
+        NotifyQrImportSelectionChanged();
+        return Task.CompletedTask;
+    }
+
+    public Task ConfirmQrImportResolutionAsync()
+    {
+        if (!IsQrImportResolutionVisible) return Task.CompletedTask;
+        CompleteQrImportResolution(new QrAccountImportResolution(
+            QrImportConflicts.Select(value => value.ToResolution()).ToList()));
+        return Task.CompletedTask;
+    }
+
+    public Task CancelQrImportResolutionAsync()
+    {
+        CompleteQrImportResolution(null);
+        return Task.CompletedTask;
+    }
+
+    public Task DismissQrImportResultAsync()
+    {
+        QrImportResultText = string.Empty;
+        IsQrImportResultVisible = false;
         return Task.CompletedTask;
     }
 
@@ -4524,6 +4712,12 @@ public sealed class MobileShellViewModel :
         _isAccountListScrolling = isScrolling;
     }
 
+    public BrandInfo MaterializeBrand(BrandInfo brand) =>
+        _brandIconResolver.MaterializeIconData(brand);
+
+    public bool TryGetMaterializedBrand(BrandInfo brand, out BrandInfo materialized) =>
+        _brandIconResolver.TryGetMaterializedIconData(brand, out materialized);
+
     public void SetRealizedAccounts(IReadOnlyCollection<MobileAccountItem> realizedAccounts)
     {
         ArgumentNullException.ThrowIfNull(realizedAccounts);
@@ -4607,6 +4801,7 @@ public sealed class MobileShellViewModel :
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged -= AutomaticBackupStatusChanged;
         _sensitiveOperationLifetime?.Cancel();
+        CancelBrandIconSearch();
         EndImportProgress();
         CancelNotificationLifetime();
         ClearCopyConfirmation();
@@ -4619,14 +4814,24 @@ public sealed class MobileShellViewModel :
         Accounts.Clear();
         Groups.Clear();
         _authorization.Lock();
-        CompleteQrConflict(QrAccountConflictDecision.Cancel);
+        CompleteQrImportResolution(null);
+        QrImportResultText = string.Empty;
+        IsQrImportResultVisible = false;
         CompleteImportConfirmation(false);
         CompleteBackupConflictResolution(null);
     }
 
     private async Task LoadAccountsAsync(Guid? selectedId = null)
     {
-        var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
+        if (_accountListSnapshots is not null)
+        {
+            await LoadAccountSnapshotsAsync(selectedId);
+            return;
+        }
+
+        var accountsTask = _accountManager.GetAllOtpEntriesSortedAsync();
+        await Task.WhenAll(accountsTask, EnsureBrandIconCatalogInitializedAsync());
+        var loaded = await accountsTask;
         if (loaded.IsFailed)
         {
             SetError(MobileStringKeys.LoadingAccountsFailed);
@@ -4660,7 +4865,7 @@ public sealed class MobileShellViewModel :
                     accountName,
                     account.PeriodSeconds,
                     FormatCustomPeriod(account.PeriodSeconds),
-                    _brandIconResolver.ResolveAccount(
+                    _brandIconResolver.ResolveAccountMetadata(
                         account.ID,
                         account.Issuer,
                         account.AccountName),
@@ -4687,6 +4892,89 @@ public sealed class MobileShellViewModel :
         RefreshGroups();
         ApplyAccountFilter(selectedId);
         StartCodeRefresh();
+    }
+
+    private async Task LoadAccountSnapshotsAsync(Guid? selectedId)
+    {
+        var snapshotsTask = _accountListSnapshots!.LoadAsync();
+        await Task.WhenAll(snapshotsTask, EnsureBrandIconCatalogInitializedAsync());
+        var loaded = await snapshotsTask;
+        if (loaded.IsFailed)
+        {
+            SetError(MobileStringKeys.LoadingAccountsFailed);
+            return;
+        }
+
+        _hasLoadedAccounts = true;
+        var existingAccounts = _allAccounts.ToDictionary(account => account.Id);
+        var refreshedAccounts = new List<MobileAccountItem>(loaded.Value.Accounts.Count);
+        foreach (var snapshot in loaded.Value.Accounts)
+        {
+            AccountGroupPolicy.TryNormalizeStoredGroups(snapshot.Groups, out var groups);
+            MobileAccountItem item;
+            if (existingAccounts.TryGetValue(snapshot.Id, out var existing)
+                && string.Equals(existing.Issuer, snapshot.Issuer, StringComparison.Ordinal)
+                && string.Equals(existing.AccountName, snapshot.AccountName, StringComparison.Ordinal)
+                && existing.ConfiguredPeriodSeconds == snapshot.PeriodSeconds)
+            {
+                item = existing;
+                item.UpdateCustomPeriodLabel(FormatCustomPeriod(snapshot.PeriodSeconds));
+                item.UpdateFavorite(snapshot.IsFavorite);
+                item.UpdateFavoriteLocalization(AddToFavoritesText, RemoveFromFavoritesText);
+                item.UpdateGroups(groups);
+            }
+            else
+            {
+                item = new MobileAccountItem(
+                    snapshot.Id,
+                    snapshot.Issuer,
+                    snapshot.AccountName,
+                    snapshot.PeriodSeconds,
+                    FormatCustomPeriod(snapshot.PeriodSeconds),
+                    _brandIconResolver.ResolveAccountMetadata(
+                        snapshot.Id,
+                        snapshot.Issuer,
+                        snapshot.AccountName),
+                    snapshot.IsFavorite,
+                    AddToFavoritesText,
+                    RemoveFromFavoritesText,
+                    groups: groups);
+            }
+
+            item.UpdateLogoVisibility(ShowIssuerLogo);
+            item.UpdateNextTokenPreference(ShowNextToken);
+            if (snapshot.Totp is { } generated)
+            {
+                item.UpdateCode(
+                    generated.Code,
+                    Math.Max(1, generated.RemainingSeconds),
+                    generated.PeriodSeconds,
+                    generated.NextCode,
+                    notifyBindings: ShouldNotifyCodeBindings(item));
+            }
+            else
+            {
+                item.ClearCode(notifyBindings: ShouldNotifyCodeBindings(item));
+            }
+            refreshedAccounts.Add(item);
+        }
+
+        _allAccounts.Clear();
+        _allAccounts.AddRange(refreshedAccounts);
+
+        if (_showFavoritesOnly
+            && selectedId.HasValue
+            && _allAccounts.FirstOrDefault(account => account.Id == selectedId.Value)?.IsFavorite != true)
+        {
+            _showFavoritesOnly = false;
+        }
+        RefreshFavoriteState();
+        RefreshGroups();
+        ApplyAccountFilter(selectedId);
+        StartCodeRefresh(refreshImmediately: false);
+
+        if (loaded.Value.FailedAccountIds.Count > 0)
+            SetError(MobileStringKeys.CodeUnavailable);
     }
 
     private void ApplySavedAccount(Account account)
@@ -4768,24 +5056,28 @@ public sealed class MobileShellViewModel :
         _allAccounts.Insert(insertionIndex, item);
     }
 
-    private void ApplyAccountFilter(Guid? preferredSelection = null)
+    private void ApplyAccountFilter(
+        Guid? preferredSelection = null,
+        bool notifyCommands = true)
     {
         var selectedId = preferredSelection ?? SelectedAccount?.Id;
-        var query = SearchText.Trim();
-        var matches = _allAccounts.Where(account =>
+        var candidates = _allAccounts.Where(account =>
             (!_showFavoritesOnly || account.IsFavorite)
             && (!_selectedGroupId.HasValue
-                || account.Groups.Any(group => group.Id == _selectedGroupId))
-            && (query.Length == 0
-                || account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                || account.Groups.Any(group => group.Name.Contains(
-                    query,
-                    StringComparison.CurrentCultureIgnoreCase))))
-            .ToArray();
+                || account.Groups.Any(group => group.Id == _selectedGroupId)));
+        var matches = RankedTextFilter.ApplyTerms(
+            candidates,
+            SearchText,
+            static account => 2 + account.Groups.Count,
+            static (account, index) => index switch
+            {
+                0 => account.Issuer,
+                1 => account.AccountName,
+                _ => account.Groups[index - 2].Name
+            });
 
-        var visibleSequenceChanged = _accounts.Count != matches.Length;
-        for (var index = 0; !visibleSequenceChanged && index < matches.Length; index++)
+        var visibleSequenceChanged = _accounts.Count != matches.Count;
+        for (var index = 0; !visibleSequenceChanged && index < matches.Count; index++)
             visibleSequenceChanged = !ReferenceEquals(_accounts[index], matches[index]);
         if (visibleSequenceChanged)
         {
@@ -4799,11 +5091,13 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(HasNoAccounts));
         OnPropertyChanged(nameof(HasNoSearchResults));
         OnPropertyChanged(nameof(SearchResultSummary));
+        var previousSelection = SelectedAccount;
         SelectedAccount = selectedId.HasValue
             ? Accounts.FirstOrDefault(account => account.Id == selectedId.Value)
                 ?? Accounts.FirstOrDefault()
             : Accounts.FirstOrDefault();
-        NotifyCommands();
+        if (notifyCommands && ReferenceEquals(previousSelection, SelectedAccount))
+            NotifyCommands();
     }
 
     private Task SelectGroupAsync(Guid groupId)
@@ -4969,16 +5263,18 @@ public sealed class MobileShellViewModel :
         }
     }
 
-    private void StartCodeRefresh(Guid? initialAccountId = null)
+    private void StartCodeRefresh(Guid? initialAccountId = null, bool refreshImmediately = true)
     {
         StopCodeRefresh();
         if (_allAccounts.Count == 0 || !IsAccountListVisible) return;
 
         var refreshAccounts = _allAccounts.ToArray();
         if (refreshAccounts.Length == 0) return;
-        var initialAccounts = initialAccountId.HasValue
-            ? refreshAccounts.Where(account => account.Id == initialAccountId.Value).ToArray()
-            : refreshAccounts;
+        var initialAccounts = !refreshImmediately
+            ? []
+            : initialAccountId.HasValue
+                ? refreshAccounts.Where(account => account.Id == initialAccountId.Value).ToArray()
+                : refreshAccounts;
         foreach (var account in initialAccounts)
             account.BeginCodeRefresh(ShouldNotifyCodeBindings(account));
 
@@ -5385,10 +5681,70 @@ public sealed class MobileShellViewModel :
 
     private void ApplyAccountBrandIconFilter()
     {
-        FilteredEditorBrandIconOptions = RankedTextFilter.Apply(
-            EditorBrandIconOptions,
-            AccountBrandIconSearchText,
-            static option => [option.DisplayName, option.Id, option.FileName]);
+        CancelBrandIconSearch();
+        var options = EditorBrandIconOptions;
+        var query = AccountBrandIconSearchText;
+        if (options.Count < BackgroundBrandSearchThreshold || string.IsNullOrWhiteSpace(query))
+        {
+            FilteredEditorBrandIconOptions = FilterBrandIconOptions(options, query);
+            return;
+        }
+
+        var lifetime = new CancellationTokenSource();
+        _brandIconSearchLifetime = lifetime;
+        _ = ApplyAccountBrandIconFilterAsync(options, query, lifetime);
+    }
+
+    private async Task ApplyAccountBrandIconFilterAsync(
+        IReadOnlyList<MobileBrandIconOption> options,
+        string query,
+        CancellationTokenSource lifetime)
+    {
+        try
+        {
+            var filtered = await Task.Run(
+                () => FilterBrandIconOptions(options, query, lifetime.Token),
+                lifetime.Token).ConfigureAwait(false);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!lifetime.IsCancellationRequested
+                    && ReferenceEquals(Volatile.Read(ref _brandIconSearchLifetime), lifetime)
+                    && string.Equals(AccountBrandIconSearchText, query, StringComparison.Ordinal))
+                {
+                    FilteredEditorBrandIconOptions = filtered;
+                }
+            });
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            Interlocked.CompareExchange(ref _brandIconSearchLifetime, null, lifetime);
+            lifetime.Dispose();
+        }
+    }
+
+    private static IReadOnlyList<MobileBrandIconOption> FilterBrandIconOptions(
+        IReadOnlyList<MobileBrandIconOption> options,
+        string query,
+        CancellationToken cancellationToken = default) =>
+        RankedTextFilter.Apply(
+            options,
+            query,
+            static _ => 3,
+            static (option, index) => index switch
+            {
+                0 => option.DisplayName,
+                1 => option.Id,
+                _ => option.FileName
+            },
+            cancellationToken);
+
+    private void CancelBrandIconSearch()
+    {
+        var lifetime = Interlocked.Exchange(ref _brandIconSearchLifetime, null);
+        lifetime?.Cancel();
     }
 
     private void CloseAccountBrandIconPicker()
@@ -5478,11 +5834,11 @@ public sealed class MobileShellViewModel :
 
     private void ApplyGroupEditorSearch()
     {
-        var query = GroupEditorSearchText.Trim();
-        var matches = _allGroupEditorAccounts.Where(account =>
-            query.Length == 0
-            || account.Issuer.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-            || account.AccountName.Contains(query, StringComparison.CurrentCultureIgnoreCase));
+        var matches = RankedTextFilter.ApplyTerms(
+            _allGroupEditorAccounts,
+            GroupEditorSearchText,
+            static _ => 2,
+            static (account, index) => index == 0 ? account.Issuer : account.AccountName);
 
         _groupEditorAccounts.ReplaceAll(matches);
     }
@@ -5552,20 +5908,38 @@ public sealed class MobileShellViewModel :
         && !IsBusy
         && !_isFavoriteUpdateInProgress
         && !IsDeleteConfirmationVisible
-        && !IsQrConflictVisible;
+        && !IsQrImportResolutionVisible
+        && !IsQrImportResultVisible;
 
-    private async Task<QrAccountConflictDecision> ResolveQrConflictAsync(
-        QrAccountConflict conflict,
+    private async Task<QrAccountImportResolution?> ResolveQrImportAsync(
+        QrAccountImportPreview preview,
         CancellationToken cancellationToken)
     {
-        var completion = new TaskCompletionSource<QrAccountConflictDecision>(
+        var completion = new TaskCompletionSource<QrAccountImportResolution?>(
             TaskCreationOptions.RunContinuationsAsynchronously);
-        _qrConflictCompletion = completion;
-        _qrConflictDisplayName = string.IsNullOrWhiteSpace(conflict.AccountName)
-            ? conflict.Issuer
-            : $"{conflict.Issuer}: {conflict.AccountName}";
-        OnPropertyChanged(nameof(QrConflictPrompt));
-        IsQrConflictVisible = true;
+        _qrImportResolutionCompletion = completion;
+        ClearQrImportConflicts();
+        foreach (var conflict in preview.ChangedConflicts)
+        {
+            var item = new QrImportConflictItem(
+                conflict,
+                ChangedFieldsFormat,
+                SecretFieldText,
+                PeriodFieldText,
+                Get(MobileStringKeys.QrSkipAccountAutomationFormat),
+                Get(MobileStringKeys.QrReplaceAccountAutomationFormat),
+                Get(MobileStringKeys.QrKeepBothAccountAutomationFormat));
+            item.PropertyChanged += OnQrImportConflictSelectionChanged;
+            QrImportConflicts.Add(item);
+        }
+        NotifyQrImportSelectionChanged();
+        QrImportResolutionText = string.Format(
+            Get(MobileStringKeys.QrImportReviewSummary),
+            preview.TotalCount,
+            preview.NewCount,
+            preview.UnchangedCount,
+            preview.ChangedConflicts.Count);
+        IsQrImportResolutionVisible = true;
 
         using var cancellation = cancellationToken.Register(() =>
             completion.TrySetCanceled(cancellationToken));
@@ -5575,18 +5949,53 @@ public sealed class MobileShellViewModel :
         }
         finally
         {
-            if (ReferenceEquals(_qrConflictCompletion, completion))
+            if (ReferenceEquals(_qrImportResolutionCompletion, completion))
             {
-                _qrConflictCompletion = null;
-                _qrConflictDisplayName = string.Empty;
-                IsQrConflictVisible = false;
-                OnPropertyChanged(nameof(QrConflictPrompt));
+                _qrImportResolutionCompletion = null;
+                ClearQrImportConflicts();
+                QrImportResolutionText = string.Empty;
+                IsQrImportResolutionVisible = false;
             }
         }
     }
 
-    private void CompleteQrConflict(QrAccountConflictDecision decision) =>
-        _qrConflictCompletion?.TrySetResult(decision);
+    private void CompleteQrImportResolution(QrAccountImportResolution? resolution) =>
+        _qrImportResolutionCompletion?.TrySetResult(resolution);
+
+    private void OnQrImportConflictSelectionChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(QrImportConflictItem.IsSkipSelected)
+            or nameof(QrImportConflictItem.IsReplaceSelected)
+            or nameof(QrImportConflictItem.IsKeepBothSelected))
+        {
+            NotifyQrImportSelectionChanged();
+        }
+    }
+
+    private void NotifyQrImportSelectionChanged()
+    {
+        OnPropertyChanged(nameof(HasQrImportConflicts));
+        OnPropertyChanged(nameof(IsAllQrConflictsSkipped));
+        OnPropertyChanged(nameof(IsAllQrConflictsReplaced));
+        OnPropertyChanged(nameof(IsAllQrConflictsKeptBoth));
+        _skipAllQrConflictsCommand.NotifyCanExecuteChanged();
+        _replaceAllQrConflictsCommand.NotifyCanExecuteChanged();
+        _keepBothAllQrConflictsCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ClearQrImportConflicts()
+    {
+        foreach (var conflict in QrImportConflicts)
+            conflict.PropertyChanged -= OnQrImportConflictSelectionChanged;
+        QrImportConflicts.Clear();
+        NotifyQrImportSelectionChanged();
+    }
+
+    private void ShowQrImportResult(string text)
+    {
+        QrImportResultText = text;
+        IsQrImportResultVisible = true;
+    }
 
     private Task<bool> ConfirmImportAsync(
         AccountImportPreview preview,
@@ -5686,10 +6095,12 @@ public sealed class MobileShellViewModel :
                 : SelectedEditorBrandIconOption?.Id);
         }
         foreach (var account in _allAccounts)
-            account.UpdateBrand(_brandIconResolver.ResolveAccount(
+            account.UpdateBrand(_brandIconResolver.ResolveAccountMetadata(
                 account.Id,
                 account.Issuer,
                 account.AccountName));
+        _accountBrandCatalogRevision++;
+        OnPropertyChanged(nameof(AccountBrandCatalogRevision));
     }
 
     private void AutomaticBackupStatusChanged(object? sender, EventArgs args)
@@ -5860,7 +6271,6 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(IsAccountListVisible));
         OnPropertyChanged(nameof(IsNativeAccountListVisible));
         OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
-        OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
         OnPropertyChanged(nameof(IsSettingsVisible));
         OnPropertyChanged(nameof(CanHandleSystemBack));
         OnPropertyChanged(nameof(IsSettingsCategoryListVisible));
@@ -6256,9 +6666,12 @@ public sealed class MobileShellViewModel :
         _cancelDeleteCommand.NotifyCanExecuteChanged();
         _scanQrCommand.NotifyCanExecuteChanged();
         _importGoogleQrCommand.NotifyCanExecuteChanged();
-        _updateQrConflictCommand.NotifyCanExecuteChanged();
-        _keepBothQrConflictCommand.NotifyCanExecuteChanged();
-        _cancelQrConflictCommand.NotifyCanExecuteChanged();
+        _skipAllQrConflictsCommand.NotifyCanExecuteChanged();
+        _replaceAllQrConflictsCommand.NotifyCanExecuteChanged();
+        _keepBothAllQrConflictsCommand.NotifyCanExecuteChanged();
+        _confirmQrImportResolutionCommand.NotifyCanExecuteChanged();
+        _cancelQrImportResolutionCommand.NotifyCanExecuteChanged();
+        _dismissQrImportResultCommand.NotifyCanExecuteChanged();
         _dismissQrCommand.NotifyCanExecuteChanged();
         _exportBackupCommand.NotifyCanExecuteChanged();
         _configureAutomaticBackupCommand.NotifyCanExecuteChanged();
@@ -6459,8 +6872,12 @@ public sealed class MobileShellViewModel :
         nameof(ExportSectionText),
         nameof(ImportGoogleQrText),
         nameof(ImportGoogleQrDescriptionText),
-        nameof(QrConflictTitle),
-        nameof(QrConflictPrompt),
+        nameof(QrImportReviewTitle),
+        nameof(QrImportChangedAccountsText),
+        nameof(QrImportResultTitle),
+        nameof(ImportCancelText),
+        nameof(CloseText),
+        nameof(KeepBothAllText),
         nameof(UpdateExistingText),
         nameof(KeepBothText),
         nameof(ShowQrText),

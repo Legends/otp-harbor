@@ -17,6 +17,36 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AndroidScreenCaptureProtection_FollowsTheRuntimePolicyAcrossTheApp()
+    {
+        var activitySource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "MainActivity.cs"));
+        var scannerSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "LiveQrScannerActivity.cs"));
+        var applicationSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "OtpHarborApplication.cs"));
+
+        Assert.Contains(
+            "_screenCapturePolicy?.IsScreenCaptureProtectionRequired != false",
+            activitySource);
+        Assert.Contains("ApplyScreenCapturePolicy();", activitySource);
+        Assert.Contains("RunOnUiThread", activitySource);
+        Assert.Contains("window.SetFlags(flags, WindowManagerFlags.Secure);", activitySource);
+        Assert.Contains("host.IsScreenCaptureProtectionRequired", scannerSource);
+        Assert.Contains("Window?.SetFlags(flags, WindowManagerFlags.Secure);", scannerSource);
+        Assert.Contains("internal bool IsScreenCaptureProtectionRequired", applicationSource);
+    }
+
+    [Fact]
     public void AndroidAutomaticBackupRetention_UsesTheSafDocumentDeleteContract()
     {
         var source = File.ReadAllText(Path.Combine(
@@ -41,6 +71,152 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains("if (Dispatcher.UIThread.CheckAccess())", source);
         Assert.Contains("_ = action();", source);
         Assert.Contains("BeginDeleteForAccountAsync(_row?.Account)", source);
+    }
+
+    [Fact]
+    public void AndroidAccountList_ShowsImmediatelyAndPrewarmsSixHundredIntoAnApplicationCache()
+    {
+        var recyclerSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeAccountRecyclerView.cs"));
+        var rowSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeAccountRowView.cs"));
+        var iconSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeBrandIcon.cs"));
+        var cacheSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeBrandIconCache.cs"));
+        var applicationSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "OtpHarborApplication.cs"));
+
+        Assert.Contains("_adapter.SetListScrolling(scrolling);", recyclerSource);
+        Assert.Contains("holder.Row.SetListScrolling(scrolling);", recyclerSource);
+        Assert.Contains("Bind(_items[position], _isListScrolling)", recyclerSource);
+        Assert.Contains("if (_animating || _row is null || _isListScrolling) return;", rowSource);
+        Assert.Contains("if (_brandIcon is null) PrepareBrandIcon();", rowSource);
+        Assert.Contains("FullIconPrewarmAccountLimit = 640", recyclerSource);
+        Assert.Contains("FullIconPrewarmBrandLimit = 40", recyclerSource);
+        Assert.Contains("InitialIconPrewarmAccountCount = 640", recyclerSource);
+        Assert.Contains("IconPrewarmBatchSize = 100", recyclerSource);
+        Assert.Contains("RuntimeIconPrewarmConcurrency = 16", recyclerSource);
+        Assert.Contains("RefreshIconPrewarmProfile();", recyclerSource);
+        var adapterAttach = recyclerSource.IndexOf("SetAdapter(_adapter);", StringComparison.Ordinal);
+        var initialSchedule = recyclerSource.IndexOf("_ = StartInitialIconPrewarm();", StringComparison.Ordinal);
+        Assert.True(adapterAttach >= 0);
+        Assert.True(initialSchedule > adapterAttach);
+        Assert.Contains("if (requestKey == _iconPrewarmRequestKey) return;", recyclerSource);
+        Assert.Contains("AddBatch(currentBatch);", recyclerSource);
+        Assert.Contains("AddBatch(lookaheadBatch);", recyclerSource);
+        Assert.Contains("_hasAccountListScrolled = true;", recyclerSource);
+        Assert.Contains("CancelIconPrewarm();", recyclerSource);
+        Assert.Contains("Post(ScheduleIconPrewarm);", recyclerSource);
+        Assert.Contains("Task.Run(", recyclerSource);
+        Assert.Contains("TryGetMaterializedBrand(metadata, out var cached)", recyclerSource);
+        Assert.Contains("finally", recyclerSource);
+        Assert.Contains("prepared.TrySetResult();", recyclerSource);
+        Assert.Contains("owner.HandleIdleScroll();", recyclerSource);
+        Assert.Contains("owner.ScheduleIconPrewarm();", recyclerSource);
+        Assert.Contains("TryGetMaterializedBrand(account.Brand", rowSource);
+        Assert.Contains("allowTemplateCreation: !_isListScrolling", rowSource);
+        Assert.Contains("public NativeBrandIcon Clone()", iconSource);
+        Assert.Contains("return existing.Template.Clone();", cacheSource);
+        Assert.Contains("IconPayloadMatches(existing, brand)", cacheSource);
+        Assert.Contains("existing.IconLayers.SequenceEqual(brand.IconLayers)", cacheSource);
+        Assert.DoesNotContain("ReferenceEquals(existing.Brand, brand)", cacheSource);
+        Assert.Contains("PrewarmRuntimeAsync", recyclerSource);
+        Assert.Contains("Parallel.ForEachAsync", recyclerSource);
+        Assert.Contains("_initialIconPrewarmLifetime", recyclerSource);
+        Assert.Contains("Math.Min(items.Length, InitialIconPrewarmAccountCount)", recyclerSource);
+        Assert.Contains("CancelAllIconPrewarm();", recyclerSource);
+        Assert.Contains("SetPinnedRuntimeIcons(pinnedBrands)", recyclerSource);
+        Assert.DoesNotContain("AttachAdapterAfterPrewarmAsync", recyclerSource);
+        Assert.Contains("if (metadata.RuntimeIcon is not null)", recyclerSource);
+        Assert.Contains("if (account.Brand.RuntimeIcon is not null)", rowSource);
+        Assert.DoesNotContain("File.ReadAllBytes", cacheSource);
+        Assert.DoesNotContain("SHA256.HashData", cacheSource);
+        Assert.Contains("load = Task.Run(", cacheSource);
+        Assert.Contains("MaximumRuntimeEntries = 640", cacheSource);
+        Assert.Contains("MaximumRuntimeBytes = 48L * 1024 * 1024", cacheSource);
+        Assert.Contains("_pinnedRuntimeKeys", cacheSource);
+        Assert.Contains("!_pinnedRuntimeKeys.Contains(pair.Key)", cacheSource);
+        Assert.Contains("RuntimeBrandIconAssetReader.ReadValidatedAsync", cacheSource);
+        Assert.Contains("BitmapFactory.DecodeByteArray", cacheSource);
+        Assert.DoesNotContain("BitmapFactory.DecodeFile", cacheSource);
+        Assert.Contains("brand.RuntimeIcon is", cacheSource);
+        Assert.Contains("requireRuntimeIconOnFirstDraw: true", rowSource);
+        Assert.Contains("if (requireRuntimeIconOnFirstDraw)", cacheSource);
+        Assert.Contains(".ConfigureAwait(false)", cacheSource);
+        Assert.Contains(".GetAwaiter()", cacheSource);
+        Assert.Contains(".GetResult();", cacheSource);
+        Assert.Contains("_brandIconCache ??= new NativeBrandIconCache();", applicationSource);
+        Assert.Contains("_brandIconCache?.Dispose();", applicationSource);
+        Assert.DoesNotContain("_brandIcons.Dispose();", recyclerSource);
+        Assert.Contains("revision != Volatile.Read(ref _submitRevision)", recyclerSource);
+        Assert.Contains("_adapter.ReplaceAll(CaptureRows());", recyclerSource);
+        Assert.Contains(
+            "args.PropertyName == nameof(MobileShellViewModel.AccountBrandCatalogRevision)",
+            recyclerSource);
+        var catalogRefresh = recyclerSource.IndexOf(
+            "args.PropertyName == nameof(MobileShellViewModel.AccountBrandCatalogRevision)",
+            StringComparison.Ordinal);
+        var catalogSubmit = recyclerSource.IndexOf("SubmitRows();", catalogRefresh, StringComparison.Ordinal);
+        Assert.True(catalogRefresh >= 0);
+        Assert.True(catalogSubmit > catalogRefresh);
+        Assert.Contains("HasStableIds = true;", recyclerSource);
+        Assert.DoesNotContain("DiffUtil.CalculateDiff", recyclerSource);
+    }
+
+    [Fact]
+    public void AndroidQrScanner_OffersALocalImageWithoutDelayingTheLiveCamera()
+    {
+        var activitySource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "LiveQrScannerActivity.cs"));
+        var scannerSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "AndroidQrScanner.cs"));
+        var mainViewSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+
+        Assert.Contains("StartCamera();", activitySource);
+        Assert.Contains("Intent.ActionOpenDocument", activitySource);
+        Assert.Contains("intent.SetType(\"image/*\")", activitySource);
+        Assert.Contains("MaximumEncodedImageBytes", activitySource);
+        Assert.Contains("MaximumDecodedImageDimension", activitySource);
+        Assert.Contains("Array.Clear(encoded);", activitySource);
+        Assert.Contains("Array.Clear(luminance);", activitySource);
+        Assert.Contains("RunOnUiThread(() => Complete(payload, null));", activitySource);
+        Assert.Contains("RunOnUiThread(ShowImageScanFailure);", activitySource);
+        Assert.Contains("MobileStringKeys.UploadQrImage", scannerSource);
+        Assert.DoesNotContain("RequestPermissions([Manifest.Permission.Read", activitySource);
+        Assert.Contains("IsQrImportResolutionVisible", mainViewSource);
+        Assert.Contains("SkipAllQrConflictsCommand", mainViewSource);
+        Assert.Contains("ReplaceAllQrConflictsCommand", mainViewSource);
+        Assert.Contains("KeepBothAllQrConflictsCommand", mainViewSource);
+        Assert.Contains("CancelQrImportResolutionCommand", mainViewSource);
+        Assert.Contains("Content=\"{Binding ImportCancelText}\"", mainViewSource);
+        Assert.Contains("IsQrImportResultVisible", mainViewSource);
+        Assert.Contains("DismissQrImportResultCommand", mainViewSource);
     }
 
     [Fact]
@@ -341,6 +517,12 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal(
             "{Binding HasSearchableBrandIcons}",
             brandIconPicker.Attribute("IsVisible")?.Value);
+        Assert.Equal("Stretch", brandIconPicker.Attribute("HorizontalAlignment")?.Value);
+        Assert.Null(brandIconPicker.Attribute("Width"));
+        var periodInput = advanced
+            .Descendants(avalonia + "NumericUpDown")
+            .Single(control => control.Attribute("Classes")?.Value == "mobile-period");
+        Assert.Null(periodInput.Attribute("Width"));
         var customIconButton = advanced
             .Descendants(avalonia + "Button")
             .Single(element => element.Attribute(xaml + "Name")?.Value

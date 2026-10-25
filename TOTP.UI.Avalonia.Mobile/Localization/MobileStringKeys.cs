@@ -148,6 +148,7 @@ public static class MobileStringKeys
     public const string NoSearchResults = nameof(NoSearchResults);
     public const string AccountSwipeHint = nameof(AccountSwipeHint);
     public const string ScanQr = nameof(ScanQr);
+    public const string UploadQrImage = nameof(UploadQrImage);
     public const string QrScannerUnavailable = nameof(QrScannerUnavailable);
     public const string QrScanFailed = nameof(QrScanFailed);
     public const string QrScanRetryAfterUnlock = nameof(QrScanRetryAfterUnlock);
@@ -155,6 +156,7 @@ public static class MobileStringKeys
     public const string QrAccountAdded = nameof(QrAccountAdded);
     public const string QrAccountUpdated = nameof(QrAccountUpdated);
     public const string QrAccountKeptBoth = nameof(QrAccountKeptBoth);
+    public const string QrAccountSkipped = nameof(QrAccountSkipped);
     public const string QrAccountDuplicate = nameof(QrAccountDuplicate);
     public const string QrImportCancelled = nameof(QrImportCancelled);
     public const string QrBulkImported = nameof(QrBulkImported);
@@ -163,6 +165,16 @@ public static class MobileStringKeys
     public const string QrConflictPrompt = nameof(QrConflictPrompt);
     public const string UpdateExisting = nameof(UpdateExisting);
     public const string KeepBoth = nameof(KeepBoth);
+    public const string QrImportReviewTitle = nameof(QrImportReviewTitle);
+    public const string QrImportReviewSummary = nameof(QrImportReviewSummary);
+    public const string QrImportChangedAccounts = nameof(QrImportChangedAccounts);
+    public const string KeepBothAll = nameof(KeepBothAll);
+    public const string ImportCancel = nameof(ImportCancel);
+    public const string QrSkipAccountAutomationFormat = nameof(QrSkipAccountAutomationFormat);
+    public const string QrReplaceAccountAutomationFormat = nameof(QrReplaceAccountAutomationFormat);
+    public const string QrKeepBothAccountAutomationFormat = nameof(QrKeepBothAccountAutomationFormat);
+    public const string QrImportResultTitle = nameof(QrImportResultTitle);
+    public const string Close = nameof(Close);
     public const string ShowQr = nameof(ShowQr);
     public const string DismissQr = nameof(DismissQr);
     public const string QrPrivacyNotice = nameof(QrPrivacyNotice);
@@ -516,6 +528,7 @@ public static class MobileStringKeys
         NoSearchResults,
         AccountSwipeHint,
         ScanQr,
+        UploadQrImage,
         QrScannerUnavailable,
         QrScanFailed,
         QrScanRetryAfterUnlock,
@@ -523,6 +536,7 @@ public static class MobileStringKeys
         QrAccountAdded,
         QrAccountUpdated,
         QrAccountKeptBoth,
+        QrAccountSkipped,
         QrAccountDuplicate,
         QrImportCancelled,
         QrBulkImported,
@@ -531,6 +545,16 @@ public static class MobileStringKeys
         QrConflictPrompt,
         UpdateExisting,
         KeepBoth,
+        QrImportReviewTitle,
+        QrImportReviewSummary,
+        QrImportChangedAccounts,
+        KeepBothAll,
+        ImportCancel,
+        QrSkipAccountAutomationFormat,
+        QrReplaceAccountAutomationFormat,
+        QrKeepBothAccountAutomationFormat,
+        QrImportResultTitle,
+        Close,
         ShowQr,
         DismissQr,
         QrPrivacyNotice,

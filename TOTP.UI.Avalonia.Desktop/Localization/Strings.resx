@@ -180,7 +180,7 @@
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Location: choose the destination in the system save dialog. OTP Harbor does not upload or automatically copy the backup.</value></data>
   <data name="LastBackupLocation" xml:space="preserve"><value>Last backup: {0}</value></data>
   <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Last backup: saved to the location selected in the system document provider.</value></data>
-  <data name="RestoreBackupHelp" xml:space="preserve"><value>Choose an encrypted OTP Harbor .totp backup and enter its password. Existing accounts are skipped by default. Choose how to handle conflicts below; you must confirm before any account is changed.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Choose an encrypted OTP Harbor .otphbp backup (legacy .totp files are also supported) and enter its password. Existing accounts are skipped by default. Choose how to handle conflicts below; you must confirm before any account is changed.</value></data>
   <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Restore encrypted backup…</value></data>
   <data name="RestoreBackup" xml:space="preserve"><value>Restore backup</value></data>
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Open last backup folder</value></data>

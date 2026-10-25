@@ -2590,6 +2590,9 @@ public sealed class MainWindowSmokeTests
             var brandIconPicker = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<SearchableComboBox>(),
                 comboBox => comboBox.Name == "AccountBrandIconComboBox");
+            var secretInput = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<RevealableSecretInput>(),
+                input => input.Name == "AccountSecretInput");
             var customIconButton = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "AccountCustomIconButton");
@@ -2609,15 +2612,10 @@ public sealed class MainWindowSmokeTests
 
             Assert.True(brandIconPicker.IsVisible);
             Assert.True(brandIconPicker.Bounds.Height > 0);
-            var brandIconPickerParent = Assert.IsAssignableFrom<Control>(brandIconPicker.Parent);
             Assert.Equal(HorizontalAlignment.Stretch, brandIconPicker.HorizontalAlignment);
-            Assert.Equal(new Thickness(8, 0), brandIconPicker.Margin);
+            Assert.Equal(new Thickness(), brandIconPicker.Margin);
             Assert.InRange(
-                Math.Abs(
-                    brandIconPicker.Bounds.Width
-                    - (brandIconPickerParent.Bounds.Width
-                        - brandIconPicker.Margin.Left
-                        - brandIconPicker.Margin.Right)),
+                Math.Abs(brandIconPicker.Bounds.Width - secretInput.Bounds.Width),
                 0,
                 0.5);
             Assert.Contains(brandIconPicker, advancedOptions.GetLogicalDescendants());

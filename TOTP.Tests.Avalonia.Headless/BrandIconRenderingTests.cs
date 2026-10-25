@@ -1,15 +1,107 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
+using Avalonia.Threading;
 using FluentResults;
+using System.IO.Compression;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Avalonia.Shared.Controls;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
+using TOTP.Tests.Services;
 
 namespace TOTP.Tests.Avalonia.Headless;
 
 public sealed class BrandIconRenderingTests
 {
+    [AvaloniaFact]
+    public async Task BrandTile_LoadsValidatedArchiveRuntimePngWithoutSvgFallback()
+    {
+        var png = OtpHarborRuntimePngTestData.Create();
+        var path = Path.Combine(Path.GetTempPath(), $"otp-harbor-runtime-{Guid.NewGuid():N}.otphicons");
+        using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
+        {
+            var entry = archive.CreateEntry(
+                "runtime/foreground-128/test.png",
+                CompressionLevel.NoCompression);
+            await using var output = entry.Open();
+            await output.WriteAsync(png, TestContext.Current.CancellationToken);
+        }
+        try
+        {
+            var sha256 = OtpHarborRuntimePngTestData.Sha256(png);
+            var runtime = new BrandRuntimeIcon(
+                $"test:{sha256}",
+                null,
+                sha256,
+                128,
+                128,
+                path,
+                "runtime/foreground-128/test.png",
+                "test");
+            var tile = new BrandTile { RuntimeIcon = runtime };
+            var window = new Window { Content = tile };
+            window.Show();
+
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (tile.RuntimeImage is null && DateTime.UtcNow < deadline)
+            {
+                Dispatcher.UIThread.RunJobs();
+                await Task.Delay(10, TestContext.Current.CancellationToken);
+            }
+
+            Assert.NotNull(tile.RuntimeImage);
+            Assert.Null(tile.IconData);
+            Assert.Null(tile.IconImage);
+            window.Close();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task BrandTile_LoadsValidatedRuntimePngWithoutSvgFallback()
+    {
+        var png = OtpHarborRuntimePngTestData.Create();
+        var path = Path.Combine(Path.GetTempPath(), $"otp-harbor-runtime-{Guid.NewGuid():N}.png");
+        await File.WriteAllBytesAsync(path, png, TestContext.Current.CancellationToken);
+        try
+        {
+            var runtime = new BrandRuntimeIcon(
+                $"test:{OtpHarborRuntimePngTestData.Sha256(png)}",
+                path,
+                OtpHarborRuntimePngTestData.Sha256(png),
+                128,
+                128);
+            var tile = new BrandTile { RuntimeIcon = runtime };
+            var window = new Window { Content = tile };
+            window.Show();
+
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (tile.RuntimeImage is null && DateTime.UtcNow < deadline)
+            {
+                Dispatcher.UIThread.RunJobs();
+                await Task.Delay(10, TestContext.Current.CancellationToken);
+            }
+
+            Assert.NotNull(tile.RuntimeImage);
+            Assert.Null(tile.IconData);
+            Assert.Null(tile.IconImage);
+
+            tile.RuntimeIcon = null;
+            Assert.Null(tile.RuntimeImage);
+            window.Close();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [AvaloniaFact]
     public void Resolve_MulticolorSvgBuildsOneVectorImageFromAllLayers()
     {

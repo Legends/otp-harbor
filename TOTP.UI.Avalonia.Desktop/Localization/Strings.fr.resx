@@ -180,7 +180,7 @@
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Emplacement : choisissez la destination dans la boîte de dialogue système. OTP Harbor ne téléverse ni ne copie automatiquement la sauvegarde.</value></data>
   <data name="LastBackupLocation" xml:space="preserve"><value>Dernière sauvegarde : {0}</value></data>
   <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Dernière sauvegarde : enregistrée à l’emplacement choisi dans le fournisseur de documents système.</value></data>
-  <data name="RestoreBackupHelp" xml:space="preserve"><value>Choisissez une sauvegarde OTP Harbor .totp chiffrée et saisissez son mot de passe. Les comptes existants sont ignorés par défaut. Choisissez ci-dessous comment gérer les conflits ; vous devrez confirmer avant toute modification de compte.</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Choisissez une sauvegarde OTP Harbor .otphbp chiffrée (les anciens fichiers .totp sont également pris en charge) et saisissez son mot de passe. Les comptes existants sont ignorés par défaut. Choisissez ci-dessous comment gérer les conflits ; vous devrez confirmer avant toute modification de compte.</value></data>
   <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Restaurer une sauvegarde chiffrée…</value></data>
   <data name="RestoreBackup" xml:space="preserve"><value>Restaurer la sauvegarde</value></data>
   <data name="OpenLastBackupFolder" xml:space="preserve"><value>Ouvrir le dossier de la dernière sauvegarde</value></data>

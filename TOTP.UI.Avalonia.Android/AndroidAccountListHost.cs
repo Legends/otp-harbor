@@ -6,6 +6,7 @@ namespace TOTP.Avalonia.Android;
 
 internal sealed class AndroidAccountListHost(
     MobileShellViewModel viewModel,
+    NativeBrandIconCache brandIconCache,
     Action dismissAccountSearchFocus) : AndroidNativeControlHost
 {
     private NativeAccountRecyclerView? _accountList;
@@ -17,6 +18,7 @@ internal sealed class AndroidAccountListHost(
         _accountList = new NativeAccountRecyclerView(
             context,
             viewModel,
+            brandIconCache,
             dismissAccountSearchFocus);
         return new AndroidViewControlHandle(_accountList);
     }

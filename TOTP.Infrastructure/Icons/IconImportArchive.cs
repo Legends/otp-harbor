@@ -216,11 +216,18 @@ internal static partial class IconImportArchive
         if (entry.Length is <= 0 || entry.Length > maximumBytes)
             throw new InvalidDataException("An icon pack entry has an invalid size.");
         await using var input = entry.Open();
-        using var memory = new MemoryStream((int)entry.Length);
-        await input.CopyToAsync(memory, cancellationToken);
-        if (memory.Length != entry.Length || memory.Length > maximumBytes)
+        var data = GC.AllocateUninitializedArray<byte>((int)entry.Length);
+        var offset = 0;
+        while (offset < data.Length)
+        {
+            var read = await input.ReadAsync(data.AsMemory(offset), cancellationToken);
+            if (read == 0)
+                throw new InvalidDataException("An icon pack entry has an invalid size.");
+            offset += read;
+        }
+        if (await input.ReadAsync(new byte[1], cancellationToken) != 0)
             throw new InvalidDataException("An icon pack entry has an invalid size.");
-        return memory.ToArray();
+        return data;
     }
 
     internal static async Task<IReadOnlyList<ImportedIconNotice>> ReadNoticesAsync(

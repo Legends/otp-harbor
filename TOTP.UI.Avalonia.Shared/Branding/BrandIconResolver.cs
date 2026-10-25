@@ -18,6 +18,10 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
     private readonly IBrandIconPackService _packService;
     private readonly ConcurrentDictionary<string, BrandInfo> _known =
         new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, BrandInfo> _knownMetadata =
+        new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, BrandInfo> _knownIconData =
+        new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, BrandInfo> _fallback =
         new(StringComparer.Ordinal);
     private bool _disposed;
@@ -51,6 +55,55 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
 
     public BrandInfo ResolveAccount(Guid accountId, string? issuer, string? accountName) =>
         ResolveAccount(issuer, accountName, _packService.GetAccountBrandId(accountId));
+
+    public BrandInfo ResolveAccountMetadata(Guid accountId, string? issuer, string? accountName)
+    {
+        var definition = _packService.ResolveAccount(
+            issuer,
+            accountName,
+            _packService.GetAccountBrandId(accountId));
+        return definition is not null
+            ? _knownMetadata.GetOrAdd(definition.Id, _ => CreateKnownMetadata(definition))
+            : CreateFallbackForIssuer(string.IsNullOrWhiteSpace(issuer) ? accountName : issuer);
+    }
+
+    public BrandInfo Materialize(BrandInfo brand)
+    {
+        ArgumentNullException.ThrowIfNull(brand);
+        if (brand.HasVectorIcon || string.IsNullOrWhiteSpace(brand.Id)) return brand;
+        var definition = _packService.Resolve(null, brand.Id);
+        return definition is null
+            ? brand
+            : _known.GetOrAdd(definition.Id, _ => CreateKnown(definition));
+    }
+
+    public BrandInfo MaterializeIconData(BrandInfo brand)
+    {
+        ArgumentNullException.ThrowIfNull(brand);
+        if (brand.RuntimeIcon is not null
+            || brand.HasVectorIcon
+            || string.IsNullOrWhiteSpace(brand.Id)) return brand;
+        return _knownIconData.GetOrAdd(brand.Id, _ => CreateIconData(brand));
+    }
+
+    public bool TryGetMaterializedIconData(BrandInfo brand, out BrandInfo materialized)
+    {
+        ArgumentNullException.ThrowIfNull(brand);
+        if (brand.RuntimeIcon is not null || brand.HasVectorIcon)
+        {
+            materialized = brand;
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(brand.Id)
+            && _knownIconData.TryGetValue(brand.Id, out materialized!))
+        {
+            return true;
+        }
+
+        materialized = brand;
+        return false;
+    }
 
     private BrandInfo CreateFallbackForIssuer(string? issuer)
     {
@@ -102,7 +155,41 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
             iconImage,
             isCustomIcon,
             iconLayers,
-            sourceTransform);
+            sourceTransform,
+            definition.RuntimeIcon);
+    }
+
+    private static BrandInfo CreateKnownMetadata(
+        TOTP.Core.Services.Models.BrandDefinition definition)
+    {
+        var color = NormalizeColor(definition.BackgroundColor);
+        return new BrandInfo(
+            definition.Id,
+            definition.DisplayName,
+            InitialsFor(definition.DisplayName),
+            color,
+            new SolidColorBrush(Color.Parse(color)),
+            null,
+            IsCustomIcon: definition.Id.StartsWith("custom_", StringComparison.Ordinal),
+            RuntimeIcon: definition.RuntimeIcon);
+    }
+
+    private BrandInfo CreateIconData(BrandInfo metadata)
+    {
+        if (metadata.Id is null
+            || !_packService.TryGetIconLayers(metadata.Id, out var layers)
+            || layers.Count == 0)
+        {
+            return metadata;
+        }
+
+        var first = layers[0];
+        return metadata with
+        {
+            IconData = first.PathData,
+            IconLayers = layers,
+            SourceTransform = first.Transform
+        };
     }
 
     private static IImage? CreateColoredIcon(IReadOnlyList<BrandIconLayer> layers)
@@ -178,6 +265,8 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
     private void PackCatalogChanged(object? sender, EventArgs args)
     {
         _known.Clear();
+        _knownMetadata.Clear();
+        _knownIconData.Clear();
         _fallback.Clear();
         CatalogChanged?.Invoke(this, EventArgs.Empty);
     }

@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using TOTP.Core.Icons;
 using TOTP.Core.Services.Models;
@@ -200,6 +201,200 @@ public sealed class IconPackImporterTests
     }
 
     [Fact]
+    public async Task OtpHarborImporter_AcceptsFormatV2AndPreservesValidatedRuntimeMetadata()
+    {
+        await using var source = CreateOtpHarborV2Archive();
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("format-2", result.Value.Version);
+        Assert.Equal(2, result.Value.Metadata?.FormatVersion);
+        var icon = Assert.Single(result.Value.Icons);
+        Assert.Null(icon.SvgData);
+        Assert.Null(icon.SourceFileName);
+        var runtime = icon.RuntimeIcon;
+        Assert.NotNull(runtime);
+        Assert.Equal("runtime/foreground-128/c-plus-plus.png", runtime.ArchivePath);
+        Assert.Equal("otp-harbor-foreground-v1", runtime.RenderProfile);
+        Assert.Equal(128, runtime.Width);
+        Assert.Equal(128, runtime.Height);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_RejectsLegacySvgMemberInFormatV2()
+    {
+        await using var source = CreateOtpHarborV2Archive(includeLegacyIcon: true);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Theory]
+    [InlineData("hash")]
+    [InlineData("dimensions")]
+    [InlineData("forbidden-chunk")]
+    public async Task OtpHarborImporter_RejectsInvalidFormatV2RuntimeAssets(string corruption)
+    {
+        var png = OtpHarborRuntimePngTestData.Create(
+            width: corruption == "dimensions" ? 64 : 128,
+            includeAncillaryChunk: corruption == "forbidden-chunk",
+            red: 255,
+            green: 255,
+            blue: 255);
+        await using var source = CreateOtpHarborV2Archive(
+            png,
+            sha256: corruption == "hash"
+                ? new string('0', 64)
+                : null);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_DoesNotRepeatBuilderOwnedPixelVisibilityValidation()
+    {
+        var png = OtpHarborRuntimePngTestData.Create(red: 0, green: 89, blue: 156);
+        await using var source = CreateOtpHarborV2Archive(png);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_ChecksEveryReferencedRuntimeHashBeforeSuccess()
+    {
+        await using var source = CreateOtpHarborV2Archive(addSecondBrandWithInvalidHash: true);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_RejectsPngWithMatchingHashButCorruptChunkChecksum()
+    {
+        var png = OtpHarborRuntimePngTestData.Create();
+        png[^1] ^= 0xff;
+        await using var source = CreateOtpHarborV2Archive(png);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_RejectsDuplicateNormalizedRuntimePath()
+    {
+        await using var source = CreateOtpHarborV2Archive(duplicateRuntimeEntry: true);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_RejectsUnsupportedRuntimeRenderProfile()
+    {
+        await using var source = CreateOtpHarborV2Archive(runtimeRenderProfile: "unknown-profile");
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_RejectsCorruptZipArchive()
+    {
+        await using var source = new MemoryStream("not a zip archive"u8.ToArray());
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_RejectsRuntimePngAboveEncodedSizeLimit()
+    {
+        var oversized = new byte[RuntimePngProfileValidator.MaximumEncodedBytes + 1];
+        await using var source = CreateOtpHarborV2Archive(oversized);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_PropagatesCancellation()
+    {
+        await using var source = CreateOtpHarborV2Archive();
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            new OtpHarborIconPackImporter().ImportAsync(
+                new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+                cancellation.Token));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task OtpHarborImporter_RejectsNoncanonicalOrUnreferencedFormatV2Paths(
+        bool noncanonicalRuntimePath,
+        bool addUnreferencedEntry)
+    {
+        await using var source = CreateOtpHarborV2Archive(
+            runtimeManifestPath: noncanonicalRuntimePath
+                ? "runtime/foreground-128/wrong.png"
+                : null,
+            addUnreferencedEntry: addUnreferencedEntry);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task OtpHarborImporter_RejectsRuntimeMemberDeclaredByFormatV1()
+    {
+        var png = OtpHarborRuntimePngTestData.Create();
+        await using var source = CreateOtpHarborV2Archive(png, declaredFormatVersion: 1);
+
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = source, FileName = "icons.otphicons" },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
     public async Task OtpHarborImporter_AllowsResolvedLocalSvgReferencesButRejectsExternalReferences()
     {
         const string localReferenceSvg = """
@@ -364,10 +559,144 @@ public sealed class IconPackImporterTests
         return stream;
     }
 
+    private static MemoryStream CreateOtpHarborV2Archive(
+        byte[]? png = null,
+        string? sha256 = null,
+        int declaredFormatVersion = 2,
+        string? runtimeManifestPath = null,
+        bool addUnreferencedEntry = false,
+        bool includeLegacyIcon = false,
+        bool addSecondBrandWithInvalidHash = false,
+        bool duplicateRuntimeEntry = false,
+        string runtimeRenderProfile = "otp-harbor-foreground-v1")
+    {
+        png ??= OtpHarborRuntimePngTestData.Create();
+        sha256 ??= OtpHarborRuntimePngTestData.Sha256(png);
+        var brand = new Dictionary<string, object?>
+        {
+            ["id"] = "c-plus-plus",
+            ["displayName"] = "C++",
+            ["backgroundColor"] = "#00599C",
+            ["issuerAliases"] = new[] { "C++", "C Plus Plus" },
+            ["selectedSource"] = new
+            {
+                provider = "simple-icons",
+                sourceId = "cplusplus",
+                metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#00599C" }
+            },
+            ["sources"] = new[]
+            {
+                new
+                {
+                    provider = "simple-icons",
+                    sourceId = "cplusplus",
+                    metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#00599C" }
+                }
+            },
+            ["runtimeIcon"] = new
+            {
+                path = runtimeManifestPath ?? "runtime/foreground-128/c-plus-plus.png",
+                mediaType = "image/png",
+                width = 128,
+                height = 128,
+                sha256,
+                renderProfile = runtimeRenderProfile
+            }
+        };
+        if (includeLegacyIcon) brand["icon"] = "icons/c-plus-plus.svg";
+        var brands = new List<Dictionary<string, object?>> { brand };
+        if (addSecondBrandWithInvalidHash)
+        {
+            brands.Add(new Dictionary<string, object?>
+            {
+                ["id"] = "github",
+                ["displayName"] = "GitHub",
+                ["backgroundColor"] = "#181717",
+                ["issuerAliases"] = new[] { "GitHub" },
+                ["selectedSource"] = new
+                {
+                    provider = "simple-icons",
+                    sourceId = "github",
+                    metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#181717" }
+                },
+                ["sources"] = new[]
+                {
+                    new
+                    {
+                        provider = "simple-icons",
+                        sourceId = "github",
+                        metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#181717" }
+                    }
+                },
+                ["runtimeIcon"] = new
+                {
+                    path = "runtime/foreground-128/github.png",
+                    mediaType = "image/png",
+                    width = 128,
+                    height = 128,
+                    sha256 = new string('0', 64),
+                    renderProfile = "otp-harbor-foreground-v1"
+                }
+            });
+        }
+        var manifest = JsonSerializer.Serialize(new
+        {
+            formatVersion = declaredFormatVersion,
+            packId = "otp-harbor-icons",
+            name = "OTP Harbor Icons",
+            sources = new[]
+            {
+                new
+                {
+                    provider = "simple-icons",
+                    inputFileName = "source.zip",
+                    sha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                    version = "16.34.0",
+                    revision = (string?)null,
+                    sourceUrl = "https://github.com/simple-icons/simple-icons/releases/tag/16.34.0",
+                    metadata = new Dictionary<string, string?> { ["version"] = "16.34.0" },
+                    licenseFiles = new[] { "licenses/simple-icons/license.md" }
+                }
+            },
+            brands,
+            issuerAliases = addSecondBrandWithInvalidHash
+                ? new[]
+                {
+                    new { key = "c++", brandId = "c-plus-plus" },
+                    new { key = "c plus plus", brandId = "c-plus-plus" },
+                    new { key = "github", brandId = "github" }
+                }
+                :
+                [
+                    new { key = "c++", brandId = "c-plus-plus" },
+                    new { key = "c plus plus", brandId = "c-plus-plus" }
+                ]
+        });
+        return CreateArchive(archive =>
+        {
+            WriteEntry(archive, "pack.json", manifest);
+            if (includeLegacyIcon) WriteEntry(archive, "icons/c-plus-plus.svg", ValidSvg);
+            WriteEntry(archive, "runtime/foreground-128/c-plus-plus.png", png);
+            if (duplicateRuntimeEntry)
+                WriteEntry(archive, "runtime/foreground-128/c-plus-plus.png", png);
+            if (addSecondBrandWithInvalidHash)
+                WriteEntry(archive, "runtime/foreground-128/github.png", png);
+            WriteEntry(archive, "licenses/simple-icons/license.md", "Synthetic license");
+            if (addUnreferencedEntry) WriteEntry(archive, "runtime/unreferenced.png", png);
+        });
+    }
+
     private static void WriteEntry(ZipArchive archive, string name, string content)
     {
         var entry = archive.CreateEntry(name);
         using var writer = new StreamWriter(entry.Open());
         writer.Write(content);
+    }
+
+    private static void WriteEntry(ZipArchive archive, string name, byte[] content)
+    {
+        var entry = archive.CreateEntry(name, CompressionLevel.NoCompression);
+        using var output = entry.Open();
+        output.Write(content);
     }
 }

@@ -1459,6 +1459,11 @@
                                 Height="24"
                                 Source="{TemplateBinding IconImage}"
                                 Stretch="Uniform" />
+                            <Image
+                                Width="24"
+                                Height="24"
+                                Source="{TemplateBinding RuntimeImage}"
+                                Stretch="Uniform" />
                         </Grid>
                     </Grid>
                 </Border>

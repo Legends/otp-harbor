@@ -101,7 +101,8 @@
   <data name="SearchResultsFormat" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No matching accounts.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Swipe right for QR and edit, or left to delete. The camera also imports Google Authenticator exports.</value></data>
-  <data name="ScanQr" xml:space="preserve"><value>Scan account or Google Authenticator QR</value></data>
+  <data name="ScanQr" xml:space="preserve"><value>Scan QR code</value></data>
+  <data name="UploadQrImage" xml:space="preserve"><value>Upload QR code image</value></data>
   <data name="QrScannerUnavailable" xml:space="preserve"><value>QR scanning is unavailable. Add the account manually instead.</value></data>
   <data name="QrScanFailed" xml:space="preserve"><value>The QR code could not be scanned safely.</value></data>
   <data name="QrScanRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor locked while scanning. Unlock it and scan the QR code again.</value></data>
@@ -109,14 +110,25 @@
   <data name="QrAccountAdded" xml:space="preserve"><value>Account added from QR code.</value></data>
   <data name="QrAccountUpdated" xml:space="preserve"><value>Existing account updated from QR code.</value></data>
   <data name="QrAccountKeptBoth" xml:space="preserve"><value>Both accounts were kept.</value></data>
+  <data name="QrAccountSkipped" xml:space="preserve"><value>The changed account was skipped.</value></data>
   <data name="QrAccountDuplicate" xml:space="preserve"><value>This account is already present and unchanged.</value></data>
   <data name="QrImportCancelled" xml:space="preserve"><value>QR import cancelled. No account was changed.</value></data>
-  <data name="QrBulkImported" xml:space="preserve"><value>QR import: {0} imported, {1} unchanged, {2} failed.</value></data>
-  <data name="QrBulkImportedMore" xml:space="preserve"><value>QR {0} of {1}: {2} imported, {3} unchanged, {4} failed. Scan the next QR code.</value></data>
+  <data name="QrBulkImported" xml:space="preserve"><value>QR import complete. Added: {0}. Updated: {1}. Kept both: {2}. Unchanged: {3}. Skipped: {4}. Failed: {5}.</value></data>
+  <data name="QrBulkImportedMore" xml:space="preserve"><value>QR {0} of {1} complete. Added: {2}. Updated: {3}. Kept both: {4}. Unchanged: {5}. Skipped: {6}. Failed: {7}. Scan the next QR code.</value></data>
   <data name="QrConflictTitle" xml:space="preserve"><value>Account already exists</value></data>
   <data name="QrConflictPrompt" xml:space="preserve"><value>{0} already exists with a different secret. Choose how to continue.</value></data>
   <data name="UpdateExisting" xml:space="preserve"><value>Update existing account</value></data>
   <data name="KeepBoth" xml:space="preserve"><value>Keep both accounts</value></data>
+  <data name="QrImportReviewTitle" xml:space="preserve"><value>Review QR import</value></data>
+  <data name="QrImportReviewSummary" xml:space="preserve"><value>{0} accounts: {1} new, {2} unchanged, {3} changed.</value></data>
+  <data name="QrImportChangedAccounts" xml:space="preserve"><value>Choose how to handle each changed account. Secret values are never displayed.</value></data>
+  <data name="KeepBothAll" xml:space="preserve"><value>Keep both for all</value></data>
+  <data name="ImportCancel" xml:space="preserve"><value>Cancel import</value></data>
+  <data name="QrSkipAccountAutomationFormat" xml:space="preserve"><value>Skip {0}</value></data>
+  <data name="QrReplaceAccountAutomationFormat" xml:space="preserve"><value>Replace {0}</value></data>
+  <data name="QrKeepBothAccountAutomationFormat" xml:space="preserve"><value>Keep both for {0}</value></data>
+  <data name="QrImportResultTitle" xml:space="preserve"><value>QR import result</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
   <data name="ShowQr" xml:space="preserve"><value>Show QR code</value></data>
   <data name="DismissQr" xml:space="preserve"><value>Hide QR code</value></data>
   <data name="QrPrivacyNotice" xml:space="preserve"><value>This QR code contains the account secret. Share it only with a trusted authenticator.</value></data>
@@ -142,7 +154,7 @@
   <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Automatic backups are disabled. Existing backup files were not deleted.</value></data>
   <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>Automatic backup setup was cancelled.</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Export or restore an encrypted OTP Harbor backup. Existing accounts are skipped by default; changed matches are reviewed before import.</value></data>
-  <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor backup. For .totp files, enter the export password. For automatic .otphbackup files, enter the master password that was active when the backup was created. Existing accounts are skipped by default; review each changed match before any account is changed.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Choose an encrypted OTP Harbor backup. For .otphbp files (or legacy .totp files), enter the export password. For automatic .otphbackup files, enter the master password that was active when the backup was created. Existing accounts are skipped by default; review each changed match before any account is changed.</value></data>
   <data name="BackupContainsNoAccounts" xml:space="preserve"><value>This backup contains no accounts to restore.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Import accounts from other formats</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Supported formats:</value></data>
@@ -151,7 +163,7 @@
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirm backup password</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Export</value></data>
   <data name="ImportBackup" xml:space="preserve"><value>Restore</value></data>
-  <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
+  <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.otphbp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Enter a backup password.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>The backup password must contain at least {0} characters.</value></data>
   <data name="BackupPasswordMismatch" xml:space="preserve"><value>The backup passwords do not match.</value></data>
@@ -231,8 +243,8 @@
   <data name="CodeCopied" xml:space="preserve"><value>Copied</value></data>
   <data name="CodeCopyFailed" xml:space="preserve"><value>The code could not be copied safely.</value></data>
   <data name="LoadingAccountsFailed" xml:space="preserve"><value>Your encrypted accounts could not be loaded.</value></data>
-  <data name="EditorAddTitle" xml:space="preserve"><value>Add TOTP account</value></data>
-  <data name="EditorEditTitle" xml:space="preserve"><value>Edit TOTP account</value></data>
+  <data name="EditorAddTitle" xml:space="preserve"><value>Add account</value></data>
+  <data name="EditorEditTitle" xml:space="preserve"><value>Edit account</value></data>
   <data name="DeleteConfirmTitle" xml:space="preserve"><value>Confirm deletion</value></data>
   <data name="BiometricPromptTitle" xml:space="preserve"><value>Unlock OTP Harbor</value></data>
   <data name="BiometricPromptSubtitle" xml:space="preserve"><value>Confirm your identity using strong biometrics.</value></data>
@@ -341,7 +353,7 @@
   <data name="ViewImportFormatsFaq" xml:space="preserve"><value>How should these import files be structured?</value></data>
   <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>How do I import accounts from different formats?</value></data>
   <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Use an original, unencrypted export from the source app. Encrypted Aegis and 2FAS exports are rejected. The following minimal structures show the required fields:</value></data>
-  <data name="FaqImportFormatsSupported" xml:space="preserve"><value>Supported imports: standard otpauth:// TOTP QR codes, Google Authenticator transfer QR codes, encrypted OTP Harbor backups (.totp), unencrypted Aegis JSON exports (.json), unencrypted 2FAS backups (.2fas), UTF-8 text files containing one standard otpauth:// TOTP URI per line (.txt), and legacy unencrypted OTP Harbor exports in JSON (.json), pipe-delimited text (.txt), or CSV (.csv) format.</value></data>
+  <data name="FaqImportFormatsSupported" xml:space="preserve"><value>Supported imports: standard otpauth:// TOTP QR codes, Google Authenticator transfer QR codes, encrypted OTP Harbor backups (.otphbp and legacy .totp), unencrypted Aegis JSON exports (.json), unencrypted 2FAS backups (.2fas), UTF-8 text files containing one standard otpauth:// TOTP URI per line (.txt), and legacy unencrypted OTP Harbor exports in JSON (.json), pipe-delimited text (.txt), or CSV (.csv) format.</value></data>
   <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>Aegis JSON (.json)</value></data>
   <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Export the vault from Aegis without encryption and select the resulting JSON file. OTP Harbor reads TOTP entries from db.entries. Encrypted vaults, HOTP entries, and unsupported TOTP parameters are rejected.</value></data>
   <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>

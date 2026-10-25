@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -18,7 +19,7 @@ namespace TOTP.Infrastructure.Services;
 
 public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackService
 {
-    private const int MaximumArchiveBytes = 256 * 1024 * 1024;
+    private const int MaximumArchiveBytes = 512 * 1024 * 1024;
     private const int MaximumEntries = 10_000;
     private const int MaximumSvgBytes = IconImportArchive.MaximumSvgBytes;
     private const int MaximumNoticeBytes = 128 * 1024;
@@ -26,7 +27,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private const int MaximumAliasesPerBrand = 32;
     private const int MaximumInstalledIndexBytes = 256 * 1024 * 1024;
     private const int MaximumInstalledPacks = 32;
-    private const int PackFormatVersion = 4;
+    private const int PackFormatVersion = 6;
     private const string StorageDirectoryName = "BrandIcons";
     private const string CurrentPackFileName = "current.json";
     private const string InstalledPacksFileName = "installed-packs.json";
@@ -34,6 +35,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private const string AccountBrandSettingsFileName = "account-brand-settings.json";
     private const string CustomIconIndexFileName = "custom-icon-index.json";
     private const string IndexFileName = "brand-index.json";
+    private const string RuntimeArchiveFileName = "pack.otphicons";
 
     private readonly string _storageRoot;
     private readonly string _packsRoot;
@@ -47,8 +49,9 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private readonly ILogger<SimpleIconsBrandIconPackService> _logger;
     private readonly IIconPackImporterResolver _importerResolver;
     private readonly ICustomIconImporter _customIconImporter;
-    private readonly IssuerAliasResolver _issuerAliases;
+    private IssuerAliasResolver _issuerAliases = IssuerAliasResolver.Empty;
     private readonly SemaphoreSlim _importLock = new(1, 1);
+    private readonly object _initializationLock = new();
     private readonly ConcurrentDictionary<string, IReadOnlyList<BrandIconLayer>> _iconLayerCache =
         new(StringComparer.Ordinal);
     private CatalogSnapshot _catalog = CatalogSnapshot.Empty;
@@ -57,6 +60,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private IReadOnlyDictionary<string, BrandDefinition> _customIcons =
         new Dictionary<string, BrandDefinition>(StringComparer.OrdinalIgnoreCase);
     private bool _showIssuerLogo = true;
+    private int _initialized;
 
     public SimpleIconsBrandIconPackService(
         IPlatformApplicationPaths applicationPaths,
@@ -90,7 +94,6 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _importerResolver = importerResolver ?? throw new ArgumentNullException(nameof(importerResolver));
         _customIconImporter = customIconImporter ?? throw new ArgumentNullException(nameof(customIconImporter));
-        _issuerAliases = LoadIssuerAliases(_logger);
         _storageRoot = Path.Combine(applicationPaths.ApplicationDataDirectory, StorageDirectoryName);
         _packsRoot = Path.Combine(_storageRoot, "packs");
         _currentPackPath = Path.Combine(_storageRoot, CurrentPackFileName);
@@ -99,26 +102,46 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         _accountBrandSettingsPath = Path.Combine(_storageRoot, AccountBrandSettingsFileName);
         _customIconsRoot = Path.Combine(_storageRoot, "custom");
         _customIconIndexPath = Path.Combine(_storageRoot, CustomIconIndexFileName);
-        TryLoadDisplaySettings();
-        TryLoadAccountBrandSettings();
-        TryLoadCustomIcons();
-        TryLoadInstalledCatalog();
     }
 
     public event EventHandler? CatalogChanged;
 
-    public BrandIconPackStatus Status => Volatile.Read(ref _catalog).Status;
+    public Task InitializeAsync(CancellationToken cancellationToken = default) =>
+        Task.Run(EnsureInitialized, cancellationToken);
+
+    public BrandIconPackStatus Status
+    {
+        get
+        {
+            EnsureInitialized();
+            return Volatile.Read(ref _catalog).Status;
+        }
+    }
 
     public IReadOnlyList<BrandIconPackInstallation> InstalledPacks =>
         Status.InstalledPacks ?? [];
 
-    public bool ShowIssuerLogo => Volatile.Read(ref _showIssuerLogo);
+    public bool ShowIssuerLogo
+    {
+        get
+        {
+            EnsureInitialized();
+            return Volatile.Read(ref _showIssuerLogo);
+        }
+    }
 
-    public IReadOnlyList<BrandDefinition> AvailableBrands =>
-        Volatile.Read(ref _catalog).Brands;
+    public IReadOnlyList<BrandDefinition> AvailableBrands
+    {
+        get
+        {
+            EnsureInitialized();
+            return Volatile.Read(ref _catalog).Brands;
+        }
+    }
 
     public string? GetAccountBrandId(Guid accountId)
     {
+        EnsureInitialized();
         if (accountId == Guid.Empty) return null;
         var mappings = Volatile.Read(ref _accountBrandIds);
         return mappings.TryGetValue(accountId, out var brandId) ? brandId : null;
@@ -126,6 +149,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public BrandDefinition? Resolve(string? issuer, string? explicitBrandId = null)
     {
+        EnsureInitialized();
         var catalog = Volatile.Read(ref _catalog);
         if (!string.IsNullOrWhiteSpace(explicitBrandId)
             && catalog.ById.TryGetValue(explicitBrandId.Trim(), out var explicitlySelected))
@@ -215,13 +239,14 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public bool TryGetIconLayers(string brandId, out IReadOnlyList<BrandIconLayer> layers)
     {
+        EnsureInitialized();
         layers = [];
         if (string.IsNullOrWhiteSpace(brandId)) return false;
         var catalog = Volatile.Read(ref _catalog);
         var customIcons = Volatile.Read(ref _customIcons);
         var isCustomIcon = customIcons.TryGetValue(brandId, out var brand);
         if (!isCustomIcon && !catalog.ById.TryGetValue(brandId, out brand)) return false;
-        if (brand is null) return false;
+        if (brand is null || string.IsNullOrWhiteSpace(brand.IconFileName)) return false;
         if (_iconLayerCache.TryGetValue(brand.Id, out layers!)) return true;
 
         try
@@ -267,6 +292,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public bool TryGetIconTransform(string brandId, out BrandIconTransform? transform)
     {
+        EnsureInitialized();
         transform = null;
         if (!TryGetIconLayers(brandId, out var layers) || layers.Count == 0) return false;
         transform = layers[0].Transform;
@@ -284,9 +310,27 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(zipStream);
+        var result = await Task.Run(
+            () => ImportCoreAsync(zipStream, fileName, cancellationToken),
+            cancellationToken);
+        if (result.IsSuccess) CatalogChanged?.Invoke(this, EventArgs.Empty);
+        return result;
+    }
+
+    private async Task<Result<BrandIconPackImportResult>> ImportCoreAsync(
+        Stream zipStream,
+        string? fileName,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(cancellationToken);
         await _importLock.WaitAsync(cancellationToken);
+        var totalTimer = Stopwatch.StartNew();
+        var copyAndHashElapsed = TimeSpan.Zero;
+        var validationElapsed = TimeSpan.Zero;
+        var installationTimer = new Stopwatch();
         string? stagingDirectory = null;
         string? temporaryArchive = null;
+        string? unregisteredPackDirectory = null;
         try
         {
             Directory.CreateDirectory(_storageRoot);
@@ -295,22 +339,32 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             _fileSecurity.RestrictDirectoryToCurrentUser(_packsRoot);
 
             temporaryArchive = Path.Combine(_storageRoot, $"import-{Guid.NewGuid():N}.tmp");
+            var phaseTimer = Stopwatch.StartNew();
             var archiveHash = await CopyBoundedAndHashAsync(zipStream, temporaryArchive, cancellationToken);
             _fileSecurity.RestrictFileToCurrentUser(temporaryArchive);
+            copyAndHashElapsed = phaseTimer.Elapsed;
 
-            await using var archiveStream = new FileStream(
-                temporaryArchive,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                81920,
-                useAsync: true);
-            var parsedResult = await _importerResolver.ImportAsync(
-                new IconPackSource { Stream = archiveStream, FileName = fileName },
-                cancellationToken);
-            if (parsedResult.IsFailed)
-                return Result.Fail("The archive did not match a supported icon-pack format.");
-            var parsed = parsedResult.Value;
+            IconPackImportResult parsed;
+            phaseTimer.Restart();
+            await using (var archiveStream = new FileStream(
+                             temporaryArchive,
+                             FileMode.Open,
+                             FileAccess.Read,
+                             FileShare.Read,
+                             81920,
+                             useAsync: true))
+            {
+                var parsedResult = await _importerResolver.ImportAsync(
+                    new IconPackSource { Stream = archiveStream, FileName = fileName },
+                    cancellationToken);
+                if (parsedResult.IsFailed)
+                    return Result.Fail("The archive did not match a supported icon-pack format.");
+                parsed = parsedResult.Value;
+            }
+            validationElapsed = phaseTimer.Elapsed;
+            installationTimer.Start();
+            var isOtpHarborPack = parsed.Format == BrandIconPackFormat.OtpHarbor;
+            var isOtpHarborV2 = isOtpHarborPack && parsed.Metadata?.FormatVersion == 2;
             var packageVersion = parsed.Version;
             var packPrefix = SanitizeVersion(parsed.ProviderId).ToLowerInvariant();
             if (packPrefix.Length == 0)
@@ -319,24 +373,46 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             stagingDirectory = Path.Combine(_packsRoot, $".{packId}-{Guid.NewGuid():N}.staging");
             Directory.CreateDirectory(stagingDirectory);
             _fileSecurity.RestrictDirectoryToCurrentUser(stagingDirectory);
+            var hasSvgIcons = parsed.Icons.Any(static icon => icon.SvgData is not null);
             var iconsDirectory = Path.Combine(stagingDirectory, "icons");
-            Directory.CreateDirectory(iconsDirectory);
-            _fileSecurity.RestrictDirectoryToCurrentUser(iconsDirectory);
+            if (hasSvgIcons)
+            {
+                Directory.CreateDirectory(iconsDirectory);
+                _fileSecurity.RestrictDirectoryToCurrentUser(iconsDirectory);
+            }
+
+            var hasRuntimeIcons = parsed.Icons.Any(static icon => icon.RuntimeIcon is not null);
+            if (hasRuntimeIcons != isOtpHarborV2)
+                throw new InvalidDataException("The normalized icon pack runtime layout is invalid.");
+            if (isOtpHarborV2)
+            {
+                var installedArchivePath = Path.Combine(stagingDirectory, RuntimeArchiveFileName);
+                File.Move(temporaryArchive, installedArchivePath);
+                temporaryArchive = null;
+                _fileSecurity.RestrictFileToCurrentUser(installedArchivePath);
+            }
 
             var imported = new List<IndexBrand>(parsed.Icons.Count);
-            var isOtpHarborPack = parsed.Format == BrandIconPackFormat.OtpHarbor;
             foreach (var sourceBrand in parsed.Icons.OrderBy(value => value.Id, StringComparer.Ordinal))
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                var hasValidSvg = sourceBrand.SvgData is { Length: > 0 } svgData
+                    && svgData.Length <= MaximumSvgBytes;
                 if (!(isOtpHarborPack
                         ? OtpHarborCanonicalIdRegex().IsMatch(sourceBrand.Id)
                         : SafeSlugRegex().IsMatch(sourceBrand.Id))
-                    || sourceBrand.SvgData.Length is <= 0 or > MaximumSvgBytes
+                    || isOtpHarborV2 && (sourceBrand.SvgData is not null || sourceBrand.RuntimeIcon is null)
+                    || !isOtpHarborV2 && (!hasValidSvg || sourceBrand.RuntimeIcon is not null)
                     || !IsSafeDisplayText(sourceBrand.Name, 256))
                     throw new InvalidDataException("The normalized icon pack contains invalid icon metadata.");
-                var destination = Path.Combine(iconsDirectory, $"{sourceBrand.Id}.svg");
-                await File.WriteAllBytesAsync(destination, sourceBrand.SvgData, cancellationToken);
-                _fileSecurity.RestrictFileToCurrentUser(destination);
+                string? iconFileName = null;
+                if (sourceBrand.SvgData is { } svg)
+                {
+                    iconFileName = $"{sourceBrand.Id}.svg";
+                    var destination = Path.Combine(iconsDirectory, iconFileName);
+                    await File.WriteAllBytesAsync(destination, svg, cancellationToken);
+                    _fileSecurity.RestrictFileToCurrentUser(destination);
+                }
                 var aliases = sourceBrand.Issuers
                     .Where(value => IsSafeDisplayText(value, 256))
                     .Distinct(StringComparer.Ordinal)
@@ -346,18 +422,31 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     : MaximumAliasesPerBrand;
                 if (aliases.Length == 0 || aliases.Length > maximumAliases)
                     throw new InvalidDataException("The normalized icon pack contains invalid issuer aliases.");
+                InstalledRuntimeIcon? installedRuntimeIcon = null;
+                if (sourceBrand.RuntimeIcon is { } runtimeIcon)
+                {
+                    installedRuntimeIcon = new InstalledRuntimeIcon(
+                        null,
+                        runtimeIcon.Sha256,
+                        runtimeIcon.Width,
+                        runtimeIcon.Height,
+                        runtimeIcon.MediaType,
+                        runtimeIcon.RenderProfile,
+                        runtimeIcon.ArchivePath);
+                }
                 imported.Add(new IndexBrand(
                     sourceBrand.Id,
                     sourceBrand.Name,
                     sourceBrand.BackgroundColor,
-                    $"{sourceBrand.Id}.svg",
+                    iconFileName,
                     aliases,
                     sourceBrand.SelectedSource,
-                    sourceBrand.Sources));
+                    sourceBrand.Sources,
+                    installedRuntimeIcon));
             }
-            if (imported.Count == 0) return Result.Fail("The archive did not contain usable brand SVG files.");
+            if (imported.Count == 0) return Result.Fail("The archive did not contain usable brand icon assets.");
 
-            if (parsed.Notices.Count > 0)
+            if (parsed.Notices.Count > 0 && !isOtpHarborV2)
             {
                 var noticesDirectory = Path.Combine(stagingDirectory, "notices");
                 Directory.CreateDirectory(noticesDirectory);
@@ -419,6 +508,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             {
                 Directory.Move(stagingDirectory, finalDirectory);
                 stagingDirectory = null;
+                unregisteredPackDirectory = finalDirectory;
             }
 
             var previousRegistration = _catalog.Registrations.FirstOrDefault(value =>
@@ -444,6 +534,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     StringComparison.Ordinal)))
                 throw new InvalidDataException("The imported icon provider could not be loaded.");
             await PersistInstalledPacksAsync(registrations, cancellationToken);
+            unregisteredPackDirectory = null;
 
             // Preserve the legacy pointer for downgrade compatibility. New versions
             // use installed-packs.json and combine all registered providers.
@@ -462,12 +553,23 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
             Volatile.Write(ref _catalog, snapshot);
             _iconLayerCache.Clear();
-            CatalogChanged?.Invoke(this, EventArgs.Empty);
             if (previousRegistration is not null
                 && !string.Equals(previousRegistration.PackId, packId, StringComparison.Ordinal))
             {
                 TryDeleteInstalledPack(previousRegistration.PackId);
             }
+            installationTimer.Stop();
+            totalTimer.Stop();
+            _logger.LogInformation(
+                "Brand icon pack import completed in {TotalMilliseconds} ms "
+                + "(copy and archive hash {CopyMilliseconds} ms, structural and asset hash validation "
+                + "{ValidationMilliseconds} ms, installation and commit {InstallationMilliseconds} ms, "
+                + "installed files {InstalledFileCount}).",
+                Math.Round(totalTimer.Elapsed.TotalMilliseconds, 1),
+                Math.Round(copyAndHashElapsed.TotalMilliseconds, 1),
+                Math.Round(validationElapsed.TotalMilliseconds, 1),
+                Math.Round(installationTimer.Elapsed.TotalMilliseconds, 1),
+                Directory.EnumerateFiles(finalDirectory, "*", SearchOption.AllDirectories).Count());
             return Result.Ok(new BrandIconPackImportResult(
                 packageVersion,
                 imported.Count,
@@ -488,6 +590,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         {
             TryDeleteFile(temporaryArchive);
             TryDeleteDirectory(stagingDirectory);
+            TryDeleteDirectory(unregisteredPackDirectory);
             _importLock.Release();
         }
     }
@@ -502,6 +605,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             return Result.Fail<BrandDefinition>("The account identifier is invalid.");
         ArgumentNullException.ThrowIfNull(svgStream);
 
+        await InitializeAsync(cancellationToken);
         await _importLock.WaitAsync(cancellationToken);
         string? temporaryIconPath = null;
         string? temporaryIndexPath = null;
@@ -520,7 +624,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
             var icon = imported.Value;
             if (!SafeSlugRegex().IsMatch(icon.Id)
-                || icon.SvgData.Length is <= 0 or > MaximumSvgBytes
+                || icon.SvgData is not { Length: > 0 } svgData
+                || svgData.Length > MaximumSvgBytes
                 || !IsSafeDisplayText(icon.Name, 256))
             {
                 return Result.Fail<BrandDefinition>("The selected custom SVG is invalid.");
@@ -536,7 +641,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             temporaryIconPath = Path.Combine(
                 _customIconsRoot,
                 $".{icon.Id}-{Guid.NewGuid():N}.tmp");
-            await File.WriteAllBytesAsync(temporaryIconPath, icon.SvgData, cancellationToken);
+            await File.WriteAllBytesAsync(temporaryIconPath, svgData, cancellationToken);
             _fileSecurity.RestrictFileToCurrentUser(temporaryIconPath);
             File.Move(temporaryIconPath, finalIconPath, overwrite: true);
             temporaryIconPath = null;
@@ -567,7 +672,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                             value.Id,
                             value.DisplayName,
                             value.BackgroundColor,
-                            value.IconFileName,
+                            value.IconFileName!,
                             value.SourceFileName))
                         .ToList()),
                 cancellationToken);
@@ -623,6 +728,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public async Task<Result> ResetAsync(CancellationToken cancellationToken = default)
     {
+        await InitializeAsync(cancellationToken);
         await _importLock.WaitAsync(cancellationToken);
         try
         {
@@ -660,6 +766,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         bool showIssuerLogo,
         CancellationToken cancellationToken = default)
     {
+        await InitializeAsync(cancellationToken);
         if (ShowIssuerLogo == showIssuerLogo) return Result.Ok();
 
         await _importLock.WaitAsync(cancellationToken);
@@ -707,6 +814,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     {
         if (accountId == Guid.Empty)
             return Result.Fail("The account identifier is invalid.");
+        await InitializeAsync(cancellationToken);
         var normalizedBrandId = string.IsNullOrWhiteSpace(brandId)
             ? null
             : brandId.Trim().ToLowerInvariant();
@@ -793,6 +901,21 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                                    or InvalidDataException)
         {
             _logger.LogWarning("The local brand-icon display preference could not be loaded.");
+        }
+    }
+
+    private void EnsureInitialized()
+    {
+        if (Volatile.Read(ref _initialized) != 0) return;
+        lock (_initializationLock)
+        {
+            if (_initialized != 0) return;
+            _issuerAliases = LoadIssuerAliases(_logger);
+            TryLoadDisplaySettings();
+            TryLoadAccountBrandSettings();
+            TryLoadCustomIcons();
+            TryLoadInstalledCatalog();
+            Volatile.Write(ref _initialized, 1);
         }
     }
 
@@ -1090,12 +1213,15 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         foreach (var item in index.Brands ?? [])
         {
             var isOtpHarborPack = format == BrandIconPackFormat.OtpHarbor;
+            var isOtpHarborV2 = isOtpHarborPack && index.Metadata?.FormatVersion == 2;
             var validId = isOtpHarborPack
                 ? OtpHarborCanonicalIdRegex().IsMatch(item.Id)
                 : SafeSlugRegex().IsMatch(item.Id);
-            var validFileName = isOtpHarborPack
-                ? string.Equals(item.IconFileName, item.Id + ".svg", StringComparison.Ordinal)
-                : SafeSvgNameRegex().IsMatch(item.IconFileName);
+            var validFileName = isOtpHarborV2
+                ? item.IconFileName is null
+                : isOtpHarborPack
+                    ? string.Equals(item.IconFileName, item.Id + ".svg", StringComparison.Ordinal)
+                    : item.IconFileName is not null && SafeSvgNameRegex().IsMatch(item.IconFileName);
             var maximumAliases = isOtpHarborPack
                 ? int.MaxValue
                 : MaximumAliasesPerBrand;
@@ -1115,16 +1241,89 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     throw new InvalidDataException("The installed OTP Harbor icon index is invalid.");
                 continue;
             }
-            var iconPath = Path.Combine(packDirectory, "icons", item.IconFileName);
-            if (!IsDescendantOf(iconPath, packDirectory)
-                || !File.Exists(iconPath)
-                || new FileInfo(iconPath).Length is <= 0 or > MaximumSvgBytes)
+            if (!isOtpHarborV2)
             {
-                if (isOtpHarborPack)
-                    throw new InvalidDataException("The installed OTP Harbor icon asset is missing or invalid.");
-                continue;
+                var iconPath = Path.Combine(packDirectory, "icons", item.IconFileName!);
+                if (!IsDescendantOf(iconPath, packDirectory)
+                    || !File.Exists(iconPath)
+                    || new FileInfo(iconPath).Length is <= 0 or > MaximumSvgBytes)
+                {
+                    if (isOtpHarborPack)
+                        throw new InvalidDataException("The installed OTP Harbor icon asset is missing or invalid.");
+                    continue;
+                }
             }
-            var definition = new BrandDefinition(item.Id, item.DisplayName, item.BackgroundColor, item.IconFileName);
+            BrandRuntimeIcon? runtimeIcon = null;
+            if (isOtpHarborV2)
+            {
+                var installedRuntime = item.RuntimeIcon;
+                var expectedArchiveEntry = $"runtime/foreground-128/{item.Id}.png";
+                var isArchiveBacked = installedRuntime?.ArchiveEntryPath is not null;
+                if (installedRuntime is null
+                    || isArchiveBacked == (installedRuntime.FileName is not null)
+                    || !LowercaseSha256Regex().IsMatch(installedRuntime.Sha256)
+                    || installedRuntime.Width != RuntimePngValidator.Width
+                    || installedRuntime.Height != RuntimePngValidator.Height
+                    || !string.Equals(installedRuntime.MediaType, "image/png", StringComparison.Ordinal)
+                    || !string.Equals(
+                        installedRuntime.RenderProfile,
+                        "otp-harbor-foreground-v1",
+                        StringComparison.Ordinal))
+                    throw new InvalidDataException("The installed OTP Harbor runtime icon metadata is invalid.");
+                if (isArchiveBacked)
+                {
+                    if (!string.Equals(
+                            installedRuntime.ArchiveEntryPath,
+                            expectedArchiveEntry,
+                            StringComparison.Ordinal))
+                        throw new InvalidDataException("The installed OTP Harbor runtime icon metadata is invalid.");
+                    var archivePath = Path.Combine(packDirectory, RuntimeArchiveFileName);
+                    if (!IsDescendantOf(archivePath, packDirectory)
+                        || !File.Exists(archivePath)
+                        || new FileInfo(archivePath).Length is <= 0 or > MaximumArchiveBytes)
+                        throw new InvalidDataException("The installed OTP Harbor runtime archive is missing or invalid.");
+                    runtimeIcon = new BrandRuntimeIcon(
+                        $"{item.Id}:{installedRuntime.Sha256}",
+                        null,
+                        installedRuntime.Sha256,
+                        installedRuntime.Width,
+                        installedRuntime.Height,
+                        archivePath,
+                        installedRuntime.ArchiveEntryPath,
+                        item.Id);
+                }
+                else
+                {
+                    if (!string.Equals(installedRuntime.FileName, item.Id + ".png", StringComparison.Ordinal))
+                        throw new InvalidDataException("The installed OTP Harbor runtime icon metadata is invalid.");
+                    var runtimePath = Path.Combine(
+                        packDirectory,
+                        "runtime",
+                        "foreground-128",
+                        installedRuntime.FileName!);
+                    if (!IsDescendantOf(runtimePath, packDirectory)
+                        || !File.Exists(runtimePath)
+                        || new FileInfo(runtimePath).Length is <= 0 or > RuntimePngValidator.MaximumEncodedBytes)
+                        throw new InvalidDataException("The installed OTP Harbor runtime icon asset is missing or invalid.");
+                    runtimeIcon = new BrandRuntimeIcon(
+                        $"{item.Id}:{installedRuntime.Sha256}",
+                        runtimePath,
+                        installedRuntime.Sha256,
+                        installedRuntime.Width,
+                        installedRuntime.Height,
+                        BrandId: item.Id);
+                }
+            }
+            else if (item.RuntimeIcon is not null)
+            {
+                throw new InvalidDataException("The installed icon index contains unexpected runtime icon metadata.");
+            }
+            var definition = new BrandDefinition(
+                item.Id,
+                item.DisplayName,
+                item.BackgroundColor,
+                isOtpHarborV2 ? null : item.IconFileName,
+                RuntimeIcon: runtimeIcon);
             if (!byId.TryAdd(item.Id, definition))
             {
                 if (isOtpHarborPack)
@@ -1171,7 +1370,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     {
         var metadata = index.Metadata;
         if (metadata is null
-            || metadata.FormatVersion != 1
+            || metadata.FormatVersion is not (1 or 2)
             || !string.Equals(metadata.PackId, "otp-harbor-icons", StringComparison.Ordinal)
             || !IsSafeDisplayText(metadata.Name, 256)
             || metadata.ArchiveSha256 is null
@@ -1658,10 +1857,19 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         string Id,
         string DisplayName,
         string BackgroundColor,
-        string IconFileName,
+        string? IconFileName,
         string[] Aliases,
         IconPackSourceReference? SelectedSource = null,
-        IReadOnlyList<IconPackSourceReference>? Sources = null);
+        IReadOnlyList<IconPackSourceReference>? Sources = null,
+        InstalledRuntimeIcon? RuntimeIcon = null);
+    private sealed record InstalledRuntimeIcon(
+        string? FileName,
+        string Sha256,
+        int Width,
+        int Height,
+        string MediaType,
+        string RenderProfile,
+        string? ArchiveEntryPath = null);
     private sealed record ProviderSnapshot(
         string PackDirectory,
         InstalledPackRegistration Registration,

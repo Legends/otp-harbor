@@ -17,6 +17,7 @@ namespace TOTP.Avalonia.Android;
 public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 {
     private ServiceProvider? _services;
+    private NativeBrandIconCache? _brandIconCache;
 
     protected OtpHarborApplication(nint javaReference, JniHandleOwnership transfer)
         : base(javaReference, transfer)
@@ -28,6 +29,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
         return base.CustomizeAppBuilder(builder).AfterSetup(_ =>
         {
             _services = AndroidCompositionRoot.Build(this);
+            var brandIconCache = _brandIconCache ??= new NativeBrandIconCache();
             var viewModel = _services.GetRequiredService<MobileShellViewModel>();
             var app = global::Avalonia.Application.Current as MobileApp
                 ?? throw new InvalidOperationException("The mobile Avalonia application is unavailable.");
@@ -38,6 +40,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                 var view = new MainView { DataContext = viewModel };
                 view.UseNativeAccountList(new AndroidAccountListHost(
                     viewModel,
+                    brandIconCache,
                     view.DismissAccountSearchFocus));
                 view.UseNativeAccountGroupStrip(new AndroidAccountGroupStripHost(
                     viewModel,
@@ -53,6 +56,9 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     {
         _services?.GetService<IMobileLifecycleSink>()?.OnEnteredBackground(lockImmediately);
     }
+
+    internal bool IsScreenCaptureProtectionRequired =>
+        _services?.GetService<MobileShellViewModel>()?.IsScreenCaptureProtectionRequired != false;
 
 #if DEBUG
     internal Task<bool> ShowOnboardingPreviewAsync() => Task.FromResult(
@@ -128,6 +134,8 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     public override void OnTerminate()
     {
         (global::Avalonia.Application.Current as MobileApp)?.DisposeAppearance();
+        _brandIconCache?.Dispose();
+        _brandIconCache = null;
         _services?.Dispose();
         _services = null;
         LoggingConfigurator.Shutdown();

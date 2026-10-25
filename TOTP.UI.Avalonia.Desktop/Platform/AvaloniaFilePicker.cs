@@ -1,5 +1,6 @@
 using Avalonia.Platform.Storage;
 using TOTP.Avalonia.Desktop.Localization;
+using TOTP.Core.Common;
 
 namespace TOTP.Avalonia.Desktop.Platform;
 
@@ -44,13 +45,13 @@ public sealed class AvaloniaFilePicker(
         {
             Title = localization.GetString(AvaloniaStringKeys.ExportEncryptedTotpBackup),
             SuggestedFileName = Path.GetFileNameWithoutExtension(suggestedFileName),
-            DefaultExtension = "totp",
+            DefaultExtension = BackupFileExtensions.EncryptedBackup.TrimStart('.'),
             ShowOverwritePrompt = true,
             FileTypeChoices =
             [
                 new FilePickerFileType(localization.GetString(AvaloniaStringKeys.EncryptedTotpBackupFile))
                 {
-                    Patterns = ["*.totp"]
+                    Patterns = [$"*{BackupFileExtensions.EncryptedBackup}"]
                 }
             ]
         });
@@ -143,7 +144,12 @@ public sealed class AvaloniaFilePicker(
             [
                 new FilePickerFileType(localization.GetString(AvaloniaStringKeys.EncryptedTotpBackupFile))
                 {
-                    Patterns = ["*.totp", "*.otphbackup"]
+                    Patterns =
+                    [
+                        $"*{BackupFileExtensions.EncryptedBackup}",
+                        $"*{BackupFileExtensions.LegacyEncryptedBackup}",
+                        $"*{BackupFileExtensions.AutomaticBackup}"
+                    ]
                 }
             ]
         });

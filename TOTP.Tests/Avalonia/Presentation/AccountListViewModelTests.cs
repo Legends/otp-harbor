@@ -565,6 +565,29 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
+    public async Task SearchText_RanksExactThenPrefixThenPartialMatches()
+    {
+        IReadOnlyList<Account> accounts =
+        [
+            new(Guid.NewGuid(), "DigitalOcean", ValidSecret, "alice"),
+            new(Guid.NewGuid(), "GitLab", ValidSecret, "bob"),
+            new(Guid.NewGuid(), "Git", ValidSecret, "carol"),
+            new(Guid.NewGuid(), "GitHub", ValidSecret, "dave")
+        ];
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok(accounts));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+
+        sut.SearchText = "git";
+
+        Assert.Equal(
+            ["Git", "GitHub", "GitLab", "DigitalOcean"],
+            sut.Accounts.Select(account => account.Issuer));
+    }
+
+    [Fact]
     public async Task GroupFilter_HidesGroupedAccountsAndSearchesGloballyByGroupOrAccount()
     {
         var group = new AccountGroup(Guid.NewGuid(), "Work", "#4F6BED");

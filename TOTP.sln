@@ -36,6 +36,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{C344A2F9-12E4-457E-B500-F20D53441119}"
 	ProjectSection(SolutionItems) = preProject
 		AGENTS.md = AGENTS.md
+		global.json = global.json
 		readme.md = readme.md
 	EndProjectSection
 EndProject

@@ -9,6 +9,18 @@ public sealed class ExportServiceTests
 {
     private readonly ExportService _sut = new(NullLogger<ExportService>.Instance);
 
+    [Fact]
+    public void SupportedImportFileExtensions_IncludeCurrentAndLegacyEncryptedBackups()
+    {
+        Assert.Contains(BackupFileExtensions.EncryptedBackup, ExportService.SupportedImportFileExtensions);
+        Assert.Contains(
+            BackupFileExtensions.LegacyEncryptedBackup,
+            ExportService.SupportedImportFileExtensions);
+        Assert.DoesNotContain(
+            BackupFileExtensions.AutomaticBackup,
+            ExportService.SupportedImportFileExtensions);
+    }
+
     [Theory]
     [InlineData(ExportFileFormat.Json, ".json")]
     [InlineData(ExportFileFormat.Txt, ".txt")]
@@ -271,7 +283,7 @@ public sealed class ExportServiceTests
     public async Task ImportFromFileAsync_WhenEncryptedWithoutPassword_ReturnsWrongPasswordError()
     {
         using var temp = new TempDir();
-        var encrypted = Path.Combine(temp.Path, "accounts.totp");
+        var encrypted = Path.Combine(temp.Path, "accounts.otphbp");
         var export = await _sut.ExportToEncryptedFileAsync(
             [new Account(Guid.NewGuid(), "GitHub", "SECRET")],
             "correct-password",
@@ -292,7 +304,7 @@ public sealed class ExportServiceTests
     public async Task ExportToEncryptedFileAsync_ThenImportFromEncryptedFileAsync_RoundTrips(ExportFileFormat format)
     {
         using var temp = new TempDir();
-        var path = Path.Combine(temp.Path, "accounts.totp");
+        var path = Path.Combine(temp.Path, "accounts.otphbp");
         List<Account> input = [new(Guid.NewGuid(), "Azure", "ABCD1234", "tenant-user", 60)];
 
         var export = await _sut.ExportToEncryptedFileAsync(input, "pw-123", path, format);
@@ -682,7 +694,7 @@ public sealed class ExportServiceTests
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var temp = new TempDir();
-        var path = Path.Combine(temp.Path, "stream-generated.totp");
+        var path = Path.Combine(temp.Path, "stream-generated.otphbp");
         var input = new Account(Guid.NewGuid(), "GitHub", "ABCD1234", "stream-user");
 
         await using (var destination = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, true))
@@ -701,19 +713,22 @@ public sealed class ExportServiceTests
         Assert.Equal(input.Secret, account.Secret);
     }
 
-    [Fact]
-    public async Task PathExporter_ThenNonSeekableStreamImporter_RoundTripsCompatibilityFormat()
+    [Theory]
+    [InlineData("portable.otphbp")]
+    [InlineData("portable.totp")]
+    public async Task PathExporter_ThenNonSeekableStreamImporter_RoundTripsCurrentAndLegacyExtensions(
+        string importFileName)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var temp = new TempDir();
-        var path = Path.Combine(temp.Path, "path-generated.totp");
+        var path = Path.Combine(temp.Path, "path-generated.otphbp");
         var input = new Account(Guid.NewGuid(), "GitLab", "EFGH5678", "path-user");
         Assert.True((await _sut.ExportToEncryptedFileAsync(
             [input], "pw-456", path, ExportFileFormat.Json)).IsSuccess);
 
         await using var file = File.OpenRead(path);
         await using var source = new NonSeekableReadStream(file);
-        var import = await _sut.ImportFromStreamAsync(source, "portable.totp", "pw-456", cancellationToken);
+        var import = await _sut.ImportFromStreamAsync(source, importFileName, "pw-456", cancellationToken);
 
         Assert.True(import.IsSuccess);
         var account = Assert.Single(import.Value);
@@ -764,7 +779,7 @@ public sealed class ExportServiceTests
     public async Task ImportFromEncryptedFileAsync_WhenPasswordWrong_ReturnsWrongPasswordOrTampered()
     {
         using var temp = new TempDir();
-        var path = Path.Combine(temp.Path, "accounts.totp");
+        var path = Path.Combine(temp.Path, "accounts.otphbp");
         Assert.True((await _sut.ExportToEncryptedFileAsync(
             [new Account(Guid.NewGuid(), "Google", "XYZ")],
             "right-password",
@@ -821,7 +836,7 @@ public sealed class ExportServiceTests
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var temp = new TempDir();
-        var path = Path.Combine(temp.Path, "invalid.totp");
+        var path = Path.Combine(temp.Path, "invalid.otphbp");
         await File.WriteAllBytesAsync(path, "not-a-valid-header"u8.ToArray(), cancellationToken);
 
         var result = await _sut.ImportFromEncryptedFileAsync("pw", path);
@@ -835,7 +850,7 @@ public sealed class ExportServiceTests
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var temp = new TempDir();
-        var path = Path.Combine(temp.Path, "oversized.totp");
+        var path = Path.Combine(temp.Path, "oversized.otphbp");
         await File.WriteAllBytesAsync(path, new byte[6 * 1024 * 1024], cancellationToken);
 
         var result = await _sut.ImportFromEncryptedFileAsync("pw", path);
@@ -848,7 +863,7 @@ public sealed class ExportServiceTests
     public async Task ExportToEncryptedFileAsync_WhenDirectoryMissing_ReturnsWriteFailed()
     {
         using var temp = new TempDir();
-        var path = Path.Combine(temp.Path, "missing", "accounts.totp");
+        var path = Path.Combine(temp.Path, "missing", "accounts.otphbp");
 
         var result = await _sut.ExportToEncryptedFileAsync(
             [new Account(Guid.NewGuid(), "GitHub", "SECRET")],

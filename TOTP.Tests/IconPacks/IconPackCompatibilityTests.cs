@@ -33,6 +33,16 @@ public sealed class IconPackCompatibilityTests
         Assert.NotNull(result.Value.Metadata);
         Assert.True(result.Value.Metadata.IssuerAliases.Count >= 5_000);
         AssertUsableIcons(result.Value.Icons);
+        Assert.All(result.Value.Icons, icon =>
+        {
+            Assert.NotNull(icon.RuntimeIcon);
+            Assert.Equal($"runtime/foreground-128/{icon.Id}.png", icon.RuntimeIcon.ArchivePath);
+            Assert.Equal("image/png", icon.RuntimeIcon.MediaType);
+            Assert.Equal(128, icon.RuntimeIcon.Width);
+            Assert.Equal(128, icon.RuntimeIcon.Height);
+            Assert.Matches("^[0-9a-f]{64}$", icon.RuntimeIcon.Sha256);
+            Assert.Equal("otp-harbor-foreground-v1", icon.RuntimeIcon.RenderProfile);
+        });
     }
 
     [Fact(
@@ -92,7 +102,9 @@ public sealed class IconPackCompatibilityTests
         {
             Assert.False(string.IsNullOrWhiteSpace(icon.Id));
             Assert.False(string.IsNullOrWhiteSpace(icon.Name));
-            Assert.NotEmpty(icon.SvgData);
+            Assert.True(
+                (icon.SvgData is { Length: > 0 }) ^ (icon.RuntimeIcon is not null),
+                $"{icon.Id} must expose exactly one validated display asset.");
             Assert.False(string.IsNullOrWhiteSpace(icon.ProviderId));
         });
     }

@@ -101,11 +101,12 @@ public sealed class QrAccountImportServiceTests
             30,
             isFavorite: true);
         var accounts = Manager([existing]);
-        Account? updated = null;
-        accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>()))
-            .ReturnsAsync((Account _, Account account) =>
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
             {
-                updated = account;
+                committed = snapshot;
                 return Result.Ok();
             });
         var sut = new QrAccountImportService(accounts.Object);
@@ -117,8 +118,16 @@ public sealed class QrAccountImportServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(QrAccountImportStatus.Updated, result.Value.Status);
+        var updated = Assert.Single(committed!);
         Assert.Equal(60, updated!.PeriodSeconds);
         Assert.True(updated.IsFavorite);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
+        accounts.Verify(
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
     }
 
     [Fact]
@@ -151,10 +160,14 @@ public sealed class QrAccountImportServiceTests
     {
         var existing = Existing("KRUGS4ZANFZSAYJA");
         var accounts = Manager([existing]);
-        accounts.Setup(value => value.UpdateAsync(existing, It.IsAny<Account>()))
-            .ReturnsAsync(Result.Ok());
-        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
-            .ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
+            {
+                committed = snapshot;
+                return Result.Ok();
+            });
         var sut = new QrAccountImportService(accounts.Object);
 
         var result = await sut.ImportAsync(
@@ -168,12 +181,30 @@ public sealed class QrAccountImportServiceTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedStatus, result.Value.Status);
+        if (decision == QrAccountConflictDecision.UpdateExisting)
+        {
+            var updated = Assert.Single(committed!);
+            Assert.Equal(existing.ID, updated.ID);
+            Assert.Equal("JBSWY3DPEHPK3PXP", updated.Secret);
+        }
+        else if (decision == QrAccountConflictDecision.KeepBoth)
+        {
+            Assert.Equal(2, committed!.Count);
+            Assert.Contains(committed, account => account.ID == existing.ID);
+            Assert.Contains(committed, account => account.ID != existing.ID);
+        }
+        else
+        {
+            Assert.Null(committed);
+        }
+
         accounts.Verify(
-            value => value.UpdateAsync(existing, It.Is<Account>(account => account.ID == existing.ID)),
-            decision == QrAccountConflictDecision.UpdateExisting ? Times.Once : Times.Never);
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            decision == QrAccountConflictDecision.Cancel ? Times.Never : Times.Once);
         accounts.Verify(
-            value => value.AddNewAsync(It.IsAny<Account>()),
-            decision == QrAccountConflictDecision.KeepBoth ? Times.Once : Times.Never);
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
     }
 
     [Fact]
@@ -267,6 +298,408 @@ public sealed class QrAccountImportServiceTests
         accounts.Verify(
             value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportWithConflictResolutionAsync_PreviewsEntireMigrationAndAppliesSkipAtomically()
+    {
+        var unchanged = Existing("JBSWY3DPEHPK3PXP");
+        var changed = new Account(
+            Guid.NewGuid(),
+            "Work",
+            "KRUGS4ZANFZSAYJA",
+            "bob@example.com",
+            isFavorite: true);
+        var accounts = Manager([unchanged, changed]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
+            {
+                committed = snapshot;
+                return Result.Ok();
+            });
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+            [
+                new MigrationAccount(
+                    Convert.FromHexString("48656C6C6F21DEADBEEF"),
+                    "Example:alice",
+                    "Example"),
+                new MigrationAccount(
+                    Convert.FromHexString("3132333435363738393031323334353637383930"),
+                    "carol@example.com",
+                    "New"),
+                new MigrationAccount(
+                    Convert.FromHexString("48656C6C6F21DEADBEEF"),
+                    "bob@example.com",
+                    "Work")
+            ]);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            payload,
+            (preview, _) =>
+            {
+                Assert.Equal(3, preview.TotalCount);
+                Assert.Equal(1, preview.NewCount);
+                Assert.Equal(1, preview.UnchangedCount);
+                var conflict = Assert.Single(preview.ChangedConflicts);
+                Assert.Equal(2, conflict.ImportIndex);
+                Assert.True(conflict.SecretChanged);
+                Assert.False(conflict.PeriodChanged);
+                return Task.FromResult<QrAccountImportResolution?>(new(
+                    [new QrAccountImportConflictResolution(
+                        conflict.ImportIndex,
+                        QrAccountConflictDecision.Skip)]));
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.AddedCount);
+        Assert.Equal(1, result.Value.DuplicateCount);
+        Assert.Equal(1, result.Value.SkippedCount);
+        Assert.Equal(0, result.Value.UpdatedCount);
+        Assert.Equal(3, committed!.Count);
+        Assert.Contains(committed, account => account.Issuer == "New");
+        Assert.Contains(committed, account =>
+            account.ID == changed.ID
+            && account.Secret == changed.Secret
+            && account.IsFavorite);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportWithConflictResolutionAsync_WhenReviewIsCancelled_PerformsNoWrites()
+    {
+        var accounts = Manager([]);
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+            [new MigrationAccount(
+                Convert.FromHexString("48656C6C6F21DEADBEEF"),
+                "Example:alice",
+                "Example")]);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            payload,
+            (_, _) => Task.FromResult<QrAccountImportResolution?>(null),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(QrAccountImportStatus.Cancelled, result.Value.Status);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Never);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        accounts.Verify(
+            value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task ImportWithConflictResolutionAsync_ReportsEveryChangedFieldCombination(
+        bool secretChanged,
+        bool periodChanged)
+    {
+        var existing = new Account(
+            Guid.NewGuid(),
+            "Example",
+            secretChanged ? "KRUGS4ZANFZSAYJA" : "JBSWY3DPEHPK3PXP",
+            "alice",
+            periodChanged ? 60 : 30);
+        var accounts = Manager([existing]);
+        var sut = new QrAccountImportService(accounts.Object);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            Payload,
+            (preview, _) =>
+            {
+                var conflict = Assert.Single(preview.ChangedConflicts);
+                Assert.Equal(0, conflict.ImportIndex);
+                Assert.Equal("Example", conflict.Issuer);
+                Assert.Equal("alice", conflict.AccountName);
+                Assert.Equal(secretChanged, conflict.SecretChanged);
+                Assert.Equal(periodChanged, conflict.PeriodChanged);
+                return Task.FromResult<QrAccountImportResolution?>(new(
+                    [new(0, QrAccountConflictDecision.Skip)]));
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(QrAccountImportStatus.Skipped, result.Value.Status);
+        Assert.Equal(1, result.Value.SkippedCount);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(QrAccountConflictDecision.Skip, QrAccountImportStatus.Skipped, 1)]
+    [InlineData(QrAccountConflictDecision.UpdateExisting, QrAccountImportStatus.Updated, 1)]
+    [InlineData(QrAccountConflictDecision.KeepBoth, QrAccountImportStatus.KeptBoth, 2)]
+    public async Task ImportWithConflictResolutionAsync_AppliesEveryConflictDecision(
+        QrAccountConflictDecision decision,
+        QrAccountImportStatus expectedStatus,
+        int expectedAccountCount)
+    {
+        var existing = Existing("KRUGS4ZANFZSAYJA");
+        var accounts = Manager([existing]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
+            {
+                committed = snapshot;
+                return Result.Ok();
+            });
+        var sut = new QrAccountImportService(accounts.Object);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            Payload,
+            (preview, _) => Task.FromResult<QrAccountImportResolution?>(new(
+                [new(Assert.Single(preview.ChangedConflicts).ImportIndex, decision)])),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(expectedStatus, result.Value.Status);
+        if (decision == QrAccountConflictDecision.Skip)
+        {
+            Assert.Null(committed);
+            Assert.Equal(1, result.Value.SkippedCount);
+        }
+        else
+        {
+            Assert.Equal(expectedAccountCount, committed!.Count);
+            accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+            accounts.Verify(
+                value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+                Times.Once);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    public async Task ImportWithConflictResolutionAsync_RejectsInvalidConflictResolution(
+        int invalidResolutionKind)
+    {
+        var accounts = Manager([Existing("KRUGS4ZANFZSAYJA")]);
+        var sut = new QrAccountImportService(accounts.Object);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            Payload,
+            (_, _) => Task.FromResult<QrAccountImportResolution?>(new(
+                invalidResolutionKind switch
+                {
+                    0 => [],
+                    1 => [new(99, QrAccountConflictDecision.Skip)],
+                    2 =>
+                    [
+                        new(0, QrAccountConflictDecision.Skip),
+                        new(0, QrAccountConflictDecision.UpdateExisting)
+                    ],
+                    3 => [new(0, QrAccountConflictDecision.Cancel)],
+                    _ =>
+                    [
+                        new(0, QrAccountConflictDecision.Skip),
+                        new(99, QrAccountConflictDecision.Skip)
+                    ]
+                })),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        Assert.Contains(
+            result.Errors,
+            error => error.Message == "The QR import conflict resolution is invalid.");
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportWithConflictResolutionAsync_MixedMigrationAppliesAllChoicesOnce()
+    {
+        var unchanged = Existing("JBSWY3DPEHPK3PXP");
+        var skip = new Account(Guid.NewGuid(), "Skip", "KRUGS4ZANFZSAYJA", "one", 30);
+        var update = new Account(
+            Guid.NewGuid(),
+            "Update",
+            "KRUGS4ZANFZSAYJA",
+            "two",
+            60,
+            isFavorite: true);
+        var keepBoth = new Account(Guid.NewGuid(), "Keep", "KRUGS4ZANFZSAYJA", "three", 30);
+        var accounts = Manager([unchanged, skip, update, keepBoth]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
+            {
+                committed = snapshot;
+                return Result.Ok();
+            });
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+        [
+            Migration("Example:alice", "Example", "48656C6C6F21DEADBEEF"),
+            Migration("new", "New", "3132333435363738393031323334353637383930"),
+            Migration("one", "Skip", "48656C6C6F21DEADBEEF"),
+            Migration("two", "Update", "48656C6C6F21DEADBEEF"),
+            Migration("three", "Keep", "48656C6C6F21DEADBEEF")
+        ]);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            payload,
+            (preview, _) =>
+            {
+                Assert.Equal(5, preview.TotalCount);
+                Assert.Equal(1, preview.NewCount);
+                Assert.Equal(1, preview.UnchangedCount);
+                Assert.Equal(3, preview.ChangedConflicts.Count);
+                return Task.FromResult<QrAccountImportResolution?>(new(
+                [
+                    new(2, QrAccountConflictDecision.Skip),
+                    new(3, QrAccountConflictDecision.UpdateExisting),
+                    new(4, QrAccountConflictDecision.KeepBoth)
+                ]));
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.AddedCount);
+        Assert.Equal(1, result.Value.UpdatedCount);
+        Assert.Equal(1, result.Value.KeptBothCount);
+        Assert.Equal(1, result.Value.DuplicateCount);
+        Assert.Equal(1, result.Value.SkippedCount);
+        Assert.Equal(6, committed!.Count);
+        Assert.Contains(committed, account => account.ID == skip.ID && account.Secret == skip.Secret);
+        Assert.Contains(committed, account =>
+            account.ID == update.ID
+            && account.Secret == "JBSWY3DPEHPK3PXP"
+            && account.PeriodSeconds == 30
+            && account.IsFavorite);
+        Assert.Equal(2, committed.Count(account => account.Issuer == "Keep"));
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ImportWithConflictResolutionAsync_AllUnchangedOrSkipped_PerformsNoWrites()
+    {
+        var unchanged = Existing("JBSWY3DPEHPK3PXP");
+        var changed = new Account(Guid.NewGuid(), "Work", "KRUGS4ZANFZSAYJA", "bob", 30);
+        var accounts = Manager([unchanged, changed]);
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+        [
+            Migration("Example:alice", "Example", "48656C6C6F21DEADBEEF"),
+            Migration("bob", "Work", "48656C6C6F21DEADBEEF")
+        ]);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            payload,
+            (preview, _) => Task.FromResult<QrAccountImportResolution?>(new(
+                [new(Assert.Single(preview.ChangedConflicts).ImportIndex, QrAccountConflictDecision.Skip)])),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.DuplicateCount);
+        Assert.Equal(1, result.Value.SkippedCount);
+        Assert.Equal(0, result.Value.ImportedCount);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(
+            value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportWithConflictResolutionAsync_DuplicateIncomingIdentities_AreReviewedAgainstStagedAccounts()
+    {
+        var accounts = Manager([]);
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? committed = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync((IReadOnlyCollection<Account> snapshot) =>
+            {
+                committed = snapshot;
+                return Result.Ok();
+            });
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(
+        [
+            Migration("alice", "Example", "48656C6C6F21DEADBEEF"),
+            Migration("alice", "Example", "3132333435363738393031323334353637383930")
+        ]);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            payload,
+            (preview, _) =>
+            {
+                Assert.Equal(1, preview.NewCount);
+                var conflict = Assert.Single(preview.ChangedConflicts);
+                Assert.Equal(1, conflict.ImportIndex);
+                return Task.FromResult<QrAccountImportResolution?>(new(
+                    [new(1, QrAccountConflictDecision.Skip)]));
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.AddedCount);
+        Assert.Equal(1, result.Value.SkippedCount);
+        var imported = Assert.Single(committed!);
+        Assert.Equal("JBSWY3DPEHPK3PXP", imported.Secret);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("not-a-qr-uri")]
+    [InlineData("otpauth-migration://offline?data=not-base64")]
+    public async Task ImportWithConflictResolutionAsync_InvalidPayloadExamplesFailWithoutWrites(
+        string invalidPayload)
+    {
+        var accounts = new Mock<IAccountManager>();
+        var sut = new QrAccountImportService(accounts.Object);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            invalidPayload,
+            (_, _) => Task.FromResult<QrAccountImportResolution?>(new([])),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        accounts.Verify(value => value.GetAllOtpEntriesSortedAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportWithConflictResolutionAsync_OversizedPayloadFailsWithoutWrites()
+    {
+        var accounts = new Mock<IAccountManager>();
+        var sut = new QrAccountImportService(accounts.Object);
+
+        var result = await sut.ImportWithConflictResolutionAsync(
+            new string('x', 4097),
+            (_, _) => Task.FromResult<QrAccountImportResolution?>(new([])),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        accounts.Verify(value => value.GetAllOtpEntriesSortedAsync(), Times.Never);
     }
 
     [Fact]
@@ -530,6 +963,12 @@ public sealed class QrAccountImportServiceTests
         int Algorithm = 1,
         int Digits = 1,
         int Type = 2);
+
+    private static MigrationAccount Migration(
+        string name,
+        string issuer,
+        string secretHex) =>
+        new(Convert.FromHexString(secretHex), name, issuer);
 
     private static string MigrationPayload(
         IReadOnlyList<MigrationAccount> entries,

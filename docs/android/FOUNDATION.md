@@ -210,7 +210,7 @@ reproducibility, metadata, and review gates documented in the
   password wrapper.
   Strong-biometric quick unlock currently requires Android 11 (API 30) or newer. Earlier supported
   Android versions retain password unlock rather than silently accepting a weaker biometric class.
-  Desktop and Android exchange the existing encrypted `.totp` backup format; private live-vault
+  Desktop and Android exchange the encrypted `.otphbp` backup format and can still import legacy `.totp` backups; private live-vault
   files are not exposed as an interchange format.
 - **Recovery impact:** the master password remains an independent recovery and authorization method.
   A missing or invalidated Keystore key falls back to password unlock and never bypasses vault-key

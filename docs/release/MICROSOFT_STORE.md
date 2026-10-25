@@ -132,7 +132,7 @@ Get-AppxPackage | Where-Object Name -Like '*OtpHarbor*' |
 ## Migration from a GitHub preview
 
 The Store package has a Windows package identity and must be treated as a separate installation.
-Before switching, export and test an encrypted `.totp` backup from the existing app. Import that
+Before switching, export and test an encrypted `.otphbp` backup from the existing app. Import that
 backup into the Store build using the master password, verify several synthetic codes, and then
 re-enroll Windows Hello. Do not copy live vault or quick-unlock files between installations.
 

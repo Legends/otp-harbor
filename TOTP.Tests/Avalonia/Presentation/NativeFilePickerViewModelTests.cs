@@ -393,11 +393,11 @@ public sealed class NativeFilePickerViewModelTests
     {
         var picker = new Mock<IAvaloniaFilePicker>();
         picker.Setup(value => value.PickEncryptedBackupFileAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TestStorageFile("backup.totp", content: [1, 2, 3]));
+            .ReturnsAsync(new TestStorageFile("backup.otphbp", content: [1, 2, 3]));
         var imported = new Account(Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "user");
         var export = new Mock<IExportService>();
         export.Setup(value => value.ImportFromStreamAsync(
-                It.IsAny<Stream>(), "backup.totp", "strong-password", It.IsAny<CancellationToken>()))
+                It.IsAny<Stream>(), "backup.otphbp", "strong-password", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new List<Account> { imported }));
         var accounts = new Mock<IAccountManager>(MockBehavior.Strict);
         var sequence = new MockSequence();
@@ -788,10 +788,11 @@ public sealed class NativeFilePickerViewModelTests
     [Fact]
     public async Task ExportEncryptedAsync_RequiresConfirmedPasswordAndHardensLocalFile()
     {
-        var file = new TestStorageFile("backup.totp", "C:\\safe\\backup.totp");
+        var file = new TestStorageFile("backup.otphbp", "C:\\safe\\backup.otphbp");
         var picker = new Mock<IAvaloniaFilePicker>();
         picker.Setup(value => value.PickEncryptedExportFileAsync(
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.Is<string>(name => name.EndsWith(".otphbp", StringComparison.Ordinal)),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(file);
         var export = new Mock<IExportService>();
         export.Setup(value => value.ExportToEncryptedStreamAsync(
@@ -830,9 +831,9 @@ public sealed class NativeFilePickerViewModelTests
         await sut.ExportEncryptedAsync();
 
         Assert.Contains("successfully", sut.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal("Last backup: C:\\safe\\backup.totp", sut.BackupLocationText);
+        Assert.Equal("Last backup: C:\\safe\\backup.otphbp", sut.BackupLocationText);
         Assert.True(sut.HasLastBackupFolder);
-        security.Verify(value => value.RestrictFileToCurrentUser("C:\\safe\\backup.totp"), Times.Once);
+        security.Verify(value => value.RestrictFileToCurrentUser("C:\\safe\\backup.otphbp"), Times.Once);
         await sut.OpenLastBackupFolderAsync();
         folderLauncher.Verify(value => value.OpenFolderAsync(
             "C:\\safe", It.IsAny<CancellationToken>()), Times.Once);
@@ -843,7 +844,7 @@ public sealed class NativeFilePickerViewModelTests
     [Fact]
     public async Task OpenLastBackupFolderAsync_WhenLauncherFails_ShowsRecoverableError()
     {
-        var file = new TestStorageFile("backup.totp", "C:\\safe\\backup.totp");
+        var file = new TestStorageFile("backup.otphbp", "C:\\safe\\backup.otphbp");
         var picker = new Mock<IAvaloniaFilePicker>();
         picker.Setup(value => value.PickEncryptedExportFileAsync(
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -888,7 +889,7 @@ public sealed class NativeFilePickerViewModelTests
         var picker = new Mock<IAvaloniaFilePicker>();
         picker.Setup(value => value.PickEncryptedExportFileAsync(
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TestStorageFile("backup.totp"));
+            .ReturnsAsync(new TestStorageFile("backup.otphbp"));
         var export = new Mock<IExportService>();
         export.Setup(value => value.ExportToEncryptedStreamAsync(
                 It.IsAny<IEnumerable<Account>>(), "strong-password", It.IsAny<Stream>(),

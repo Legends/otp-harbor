@@ -96,4 +96,89 @@ public sealed class BrandIconResolverTests
         Assert.Equal("amazon", resolved.Id);
         pack.Verify(value => value.ResolveAccount("GitHub", "alice", "amazon"), Times.Once);
     }
+
+    [Fact]
+    public void ResolveAccountMetadata_DefersAndCachesIconMaterializationByBrandId()
+    {
+        var accountId = Guid.NewGuid();
+        var definition = new BrandDefinition("github", "GitHub", "#181717", "github.svg");
+        var pack = new Mock<IBrandIconPackService>();
+        pack.Setup(value => value.ResolveAccount("GitHub", "alice", null))
+            .Returns(definition);
+        pack.Setup(value => value.TryGetIconLayers(
+                "github",
+                out It.Ref<IReadOnlyList<BrandIconLayer>>.IsAny))
+            .Returns((string _, out IReadOnlyList<BrandIconLayer> layers) =>
+            {
+                layers = [new BrandIconLayer("M0 0h24v24H0z")];
+                return true;
+            });
+        using var sut = new BrandIconResolver(pack.Object);
+
+        var metadata = sut.ResolveAccountMetadata(accountId, "GitHub", "alice");
+
+        Assert.False(metadata.HasIcon);
+        Assert.False(sut.TryGetMaterializedIconData(metadata, out _));
+
+        var first = sut.MaterializeIconData(metadata);
+        var second = sut.MaterializeIconData(metadata);
+
+        Assert.True(first.HasIcon);
+        Assert.Same(first, second);
+        Assert.True(sut.TryGetMaterializedIconData(metadata, out var cached));
+        Assert.Same(first, cached);
+        pack.Verify(
+            value => value.TryGetIconLayers(
+                "github",
+                out It.Ref<IReadOnlyList<BrandIconLayer>>.IsAny),
+            Times.Once);
+    }
+
+    [Fact]
+    public void ResolveAccountMetadata_PreservesRuntimeDescriptorWithoutParsingSvg()
+    {
+        var runtime = new BrandRuntimeIcon(
+            "github:0123456789abcdef",
+            "runtime/github.png",
+            new string('0', 64),
+            128,
+            128);
+        var definition = new BrandDefinition(
+            "github",
+            "GitHub",
+            "#181717",
+            "github.svg",
+            RuntimeIcon: runtime);
+        var pack = new Mock<IBrandIconPackService>();
+        pack.Setup(value => value.ResolveAccount("GitHub", "alice", null)).Returns(definition);
+        using var sut = new BrandIconResolver(pack.Object);
+
+        var metadata = sut.ResolveAccountMetadata(Guid.NewGuid(), "GitHub", "alice");
+        var materialized = sut.MaterializeIconData(metadata);
+
+        Assert.Same(runtime, metadata.RuntimeIcon);
+        Assert.True(metadata.HasIcon);
+        Assert.False(metadata.HasVectorIcon);
+        Assert.Same(metadata, materialized);
+        pack.Verify(
+            value => value.TryGetIconLayers(
+                It.IsAny<string>(),
+                out It.Ref<IReadOnlyList<BrandIconLayer>>.IsAny),
+            Times.Never);
+    }
+
+    [Fact]
+    public void CatalogChange_InvalidatesDeferredMetadata()
+    {
+        var definition = new BrandDefinition("github", "GitHub", "#181717", "github.svg");
+        var pack = new Mock<IBrandIconPackService>();
+        pack.Setup(value => value.ResolveAccount("GitHub", null, null)).Returns(definition);
+        using var sut = new BrandIconResolver(pack.Object);
+        var first = sut.ResolveAccountMetadata(Guid.NewGuid(), "GitHub", null);
+
+        pack.Raise(value => value.CatalogChanged += null, EventArgs.Empty);
+        var second = sut.ResolveAccountMetadata(Guid.NewGuid(), "GitHub", null);
+
+        Assert.NotSame(first, second);
+    }
 }

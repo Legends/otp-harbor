@@ -1,7 +1,9 @@
 # Synthetic portable-backup fixture
 
-`synthetic-ui-test-backup.totp` is an encrypted backup created exclusively from
-synthetic accounts for manual live UI import and restore testing.
+`synthetic-ui-test-backup.totp` is a legacy-extension encrypted backup created
+exclusively from synthetic accounts for manual compatibility import and restore
+testing. New fixtures and exports use `.otphbp`; the encrypted payload format is
+unchanged.
 
 Rules for this fixture:
 

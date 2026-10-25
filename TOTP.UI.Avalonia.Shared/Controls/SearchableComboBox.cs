@@ -301,13 +301,16 @@ public sealed class SearchableComboBox : TemplatedControl
     private void RefreshFilteredItems()
     {
         var searchText = SearchText.Trim();
-        var items = ItemsSource?.Cast<object>() ?? [];
+        var items = ItemsSource as IEnumerable<object>
+            ?? ItemsSource?.Cast<object>()
+            ?? [];
         SynchronizeSelection(() =>
         {
             FilteredItems = RankedTextFilter.Apply(
                 items,
                 searchText,
-                static item => [item.ToString()]);
+                static _ => 1,
+                static (item, _) => item.ToString());
             SyncSelectedItemCore();
         });
     }

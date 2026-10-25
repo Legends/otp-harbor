@@ -30,7 +30,11 @@ public sealed class ExportService : IExportService
     private const long MaxImportFileBytes = 5 * 1024 * 1024; // 5 MiB hard limit to reduce parser/DoS risk.
 
     public static IReadOnlyList<string> SupportedImportFileExtensions { get; } =
-        Array.AsReadOnly(UnencryptedImportFormats.Keys.Prepend(".totp").ToArray());
+        Array.AsReadOnly(
+            UnencryptedImportFormats.Keys
+                .Prepend(BackupFileExtensions.LegacyEncryptedBackup)
+                .Prepend(BackupFileExtensions.EncryptedBackup)
+                .ToArray());
 
     private static readonly Argon2Parameters _argonParameters = new()
     {
@@ -215,7 +219,7 @@ public sealed class ExportService : IExportService
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         var extension = Path.GetExtension(Path.GetFileName(fileName));
 
-        if (extension.Equals(".totp", StringComparison.OrdinalIgnoreCase))
+        if (BackupFileExtensions.IsEncryptedBackup(extension))
         {
             if (string.IsNullOrWhiteSpace(password))
             {

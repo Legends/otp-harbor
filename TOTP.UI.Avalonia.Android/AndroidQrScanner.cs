@@ -40,6 +40,12 @@ internal sealed class AndroidQrScanner(
             intent.PutExtra(
                 LiveQrScannerActivity.CancelExtra,
                 strings.Get(MobileStringKeys.Cancel));
+            intent.PutExtra(
+                LiveQrScannerActivity.UploadImageExtra,
+                strings.Get(MobileStringKeys.UploadQrImage));
+            intent.PutExtra(
+                LiveQrScannerActivity.ImageScanFailedExtra,
+                strings.Get(MobileStringKeys.QrScanFailed));
 
             activity.IsInternalQrScannerActive = true;
             activity.StartActivityForResult(intent, ScanRequestCode);

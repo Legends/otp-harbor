@@ -11,6 +11,8 @@ public interface IBrandIconPackService
 {
     event EventHandler? CatalogChanged;
 
+    Task InitializeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
     BrandIconPackStatus Status { get; }
 
     IReadOnlyList<BrandIconPackInstallation> InstalledPacks => Status.InstalledPacks ?? [];

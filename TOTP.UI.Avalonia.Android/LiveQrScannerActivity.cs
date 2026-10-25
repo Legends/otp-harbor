@@ -31,26 +31,42 @@ public sealed class LiveQrScannerActivity : ComponentActivity
     internal const string StatusExtra = "otp-harbor.qr.status";
     internal const string InstructionExtra = "otp-harbor.qr.instruction";
     internal const string CancelExtra = "otp-harbor.qr.cancel";
+    internal const string UploadImageExtra = "otp-harbor.qr.upload-image";
+    internal const string ImageScanFailedExtra = "otp-harbor.qr.image-scan-failed";
     internal const string UnavailableStatus = "unavailable";
     internal const string FailedStatus = "failed";
 
     private const int CameraPermissionRequestCode = 0x4351;
+    private const int ImagePickerRequestCode = 0x4352;
+    private const int MaximumEncodedImageBytes = 16 * 1024 * 1024;
+    private const int MaximumDecodedImageDimension = 2048;
     private PreviewView? _preview;
     private ProcessCameraProvider? _cameraProvider;
     private IExecutorService? _analysisExecutor;
     private QrAnalyzer? _analyzer;
     private int _completed;
+    private int _imageDecodeInProgress;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        Window?.AddFlags(WindowManagerFlags.Secure);
+        ApplyScreenCapturePolicy();
         BuildContent();
 
         if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.Camera) == Permission.Granted)
             StartCamera();
         else
             RequestPermissions([Manifest.Permission.Camera], CameraPermissionRequestCode);
+    }
+
+    private void ApplyScreenCapturePolicy()
+    {
+        var protectionRequired = Application is not OtpHarborApplication host
+            || host.IsScreenCaptureProtectionRequired;
+        var flags = protectionRequired
+            ? WindowManagerFlags.Secure
+            : (WindowManagerFlags)0;
+        Window?.SetFlags(flags, WindowManagerFlags.Secure);
     }
 
     public override void OnRequestPermissionsResult(
@@ -68,6 +84,20 @@ public sealed class LiveQrScannerActivity : ComponentActivity
     }
 
     public override void OnBackPressed() => Complete(null, null);
+
+    protected override void OnActivityResult(int requestCode, AndroidResult resultCode, Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+        if (requestCode != ImagePickerRequestCode
+            || resultCode != AndroidResult.Ok
+            || data?.Data is not { } imageUri
+            || Interlocked.CompareExchange(ref _imageDecodeInProgress, 1, 0) != 0)
+        {
+            return;
+        }
+
+        _ = DecodeSelectedImageAsync(imageUri);
+    }
 
     protected override void OnDestroy()
     {
@@ -115,6 +145,28 @@ public sealed class LiveQrScannerActivity : ComponentActivity
         };
         root.AddView(instruction, instructionLayout);
 
+        var uploadImage = new TextView(this)
+        {
+            Text = Intent?.GetStringExtra(UploadImageExtra) ?? string.Empty,
+            TextSize = 16,
+            Gravity = GravityFlags.Center,
+            ContentDescription = Intent?.GetStringExtra(UploadImageExtra) ?? string.Empty
+        };
+        uploadImage.SetTextColor(Color.White);
+        uploadImage.SetPadding(Dp(18), Dp(14), Dp(18), Dp(14));
+        uploadImage.Background = CreateRoundedBackground(Color.Argb(220, 7, 24, 49), 16);
+        uploadImage.Click += (_, _) => OpenImagePicker();
+        var uploadLayout = new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MatchParent,
+            ViewGroup.LayoutParams.WrapContent,
+            GravityFlags.Bottom | GravityFlags.CenterHorizontal)
+        {
+            LeftMargin = Dp(24),
+            RightMargin = Dp(24),
+            BottomMargin = Dp(108)
+        };
+        root.AddView(uploadImage, uploadLayout);
+
         var close = new TextView(this)
         {
             Text = "×",
@@ -132,6 +184,157 @@ public sealed class LiveQrScannerActivity : ComponentActivity
         root.AddView(close, closeLayout);
 
         SetContentView(root);
+    }
+
+    private void OpenImagePicker()
+    {
+        try
+        {
+            using var intent = new Intent(Intent.ActionOpenDocument);
+            intent.AddCategory(Intent.CategoryOpenable);
+            intent.SetType("image/*");
+            StartActivityForResult(intent, ImagePickerRequestCode);
+        }
+        catch
+        {
+            ShowImageScanFailure();
+        }
+    }
+
+    private async Task DecodeSelectedImageAsync(global::Android.Net.Uri imageUri)
+    {
+        try
+        {
+            var payload = await Task.Run(() => DecodeSelectedImage(imageUri)).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(payload))
+            {
+                RunOnUiThread(() => Complete(payload, null));
+                return;
+            }
+
+            RunOnUiThread(ShowImageScanFailure);
+        }
+        catch
+        {
+            RunOnUiThread(ShowImageScanFailure);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _imageDecodeInProgress, 0);
+        }
+    }
+
+    private string? DecodeSelectedImage(global::Android.Net.Uri imageUri)
+    {
+        var encoded = ReadSelectedImage(imageUri);
+        if (encoded is null) return null;
+
+        int[] pixels = [];
+        byte[] luminance = [];
+        try
+        {
+            using var bounds = new BitmapFactory.Options { InJustDecodeBounds = true };
+            BitmapFactory.DecodeByteArray(encoded, 0, encoded.Length, bounds);
+            if (bounds.OutWidth <= 0 || bounds.OutHeight <= 0) return null;
+
+            var sampleSize = 1;
+            while (bounds.OutWidth / sampleSize > MaximumDecodedImageDimension
+                   || bounds.OutHeight / sampleSize > MaximumDecodedImageDimension)
+            {
+                sampleSize *= 2;
+            }
+
+            using var options = new BitmapFactory.Options
+            {
+                InPreferredConfig = Bitmap.Config.Argb8888,
+                InSampleSize = sampleSize
+            };
+            using var bitmap = BitmapFactory.DecodeByteArray(encoded, 0, encoded.Length, options);
+            if (bitmap is null || bitmap.Width <= 0 || bitmap.Height <= 0) return null;
+
+            pixels = new int[checked(bitmap.Width * bitmap.Height)];
+            luminance = new byte[pixels.Length];
+            bitmap.GetPixels(pixels, 0, bitmap.Width, 0, 0, bitmap.Width, bitmap.Height);
+            for (var index = 0; index < pixels.Length; index++)
+            {
+                var pixel = pixels[index];
+                var red = (pixel >> 16) & 0xff;
+                var green = (pixel >> 8) & 0xff;
+                var blue = pixel & 0xff;
+                luminance[index] = (byte)((306 * red + 601 * green + 117 * blue) >> 10);
+            }
+
+            var source = new RGBLuminanceSource(
+                luminance,
+                bitmap.Width,
+                bitmap.Height,
+                RGBLuminanceSource.BitmapFormat.Gray8);
+            return DecodeQr(source) ?? DecodeQr(source.invert());
+        }
+        finally
+        {
+            Array.Clear(encoded);
+            Array.Clear(pixels);
+            Array.Clear(luminance);
+        }
+    }
+
+    private byte[]? ReadSelectedImage(global::Android.Net.Uri imageUri)
+    {
+        using var source = ContentResolver?.OpenInputStream(imageUri);
+        if (source is null) return null;
+
+        using var destination = new MemoryStream();
+        var buffer = new byte[81920];
+        try
+        {
+            while (true)
+            {
+                var read = source.Read(buffer, 0, buffer.Length);
+                if (read == 0) break;
+                if (destination.Length + read > MaximumEncodedImageBytes) return null;
+                destination.Write(buffer, 0, read);
+            }
+
+            return destination.Length == 0 ? null : destination.ToArray();
+        }
+        finally
+        {
+            Array.Clear(buffer);
+        }
+    }
+
+    private void ShowImageScanFailure()
+    {
+        if (IsFinishing) return;
+        Toast.MakeText(
+            this,
+            Intent?.GetStringExtra(ImageScanFailedExtra) ?? string.Empty,
+            ToastLength.Long)?.Show();
+    }
+
+    private static string? DecodeQr(LuminanceSource source)
+    {
+        var reader = new QRCodeReader();
+        try
+        {
+            return reader.decode(
+                new BinaryBitmap(new HybridBinarizer(source)),
+                new Dictionary<DecodeHintType, object>
+                {
+                    [DecodeHintType.POSSIBLE_FORMATS] = new[] { BarcodeFormat.QR_CODE },
+                    [DecodeHintType.CHARACTER_SET] = "UTF-8",
+                    [DecodeHintType.TRY_HARDER] = true
+                })?.Text;
+        }
+        catch (ReaderException)
+        {
+            return null;
+        }
+        finally
+        {
+            reader.reset();
+        }
     }
 
     private void StartCamera()

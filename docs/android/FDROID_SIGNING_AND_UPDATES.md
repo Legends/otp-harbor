@@ -25,7 +25,7 @@ Android will reject an in-place install from a differently signed channel.
 
 Before uninstalling an existing production package:
 
-1. Export a password-protected encrypted `.totp` backup through OTP Harbor.
+1. Export a password-protected encrypted `.otphbp` backup through OTP Harbor.
 2. Verify the backup password and keep it separately from the backup file.
 3. Keep the original installation until the external backup is present and readable.
 4. Uninstall the old channel only after accepting that Android will delete its private app data.
@@ -62,7 +62,7 @@ F-Droid-managed signing remains the policy and cross-channel in-place updates re
   protected from destructive cross-channel migration mistakes.
 - **Data-flow impact:** stores and package managers handle public binaries and signatures only. Vaults,
   passwords, OTP seeds, and encrypted backups are never supplied to a distribution service.
-- **Compatibility impact:** vault and `.totp` backup formats remain shared, but Android signature
+- **Compatibility impact:** vault and `.otphbp` backup formats remain shared, and legacy `.totp` backups remain importable, but Android signature
   enforcement requires uninstall/reinstall when moving between F-Droid and GitHub/Play.
 - **Verification evidence:** repository validation checks the permanent package ID, disabled Android
   backup, explicit separate-signature policy, encrypted migration workflow, and absence of premature

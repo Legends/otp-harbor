@@ -11,7 +11,10 @@ namespace TOTP.Infrastructure.Icons;
 
 public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
 {
-    private const int CurrentFormatVersion = 1;
+    private const int MinimumFormatVersion = 1;
+    private const int MaximumFormatVersion = 2;
+    private const string RuntimeMediaType = "image/png";
+    private const string RuntimeRenderProfile = "otp-harbor-foreground-v1";
     private const int MaximumPackJsonBytes = 128 * 1024 * 1024;
     private const int MaximumSources = 16;
     private const int MaximumSourcesPerBrand = 32;
@@ -48,7 +51,7 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         {
             cancellationToken.ThrowIfCancellationRequested();
             using var archive = IconImportArchive.Open(source);
-            var manifest = FindRootManifest(archive);
+            var manifest = FindRootManifest(CreateCanonicalFileIndex(archive));
             if (manifest is null) return hasOtpHarborExtension;
             var bytes = await IconImportArchive.ReadBoundedAsync(
                 manifest,
@@ -83,7 +86,8 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         try
         {
             using var archive = IconImportArchive.Open(source);
-            var manifestEntry = FindRootManifest(archive)
+            var entriesByPath = CreateCanonicalFileIndex(archive);
+            var manifestEntry = FindRootManifest(entriesByPath)
                 ?? throw new InvalidDataException("The OTP Harbor icon pack has no root pack.json.");
             var manifestBytes = await IconImportArchive.ReadBoundedAsync(
                 manifestEntry,
@@ -99,9 +103,10 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
             {
                 throw new InvalidDataException("The OTP Harbor icon pack manifest is malformed.", ex);
             }
+            ValidateVersionSpecificManifestShape(manifestBytes, document.FormatVersion);
 
             var imported = await ValidateAndReadAsync(
-                archive,
+                entriesByPath,
                 manifestEntry,
                 document,
                 cancellationToken);
@@ -123,12 +128,12 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
     }
 
     private static async Task<IconPackImportResult> ValidateAndReadAsync(
-        ZipArchive archive,
+        IReadOnlyDictionary<string, ZipArchiveEntry> entriesByPath,
         ZipArchiveEntry manifestEntry,
         PackDocument document,
         CancellationToken cancellationToken)
     {
-        if (document.FormatVersion != CurrentFormatVersion)
+        if (document.FormatVersion is < MinimumFormatVersion or > MaximumFormatVersion)
             throw new InvalidDataException("The OTP Harbor icon pack format version is unsupported.");
         if (!string.Equals(document.PackId, ExpectedPackId, StringComparison.Ordinal)
             || !IconImportArchive.IsSafeDisplayText(document.Name))
@@ -158,7 +163,7 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
                     || !licensePath.StartsWith($"licenses/{source.Provider}/", StringComparison.Ordinal)
                     || !IsCanonicalArchivePath(licensePath))
                     throw new InvalidDataException("The OTP Harbor icon pack contains an invalid license reference.");
-                var licenseEntry = FindCanonicalEntry(archive, licensePath)
+                var licenseEntry = FindCanonicalEntry(entriesByPath, licensePath)
                     ?? throw new InvalidDataException("The OTP Harbor icon pack is missing a referenced license.");
                 var data = await IconImportArchive.ReadBoundedAsync(
                     licenseEntry,
@@ -191,16 +196,44 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         foreach (var brand in document.Brands)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ValidateBrandShape(brand, sourceProviders);
+            ValidateBrandShape(brand, sourceProviders, document.FormatVersion);
             if (!brandsById.TryAdd(brand.Id!, brand))
                 throw new InvalidDataException("The OTP Harbor icon pack contains duplicate brand IDs.");
-            var expectedIconPath = $"icons/{brand.Id}.svg";
-            if (!string.Equals(brand.Icon, expectedIconPath, StringComparison.Ordinal)
-                || !expectedFiles.Add(expectedIconPath))
-                throw new InvalidDataException("The OTP Harbor icon pack contains an invalid icon reference.");
-            var iconEntry = FindCanonicalEntry(archive, expectedIconPath)
-                ?? throw new InvalidDataException("The OTP Harbor icon pack is missing a referenced icon.");
-            var svg = await IconImportArchive.ReadValidatedSvgAsync(iconEntry, cancellationToken);
+            byte[]? svg = null;
+            string? iconPath = null;
+            ImportedRuntimeIcon? runtimeIcon = null;
+            if (document.FormatVersion == 1)
+            {
+                iconPath = $"icons/{brand.Id}.svg";
+                if (!string.Equals(brand.Icon, iconPath, StringComparison.Ordinal)
+                    || !expectedFiles.Add(iconPath))
+                    throw new InvalidDataException("The OTP Harbor icon pack contains an invalid icon reference.");
+                var iconEntry = FindCanonicalEntry(entriesByPath, iconPath)
+                    ?? throw new InvalidDataException("The OTP Harbor icon pack is missing a referenced icon.");
+                svg = await IconImportArchive.ReadValidatedSvgAsync(iconEntry, cancellationToken);
+            }
+            else
+            {
+                var expectedRuntimePath = $"runtime/foreground-128/{brand.Id}.png";
+                var runtime = brand.RuntimeIcon!;
+                if (!string.Equals(runtime.Path, expectedRuntimePath, StringComparison.Ordinal)
+                    || !expectedFiles.Add(expectedRuntimePath))
+                    throw new InvalidDataException("The OTP Harbor icon pack contains an invalid runtime icon reference.");
+                var runtimeEntry = FindCanonicalEntry(entriesByPath, expectedRuntimePath)
+                    ?? throw new InvalidDataException("The OTP Harbor icon pack is missing a referenced runtime icon.");
+                var png = await IconImportArchive.ReadBoundedAsync(
+                    runtimeEntry,
+                    RuntimePngValidator.MaximumEncodedBytes,
+                    cancellationToken);
+                RuntimePngValidator.ValidateEncoded(png, runtime.Sha256!);
+                runtimeIcon = new ImportedRuntimeIcon(
+                    expectedRuntimePath,
+                    runtime.MediaType!,
+                    runtime.Width,
+                    runtime.Height,
+                    runtime.Sha256!,
+                    runtime.RenderProfile!);
+            }
 
             foreach (var alias in brand.IssuerAliases!)
             {
@@ -223,9 +256,10 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
                 brand.IssuerAliases,
                 ExpectedPackId,
                 brand.BackgroundColor!,
-                expectedIconPath,
+                iconPath,
                 selected,
-                contributing));
+                contributing,
+                runtimeIcon));
         }
 
         var aliasKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -249,9 +283,8 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         if (aliasKeys.Count != expectedAliases.Count)
             throw new InvalidDataException("The OTP Harbor icon pack issuer index is incomplete.");
 
-        foreach (var entry in archive.Entries.Where(value => value.Name.Length > 0))
+        foreach (var path in entriesByPath.Keys)
         {
-            var path = IconImportArchive.NormalizeEntryName(entry.FullName);
             if (!expectedFiles.Contains(path))
                 throw new InvalidDataException("The OTP Harbor icon pack contains an unreferenced file.");
         }
@@ -259,16 +292,42 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         return new IconPackImportResult(
             ExpectedPackId,
             document.Name!,
-            $"format-{CurrentFormatVersion}",
+            $"format-{document.FormatVersion}",
             BrandIconPackFormat.OtpHarbor,
             icons,
             notices,
             new IconPackMetadata(
-                CurrentFormatVersion,
+                document.FormatVersion,
                 document.PackId!,
                 document.Name!,
                 sources,
                 aliases));
+    }
+
+    private static void ValidateVersionSpecificManifestShape(
+        ReadOnlyMemory<byte> manifestBytes,
+        int formatVersion)
+    {
+        if (formatVersion is < MinimumFormatVersion or > MaximumFormatVersion) return;
+        using var json = JsonDocument.Parse(manifestBytes, new JsonDocumentOptions
+        {
+            AllowTrailingCommas = false,
+            CommentHandling = JsonCommentHandling.Disallow,
+            MaxDepth = 32
+        });
+        if (!json.RootElement.TryGetProperty("brands", out var brands)
+            || brands.ValueKind != JsonValueKind.Array)
+            return;
+        foreach (var brand in brands.EnumerateArray())
+        {
+            var containsRuntimeIcon = brand.ValueKind == JsonValueKind.Object
+                && brand.TryGetProperty("runtimeIcon", out _);
+            var containsIcon = brand.ValueKind == JsonValueKind.Object
+                && brand.TryGetProperty("icon", out _);
+            if (formatVersion == 1 && (!containsIcon || containsRuntimeIcon)
+                || formatVersion == 2 && (containsIcon || !containsRuntimeIcon))
+                throw new InvalidDataException("The OTP Harbor icon pack mixes incompatible format members.");
+        }
     }
 
     private static void ValidatePackSource(PackSource source, ISet<string> providers)
@@ -290,7 +349,10 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
             throw new InvalidDataException("The OTP Harbor icon pack contains invalid source provenance.");
     }
 
-    private static void ValidateBrandShape(PackBrand brand, IReadOnlySet<string> sourceProviders)
+    private static void ValidateBrandShape(
+        PackBrand brand,
+        IReadOnlySet<string> sourceProviders,
+        int formatVersion)
     {
         if (brand.Id is null
             || !CanonicalIdRegex().IsMatch(brand.Id)
@@ -303,6 +365,22 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
             || brand.Sources is null
             || brand.Sources.Count is <= 0 or > MaximumSourcesPerBrand)
             throw new InvalidDataException("The OTP Harbor icon pack contains invalid brand metadata.");
+
+        if (formatVersion == 1 && (brand.Icon is null || brand.RuntimeIcon is not null))
+            throw new InvalidDataException("A format-1 OTP Harbor icon pack cannot contain runtime icons.");
+        if (formatVersion == 2
+            && (brand.Icon is not null
+                || brand.RuntimeIcon is null
+                || !string.Equals(brand.RuntimeIcon.MediaType, RuntimeMediaType, StringComparison.Ordinal)
+                || brand.RuntimeIcon.Width != RuntimePngValidator.Width
+                || brand.RuntimeIcon.Height != RuntimePngValidator.Height
+                || brand.RuntimeIcon.Sha256 is null
+                || !LowercaseSha256Regex().IsMatch(brand.RuntimeIcon.Sha256)
+                || !string.Equals(
+                    brand.RuntimeIcon.RenderProfile,
+                    RuntimeRenderProfile,
+                    StringComparison.Ordinal)))
+            throw new InvalidDataException("The OTP Harbor icon pack contains invalid runtime icon metadata.");
 
         var originalAliases = new HashSet<string>(StringComparer.Ordinal);
         foreach (var alias in brand.IssuerAliases)
@@ -349,29 +427,33 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
     private static IconPackSourceReference ToSourceReference(SourceReference source) =>
         new(source.Provider!, source.SourceId!, source.Metadata!);
 
-    private static ZipArchiveEntry? FindRootManifest(ZipArchive archive)
+    private static IReadOnlyDictionary<string, ZipArchiveEntry> CreateCanonicalFileIndex(
+        ZipArchive archive)
     {
-        var matches = archive.Entries.Where(entry =>
-            string.Equals(
-                IconImportArchive.NormalizeEntryName(entry.FullName),
-                ManifestPath,
-                StringComparison.Ordinal)).ToArray();
-        if (matches.Length > 1) throw new InvalidDataException("The OTP Harbor icon pack contains duplicate manifests.");
-        return matches.Length == 1 && matches[0].Length is > 0 and <= MaximumPackJsonBytes
-            ? matches[0]
+        var entries = new Dictionary<string, ZipArchiveEntry>(StringComparer.Ordinal);
+        foreach (var entry in archive.Entries.Where(static entry => entry.Name.Length > 0))
+        {
+            var path = IconImportArchive.NormalizeEntryName(entry.FullName);
+            if (!entries.TryAdd(path, entry))
+                throw new InvalidDataException("The OTP Harbor icon pack contains duplicate files.");
+        }
+        return entries;
+    }
+
+    private static ZipArchiveEntry? FindRootManifest(
+        IReadOnlyDictionary<string, ZipArchiveEntry> entriesByPath)
+    {
+        return entriesByPath.TryGetValue(ManifestPath, out var manifest)
+               && manifest.Length is > 0 and <= MaximumPackJsonBytes
+            ? manifest
             : null;
     }
 
-    private static ZipArchiveEntry? FindCanonicalEntry(ZipArchive archive, string path)
+    private static ZipArchiveEntry? FindCanonicalEntry(
+        IReadOnlyDictionary<string, ZipArchiveEntry> entriesByPath,
+        string path)
     {
-        var entry = IconImportArchive.FindEntryByPath(archive, path);
-        return entry is not null
-               && string.Equals(
-                   IconImportArchive.NormalizeEntryName(entry.FullName),
-                   path,
-                   StringComparison.Ordinal)
-            ? entry
-            : null;
+        return entriesByPath.TryGetValue(path, out var entry) ? entry : null;
     }
 
     private static bool IsCanonicalArchivePath(string path)
@@ -429,6 +511,17 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         public List<string>? IssuerAliases { get; init; }
         public SourceReference? SelectedSource { get; init; }
         public List<SourceReference>? Sources { get; init; }
+        public RuntimeIconReference? RuntimeIcon { get; init; }
+    }
+
+    private sealed class RuntimeIconReference
+    {
+        public string? Path { get; init; }
+        public string? MediaType { get; init; }
+        public int Width { get; init; }
+        public int Height { get; init; }
+        public string? Sha256 { get; init; }
+        public string? RenderProfile { get; init; }
     }
 
     private sealed class SourceReference

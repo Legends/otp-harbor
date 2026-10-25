@@ -4,8 +4,22 @@ public sealed record BrandDefinition(
     string Id,
     string DisplayName,
     string BackgroundColor,
-    string IconFileName,
-    string? SourceFileName = null);
+    string? IconFileName,
+    string? SourceFileName = null,
+    BrandRuntimeIcon? RuntimeIcon = null);
+
+public sealed record BrandRuntimeIcon(
+    string CacheKey,
+    string? FilePath,
+    string Sha256,
+    int Width,
+    int Height,
+    string? ArchivePath = null,
+    string? ArchiveEntryPath = null,
+    string? BrandId = null)
+{
+    public bool IsArchiveBacked => ArchivePath is not null && ArchiveEntryPath is not null;
+}
 
 public sealed record BrandIconTransform(
     double M11,

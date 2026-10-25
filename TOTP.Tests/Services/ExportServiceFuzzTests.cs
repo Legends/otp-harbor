@@ -64,7 +64,7 @@ public sealed class ExportServiceFuzzTests
 
         for (var i = 0; i < 100; i++)
         {
-            var path = Path.Combine(temp.Path, $"fuzz-{i}.totp");
+            var path = Path.Combine(temp.Path, $"fuzz-{i}.otphbp");
             var bytes = new byte[rng.Next(1, 2048)];
             rng.NextBytes(bytes);
             await File.WriteAllBytesAsync(path, bytes, cancellationToken);
@@ -89,7 +89,7 @@ public sealed class ExportServiceFuzzTests
 
         for (var i = 0; i < 50; i++)
         {
-            var path = Path.Combine(temp.Path, $"fuzz-{i}.totp");
+            var path = Path.Combine(temp.Path, $"fuzz-{i}.otphbp");
             var bytes = new byte[rng.Next(1, 1024)];
             rng.NextBytes(bytes);
             await File.WriteAllBytesAsync(path, bytes, cancellationToken);

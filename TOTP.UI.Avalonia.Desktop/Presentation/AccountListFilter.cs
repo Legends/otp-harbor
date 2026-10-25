@@ -1,3 +1,5 @@
+using TOTP.Avalonia.Shared.Presentation;
+
 namespace TOTP.Avalonia.Desktop.Presentation;
 
 internal static class AccountListFilter
@@ -10,24 +12,22 @@ internal static class AccountListFilter
         bool allAccounts = false)
     {
         ArgumentNullException.ThrowIfNull(accounts);
-        var terms = (searchText ?? string.Empty)
-            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (terms.Length == 0 && !favoritesOnly)
-            return groupId is null
-                ? accounts.ToArray()
-                : accounts.Where(account => account.Groups.Any(group => group.Id == groupId)).ToArray();
-
-        return accounts
+        var candidates = accounts
             .Where(account =>
                 (!favoritesOnly || account.IsFavorite)
                 && (favoritesOnly || groupId is null
-                    || account.Groups.Any(group => group.Id == groupId))
-                && terms.All(term =>
-                    account.Issuer.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || account.AccountName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || account.Groups.Any(group => group.Name.Contains(
-                        term,
-                        StringComparison.OrdinalIgnoreCase))))
+                    || account.Groups.Any(group => group.Id == groupId)))
             .ToArray();
+
+        return RankedTextFilter.ApplyTerms(
+            candidates,
+            searchText,
+            static account => 2 + account.Groups.Count,
+            static (account, index) => index switch
+            {
+                0 => account.Issuer,
+                1 => account.AccountName,
+                _ => account.Groups[index - 2].Name
+            });
     }
 }

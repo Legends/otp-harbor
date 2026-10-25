@@ -14,9 +14,14 @@ public sealed record BrandInfo(
     IImage? IconImage = null,
     bool IsCustomIcon = false,
     IReadOnlyList<BrandIconLayer>? IconLayers = null,
-    BrandIconTransform? SourceTransform = null)
+    BrandIconTransform? SourceTransform = null,
+    BrandRuntimeIcon? RuntimeIcon = null)
 {
-    public bool HasIcon => IconData is not null || IconImage is not null || IconLayers is { Count: > 0 };
+    public bool HasVectorIcon => IconData is not null
+        || IconImage is not null
+        || IconLayers is { Count: > 0 };
+
+    public bool HasIcon => RuntimeIcon is not null || HasVectorIcon;
 
     public static BrandInfo Generic(string? issuer)
     {

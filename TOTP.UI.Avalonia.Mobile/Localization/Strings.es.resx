@@ -101,7 +101,8 @@
   <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
   <data name="NoSearchResults" xml:space="preserve"><value>No hay cuentas coincidentes.</value></data>
   <data name="AccountSwipeHint" xml:space="preserve"><value>Deslice a la derecha para QR y editar, o a la izquierda para eliminar. La cámara también importa exportaciones de Google Authenticator.</value></data>
-  <data name="ScanQr" xml:space="preserve"><value>Escanear QR de cuenta o Google Authenticator</value></data>
+  <data name="ScanQr" xml:space="preserve"><value>Escanear código QR</value></data>
+  <data name="UploadQrImage" xml:space="preserve"><value>Subir imagen de código QR</value></data>
   <data name="QrScannerUnavailable" xml:space="preserve"><value>El escaneo QR no está disponible. Añada la cuenta manualmente.</value></data>
   <data name="QrScanFailed" xml:space="preserve"><value>No se pudo escanear el código QR de forma segura.</value></data>
   <data name="QrScanRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor se bloqueó durante el escaneo. Desbloquéelo y vuelva a escanear el código QR.</value></data>
@@ -109,14 +110,25 @@
   <data name="QrAccountAdded" xml:space="preserve"><value>Cuenta añadida desde el código QR.</value></data>
   <data name="QrAccountUpdated" xml:space="preserve"><value>Cuenta existente actualizada desde el código QR.</value></data>
   <data name="QrAccountKeptBoth" xml:space="preserve"><value>Se conservaron ambas cuentas.</value></data>
+  <data name="QrAccountSkipped" xml:space="preserve"><value>Se omitió la cuenta modificada.</value></data>
   <data name="QrAccountDuplicate" xml:space="preserve"><value>Esta cuenta ya existe y no ha cambiado.</value></data>
   <data name="QrImportCancelled" xml:space="preserve"><value>Importación QR cancelada. No se modificó ninguna cuenta.</value></data>
-  <data name="QrBulkImported" xml:space="preserve"><value>Importación QR: {0} importadas, {1} sin cambios, {2} con error.</value></data>
-  <data name="QrBulkImportedMore" xml:space="preserve"><value>QR {0} de {1}: {2} importadas, {3} sin cambios, {4} con error. Escanee el siguiente código QR.</value></data>
+  <data name="QrBulkImported" xml:space="preserve"><value>Importación QR completada. Añadidas: {0}. Actualizadas: {1}. Ambas conservadas: {2}. Sin cambios: {3}. Omitidas: {4}. Con error: {5}.</value></data>
+  <data name="QrBulkImportedMore" xml:space="preserve"><value>QR {0} de {1} completado. Añadidas: {2}. Actualizadas: {3}. Ambas conservadas: {4}. Sin cambios: {5}. Omitidas: {6}. Con error: {7}. Escanee el siguiente código QR.</value></data>
   <data name="QrConflictTitle" xml:space="preserve"><value>La cuenta ya existe</value></data>
   <data name="QrConflictPrompt" xml:space="preserve"><value>{0} ya existe con otro secreto. Elija cómo continuar.</value></data>
   <data name="UpdateExisting" xml:space="preserve"><value>Actualizar la cuenta existente</value></data>
   <data name="KeepBoth" xml:space="preserve"><value>Conservar ambas cuentas</value></data>
+  <data name="QrImportReviewTitle" xml:space="preserve"><value>Revisar importación QR</value></data>
+  <data name="QrImportReviewSummary" xml:space="preserve"><value>{0} cuentas: {1} nuevas, {2} sin cambios, {3} modificadas.</value></data>
+  <data name="QrImportChangedAccounts" xml:space="preserve"><value>Elija una acción para cada cuenta modificada. Los valores secretos nunca se muestran.</value></data>
+  <data name="KeepBothAll" xml:space="preserve"><value>Conservar ambas para todas</value></data>
+  <data name="ImportCancel" xml:space="preserve"><value>Cancelar importación</value></data>
+  <data name="QrSkipAccountAutomationFormat" xml:space="preserve"><value>Omitir {0}</value></data>
+  <data name="QrReplaceAccountAutomationFormat" xml:space="preserve"><value>Reemplazar {0}</value></data>
+  <data name="QrKeepBothAccountAutomationFormat" xml:space="preserve"><value>Conservar ambas para {0}</value></data>
+  <data name="QrImportResultTitle" xml:space="preserve"><value>Resultado de la importación QR</value></data>
+  <data name="Close" xml:space="preserve"><value>Cerrar</value></data>
   <data name="ShowQr" xml:space="preserve"><value>Mostrar código QR</value></data>
   <data name="DismissQr" xml:space="preserve"><value>Ocultar código QR</value></data>
   <data name="QrPrivacyNotice" xml:space="preserve"><value>Este código QR contiene el secreto de la cuenta. Compártalo únicamente con un autenticador de confianza.</value></data>
@@ -142,7 +154,7 @@
   <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Las copias automáticas están desactivadas. Los archivos existentes no se eliminaron.</value></data>
   <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>Se canceló la configuración de la copia automática.</value></data>
   <data name="BackupDescription" xml:space="preserve"><value>Exporte o restaure una copia de seguridad cifrada de OTP Harbor. Las cuentas existentes se omiten de forma predeterminada; las coincidencias modificadas se revisan antes de importar.</value></data>
-  <data name="ImportBackupDescription" xml:space="preserve"><value>Elija una copia cifrada de OTP Harbor. Para archivos .totp, introduzca la contraseña de exportación. Para archivos automáticos .otphbackup, introduzca la contraseña maestra activa cuando se creó la copia. Las cuentas existentes se omiten de forma predeterminada; revise cada coincidencia modificada antes de cambiar ninguna cuenta.</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Elija una copia cifrada de OTP Harbor. Para archivos .otphbp (o archivos .totp antiguos), introduzca la contraseña de exportación. Para archivos automáticos .otphbackup, introduzca la contraseña maestra activa cuando se creó la copia. Las cuentas existentes se omiten de forma predeterminada; revise cada coincidencia modificada antes de cambiar ninguna cuenta.</value></data>
   <data name="BackupContainsNoAccounts" xml:space="preserve"><value>Esta copia de seguridad no contiene cuentas para restaurar.</value></data>
   <data name="ImportAccountFile" xml:space="preserve"><value>Importar cuentas desde otros formatos</value></data>
   <data name="ImportAccountFileDescription" xml:space="preserve"><value>Formatos compatibles:</value></data>
@@ -151,7 +163,7 @@
   <data name="ConfirmBackupPassword" xml:space="preserve"><value>Confirmar contraseña de la copia de seguridad</value></data>
   <data name="ExportBackup" xml:space="preserve"><value>Exportar</value></data>
   <data name="ImportBackup" xml:space="preserve"><value>Restaurar</value></data>
-  <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.totp</value></data>
+  <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.otphbp</value></data>
   <data name="BackupPasswordRequired" xml:space="preserve"><value>Introduzca una contraseña para la copia de seguridad.</value></data>
   <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>La contraseña de la copia de seguridad debe contener al menos {0} caracteres.</value></data>
   <data name="BackupPasswordMismatch" xml:space="preserve"><value>Las contraseñas de la copia de seguridad no coinciden.</value></data>
@@ -231,8 +243,8 @@
   <data name="CodeCopied" xml:space="preserve"><value>Copiado</value></data>
   <data name="CodeCopyFailed" xml:space="preserve"><value>No se pudo copiar el código de forma segura.</value></data>
   <data name="LoadingAccountsFailed" xml:space="preserve"><value>No se pudieron cargar sus cuentas cifradas.</value></data>
-  <data name="EditorAddTitle" xml:space="preserve"><value>Añadir cuenta TOTP</value></data>
-  <data name="EditorEditTitle" xml:space="preserve"><value>Editar cuenta TOTP</value></data>
+  <data name="EditorAddTitle" xml:space="preserve"><value>Añadir cuenta</value></data>
+  <data name="EditorEditTitle" xml:space="preserve"><value>Editar cuenta</value></data>
   <data name="DeleteConfirmTitle" xml:space="preserve"><value>Confirmar eliminación</value></data>
   <data name="BiometricPromptTitle" xml:space="preserve"><value>Desbloquear OTP Harbor</value></data>
   <data name="BiometricPromptSubtitle" xml:space="preserve"><value>Confirme su identidad mediante biometría fuerte.</value></data>
@@ -341,7 +353,7 @@
   <data name="ViewImportFormatsFaq" xml:space="preserve"><value>¿Cómo deben estructurarse estos archivos de importación?</value></data>
   <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>¿Cómo importo cuentas desde distintos formatos?</value></data>
   <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Usa una exportación original sin cifrar de la aplicación de origen. Se rechazan las exportaciones cifradas de Aegis y 2FAS. Las siguientes estructuras mínimas muestran los campos obligatorios:</value></data>
-  <data name="FaqImportFormatsSupported" xml:space="preserve"><value>Importaciones compatibles: códigos QR TOTP otpauth:// estándar, códigos QR de transferencia de Google Authenticator, copias cifradas de OTP Harbor (.totp), exportaciones JSON de Aegis sin cifrar (.json), copias de 2FAS sin cifrar (.2fas), archivos de texto UTF-8 con una URI TOTP otpauth:// estándar por línea (.txt) y exportaciones antiguas de OTP Harbor sin cifrar en formato JSON (.json), texto delimitado por barras verticales (.txt) o CSV (.csv).</value></data>
+  <data name="FaqImportFormatsSupported" xml:space="preserve"><value>Importaciones compatibles: códigos QR TOTP otpauth:// estándar, códigos QR de transferencia de Google Authenticator, copias cifradas de OTP Harbor (.otphbp y archivos .totp antiguos), exportaciones JSON de Aegis sin cifrar (.json), copias de 2FAS sin cifrar (.2fas), archivos de texto UTF-8 con una URI TOTP otpauth:// estándar por línea (.txt) y exportaciones antiguas de OTP Harbor sin cifrar en formato JSON (.json), texto delimitado por barras verticales (.txt) o CSV (.csv).</value></data>
   <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>Aegis JSON (.json)</value></data>
   <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Exporta la bóveda desde Aegis sin cifrado y selecciona el archivo JSON resultante. OTP Harbor lee las entradas TOTP de db.entries. Se rechazan las bóvedas cifradas, las entradas HOTP y los parámetros TOTP no compatibles.</value></data>
   <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>

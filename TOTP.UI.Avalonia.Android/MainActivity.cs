@@ -30,6 +30,7 @@ public class MainActivity : AvaloniaMainActivity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        ApplyScreenCapturePolicy();
         if (Application is OtpHarborApplication host) host.AttachActivity(this);
     }
 
@@ -98,16 +99,15 @@ public class MainActivity : AvaloniaMainActivity
 
     private void ApplyScreenCapturePolicy()
     {
-        var window = Window;
-        if (window is null) return;
-
-#if OTP_HARBOR_MARKETING_CAPTURE
-        window.ClearFlags(WindowManagerFlags.Secure);
-#else
-        if (_screenCapturePolicy?.IsScreenCaptureProtectionRequired == true)
-            window.AddFlags(WindowManagerFlags.Secure);
-        else
-            window.ClearFlags(WindowManagerFlags.Secure);
-#endif
+        var protectionRequired = _screenCapturePolicy?.IsScreenCaptureProtectionRequired != false;
+        RunOnUiThread(() =>
+        {
+            var window = Window;
+            if (window is null) return;
+            var flags = protectionRequired
+                ? WindowManagerFlags.Secure
+                : (WindowManagerFlags)0;
+            window.SetFlags(flags, WindowManagerFlags.Secure);
+        });
     }
 }
