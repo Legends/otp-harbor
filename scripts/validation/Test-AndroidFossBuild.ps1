@@ -19,10 +19,10 @@ function Read-RequiredFile([string]$RelativePath) {
 }
 
 $sdkConfiguration = Read-RequiredFile 'global.json' | ConvertFrom-Json
-if ($sdkConfiguration.sdk.version -cne '10.0.401' -or
+if ($sdkConfiguration.sdk.version -cne '10.0.402' -or
     $sdkConfiguration.sdk.rollForward -cne 'disable' -or
     $sdkConfiguration.sdk.allowPrerelease -ne $false) {
-    throw 'global.json must pin stable .NET SDK 10.0.401 with roll-forward disabled.'
+    throw 'global.json must pin stable .NET SDK 10.0.402 with roll-forward disabled.'
 }
 
 $nugetConfiguration = [xml](Read-RequiredFile 'NuGet.config')
@@ -114,7 +114,7 @@ foreach ($packageId in $packageIds) {
 
 $workflow = Read-RequiredFile '.github\workflows\build-and-test.yml'
 foreach ($required in @(
-    'dotnet-version: "10.0.401"',
+    'dotnet-version: "10.0.402"',
     'dotnet restore TOTP.Android.sln --locked-mode',
     'dotnet restore TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj --locked-mode',
     'dotnet workload install android --skip-manifest-update',
