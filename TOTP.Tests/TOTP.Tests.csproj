@@ -39,6 +39,8 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="..\TOTP.UI.Avalonia.Android\NativeTextSizing.cs"
+             Link="Fixtures\Android\NativeTextSizing.cs" />
   </ItemGroup>
 
   <ItemGroup>

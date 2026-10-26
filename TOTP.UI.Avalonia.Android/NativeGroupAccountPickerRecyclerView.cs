@@ -44,7 +44,6 @@ internal sealed class NativeGroupAccountPickerRecyclerView : RecyclerView
         _viewModel.GroupEditorAccounts.CollectionChanged -= AccountsChanged;
         _viewModel.PropertyChanged -= ViewModelPropertyChanged;
         _adapter.DisposeAdapter();
-        SetAdapter(null);
         Dispose();
     }
 

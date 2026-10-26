@@ -40,7 +40,7 @@ internal sealed class NativeAccountRowView : View
     private readonly global::Android.Graphics.Path _editPath = new();
     private readonly int _touchSlop;
     private readonly float _density;
-    private readonly float _scaledDensity;
+    private readonly float _fontScale;
     private NativeAccountRow? _row;
     private ValueAnimator? _settleAnimator;
     private ValueAnimator? _highlightAnimator;
@@ -72,7 +72,7 @@ internal sealed class NativeAccountRowView : View
         _brandIcons = brandIcons;
         _openRowChanged = openRowChanged;
         _density = Resources?.DisplayMetrics?.Density ?? 1f;
-        _scaledDensity = _density * (Resources?.Configuration?.FontScale ?? 1f);
+        _fontScale = Resources?.Configuration?.FontScale ?? 1f;
         _touchSlop = ViewConfiguration.Get(context)?.ScaledTouchSlop ?? Dp(8);
         Clickable = true;
         Focusable = true;
@@ -433,32 +433,32 @@ internal sealed class NativeAccountRowView : View
 
         var codeRight = card.Right - Dp(10);
         _text.Color = palette.Primary;
-        _text.TextSize = Sp(17);
+        _text.TextSize = ResponsiveSp(17);
         _text.SetTypeface(Typeface.DefaultBold);
         canvas.DrawText(_displayIssuer, left, card.Top + Dp(28), _text);
 
         _text.SetTypeface(Typeface.Default);
-        _text.TextSize = Sp(14);
+        _text.TextSize = ResponsiveSp(14);
         _text.Color = palette.AccountName;
         canvas.DrawText(_displaySecondary, left, card.Top + Dp(51), _text);
 
         _text.SetTypeface(Typeface.Monospace);
         _text.TextAlign = Paint.Align.Right;
-        _text.TextSize = Sp(24);
+        SetFittedTextSize(_displayCode, 24, 18, CodeAvailableWidth);
         _text.Color = palette.Code;
         canvas.DrawText(_displayCode, codeRight, card.Top + Dp(35), _text);
 
         if (account.HasVisibleNextCode)
         {
             _text.SetTypeface(Typeface.Monospace);
-            _text.TextSize = Sp(16);
+            SetFittedTextSize(_displayNextCode, 16, 12, CodeAvailableWidth);
             _text.Color = palette.Secondary;
             canvas.DrawText(_displayNextCode, codeRight, card.Top + Dp(55), _text);
         }
         else
         {
             _text.SetTypeface(Typeface.DefaultBold);
-            _text.TextSize = Sp(10);
+            SetFittedTextSize(account.CopyConfirmation, 10, 8, CodeAvailableWidth);
             _text.Color = palette.CopyConfirmation;
             canvas.DrawText(account.CopyConfirmation, codeRight, card.Top + Dp(54), _text);
         }
@@ -523,7 +523,7 @@ internal sealed class NativeAccountRowView : View
 
         _text.SetTypeface(Typeface.DefaultBold);
         _text.TextAlign = Paint.Align.Center;
-        _text.TextSize = Sp(15);
+        _text.TextSize = ResponsiveSp(15);
         _text.Color = Color.White;
         var baseline = centerY - (_text.Ascent() + _text.Descent()) / 2;
         canvas.DrawText(account.Brand.Initials, bounds.CenterX(), baseline, _text);
@@ -725,7 +725,31 @@ internal sealed class NativeAccountRowView : View
     private RectF CardBounds => _cardBounds;
 
     private int Dp(float value) => (int)MathF.Round(value * _density);
-    private float Sp(float value) => value * _scaledDensity;
+    private float ResponsiveSp(float value) => NativeTextSizing.ResolvePixels(
+        value,
+        _density,
+        _fontScale,
+        Width > 0 ? Width / _density : 344f,
+        344f);
+
+    private float CodeAvailableWidth => Math.Max(
+        0,
+        _cardBounds.Right - Dp(10) - (GetStarLeft() + Dp(46)));
+
+    private void SetFittedTextSize(
+        string value,
+        float preferredSp,
+        float minimumSp,
+        float availableWidth)
+    {
+        var preferredPixels = ResponsiveSp(preferredSp);
+        _text.TextSize = preferredPixels;
+        _text.TextSize = NativeTextSizing.FitPixels(
+            preferredPixels,
+            _text.MeasureText(value),
+            availableWidth,
+            ResponsiveSp(minimumSp));
+    }
 
     private string Ellipsize(string value, float availableWidth)
     {
@@ -760,7 +784,7 @@ internal sealed class NativeAccountRowView : View
         var availableWidth = Math.Max(0, GetStarLeft() - Dp(8) - left);
 
         _text.SetTypeface(Typeface.DefaultBold);
-        _text.TextSize = Sp(17);
+        _text.TextSize = ResponsiveSp(17);
         _displayIssuer = Ellipsize(account.Issuer, availableWidth);
 
         var secondary = account.AccountName;
@@ -771,7 +795,7 @@ internal sealed class NativeAccountRowView : View
                 : $"{secondary} · {account.CustomPeriodLabel}";
         }
         _text.SetTypeface(Typeface.Default);
-        _text.TextSize = Sp(14);
+        _text.TextSize = ResponsiveSp(14);
         _displaySecondary = Ellipsize(secondary, availableWidth);
     }
 

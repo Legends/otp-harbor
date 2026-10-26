@@ -93,11 +93,9 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
         _viewModel.Accounts.CollectionChanged -= AccountsChanged;
         _viewModel.PropertyChanged -= ViewModelPropertyChanged;
         _deleteConfirmationDialog.Dispose();
-        RemoveOnScrollListener(_scrollListener);
         _viewModel.SetAccountListScrolling(false);
         _viewModel.SetRealizedAccounts([]);
         _adapter.DisposeAdapter();
-        SetAdapter(null);
         _brandIcons.RuntimeIconReady -= RuntimeIconReady;
         Dispose();
     }

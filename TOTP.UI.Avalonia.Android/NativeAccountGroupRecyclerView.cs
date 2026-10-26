@@ -66,7 +66,6 @@ internal sealed class NativeAccountGroupRecyclerView : RecyclerView
         _viewModel.Groups.CollectionChanged -= GroupsChanged;
         _viewModel.PropertyChanged -= ViewModelPropertyChanged;
         _adapter.ReplaceAll([]);
-        SetAdapter(null);
         Dispose();
     }
 
@@ -250,7 +249,7 @@ internal sealed class NativeAccountGroupView : View
     private readonly global::Android.Graphics.Path _folderPath = new();
     private readonly global::Android.Graphics.Path _editPath = new();
     private readonly float _density;
-    private readonly float _scaledDensity;
+    private readonly float _fontScale;
     private readonly int _touchSlop;
     private NativeAccountGroupRow? _row;
     private float _downX;
@@ -263,7 +262,7 @@ internal sealed class NativeAccountGroupView : View
     {
         _viewModel = viewModel;
         _density = Resources?.DisplayMetrics?.Density ?? 1f;
-        _scaledDensity = _density * (Resources?.Configuration?.FontScale ?? 1f);
+        _fontScale = Resources?.Configuration?.FontScale ?? 1f;
         _touchSlop = ViewConfiguration.Get(context)?.ScaledTouchSlop ?? Dp(8);
         Clickable = true;
         Focusable = true;
@@ -346,12 +345,12 @@ internal sealed class NativeAccountGroupView : View
         }
 
         _text.SetTypeface(Typeface.DefaultBold);
-        _text.TextSize = Sp(15);
+        _text.TextSize = ResponsiveSp(15);
         _text.Color = row.IsFavorites ? palette.FavoriteForeground : palette.Primary;
         canvas.DrawText(_displayName, Dp(43), Height / 2f + Dp(5), _text);
 
         _text.SetTypeface(Typeface.Default);
-        _text.TextSize = Sp(12);
+        _text.TextSize = ResponsiveSp(12);
         var countRight = row.IsFavorites ? Width - Dp(12) : Width - Dp(48);
         _text.TextAlign = Paint.Align.Right;
         canvas.DrawText(_displayCount, countRight, Height / 2f + Dp(5), _text);
@@ -446,7 +445,7 @@ internal sealed class NativeAccountGroupView : View
         var row = _row;
         if (row is null || Width <= 0) return;
         _text.SetTypeface(Typeface.DefaultBold);
-        _text.TextSize = Sp(15);
+        _text.TextSize = ResponsiveSp(15);
         var right = row.IsFavorites ? Width - Dp(42) : Width - Dp(78);
         _displayName = Ellipsize(row.Name, Math.Max(0, right - Dp(43)));
     }
@@ -510,7 +509,16 @@ internal sealed class NativeAccountGroupView : View
     }
 
     private int Dp(float value) => (int)MathF.Round(value * _density);
-    private float Sp(float value) => value * _scaledDensity;
+    private float ResponsiveSp(float value)
+    {
+        var viewportWidthDp = (Resources?.DisplayMetrics?.WidthPixels ?? Width) / _density;
+        return NativeTextSizing.ResolvePixels(
+            value,
+            _density,
+            _fontScale,
+            viewportWidthDp,
+            360f);
+    }
 
     private static Color TryColor(string value, Color fallback)
     {

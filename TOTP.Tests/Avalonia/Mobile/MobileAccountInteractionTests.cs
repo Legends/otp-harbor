@@ -74,6 +74,21 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AndroidNativeAccountList_DisposalToleratesAnAlreadyDestroyedNativePeer()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeAccountRecyclerView.cs"));
+
+        Assert.Contains("if (_disposed) return;", source);
+        Assert.Contains("_disposed = true;", source);
+        Assert.DoesNotContain("RemoveOnScrollListener(_scrollListener);", source);
+        Assert.DoesNotContain("SetAdapter(null);", source);
+    }
+
+    [Fact]
     public void AndroidAccountList_ShowsImmediatelyAndPrewarmsSixHundredIntoAnApplicationCache()
     {
         var recyclerSource = File.ReadAllText(Path.Combine(
