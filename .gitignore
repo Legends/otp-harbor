@@ -6,6 +6,7 @@ obj/
 [Bb]uilds/
 .vs/
 .git-commands/
+.codex
 artifacts
 
 # Rider IDE
