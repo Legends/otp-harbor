@@ -27,7 +27,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private const int MaximumAliasesPerBrand = 32;
     private const int MaximumInstalledIndexBytes = 256 * 1024 * 1024;
     private const int MaximumInstalledPacks = 32;
-    private const int PackFormatVersion = 6;
+    private const int PackFormatVersion = 7;
     private const string StorageDirectoryName = "BrandIcons";
     private const string CurrentPackFileName = "current.json";
     private const string InstalledPacksFileName = "installed-packs.json";
@@ -36,6 +36,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private const string CustomIconIndexFileName = "custom-icon-index.json";
     private const string IndexFileName = "brand-index.json";
     private const string RuntimeArchiveFileName = "pack.otphicons";
+    private const string RetiredPacksDirectoryPrefix = ".packs-reset-";
+    private const string RetiredPacksDirectorySuffix = ".retired";
 
     private readonly string _storageRoot;
     private readonly string _packsRoot;
@@ -49,6 +51,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private readonly ILogger<SimpleIconsBrandIconPackService> _logger;
     private readonly IIconPackImporterResolver _importerResolver;
     private readonly ICustomIconImporter _customIconImporter;
+    private readonly Action<Action> _scheduleBackgroundWork;
     private IssuerAliasResolver _issuerAliases = IssuerAliasResolver.Empty;
     private readonly SemaphoreSlim _importLock = new(1, 1);
     private readonly object _initializationLock = new();
@@ -78,7 +81,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     new FilenameIndexedIconPackImporter()
                 ],
                 NullLogger<IconPackImporterResolver>.Instance),
-            new SvgIconImporter())
+            new CustomIconImporter())
     {
     }
 
@@ -88,12 +91,31 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         ILogger<SimpleIconsBrandIconPackService> logger,
         IIconPackImporterResolver importerResolver,
         ICustomIconImporter customIconImporter)
+        : this(
+            applicationPaths,
+            fileSecurity,
+            logger,
+            importerResolver,
+            customIconImporter,
+            action => _ = Task.Run(action))
+    {
+    }
+
+    internal SimpleIconsBrandIconPackService(
+        IPlatformApplicationPaths applicationPaths,
+        IPlatformFileSecurity fileSecurity,
+        ILogger<SimpleIconsBrandIconPackService> logger,
+        IIconPackImporterResolver importerResolver,
+        ICustomIconImporter customIconImporter,
+        Action<Action> scheduleBackgroundWork)
     {
         ArgumentNullException.ThrowIfNull(applicationPaths);
         _fileSecurity = fileSecurity ?? throw new ArgumentNullException(nameof(fileSecurity));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _importerResolver = importerResolver ?? throw new ArgumentNullException(nameof(importerResolver));
         _customIconImporter = customIconImporter ?? throw new ArgumentNullException(nameof(customIconImporter));
+        _scheduleBackgroundWork = scheduleBackgroundWork
+            ?? throw new ArgumentNullException(nameof(scheduleBackgroundWork));
         _storageRoot = Path.Combine(applicationPaths.ApplicationDataDirectory, StorageDirectoryName);
         _packsRoot = Path.Combine(_storageRoot, "packs");
         _currentPackPath = Path.Combine(_storageRoot, CurrentPackFileName);
@@ -365,6 +387,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             installationTimer.Start();
             var isOtpHarborPack = parsed.Format == BrandIconPackFormat.OtpHarbor;
             var isOtpHarborV2 = isOtpHarborPack && parsed.Metadata?.FormatVersion == 2;
+            var isOtpHarborV3 = isOtpHarborPack && parsed.Metadata?.FormatVersion == 3;
+            var isOtpHarborRuntimePack = isOtpHarborV2 || isOtpHarborV3;
             var packageVersion = parsed.Version;
             var packPrefix = SanitizeVersion(parsed.ProviderId).ToLowerInvariant();
             if (packPrefix.Length == 0)
@@ -382,9 +406,11 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             }
 
             var hasRuntimeIcons = parsed.Icons.Any(static icon => icon.RuntimeIcon is not null);
-            if (hasRuntimeIcons != isOtpHarborV2)
+            var hasRuntimeAppearances = parsed.Icons.Any(static icon => icon.RuntimeAppearances is not null);
+            if (hasRuntimeIcons != isOtpHarborV2
+                || hasRuntimeAppearances != isOtpHarborV3)
                 throw new InvalidDataException("The normalized icon pack runtime layout is invalid.");
-            if (isOtpHarborV2)
+            if (isOtpHarborRuntimePack)
             {
                 var installedArchivePath = Path.Combine(stagingDirectory, RuntimeArchiveFileName);
                 File.Move(temporaryArchive, installedArchivePath);
@@ -402,7 +428,13 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                         ? OtpHarborCanonicalIdRegex().IsMatch(sourceBrand.Id)
                         : SafeSlugRegex().IsMatch(sourceBrand.Id))
                     || isOtpHarborV2 && (sourceBrand.SvgData is not null || sourceBrand.RuntimeIcon is null)
-                    || !isOtpHarborV2 && (!hasValidSvg || sourceBrand.RuntimeIcon is not null)
+                    || isOtpHarborV3 && (sourceBrand.SvgData is not null
+                        || sourceBrand.RuntimeIcon is not null
+                        || sourceBrand.RuntimeAppearances is null)
+                    || !isOtpHarborRuntimePack
+                        && (!hasValidSvg
+                            || sourceBrand.RuntimeIcon is not null
+                            || sourceBrand.RuntimeAppearances is not null)
                     || !IsSafeDisplayText(sourceBrand.Name, 256))
                     throw new InvalidDataException("The normalized icon pack contains invalid icon metadata.");
                 string? iconFileName = null;
@@ -434,6 +466,13 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                         runtimeIcon.RenderProfile,
                         runtimeIcon.ArchivePath);
                 }
+                InstalledRuntimeAppearances? installedRuntimeAppearances = null;
+                if (sourceBrand.RuntimeAppearances is { } appearances)
+                {
+                    installedRuntimeAppearances = new InstalledRuntimeAppearances(
+                        ToInstalledAppearance(appearances.LightTheme),
+                        ToInstalledAppearance(appearances.DarkTheme));
+                }
                 imported.Add(new IndexBrand(
                     sourceBrand.Id,
                     sourceBrand.Name,
@@ -442,11 +481,12 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     aliases,
                     sourceBrand.SelectedSource,
                     sourceBrand.Sources,
-                    installedRuntimeIcon));
+                    installedRuntimeIcon,
+                    installedRuntimeAppearances));
             }
             if (imported.Count == 0) return Result.Fail("The archive did not contain usable brand icon assets.");
 
-            if (parsed.Notices.Count > 0 && !isOtpHarborV2)
+            if (parsed.Notices.Count > 0 && !isOtpHarborRuntimePack)
             {
                 var noticesDirectory = Path.Combine(stagingDirectory, "notices");
                 Directory.CreateDirectory(noticesDirectory);
@@ -595,15 +635,33 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
     }
 
+    private static InstalledRuntimeAppearance ToInstalledAppearance(
+        ImportedRuntimeAppearance appearance) =>
+        new(
+            new InstalledRuntimeIcon(
+                null,
+                appearance.Asset.Sha256,
+                appearance.Asset.Width,
+                appearance.Asset.Height,
+                appearance.Asset.MediaType,
+                appearance.Asset.RenderProfile,
+                appearance.Asset.ArchivePath),
+            appearance.AssetRole,
+            appearance.BackgroundMode,
+            appearance.BackgroundColor,
+            appearance.Selection,
+            appearance.Source,
+            appearance.AppearanceSelectionReason);
+
     public async Task<Result<BrandDefinition>> ImportCustomIconAsync(
         Guid accountId,
-        Stream svgStream,
+        Stream imageStream,
         string? fileName = null,
         CancellationToken cancellationToken = default)
     {
         if (accountId == Guid.Empty)
             return Result.Fail<BrandDefinition>("The account identifier is invalid.");
-        ArgumentNullException.ThrowIfNull(svgStream);
+        ArgumentNullException.ThrowIfNull(imageStream);
 
         await InitializeAsync(cancellationToken);
         await _importLock.WaitAsync(cancellationToken);
@@ -615,7 +673,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             var imported = await _customIconImporter.ImportAsync(
                 new CustomIconSource
                 {
-                    Stream = svgStream,
+                    Stream = imageStream,
                     FileName = fileName
                 },
                 cancellationToken);
@@ -623,12 +681,22 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 return Result.Fail<BrandDefinition>(imported.Errors);
 
             var icon = imported.Value;
+            var hasSvg = icon.SvgData is { Length: > 0 };
+            var hasPng = icon.PngData is { Length: > 0 };
             if (!SafeSlugRegex().IsMatch(icon.Id)
-                || icon.SvgData is not { Length: > 0 } svgData
-                || svgData.Length > MaximumSvgBytes
+                || hasSvg == hasPng
                 || !IsSafeDisplayText(icon.Name, 256))
             {
-                return Result.Fail<BrandDefinition>("The selected custom SVG is invalid.");
+                return Result.Fail<BrandDefinition>("The selected custom icon is invalid.");
+            }
+            var imageData = hasSvg ? icon.SvgData! : icon.PngData!;
+            if (imageData.Length > MaximumSvgBytes)
+                return Result.Fail<BrandDefinition>("The selected custom icon is invalid.");
+            string? pngSha256 = null;
+            if (hasPng)
+            {
+                pngSha256 = Convert.ToHexString(SHA256.HashData(imageData)).ToLowerInvariant();
+                RuntimePngProfileValidator.ValidateCustomEncoded(imageData, pngSha256);
             }
 
             Directory.CreateDirectory(_storageRoot);
@@ -636,12 +704,12 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             _fileSecurity.RestrictDirectoryToCurrentUser(_storageRoot);
             _fileSecurity.RestrictDirectoryToCurrentUser(_customIconsRoot);
 
-            var iconFileName = $"{icon.Id}.svg";
+            var iconFileName = $"{icon.Id}.{(hasPng ? "png" : "svg")}";
             var finalIconPath = Path.Combine(_customIconsRoot, iconFileName);
             temporaryIconPath = Path.Combine(
                 _customIconsRoot,
                 $".{icon.Id}-{Guid.NewGuid():N}.tmp");
-            await File.WriteAllBytesAsync(temporaryIconPath, svgData, cancellationToken);
+            await File.WriteAllBytesAsync(temporaryIconPath, imageData, cancellationToken);
             _fileSecurity.RestrictFileToCurrentUser(temporaryIconPath);
             File.Move(temporaryIconPath, finalIconPath, overwrite: true);
             temporaryIconPath = null;
@@ -651,8 +719,17 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 icon.Id,
                 icon.Name,
                 icon.BackgroundColor,
-                iconFileName,
-                icon.SourceFileName);
+                hasSvg ? iconFileName : null,
+                icon.SourceFileName,
+                hasPng
+                    ? new BrandRuntimeIcon(
+                        $"{icon.Id}:{pngSha256}",
+                        finalIconPath,
+                        pngSha256!,
+                        RuntimePngValidator.Width,
+                        RuntimePngValidator.Height,
+                        BrandId: icon.Id)
+                    : null);
             var customIcons = new Dictionary<string, BrandDefinition>(
                 Volatile.Read(ref _customIcons),
                 StringComparer.OrdinalIgnoreCase)
@@ -665,15 +742,21 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             await WriteJsonAsync(
                 temporaryIndexPath,
                 new CustomIconIndex(
-                    1,
+                    2,
                     customIcons.Values
                         .OrderBy(value => value.Id, StringComparer.Ordinal)
                         .Select(value => new CustomIconEntry(
                             value.Id,
                             value.DisplayName,
                             value.BackgroundColor,
-                            value.IconFileName!,
-                            value.SourceFileName))
+                            value.IconFileName
+                                ?? Path.GetFileName(value.RuntimeIcon?.FilePath)
+                                ?? throw new InvalidDataException(
+                                    "The custom icon storage metadata is invalid."),
+                            value.SourceFileName,
+                            value.RuntimeIcon?.Sha256,
+                            value.RuntimeIcon?.Width,
+                            value.RuntimeIcon?.Height))
                         .ToList()),
                 cancellationToken);
             _fileSecurity.RestrictFileToCurrentUser(temporaryIndexPath);
@@ -713,9 +796,9 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "A local per-account custom SVG could not be imported.");
+            _logger.LogWarning(ex, "A local per-account custom icon could not be imported.");
             return Result.Fail<BrandDefinition>(
-                "The selected custom SVG is invalid or could not be stored safely.");
+                "The selected custom icon is invalid or could not be stored safely.");
         }
         finally
         {
@@ -741,9 +824,10 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 return Result.Fail("The local brand-icon storage location is invalid.");
             }
 
-            await Task.Run(RemoveImportedPackFiles, cancellationToken);
+            var retiredPacksDirectory = RetireImportedPackActivation();
             _iconLayerCache.Clear();
             Volatile.Write(ref _catalog, CatalogSnapshot.Empty);
+            QueueRetiredPackCleanup(retiredPacksDirectory);
             CatalogChanged?.Invoke(this, EventArgs.Empty);
             return Result.Ok();
         }
@@ -871,16 +955,157 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
     }
 
-    private void RemoveImportedPackFiles()
+    private string RetireImportedPackActivation()
     {
-        if (Directory.Exists(_packsRoot))
-            Directory.Delete(_packsRoot, recursive: true);
-        if (File.Exists(_currentPackPath))
-            File.Delete(_currentPackPath);
-        if (File.Exists(_installedPacksPath))
-            File.Delete(_installedPacksPath);
-        Directory.CreateDirectory(_packsRoot);
-        _fileSecurity.RestrictDirectoryToCurrentUser(_packsRoot);
+        Directory.CreateDirectory(_storageRoot);
+        _fileSecurity.RestrictDirectoryToCurrentUser(_storageRoot);
+
+        var resetId = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
+        var retiredDirectory = Path.Combine(
+            _storageRoot,
+            $"{RetiredPacksDirectoryPrefix}{resetId}{RetiredPacksDirectorySuffix}");
+        if (!IsSafeRetiredPacksDirectory(retiredDirectory))
+            throw new InvalidDataException("The retired brand-icon storage location is invalid.");
+
+        var retiredCurrentPackPath = Path.Combine(retiredDirectory, $".{resetId}-{CurrentPackFileName}");
+        var retiredInstalledPacksPath = Path.Combine(
+            retiredDirectory,
+            $".{resetId}-{InstalledPacksFileName}");
+        var movedCurrentPack = false;
+        var movedInstalledPacks = false;
+        try
+        {
+            Directory.CreateDirectory(retiredDirectory);
+            _fileSecurity.RestrictDirectoryToCurrentUser(retiredDirectory);
+
+            if (File.Exists(_currentPackPath))
+            {
+                File.Move(_currentPackPath, retiredCurrentPackPath);
+                movedCurrentPack = true;
+            }
+            if (File.Exists(_installedPacksPath))
+            {
+                File.Move(_installedPacksPath, retiredInstalledPacksPath);
+                movedInstalledPacks = true;
+            }
+
+            Directory.CreateDirectory(_packsRoot);
+            _fileSecurity.RestrictDirectoryToCurrentUser(_packsRoot);
+            return retiredDirectory;
+        }
+        catch
+        {
+            if (movedInstalledPacks && File.Exists(retiredInstalledPacksPath))
+                File.Move(retiredInstalledPacksPath, _installedPacksPath);
+            if (movedCurrentPack && File.Exists(retiredCurrentPackPath))
+                File.Move(retiredCurrentPackPath, _currentPackPath);
+            if (Directory.Exists(retiredDirectory))
+                Directory.Delete(retiredDirectory, recursive: false);
+            throw;
+        }
+    }
+
+    private void QueueRetiredPackCleanup(string retiredDirectory)
+    {
+        if (!IsSafeRetiredPacksDirectory(retiredDirectory)) return;
+        _scheduleBackgroundWork(() => CleanupRetiredPackStorage(retiredDirectory));
+    }
+
+    private void QueueStaleRetiredPackCleanup()
+    {
+        _scheduleBackgroundWork(() =>
+        {
+            _importLock.Wait();
+            try
+            {
+                DeleteUnregisteredPackDirectories();
+                if (!Directory.Exists(_storageRoot)) return;
+                foreach (var directory in Directory.EnumerateDirectories(
+                             _storageRoot,
+                             $"{RetiredPacksDirectoryPrefix}*{RetiredPacksDirectorySuffix}",
+                             SearchOption.TopDirectoryOnly))
+                {
+                    DeleteRetiredPackDirectory(directory);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning("Retired local brand-icon directories could not be enumerated for cleanup.");
+            }
+            finally
+            {
+                _importLock.Release();
+            }
+        });
+    }
+
+    private void CleanupRetiredPackStorage(string retiredDirectory)
+    {
+        _importLock.Wait();
+        try
+        {
+            DeleteUnregisteredPackDirectories();
+            DeleteRetiredPackDirectory(retiredDirectory);
+        }
+        finally
+        {
+            _importLock.Release();
+        }
+    }
+
+    private void DeleteUnregisteredPackDirectories()
+    {
+        if (!Directory.Exists(_packsRoot)) return;
+        var registeredPackIds = Volatile.Read(ref _catalog).Registrations
+            .Select(static registration => registration.PackId)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var directory in Directory.EnumerateDirectories(
+                     _packsRoot,
+                     "*",
+                     SearchOption.TopDirectoryOnly))
+        {
+            if (!IsDescendantOf(directory, _packsRoot)
+                || registeredPackIds.Contains(Path.GetFileName(directory)))
+                continue;
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning(
+                    "An inactive local brand-icon directory could not be removed yet.");
+            }
+        }
+    }
+
+    private void DeleteRetiredPackDirectory(string retiredDirectory)
+    {
+        try
+        {
+            if (IsSafeRetiredPacksDirectory(retiredDirectory)
+                && Directory.Exists(retiredDirectory))
+            {
+                Directory.Delete(retiredDirectory, recursive: true);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning("A retired local brand-icon directory could not be removed yet.");
+        }
+    }
+
+    private bool IsSafeRetiredPacksDirectory(string path)
+    {
+        if (!IsDescendantOf(path, _storageRoot)) return false;
+        var name = Path.GetFileName(path);
+        return name.StartsWith(RetiredPacksDirectoryPrefix, StringComparison.Ordinal)
+               && name.EndsWith(RetiredPacksDirectorySuffix, StringComparison.Ordinal)
+               && Guid.TryParseExact(
+                   name[RetiredPacksDirectoryPrefix.Length..
+                       ^RetiredPacksDirectorySuffix.Length],
+                   "N",
+                   out _);
     }
 
     private void TryLoadDisplaySettings()
@@ -916,6 +1141,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             TryLoadCustomIcons();
             TryLoadInstalledCatalog();
             Volatile.Write(ref _initialized, 1);
+            QueueStaleRetiredPackCleanup();
         }
     }
 
@@ -959,7 +1185,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             var index = JsonSerializer.Deserialize<CustomIconIndex>(
                 File.ReadAllText(_customIconIndexPath));
             if (index is null
-                || index.Version != 1
+                || index.Version is not (1 or 2)
                 || index.Icons is null
                 || index.Icons.Count > MaximumEntries) return;
 
@@ -972,20 +1198,13 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     || !SafeSlugRegex().IsMatch(item.Id)
                     || !item.Id.StartsWith("custom_", StringComparison.Ordinal)
                     || string.IsNullOrWhiteSpace(item.IconFileName)
-                    || !SafeSvgNameRegex().IsMatch(item.IconFileName)
+                    || !SafeCustomIconNameRegex().IsMatch(item.IconFileName)
                     || !IsSafeDisplayText(item.DisplayName, 256)
                     || item.SourceFileName is { Length: > 0 }
                         && !IsSafeDisplayText(item.SourceFileName, 256)
                     || string.IsNullOrWhiteSpace(item.BackgroundColor)
                     || !IconImportArchive.IsHexColor(item.BackgroundColor.TrimStart('#'))
-                    || !icons.TryAdd(
-                        item.Id,
-                        new BrandDefinition(
-                            item.Id,
-                            item.DisplayName,
-                            item.BackgroundColor,
-                            item.IconFileName,
-                            item.SourceFileName)))
+                    )
                 {
                     return;
                 }
@@ -997,10 +1216,48 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 {
                     return;
                 }
+                BrandDefinition definition;
+                if (item.IconFileName.EndsWith(".png", StringComparison.Ordinal))
+                {
+                    if (index.Version != 2
+                        || item.Sha256 is null
+                        || !LowercaseSha256Regex().IsMatch(item.Sha256)
+                        || item.Width != RuntimePngValidator.Width
+                        || item.Height != RuntimePngValidator.Height)
+                        return;
+                    var png = File.ReadAllBytes(iconPath);
+                    RuntimePngProfileValidator.ValidateCustomEncoded(png, item.Sha256);
+                    definition = new BrandDefinition(
+                        item.Id,
+                        item.DisplayName,
+                        item.BackgroundColor,
+                        null,
+                        item.SourceFileName,
+                        new BrandRuntimeIcon(
+                            $"{item.Id}:{item.Sha256}",
+                            iconPath,
+                            item.Sha256,
+                            item.Width.Value,
+                            item.Height.Value,
+                            BrandId: item.Id));
+                }
+                else
+                {
+                    definition = new BrandDefinition(
+                        item.Id,
+                        item.DisplayName,
+                        item.BackgroundColor,
+                        item.IconFileName,
+                        item.SourceFileName);
+                }
+                if (!icons.TryAdd(item.Id, definition)) return;
             }
             Volatile.Write(ref _customIcons, icons);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception ex) when (ex is IOException
+                                   or UnauthorizedAccessException
+                                   or JsonException
+                                   or InvalidDataException)
         {
             _logger.LogWarning("The local custom-icon index could not be loaded.");
         }
@@ -1214,10 +1471,12 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         {
             var isOtpHarborPack = format == BrandIconPackFormat.OtpHarbor;
             var isOtpHarborV2 = isOtpHarborPack && index.Metadata?.FormatVersion == 2;
+            var isOtpHarborV3 = isOtpHarborPack && index.Metadata?.FormatVersion == 3;
+            var isOtpHarborRuntimePack = isOtpHarborV2 || isOtpHarborV3;
             var validId = isOtpHarborPack
                 ? OtpHarborCanonicalIdRegex().IsMatch(item.Id)
                 : SafeSlugRegex().IsMatch(item.Id);
-            var validFileName = isOtpHarborV2
+            var validFileName = isOtpHarborRuntimePack
                 ? item.IconFileName is null
                 : isOtpHarborPack
                     ? string.Equals(item.IconFileName, item.Id + ".svg", StringComparison.Ordinal)
@@ -1241,7 +1500,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                     throw new InvalidDataException("The installed OTP Harbor icon index is invalid.");
                 continue;
             }
-            if (!isOtpHarborV2)
+            if (!isOtpHarborRuntimePack)
             {
                 var iconPath = Path.Combine(packDirectory, "icons", item.IconFileName!);
                 if (!IsDescendantOf(iconPath, packDirectory)
@@ -1254,8 +1513,11 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 }
             }
             BrandRuntimeIcon? runtimeIcon = null;
+            BrandRuntimeAppearances? runtimeAppearances = null;
             if (isOtpHarborV2)
             {
+                if (item.RuntimeAppearances is not null)
+                    throw new InvalidDataException("The installed OTP Harbor runtime icon metadata is invalid.");
                 var installedRuntime = item.RuntimeIcon;
                 var expectedArchiveEntry = $"runtime/foreground-128/{item.Id}.png";
                 var isArchiveBacked = installedRuntime?.ArchiveEntryPath is not null;
@@ -1314,7 +1576,28 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                         BrandId: item.Id);
                 }
             }
-            else if (item.RuntimeIcon is not null)
+            else if (isOtpHarborV3)
+            {
+                if (item.RuntimeIcon is not null || item.RuntimeAppearances is null)
+                    throw new InvalidDataException("The installed OTP Harbor themed appearance metadata is invalid.");
+                var archivePath = Path.Combine(packDirectory, RuntimeArchiveFileName);
+                if (!IsDescendantOf(archivePath, packDirectory)
+                    || !File.Exists(archivePath)
+                    || new FileInfo(archivePath).Length is <= 0 or > MaximumArchiveBytes)
+                    throw new InvalidDataException("The installed OTP Harbor runtime archive is missing or invalid.");
+                runtimeAppearances = new BrandRuntimeAppearances(
+                    LoadInstalledAppearance(
+                        item,
+                        BrandIconTheme.Light,
+                        item.RuntimeAppearances.LightTheme,
+                        archivePath),
+                    LoadInstalledAppearance(
+                        item,
+                        BrandIconTheme.Dark,
+                        item.RuntimeAppearances.DarkTheme,
+                        archivePath));
+            }
+            else if (item.RuntimeIcon is not null || item.RuntimeAppearances is not null)
             {
                 throw new InvalidDataException("The installed icon index contains unexpected runtime icon metadata.");
             }
@@ -1322,8 +1605,9 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 item.Id,
                 item.DisplayName,
                 item.BackgroundColor,
-                isOtpHarborV2 ? null : item.IconFileName,
-                RuntimeIcon: runtimeIcon);
+                isOtpHarborRuntimePack ? null : item.IconFileName,
+                RuntimeIcon: runtimeIcon,
+                RuntimeAppearances: runtimeAppearances);
             if (!byId.TryAdd(item.Id, definition))
             {
                 if (isOtpHarborPack)
@@ -1363,6 +1647,72 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             providerDisplayName);
     }
 
+    private static BrandRuntimeAppearance LoadInstalledAppearance(
+        IndexBrand brand,
+        BrandIconTheme theme,
+        InstalledRuntimeAppearance? appearance,
+        string archivePath)
+    {
+        var asset = appearance?.Asset;
+        var themeKey = theme == BrandIconTheme.Dark ? "dark" : "light";
+        if (appearance is null
+            || asset is null
+            || asset.FileName is not null
+            || asset.ArchiveEntryPath is null
+            || !LowercaseSha256Regex().IsMatch(asset.Sha256)
+            || asset.Width != RuntimePngValidator.Width
+            || asset.Height != RuntimePngValidator.Height
+            || !string.Equals(asset.MediaType, "image/png", StringComparison.Ordinal)
+            || !string.Equals(
+                asset.RenderProfile,
+                "otp-harbor-themed-appearance-v1",
+                StringComparison.Ordinal)
+            || !string.Equals(
+                asset.ArchiveEntryPath,
+                $"runtime/appearance-128/{asset.Sha256}.png",
+                StringComparison.Ordinal)
+            || !Enum.IsDefined(appearance.AssetRole)
+            || !Enum.IsDefined(appearance.BackgroundMode)
+            || !Enum.IsDefined(appearance.Selection)
+            || appearance.AssetRole == BrandIconAssetRole.Foreground
+                && (appearance.BackgroundMode != BrandIconBackgroundMode.Solid
+                    || appearance.BackgroundColor is null
+                    || !UppercaseColorRegex().IsMatch(appearance.BackgroundColor))
+            || appearance.AssetRole == BrandIconAssetRole.CompleteIcon
+                && (appearance.BackgroundMode != BrandIconBackgroundMode.Embedded
+                    || appearance.BackgroundColor is not null)
+            || appearance.Source is null
+            || !IsSafeDisplayText(appearance.Source.Provider, 128)
+            || !IsSafeDisplayText(appearance.Source.SourceId, 256)
+            || !IsSafeDisplayText(appearance.Source.AssetPath, 4_096)
+            || brand.Sources is null
+            || !brand.Sources.Any(source => string.Equals(
+                source.Provider,
+                appearance.Source.Provider,
+                StringComparison.Ordinal))
+            || !IsSafeDisplayText(appearance.AppearanceSelectionReason, 4_096))
+            throw new InvalidDataException("The installed OTP Harbor themed appearance metadata is invalid.");
+
+        var runtimeIcon = new BrandRuntimeIcon(
+            $"{brand.Id}:{themeKey}:{asset.Sha256}",
+            null,
+            asset.Sha256,
+            asset.Width,
+            asset.Height,
+            archivePath,
+            asset.ArchiveEntryPath,
+            brand.Id,
+            theme);
+        return new BrandRuntimeAppearance(
+            runtimeIcon,
+            appearance.AssetRole,
+            appearance.BackgroundMode,
+            appearance.BackgroundColor,
+            appearance.Selection,
+            appearance.Source,
+            appearance.AppearanceSelectionReason);
+    }
+
     private static void ValidateInstalledOtpHarborMetadata(
         BrandIndex index,
         IReadOnlyDictionary<string, BrandDefinition> brands,
@@ -1370,7 +1720,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     {
         var metadata = index.Metadata;
         if (metadata is null
-            || metadata.FormatVersion is not (1 or 2)
+            || metadata.FormatVersion is not (1 or 2 or 3)
             || !string.Equals(metadata.PackId, "otp-harbor-icons", StringComparison.Ordinal)
             || !IsSafeDisplayText(metadata.Name, 256)
             || metadata.ArchiveSha256 is null
@@ -1812,6 +2162,9 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     [GeneratedRegex("^[a-z0-9_]+\\.svg$", RegexOptions.CultureInvariant)]
     private static partial Regex SafeSvgNameRegex();
 
+    [GeneratedRegex("^[a-z0-9_]+\\.(?:svg|png)$", RegexOptions.CultureInvariant)]
+    private static partial Regex SafeCustomIconNameRegex();
+
     [GeneratedRegex("^[a-z0-9-]+-[0-9A-Za-z.-]+-v[0-9]+-[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
     private static partial Regex SafePackIdRegex();
 
@@ -1820,6 +2173,9 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     [GeneratedRegex("^[a-f0-9]{64}$", RegexOptions.CultureInvariant)]
     private static partial Regex LowercaseSha256Regex();
+
+    [GeneratedRegex("^#[0-9A-F]{6}$", RegexOptions.CultureInvariant)]
+    private static partial Regex UppercaseColorRegex();
 
     [GeneratedRegex(@"([A-Za-z]+)\s*\(([^)]*)\)", RegexOptions.CultureInvariant)]
     private static partial Regex SvgTransformFunctionRegex();
@@ -1845,7 +2201,10 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         string DisplayName,
         string BackgroundColor,
         string IconFileName,
-        string? SourceFileName = null);
+        string? SourceFileName = null,
+        string? Sha256 = null,
+        int? Width = null,
+        int? Height = null);
     private sealed record BrandIndex(
         string Version,
         List<IndexBrand> Brands,
@@ -1861,7 +2220,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         string[] Aliases,
         IconPackSourceReference? SelectedSource = null,
         IReadOnlyList<IconPackSourceReference>? Sources = null,
-        InstalledRuntimeIcon? RuntimeIcon = null);
+        InstalledRuntimeIcon? RuntimeIcon = null,
+        InstalledRuntimeAppearances? RuntimeAppearances = null);
     private sealed record InstalledRuntimeIcon(
         string? FileName,
         string Sha256,
@@ -1870,6 +2230,17 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         string MediaType,
         string RenderProfile,
         string? ArchiveEntryPath = null);
+    private sealed record InstalledRuntimeAppearance(
+        InstalledRuntimeIcon Asset,
+        BrandIconAssetRole AssetRole,
+        BrandIconBackgroundMode BackgroundMode,
+        string? BackgroundColor,
+        BrandIconAppearanceSelection Selection,
+        BrandIconAppearanceSource Source,
+        string AppearanceSelectionReason);
+    private sealed record InstalledRuntimeAppearances(
+        InstalledRuntimeAppearance LightTheme,
+        InstalledRuntimeAppearance DarkTheme);
     private sealed record ProviderSnapshot(
         string PackDirectory,
         InstalledPackRegistration Registration,

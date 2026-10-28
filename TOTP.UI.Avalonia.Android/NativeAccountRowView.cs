@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Avalonia.Shared.Branding;
 using TOTP.Avalonia.Shared.Styles;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Avalonia.Android;
 
@@ -59,6 +60,8 @@ internal sealed class NativeAccountRowView : View
     private string _displayNextCode = string.Empty;
     private string _rawCode = string.Empty;
     private Color _brandColor;
+    private bool _drawBrandBackground = true;
+    private string? _preparedRuntimeCacheKey;
     private bool _isSelected;
 
     public NativeAccountRowView(
@@ -127,7 +130,8 @@ internal sealed class NativeAccountRowView : View
         _rawCode = row.Account.Code;
         _displayCode = row.Account.DisplayCode;
         _displayNextCode = row.Account.DisplayNextCode;
-        _brandColor = TryColor(row.Account.Brand.BackgroundColor, NativeAccountPalette.Current.GenericBrand);
+        _preparedRuntimeCacheKey = null;
+        UpdateBrandAppearance(row.Account.Brand);
         PrepareBrandIcon();
         UpdateTextLayout();
         UpdateStarPath();
@@ -146,6 +150,7 @@ internal sealed class NativeAccountRowView : View
         _swipeOffset = 0;
         _brandIcon?.Dispose();
         _brandIcon = null;
+        _preparedRuntimeCacheKey = null;
         _displayIssuer = string.Empty;
         _displaySecondary = string.Empty;
         _displayCode = string.Empty;
@@ -512,14 +517,23 @@ internal sealed class NativeAccountRowView : View
         float centerY)
     {
         var bounds = _brandBounds;
-        _fill.Color = _brandColor;
-        canvas.DrawRoundRect(bounds, Dp(10), Dp(10), _fill);
+        RefreshThemeAppearance(account.Brand);
 
         if (_brandIcon is not null)
         {
+            if (_drawBrandBackground)
+            {
+                _fill.Color = _brandColor;
+                canvas.DrawRoundRect(bounds, Dp(10), Dp(10), _fill);
+            }
             _brandIcon.Draw(canvas, _fill, _stroke);
             return;
         }
+
+        _fill.Color = _drawBrandBackground
+            ? _brandColor
+            : NativeAccountPalette.Current.GenericBrand;
+        canvas.DrawRoundRect(bounds, Dp(10), Dp(10), _fill);
 
         _text.SetTypeface(Typeface.DefaultBold);
         _text.TextAlign = Paint.Align.Center;
@@ -658,9 +672,7 @@ internal sealed class NativeAccountRowView : View
         {
             if (_row is not null)
             {
-                _brandColor = TryColor(
-                    _row.Account.Brand.BackgroundColor,
-                    NativeAccountPalette.Current.GenericBrand);
+                UpdateBrandAppearance(_row.Account.Brand);
             }
             PrepareBrandIcon();
             UpdateTextLayout();
@@ -799,7 +811,7 @@ internal sealed class NativeAccountRowView : View
         _displaySecondary = Ellipsize(secondary, availableWidth);
     }
 
-    private void PrepareBrandIcon()
+    private void PrepareBrandIcon(bool requireRuntimeIconOnFirstDraw = true)
     {
         _brandIcon?.Dispose();
         _brandIcon = null;
@@ -811,13 +823,16 @@ internal sealed class NativeAccountRowView : View
             return;
         }
 
+        var appearance = account.Brand.RuntimeAppearanceFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant);
+        var inset = appearance is null ? Dp(9) : 0;
         using var target = new RectF(
-            _brandBounds.Left + Dp(9),
-            _brandBounds.Top + Dp(9),
-            _brandBounds.Right - Dp(9),
-            _brandBounds.Bottom - Dp(9));
+            _brandBounds.Left + inset,
+            _brandBounds.Top + inset,
+            _brandBounds.Right - inset,
+            _brandBounds.Bottom - inset);
         BrandInfo brand;
-        if (account.Brand.RuntimeIcon is not null)
+        if (account.Brand.HasRuntimeIcon)
         {
             brand = account.Brand;
         }
@@ -835,7 +850,29 @@ internal sealed class NativeAccountRowView : View
             target,
             Color.White,
             allowTemplateCreation: !_isListScrolling,
-            requireRuntimeIconOnFirstDraw: true);
+            requireRuntimeIconOnFirstDraw);
+        _preparedRuntimeCacheKey = brand.RuntimeIconFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant)?.CacheKey;
+    }
+
+    private void RefreshThemeAppearance(BrandInfo brand)
+    {
+        var cacheKey = brand.RuntimeIconFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant)?.CacheKey;
+        if (string.Equals(cacheKey, _preparedRuntimeCacheKey, StringComparison.Ordinal)) return;
+        UpdateBrandAppearance(brand);
+        PrepareBrandIcon(requireRuntimeIconOnFirstDraw: false);
+    }
+
+    private void UpdateBrandAppearance(BrandInfo brand)
+    {
+        var appearance = brand.RuntimeAppearanceFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant);
+        _drawBrandBackground = appearance?.BackgroundMode != BrandIconBackgroundMode.Embedded;
+        _brandColor = appearance is { BackgroundMode: BrandIconBackgroundMode.Solid,
+                                      BackgroundColor: { } color }
+            ? TryColor(color, NativeAccountPalette.Current.GenericBrand)
+            : TryColor(brand.BackgroundColor, NativeAccountPalette.Current.GenericBrand);
     }
 
     private void UpdateStarPath()

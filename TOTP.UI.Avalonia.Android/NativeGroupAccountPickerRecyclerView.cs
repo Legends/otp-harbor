@@ -6,6 +6,8 @@ using Android.Views;
 using Android.Views.Accessibility;
 using AndroidX.RecyclerView.Widget;
 using TOTP.Avalonia.Mobile.Presentation;
+using TOTP.Avalonia.Shared.Branding;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Avalonia.Android;
 
@@ -15,11 +17,14 @@ internal sealed class NativeGroupAccountPickerRecyclerView : RecyclerView
     private readonly NativeGroupAccountPickerAdapter _adapter;
     private bool _disposed;
 
-    public NativeGroupAccountPickerRecyclerView(Context context, MobileShellViewModel viewModel)
+    public NativeGroupAccountPickerRecyclerView(
+        Context context,
+        MobileShellViewModel viewModel,
+        NativeBrandIconCache brandIconCache)
         : base(context)
     {
         _viewModel = viewModel;
-        _adapter = new NativeGroupAccountPickerAdapter(viewModel);
+        _adapter = new NativeGroupAccountPickerAdapter(viewModel, brandIconCache);
         SetLayoutManager(new LinearLayoutManager(context, Vertical, false));
         SetAdapter(_adapter);
         SetItemAnimator(null);
@@ -83,11 +88,15 @@ internal sealed class NativeGroupAccountPickerAdapter : RecyclerView.Adapter
 {
     internal const int AccountSelectionViewType = 2;
     private readonly MobileShellViewModel _viewModel;
+    private readonly NativeBrandIconCache _brandIcons;
     private MobileGroupAccountSelection[] _items = [];
 
-    public NativeGroupAccountPickerAdapter(MobileShellViewModel viewModel)
+    public NativeGroupAccountPickerAdapter(
+        MobileShellViewModel viewModel,
+        NativeBrandIconCache brandIcons)
     {
         _viewModel = viewModel;
+        _brandIcons = brandIcons;
         HasStableIds = true;
     }
 
@@ -104,7 +113,7 @@ internal sealed class NativeGroupAccountPickerAdapter : RecyclerView.Adapter
 
     public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
     {
-        var row = new NativeGroupAccountSelectionRowView(parent.Context!, _viewModel)
+        var row = new NativeGroupAccountSelectionRowView(parent.Context!, _viewModel, _brandIcons)
         {
             LayoutParameters = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MatchParent,
@@ -145,6 +154,7 @@ internal sealed class NativeGroupAccountPickerAdapter : RecyclerView.Adapter
 internal sealed class NativeGroupAccountSelectionRowView : View
 {
     private readonly MobileShellViewModel _viewModel;
+    private readonly NativeBrandIconCache _brandIcons;
     private readonly Paint _fill = new(PaintFlags.AntiAlias);
     private readonly Paint _stroke = new(PaintFlags.AntiAlias);
     private readonly Paint _text = new(PaintFlags.AntiAlias);
@@ -155,16 +165,20 @@ internal sealed class NativeGroupAccountSelectionRowView : View
     private MobileGroupAccountSelection? _item;
     private NativeBrandIcon? _brandIcon;
     private Color _brandColor;
+    private bool _drawBrandBackground = true;
+    private string? _preparedRuntimeCacheKey;
     private float _downX;
     private float _downY;
     private bool _moved;
 
     public NativeGroupAccountSelectionRowView(
         Context context,
-        MobileShellViewModel viewModel)
+        MobileShellViewModel viewModel,
+        NativeBrandIconCache brandIcons)
         : base(context)
     {
         _viewModel = viewModel;
+        _brandIcons = brandIcons;
         _density = Resources?.DisplayMetrics?.Density ?? 1f;
         _scaledDensity = _density * (Resources?.Configuration?.FontScale ?? 1f);
         _touchSlop = ViewConfiguration.Get(context)?.ScaledTouchSlop ?? Dp(8);
@@ -194,7 +208,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         Unbind();
         _item = item;
         _item.PropertyChanged += ItemPropertyChanged;
-        _brandColor = TryColor(item.Brand.BackgroundColor, NativeAccountPalette.Current.GenericBrand);
+        UpdateBrandAppearance(item.Brand);
         PrepareBrandIcon();
         ContentDescription = string.IsNullOrWhiteSpace(item.AccountName)
             ? item.Issuer
@@ -208,6 +222,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         _item = null;
         _brandIcon?.Dispose();
         _brandIcon = null;
+        _preparedRuntimeCacheKey = null;
     }
 
     protected override void OnDraw(Canvas canvas)
@@ -341,13 +356,22 @@ internal sealed class NativeGroupAccountSelectionRowView : View
 
     private void DrawBrand(Canvas canvas)
     {
-        _fill.Color = _brandColor;
-        canvas.DrawRoundRect(_brandBounds, Dp(8), Dp(8), _fill);
+        RefreshThemeAppearance();
         if (_brandIcon is not null)
         {
+            if (_drawBrandBackground)
+            {
+                _fill.Color = _brandColor;
+                canvas.DrawRoundRect(_brandBounds, Dp(8), Dp(8), _fill);
+            }
             _brandIcon.Draw(canvas, _fill, _stroke);
             return;
         }
+
+        _fill.Color = _drawBrandBackground
+            ? _brandColor
+            : NativeAccountPalette.Current.GenericBrand;
+        canvas.DrawRoundRect(_brandBounds, Dp(8), Dp(8), _fill);
 
         _text.Color = Color.White;
         _text.TextAlign = Paint.Align.Center;
@@ -391,7 +415,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         return low == 0 ? suffix : value[..low] + suffix;
     }
 
-    private void PrepareBrandIcon()
+    private void PrepareBrandIcon(bool requireRuntimeIconOnFirstDraw = true)
     {
         _brandIcon?.Dispose();
         _brandIcon = null;
@@ -401,12 +425,43 @@ internal sealed class NativeGroupAccountSelectionRowView : View
             return;
         }
 
+        var appearance = _item.Brand.RuntimeAppearanceFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant);
+        var inset = appearance is null ? Dp(8) : 0;
         using var target = new RectF(
-            _brandBounds.Left + Dp(8),
-            _brandBounds.Top + Dp(8),
-            _brandBounds.Right - Dp(8),
-            _brandBounds.Bottom - Dp(8));
-        _brandIcon = NativeBrandIcon.TryCreate(_item.Brand, target, Color.White);
+            _brandBounds.Left + inset,
+            _brandBounds.Top + inset,
+            _brandBounds.Right - inset,
+            _brandBounds.Bottom - inset);
+        _brandIcon = _brandIcons.TryCreate(
+            _item.Brand,
+            target,
+            Color.White,
+            allowTemplateCreation: true,
+            requireRuntimeIconOnFirstDraw);
+        _preparedRuntimeCacheKey = _item.Brand.RuntimeIconFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant)?.CacheKey;
+    }
+
+    private void RefreshThemeAppearance()
+    {
+        if (_item is null) return;
+        var cacheKey = _item.Brand.RuntimeIconFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant)?.CacheKey;
+        if (string.Equals(cacheKey, _preparedRuntimeCacheKey, StringComparison.Ordinal)) return;
+        UpdateBrandAppearance(_item.Brand);
+        PrepareBrandIcon(requireRuntimeIconOnFirstDraw: false);
+    }
+
+    private void UpdateBrandAppearance(BrandInfo brand)
+    {
+        var appearance = brand.RuntimeAppearanceFor(
+            global::Avalonia.Application.Current?.ActualThemeVariant);
+        _drawBrandBackground = appearance?.BackgroundMode != BrandIconBackgroundMode.Embedded;
+        _brandColor = appearance is { BackgroundMode: BrandIconBackgroundMode.Solid,
+                                      BackgroundColor: { } color }
+            ? TryColor(color, NativeAccountPalette.Current.GenericBrand)
+            : TryColor(brand.BackgroundColor, NativeAccountPalette.Current.GenericBrand);
     }
 
     private void ItemPropertyChanged(object? sender, PropertyChangedEventArgs args)

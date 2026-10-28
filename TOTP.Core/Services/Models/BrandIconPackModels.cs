@@ -6,7 +6,8 @@ public sealed record BrandDefinition(
     string BackgroundColor,
     string? IconFileName,
     string? SourceFileName = null,
-    BrandRuntimeIcon? RuntimeIcon = null);
+    BrandRuntimeIcon? RuntimeIcon = null,
+    BrandRuntimeAppearances? RuntimeAppearances = null);
 
 public sealed record BrandRuntimeIcon(
     string CacheKey,
@@ -16,9 +17,59 @@ public sealed record BrandRuntimeIcon(
     int Height,
     string? ArchivePath = null,
     string? ArchiveEntryPath = null,
-    string? BrandId = null)
+    string? BrandId = null,
+    BrandIconTheme? Theme = null)
 {
     public bool IsArchiveBacked => ArchivePath is not null && ArchiveEntryPath is not null;
+}
+
+public enum BrandIconTheme
+{
+    Light,
+    Dark
+}
+
+public enum BrandIconAssetRole
+{
+    Foreground,
+    CompleteIcon
+}
+
+public enum BrandIconBackgroundMode
+{
+    Solid,
+    Embedded
+}
+
+public enum BrandIconAppearanceSelection
+{
+    NativeThemeVariant,
+    BrandColorForeground,
+    CompleteSourceArtwork,
+    SourceDefault,
+    ReviewedBadgeComposition
+}
+
+public sealed record BrandIconAppearanceSource(
+    string Provider,
+    string SourceId,
+    string AssetPath);
+
+public sealed record BrandRuntimeAppearance(
+    BrandRuntimeIcon Asset,
+    BrandIconAssetRole AssetRole,
+    BrandIconBackgroundMode BackgroundMode,
+    string? BackgroundColor,
+    BrandIconAppearanceSelection Selection,
+    BrandIconAppearanceSource Source,
+    string AppearanceSelectionReason);
+
+public sealed record BrandRuntimeAppearances(
+    BrandRuntimeAppearance LightTheme,
+    BrandRuntimeAppearance DarkTheme)
+{
+    public BrandRuntimeAppearance ForTheme(BrandIconTheme theme) =>
+        theme == BrandIconTheme.Dark ? DarkTheme : LightTheme;
 }
 
 public sealed record BrandIconTransform(

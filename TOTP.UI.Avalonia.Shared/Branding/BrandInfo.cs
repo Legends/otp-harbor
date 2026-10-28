@@ -1,4 +1,6 @@
 using Avalonia.Media;
+using Avalonia.Styling;
+using TOTP.Avalonia.Shared.Styles;
 using TOTP.Core.Services.Models;
 
 namespace TOTP.Avalonia.Shared.Branding;
@@ -15,13 +17,28 @@ public sealed record BrandInfo(
     bool IsCustomIcon = false,
     IReadOnlyList<BrandIconLayer>? IconLayers = null,
     BrandIconTransform? SourceTransform = null,
-    BrandRuntimeIcon? RuntimeIcon = null)
+    BrandRuntimeIcon? RuntimeIcon = null,
+    BrandRuntimeAppearances? RuntimeAppearances = null)
 {
     public bool HasVectorIcon => IconData is not null
         || IconImage is not null
         || IconLayers is { Count: > 0 };
 
-    public bool HasIcon => RuntimeIcon is not null || HasVectorIcon;
+    public bool HasRuntimeIcon => RuntimeIcon is not null || RuntimeAppearances is not null;
+
+    public bool HasIcon => HasRuntimeIcon || HasVectorIcon;
+
+    public BrandRuntimeAppearance? RuntimeAppearanceFor(ThemeVariant? theme)
+    {
+        if (RuntimeAppearances is null) return null;
+        var iconTheme = theme == ThemeVariant.Dark || theme == AvaloniaThemeVariants.HighContrast
+            ? BrandIconTheme.Dark
+            : BrandIconTheme.Light;
+        return RuntimeAppearances.ForTheme(iconTheme);
+    }
+
+    public BrandRuntimeIcon? RuntimeIconFor(ThemeVariant? theme) =>
+        RuntimeAppearanceFor(theme)?.Asset ?? RuntimeIcon;
 
     public static BrandInfo Generic(string? issuer)
     {

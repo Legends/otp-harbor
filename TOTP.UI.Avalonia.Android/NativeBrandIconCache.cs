@@ -34,7 +34,7 @@ internal sealed class NativeBrandIconCache : IDisposable
     {
         if (string.IsNullOrWhiteSpace(brand.Id) || !brand.HasIcon) return null;
 
-        if (brand.RuntimeIcon is { } runtimeIcon)
+        if (RuntimeIconFor(brand) is { } runtimeIcon)
         {
             var cached = TryAcquireRuntime(runtimeIcon, target);
             if (cached is not null) return cached;
@@ -63,7 +63,7 @@ internal sealed class NativeBrandIconCache : IDisposable
     public bool Prewarm(BrandInfo brand, RectF target, Color monochromeColor)
     {
         if (string.IsNullOrWhiteSpace(brand.Id) || !brand.HasIcon) return false;
-        if (brand.RuntimeIcon is { } runtimeIcon)
+        if (RuntimeIconFor(brand) is { } runtimeIcon)
         {
             EnsureRuntimeLoad(runtimeIcon);
             return IsRuntimeCached(runtimeIcon.CacheKey);
@@ -75,7 +75,7 @@ internal sealed class NativeBrandIconCache : IDisposable
 
     internal Task<bool> PrewarmRuntimeAsync(
         BrandInfo brand,
-        CancellationToken cancellationToken) => brand.RuntimeIcon is { } runtimeIcon
+        CancellationToken cancellationToken) => RuntimeIconFor(brand) is { } runtimeIcon
         ? LoadRuntimeAsync(runtimeIcon, cancellationToken)
         : Task.FromResult(false);
 
@@ -83,7 +83,7 @@ internal sealed class NativeBrandIconCache : IDisposable
     {
         ArgumentNullException.ThrowIfNull(brands);
         var cacheKeys = brands
-            .Select(static brand => brand.RuntimeIcon?.CacheKey)
+            .Select(static brand => RuntimeIconFor(brand)?.CacheKey)
             .Where(static key => !string.IsNullOrWhiteSpace(key))
             .Select(static key => key!)
             .ToHashSet(StringComparer.Ordinal);
@@ -99,7 +99,7 @@ internal sealed class NativeBrandIconCache : IDisposable
 
     public bool IsPrewarmed(BrandInfo brand, RectF target, Color monochromeColor)
     {
-        if (brand.RuntimeIcon is { } runtimeIcon) return IsRuntimeCached(runtimeIcon.CacheKey);
+        if (RuntimeIconFor(brand) is { } runtimeIcon) return IsRuntimeCached(runtimeIcon.CacheKey);
         return !string.IsNullOrWhiteSpace(brand.Id)
             && brand.HasIcon
             && _entries.TryGetValue(brand.Id, out var existing)
@@ -207,8 +207,8 @@ internal sealed class NativeBrandIconCache : IDisposable
                 }
             }
 
-            var separator = runtimeIcon.CacheKey.LastIndexOf(':');
-            if (separator > 0) RuntimeIconReady?.Invoke(runtimeIcon.CacheKey[..separator]);
+            if (!string.IsNullOrWhiteSpace(runtimeIcon.BrandId))
+                RuntimeIconReady?.Invoke(runtimeIcon.BrandId);
             return true;
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -249,6 +249,9 @@ internal sealed class NativeBrandIconCache : IDisposable
         && existing.TargetWidth.Equals(target.Width())
         && existing.TargetHeight.Equals(target.Height())
         && existing.MonochromeColor == monochromeColor.ToArgb();
+
+    private static BrandRuntimeIcon? RuntimeIconFor(BrandInfo brand) =>
+        brand.RuntimeIconFor(global::Avalonia.Application.Current?.ActualThemeVariant);
 
     private static bool IconPayloadMatches(Entry existing, BrandInfo brand)
     {

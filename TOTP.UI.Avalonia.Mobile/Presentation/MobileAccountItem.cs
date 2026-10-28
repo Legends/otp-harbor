@@ -200,7 +200,8 @@ public sealed class MobileAccountItem(
                 && ReferenceEquals(_brand.IconImage, brand.IconImage)
                 && ReferenceEquals(_brand.IconLayers, brand.IconLayers)
                 && Equals(_brand.SourceTransform, brand.SourceTransform)
-                && Equals(_brand.RuntimeIcon, brand.RuntimeIcon)))
+                && Equals(_brand.RuntimeIcon, brand.RuntimeIcon)
+                && Equals(_brand.RuntimeAppearances, brand.RuntimeAppearances)))
         {
             return;
         }

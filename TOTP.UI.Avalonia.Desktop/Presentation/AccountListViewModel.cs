@@ -794,7 +794,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         IsBusy = true;
         try
         {
-            await using var file = await _filePicker.PickCustomSvgIconAsync();
+            await using var file = await _filePicker.PickCustomIconAsync();
             if (file is null) return;
             await using var stream = await file.OpenReadAsync();
             if (!_editingAccountId.HasValue)
@@ -853,6 +853,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             CustomIconImportFailureReason.MalformedXml => AvaloniaStringKeys.CustomIconImportMalformed,
             CustomIconImportFailureReason.MissingVectorPath => AvaloniaStringKeys.CustomIconImportMissingPath,
             CustomIconImportFailureReason.UnsafeContent => AvaloniaStringKeys.CustomIconImportUnsafe,
+            CustomIconImportFailureReason.InvalidPng => AvaloniaStringKeys.CustomIconImportInvalidPng,
+            CustomIconImportFailureReason.UnsupportedFormat => AvaloniaStringKeys.CustomIconImportUnsupportedFormat,
             CustomIconImportFailureReason.Unreadable => AvaloniaStringKeys.CustomIconImportUnreadable,
             _ => AvaloniaStringKeys.CustomIconImportFailed
         };
@@ -1588,7 +1590,10 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
 
             ClearEditor();
             IsBusy = false;
-            await LoadAsync(isNewAccount ? updated.ID : null);
+            if (isNewAccount)
+                await RevealAccountAsync(updated.ID, highlightAsNew: true);
+            else
+                await LoadAsync();
             if (!HasMessage)
             {
                 SetSelectedAccount(
@@ -1624,6 +1629,14 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         bool highlightAsNew,
         string successMessage)
     {
+        await RevealAccountAsync(accountId, highlightAsNew);
+        if (HasMessage) return;
+
+        ShowTransientMessage(successMessage);
+    }
+
+    private async Task RevealAccountAsync(Guid accountId, bool highlightAsNew)
+    {
         SearchText = string.Empty;
         await LoadAsync(highlightAsNew ? accountId : null);
         if (HasMessage) return;
@@ -1641,7 +1654,6 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var accountToReveal = Accounts.FirstOrDefault(account => account.Id == accountId);
         if (accountToReveal is not null)
             AccountRevealRequested?.Invoke(accountToReveal);
-        ShowTransientMessage(successMessage);
     }
 
     public void ShowQrImportOutcome(string message, NotificationSeverity severity)
@@ -2601,7 +2613,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             _localization.GetString(AvaloniaStringKeys.AutomaticBrandIcon));
         var chooseCustom = new BrandIconOption(
             null,
-            _localization.GetString(AvaloniaStringKeys.ChooseCustomSvgIcon),
+            _localization.GetString(AvaloniaStringKeys.ChooseCustomIcon),
             IsCustomPickerAction: true);
         var pendingCustom = _pendingCustomIconBytes is { Length: > 0 }
             ? new BrandIconOption(

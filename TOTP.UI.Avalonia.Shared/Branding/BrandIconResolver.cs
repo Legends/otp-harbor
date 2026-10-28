@@ -80,7 +80,7 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
     public BrandInfo MaterializeIconData(BrandInfo brand)
     {
         ArgumentNullException.ThrowIfNull(brand);
-        if (brand.RuntimeIcon is not null
+        if (brand.HasRuntimeIcon
             || brand.HasVectorIcon
             || string.IsNullOrWhiteSpace(brand.Id)) return brand;
         return _knownIconData.GetOrAdd(brand.Id, _ => CreateIconData(brand));
@@ -89,7 +89,7 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
     public bool TryGetMaterializedIconData(BrandInfo brand, out BrandInfo materialized)
     {
         ArgumentNullException.ThrowIfNull(brand);
-        if (brand.RuntimeIcon is not null || brand.HasVectorIcon)
+        if (brand.HasRuntimeIcon || brand.HasVectorIcon)
         {
             materialized = brand;
             return true;
@@ -156,7 +156,8 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
             isCustomIcon,
             iconLayers,
             sourceTransform,
-            definition.RuntimeIcon);
+            definition.RuntimeIcon,
+            definition.RuntimeAppearances);
     }
 
     private static BrandInfo CreateKnownMetadata(
@@ -171,7 +172,8 @@ public sealed class BrandIconResolver : IBrandIconResolver, IDisposable
             new SolidColorBrush(Color.Parse(color)),
             null,
             IsCustomIcon: definition.Id.StartsWith("custom_", StringComparison.Ordinal),
-            RuntimeIcon: definition.RuntimeIcon);
+            RuntimeIcon: definition.RuntimeIcon,
+            RuntimeAppearances: definition.RuntimeAppearances);
     }
 
     private BrandInfo CreateIconData(BrandInfo metadata)

@@ -53,7 +53,7 @@ public interface IBrandIconPackService
 
     Task<Result<BrandDefinition>> ImportCustomIconAsync(
         Guid accountId,
-        Stream svgStream,
+        Stream imageStream,
         string? fileName = null,
         CancellationToken cancellationToken = default);
 

@@ -33,16 +33,27 @@ public sealed class IconPackCompatibilityTests
         Assert.NotNull(result.Value.Metadata);
         Assert.True(result.Value.Metadata.IssuerAliases.Count >= 5_000);
         AssertUsableIcons(result.Value.Icons);
-        Assert.All(result.Value.Icons, icon =>
+        if (result.Value.Metadata.FormatVersion == 2)
         {
-            Assert.NotNull(icon.RuntimeIcon);
-            Assert.Equal($"runtime/foreground-128/{icon.Id}.png", icon.RuntimeIcon.ArchivePath);
-            Assert.Equal("image/png", icon.RuntimeIcon.MediaType);
-            Assert.Equal(128, icon.RuntimeIcon.Width);
-            Assert.Equal(128, icon.RuntimeIcon.Height);
-            Assert.Matches("^[0-9a-f]{64}$", icon.RuntimeIcon.Sha256);
-            Assert.Equal("otp-harbor-foreground-v1", icon.RuntimeIcon.RenderProfile);
-        });
+            Assert.All(result.Value.Icons, icon =>
+            {
+                Assert.NotNull(icon.RuntimeIcon);
+                Assert.Null(icon.RuntimeAppearances);
+                Assert.Equal($"runtime/foreground-128/{icon.Id}.png", icon.RuntimeIcon.ArchivePath);
+                AssertRuntimeAsset(icon.RuntimeIcon, "otp-harbor-foreground-v1");
+            });
+        }
+        else
+        {
+            Assert.Equal(3, result.Value.Metadata.FormatVersion);
+            Assert.All(result.Value.Icons, icon =>
+            {
+                Assert.Null(icon.RuntimeIcon);
+                var appearances = Assert.IsType<ImportedRuntimeAppearances>(icon.RuntimeAppearances);
+                AssertRuntimeAppearance(appearances.LightTheme);
+                AssertRuntimeAppearance(appearances.DarkTheme);
+            });
+        }
     }
 
     [Fact(
@@ -102,11 +113,41 @@ public sealed class IconPackCompatibilityTests
         {
             Assert.False(string.IsNullOrWhiteSpace(icon.Id));
             Assert.False(string.IsNullOrWhiteSpace(icon.Name));
+            var hasRuntimeAsset = icon.RuntimeIcon is not null || icon.RuntimeAppearances is not null;
             Assert.True(
-                (icon.SvgData is { Length: > 0 }) ^ (icon.RuntimeIcon is not null),
+                (icon.SvgData is { Length: > 0 }) ^ hasRuntimeAsset,
                 $"{icon.Id} must expose exactly one validated display asset.");
             Assert.False(string.IsNullOrWhiteSpace(icon.ProviderId));
         });
+    }
+
+    private static void AssertRuntimeAppearance(ImportedRuntimeAppearance appearance)
+    {
+        AssertRuntimeAsset(appearance.Asset, "otp-harbor-themed-appearance-v1");
+        Assert.Equal(
+            $"runtime/appearance-128/{appearance.Asset.Sha256}.png",
+            appearance.Asset.ArchivePath);
+        Assert.False(string.IsNullOrWhiteSpace(appearance.AppearanceSelectionReason));
+        if (appearance.AssetRole == BrandIconAssetRole.Foreground)
+        {
+            Assert.Equal(BrandIconBackgroundMode.Solid, appearance.BackgroundMode);
+            Assert.Matches("^#[0-9A-F]{6}$", appearance.BackgroundColor);
+        }
+        else
+        {
+            Assert.Equal(BrandIconAssetRole.CompleteIcon, appearance.AssetRole);
+            Assert.Equal(BrandIconBackgroundMode.Embedded, appearance.BackgroundMode);
+            Assert.Null(appearance.BackgroundColor);
+        }
+    }
+
+    private static void AssertRuntimeAsset(ImportedRuntimeIcon runtime, string renderProfile)
+    {
+        Assert.Equal("image/png", runtime.MediaType);
+        Assert.Equal(128, runtime.Width);
+        Assert.Equal(128, runtime.Height);
+        Assert.Matches("^[0-9a-f]{64}$", runtime.Sha256);
+        Assert.Equal(renderProfile, runtime.RenderProfile);
     }
 
     private static bool ArchiveIsAvailable(string environmentVariable) =>

@@ -168,6 +168,73 @@ public sealed class BrandIconResolverTests
     }
 
     [Fact]
+    public void ResolveAccountMetadata_PreservesThemeAppearancesWithoutParsingSvg()
+    {
+        var lightAsset = new BrandRuntimeIcon(
+            $"github:light:{new string('1', 64)}",
+            null,
+            new string('1', 64),
+            128,
+            128,
+            "pack.otphicons",
+            $"runtime/appearance-128/{new string('1', 64)}.png",
+            "github",
+            BrandIconTheme.Light);
+        var darkAsset = new BrandRuntimeIcon(
+            $"github:dark:{new string('2', 64)}",
+            null,
+            new string('2', 64),
+            128,
+            128,
+            "pack.otphicons",
+            $"runtime/appearance-128/{new string('2', 64)}.png",
+            "github",
+            BrandIconTheme.Dark);
+        var source = new BrandIconAppearanceSource("simple-icons", "github", "icons/github.svg");
+        var appearances = new BrandRuntimeAppearances(
+            new BrandRuntimeAppearance(
+                lightAsset,
+                BrandIconAssetRole.Foreground,
+                BrandIconBackgroundMode.Solid,
+                "#FFFFFF",
+                BrandIconAppearanceSelection.SourceDefault,
+                source,
+                "Synthetic light appearance."),
+            new BrandRuntimeAppearance(
+                darkAsset,
+                BrandIconAssetRole.CompleteIcon,
+                BrandIconBackgroundMode.Embedded,
+                null,
+                BrandIconAppearanceSelection.CompleteSourceArtwork,
+                source,
+                "Synthetic dark appearance."));
+        var definition = new BrandDefinition(
+            "github",
+            "GitHub",
+            "#FFFFFF",
+            null,
+            RuntimeAppearances: appearances);
+        var pack = new Mock<IBrandIconPackService>();
+        pack.Setup(value => value.ResolveAccount("GitHub", "alice", null)).Returns(definition);
+        using var sut = new BrandIconResolver(pack.Object);
+
+        var metadata = sut.ResolveAccountMetadata(Guid.NewGuid(), "GitHub", "alice");
+        var materialized = sut.MaterializeIconData(metadata);
+
+        Assert.Same(appearances, metadata.RuntimeAppearances);
+        Assert.Same(lightAsset, metadata.RuntimeAppearanceFor(global::Avalonia.Styling.ThemeVariant.Light)?.Asset);
+        Assert.Same(darkAsset, metadata.RuntimeAppearanceFor(global::Avalonia.Styling.ThemeVariant.Dark)?.Asset);
+        Assert.True(metadata.HasIcon);
+        Assert.False(metadata.HasVectorIcon);
+        Assert.Same(metadata, materialized);
+        pack.Verify(
+            value => value.TryGetIconLayers(
+                It.IsAny<string>(),
+                out It.Ref<IReadOnlyList<BrandIconLayer>>.IsAny),
+            Times.Never);
+    }
+
+    [Fact]
     public void CatalogChange_InvalidatesDeferredMetadata()
     {
         var definition = new BrandDefinition("github", "GitHub", "#181717", "github.svg");

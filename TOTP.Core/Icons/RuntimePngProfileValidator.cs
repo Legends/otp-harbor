@@ -13,17 +13,7 @@ public static class RuntimePngProfileValidator
 
     public static void ValidateEncoded(ReadOnlySpan<byte> png, string expectedSha256)
     {
-        if (png.Length is <= 0 or > MaximumEncodedBytes
-            || png.Length < Signature.Length
-            || !png[..Signature.Length].SequenceEqual(Signature))
-            throw new InvalidDataException("The runtime icon is not a supported PNG.");
-        if (!IsLowercaseSha256(expectedSha256))
-            throw new InvalidDataException("The runtime icon hash is invalid.");
-
-        var actualHash = SHA256.HashData(png);
-        var expectedHash = Convert.FromHexString(expectedSha256);
-        if (!CryptographicOperations.FixedTimeEquals(actualHash, expectedHash))
-            throw new InvalidDataException("The runtime icon hash does not match its manifest.");
+        ValidateEnvelopeAndHash(png, expectedSha256);
 
         var offset = Signature.Length;
         var sawHeader = false;
@@ -90,6 +80,134 @@ public static class RuntimePngProfileValidator
 
         if (!sawEnd)
             throw new InvalidDataException("The runtime PNG is incomplete.");
+    }
+
+    public static void ValidateCustomEncoded(ReadOnlySpan<byte> png, string expectedSha256)
+    {
+        ValidateEnvelopeAndHash(png, expectedSha256);
+
+        var offset = Signature.Length;
+        var chunks = 0;
+        var sawHeader = false;
+        var sawPalette = false;
+        var sawImageData = false;
+        var imageDataEnded = false;
+        var sawEnd = false;
+        byte colorType = 0;
+        while (offset < png.Length)
+        {
+            if (++chunks > 512 || png.Length - offset < 12)
+                throw new InvalidDataException("The custom PNG chunk structure is invalid.");
+            var unsignedLength = BinaryPrimitives.ReadUInt32BigEndian(png.Slice(offset, 4));
+            offset += 4;
+            if (unsignedLength > MaximumEncodedBytes)
+                throw new InvalidDataException("The custom PNG chunk length is invalid.");
+            var length = (int)unsignedLength;
+            if (png.Length - offset < length + 8)
+                throw new InvalidDataException("The custom PNG chunk length is invalid.");
+
+            var type = png.Slice(offset, 4);
+            offset += 4;
+            if (!IsChunkType(type))
+                throw new InvalidDataException("The custom PNG chunk type is invalid.");
+            var data = png.Slice(offset, length);
+            offset += length;
+            var expectedCrc = BinaryPrimitives.ReadUInt32BigEndian(png.Slice(offset, 4));
+            offset += 4;
+            if (ComputeCrc32(type, data) != expectedCrc)
+                throw new InvalidDataException("The custom PNG chunk checksum is invalid.");
+
+            if (!sawHeader && !type.SequenceEqual("IHDR"u8))
+                throw new InvalidDataException("The custom PNG header is missing.");
+            if (type.SequenceEqual("IHDR"u8))
+            {
+                if (sawHeader || length != 13
+                    || BinaryPrimitives.ReadUInt32BigEndian(data[..4]) != Width
+                    || BinaryPrimitives.ReadUInt32BigEndian(data.Slice(4, 4)) != Height
+                    || !IsSupportedCustomColorProfile(data[8], data[9])
+                    || data[10] != 0
+                    || data[11] != 0
+                    || data[12] != 0)
+                    throw new InvalidDataException(
+                        "The custom PNG header is outside the supported 128x128 profile.");
+                sawHeader = true;
+                colorType = data[9];
+            }
+            else if (type.SequenceEqual("PLTE"u8))
+            {
+                if (!sawHeader || sawPalette || sawImageData
+                    || length is 0 or > 768
+                    || length % 3 != 0
+                    || colorType is 0 or 4)
+                    throw new InvalidDataException("The custom PNG palette is invalid.");
+                sawPalette = true;
+            }
+            else if (type.SequenceEqual("IDAT"u8))
+            {
+                if (!sawHeader || imageDataEnded || sawEnd || length == 0
+                    || colorType == 3 && !sawPalette)
+                    throw new InvalidDataException("The custom PNG image-data chunks are invalid.");
+                sawImageData = true;
+            }
+            else if (type.SequenceEqual("IEND"u8))
+            {
+                if (!sawHeader || !sawImageData || sawEnd || length != 0 || offset != png.Length)
+                    throw new InvalidDataException("The custom PNG end chunk is invalid.");
+                sawEnd = true;
+            }
+            else
+            {
+                if ((type[0] & 0x20) == 0
+                    || type.SequenceEqual("acTL"u8)
+                    || type.SequenceEqual("fcTL"u8)
+                    || type.SequenceEqual("fdAT"u8))
+                    throw new InvalidDataException("The custom PNG contains an unsupported chunk.");
+            }
+
+            if (sawImageData && !type.SequenceEqual("IDAT"u8)) imageDataEnded = true;
+        }
+
+        if (!sawEnd)
+            throw new InvalidDataException("The custom PNG is incomplete.");
+    }
+
+    private static void ValidateEnvelopeAndHash(
+        ReadOnlySpan<byte> png,
+        string expectedSha256)
+    {
+        if (png.Length is <= 0 or > MaximumEncodedBytes
+            || png.Length < Signature.Length
+            || !png[..Signature.Length].SequenceEqual(Signature))
+            throw new InvalidDataException("The runtime icon is not a supported PNG.");
+        if (!IsLowercaseSha256(expectedSha256))
+            throw new InvalidDataException("The runtime icon hash is invalid.");
+
+        var actualHash = SHA256.HashData(png);
+        var expectedHash = Convert.FromHexString(expectedSha256);
+        if (!CryptographicOperations.FixedTimeEquals(actualHash, expectedHash))
+            throw new InvalidDataException("The runtime icon hash does not match its manifest.");
+    }
+
+    private static bool IsSupportedCustomColorProfile(byte bitDepth, byte colorType) =>
+        colorType switch
+        {
+            0 => bitDepth is 1 or 2 or 4 or 8 or 16,
+            2 => bitDepth is 8 or 16,
+            3 => bitDepth is 1 or 2 or 4 or 8,
+            4 or 6 => bitDepth is 8 or 16,
+            _ => false
+        };
+
+    private static bool IsChunkType(ReadOnlySpan<byte> type)
+    {
+        foreach (var value in type)
+        {
+            if (value is not (>= (byte)'A' and <= (byte)'Z')
+                and not (>= (byte)'a' and <= (byte)'z'))
+                return false;
+        }
+
+        return true;
     }
 
     private static bool IsLowercaseSha256(string value) =>

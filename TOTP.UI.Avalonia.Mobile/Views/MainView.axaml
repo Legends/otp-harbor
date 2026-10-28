@@ -509,8 +509,9 @@
                                 VerticalContentAlignment="Center"
                                 automation:AutomationProperties.Name="{Binding ClearSearchText}"
                                 Classes="link"
-                                Click="RefocusAccountSearchAfterClear"
+                                Click="KeepAccountSearchFocusedAfterClear"
                                 Command="{Binding ClearSearchCommand}"
+                                Focusable="False"
                                 IsVisible="{Binding HasSearchText}"
                                 ToolTip.Tip="{Binding ClearSearchText}">
                                 <controls:SymbolIcon IconSize="18" Kind="Close" />
@@ -795,6 +796,7 @@
                                                             IconData="{Binding Brand.IconData}"
                                                             IconImage="{Binding Brand.IconImage}"
                                                             RuntimeIcon="{Binding Brand.RuntimeIcon}"
+                                                            RuntimeAppearances="{Binding Brand.RuntimeAppearances}"
                                                             IconTransform="{Binding Brand.IconTransform}"
                                                             IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                         Initials="{Binding Brand.Initials}"
@@ -1696,7 +1698,7 @@
                                                 </Grid>
                                                 <TextBlock
                                                     Foreground="{DynamicResource BrushTextSecondary}"
-                                                    Text="{Binding FaqImportIconPacksCustomSvgTipText}"
+                                                    Text="{Binding FaqImportIconPacksCustomIconTipText}"
                                                     TextWrapping="Wrap" />
                                                 <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
                                                 <HyperlinkButton
@@ -1871,8 +1873,9 @@
                                 VerticalContentAlignment="Center"
                                 automation:AutomationProperties.Name="{Binding ClearSearchText}"
                                 Classes="link"
-                                Click="RefocusGroupAccountSearchAfterClear"
+                                Click="KeepGroupAccountSearchFocusedAfterClear"
                                 Command="{Binding ClearGroupEditorSearchCommand}"
+                                Focusable="False"
                                 IsVisible="{Binding HasGroupEditorSearchText}"
                                 ToolTip.Tip="{Binding ClearSearchText}">
                                 <controls:SymbolIcon IconSize="18" Kind="Close" />
@@ -1907,6 +1910,7 @@
                                                             IconData="{Binding Brand.IconData}"
                                                             IconImage="{Binding Brand.IconImage}"
                                                             RuntimeIcon="{Binding Brand.RuntimeIcon}"
+                                                            RuntimeAppearances="{Binding Brand.RuntimeAppearances}"
                                                             IconTransform="{Binding Brand.IconTransform}"
                                                             IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                         Initials="{Binding Brand.Initials}"
@@ -2039,12 +2043,12 @@
                                     x:Name="AccountCustomIconButton"
                                     Classes="account-brand-icon-picker"
                                     HorizontalAlignment="Left"
-                                    automation:AutomationProperties.Name="{Binding ChooseCustomSvgIconText}"
+                                    automation:AutomationProperties.Name="{Binding ChooseCustomIconText}"
                                     Command="{Binding ImportCustomIconCommand}"
                                     IsVisible="{Binding HasNoInstalledBrandIconPack}">
                                     <controls:SymbolIconLabel
                                         Kind="ImageStack"
-                                        Text="{Binding ChooseCustomSvgIconText}" />
+                                        Text="{Binding ChooseCustomIconText}" />
                                 </Button>
                                 <Border MinHeight="24">
                                     <TextBlock
@@ -2892,6 +2896,7 @@
                             VerticalContentAlignment="Center"
                             automation:AutomationProperties.Name="{Binding ClearSearchText}"
                             Command="{Binding ClearAccountBrandIconSearchCommand}"
+                            Focusable="False"
                             IsVisible="{Binding HasAccountBrandIconSearchText}"
                             ToolTip.Tip="{Binding ClearSearchText}">
                             <controls:SymbolIcon Kind="Close" />

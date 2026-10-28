@@ -10,6 +10,11 @@ namespace TOTP.Avalonia.Shared.Controls;
 
 public sealed class BrandTile : TemplatedControl
 {
+    public BrandTile()
+    {
+        ActualThemeVariantChanged += (_, _) => RefreshRuntimeAppearance();
+    }
+
     static BrandTile()
     {
         IconDataProperty.Changed.AddClassHandler<BrandTile>(
@@ -17,7 +22,11 @@ public sealed class BrandTile : TemplatedControl
         IconImageProperty.Changed.AddClassHandler<BrandTile>(
             static (control, _) => control.UpdateIconPseudoClass());
         RuntimeIconProperty.Changed.AddClassHandler<BrandTile>(
-            static (control, _) => control.StartRuntimeIconLoad());
+            static (control, _) => control.RefreshRuntimeAppearance());
+        RuntimeAppearancesProperty.Changed.AddClassHandler<BrandTile>(
+            static (control, _) => control.RefreshRuntimeAppearance());
+        TileBackgroundProperty.Changed.AddClassHandler<BrandTile>(
+            static (control, _) => control.RefreshRuntimeBackground());
         IsCustomIconProperty.Changed.AddClassHandler<BrandTile>(
             static (control, _) => control.PseudoClasses.Set(":custom-icon", control.IsCustomIcon));
     }
@@ -37,10 +46,18 @@ public sealed class BrandTile : TemplatedControl
     public static readonly StyledProperty<BrandRuntimeIcon?> RuntimeIconProperty =
         AvaloniaProperty.Register<BrandTile, BrandRuntimeIcon?>(nameof(RuntimeIcon));
 
+    public static readonly StyledProperty<BrandRuntimeAppearances?> RuntimeAppearancesProperty =
+        AvaloniaProperty.Register<BrandTile, BrandRuntimeAppearances?>(nameof(RuntimeAppearances));
+
     public static readonly DirectProperty<BrandTile, IImage?> RuntimeImageProperty =
         AvaloniaProperty.RegisterDirect<BrandTile, IImage?>(
             nameof(RuntimeImage),
             control => control.RuntimeImage);
+
+    public static readonly DirectProperty<BrandTile, IBrush?> EffectiveTileBackgroundProperty =
+        AvaloniaProperty.RegisterDirect<BrandTile, IBrush?>(
+            nameof(EffectiveTileBackground),
+            control => control.EffectiveTileBackground);
 
     public static readonly StyledProperty<bool> IsCustomIconProperty =
         AvaloniaProperty.Register<BrandTile, bool>(nameof(IsCustomIcon));
@@ -78,10 +95,25 @@ public sealed class BrandTile : TemplatedControl
         set => SetValue(RuntimeIconProperty, value);
     }
 
+    public BrandRuntimeAppearances? RuntimeAppearances
+    {
+        get => GetValue(RuntimeAppearancesProperty);
+        set => SetValue(RuntimeAppearancesProperty, value);
+    }
+
     public IImage? RuntimeImage
     {
         get => _runtimeImage;
         private set => SetAndRaise(RuntimeImageProperty, ref _runtimeImage, value);
+    }
+
+    public IBrush? EffectiveTileBackground
+    {
+        get => _effectiveTileBackground;
+        private set => SetAndRaise(
+            EffectiveTileBackgroundProperty,
+            ref _effectiveTileBackground,
+            value);
     }
 
     public bool IsCustomIcon
@@ -97,13 +129,15 @@ public sealed class BrandTile : TemplatedControl
     }
 
     private IImage? _runtimeImage;
+    private IBrush? _effectiveTileBackground;
+    private BrandRuntimeIcon? _effectiveRuntimeIcon;
     private RuntimeBrandIconImageCache.Lease? _runtimeLease;
     private CancellationTokenSource? _runtimeLoad;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        if (RuntimeIcon is not null && _runtimeLease is null) StartRuntimeIconLoad();
+        RefreshRuntimeAppearance();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -112,10 +146,49 @@ public sealed class BrandTile : TemplatedControl
         base.OnDetachedFromVisualTree(e);
     }
 
+    private void RefreshRuntimeAppearance()
+    {
+        var appearance = SelectRuntimeAppearance();
+        var runtimeIcon = appearance?.Asset ?? RuntimeIcon;
+        RefreshRuntimeBackground(appearance);
+        PseudoClasses.Set(":themed-runtime", appearance is not null);
+        if (Equals(_effectiveRuntimeIcon, runtimeIcon)
+            && (_runtimeLease is not null || _runtimeLoad is not null || runtimeIcon is null))
+            return;
+        _effectiveRuntimeIcon = runtimeIcon;
+        StartRuntimeIconLoad();
+    }
+
+    private void RefreshRuntimeBackground() => RefreshRuntimeBackground(SelectRuntimeAppearance());
+
+    private void RefreshRuntimeBackground(BrandRuntimeAppearance? appearance)
+    {
+        if (appearance is null)
+        {
+            EffectiveTileBackground = TileBackground;
+            return;
+        }
+        EffectiveTileBackground = appearance.BackgroundMode == BrandIconBackgroundMode.Solid
+            && appearance.BackgroundColor is { } color
+            && Color.TryParse(color, out var parsed)
+                ? new SolidColorBrush(parsed)
+                : Brushes.Transparent;
+    }
+
+    private BrandRuntimeAppearance? SelectRuntimeAppearance()
+    {
+        if (RuntimeAppearances is null) return null;
+        var theme = ActualThemeVariant == global::Avalonia.Styling.ThemeVariant.Dark
+                    || ActualThemeVariant == global::TOTP.Avalonia.Shared.Styles.AvaloniaThemeVariants.HighContrast
+            ? BrandIconTheme.Dark
+            : BrandIconTheme.Light;
+        return RuntimeAppearances.ForTheme(theme);
+    }
+
     private void StartRuntimeIconLoad()
     {
         CancelRuntimeIconLoad();
-        var runtimeIcon = RuntimeIcon;
+        var runtimeIcon = _effectiveRuntimeIcon;
         if (runtimeIcon is null) return;
 
         var cancellation = new CancellationTokenSource();
@@ -138,7 +211,7 @@ public sealed class BrandTile : TemplatedControl
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (cancellation.IsCancellationRequested
-                    || !Equals(RuntimeIcon, runtimeIcon)
+                    || !Equals(_effectiveRuntimeIcon, runtimeIcon)
                     || !ReferenceEquals(_runtimeLoad, cancellation))
                     return;
 

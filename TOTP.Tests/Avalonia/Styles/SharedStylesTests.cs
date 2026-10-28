@@ -1016,7 +1016,9 @@ public sealed class SharedStylesTests
                     "ClearSearchCommand",
                     StringComparison.Ordinal) == true);
             Assert.Equal(
-                "RefocusAccountSearchAfterClear",
+                fixtureName == "MobileMainView.axaml"
+                    ? "KeepAccountSearchFocusedAfterClear"
+                    : "RefocusAccountSearchAfterClear",
                 clearSearchButton.Attribute("Click")?.Value);
         }
 

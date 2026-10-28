@@ -2012,8 +2012,8 @@ public sealed class MobileShellViewModel :
         Get(MobileStringKeys.FaqImportIconPacksStepBuild);
     public string FaqImportIconPacksStepImportText =>
         Get(MobileStringKeys.FaqImportIconPacksStepImport);
-    public string FaqImportIconPacksCustomSvgTipText =>
-        Get(MobileStringKeys.FaqImportIconPacksCustomSvgTip);
+    public string FaqImportIconPacksCustomIconTipText =>
+        Get(MobileStringKeys.FaqImportIconPacksCustomIconTip);
     public string FaqImportIconPacksSourcesText => Get(MobileStringKeys.FaqImportIconPacksSources);
     public string FaqSimpleIconsOfficialLinkText => Get(MobileStringKeys.FaqSimpleIconsOfficialLink);
     public string FaqAegisIconPackDocsLinkText => Get(MobileStringKeys.FaqAegisIconPackDocsLink);
@@ -2163,7 +2163,7 @@ public sealed class MobileShellViewModel :
     public string BrandIconsText => Get(MobileStringKeys.BrandIcons);
     public string BrandIconsDescriptionText => Get(MobileStringKeys.BrandIconsDescription);
     public string IconPackBuilderLinkText => Get(MobileStringKeys.IconPackBuilderLink);
-    public string ChooseCustomSvgIconText => Get(MobileStringKeys.ChooseCustomSvgIcon);
+    public string ChooseCustomIconText => Get(MobileStringKeys.ChooseCustomIcon);
     public string OrText => Get(MobileStringKeys.Or);
     public string UnsavedAccountChangesTitleText =>
         Get(MobileStringKeys.UnsavedAccountChangesTitle);
@@ -5126,7 +5126,7 @@ public sealed class MobileShellViewModel :
         using var operation = BeginSensitiveOperation();
         try
         {
-            using var document = await _documents.OpenCustomSvgIconAsync(operation.Token);
+            using var document = await _documents.OpenCustomIconAsync(operation.Token);
             if (document is null) return;
             if (!_editingAccountId.HasValue)
             {
@@ -5189,6 +5189,8 @@ public sealed class MobileShellViewModel :
             CustomIconImportFailureReason.MalformedXml => MobileStringKeys.CustomIconImportMalformed,
             CustomIconImportFailureReason.MissingVectorPath => MobileStringKeys.CustomIconImportMissingPath,
             CustomIconImportFailureReason.UnsafeContent => MobileStringKeys.CustomIconImportUnsafe,
+            CustomIconImportFailureReason.InvalidPng => MobileStringKeys.CustomIconImportInvalidPng,
+            CustomIconImportFailureReason.UnsupportedFormat => MobileStringKeys.CustomIconImportUnsupportedFormat,
             CustomIconImportFailureReason.Unreadable => MobileStringKeys.CustomIconImportUnreadable,
             _ => MobileStringKeys.CustomIconImportFailed
         };
@@ -5632,7 +5634,7 @@ public sealed class MobileShellViewModel :
             Get(MobileStringKeys.AutomaticBrandIcon));
         var chooseCustom = new MobileBrandIconOption(
             null,
-            Get(MobileStringKeys.ChooseCustomSvgIcon),
+            Get(MobileStringKeys.ChooseCustomIcon),
             IsCustomPickerAction: true);
         var pendingCustom = _pendingCustomIconBytes is { Length: > 0 }
             ? new MobileBrandIconOption(
@@ -6811,7 +6813,7 @@ public sealed class MobileShellViewModel :
         nameof(FaqImportIconPacksDownloadLinkText),
         nameof(FaqImportIconPacksStepBuildText),
         nameof(FaqImportIconPacksStepImportText),
-        nameof(FaqImportIconPacksCustomSvgTipText),
+        nameof(FaqImportIconPacksCustomIconTipText),
         nameof(FaqImportIconPacksSourcesText),
         nameof(FaqSimpleIconsOfficialLinkText),
         nameof(FaqAegisIconPackDocsLinkText),
@@ -6917,7 +6919,7 @@ public sealed class MobileShellViewModel :
         nameof(BrandIconsText),
         nameof(BrandIconsDescriptionText),
         nameof(IconPackBuilderLinkText),
-        nameof(ChooseCustomSvgIconText),
+        nameof(ChooseCustomIconText),
         nameof(OrText),
         nameof(SelectedEditorCustomIconFileName),
         nameof(UnsavedAccountChangesTitleText),

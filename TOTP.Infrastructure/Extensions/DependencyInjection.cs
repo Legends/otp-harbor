@@ -78,7 +78,7 @@ public static class DependencyInjection
         services.AddSingleton<IIconPackImporter, AegisIconPackImporter>();
         services.AddSingleton<IIconPackImporter, FilenameIndexedIconPackImporter>();
         services.AddSingleton<IIconPackImporterResolver, IconPackImporterResolver>();
-        services.AddSingleton<ICustomIconImporter, SvgIconImporter>();
+        services.AddSingleton<ICustomIconImporter, CustomIconImporter>();
         services.AddSingleton<IBrandIconPackService>(sp =>
             new SimpleIconsBrandIconPackService(
                 applicationPaths,

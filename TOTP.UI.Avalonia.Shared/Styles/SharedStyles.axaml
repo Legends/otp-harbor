@@ -1426,7 +1426,7 @@
                     Name="PART_Tile"
                     Width="40"
                     Height="40"
-                    Background="{TemplateBinding TileBackground}"
+                    Background="{TemplateBinding EffectiveTileBackground}"
                     CornerRadius="8">
                     <Grid>
                         <Border
@@ -1459,12 +1459,13 @@
                                 Height="24"
                                 Source="{TemplateBinding IconImage}"
                                 Stretch="Uniform" />
-                            <Image
-                                Width="24"
-                                Height="24"
-                                Source="{TemplateBinding RuntimeImage}"
-                                Stretch="Uniform" />
                         </Grid>
+                        <Image
+                            Name="PART_RuntimeImage"
+                            Width="24"
+                            Height="24"
+                            Source="{TemplateBinding RuntimeImage}"
+                            Stretch="Uniform" />
                     </Grid>
                 </Border>
             </ControlTemplate>
@@ -1478,6 +1479,10 @@
     </Style>
     <Style Selector="controls|BrandTile:custom-icon /template/ Path#PART_IconPath">
         <Setter Property="Fill" Value="{DynamicResource BrushCustomBrandTileForeground}" />
+    </Style>
+    <Style Selector="controls|BrandTile:themed-runtime /template/ Image#PART_RuntimeImage">
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="40" />
     </Style>
     <Style Selector="controls|NotificationBanner">
         <Setter Property="Template">

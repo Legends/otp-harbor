@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using FluentResults;
 using System.IO.Compression;
 using TOTP.Avalonia.Shared.Branding;
@@ -103,6 +104,140 @@ public sealed class BrandIconRenderingTests
     }
 
     [AvaloniaFact]
+    public async Task BrandTile_SelectsThemeAppearanceAndAppliesItsBackgroundSemantics()
+    {
+        var lightPng = OtpHarborRuntimePngTestData.Create(red: 0, green: 89, blue: 156);
+        var darkPng = OtpHarborRuntimePngTestData.Create(red: 24, green: 24, blue: 27);
+        var lightHash = OtpHarborRuntimePngTestData.Sha256(lightPng);
+        var darkHash = OtpHarborRuntimePngTestData.Sha256(darkPng);
+        var path = Path.Combine(Path.GetTempPath(), $"otp-harbor-runtime-{Guid.NewGuid():N}.otphicons");
+        using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
+        {
+            await WriteRuntimeEntryAsync(archive, lightHash, lightPng);
+            await WriteRuntimeEntryAsync(archive, darkHash, darkPng);
+        }
+
+        try
+        {
+            var appearances = new BrandRuntimeAppearances(
+                CreateAppearance(
+                    BrandIconTheme.Light,
+                    lightHash,
+                    path,
+                    BrandIconAssetRole.Foreground,
+                    BrandIconBackgroundMode.Solid,
+                    "#FFFFFF"),
+                CreateAppearance(
+                    BrandIconTheme.Dark,
+                    darkHash,
+                    path,
+                    BrandIconAssetRole.CompleteIcon,
+                    BrandIconBackgroundMode.Embedded,
+                    null));
+            var tile = new BrandTile { RuntimeAppearances = appearances };
+            var window = new Window
+            {
+                Content = tile,
+                RequestedThemeVariant = global::Avalonia.Styling.ThemeVariant.Light
+            };
+            window.Show();
+
+            await WaitForRuntimeImageAsync(tile);
+            var lightImage = Assert.IsAssignableFrom<IImage>(tile.RuntimeImage);
+            var lightBackground = Assert.IsType<SolidColorBrush>(tile.EffectiveTileBackground);
+            Assert.Equal(Colors.White, lightBackground.Color);
+
+            window.RequestedThemeVariant = global::Avalonia.Styling.ThemeVariant.Dark;
+            Dispatcher.UIThread.RunJobs();
+            await WaitForRuntimeImageAsync(tile, lightImage);
+
+            Assert.NotNull(tile.RuntimeImage);
+            Assert.NotSame(lightImage, tile.RuntimeImage);
+            Assert.Same(Brushes.Transparent, tile.EffectiveTileBackground);
+            Assert.Null(tile.IconData);
+            Assert.Null(tile.IconImage);
+            window.Close();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task BrandTile_RendersCompleteEmbeddedV3CanvasWithoutBackgroundOrSecondInset()
+    {
+        var png = OtpHarborRuntimePngTestData.Create(
+            red: 183,
+            green: 28,
+            blue: 28,
+            transparentInset: 8);
+        var sha256 = OtpHarborRuntimePngTestData.Sha256(png);
+        var path = Path.Combine(Path.GetTempPath(), $"otp-harbor-runtime-{Guid.NewGuid():N}.otphicons");
+        using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
+            await WriteRuntimeEntryAsync(archive, sha256, png);
+
+        try
+        {
+            var appearances = new BrandRuntimeAppearances(
+                CreateAppearance(
+                    BrandIconTheme.Light,
+                    sha256,
+                    path,
+                    BrandIconAssetRole.CompleteIcon,
+                    BrandIconBackgroundMode.Embedded,
+                    null,
+                    BrandIconAppearanceSelection.ReviewedBadgeComposition),
+                CreateAppearance(
+                    BrandIconTheme.Dark,
+                    sha256,
+                    path,
+                    BrandIconAssetRole.CompleteIcon,
+                    BrandIconBackgroundMode.Embedded,
+                    null,
+                    BrandIconAppearanceSelection.ReviewedBadgeComposition));
+            var tile = new BrandTile { RuntimeAppearances = appearances };
+            Assert.Equal(128, appearances.LightTheme.Asset.Width);
+            Assert.Equal(128, appearances.LightTheme.Asset.Height);
+            Assert.Equal(
+                png,
+                await RuntimeBrandIconAssetReader.ReadValidatedAsync(
+                    appearances.LightTheme.Asset,
+                    TestContext.Current.CancellationToken));
+            var window = new Window
+            {
+                Content = tile,
+                RequestedThemeVariant = global::Avalonia.Styling.ThemeVariant.Light
+            };
+            window.Show();
+
+            await WaitForRuntimeImageAsync(tile);
+            Assert.NotNull(tile.RuntimeImage);
+            Assert.Same(Brushes.Transparent, tile.EffectiveTileBackground);
+            var image = tile.GetVisualDescendants()
+                .OfType<Image>()
+                .Single(control => control.Name == "PART_RuntimeImage");
+            Assert.Equal(40, image.Bounds.Width);
+            Assert.Equal(40, image.Bounds.Height);
+            Assert.Equal(new Thickness(0), image.Margin);
+            Assert.Equal(Stretch.Uniform, image.Stretch);
+
+            window.RequestedThemeVariant = global::Avalonia.Styling.ThemeVariant.Dark;
+            Dispatcher.UIThread.RunJobs();
+            await WaitForRuntimeImageAsync(tile);
+            Assert.NotNull(tile.RuntimeImage);
+            Assert.Same(Brushes.Transparent, tile.EffectiveTileBackground);
+            window.Close();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [AvaloniaFact]
     public void Resolve_MulticolorSvgBuildsOneVectorImageFromAllLayers()
     {
         using var sut = new BrandIconResolver(new MulticolorPackService());
@@ -187,6 +322,59 @@ public sealed class BrandIconRenderingTests
                 new("M308 21C266 55 233 99 212 151Z", "#DD2C00", Viewport: viewport)
             ];
             return true;
+        }
+    }
+
+    private static async Task WriteRuntimeEntryAsync(
+        ZipArchive archive,
+        string sha256,
+        byte[] png)
+    {
+        var entry = archive.CreateEntry(
+            $"runtime/appearance-128/{sha256}.png",
+            CompressionLevel.NoCompression);
+        await using var output = entry.Open();
+        await output.WriteAsync(png, TestContext.Current.CancellationToken);
+    }
+
+    private static BrandRuntimeAppearance CreateAppearance(
+        BrandIconTheme theme,
+        string sha256,
+        string archivePath,
+        BrandIconAssetRole role,
+        BrandIconBackgroundMode backgroundMode,
+        string? backgroundColor,
+        BrandIconAppearanceSelection? selection = null) =>
+        new(
+            new BrandRuntimeIcon(
+                $"test:{theme.ToString().ToLowerInvariant()}:{sha256}",
+                null,
+                sha256,
+                128,
+                128,
+                archivePath,
+                $"runtime/appearance-128/{sha256}.png",
+                "test",
+                theme),
+            role,
+            backgroundMode,
+            backgroundColor,
+            selection ?? (role == BrandIconAssetRole.CompleteIcon
+                ? BrandIconAppearanceSelection.CompleteSourceArtwork
+                : BrandIconAppearanceSelection.SourceDefault),
+            new BrandIconAppearanceSource("simple-icons", "test", "icons/test.svg"),
+            "Synthetic theme appearance.");
+
+    private static async Task WaitForRuntimeImageAsync(
+        BrandTile tile,
+        IImage? previous = null)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while ((tile.RuntimeImage is null || ReferenceEquals(tile.RuntimeImage, previous))
+               && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(10, TestContext.Current.CancellationToken);
         }
     }
 }

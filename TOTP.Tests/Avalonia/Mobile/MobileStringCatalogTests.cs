@@ -178,7 +178,7 @@ public sealed class MobileStringCatalogTests
         Assert.Contains("Dashboard Icons", catalog.Get(MobileStringKeys.FaqDashboardIconsLegalLink));
         Assert.Contains("OTP Harbor", catalog.Get(MobileStringKeys.FaqImportIconPacksDisclaimer));
         Assert.Contains("GitHub", catalog.Get(MobileStringKeys.FaqImportIconPacksStepDownload));
-        Assert.Contains("SVG", catalog.Get(MobileStringKeys.FaqImportIconPacksCustomSvgTip));
+        Assert.Contains("PNG", catalog.Get(MobileStringKeys.FaqImportIconPacksCustomIconTip));
     }
 
     [Theory]

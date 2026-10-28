@@ -4,7 +4,9 @@ using TOTP.Avalonia.Mobile.Presentation;
 
 namespace TOTP.Avalonia.Android;
 
-internal sealed class AndroidGroupAccountPickerHost(MobileShellViewModel viewModel)
+internal sealed class AndroidGroupAccountPickerHost(
+    MobileShellViewModel viewModel,
+    NativeBrandIconCache brandIconCache)
     : AndroidNativeControlHost
 {
     private NativeGroupAccountPickerRecyclerView? _accountPicker;
@@ -13,7 +15,10 @@ internal sealed class AndroidGroupAccountPickerHost(MobileShellViewModel viewMod
     {
         var context = (parent as AndroidViewControlHandle)?.View.Context
             ?? global::Android.App.Application.Context;
-        _accountPicker = new NativeGroupAccountPickerRecyclerView(context, viewModel);
+        _accountPicker = new NativeGroupAccountPickerRecyclerView(
+            context,
+            viewModel,
+            brandIconCache);
         return new AndroidViewControlHandle(_accountPicker);
     }
 

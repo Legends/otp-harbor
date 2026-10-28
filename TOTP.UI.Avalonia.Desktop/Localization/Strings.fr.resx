@@ -90,18 +90,20 @@
   <data name="BrandIconHelp" xml:space="preserve"><value>Choisissez une icône du pack local importé ou conservez la correspondance automatique. Cette préférence d’affichage locale n’est pas incluse dans les sauvegardes du coffre-fort.</value></data>
   <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>Aucun pack d’icônes installé</value></data>
   <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Pour consulter les instructions d’importation et accéder à plus d’options, allez dans Paramètres → Packs d’icônes.</value></data>
-  <data name="CustomAccountIcon" xml:space="preserve"><value>SVG personnalisé</value></data>
-  <data name="ChooseCustomSvgIcon" xml:space="preserve"><value>Choisir un SVG personnalisé…</value></data>
+  <data name="CustomAccountIcon" xml:space="preserve"><value>Image personnalisée</value></data>
+  <data name="ChooseCustomIcon" xml:space="preserve"><value>Choisir un SVG ou PNG personnalisé…</value></data>
   <data name="CustomIconFileName" xml:space="preserve"><value>Image personnalisée : {0}</value></data>
-  <data name="SvgIconFiles" xml:space="preserve"><value>Fichiers d’icônes SVG</value></data>
+  <data name="CustomIconFiles" xml:space="preserve"><value>Fichiers d’icônes SVG et PNG</value></data>
   <data name="CustomIconImported" xml:space="preserve"><value>L’icône personnalisée a été appliquée à ce compte.</value></data>
-  <data name="CustomIconImportFailed" xml:space="preserve"><value>Le SVG est invalide ou n’a pas pu être stocké en toute sécurité.</value></data>
-  <data name="CustomIconImportEmpty" xml:space="preserve"><value>Le fichier SVG est vide.</value></data>
-  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>Le SVG ne doit pas dépasser 1 Mo.</value></data>
+  <data name="CustomIconImportFailed" xml:space="preserve"><value>Le SVG ou PNG est invalide ou n’a pas pu être stocké en toute sécurité.</value></data>
+  <data name="CustomIconImportEmpty" xml:space="preserve"><value>Le fichier d’icône sélectionné est vide.</value></data>
+  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>Le fichier d’icône ne doit pas dépasser 1 Mo.</value></data>
   <data name="CustomIconImportMalformed" xml:space="preserve"><value>Le SVG n’est pas un document XML bien formé.</value></data>
   <data name="CustomIconImportMissingPath" xml:space="preserve"><value>Le SVG doit contenir une racine &lt;svg&gt; et au moins un élément &lt;path&gt; avec des données de tracé.</value></data>
   <data name="CustomIconImportUnsafe" xml:space="preserve"><value>Le SVG contient un script ou une référence à une ressource externe, ce qui n’est pas autorisé.</value></data>
-  <data name="CustomIconImportUnreadable" xml:space="preserve"><value>Le SVG n’a pas pu être lu ou stocké en toute sécurité.</value></data>
+  <data name="CustomIconImportUnreadable" xml:space="preserve"><value>Le fichier d’icône n’a pas pu être lu ou stocké en toute sécurité.</value></data>
+  <data name="CustomIconImportInvalidPng" xml:space="preserve"><value>Le PNG doit être une image valide, non animée, de 128 × 128.</value></data>
+  <data name="CustomIconImportUnsupportedFormat" xml:space="preserve"><value>Choisissez un fichier SVG ou PNG.</value></data>
   <data name="AdvancedOptions" xml:space="preserve"><value>Options avancées</value></data>
   <data name="TotpPeriod" xml:space="preserve"><value>Période du code en secondes</value></data>
   <data name="ClearPeriod" xml:space="preserve"><value>Effacer la période du code</value></data>

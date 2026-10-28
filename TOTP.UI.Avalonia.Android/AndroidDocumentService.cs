@@ -15,7 +15,7 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
     private const int CreateRequestCode = 0x4f56;
     private const int BrandIconPackRequestCode = 0x4f57;
     private const int AccountImportRequestCode = 0x4f58;
-    private const int CustomSvgIconRequestCode = 0x4f59;
+    private const int CustomIconRequestCode = 0x4f59;
     private const int DiagnosticLogRequestCode = 0x4f5a;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
 
@@ -134,19 +134,20 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         return OpenReadableDocument(selected, "otp-harbor-icons.otphicons");
     }
 
-    public async Task<MobileReadableDocument?> OpenCustomSvgIconAsync(
+    public async Task<MobileReadableDocument?> OpenCustomIconAsync(
         CancellationToken cancellationToken = default)
     {
         using var intent = new Intent(Intent.ActionOpenDocument);
         intent.AddCategory(Intent.CategoryOpenable);
-        intent.SetType("image/svg+xml");
+        intent.SetType("image/*");
         intent.PutExtra(Intent.ExtraMimeTypes, new[]
         {
             "image/svg+xml",
+            "image/png",
             "text/xml",
             "application/xml"
         });
-        var selected = await StartAsync(intent, CustomSvgIconRequestCode, cancellationToken);
+        var selected = await StartAsync(intent, CustomIconRequestCode, cancellationToken);
         if (selected is null) return null;
 
         return OpenReadableDocument(selected, "custom-icon.svg");
@@ -162,15 +163,19 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
 
         try
         {
+            var contentType = resolver?.GetType(selected);
             var name = string.Equals(fallbackName, "accounts.txt", StringComparison.Ordinal)
-                ? resolver?.GetType(selected) switch
+                ? contentType switch
                 {
                     "application/json" => "accounts.json",
                     "application/octet-stream" => "accounts.2fas",
                     "text/csv" or "text/comma-separated-values" or "application/csv" => "accounts.csv",
                     _ => fallbackName
                 }
-                : fallbackName;
+                : string.Equals(fallbackName, "custom-icon.svg", StringComparison.Ordinal)
+                    && string.Equals(contentType, "image/png", StringComparison.OrdinalIgnoreCase)
+                        ? "custom-icon.png"
+                        : fallbackName;
             using var cursor = resolver?.Query(
                 selected,
                 [IOpenableColumns.DisplayName],

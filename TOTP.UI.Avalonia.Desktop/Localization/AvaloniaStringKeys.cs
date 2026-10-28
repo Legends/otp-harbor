@@ -330,9 +330,9 @@ public static class AvaloniaStringKeys
     public const string NoBrandIconPackInstalled = nameof(NoBrandIconPackInstalled);
     public const string NoBrandIconPackInstructions = nameof(NoBrandIconPackInstructions);
     public const string CustomAccountIcon = nameof(CustomAccountIcon);
-    public const string ChooseCustomSvgIcon = nameof(ChooseCustomSvgIcon);
+    public const string ChooseCustomIcon = nameof(ChooseCustomIcon);
     public const string CustomIconFileName = nameof(CustomIconFileName);
-    public const string SvgIconFiles = nameof(SvgIconFiles);
+    public const string CustomIconFiles = nameof(CustomIconFiles);
     public const string CustomIconImported = nameof(CustomIconImported);
     public const string CustomIconImportFailed = nameof(CustomIconImportFailed);
     public const string CustomIconImportEmpty = nameof(CustomIconImportEmpty);
@@ -341,6 +341,8 @@ public static class AvaloniaStringKeys
     public const string CustomIconImportMissingPath = nameof(CustomIconImportMissingPath);
     public const string CustomIconImportUnsafe = nameof(CustomIconImportUnsafe);
     public const string CustomIconImportUnreadable = nameof(CustomIconImportUnreadable);
+    public const string CustomIconImportInvalidPng = nameof(CustomIconImportInvalidPng);
+    public const string CustomIconImportUnsupportedFormat = nameof(CustomIconImportUnsupportedFormat);
     public const string OtherFormatAegis = nameof(OtherFormatAegis);
     public const string OtherFormatTwoFas = nameof(OtherFormatTwoFas);
     public const string OtherFormatOtpAuth = nameof(OtherFormatOtpAuth);
@@ -612,10 +614,11 @@ public static class AvaloniaStringKeys
         IssuerPlaceholder,
         AccountName, Secret, BrandIcon, SearchBrandIcons, AutomaticBrandIcon, BrandIconHelp,
         NoBrandIconPackInstalled, NoBrandIconPackInstructions,
-        CustomAccountIcon, ChooseCustomSvgIcon, CustomIconFileName, SvgIconFiles, CustomIconImported,
+        CustomAccountIcon, ChooseCustomIcon, CustomIconFileName, CustomIconFiles, CustomIconImported,
         CustomIconImportFailed, CustomIconImportEmpty, CustomIconImportTooLarge,
         CustomIconImportMalformed, CustomIconImportMissingPath, CustomIconImportUnsafe,
-        CustomIconImportUnreadable, OtherFormatAegis, OtherFormatTwoFas, OtherFormatOtpAuth,
+        CustomIconImportUnreadable, CustomIconImportInvalidPng, CustomIconImportUnsupportedFormat,
+        OtherFormatAegis, OtherFormatTwoFas, OtherFormatOtpAuth,
         OtherFormatLegacyOtpHarbor,
         AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,

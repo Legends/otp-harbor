@@ -11,7 +11,7 @@ public interface IMobileDocumentService
     Task<MobileReadableDocument?> OpenBrandIconPackAsync(
         CancellationToken cancellationToken = default);
 
-    Task<MobileReadableDocument?> OpenCustomSvgIconAsync(
+    Task<MobileReadableDocument?> OpenCustomIconAsync(
         CancellationToken cancellationToken = default);
 
     Task<MobileWritableDocument?> CreateEncryptedBackupAsync(

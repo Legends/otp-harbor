@@ -351,7 +351,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
             foreach (var metadata in brands)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (metadata.RuntimeIcon is not null)
+                if (metadata.HasRuntimeIcon)
                 {
                     runtimeBrands.Add(metadata);
                     continue;
@@ -376,7 +376,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
                 }
                 if (!materialized.HasIcon || materialized.Id is null) continue;
 
-                if (materialized.RuntimeIcon is not null)
+                if (materialized.HasRuntimeIcon)
                 {
                     runtimeBrands.Add(materialized);
                     continue;

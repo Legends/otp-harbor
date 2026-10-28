@@ -70,7 +70,7 @@ public static class MobileStringKeys
     public const string FaqImportIconPacksDownloadLink = nameof(FaqImportIconPacksDownloadLink);
     public const string FaqImportIconPacksStepBuild = nameof(FaqImportIconPacksStepBuild);
     public const string FaqImportIconPacksStepImport = nameof(FaqImportIconPacksStepImport);
-    public const string FaqImportIconPacksCustomSvgTip = nameof(FaqImportIconPacksCustomSvgTip);
+    public const string FaqImportIconPacksCustomIconTip = nameof(FaqImportIconPacksCustomIconTip);
     public const string FaqImportIconPacksSources = nameof(FaqImportIconPacksSources);
     public const string FaqSimpleIconsOfficialLink = nameof(FaqSimpleIconsOfficialLink);
     public const string FaqAegisIconPackDocsLink = nameof(FaqAegisIconPackDocsLink);
@@ -249,7 +249,7 @@ public static class MobileStringKeys
     public const string ResetBrandIcons = nameof(ResetBrandIcons);
     public const string ShowIssuerLogo = nameof(ShowIssuerLogo);
     public const string ShowIssuerLogoDescription = nameof(ShowIssuerLogoDescription);
-    public const string ChooseCustomSvgIcon = nameof(ChooseCustomSvgIcon);
+    public const string ChooseCustomIcon = nameof(ChooseCustomIcon);
     public const string Or = nameof(Or);
     public const string CustomIconFileName = nameof(CustomIconFileName);
     public const string BrandIcon = nameof(BrandIcon);
@@ -267,6 +267,8 @@ public static class MobileStringKeys
     public const string CustomIconImportMissingPath = nameof(CustomIconImportMissingPath);
     public const string CustomIconImportUnsafe = nameof(CustomIconImportUnsafe);
     public const string CustomIconImportUnreadable = nameof(CustomIconImportUnreadable);
+    public const string CustomIconImportInvalidPng = nameof(CustomIconImportInvalidPng);
+    public const string CustomIconImportUnsupportedFormat = nameof(CustomIconImportUnsupportedFormat);
     public const string UnsavedAccountChangesTitle = nameof(UnsavedAccountChangesTitle);
     public const string UnsavedAccountChangesPrompt = nameof(UnsavedAccountChangesPrompt);
     public const string DiscardChanges = nameof(DiscardChanges);
@@ -452,7 +454,7 @@ public static class MobileStringKeys
         FaqImportIconPacksDownloadLink,
         FaqImportIconPacksStepBuild,
         FaqImportIconPacksStepImport,
-        FaqImportIconPacksCustomSvgTip,
+        FaqImportIconPacksCustomIconTip,
         FaqImportIconPacksSources,
         FaqSimpleIconsOfficialLink,
         FaqAegisIconPackDocsLink,
@@ -621,13 +623,14 @@ public static class MobileStringKeys
         NoBrandIconPackSelected,
         BrandIconPackImported,
         BrandIconPackImportFailed, BrandIconPackReset, BrandIconPackResetFailed,
-        ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, ChooseCustomSvgIcon, Or,
+        ResetBrandIcons, ShowIssuerLogo, ShowIssuerLogoDescription, ChooseCustomIcon, Or,
         CustomIconFileName,
         BrandIcon, AutomaticBrandIcon, BrandIconHelp, NoBrandIconPackInstalled,
         NoBrandIconsMatchSearch, CustomAccountIcon,
         CustomIconImported, CustomIconImportFailed, CustomIconImportEmpty,
         CustomIconImportTooLarge, CustomIconImportMalformed, CustomIconImportMissingPath,
-        CustomIconImportUnsafe, CustomIconImportUnreadable, UnsavedAccountChangesTitle,
+        CustomIconImportUnsafe, CustomIconImportUnreadable, CustomIconImportInvalidPng,
+        CustomIconImportUnsupportedFormat, UnsavedAccountChangesTitle,
         UnsavedAccountChangesPrompt, DiscardChanges, SettingsSaveFailed,
         BackupFileName,
         BackupPasswordRequired,

@@ -106,7 +106,7 @@ public sealed class AvaloniaFilePicker(
         return files.Count == 1 ? new AvaloniaStorageFile(files[0]) : null;
     }
 
-    public async Task<INativeStorageFile?> PickCustomSvgIconAsync(
+    public async Task<INativeStorageFile?> PickCustomIconAsync(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -115,13 +115,13 @@ public sealed class AvaloniaFilePicker(
 
         var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = localization.GetString(AvaloniaStringKeys.ChooseCustomSvgIcon),
+            Title = localization.GetString(AvaloniaStringKeys.ChooseCustomIcon),
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType(localization.GetString(AvaloniaStringKeys.SvgIconFiles))
+                new FilePickerFileType(localization.GetString(AvaloniaStringKeys.CustomIconFiles))
                 {
-                    Patterns = ["*.svg"]
+                    Patterns = ["*.svg", "*.png"]
                 }
             ]
         });

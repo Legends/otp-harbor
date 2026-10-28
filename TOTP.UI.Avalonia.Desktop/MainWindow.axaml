@@ -631,6 +631,7 @@
                                                                         IconData="{Binding Brand.IconData}"
                                                                         IconImage="{Binding Brand.IconImage}"
                                                                         RuntimeIcon="{Binding Brand.RuntimeIcon}"
+                                                                        RuntimeAppearances="{Binding Brand.RuntimeAppearances}"
                                                                         IconTransform="{Binding Brand.IconTransform}"
                                                                         IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                                         Initials="{Binding Brand.Initials}"
@@ -961,13 +962,13 @@
                                                         <Button
                                                             x:Name="AccountCustomIconButton"
                                                             Margin="8,0"
-                                                            automation:AutomationProperties.Name="{DynamicResource ChooseCustomSvgIcon}"
+                                                            automation:AutomationProperties.Name="{DynamicResource ChooseCustomIcon}"
                                                             Classes="wide account-custom-icon"
                                                             Command="{Binding ImportCustomIconCommand}"
                                                             IsVisible="{Binding HasNoInstalledBrandIconPack}">
                                                             <shared:SymbolIconLabel
                                                                 Kind="ImageStack"
-                                                                Text="{DynamicResource ChooseCustomSvgIcon}" />
+                                                                Text="{DynamicResource ChooseCustomIcon}" />
                                                         </Button>
                                                         <Border
                                                             x:Name="SelectedEditorCustomIconFileNameHost"
@@ -1209,6 +1210,7 @@
                                                                             IconData="{Binding Brand.IconData}"
                                                                             IconImage="{Binding Brand.IconImage}"
                                                                             RuntimeIcon="{Binding Brand.RuntimeIcon}"
+                                                                            RuntimeAppearances="{Binding Brand.RuntimeAppearances}"
                                                                             IconTransform="{Binding Brand.IconTransform}"
                                                                             IsCustomIcon="{Binding Brand.IsCustomIcon}"
                                                                             Initials="{Binding Brand.Initials}"

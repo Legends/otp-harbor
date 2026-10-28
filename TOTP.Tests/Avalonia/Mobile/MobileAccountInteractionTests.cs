@@ -47,6 +47,22 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
+    public void AndroidUnhandledExceptions_AreWrittenToTheSystemLogThroughTheRedactor()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "OtpHarborApplication.cs"));
+
+        Assert.Contains("AndroidEnvironment.UnhandledExceptionRaiser +=", source);
+        Assert.Contains("AppDomain.CurrentDomain.UnhandledException +=", source);
+        Assert.Contains("SensitiveTextRedactor.Sanitize", source);
+        Assert.Contains("\"OtpHarborCrash\"", source);
+        Assert.DoesNotContain("Log.Fatal(\n            exception,", source);
+    }
+
+    [Fact]
     public void AndroidAutomaticBackupRetention_UsesTheSafDocumentDeleteContract()
     {
         var source = File.ReadAllText(Path.Combine(
@@ -158,8 +174,12 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains("CancelAllIconPrewarm();", recyclerSource);
         Assert.Contains("SetPinnedRuntimeIcons(pinnedBrands)", recyclerSource);
         Assert.DoesNotContain("AttachAdapterAfterPrewarmAsync", recyclerSource);
-        Assert.Contains("if (metadata.RuntimeIcon is not null)", recyclerSource);
-        Assert.Contains("if (account.Brand.RuntimeIcon is not null)", rowSource);
+        Assert.Contains("if (metadata.HasRuntimeIcon)", recyclerSource);
+        Assert.Contains("if (account.Brand.HasRuntimeIcon)", rowSource);
+        Assert.Contains("var inset = appearance is null ? Dp(9) : 0;", rowSource);
+        Assert.Contains(
+            "_drawBrandBackground = appearance?.BackgroundMode != BrandIconBackgroundMode.Embedded;",
+            rowSource);
         Assert.DoesNotContain("File.ReadAllBytes", cacheSource);
         Assert.DoesNotContain("SHA256.HashData", cacheSource);
         Assert.Contains("load = Task.Run(", cacheSource);
@@ -170,8 +190,9 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains("RuntimeBrandIconAssetReader.ReadValidatedAsync", cacheSource);
         Assert.Contains("BitmapFactory.DecodeByteArray", cacheSource);
         Assert.DoesNotContain("BitmapFactory.DecodeFile", cacheSource);
-        Assert.Contains("brand.RuntimeIcon is", cacheSource);
-        Assert.Contains("requireRuntimeIconOnFirstDraw: true", rowSource);
+        Assert.Contains("RuntimeIconFor(brand) is", cacheSource);
+        Assert.Contains("PrepareBrandIcon(bool requireRuntimeIconOnFirstDraw = true)", rowSource);
+        Assert.Contains("requireRuntimeIconOnFirstDraw);", rowSource);
         Assert.Contains("if (requireRuntimeIconOnFirstDraw)", cacheSource);
         Assert.Contains(".ConfigureAwait(false)", cacheSource);
         Assert.Contains(".GetAwaiter()", cacheSource);
@@ -661,6 +682,7 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "Button")
             .Single(element => element.Attribute(xaml + "Name")?.Value
                 == "AccountBrandIconClearSearchButton");
+        Assert.Equal("False", clearSearchButton.Attribute("Focusable")?.Value);
         Assert.Equal("Center", clearSearchButton.Attribute("HorizontalContentAlignment")?.Value);
         Assert.Equal("Center", clearSearchButton.Attribute("VerticalContentAlignment")?.Value);
         Assert.Equal("0", clearSearchButton.Attribute("Padding")?.Value);
@@ -1020,7 +1042,7 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains(
             faqSections[0].Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value
-                == "{Binding FaqImportIconPacksCustomSvgTipText}");
+                == "{Binding FaqImportIconPacksCustomIconTipText}");
         Assert.Contains(
             faqSections[1].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
@@ -1227,6 +1249,10 @@ public sealed class MobileAccountInteractionTests
 
         Assert.NotNull(clearButton);
         Assert.Equal("{Binding ClearSearchCommand}", clearButton.Attribute("Command")?.Value);
+        Assert.Equal("False", clearButton.Attribute("Focusable")?.Value);
+        Assert.Equal(
+            "KeepAccountSearchFocusedAfterClear",
+            clearButton.Attribute("Click")?.Value);
         Assert.Equal("Center", clearButton.Attribute("HorizontalContentAlignment")?.Value);
         Assert.Equal("Center", clearButton.Attribute("VerticalContentAlignment")?.Value);
         var closeIcon = clearButton
@@ -1552,6 +1578,10 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal(
             "{Binding HasGroupEditorSearchText}",
             clearGroupSearchButton?.Attribute("IsVisible")?.Value);
+        Assert.Equal("False", clearGroupSearchButton?.Attribute("Focusable")?.Value);
+        Assert.Equal(
+            "KeepGroupAccountSearchFocusedAfterClear",
+            clearGroupSearchButton?.Attribute("Click")?.Value);
         Assert.Equal("Hidden", accountPicker.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
         Assert.Equal("False", accountPicker.Attribute("ScrollViewer.IsScrollChainingEnabled")?.Value);
         var accountSelection = accountPicker

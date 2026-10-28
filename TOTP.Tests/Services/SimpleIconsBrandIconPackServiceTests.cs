@@ -307,6 +307,71 @@ public sealed class SimpleIconsBrandIconPackServiceTests
     }
 
     [Fact]
+    public async Task ImportAsync_InstallsAndReloadsFormatV3AppearancesTransactionally()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var archive = CreateOtpHarborV3Archive();
+
+        var imported = await sut.ImportAsync(
+            archive,
+            "otp-harbor-icons.otphicons",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(imported.IsSuccess);
+        var installed = Assert.IsType<BrandDefinition>(sut.Resolve("C++"));
+        Assert.Null(installed.IconFileName);
+        Assert.Null(installed.RuntimeIcon);
+        Assert.False(sut.TryGetIconLayers("c-plus-plus", out _));
+        var appearances = Assert.IsType<BrandRuntimeAppearances>(installed.RuntimeAppearances);
+        Assert.Equal(BrandIconTheme.Light, appearances.LightTheme.Asset.Theme);
+        Assert.Equal(BrandIconTheme.Dark, appearances.DarkTheme.Asset.Theme);
+        Assert.Equal(
+            $"c-plus-plus:light:{appearances.LightTheme.Asset.Sha256}",
+            appearances.LightTheme.Asset.CacheKey);
+        Assert.Equal(
+            $"c-plus-plus:dark:{appearances.DarkTheme.Asset.Sha256}",
+            appearances.DarkTheme.Asset.CacheKey);
+        Assert.Equal(BrandIconAssetRole.Foreground, appearances.LightTheme.AssetRole);
+        Assert.Equal(BrandIconBackgroundMode.Solid, appearances.LightTheme.BackgroundMode);
+        Assert.Equal("#FFFFFF", appearances.LightTheme.BackgroundColor);
+        Assert.Equal(BrandIconAssetRole.CompleteIcon, appearances.DarkTheme.AssetRole);
+        Assert.Equal(BrandIconBackgroundMode.Embedded, appearances.DarkTheme.BackgroundMode);
+        Assert.Equal(
+            BrandIconAppearanceSelection.ReviewedBadgeComposition,
+            appearances.DarkTheme.Selection);
+        Assert.Null(appearances.DarkTheme.BackgroundColor);
+        Assert.Equal(
+            $"runtime/appearance-128/{appearances.LightTheme.Asset.Sha256}.png",
+            appearances.LightTheme.Asset.ArchiveEntryPath);
+        Assert.Equal(
+            $"runtime/appearance-128/{appearances.DarkTheme.Asset.Sha256}.png",
+            appearances.DarkTheme.Asset.ArchiveEntryPath);
+        Assert.NotNull(await RuntimeBrandIconAssetReader.ReadValidatedAsync(
+            appearances.LightTheme.Asset,
+            TestContext.Current.CancellationToken));
+        Assert.NotNull(await RuntimeBrandIconAssetReader.ReadValidatedAsync(
+            appearances.DarkTheme.Asset,
+            TestContext.Current.CancellationToken));
+
+        var packDirectory = Assert.Single(Directory.EnumerateDirectories(
+            Path.Combine(temp.Path, "BrandIcons", "packs")));
+        Assert.Empty(Directory.EnumerateFiles(packDirectory, "*.png", SearchOption.AllDirectories));
+        Assert.Empty(Directory.EnumerateFiles(packDirectory, "*.svg", SearchOption.AllDirectories));
+        Assert.Equal(
+            ["brand-index.json", "pack.otphicons"],
+            Directory.EnumerateFiles(packDirectory)
+                .Select(path => Path.GetFileName(path)!)
+                .Order(StringComparer.Ordinal)
+                .ToArray());
+
+        var reloaded = CreateSut(temp.Path).Resolve("C++");
+        var reloadedAppearances = Assert.IsType<BrandRuntimeAppearances>(reloaded?.RuntimeAppearances);
+        Assert.Equal(appearances.LightTheme, reloadedAppearances.LightTheme);
+        Assert.Equal(appearances.DarkTheme, reloadedAppearances.DarkTheme);
+    }
+
+    [Fact]
     public async Task ImportAsync_RunsImporterAwayFromCallingThread()
     {
         using var temp = new TempDir();
@@ -371,6 +436,30 @@ public sealed class SimpleIconsBrandIconPackServiceTests
             "otp-harbor-icons.otphicons",
             TestContext.Current.CancellationToken)).IsSuccess);
         await using var invalid = CreateOtpHarborV2Archive(invalidHash: true);
+
+        var rejected = await sut.ImportAsync(
+            invalid,
+            "otp-harbor-icons.otphicons",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(rejected.IsFailed);
+        Assert.Equal("c-plus-plus", sut.Resolve("C++")?.Id);
+        Assert.Equal("c-plus-plus", CreateSut(temp.Path).Resolve("C++")?.Id);
+        Assert.Single(Directory.EnumerateDirectories(
+            Path.Combine(temp.Path, "BrandIcons", "packs")));
+    }
+
+    [Fact]
+    public async Task ImportAsync_InvalidFormatV3RuntimeLeavesInstalledPackUntouched()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        await using var valid = CreateOtpHarborArchive(aliasCount: 3);
+        Assert.True((await sut.ImportAsync(
+            valid,
+            "otp-harbor-icons.otphicons",
+            TestContext.Current.CancellationToken)).IsSuccess);
+        await using var invalid = CreateOtpHarborV3Archive(invalidLightHash: true);
 
         var rejected = await sut.ImportAsync(
             invalid,
@@ -576,7 +665,7 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         {
             Assert.Contains(sut.AvailableBrands, brand => brand.Id == brandId);
             var brand = sut.AvailableBrands.Single(value => value.Id == brandId);
-            Assert.NotNull(brand.RuntimeIcon);
+            Assert.True(brand.RuntimeIcon is not null || brand.RuntimeAppearances is not null);
             Assert.Null(brand.IconFileName);
             Assert.False(sut.TryGetIconLayers(brandId, out _));
         }
@@ -587,15 +676,19 @@ public sealed class SimpleIconsBrandIconPackServiceTests
                      "ethereum", "firebase", "garmin", "goodreads", "google-assistant"
                  })
         {
-            var runtime = sut.AvailableBrands.Single(value => value.Id == brandId).RuntimeIcon!;
-            Assert.NotNull(await RuntimeBrandIconAssetReader.ReadValidatedAsync(
-                runtime,
-                TestContext.Current.CancellationToken));
+            var brand = sut.AvailableBrands.Single(value => value.Id == brandId);
+            var runtimes = brand.RuntimeAppearances is { } appearances
+                ? new[] { appearances.LightTheme.Asset, appearances.DarkTheme.Asset }
+                : new[] { Assert.IsType<BrandRuntimeIcon>(brand.RuntimeIcon) };
+            foreach (var runtime in runtimes)
+                Assert.NotNull(await RuntimeBrandIconAssetReader.ReadValidatedAsync(
+                    runtime,
+                    TestContext.Current.CancellationToken));
         }
         iconTimer.Stop();
         var performanceSummary =
-            $"Full v2 import: {importTimer.Elapsed.TotalMilliseconds:F1} ms; "
-            + $"first 10 encoded account icons: {iconTimer.Elapsed.TotalMilliseconds:F1} ms; "
+            $"Full v2/v3 import: {importTimer.Elapsed.TotalMilliseconds:F1} ms; "
+            + $"first 10 account appearance sets: {iconTimer.Elapsed.TotalMilliseconds:F1} ms; "
             + logger.Messages.LastOrDefault(message => message.Contains(
                 "Brand icon pack import completed",
                 StringComparison.Ordinal));
@@ -624,16 +717,26 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         Assert.True(imported.IsSuccess);
         Assert.All(sut.AvailableBrands, brand =>
         {
-            Assert.NotNull(brand.RuntimeIcon);
-            Assert.Equal($"{brand.Id}:{brand.RuntimeIcon.Sha256}", brand.RuntimeIcon.CacheKey);
-            Assert.Equal(128, brand.RuntimeIcon.Width);
-            Assert.Equal(128, brand.RuntimeIcon.Height);
-            Assert.True(brand.RuntimeIcon.IsArchiveBacked);
-            Assert.Null(brand.RuntimeIcon.FilePath);
-            Assert.True(File.Exists(brand.RuntimeIcon.ArchivePath), brand.RuntimeIcon.ArchivePath);
-            Assert.Equal(
-                $"runtime/foreground-128/{brand.Id}.png",
-                brand.RuntimeIcon.ArchiveEntryPath);
+            var runtimes = brand.RuntimeAppearances is { } appearances
+                ? new[] { appearances.LightTheme.Asset, appearances.DarkTheme.Asset }
+                : new[] { Assert.IsType<BrandRuntimeIcon>(brand.RuntimeIcon) };
+            foreach (var runtime in runtimes)
+            {
+                var expectedKey = runtime.Theme is { } theme
+                    ? $"{brand.Id}:{theme.ToString().ToLowerInvariant()}:{runtime.Sha256}"
+                    : $"{brand.Id}:{runtime.Sha256}";
+                Assert.Equal(expectedKey, runtime.CacheKey);
+                Assert.Equal(128, runtime.Width);
+                Assert.Equal(128, runtime.Height);
+                Assert.True(runtime.IsArchiveBacked);
+                Assert.Null(runtime.FilePath);
+                Assert.True(File.Exists(runtime.ArchivePath), runtime.ArchivePath);
+                Assert.Equal(
+                    runtime.Theme is null
+                        ? $"runtime/foreground-128/{brand.Id}.png"
+                        : $"runtime/appearance-128/{runtime.Sha256}.png",
+                    runtime.ArchiveEntryPath);
+            }
         });
         Assert.All(sut.AvailableBrands, brand =>
         {
@@ -717,8 +820,58 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         Assert.False(sut.Status.IsInstalled);
         Assert.Null(sut.Resolve("GitHub"));
         Assert.True(changed > 0);
-        Assert.Empty(Directory.EnumerateDirectories(
-            Path.Combine(temp.Path, "BrandIcons", "packs")));
+        var packsRoot = Path.Combine(temp.Path, "BrandIcons", "packs");
+        Assert.True(SpinWait.SpinUntil(
+            () => !Directory.EnumerateDirectories(packsRoot).Any(),
+            TimeSpan.FromSeconds(5)));
+    }
+
+    [Fact]
+    public async Task ResetAsync_DeactivatesPackBeforeCleanupAndToleratesOpenRuntimeFile()
+    {
+        using var temp = new TempDir();
+        var scheduledCleanup = new List<Action>();
+        var sut = CreateSut(temp.Path, scheduledCleanup.Add);
+        await using var archive = CreateArchive();
+        Assert.True((await sut.ImportAsync(
+            archive,
+            TestContext.Current.CancellationToken)).IsSuccess);
+        scheduledCleanup.Clear();
+
+        var activePacksRoot = Path.Combine(temp.Path, "BrandIcons", "packs");
+        var installedPack = Assert.Single(Directory.EnumerateDirectories(activePacksRoot));
+        var legacyRuntimeDirectory = Path.Combine(installedPack, "legacy-runtime");
+        Directory.CreateDirectory(legacyRuntimeDirectory);
+        for (var index = 0; index < 250; index++)
+            File.WriteAllText(Path.Combine(legacyRuntimeDirectory, $"icon-{index:D4}.png"), "synthetic");
+        var heldRuntimePath = Path.Combine(legacyRuntimeDirectory, "icon-0000.png");
+        using var heldRuntimeFile = new FileStream(
+            heldRuntimePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read | FileShare.Delete);
+
+        var result = await sut.ResetAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(sut.Status.IsInstalled);
+        var cleanup = Assert.Single(scheduledCleanup);
+        var retiredDirectory = Assert.Single(Directory.EnumerateDirectories(
+            Path.Combine(temp.Path, "BrandIcons"),
+            ".packs-reset-*.retired",
+            SearchOption.TopDirectoryOnly));
+        Assert.Equal(250, Directory.EnumerateFiles(
+            installedPack,
+            "icon-*.png",
+            SearchOption.AllDirectories).Count());
+
+        cleanup();
+
+        heldRuntimeFile.Dispose();
+        cleanup();
+
+        Assert.False(Directory.Exists(retiredDirectory));
+        Assert.Empty(Directory.EnumerateFileSystemEntries(activePacksRoot));
     }
 
     [Fact]
@@ -855,6 +1008,58 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         Assert.DoesNotContain(
             reloaded.AvailableBrands,
             brand => brand.Id == imported.Value.Id);
+    }
+
+    [Fact]
+    public async Task ImportCustomIconAsync_PersistsAndReloadsValidatedPngRuntimeAsset()
+    {
+        using var temp = new TempDir();
+        var sut = CreateSut(temp.Path);
+        var accountId = Guid.NewGuid();
+        var png = OtpHarborRuntimePngTestData.Create(includeAncillaryChunk: true);
+        await using var image = new MemoryStream(png, writable: false);
+
+        var imported = await sut.ImportCustomIconAsync(
+            accountId,
+            image,
+            "personal-mark.png",
+            TestContext.Current.CancellationToken);
+        Assert.True(imported.IsSuccess);
+
+        var reloaded = CreateSut(temp.Path);
+        var definition = reloaded.Resolve(null, imported.Value.Id);
+        var runtime = Assert.IsType<BrandRuntimeIcon>(definition?.RuntimeIcon);
+
+        Assert.Null(definition?.IconFileName);
+        Assert.Equal("personal-mark.png", definition?.SourceFileName);
+        Assert.Equal(imported.Value.Id, reloaded.GetAccountBrandId(accountId));
+        Assert.Equal(128, runtime.Width);
+        Assert.Equal(128, runtime.Height);
+        Assert.EndsWith(
+            ".png",
+            Assert.IsType<string>(runtime.FilePath),
+            StringComparison.Ordinal);
+        Assert.Equal(
+            png,
+            await RuntimeBrandIconAssetReader.ReadValidatedAsync(
+                runtime,
+                TestContext.Current.CancellationToken));
+        var index = File.ReadAllText(Path.Combine(
+            temp.Path,
+            "BrandIcons",
+            "custom-icon-index.json"));
+        Assert.Contains("\"Version\":2", index, StringComparison.Ordinal);
+        Assert.Contains(runtime.Sha256, index, StringComparison.Ordinal);
+
+        var runtimePath = Assert.IsType<string>(runtime.FilePath);
+        var corrupted = File.ReadAllBytes(runtimePath);
+        corrupted[^13] ^= 0x01;
+        File.WriteAllBytes(runtimePath, corrupted);
+
+        Assert.Null(await RuntimeBrandIconAssetReader.ReadValidatedAsync(
+            runtime,
+            TestContext.Current.CancellationToken));
+        Assert.Null(CreateSut(temp.Path).Resolve(null, imported.Value.Id));
     }
 
     [Fact]
@@ -1205,6 +1410,27 @@ public sealed class SimpleIconsBrandIconPackServiceTests
 
     private static SimpleIconsBrandIconPackService CreateSut(
         string applicationDataDirectory,
+        Action<Action> scheduleBackgroundWork)
+    {
+        var paths = new Mock<IPlatformApplicationPaths>();
+        paths.SetupGet(value => value.ApplicationDataDirectory).Returns(applicationDataDirectory);
+        return new SimpleIconsBrandIconPackService(
+            paths.Object,
+            NoOpPlatformFileSecurity.Instance,
+            NullLogger<SimpleIconsBrandIconPackService>.Instance,
+            new IconPackImporterResolver(
+            [
+                new OtpHarborIconPackImporter(),
+                new SimpleIconsImporter(),
+                new AegisIconPackImporter(),
+                new FilenameIndexedIconPackImporter()
+            ], NullLogger<IconPackImporterResolver>.Instance),
+            new SvgIconImporter(),
+            scheduleBackgroundWork);
+    }
+
+    private static SimpleIconsBrandIconPackService CreateSut(
+        string applicationDataDirectory,
         IIconPackImporterResolver importerResolver,
         ILogger<SimpleIconsBrandIconPackService>? logger = null)
     {
@@ -1506,6 +1732,135 @@ public sealed class SimpleIconsBrandIconPackServiceTests
         }
         stream.Position = 0;
         return stream;
+    }
+
+    private static MemoryStream CreateOtpHarborV3Archive(bool invalidLightHash = false)
+    {
+        var lightPng = OtpHarborRuntimePngTestData.Create(red: 0, green: 89, blue: 156);
+        var darkPng = OtpHarborRuntimePngTestData.Create(red: 24, green: 24, blue: 27);
+        var actualLightHash = OtpHarborRuntimePngTestData.Sha256(lightPng);
+        var lightHash = invalidLightHash ? new string('0', 64) : actualLightHash;
+        var darkHash = OtpHarborRuntimePngTestData.Sha256(darkPng);
+        var lightPath = $"runtime/appearance-128/{lightHash}.png";
+        var darkPath = $"runtime/appearance-128/{darkHash}.png";
+        var manifest = JsonSerializer.Serialize(new
+        {
+            formatVersion = 3,
+            packId = "otp-harbor-icons",
+            name = "OTP Harbor Icons",
+            sources = new[]
+            {
+                new
+                {
+                    provider = "simple-icons",
+                    inputFileName = "source.zip",
+                    sha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                    version = "16.34.0",
+                    revision = (string?)null,
+                    sourceUrl = "https://github.com/simple-icons/simple-icons/releases/tag/16.34.0",
+                    metadata = new Dictionary<string, string?> { ["version"] = "16.34.0" },
+                    licenseFiles = new[] { "licenses/simple-icons/license.md" }
+                }
+            },
+            brands = new[]
+            {
+                new
+                {
+                    id = "c-plus-plus",
+                    displayName = "C++",
+                    issuerAliases = new[] { "C++", "C Plus Plus" },
+                    selectedSource = new
+                    {
+                        provider = "simple-icons",
+                        sourceId = "cplusplus",
+                        metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#00599C" }
+                    },
+                    sources = new[]
+                    {
+                        new
+                        {
+                            provider = "simple-icons",
+                            sourceId = "cplusplus",
+                            metadata = new Dictionary<string, string?> { ["nativeBrandColor"] = "#00599C" }
+                        }
+                    },
+                    appearances = new
+                    {
+                        lightTheme = CreateV3Appearance(
+                            lightPath,
+                            lightHash,
+                            "foreground",
+                            "solid",
+                            "#FFFFFF",
+                            "source-default",
+                            "icons/cplusplus.svg"),
+                        darkTheme = CreateV3Appearance(
+                            darkPath,
+                            darkHash,
+                            "complete-icon",
+                            "embedded",
+                            null,
+                            "reviewed-badge-composition",
+                            "icons/cplusplus-dark.svg")
+                    }
+                }
+            },
+            issuerAliases = new[]
+            {
+                new { key = "c++", brandId = "c-plus-plus" },
+                new { key = "c plus plus", brandId = "c-plus-plus" }
+            }
+        });
+        var stream = new MemoryStream();
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            WriteEntry(archive, "pack.json", manifest);
+            var light = archive.CreateEntry(lightPath, CompressionLevel.NoCompression);
+            using (var output = light.Open()) output.Write(lightPng);
+            var dark = archive.CreateEntry(darkPath, CompressionLevel.NoCompression);
+            using (var output = dark.Open()) output.Write(darkPng);
+            WriteEntry(archive, "licenses/simple-icons/license.md", "Synthetic license");
+        }
+        stream.Position = 0;
+        return stream;
+    }
+
+    private static object CreateV3Appearance(
+        string path,
+        string sha256,
+        string assetRole,
+        string backgroundMode,
+        string? backgroundColor,
+        string selection,
+        string sourceAssetPath)
+    {
+        var background = new Dictionary<string, object?> { ["mode"] = backgroundMode };
+        if (backgroundColor is not null) background["color"] = backgroundColor;
+        var sourceId = sourceAssetPath.EndsWith("-dark.svg", StringComparison.Ordinal)
+            ? "cplusplus-dark"
+            : "cplusplus";
+        return new
+        {
+            asset = new
+            {
+                path,
+                mediaType = "image/png",
+                width = 128,
+                height = 128,
+                sha256,
+                renderProfile = "otp-harbor-themed-appearance-v1"
+            },
+            assetRole,
+            background,
+            selection,
+            source = new
+            {
+                provider = "simple-icons",
+                sourceId,
+                assetPath = sourceAssetPath
+            },
+            appearanceSelectionReason = "Synthetic deterministic test appearance."
+        };
     }
 
     private static MemoryStream CreateFilenameIndexedArchive()

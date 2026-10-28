@@ -13,8 +13,11 @@ internal static class OtpHarborRuntimePngTestData
         bool includeAncillaryChunk = false,
         byte red = 255,
         byte green = 255,
-        byte blue = 255)
+        byte blue = 255,
+        int transparentInset = 0)
     {
+        if (transparentInset < 0 || transparentInset * 2 >= width || transparentInset * 2 >= height)
+            throw new ArgumentOutOfRangeException(nameof(transparentInset));
         var rowBytes = 1 + width * 4;
         var pixels = new byte[rowBytes * height];
         for (var row = 0; row < height; row++)
@@ -26,7 +29,13 @@ internal static class OtpHarborRuntimePngTestData
                 pixels[pixel] = red;
                 pixels[pixel + 1] = green;
                 pixels[pixel + 2] = blue;
-                pixels[pixel + 3] = 255;
+                var column = (pixel - start - 1) / 4;
+                pixels[pixel + 3] = row >= transparentInset
+                    && row < height - transparentInset
+                    && column >= transparentInset
+                    && column < width - transparentInset
+                        ? (byte)255
+                        : (byte)0;
             }
         }
 

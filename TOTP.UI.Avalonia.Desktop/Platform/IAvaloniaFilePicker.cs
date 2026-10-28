@@ -11,7 +11,7 @@ public interface IAvaloniaFilePicker
 
     Task<INativeStorageFile?> PickBrandIconPackAsync(CancellationToken cancellationToken = default);
 
-    Task<INativeStorageFile?> PickCustomSvgIconAsync(CancellationToken cancellationToken = default);
+    Task<INativeStorageFile?> PickCustomIconAsync(CancellationToken cancellationToken = default);
 
     Task<INativeStorageFile?> PickEncryptedExportFileAsync(
         string suggestedFileName,

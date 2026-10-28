@@ -12,9 +12,10 @@ namespace TOTP.Infrastructure.Icons;
 public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
 {
     private const int MinimumFormatVersion = 1;
-    private const int MaximumFormatVersion = 2;
+    private const int MaximumFormatVersion = 3;
     private const string RuntimeMediaType = "image/png";
-    private const string RuntimeRenderProfile = "otp-harbor-foreground-v1";
+    private const string V2RuntimeRenderProfile = "otp-harbor-foreground-v1";
+    private const string V3RuntimeRenderProfile = "otp-harbor-themed-appearance-v1";
     private const int MaximumPackJsonBytes = 128 * 1024 * 1024;
     private const int MaximumSources = 16;
     private const int MaximumSourcesPerBrand = 32;
@@ -192,6 +193,7 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
 
         var brandsById = new Dictionary<string, PackBrand>(StringComparer.Ordinal);
         var expectedAliases = new Dictionary<string, string>(StringComparer.Ordinal);
+        var runtimeAssets = new Dictionary<string, RuntimeIconReference>(StringComparer.Ordinal);
         var icons = new List<ImportedIcon>(document.Brands.Count);
         foreach (var brand in document.Brands)
         {
@@ -202,6 +204,7 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
             byte[]? svg = null;
             string? iconPath = null;
             ImportedRuntimeIcon? runtimeIcon = null;
+            ImportedRuntimeAppearances? runtimeAppearances = null;
             if (document.FormatVersion == 1)
             {
                 iconPath = $"icons/{brand.Id}.svg";
@@ -212,20 +215,14 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
                     ?? throw new InvalidDataException("The OTP Harbor icon pack is missing a referenced icon.");
                 svg = await IconImportArchive.ReadValidatedSvgAsync(iconEntry, cancellationToken);
             }
-            else
+            else if (document.FormatVersion == 2)
             {
                 var expectedRuntimePath = $"runtime/foreground-128/{brand.Id}.png";
                 var runtime = brand.RuntimeIcon!;
                 if (!string.Equals(runtime.Path, expectedRuntimePath, StringComparison.Ordinal)
                     || !expectedFiles.Add(expectedRuntimePath))
                     throw new InvalidDataException("The OTP Harbor icon pack contains an invalid runtime icon reference.");
-                var runtimeEntry = FindCanonicalEntry(entriesByPath, expectedRuntimePath)
-                    ?? throw new InvalidDataException("The OTP Harbor icon pack is missing a referenced runtime icon.");
-                var png = await IconImportArchive.ReadBoundedAsync(
-                    runtimeEntry,
-                    RuntimePngValidator.MaximumEncodedBytes,
-                    cancellationToken);
-                RuntimePngValidator.ValidateEncoded(png, runtime.Sha256!);
+                runtimeAssets.Add(expectedRuntimePath, runtime);
                 runtimeIcon = new ImportedRuntimeIcon(
                     expectedRuntimePath,
                     runtime.MediaType!,
@@ -233,6 +230,19 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
                     runtime.Height,
                     runtime.Sha256!,
                     runtime.RenderProfile!);
+            }
+            else
+            {
+                var appearances = brand.Appearances!;
+                runtimeAppearances = new ImportedRuntimeAppearances(
+                    ImportAppearance(
+                        appearances.LightTheme!,
+                        expectedFiles,
+                        runtimeAssets),
+                    ImportAppearance(
+                        appearances.DarkTheme!,
+                        expectedFiles,
+                        runtimeAssets));
             }
 
             foreach (var alias in brand.IssuerAliases!)
@@ -255,11 +265,26 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
                 svg,
                 brand.IssuerAliases,
                 ExpectedPackId,
-                brand.BackgroundColor!,
+                document.FormatVersion == 3
+                    ? CompatibleBackgroundColor(runtimeAppearances!.LightTheme)
+                    : brand.BackgroundColor!,
                 iconPath,
                 selected,
                 contributing,
-                runtimeIcon));
+                runtimeIcon,
+                runtimeAppearances));
+        }
+
+        foreach (var asset in runtimeAssets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var runtimeEntry = FindCanonicalEntry(entriesByPath, asset.Key)
+                ?? throw new InvalidDataException("The OTP Harbor icon pack is missing a referenced runtime icon.");
+            var png = await IconImportArchive.ReadBoundedAsync(
+                runtimeEntry,
+                RuntimePngValidator.MaximumEncodedBytes,
+                cancellationToken);
+            RuntimePngValidator.ValidateEncoded(png, asset.Value.Sha256!);
         }
 
         var aliasKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -324,8 +349,16 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
                 && brand.TryGetProperty("runtimeIcon", out _);
             var containsIcon = brand.ValueKind == JsonValueKind.Object
                 && brand.TryGetProperty("icon", out _);
-            if (formatVersion == 1 && (!containsIcon || containsRuntimeIcon)
-                || formatVersion == 2 && (containsIcon || !containsRuntimeIcon))
+            var containsAppearances = brand.ValueKind == JsonValueKind.Object
+                && brand.TryGetProperty("appearances", out _);
+            var containsBackgroundColor = brand.ValueKind == JsonValueKind.Object
+                && brand.TryGetProperty("backgroundColor", out _);
+            if (formatVersion == 1
+                    && (!containsIcon || containsRuntimeIcon || containsAppearances || !containsBackgroundColor)
+                || formatVersion == 2
+                    && (containsIcon || !containsRuntimeIcon || containsAppearances || !containsBackgroundColor)
+                || formatVersion == 3
+                    && (containsIcon || containsRuntimeIcon || !containsAppearances || containsBackgroundColor))
                 throw new InvalidDataException("The OTP Harbor icon pack mixes incompatible format members.");
         }
     }
@@ -357,8 +390,6 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         if (brand.Id is null
             || !CanonicalIdRegex().IsMatch(brand.Id)
             || !IconImportArchive.IsSafeDisplayText(brand.DisplayName)
-            || brand.BackgroundColor is null
-            || !UppercaseColorRegex().IsMatch(brand.BackgroundColor)
             || brand.IssuerAliases is null
             || brand.IssuerAliases.Count == 0
             || brand.SelectedSource is null
@@ -366,11 +397,18 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
             || brand.Sources.Count is <= 0 or > MaximumSourcesPerBrand)
             throw new InvalidDataException("The OTP Harbor icon pack contains invalid brand metadata.");
 
-        if (formatVersion == 1 && (brand.Icon is null || brand.RuntimeIcon is not null))
+        if (formatVersion is 1 or 2
+            && (brand.BackgroundColor is null || !UppercaseColorRegex().IsMatch(brand.BackgroundColor))
+            || formatVersion == 3 && brand.BackgroundColor is not null)
+            throw new InvalidDataException("The OTP Harbor icon pack contains invalid brand color metadata.");
+
+        if (formatVersion == 1
+            && (brand.Icon is null || brand.RuntimeIcon is not null || brand.Appearances is not null))
             throw new InvalidDataException("A format-1 OTP Harbor icon pack cannot contain runtime icons.");
         if (formatVersion == 2
             && (brand.Icon is not null
                 || brand.RuntimeIcon is null
+                || brand.Appearances is not null
                 || !string.Equals(brand.RuntimeIcon.MediaType, RuntimeMediaType, StringComparison.Ordinal)
                 || brand.RuntimeIcon.Width != RuntimePngValidator.Width
                 || brand.RuntimeIcon.Height != RuntimePngValidator.Height
@@ -378,9 +416,12 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
                 || !LowercaseSha256Regex().IsMatch(brand.RuntimeIcon.Sha256)
                 || !string.Equals(
                     brand.RuntimeIcon.RenderProfile,
-                    RuntimeRenderProfile,
+                    V2RuntimeRenderProfile,
                     StringComparison.Ordinal)))
             throw new InvalidDataException("The OTP Harbor icon pack contains invalid runtime icon metadata.");
+        if (formatVersion == 3
+            && (brand.Icon is not null || brand.RuntimeIcon is not null || brand.Appearances is null))
+            throw new InvalidDataException("The OTP Harbor icon pack contains invalid themed appearance metadata.");
 
         var originalAliases = new HashSet<string>(StringComparer.Ordinal);
         foreach (var alias in brand.IssuerAliases)
@@ -398,6 +439,144 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         }
         if (!references.Contains(brand.SelectedSource.Provider + "/" + brand.SelectedSource.SourceId))
             throw new InvalidDataException("The OTP Harbor icon pack selected source is not a contributor.");
+
+        if (formatVersion == 3)
+        {
+            ValidateAppearance(brand.Appearances!.LightTheme, sourceProviders, references);
+            ValidateAppearance(brand.Appearances.DarkTheme, sourceProviders, references);
+        }
+    }
+
+    private static void ValidateAppearance(
+        AppearanceReference? appearance,
+        IReadOnlySet<string> sourceProviders,
+        IReadOnlySet<string> brandSources)
+    {
+        if (appearance?.Asset is null
+            || appearance.Source is null
+            || !ValidateV3Asset(appearance.Asset)
+            || !TryParseAssetRole(appearance.AssetRole, out var role)
+            || !TryParseBackgroundMode(appearance.Background?.Mode, out var backgroundMode)
+            || !TryParseSelection(appearance.Selection, out _)
+            || !IconImportArchive.IsSafeDisplayText(appearance.AppearanceSelectionReason, 4_096)
+            || !sourceProviders.Contains(appearance.Source.Provider ?? string.Empty)
+            || appearance.Source.Provider is null
+            || !CanonicalIdRegex().IsMatch(appearance.Source.Provider)
+            || !IconImportArchive.IsSafeDisplayText(appearance.Source.SourceId)
+            || !IconImportArchive.IsSafeDisplayText(appearance.Source.AssetPath, 4_096)
+            || !brandSources.Any(source => source.StartsWith(
+                appearance.Source.Provider + "/",
+                StringComparison.Ordinal))
+            || role == BrandIconAssetRole.Foreground
+                && (backgroundMode != BrandIconBackgroundMode.Solid
+                    || appearance.Background!.Color is null
+                    || !UppercaseColorRegex().IsMatch(appearance.Background.Color))
+            || role == BrandIconAssetRole.CompleteIcon
+                && (backgroundMode != BrandIconBackgroundMode.Embedded
+                    || appearance.Background!.Color is not null))
+            throw new InvalidDataException("The OTP Harbor icon pack contains an invalid themed appearance.");
+    }
+
+    private static bool ValidateV3Asset(RuntimeIconReference asset) =>
+        string.Equals(asset.MediaType, RuntimeMediaType, StringComparison.Ordinal)
+        && asset.Width == RuntimePngValidator.Width
+        && asset.Height == RuntimePngValidator.Height
+        && asset.Sha256 is not null
+        && LowercaseSha256Regex().IsMatch(asset.Sha256)
+        && string.Equals(asset.RenderProfile, V3RuntimeRenderProfile, StringComparison.Ordinal)
+        && string.Equals(
+            asset.Path,
+            $"runtime/appearance-128/{asset.Sha256}.png",
+            StringComparison.Ordinal);
+
+    private static ImportedRuntimeAppearance ImportAppearance(
+        AppearanceReference appearance,
+        ISet<string> expectedFiles,
+        IDictionary<string, RuntimeIconReference> runtimeAssets)
+    {
+        var asset = appearance.Asset!;
+        var path = asset.Path!;
+        expectedFiles.Add(path);
+        if (runtimeAssets.TryGetValue(path, out var existing))
+        {
+            if (!string.Equals(existing.Sha256, asset.Sha256, StringComparison.Ordinal)
+                || !string.Equals(existing.MediaType, asset.MediaType, StringComparison.Ordinal)
+                || existing.Width != asset.Width
+                || existing.Height != asset.Height
+                || !string.Equals(existing.RenderProfile, asset.RenderProfile, StringComparison.Ordinal))
+                throw new InvalidDataException("The OTP Harbor icon pack contains conflicting runtime asset metadata.");
+        }
+        else
+        {
+            runtimeAssets.Add(path, asset);
+        }
+
+        TryParseAssetRole(appearance.AssetRole, out var role);
+        TryParseBackgroundMode(appearance.Background!.Mode, out var backgroundMode);
+        TryParseSelection(appearance.Selection, out var selection);
+        return new ImportedRuntimeAppearance(
+            new ImportedRuntimeIcon(
+                path,
+                asset.MediaType!,
+                asset.Width,
+                asset.Height,
+                asset.Sha256!,
+                asset.RenderProfile!),
+            role,
+            backgroundMode,
+            appearance.Background.Color,
+            selection,
+            new BrandIconAppearanceSource(
+                appearance.Source!.Provider!,
+                appearance.Source.SourceId!,
+                appearance.Source.AssetPath!),
+            appearance.AppearanceSelectionReason!);
+    }
+
+    private static string CompatibleBackgroundColor(ImportedRuntimeAppearance appearance) =>
+        appearance.BackgroundMode == BrandIconBackgroundMode.Solid
+        && appearance.BackgroundColor is { } color
+            ? color
+            : "#334155";
+
+    private static bool TryParseAssetRole(string? value, out BrandIconAssetRole role)
+    {
+        role = value switch
+        {
+            "foreground" => BrandIconAssetRole.Foreground,
+            "complete-icon" => BrandIconAssetRole.CompleteIcon,
+            _ => default
+        };
+        return value is "foreground" or "complete-icon";
+    }
+
+    private static bool TryParseBackgroundMode(string? value, out BrandIconBackgroundMode mode)
+    {
+        mode = value switch
+        {
+            "solid" => BrandIconBackgroundMode.Solid,
+            "embedded" => BrandIconBackgroundMode.Embedded,
+            _ => default
+        };
+        return value is "solid" or "embedded";
+    }
+
+    private static bool TryParseSelection(string? value, out BrandIconAppearanceSelection selection)
+    {
+        selection = value switch
+        {
+            "native-theme-variant" => BrandIconAppearanceSelection.NativeThemeVariant,
+            "brand-color-foreground" => BrandIconAppearanceSelection.BrandColorForeground,
+            "complete-source-artwork" => BrandIconAppearanceSelection.CompleteSourceArtwork,
+            "source-default" => BrandIconAppearanceSelection.SourceDefault,
+            "reviewed-badge-composition" => BrandIconAppearanceSelection.ReviewedBadgeComposition,
+            _ => default
+        };
+        return value is "native-theme-variant"
+            or "brand-color-foreground"
+            or "complete-source-artwork"
+            or "source-default"
+            or "reviewed-badge-composition";
     }
 
     private static void ValidateSourceReference(
@@ -512,6 +691,7 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         public SourceReference? SelectedSource { get; init; }
         public List<SourceReference>? Sources { get; init; }
         public RuntimeIconReference? RuntimeIcon { get; init; }
+        public AppearanceSet? Appearances { get; init; }
     }
 
     private sealed class RuntimeIconReference
@@ -522,6 +702,35 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         public int Height { get; init; }
         public string? Sha256 { get; init; }
         public string? RenderProfile { get; init; }
+    }
+
+    private sealed class AppearanceSet
+    {
+        public AppearanceReference? LightTheme { get; init; }
+        public AppearanceReference? DarkTheme { get; init; }
+    }
+
+    private sealed class AppearanceReference
+    {
+        public RuntimeIconReference? Asset { get; init; }
+        public string? AssetRole { get; init; }
+        public AppearanceBackground? Background { get; init; }
+        public string? Selection { get; init; }
+        public AppearanceSourceReference? Source { get; init; }
+        public string? AppearanceSelectionReason { get; init; }
+    }
+
+    private sealed class AppearanceBackground
+    {
+        public string? Mode { get; init; }
+        public string? Color { get; init; }
+    }
+
+    private sealed class AppearanceSourceReference
+    {
+        public string? Provider { get; init; }
+        public string? SourceId { get; init; }
+        public string? AssetPath { get; init; }
     }
 
     private sealed class SourceReference

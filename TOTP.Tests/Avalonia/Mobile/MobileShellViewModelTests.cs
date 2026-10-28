@@ -377,7 +377,7 @@ public sealed class MobileShellViewModelTests
         Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksStepDownloadText));
         Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksStepBuildText));
         Assert.False(string.IsNullOrWhiteSpace(context.Sut.FaqImportIconPacksStepImportText));
-        Assert.Contains("SVG", context.Sut.FaqImportIconPacksCustomSvgTipText, StringComparison.Ordinal);
+        Assert.Contains("PNG", context.Sut.FaqImportIconPacksCustomIconTipText, StringComparison.Ordinal);
 
         context.Sut.ShowSettingsCategoriesCommand.Execute(null);
         context.Sut.ShowImportExportSettingsCommand.Execute(null);
@@ -3856,7 +3856,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
-        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+        context.Documents.Setup(value => value.OpenCustomIconAsync(
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MobileReadableDocument(
                 new MemoryStream([1, 2, 3]),
@@ -3964,7 +3964,7 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.HasBrandIconChoices);
         Assert.Equal(66d, context.Sut.AccountBrandIconResultsMaxHeight);
         Assert.Equal(
-            ["Choose custom SVG…"],
+            ["Choose custom SVG or PNG…"],
             context.Sut.FilteredEditorBrandIconOptions.Select(option => option.DisplayName));
         Assert.Contains("Settings", context.Sut.NoBrandIconPackInstructionsText);
         Assert.Contains("Icon packs", context.Sut.NoBrandIconPackInstructionsText);
@@ -4044,7 +4044,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
             .Callback<Account>(account => created = account)
             .ReturnsAsync(Result.Ok());
-        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+        context.Documents.Setup(value => value.OpenCustomIconAsync(
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MobileReadableDocument(
                 new MemoryStream([1, 2, 3]),
@@ -4053,7 +4053,7 @@ public sealed class MobileShellViewModelTests
 
         var pickerOption = Assert.Single(context.Sut.EditorBrandIconOptions);
         Assert.True(pickerOption.IsCustomPickerAction);
-        Assert.Equal("Choose custom SVG…", pickerOption.DisplayName);
+        Assert.Equal("Choose custom SVG or PNG…", pickerOption.DisplayName);
         await context.Sut.ImportCustomIconAsync();
         Assert.True(context.Sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
@@ -4093,7 +4093,7 @@ public sealed class MobileShellViewModelTests
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(AuthorizationResult.Success);
-        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+        context.Documents.Setup(value => value.OpenCustomIconAsync(
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MobileReadableDocument?)null);
         await ConfigureAndBeginAddAsync(context);
@@ -4160,7 +4160,7 @@ public sealed class MobileShellViewModelTests
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(AuthorizationResult.Success);
-        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+        context.Documents.Setup(value => value.OpenCustomIconAsync(
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MobileReadableDocument(
                 new MemoryStream(new byte[(1024 * 1024) + 1]),
@@ -4243,7 +4243,7 @@ public sealed class MobileShellViewModelTests
             .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
-        context.Documents.Setup(value => value.OpenCustomSvgIconAsync(
+        context.Documents.Setup(value => value.OpenCustomIconAsync(
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MobileReadableDocument(
                 new MemoryStream([1, 2, 3]),

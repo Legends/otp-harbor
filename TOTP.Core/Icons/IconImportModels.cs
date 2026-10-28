@@ -28,11 +28,13 @@ public enum CustomIconImportFailureReason
     MalformedXml,
     MissingVectorPath,
     UnsafeContent,
+    InvalidPng,
+    UnsupportedFormat,
     Unreadable
 }
 
 public sealed class CustomIconImportError(CustomIconImportFailureReason reason)
-    : Error("The selected custom SVG failed validation.")
+    : Error("The selected custom icon failed validation.")
 {
     public CustomIconImportFailureReason Reason { get; } = reason;
 }
@@ -47,7 +49,9 @@ public sealed record ImportedIcon(
     string? SourceFileName = null,
     IconPackSourceReference? SelectedSource = null,
     IReadOnlyList<IconPackSourceReference>? Sources = null,
-    ImportedRuntimeIcon? RuntimeIcon = null);
+    ImportedRuntimeIcon? RuntimeIcon = null,
+    ImportedRuntimeAppearances? RuntimeAppearances = null,
+    byte[]? PngData = null);
 
 public sealed record ImportedRuntimeIcon(
     string ArchivePath,
@@ -56,6 +60,19 @@ public sealed record ImportedRuntimeIcon(
     int Height,
     string Sha256,
     string RenderProfile);
+
+public sealed record ImportedRuntimeAppearance(
+    ImportedRuntimeIcon Asset,
+    BrandIconAssetRole AssetRole,
+    BrandIconBackgroundMode BackgroundMode,
+    string? BackgroundColor,
+    BrandIconAppearanceSelection Selection,
+    BrandIconAppearanceSource Source,
+    string AppearanceSelectionReason);
+
+public sealed record ImportedRuntimeAppearances(
+    ImportedRuntimeAppearance LightTheme,
+    ImportedRuntimeAppearance DarkTheme);
 
 public sealed record ImportedIconNotice(
     string FileName,

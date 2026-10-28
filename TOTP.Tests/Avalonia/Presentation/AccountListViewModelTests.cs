@@ -1724,6 +1724,8 @@ public sealed class AccountListViewModelTests
                 return Result.Ok();
             });
         sut = CreateSut(manager.Object);
+        AccountListItemViewModel? revealRequest = null;
+        sut.AccountRevealRequested += account => revealRequest = account;
         await sut.BeginAddAsync();
         sut.EditorIssuer = "  GitHub  ";
         sut.EditorAccountName = " alice@example.test ";
@@ -1737,6 +1739,9 @@ public sealed class AccountListViewModelTests
         Assert.Equal(ValidSecret, created.Secret);
         Assert.Equal(30, created.PeriodSeconds);
         Assert.False(sut.IsEditorVisible);
+        Assert.Equal(created.ID, revealRequest?.Id);
+        Assert.True(revealRequest?.IsRecentlyAdded);
+        Assert.Equal(created.ID, sut.SelectedAccount?.Id);
         Assert.Equal("Account saved.", sut.Message);
     }
 
@@ -1900,7 +1905,7 @@ public sealed class AccountListViewModelTests
         selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MemoryStream([1, 2, 3]));
         var picker = new Mock<IAvaloniaFilePicker>();
-        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+        picker.Setup(value => value.PickCustomIconAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(selectedFile.Object);
         using var sut = CreateSut(
             manager.Object,
@@ -1919,7 +1924,7 @@ public sealed class AccountListViewModelTests
         Assert.Equal("Custom image: personal-mark.svg", sut.SelectedEditorCustomIconFileName);
         Assert.Contains(
             sut.EditorBrandIconOptions,
-            option => option.Id == custom.Id && option.DisplayName == "Custom SVG");
+            option => option.Id == custom.Id && option.DisplayName == "Custom image");
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             account.ID,
             It.IsAny<Stream>(),
@@ -1957,7 +1962,7 @@ public sealed class AccountListViewModelTests
         selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MemoryStream([1, 2, 3]));
         var picker = new Mock<IAvaloniaFilePicker>();
-        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+        picker.Setup(value => value.PickCustomIconAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(selectedFile.Object);
         using var sut = CreateSut(
             manager.Object,
@@ -1971,7 +1976,7 @@ public sealed class AccountListViewModelTests
         Assert.False(sut.HasBrandIconChoices);
         var pickerOption = Assert.Single(sut.EditorBrandIconOptions);
         Assert.True(pickerOption.IsCustomPickerAction);
-        Assert.Equal("Choose custom SVG…", pickerOption.DisplayName);
+        Assert.Equal("Choose custom SVG or PNG…", pickerOption.DisplayName);
         await sut.ImportCustomIconAsync();
         Assert.True(sut.SelectedEditorBrandIconOption?.IsPendingCustomIcon);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
@@ -2006,7 +2011,7 @@ public sealed class AccountListViewModelTests
             new BrandDefinition("github", "GitHub", "#181717", "github.svg")
         ]);
         var picker = new Mock<IAvaloniaFilePicker>();
-        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+        picker.Setup(value => value.PickCustomIconAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync((INativeStorageFile?)null);
         using var sut = CreateSut(
             manager.Object,
@@ -2066,7 +2071,7 @@ public sealed class AccountListViewModelTests
         selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MemoryStream(new byte[(1024 * 1024) + 1]));
         var picker = new Mock<IAvaloniaFilePicker>();
-        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+        picker.Setup(value => value.PickCustomIconAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(selectedFile.Object);
         using var sut = CreateSut(
             manager.Object,
@@ -2076,7 +2081,7 @@ public sealed class AccountListViewModelTests
 
         await sut.ImportCustomIconAsync();
 
-        Assert.Equal("The SVG must be no larger than 1 MB.", sut.EditorMessage);
+        Assert.Equal("The icon file must be no larger than 1 MB.", sut.EditorMessage);
         Assert.Null(sut.SelectedEditorBrandIconOption);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             It.IsAny<Guid>(),
@@ -2106,7 +2111,7 @@ public sealed class AccountListViewModelTests
         selectedFile.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MemoryStream([1, 2, 3]));
         var picker = new Mock<IAvaloniaFilePicker>();
-        picker.Setup(value => value.PickCustomSvgIconAsync(It.IsAny<CancellationToken>()))
+        picker.Setup(value => value.PickCustomIconAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(selectedFile.Object);
         using var sut = CreateSut(
             manager.Object,

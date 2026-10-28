@@ -72,7 +72,8 @@ public sealed class AvaloniaCompositionRootTests
         Assert.Equal(4, iconPackImporters.Length);
         Assert.IsType<OtpHarborIconPackImporter>(iconPackImporters[0]);
         Assert.NotNull(services.GetRequiredService<IIconPackImporterResolver>());
-        Assert.NotNull(services.GetRequiredService<ICustomIconImporter>());
+        Assert.IsType<CustomIconImporter>(
+            services.GetRequiredService<ICustomIconImporter>());
         Assert.IsType<SimpleIconsBrandIconPackService>(brandIcons);
         Assert.Contains(
             accountList.EditorBrandIconOptions,

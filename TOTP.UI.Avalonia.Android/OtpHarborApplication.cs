@@ -25,6 +25,13 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     {
     }
 
+    public override void OnCreate()
+    {
+        AndroidEnvironment.UnhandledExceptionRaiser += AndroidUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += DomainUnhandledException;
+        base.OnCreate();
+    }
+
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
         return base.CustomizeAppBuilder(builder).AfterSetup(_ =>
@@ -48,7 +55,9 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                     view.UseNativeAccountGroupStrip(new AndroidAccountGroupStripHost(
                         viewModel,
                         view.DismissAccountSearchFocus));
-                    view.UseNativeGroupAccountPicker(new AndroidGroupAccountPickerHost(viewModel));
+                    view.UseNativeGroupAccountPicker(new AndroidGroupAccountPickerHost(
+                        viewModel,
+                        brandIconCache));
                     viewModel.InitializeCommand.Execute(null);
                     return view;
                 };
@@ -148,6 +157,8 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 
     public override void OnTerminate()
     {
+        AndroidEnvironment.UnhandledExceptionRaiser -= AndroidUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException -= DomainUnhandledException;
         (global::Avalonia.Application.Current as MobileApp)?.DisposeAppearance();
         _brandIconCache?.Dispose();
         _brandIconCache = null;
@@ -155,5 +166,31 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
         _services = null;
         LoggingConfigurator.Shutdown();
         base.OnTerminate();
+    }
+
+    private static void AndroidUnhandledException(
+        object? sender,
+        RaiseThrowableEventArgs args) =>
+        RecordFatalException("Android runtime", args.Exception);
+
+    private static void DomainUnhandledException(
+        object sender,
+        UnhandledExceptionEventArgs args) =>
+        RecordFatalException("managed application domain", args.ExceptionObject as Exception);
+
+    private static void RecordFatalException(string boundary, Exception? exception)
+    {
+        var exceptionType = exception?.GetType().FullName ?? "Unknown";
+        var sanitizedDiagnostic = SensitiveTextRedactor.Sanitize(
+            exception?.ToString() ?? "Unknown unhandled exception");
+        Log.Fatal(
+            "Unhandled exception reached the {Boundary} boundary with type {ExceptionType}. "
+            + "Diagnostic: {Diagnostic}",
+            boundary,
+            exceptionType,
+            sanitizedDiagnostic);
+        global::Android.Util.Log.Error(
+            "OtpHarborCrash",
+            $"{boundary}: {sanitizedDiagnostic}");
     }
 }

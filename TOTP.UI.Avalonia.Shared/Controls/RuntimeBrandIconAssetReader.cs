@@ -39,7 +39,11 @@ public static class RuntimeBrandIconAssetReader
             }
 
             if (encoded is null) return null;
-            RuntimePngProfileValidator.ValidateEncoded(encoded, runtimeIcon.Sha256);
+            if (!runtimeIcon.IsArchiveBacked
+                && runtimeIcon.BrandId?.StartsWith("custom_", StringComparison.Ordinal) == true)
+                RuntimePngProfileValidator.ValidateCustomEncoded(encoded, runtimeIcon.Sha256);
+            else
+                RuntimePngProfileValidator.ValidateEncoded(encoded, runtimeIcon.Sha256);
             return encoded;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -56,12 +60,17 @@ public static class RuntimeBrandIconAssetReader
         }
     }
 
-    private static bool HasCanonicalCacheKey(BrandRuntimeIcon runtimeIcon) =>
-        runtimeIcon.BrandId is null
-        || string.Equals(
-            runtimeIcon.CacheKey,
-            $"{runtimeIcon.BrandId}:{runtimeIcon.Sha256}",
-            StringComparison.Ordinal);
+    private static bool HasCanonicalCacheKey(BrandRuntimeIcon runtimeIcon)
+    {
+        if (runtimeIcon.BrandId is null) return true;
+        var expected = runtimeIcon.Theme switch
+        {
+            BrandIconTheme.Light => $"{runtimeIcon.BrandId}:light:{runtimeIcon.Sha256}",
+            BrandIconTheme.Dark => $"{runtimeIcon.BrandId}:dark:{runtimeIcon.Sha256}",
+            _ => $"{runtimeIcon.BrandId}:{runtimeIcon.Sha256}"
+        };
+        return string.Equals(runtimeIcon.CacheKey, expected, StringComparison.Ordinal);
+    }
 
     private static bool HasCanonicalArchiveEntry(BrandRuntimeIcon runtimeIcon)
     {
@@ -72,11 +81,11 @@ public static class RuntimeBrandIconAssetReader
             || Path.IsPathRooted(entryPath)
             || entryPath.Split('/').Any(static segment => segment is "" or "." or ".."))
             return false;
-        return runtimeIcon.BrandId is not null
-            && string.Equals(
-                entryPath,
-                $"runtime/foreground-128/{runtimeIcon.BrandId}.png",
-                StringComparison.Ordinal);
+        if (runtimeIcon.BrandId is null) return false;
+        var expected = runtimeIcon.Theme is null
+            ? $"runtime/foreground-128/{runtimeIcon.BrandId}.png"
+            : $"runtime/appearance-128/{runtimeIcon.Sha256}.png";
+        return string.Equals(entryPath, expected, StringComparison.Ordinal);
     }
 
     private static async Task<byte[]?> ReadArchiveEntryAsync(
