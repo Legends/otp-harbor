@@ -86,7 +86,7 @@
   <data name="Secret" xml:space="preserve"><value>Secret Base32</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Icône du compte (pack d’icônes)</value></data>
   <data name="SearchBrandIcons" xml:space="preserve"><value>Rechercher dans le pack d’icônes</value></data>
-  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Correspondance automatique de l’émetteur</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Attribution automatique</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Choisissez une icône du pack local importé ou conservez la correspondance automatique. Cette préférence d’affichage locale n’est pas incluse dans les sauvegardes du coffre-fort.</value></data>
   <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>Aucun pack d’icônes installé</value></data>
   <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Pour consulter les instructions d’importation et accéder à plus d’options, allez dans Paramètres → Packs d’icônes.</value></data>

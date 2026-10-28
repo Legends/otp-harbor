@@ -282,6 +282,7 @@
   <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Gerätesperre&#xA;(PIN, Muster oder Passwort)</value></data>
   <data name="DevicePinUnavailable" xml:space="preserve"><value>Es ist keine sichere Gerätesperre (PIN, Muster oder Passwort) eingerichtet.</value></data>
   <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Geben Sie Ihr Masterpasswort ein, um die Änderung der Entsperrmethode zu autorisieren.</value></data>
+  <data name="EnableAppLockPasswordPrompt" xml:space="preserve"><value>Geben Sie Ihr Masterpasswort ein, um die App-Sperre wieder zu aktivieren.</value></data>
   <data name="UnlockMethodChanged" xml:space="preserve"><value>Entsperrmethode geändert.</value></data>
   <data name="UnlockMethodChangeFailed" xml:space="preserve"><value>Die Entsperrmethode konnte nicht sicher geändert werden.</value></data>
   <data name="ApplyUnlockMethod" xml:space="preserve"><value>Übernehmen</value></data>
@@ -309,7 +310,7 @@
   <data name="Or" xml:space="preserve"><value>oder</value></data>
   <data name="CustomIconFileName" xml:space="preserve"><value>Benutzerdefiniertes Bild: {0}</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Kontosymbol (Symbolpaket)</value></data>
-  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatisch nach Anbieter zuordnen</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatische Zuordnung</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Wählen Sie ein Symbol aus dem importierten lokalen Paket oder behalten Sie die automatische Zuordnung bei. Diese lokale Anzeigeeinstellung ist nicht in Tresor-Sicherungen enthalten.</value></data>
   <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>Kein Symbolpaket installiert</value></data>
   <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Importanleitungen und weitere Optionen findest du unter Einstellungen → Symbolpakete.</value></data>

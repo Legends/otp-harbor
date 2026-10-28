@@ -64,6 +64,21 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en", "Automatic assignment")]
+    [InlineData("de", "Automatische Zuordnung")]
+    [InlineData("fr", "Attribution automatique")]
+    [InlineData("es", "Asignación automática")]
+    public void Catalog_UsesConciseAutomaticBrandIconAssignmentLabel(
+        string cultureName,
+        string expected)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        Assert.Equal(expected, sut.Get(AvaloniaStringKeys.AutomaticBrandIcon, culture));
+    }
+
+    [Theory]
     [InlineData("en")]
     [InlineData("de")]
     [InlineData("fr")]

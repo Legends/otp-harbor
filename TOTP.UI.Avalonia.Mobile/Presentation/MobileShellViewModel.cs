@@ -1138,6 +1138,16 @@ public sealed class MobileShellViewModel :
         }
     }
 
+    public bool IsAppLockReactivationPending
+    {
+        get => _isReenablingAppLock;
+        private set
+        {
+            if (!SetField(ref _isReenablingAppLock, value)) return;
+            OnPropertyChanged(nameof(UnlockMethodPasswordPromptText));
+        }
+    }
+
     public string BiometricRecoveryPassword
     {
         get => _biometricRecoveryPassword;
@@ -1978,8 +1988,10 @@ public sealed class MobileShellViewModel :
     public string DeviceCredentialUnlockButtonText =>
         Get(MobileStringKeys.DeviceCredentialUnlockButton);
     public string DevicePinUnavailableText => Get(MobileStringKeys.DevicePinUnavailable);
-    public string UnlockMethodPasswordPromptText =>
-        Get(MobileStringKeys.UnlockMethodPasswordPrompt);
+    public string UnlockMethodPasswordPromptText => Get(
+        IsAppLockReactivationPending
+            ? MobileStringKeys.EnableAppLockPasswordPrompt
+            : MobileStringKeys.UnlockMethodPasswordPrompt);
     public string ApplyUnlockMethodText => Get(MobileStringKeys.ApplyUnlockMethod);
     public string CodesText => Get(MobileStringKeys.Codes);
     public string SettingsText => Get(MobileStringKeys.Settings);
@@ -2301,6 +2313,7 @@ public sealed class MobileShellViewModel :
             // ISettingsService keeps a stable mutable Current instance. Notify bindings after
             // LoadAsync applies persisted values so the UI cannot retain constructor defaults.
             NotifyAppLockChanged();
+            OnPropertyChanged(nameof(ShowNextToken));
             OnPropertyChanged(nameof(AllowScreenshots));
             OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             _logSwitchService?.SetLevel(_settings.Current.MinimumLogLevel);
@@ -2572,7 +2585,7 @@ public sealed class MobileShellViewModel :
         if (!CanSelectUnlockMethod(method)) return Task.CompletedTask;
         if (DisplayedUnlockMethod == method) return Task.CompletedTask;
         _pendingUnlockMethod = method;
-        _isReenablingAppLock = false;
+        IsAppLockReactivationPending = false;
         BiometricRecoveryPassword = string.Empty;
         IsBiometricEnrollmentVisible = true;
         ClearNotification();
@@ -2596,7 +2609,7 @@ public sealed class MobileShellViewModel :
         IsBusy = true;
         try
         {
-            var result = _isReenablingAppLock
+            var result = IsAppLockReactivationPending
                 ? await _authorization.SetAppLockEnabledAsync(true, recoveryPassword)
                 : _pendingUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock
                     ? await _authorization.ConfigureHelloAsync(recoveryPassword)
@@ -2607,7 +2620,7 @@ public sealed class MobileShellViewModel :
             if (result != AuthorizationResult.Success)
             {
                 SetError(GetUnlockMethodErrorKey(result, _pendingUnlockMethod));
-                if (_isReenablingAppLock && IsAppLockEnabled)
+                if (IsAppLockReactivationPending && IsAppLockEnabled)
                 {
                     RefreshUnlockMethodState();
                     NotifyAppLockChanged();
@@ -2621,7 +2634,7 @@ public sealed class MobileShellViewModel :
             RefreshUnlockMethodState();
             NotifyAppLockChanged();
             NotifyUnlockMethodChanged();
-            if (_isReenablingAppLock)
+            if (IsAppLockReactivationPending)
                 LockCore();
             else
                 SetSuccess(MobileStringKeys.UnlockMethodChanged);
@@ -2632,7 +2645,7 @@ public sealed class MobileShellViewModel :
         }
         finally
         {
-            _isReenablingAppLock = false;
+            IsAppLockReactivationPending = false;
             recoveryPassword = string.Empty;
             IsBusy = false;
         }
@@ -2752,7 +2765,7 @@ public sealed class MobileShellViewModel :
         if (IsBusy) return Task.CompletedTask;
         BiometricRecoveryPassword = string.Empty;
         IsBiometricEnrollmentVisible = false;
-        _isReenablingAppLock = false;
+        IsAppLockReactivationPending = false;
         NotifyUnlockMethodChanged();
         ClearNotification();
         return Task.CompletedTask;
@@ -2840,7 +2853,7 @@ public sealed class MobileShellViewModel :
             or PreferredUnlockMethod.PlatformDeviceCredential)
         {
             _pendingUnlockMethod = preferred;
-            _isReenablingAppLock = true;
+            IsAppLockReactivationPending = true;
             BiometricRecoveryPassword = string.Empty;
             IsBiometricEnrollmentVisible = true;
             ClearNotification();
@@ -6384,7 +6397,7 @@ public sealed class MobileShellViewModel :
     private void ResetPendingUnlockMethodChange()
     {
         _pendingUnlockMethod = DisplayedUnlockMethod;
-        _isReenablingAppLock = false;
+        IsAppLockReactivationPending = false;
         BiometricRecoveryPassword = string.Empty;
         IsBiometricEnrollmentVisible = false;
         NotifyUnlockMethodChanged();

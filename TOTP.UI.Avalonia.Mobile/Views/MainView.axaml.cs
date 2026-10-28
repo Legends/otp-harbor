@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using TOTP.Avalonia.Mobile.Presentation;
+using TOTP.Avalonia.Shared.Controls;
 
 namespace TOTP.Avalonia.Mobile.Views;
 
@@ -293,14 +294,76 @@ public partial class MainView : UserControl
                 return;
             }
 
-            UnlockMethodPasswordBox.Classes.Remove(UnlockMethodAttentionClass);
-            UnlockMethodPasswordBox.Classes.Add(UnlockMethodAttentionClass);
-            UnlockMethodPasswordBox.FocusInput();
-
-            DispatcherTimer.RunOnce(
-                () => UnlockMethodPasswordBox.Classes.Remove(UnlockMethodAttentionClass),
-                TimeSpan.FromMilliseconds(1200));
+            HighlightPasswordInput(UnlockMethodPasswordBox);
         }, DispatcherPriority.Background);
+    }
+
+    private void RevealAppLockConfirmation(object? sender, RoutedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (DataContext is not MobileShellViewModel viewModel) return;
+
+            if (viewModel.IsDisableAppLockConfirmationVisible)
+            {
+                RevealPasswordConfirmation(
+                    DisableAppLockConfirmationPanel,
+                    DisableAppLockPasswordBox);
+            }
+            else if (viewModel is
+                     {
+                         IsAppLockReactivationPending: true,
+                         IsBiometricEnrollmentVisible: true
+                     })
+            {
+                RevealPasswordConfirmation(
+                    UnlockMethodConfirmationPanel,
+                    UnlockMethodPasswordBox);
+            }
+        }, DispatcherPriority.Background);
+    }
+
+    private void RevealPasswordConfirmation(
+        Control confirmationPanel,
+        RevealableSecretInput passwordInput)
+    {
+        ScrollConfirmationIntoView(confirmationPanel);
+        HighlightPasswordInput(passwordInput);
+
+        // Android resizes the viewport while the software keyboard animates.
+        // Reapply the same panel-top alignment so its hint, field, and actions
+        // remain together in the resized viewport.
+        DispatcherTimer.RunOnce(
+            () => ScrollConfirmationIntoView(confirmationPanel),
+            TimeSpan.FromMilliseconds(250));
+    }
+
+    private void ScrollConfirmationIntoView(Control confirmationPanel)
+    {
+        var position = confirmationPanel.TranslatePoint(default, MainScrollViewer);
+        if (position is null) return;
+
+        const double topMargin = 12;
+        var maximumOffset = Math.Max(
+            0,
+            MainScrollViewer.Extent.Height - MainScrollViewer.Viewport.Height);
+        var targetOffset = Math.Clamp(
+            MainScrollViewer.Offset.Y + position.Value.Y - topMargin,
+            0,
+            maximumOffset);
+        MainScrollViewer.Offset = new Vector(MainScrollViewer.Offset.X, targetOffset);
+        UpdateSettingsBackToTopVisibility();
+    }
+
+    private static void HighlightPasswordInput(RevealableSecretInput passwordInput)
+    {
+        passwordInput.Classes.Remove(UnlockMethodAttentionClass);
+        passwordInput.Classes.Add(UnlockMethodAttentionClass);
+        passwordInput.FocusInput();
+
+        DispatcherTimer.RunOnce(
+            () => passwordInput.Classes.Remove(UnlockMethodAttentionClass),
+            TimeSpan.FromMilliseconds(1200));
     }
 
     private void CopyAccountCode(object? sender, RoutedEventArgs e)

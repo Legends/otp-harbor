@@ -21,6 +21,20 @@ public sealed class MobileStringCatalogTests
     }
 
     [Theory]
+    [InlineData("en", "Automatic assignment")]
+    [InlineData("de", "Automatische Zuordnung")]
+    [InlineData("fr", "Attribution automatique")]
+    [InlineData("es", "Asignación automática")]
+    public void Get_AutomaticBrandIconUsesConciseAssignmentLabel(
+        string cultureName,
+        string expected)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(cultureName));
+
+        Assert.Equal(expected, catalog.Get(MobileStringKeys.AutomaticBrandIcon));
+    }
+
+    [Theory]
     [InlineData("en", "master password", "quick-unlock")]
     [InlineData("de", "Master-Passwort", "Schnellentsperrdaten")]
     [InlineData("fr", "mot de passe principal", "déverrouillage rapide")]

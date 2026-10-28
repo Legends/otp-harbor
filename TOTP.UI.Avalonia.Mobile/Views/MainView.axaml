@@ -95,6 +95,12 @@
             <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
             <Setter Property="BorderThickness" Value="3" />
         </Style>
+        <Style Selector="TextBlock.unlock-method-prompt">
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}" />
+        </Style>
+        <Style Selector="TextBlock.unlock-method-prompt.app-lock-reactivation">
+            <Setter Property="Foreground" Value="{DynamicResource BrushWarning}" />
+        </Style>
         <Style Selector="Button.settings-category">
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Padding" Value="14,12" />
@@ -1239,19 +1245,23 @@
                                             Classes="wide"
                                             Classes.primary="{Binding IsAppLockDisabled}"
                                             Classes.secondary="{Binding IsAppLockEnabled}"
+                                            Click="RevealAppLockConfirmation"
                                             Command="{Binding ToggleAppLockCommand}">
                                             <controls:SymbolIconLabel Kind="Lock" Text="{Binding AppLockActionText}" />
                                         </Button>
                                         <Border
+                                            x:Name="DisableAppLockConfirmationPanel"
                                             Background="{DynamicResource BrushSurfaceAlternate}"
                                             CornerRadius="8"
                                             IsVisible="{Binding IsDisableAppLockConfirmationVisible}"
                                             Padding="12">
                                             <StackPanel Spacing="10">
                                                 <TextBlock
+                                                    Foreground="{DynamicResource BrushWarning}"
                                                     Text="{Binding DisableAppLockWarningText}"
                                                     TextWrapping="Wrap" />
                                                 <controls:RevealableSecretInput
+                                                    x:Name="DisableAppLockPasswordBox"
                                                     AccessibleName="{Binding MasterPasswordText}"
                                                     PlaceholderText="{Binding MasterPasswordText}"
                                                     RevealButtonAccessibleName="{Binding RevealPasswordText}"
@@ -1327,10 +1337,12 @@
                                                 IsChecked="{Binding IsPasswordUnlockSelected, Mode=OneWay}" />
                                         </StackPanel>
                                         <StackPanel
+                                            x:Name="UnlockMethodConfirmationPanel"
                                             IsVisible="{Binding IsBiometricEnrollmentVisible}"
                                             Spacing="10">
                                             <TextBlock
-                                                Foreground="{DynamicResource BrushTextSecondary}"
+                                                Classes="unlock-method-prompt"
+                                                Classes.app-lock-reactivation="{Binding IsAppLockReactivationPending}"
                                                 Text="{Binding UnlockMethodPasswordPromptText}"
                                                 TextWrapping="Wrap" />
                                             <controls:RevealableSecretInput

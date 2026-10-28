@@ -854,6 +854,48 @@ public sealed class MobileAccountInteractionTests
             security.Descendants(avalonia + "Button"),
             button => button.Attribute("Command")?.Value
                 == "{Binding ChangeMasterPasswordCommand}");
+        var appLockToggle = security
+            .Descendants(avalonia + "Button")
+            .Single(button => button.Attribute("Command")?.Value
+                == "{Binding ToggleAppLockCommand}");
+        Assert.Equal("RevealAppLockConfirmation", appLockToggle.Attribute("Click")?.Value);
+        var disableConfirmation = security
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "DisableAppLockConfirmationPanel");
+        Assert.Equal(
+            "{DynamicResource BrushWarning}",
+            disableConfirmation
+                .Descendants(avalonia + "TextBlock")
+                .Single(text => text.Attribute("Text")?.Value
+                    == "{Binding DisableAppLockWarningText}")
+                .Attribute("Foreground")?.Value);
+        Assert.Contains(
+            disableConfirmation.Descendants(),
+            element => element.Attribute(xaml + "Name")?.Value
+                == "DisableAppLockPasswordBox");
+        var unlockConfirmation = security
+            .Descendants(avalonia + "StackPanel")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "UnlockMethodConfirmationPanel");
+        var unlockPrompt = unlockConfirmation
+            .Descendants(avalonia + "TextBlock")
+            .Single(text => text.Attribute("Text")?.Value
+                == "{Binding UnlockMethodPasswordPromptText}");
+        Assert.Equal("unlock-method-prompt", unlockPrompt.Attribute("Classes")?.Value);
+        Assert.Equal(
+            "{Binding IsAppLockReactivationPending}",
+            unlockPrompt.Attributes().Single(attribute =>
+                attribute.Name.LocalName == "Classes.app-lock-reactivation").Value);
+        var mainViewSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml.cs"));
+        Assert.Contains("RevealAppLockConfirmation", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("DisableAppLockConfirmationPanel", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("UnlockMethodConfirmationPanel", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("ScrollConfirmationIntoView", mainViewSource, StringComparison.Ordinal);
 
         var misc = document
             .Descendants(avalonia + "Border")

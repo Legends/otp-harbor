@@ -282,6 +282,7 @@
   <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Bloqueo del dispositivo&#xA;(PIN, patrón o contraseña)</value></data>
   <data name="DevicePinUnavailable" xml:space="preserve"><value>No hay configurado un bloqueo seguro del dispositivo (PIN, patrón o contraseña).</value></data>
   <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Introduzca su contraseña maestra para autorizar el cambio del método de desbloqueo.</value></data>
+  <data name="EnableAppLockPasswordPrompt" xml:space="preserve"><value>Introduzca su contraseña maestra para volver a activar el bloqueo de la aplicación.</value></data>
   <data name="UnlockMethodChanged" xml:space="preserve"><value>Método de desbloqueo cambiado.</value></data>
   <data name="UnlockMethodChangeFailed" xml:space="preserve"><value>No se pudo cambiar el método de desbloqueo de forma segura.</value></data>
   <data name="ApplyUnlockMethod" xml:space="preserve"><value>Aplicar</value></data>
@@ -309,7 +310,7 @@
   <data name="Or" xml:space="preserve"><value>o</value></data>
   <data name="CustomIconFileName" xml:space="preserve"><value>Imagen personalizada: {0}</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Icono de la cuenta (paquete de iconos)</value></data>
-  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Coincidencia automática del emisor</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Asignación automática</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Elige un icono del paquete local importado o mantén la coincidencia automática. Esta preferencia visual local no se incluye en las copias de seguridad de la caja fuerte.</value></data>
   <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>No hay ningún paquete de iconos instalado</value></data>
   <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Para consultar las instrucciones de importación y más opciones, ve a Ajustes → Paquetes de iconos.</value></data>

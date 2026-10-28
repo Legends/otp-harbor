@@ -2729,12 +2729,38 @@ public sealed class AccountListViewModelTests
 
         Assert.True(sut.HasVisibleNextCode);
         Assert.Equal("654 321", sut.DisplayNextCode);
+
+        sut.UpdateNextTokenPreference(false);
+
+        Assert.False(sut.HasVisibleNextCode);
         Assert.Equal("123 456", sut.DisplayCode);
 
         sut.UpdateCode("654321", 30, 30, "111222");
 
         Assert.False(sut.HasVisibleNextCode);
         Assert.Equal("654 321", sut.DisplayCode);
+    }
+
+    [Fact]
+    public async Task NotifySettingsChanged_AppliesPersistedNextTokenPreferenceToDesktopRows()
+    {
+        var account = new Account(Guid.NewGuid(), "Issuer", ValidSecret, "account");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var current = new AppSettings { ShowNextToken = true };
+        var settings = new Mock<ISettingsService>();
+        settings.SetupGet(value => value.Current).Returns(current);
+        using var sut = CreateSut(manager.Object, settingsService: settings.Object);
+        await sut.LoadAsync();
+        var row = Assert.Single(sut.Accounts);
+        row.UpdateCode("123456", 5, 30, "654321");
+        Assert.True(row.HasVisibleNextCode);
+
+        current.ShowNextToken = false;
+        sut.NotifySettingsChanged();
+
+        Assert.False(row.HasVisibleNextCode);
     }
 
     [Fact]

@@ -86,7 +86,7 @@
   <data name="Secret" xml:space="preserve"><value>Base32 secret</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Account icon (icon pack)</value></data>
   <data name="SearchBrandIcons" xml:space="preserve"><value>Search icon pack</value></data>
-  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatic issuer match</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Automatic assignment</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Choose an icon from the imported local pack or keep automatic matching. This local display preference is not included in vault backups.</value></data>
   <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>No icon pack installed</value></data>
   <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>For import instructions and more options, go to Settings → Icon packs.</value></data>

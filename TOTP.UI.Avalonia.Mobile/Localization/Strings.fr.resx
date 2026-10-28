@@ -282,6 +282,7 @@
   <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Verrouillage de l’appareil&#xA;(code PIN, schéma ou mot de passe)</value></data>
   <data name="DevicePinUnavailable" xml:space="preserve"><value>Aucun verrouillage sécurisé de l’appareil (code PIN, schéma ou mot de passe) n’est configuré.</value></data>
   <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Saisissez votre mot de passe principal pour autoriser la modification de la méthode de déverrouillage.</value></data>
+  <data name="EnableAppLockPasswordPrompt" xml:space="preserve"><value>Saisissez votre mot de passe principal pour réactiver le verrouillage de l’application.</value></data>
   <data name="UnlockMethodChanged" xml:space="preserve"><value>Méthode de déverrouillage modifiée.</value></data>
   <data name="UnlockMethodChangeFailed" xml:space="preserve"><value>La méthode de déverrouillage n’a pas pu être modifiée en toute sécurité.</value></data>
   <data name="ApplyUnlockMethod" xml:space="preserve"><value>Appliquer</value></data>
@@ -309,7 +310,7 @@
   <data name="Or" xml:space="preserve"><value>ou</value></data>
   <data name="CustomIconFileName" xml:space="preserve"><value>Image personnalisée : {0}</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Icône du compte (pack d’icônes)</value></data>
-  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Correspondance automatique de l’émetteur</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Attribution automatique</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Choisissez une icône du pack local importé ou conservez la correspondance automatique. Cette préférence d’affichage locale n’est pas incluse dans les sauvegardes du coffre-fort.</value></data>
   <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>Aucun pack d’icônes installé</value></data>
   <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Pour consulter les instructions d’importation et accéder à plus d’options, allez dans Paramètres → Packs d’icônes.</value></data>

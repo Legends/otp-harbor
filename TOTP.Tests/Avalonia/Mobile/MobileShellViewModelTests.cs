@@ -289,6 +289,59 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_NotifiesShowNextTokenAfterPersistedSettingsLoad()
+    {
+        var context = CreateContext(isConfigured: false);
+        context.SettingsValue.ShowNextToken = false;
+        context.Settings.Setup(value => value.LoadAsync())
+            .Callback(() => context.SettingsValue.ShowNextToken = true)
+            .ReturnsAsync(Result.Ok<IAppSettings>(context.SettingsValue));
+        var changedProperties = new List<string?>();
+        context.Sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        await context.Sut.InitializeAsync();
+
+        Assert.True(context.Sut.ShowNextToken);
+        Assert.Contains(nameof(MobileShellViewModel.ShowNextToken), changedProperties);
+    }
+
+    [Fact]
+    public async Task ShowNextToken_ImmediatelyUpdatesRowsAndPersistsBothValues()
+    {
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user@example.test");
+        var context = CreateContext(
+            isConfigured: true,
+            accounts: [account],
+            appLockEnabled: false);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp
+            .Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult>
+                {
+                    [account.ID] = new("123456", 5, 30, "654321")
+                },
+                new HashSet<Guid>())));
+        await context.Sut.InitializeAsync();
+        var row = Assert.Single(context.Sut.Accounts);
+        await WaitUntilAsync(() => row.DisplayNextCode == "654 321");
+
+        Assert.False(context.Sut.ShowNextToken);
+        Assert.False(row.HasVisibleNextCode);
+
+        context.Sut.ShowNextToken = true;
+        await WaitUntilAsync(() => context.SettingsValue.ShowNextToken);
+        Assert.True(row.HasVisibleNextCode);
+
+        context.Sut.ShowNextToken = false;
+        await WaitUntilAsync(() => !context.SettingsValue.ShowNextToken);
+        Assert.False(row.HasVisibleNextCode);
+        context.Settings.Verify(value => value.SaveAsync(), Times.Exactly(2));
+    }
+
+    [Fact]
     public async Task EnableAppLockAsync_FromDisabledSettings_ImmediatelyLocksAndClearsAccounts()
     {
         var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user@example.test");
@@ -315,17 +368,48 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ShowSettingsAsync();
 
         Assert.Equal("Activate app lock", context.Sut.AppLockActionText);
+        Assert.False(context.Sut.IsAppLockReactivationPending);
         await context.Sut.ToggleAppLockAsync();
         Assert.True(context.Sut.IsBiometricEnrollmentVisible);
+        Assert.True(context.Sut.IsAppLockReactivationPending);
+        Assert.Equal(
+            "Enter your master password to reactivate app lock.",
+            context.Sut.UnlockMethodPasswordPromptText);
         context.Sut.BiometricRecoveryPassword = "recovery-password";
         await context.Sut.EnableBiometricAsync();
 
         Assert.True(context.Sut.IsAppLockEnabled);
+        Assert.False(context.Sut.IsAppLockReactivationPending);
         Assert.True(context.Sut.IsUnlockVisible);
         Assert.False(context.Sut.IsSettingsVisible);
         Assert.Empty(context.Sut.Accounts);
         Assert.False(context.Sut.EnableAppLockCommand.CanExecute(null));
         context.Authorization.Verify(value => value.Lock(), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("en", "Enter your master password to reactivate app lock.")]
+    [InlineData("de", "Geben Sie Ihr Masterpasswort ein, um die App-Sperre wieder zu aktivieren.")]
+    [InlineData("fr", "Saisissez votre mot de passe principal pour réactiver le verrouillage de l’application.")]
+    [InlineData("es", "Introduzca su contraseña maestra para volver a activar el bloqueo de la aplicación.")]
+    public async Task EnableAppLockAsync_UsesCompleteLocalizedReactivationPrompt(
+        string cultureName,
+        string expectedPrompt)
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: true,
+            preferredUnlockMethod:
+                TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock,
+            cultureName: cultureName,
+            appLockEnabled: false);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        await context.Sut.EnableAppLockAsync();
+
+        Assert.True(context.Sut.IsAppLockReactivationPending);
+        Assert.Equal(expectedPrompt, context.Sut.UnlockMethodPasswordPromptText);
     }
 
     [Fact]

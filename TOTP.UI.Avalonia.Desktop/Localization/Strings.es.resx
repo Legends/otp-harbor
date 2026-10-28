@@ -86,7 +86,7 @@
   <data name="Secret" xml:space="preserve"><value>Secreto Base32</value></data>
   <data name="BrandIcon" xml:space="preserve"><value>Icono de la cuenta (paquete de iconos)</value></data>
   <data name="SearchBrandIcons" xml:space="preserve"><value>Buscar en el paquete de iconos</value></data>
-  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Coincidencia automática del emisor</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Asignación automática</value></data>
   <data name="BrandIconHelp" xml:space="preserve"><value>Elige un icono del paquete local importado o mantén la coincidencia automática. Esta preferencia visual local no se incluye en las copias de seguridad de la caja fuerte.</value></data>
   <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>No hay ningún paquete de iconos instalado</value></data>
   <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Para consultar las instrucciones de importación y más opciones, ve a Ajustes → Paquetes de iconos.</value></data>

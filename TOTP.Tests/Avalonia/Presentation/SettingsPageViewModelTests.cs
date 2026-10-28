@@ -184,6 +184,7 @@ public sealed class SettingsPageViewModelTests
             LockOnSessionLock = false,
             QrPreviewScaleFactor = 2.5m,
             OpenExportFileAfterExport = false,
+            ShowNextToken = true,
             MinimumLogLevel = AppLogLevel.Warning
         };
         sut.SelectedAutoLock = AutoLock(sut, TimeSpan.FromMinutes(5));
@@ -202,6 +203,7 @@ public sealed class SettingsPageViewModelTests
         Assert.Equal(2.5, current.QrPreviewScaleFactor);
         Assert.Equal(175, current.InterfaceScalePercent);
         Assert.False(current.OpenExportFileAfterExport);
+        Assert.True(current.ShowNextToken);
         Assert.Equal(AppLogLevel.Warning, current.MinimumLogLevel);
     }
 
