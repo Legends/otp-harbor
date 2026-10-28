@@ -2788,16 +2788,54 @@ public sealed class MainWindowSmokeTests
                 templateHost.GetLogicalDescendants().OfType<ScrollViewer>(),
                 viewer => viewer.Name == "GroupCardsScrollViewer");
             Assert.Equal(ScrollBarVisibility.Hidden, groupScroller.HorizontalScrollBarVisibility);
+            Assert.Equal(52, groupScroller.MaxHeight);
             var groupStrip = Assert.IsType<StackPanel>(groupScroller.Content);
             Assert.Equal(Orientation.Horizontal, groupStrip.Orientation);
             var favorites = Assert.IsType<Border>(groupStrip.Children[0]);
             Assert.Equal("FavoritesGroupCard", favorites.Name);
+            Assert.Equal(42, favorites.MinHeight);
+            var favoritesButton = Assert.IsType<Button>(favorites.Child);
+            var favoritesContent = Assert.IsType<Grid>(favoritesButton.Content);
+            var favoritesLabelRow = Assert.IsType<Grid>(favoritesContent.Children[1]);
+            Assert.Equal("FavoritesGroupLabelRow", favoritesLabelRow.Name);
+            Assert.Equal(2, favoritesLabelRow.ColumnDefinitions.Count);
+            Assert.True(favoritesLabelRow.ColumnDefinitions[0].Width.IsStar);
+            Assert.True(favoritesLabelRow.ColumnDefinitions[1].Width.IsAuto);
+            var favoriteLabels = favoritesLabelRow.Children.OfType<TextBlock>().ToArray();
+            Assert.Equal(2, favoriteLabels.Length);
+            Assert.Equal(0, Grid.GetColumn(favoriteLabels[0]));
+            Assert.Equal(1, Grid.GetColumn(favoriteLabels[1]));
+            Assert.Equal(HorizontalAlignment.Right, favoriteLabels[1].HorizontalAlignment);
             var favoritesMenu = Assert.IsType<ContextMenu>(favorites.ContextMenu);
             var favoriteEdit = Assert.Single(favoritesMenu.Items.Cast<MenuItem>());
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.EditFavorites],
                 favoriteEdit.Header);
-            Assert.IsType<ItemsControl>(groupStrip.Children[1]);
+            var groupItems = Assert.IsType<ItemsControl>(groupStrip.Children[1]);
+            var noOpCommand = new TestCommand(() => { });
+            groupItems.ItemsSource = new[]
+            {
+                new AccountGroupListItemViewModel(
+                    new AccountGroup(Guid.NewGuid(), "Test group", "#0078D4"),
+                    12,
+                    false,
+                    noOpCommand,
+                    noOpCommand,
+                    noOpCommand),
+            };
+            templateHost.UpdateLayout();
+            var groupCard = Assert.Single(
+                groupItems.GetLogicalDescendants().OfType<Border>(),
+                border => border.Classes.Contains("group-card"));
+            Assert.Equal(42, groupCard.MinHeight);
+            var groupLabelRow = Assert.Single(
+                groupCard.GetLogicalDescendants().OfType<Grid>(),
+                grid => grid.Name == "GroupCardLabelRow");
+            var groupLabels = groupLabelRow.Children.OfType<TextBlock>().ToArray();
+            Assert.Equal(2, groupLabels.Length);
+            Assert.Equal(0, Grid.GetColumn(groupLabels[0]));
+            Assert.Equal(1, Grid.GetColumn(groupLabels[1]));
+            Assert.Equal(HorizontalAlignment.Right, groupLabels[1].HorizontalAlignment);
             Assert.Equal(2, groupStrip.Children.Count);
             Assert.DoesNotContain(
                 templateHost.GetLogicalDescendants().OfType<Control>(),
@@ -2811,7 +2849,7 @@ public sealed class MainWindowSmokeTests
             var groupNavigationGrid = Assert.IsType<Grid>(groupScroller.Parent);
             Assert.Equal(new GridLength(10), groupNavigationGrid.ColumnDefinitions[0].Width);
             Assert.Equal(new Thickness(-7, 2, 1, 2), groupBackButton.Margin);
-            Assert.Equal(50, groupBackButton.Height);
+            Assert.Equal(42, groupBackButton.Height);
             Assert.Equal(16, groupBackButton.Width);
             Assert.Empty(groupBackButton.GetLogicalDescendants().OfType<TextBlock>());
             Assert.Equal(

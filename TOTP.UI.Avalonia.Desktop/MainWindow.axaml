@@ -477,7 +477,7 @@
                                                     <Button
                                                         x:Name="GroupBackButton"
                                                         Grid.Column="0"
-                                                        Height="50"
+                                                        Height="42"
                                                         HorizontalAlignment="Left"
                                                         Margin="-7,2,1,2"
                                                         Padding="2"
@@ -493,7 +493,7 @@
                                                     <ScrollViewer
                                                         x:Name="GroupCardsScrollViewer"
                                                         Grid.Column="1"
-                                                        MaxHeight="72"
+                                                        MaxHeight="52"
                                                         HorizontalScrollBarVisibility="Hidden"
                                                         PointerWheelChanged="ScrollGroupsHorizontally"
                                                         VerticalScrollBarVisibility="Disabled">
@@ -501,7 +501,7 @@
                                                             <Border
                                                                 x:Name="FavoritesGroupCard"
                                                                 Width="150"
-                                                                MinHeight="54"
+                                                                MinHeight="42"
                                                                 Margin="2"
                                                                 Background="{Binding FavoriteGroupBackground}"
                                                                 Classes="group-card"
@@ -524,14 +524,25 @@
                                                                     ToolTip.Tip="{DynamicResource FavoriteAccounts}">
                                                                     <Grid ColumnDefinitions="20,*" ColumnSpacing="7">
                                                                         <shared:SymbolIcon Grid.Column="0" Foreground="{Binding FavoriteGroupForeground}" IconSize="20" Kind="Favorite" />
-                                                                        <StackPanel Grid.Column="1">
+                                                                        <Grid
+                                                                            x:Name="FavoritesGroupLabelRow"
+                                                                            Grid.Column="1"
+                                                                            ColumnDefinitions="*,Auto"
+                                                                            ColumnSpacing="6"
+                                                                            VerticalAlignment="Center">
                                                                             <TextBlock
+                                                                                Grid.Column="0"
                                                                                 FontWeight="SemiBold"
                                                                                 Text="{DynamicResource FavoriteAccounts}"
                                                                                 TextTrimming="CharacterEllipsis"
                                                                                 TextWrapping="NoWrap" />
-                                                                            <TextBlock FontSize="11" Text="{Binding FavoriteCount}" />
-                                                                        </StackPanel>
+                                                                            <TextBlock
+                                                                                Grid.Column="1"
+                                                                                FontSize="11"
+                                                                                HorizontalAlignment="Right"
+                                                                                Text="{Binding FavoriteCount}"
+                                                                                VerticalAlignment="Center" />
+                                                                        </Grid>
                                                                     </Grid>
                                                                 </Button>
                                                             </Border>
@@ -545,7 +556,7 @@
                                                                 <DataTemplate x:DataType="presentation:AccountGroupListItemViewModel">
                                                                     <Border
                                                                         Width="150"
-                                                                        MinHeight="54"
+                                                                        MinHeight="42"
                                                                         Margin="2"
                                                                         Background="{Binding Background}"
                                                                         Classes="group-card"
@@ -577,14 +588,25 @@
                                                                                     Foreground="{Binding Foreground}"
                                                                                     IconSize="20"
                                                                                     Kind="Folder" />
-                                                                                <StackPanel Grid.Column="1">
+                                                                                <Grid
+                                                                                    x:Name="GroupCardLabelRow"
+                                                                                    Grid.Column="1"
+                                                                                    ColumnDefinitions="*,Auto"
+                                                                                    ColumnSpacing="6"
+                                                                                    VerticalAlignment="Center">
                                                                                     <TextBlock
+                                                                                        Grid.Column="0"
                                                                                         FontWeight="SemiBold"
                                                                                         Text="{Binding Name}"
                                                                                         TextTrimming="CharacterEllipsis"
                                                                                         TextWrapping="NoWrap" />
-                                                                                    <TextBlock FontSize="11" Text="{Binding AccountCount}" />
-                                                                                </StackPanel>
+                                                                                    <TextBlock
+                                                                                        Grid.Column="1"
+                                                                                        FontSize="11"
+                                                                                        HorizontalAlignment="Right"
+                                                                                        Text="{Binding AccountCount}"
+                                                                                        VerticalAlignment="Center" />
+                                                                                </Grid>
                                                                             </Grid>
                                                                         </Button>
                                                                     </Border>
