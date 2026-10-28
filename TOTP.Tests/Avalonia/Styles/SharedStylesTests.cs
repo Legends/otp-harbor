@@ -82,6 +82,50 @@ public sealed class SharedStylesTests
     }
 
     [Fact]
+    public void DesktopCustomIconValidation_IsPlacedBelowFullWidthPickerAndFadesIn()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "DesktopMainWindow.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+
+        var picker = document
+            .Descendants()
+            .Single(element => element.Name.LocalName == "SearchableComboBox"
+                && element.Attribute(xaml + "Name")?.Value == "AccountBrandIconComboBox");
+        var message = document
+            .Descendants()
+            .Single(element => element.Name.LocalName == "ValidationMessage"
+                && element.Attribute(xaml + "Name")?.Value
+                    == "AccountCustomIconValidationMessage");
+
+        Assert.Null(picker.Attribute("Width"));
+        Assert.Equal("Stretch", picker.Attribute("HorizontalAlignment")?.Value);
+        Assert.Equal("{Binding EditorCustomIconMessage}", message.Attribute("Text")?.Value);
+        Assert.Same(picker.Parent, message.Parent);
+        Assert.True(
+            picker.Parent!.Elements().ToList().IndexOf(message)
+                > picker.Parent.Elements().ToList().IndexOf(picker));
+
+        var fadeStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value
+                == "shared|ValidationMessage.custom-icon-message[IsVisible=true]");
+        var animation = Assert.Single(fadeStyle.Descendants(avalonia + "Animation"));
+        Assert.Equal("0:0:0.18", animation.Attribute("Duration")?.Value);
+        Assert.Equal(
+            ["0", "1"],
+            animation
+                .Descendants(avalonia + "Setter")
+                .Where(element => element.Attribute("Property")?.Value == "Opacity")
+                .Select(element => element.Attribute("Value")?.Value ?? string.Empty)
+                .ToArray());
+    }
+
+    [Fact]
     public void FluentThemeUsesStaticWindowsBlueAcrossPlatforms()
     {
         var sourcePath = Path.Combine(

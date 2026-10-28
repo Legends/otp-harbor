@@ -82,6 +82,25 @@
             <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
         </Style>
+        <Style Selector="shared|ValidationMessage.custom-icon-message">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="shared|ValidationMessage.custom-icon-message[IsVisible=true]">
+            <Style.Animations>
+                <Animation
+                    Duration="0:0:0.18"
+                    Easing="CubicEaseOut"
+                    FillMode="Forward"
+                    PlaybackBehavior="OnlyIfVisible">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*">
@@ -925,6 +944,7 @@
                                                 <Expander
                                                     x:Name="AccountAdvancedOptions"
                                                     Margin="0,10,0,0"
+                                                    HorizontalAlignment="Stretch"
                                                     Classes="account-advanced"
                                                     Header="{DynamicResource AdvancedOptions}"
                                                     IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">
@@ -943,7 +963,6 @@
                                                         <shared:SearchableComboBox
                                                             x:Name="AccountBrandIconComboBox"
                                                             HorizontalAlignment="Stretch"
-                                                            Width="{Binding Bounds.Width, ElementName=AccountSecretInput}"
                                                             automation:AutomationProperties.Name="{DynamicResource BrandIcon}"
                                                             ClearSearchText="{DynamicResource ClearSearch}"
                                                             IsEnabled="{Binding HasBrandIconChoices}"
@@ -970,6 +989,11 @@
                                                                 Kind="ImageStack"
                                                                 Text="{DynamicResource ChooseCustomIcon}" />
                                                         </Button>
+                                                        <shared:ValidationMessage
+                                                            x:Name="AccountCustomIconValidationMessage"
+                                                            Classes="custom-icon-message"
+                                                            Severity="Error"
+                                                            Text="{Binding EditorCustomIconMessage}" />
                                                         <Border
                                                             x:Name="SelectedEditorCustomIconFileNameHost"
                                                             MinHeight="16"

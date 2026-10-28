@@ -1300,11 +1300,12 @@
         <Setter Property="PopupMaxHeight" Value="300" />
         <Setter Property="Template">
             <ControlTemplate>
-                <Grid>
+                <Grid HorizontalAlignment="Stretch">
                     <Button
                         Name="PART_DropDownButton"
                         MinHeight="{TemplateBinding MinHeight}"
                         Padding="12,8"
+                        HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"
                         Background="{DynamicResource BrushSurface}"
                         BorderBrush="{DynamicResource BrushControlBorder}"

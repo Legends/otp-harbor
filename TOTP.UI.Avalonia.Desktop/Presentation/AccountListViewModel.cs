@@ -110,6 +110,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _editorIssuerMessage = string.Empty;
     private string _editorSecretMessage = string.Empty;
     private string _editorPeriodMessage = string.Empty;
+    private string _editorCustomIconMessage = string.Empty;
     private string _editorMessage = string.Empty;
     private bool _isEditorSecretAuthorized;
     private bool _isEditorSecretRevealed;
@@ -698,6 +699,12 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         private set => SetField(ref _editorPeriodMessage, value);
     }
 
+    public string EditorCustomIconMessage
+    {
+        get => _editorCustomIconMessage;
+        private set => SetField(ref _editorCustomIconMessage, value);
+    }
+
     public string EditorMessage
     {
         get => _editorMessage;
@@ -740,6 +747,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             }
             CompleteCustomIconPickerSelection();
             if (!SetField(ref _selectedEditorBrandIconOption, value)) return;
+            EditorCustomIconMessage = string.Empty;
             NotifySelectedBrandIconProperties();
         }
     }
@@ -791,6 +799,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
+        EditorCustomIconMessage = string.Empty;
         IsBusy = true;
         try
         {
@@ -802,12 +811,14 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 var pending = await ReadPendingCustomIconAsync(stream);
                 if (pending.TooLarge)
                 {
-                    EditorMessage = _localization.GetString(AvaloniaStringKeys.CustomIconImportTooLarge);
+                    EditorCustomIconMessage = _localization.GetString(
+                        AvaloniaStringKeys.CustomIconImportTooLarge);
                     return;
                 }
                 if (pending.Data is not { Length: > 0 })
                 {
-                    EditorMessage = _localization.GetString(AvaloniaStringKeys.CustomIconImportEmpty);
+                    EditorCustomIconMessage = _localization.GetString(
+                        AvaloniaStringKeys.CustomIconImportEmpty);
                     return;
                 }
 
@@ -823,7 +834,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 file.Name);
             if (imported.IsFailed)
             {
-                EditorMessage = _localization.GetString(CustomIconFailureKey(imported.Errors));
+                EditorCustomIconMessage = _localization.GetString(
+                    CustomIconFailureKey(imported.Errors));
                 return;
             }
 
@@ -834,7 +846,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (Exception)
         {
-            EditorMessage = _localization.GetString(AvaloniaStringKeys.CustomIconImportFailed);
+            EditorCustomIconMessage = _localization.GetString(
+                AvaloniaStringKeys.CustomIconImportFailed);
         }
         finally
         {
@@ -2560,6 +2573,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorIssuerMessage = string.Empty;
         EditorSecretMessage = string.Empty;
         EditorPeriodMessage = string.Empty;
+        EditorCustomIconMessage = string.Empty;
         EditorMessage = string.Empty;
         _pendingCustomIconBytes = null;
         _pendingCustomIconFileName = null;

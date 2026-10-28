@@ -2081,7 +2081,10 @@ public sealed class AccountListViewModelTests
 
         await sut.ImportCustomIconAsync();
 
-        Assert.Equal("The icon file must be no larger than 1 MB.", sut.EditorMessage);
+        Assert.Equal(
+            "The icon file must be no larger than 1 MB.",
+            sut.EditorCustomIconMessage);
+        Assert.Equal(string.Empty, sut.EditorMessage);
         Assert.Null(sut.SelectedEditorBrandIconOption);
         brandIcons.Verify(value => value.ImportCustomIconAsync(
             It.IsAny<Guid>(),
@@ -2125,7 +2128,8 @@ public sealed class AccountListViewModelTests
 
         Assert.Equal(
             "The SVG contains a script or an external resource reference, which is not allowed.",
-            sut.EditorMessage);
+            sut.EditorCustomIconMessage);
+        Assert.Equal(string.Empty, sut.EditorMessage);
     }
 
     [Fact]
@@ -2255,6 +2259,7 @@ public sealed class AccountListViewModelTests
         Assert.Equal(string.Empty, sut.EditorIssuerMessage);
         Assert.Equal(string.Empty, sut.EditorSecretMessage);
         Assert.Equal(string.Empty, sut.EditorPeriodMessage);
+        Assert.Equal(string.Empty, sut.EditorCustomIconMessage);
         Assert.Equal(string.Empty, sut.EditorMessage);
     }
 

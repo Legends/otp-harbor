@@ -2590,34 +2590,63 @@ public sealed class MainWindowSmokeTests
             var brandIconPicker = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<SearchableComboBox>(),
                 comboBox => comboBox.Name == "AccountBrandIconComboBox");
-            var secretInput = Assert.Single(
-                templateHost.GetLogicalDescendants().OfType<RevealableSecretInput>(),
-                input => input.Name == "AccountSecretInput");
             var customIconButton = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "AccountCustomIconButton");
+            var customIconMessage = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<ValidationMessage>(),
+                message => message.Name == "AccountCustomIconValidationMessage");
             var noPackCallout = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "NoBrandIconPackCallout");
             var customIconFileNameHost = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "SelectedEditorCustomIconFileNameHost");
+            var periodInput = Assert.Single(
+                advancedOptions.GetLogicalDescendants().OfType<NumericUpDown>());
             var scrollViewer = Assert.Single(
                 templateHost.GetVisualDescendants().OfType<ScrollViewer>(),
                 viewer => viewer.Name == "AccountEditorScrollViewer");
             flyout.IsVisible = true;
+            advancedOptions.IsExpanded = false;
+            templateHost.UpdateLayout();
+            var issuer = Assert.Single(
+                templateHost.GetVisualDescendants().OfType<TextBox>(),
+                textBox => textBox.Name == "AccountIssuerBox");
+            Assert.Equal(HorizontalAlignment.Stretch, advancedOptions.HorizontalAlignment);
+            Assert.InRange(
+                Math.Abs(advancedOptions.Bounds.Width - issuer.Bounds.Width),
+                0,
+                0.5);
+
             advancedOptions.IsExpanded = true;
             scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
             templateHost.UpdateLayout();
+            Assert.InRange(
+                Math.Abs(advancedOptions.Bounds.Width - issuer.Bounds.Width),
+                0,
+                0.5);
 
             Assert.True(brandIconPicker.IsVisible);
             Assert.True(brandIconPicker.Bounds.Height > 0);
             Assert.Equal(HorizontalAlignment.Stretch, brandIconPicker.HorizontalAlignment);
             Assert.Equal(new Thickness(), brandIconPicker.Margin);
             Assert.InRange(
-                Math.Abs(brandIconPicker.Bounds.Width - secretInput.Bounds.Width),
+                Math.Abs(brandIconPicker.Bounds.Width - periodInput.Bounds.Width),
                 0,
                 0.5);
+            var brandIconDropDownButton = Assert.Single(
+                brandIconPicker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            Assert.InRange(
+                Math.Abs(brandIconDropDownButton.Bounds.Width - periodInput.Bounds.Width),
+                0,
+                0.5);
+            var pickerOrigin = brandIconPicker.TranslatePoint(new Point(0, 0), advancedOptions);
+            var periodOrigin = periodInput.TranslatePoint(new Point(0, 0), advancedOptions);
+            Assert.NotNull(pickerOrigin);
+            Assert.NotNull(periodOrigin);
+            Assert.InRange(Math.Abs(pickerOrigin.Value.X - periodOrigin.Value.X), 0, 0.5);
             Assert.Contains(brandIconPicker, advancedOptions.GetLogicalDescendants());
             Assert.Equal(new Thickness(8, 0), customIconButton.Margin);
             Assert.Contains("account-custom-icon", customIconButton.Classes);
@@ -2634,6 +2663,11 @@ public sealed class MainWindowSmokeTests
                     Application.Current!.Resources[AvaloniaStringKeys.NoBrandIconPackInstructions]));
             Assert.Equal(16, customIconFileNameHost.MinHeight);
             Assert.Contains(customIconFileNameHost, advancedOptions.GetLogicalDescendants());
+            Assert.Equal(new Thickness(), customIconMessage.Margin);
+            var advancedContent = Assert.IsType<StackPanel>(advancedOptions.Content);
+            Assert.True(
+                advancedContent.Children.IndexOf(customIconMessage)
+                    > advancedContent.Children.IndexOf(customIconButton));
 
             var accountEditorContent = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<StackPanel>(),
@@ -2643,9 +2677,6 @@ public sealed class MainWindowSmokeTests
             var verticalScrollBar = Assert.Single(
                 scrollViewer.GetVisualDescendants().OfType<ScrollBar>(),
                 scrollBar => scrollBar.Orientation == Orientation.Vertical && scrollBar.IsVisible);
-            var issuer = Assert.Single(
-                templateHost.GetVisualDescendants().OfType<TextBox>(),
-                textBox => textBox.Name == "AccountIssuerBox");
             var issuerRight = issuer.TranslatePoint(new Point(issuer.Bounds.Width, 0), scrollViewer);
             var scrollBarLeft = verticalScrollBar.TranslatePoint(new Point(0, 0), scrollViewer);
             Assert.NotNull(issuerRight);
