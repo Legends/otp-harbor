@@ -39,7 +39,8 @@
   <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Déverrouiller avec l’identification biométrique</value></data>
   <data name="UseMasterPassword" xml:space="preserve"><value>Déverrouiller avec le mot de passe principal</value></data>
   <data name="UnlockMethodSeparator" xml:space="preserve"><value>ou</value></data>
-  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Coffre-fort verrouillé. Déverrouillez-le par biométrie ou avec votre mot de passe principal.</value></data>
+  <data name="VaultLockedTitle" xml:space="preserve"><value>Coffre-fort verrouillé</value></data>
+  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Déverrouillez-le avec l’identification biométrique ou votre mot de passe principal.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Coffre-fort verrouillé. Saisissez votre mot de passe principal pour continuer.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Le déverrouillage rapide a été annulé. Votre coffre-fort reste verrouillé.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>Le déverrouillage rapide n’a pas pu aboutir. Utilisez votre mot de passe principal pour récupérer l’accès.</value></data>

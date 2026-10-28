@@ -39,7 +39,8 @@
   <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Desbloquear con identificación biométrica</value></data>
   <data name="UseMasterPassword" xml:space="preserve"><value>Desbloquear con contraseña maestra</value></data>
   <data name="UnlockMethodSeparator" xml:space="preserve"><value>o</value></data>
-  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Caja fuerte bloqueada. Desbloquéala con identificación biométrica o con tu contraseña maestra.</value></data>
+  <data name="VaultLockedTitle" xml:space="preserve"><value>Caja fuerte bloqueada</value></data>
+  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Desbloquéala con identificación biométrica o con tu contraseña maestra.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Caja fuerte bloqueada. Introduce tu contraseña maestra para continuar.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Se canceló el desbloqueo rápido. Tu caja fuerte sigue bloqueada.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>No se pudo completar el desbloqueo rápido. Usa tu contraseña maestra para recuperar el acceso.</value></data>

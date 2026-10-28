@@ -803,6 +803,7 @@ public sealed class SharedStylesTests
             "Avalonia",
             "SharedStyles.axaml"));
         XNamespace avalonia = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
         var light = styles
             .Descendants(avalonia + "ResourceDictionary")
             .Single(element => GetResourceKeyOrDefault(element) == "Light");
@@ -835,6 +836,27 @@ public sealed class SharedStylesTests
             image => image.Attribute("Source")?.Value.EndsWith(
                 "/otp-harbor-mark.png",
                 StringComparison.Ordinal) == true);
+        var orbit = fingerprintStyle
+            .Descendants(avalonia + "Grid")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "PART_FingerprintOrbit");
+        Assert.Equal("0", orbit.Attribute("Opacity")?.Value);
+        Assert.Equal(6, orbit.Elements(avalonia + "Ellipse").Count());
+        Assert.All(
+            orbit.Elements(avalonia + "Ellipse"),
+            particle => Assert.Contains(
+                particle.Attribute("Fill")?.Value,
+                new[]
+                {
+                    "{DynamicResource BrushBiometricIconPrimary}",
+                    "{DynamicResource BrushBiometricIconSecondary}"
+                }));
+        var scanLine = fingerprintStyle
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "PART_FingerprintScanLine");
+        Assert.Equal("{DynamicResource BrushBiometricIconPrimary}", scanLine.Attribute("Background")?.Value);
+        Assert.Equal("0", scanLine.Attribute("Opacity")?.Value);
 
         var buttonStyle = styles
             .Descendants(avalonia + "Style")
@@ -872,6 +894,34 @@ public sealed class SharedStylesTests
         var rippleAnimation = rippleStyle.Descendants(avalonia + "Animation").Single();
         Assert.Equal("0:0:0.5", rippleAnimation.Attribute("Duration")?.Value);
         Assert.Equal(2, rippleAnimation.Descendants(avalonia + "KeyFrame").Count());
+
+        var orbitHoverStyle = styles
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value.Contains(
+                "PART_FingerprintOrbit",
+                StringComparison.Ordinal) == true);
+        Assert.Contains(":pointerover", orbitHoverStyle.Attribute("Selector")?.Value);
+        var orbitAnimation = orbitHoverStyle.Descendants(avalonia + "Animation").Single();
+        Assert.Equal("0:0:2.8", orbitAnimation.Attribute("Duration")?.Value);
+        Assert.Equal("Infinite", orbitAnimation.Attribute("IterationCount")?.Value);
+        Assert.Contains(
+            orbitAnimation.Descendants(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "RotateTransform.Angle"
+                && setter.Attribute("Value")?.Value == "360");
+
+        var scanHoverStyle = styles
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value.Contains(
+                "PART_FingerprintScanLine",
+                StringComparison.Ordinal) == true);
+        Assert.Contains(":pointerover", scanHoverStyle.Attribute("Selector")?.Value);
+        var scanAnimation = scanHoverStyle.Descendants(avalonia + "Animation").Single();
+        Assert.Equal("0:0:1.8", scanAnimation.Attribute("Duration")?.Value);
+        Assert.Equal("Infinite", scanAnimation.Attribute("IterationCount")?.Value);
+        Assert.Contains(
+            scanAnimation.Descendants(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "TranslateTransform.Y"
+                && setter.Attribute("Value")?.Value == "16");
     }
 
     [Fact]

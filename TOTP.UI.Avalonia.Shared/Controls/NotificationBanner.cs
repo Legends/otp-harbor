@@ -8,8 +8,18 @@ namespace TOTP.Avalonia.Shared.Controls;
 
 public sealed class NotificationBanner : TemplatedControl
 {
+    private bool _hasTitle;
+
+    public static readonly StyledProperty<string> TitleProperty =
+        AvaloniaProperty.Register<NotificationBanner, string>(nameof(Title), string.Empty);
+
     public static readonly StyledProperty<string> TextProperty =
         AvaloniaProperty.Register<NotificationBanner, string>(nameof(Text), string.Empty);
+
+    public static readonly DirectProperty<NotificationBanner, bool> HasTitleProperty =
+        AvaloniaProperty.RegisterDirect<NotificationBanner, bool>(
+            nameof(HasTitle),
+            control => control.HasTitle);
 
     public static readonly StyledProperty<NotificationSeverity> SeverityProperty =
         AvaloniaProperty.Register<NotificationBanner, NotificationSeverity>(
@@ -23,6 +33,8 @@ public sealed class NotificationBanner : TemplatedControl
 
     static NotificationBanner()
     {
+        TitleProperty.Changed.AddClassHandler<NotificationBanner>(
+            static (control, _) => control.UpdateVisualState());
         TextProperty.Changed.AddClassHandler<NotificationBanner>(
             static (control, _) => control.UpdateVisualState());
         SeverityProperty.Changed.AddClassHandler<NotificationBanner>(
@@ -40,6 +52,18 @@ public sealed class NotificationBanner : TemplatedControl
         set => SetValue(TextProperty, value ?? string.Empty);
     }
 
+    public string Title
+    {
+        get => GetValue(TitleProperty);
+        set => SetValue(TitleProperty, value ?? string.Empty);
+    }
+
+    public bool HasTitle
+    {
+        get => _hasTitle;
+        private set => SetAndRaise(HasTitleProperty, ref _hasTitle, value);
+    }
+
     public NotificationSeverity Severity
     {
         get => GetValue(SeverityProperty);
@@ -54,6 +78,7 @@ public sealed class NotificationBanner : TemplatedControl
 
     private void UpdateVisualState()
     {
+        HasTitle = !string.IsNullOrWhiteSpace(Title);
         IsVisible = !string.IsNullOrWhiteSpace(Text);
         LiveSetting = Severity == NotificationSeverity.Error
             ? AutomationLiveSetting.Assertive

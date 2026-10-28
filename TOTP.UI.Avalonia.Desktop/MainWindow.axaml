@@ -137,10 +137,19 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Spacing="8">
-                    <shared:NotificationBanner
-                        x:Name="LockScreenNotification"
-                        Severity="{Binding Notification.Severity}"
-                        Text="{Binding Notification.Text}" />
+                    <Border IsVisible="{Binding IsQuickUnlockVisible}">
+                        <shared:NotificationBanner
+                            x:Name="QuickUnlockStatusBanner"
+                            Severity="Information"
+                            Text="{DynamicResource VaultLockedQuickUnlock}"
+                            Title="{DynamicResource VaultLockedTitle}" />
+                    </Border>
+                    <Border IsVisible="{Binding !IsQuickUnlockVisible}">
+                        <shared:NotificationBanner
+                            x:Name="LockScreenNotification"
+                            Severity="{Binding Notification.Severity}"
+                            Text="{Binding Notification.Text}" />
+                    </Border>
                     <Button
                         HorizontalAlignment="Center"
                         Command="{Binding InitializeCommand}"
@@ -152,15 +161,6 @@
                         Classes="unlock-card biometric-card"
                         IsVisible="{Binding IsQuickUnlockVisible}">
                         <StackPanel Spacing="8">
-                            <TextBlock
-                                x:Name="QuickUnlockHeading"
-                                Classes="section-title"
-                                Text="{DynamicResource ChooseUnlockMethod}" />
-                            <TextBlock
-                                x:Name="QuickUnlockRecoveryNoticeText"
-                                Classes="secondary"
-                                Text="{DynamicResource QuickUnlockRecoveryNotice}"
-                                TextWrapping="Wrap" />
                             <Grid Height="18" ClipToBounds="True">
                                 <shared:ValidationMessage
                                     VerticalAlignment="Center"

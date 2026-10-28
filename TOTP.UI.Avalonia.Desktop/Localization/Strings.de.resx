@@ -39,7 +39,8 @@
   <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Mit biometrischer ID entsperren</value></data>
   <data name="UseMasterPassword" xml:space="preserve"><value>Mit Master-Passwort entsperren</value></data>
   <data name="UnlockMethodSeparator" xml:space="preserve"><value>oder</value></data>
-  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Tresor gesperrt. Entsperre ihn biometrisch oder mit deinem Master-Passwort.</value></data>
+  <data name="VaultLockedTitle" xml:space="preserve"><value>Tresor gesperrt</value></data>
+  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Mit biometrischer ID oder deinem Master-Passwort entsperren.</value></data>
   <data name="VaultLockedPassword" xml:space="preserve"><value>Tresor gesperrt. Gib dein Master-Passwort ein, um fortzufahren.</value></data>
   <data name="QuickUnlockCancelled" xml:space="preserve"><value>Die Schnellentsperrung wurde abgebrochen. Dein Tresor bleibt gesperrt.</value></data>
   <data name="QuickUnlockFailed" xml:space="preserve"><value>Die Schnellentsperrung konnte nicht abgeschlossen werden. Verwende dein Master-Passwort, um den Zugriff wiederherzustellen.</value></data>

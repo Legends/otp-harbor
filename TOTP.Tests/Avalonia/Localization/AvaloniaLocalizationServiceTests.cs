@@ -79,6 +79,23 @@ public sealed class AvaloniaLocalizationServiceTests
     }
 
     [Theory]
+    [InlineData("en", "Vault locked", "Unlock using Biometric ID or your master password.")]
+    [InlineData("de", "Tresor gesperrt", "Mit biometrischer ID oder deinem Master-Passwort entsperren.")]
+    [InlineData("fr", "Coffre-fort verrouillé", "Déverrouillez-le avec l’identification biométrique ou votre mot de passe principal.")]
+    [InlineData("es", "Caja fuerte bloqueada", "Desbloquéala con identificación biométrica o con tu contraseña maestra.")]
+    public void Catalog_UsesLocalizedQuickUnlockTitleAndInstruction(
+        string cultureName,
+        string expectedTitle,
+        string expectedInstruction)
+    {
+        var sut = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+
+        Assert.Equal(expectedTitle, sut.Get(AvaloniaStringKeys.VaultLockedTitle, culture));
+        Assert.Equal(expectedInstruction, sut.Get(AvaloniaStringKeys.VaultLockedQuickUnlock, culture));
+    }
+
+    [Theory]
     [InlineData("en")]
     [InlineData("de")]
     [InlineData("fr")]

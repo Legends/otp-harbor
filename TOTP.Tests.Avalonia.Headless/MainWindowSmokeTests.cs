@@ -47,24 +47,22 @@ public sealed class MainWindowSmokeTests
             window.Show();
             var scroller = Assert.IsType<ScrollViewer>(window.FindControl<ScrollViewer>("AuthorizationScroller"));
             var quickUnlockCard = Assert.IsType<Border>(window.FindControl<Border>("QuickUnlockCard"));
-            var notification = Assert.IsType<NotificationBanner>(window.FindControl<NotificationBanner>("LockScreenNotification"));
+            var notification = Assert.IsType<NotificationBanner>(window.FindControl<NotificationBanner>("QuickUnlockStatusBanner"));
             var masterPasswordButton = Assert.IsType<Button>(window.FindControl<Button>("MasterPasswordFallbackButton"));
-            var heading = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("QuickUnlockHeading"));
-            var recoveryNotice = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("QuickUnlockRecoveryNoticeText"));
             var separator = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("UnlockMethodSeparatorText"));
             var masterPasswordText = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("MasterPasswordFallbackText"));
 
             scroller.IsVisible = true;
             quickUnlockCard.IsVisible = true;
+            Assert.IsType<Border>(notification.Parent).IsVisible = true;
             Assert.Equal(ScrollBarVisibility.Disabled, scroller.VerticalScrollBarVisibility);
 
             var catalog = new AvaloniaStringCatalog();
             foreach (var cultureName in new[] { "en", "de", "es", "fr" })
             {
                 var culture = CultureInfo.GetCultureInfo(cultureName);
+                notification.Title = catalog.Get(AvaloniaStringKeys.VaultLockedTitle, culture);
                 notification.Text = catalog.Get(AvaloniaStringKeys.VaultLockedQuickUnlock, culture);
-                heading.Text = catalog.Get(AvaloniaStringKeys.ChooseUnlockMethod, culture);
-                recoveryNotice.Text = catalog.Get(AvaloniaStringKeys.QuickUnlockRecoveryNotice, culture);
                 separator.Text = catalog.Get(AvaloniaStringKeys.UnlockMethodSeparator, culture);
                 masterPasswordText.Text = catalog.Get(AvaloniaStringKeys.UseMasterPassword, culture);
                 window.UpdateLayout();

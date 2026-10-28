@@ -39,10 +39,25 @@ public sealed class DesktopUnlockInteractionTests
             .Descendants(avalonia + "Border")
             .Single(element => element.Attribute("Classes")?.Value
                 == "unlock-card biometric-card");
-        var cardHeading = biometricCard
-            .Descendants(avalonia + "TextBlock")
-            .Single(element => element.Attribute("Classes")?.Value == "section-title");
-        Assert.Equal("{DynamicResource ChooseUnlockMethod}", cardHeading.Attribute("Text")?.Value);
+        Assert.DoesNotContain(
+            biometricCard.Descendants(avalonia + "TextBlock"),
+            element => element.Attribute("Text")?.Value
+                == "{DynamicResource ChooseUnlockMethod}");
+        Assert.DoesNotContain(
+            biometricCard.Descendants(avalonia + "TextBlock"),
+            element => element.Attribute("Text")?.Value
+                == "{DynamicResource QuickUnlockRecoveryNotice}");
+
+        var statusBanner = document
+            .Descendants()
+            .Single(element => element.Name.LocalName == "NotificationBanner"
+                && element.Attribute(xaml + "Name")?.Value == "QuickUnlockStatusBanner");
+        Assert.Equal(
+            "{DynamicResource VaultLockedTitle}",
+            statusBanner.Attribute("Title")?.Value);
+        Assert.Equal(
+            "{DynamicResource VaultLockedQuickUnlock}",
+            statusBanner.Attribute("Text")?.Value);
 
         var divider = biometricCard
             .Descendants(avalonia + "Grid")
