@@ -101,6 +101,41 @@
         <Style Selector="TextBlock.unlock-method-prompt.app-lock-reactivation">
             <Setter Property="Foreground" Value="{DynamicResource BrushWarning}" />
         </Style>
+        <Style Selector="Border.app-lock-confirmation">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Border.app-lock-confirmation.revealed">
+            <Setter Property="Opacity" Value="1" />
+            <Style.Animations>
+                <Animation
+                    Duration="0:0:0.22"
+                    Easing="CubicEaseOut"
+                    FillMode="Forward"
+                    PlaybackBehavior="OnlyIfVisible">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Grid.startup-loading-orbit">
+            <Style.Animations>
+                <Animation
+                    Duration="0:0:3.2"
+                    IterationCount="Infinite"
+                    PlaybackBehavior="OnlyIfVisible">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="360" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
         <Style Selector="Button.settings-category">
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Padding" Value="14,12" />
@@ -339,31 +374,13 @@
             Classes.account-list="{Binding IsAccountListVisible}">
             <ScrollViewer.Styles>
                 <Style Selector="ScrollViewer.account-list">
-                    <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
+                    <Setter Property="VerticalScrollBarVisibility" Value="Hidden" />
                 </Style>
             </ScrollViewer.Styles>
             <Grid
                 x:Name="MobileMainContent"
                 MaxWidth="720"
                 HorizontalAlignment="Stretch">
-                <StackPanel
-                    HorizontalAlignment="Stretch"
-                    IsVisible="{Binding IsStartingVisible}"
-                    Spacing="18"
-                    VerticalAlignment="Center">
-                    <ProgressBar IsIndeterminate="True" />
-                    <TextBlock
-                        Foreground="{DynamicResource BrushTextSecondary}"
-                        Text="{Binding StartingText}"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-                    <Button
-                        Classes="wide primary"
-                        Command="{Binding InitializeCommand}"
-                        Content="{Binding RetryText}"
-                        IsVisible="{Binding CanRetry}" />
-                </StackPanel>
-
                 <StackPanel
                     HorizontalAlignment="Stretch"
                     IsVisible="{Binding IsSetupVisible}"
@@ -951,10 +968,20 @@
                     </Grid>
 
                     <StackPanel
+                        x:Name="SettingsRoot"
                         Classes="settings-root"
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsSettingsVisible}"
+                        Opacity="1"
                         Spacing="14">
+                        <StackPanel.Transitions>
+                            <Transitions>
+                                <DoubleTransition
+                                    Property="Opacity"
+                                    Duration="0:0:0.2"
+                                    Easing="CubicEaseOut" />
+                            </Transitions>
+                        </StackPanel.Transitions>
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                             <Button
                                 Grid.Column="0"
@@ -1086,8 +1113,8 @@
                             Classes="card"
                             IsVisible="{Binding IsAppearanceSettingsVisible}"
                             Padding="16">
-                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="28" RowSpacing="12">
-                                <StackPanel Grid.Column="0" Spacing="10">
+                            <StackPanel Spacing="12">
+                                <StackPanel x:Name="AppearanceLanguageSection" Spacing="10">
                                     <TextBlock
                                         FontSize="18"
                                         FontWeight="SemiBold"
@@ -1124,7 +1151,11 @@
                                         </ComboBox.SelectionBoxItemTemplate>
                                     </ComboBox>
                                 </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="8">
+                                <Border
+                                    x:Name="AppearanceLanguageDivider"
+                                    Height="1"
+                                    Background="{DynamicResource BrushBorder}" />
+                                <StackPanel x:Name="AppearanceThemeSection" Spacing="8">
                                     <TextBlock
                                         FontSize="18"
                                         FontWeight="SemiBold"
@@ -1147,14 +1178,31 @@
                                             IsChecked="{Binding IsLightThemeSelected, Mode=OneWay}" />
                                     </StackPanel>
                                 </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Spacing="4">
+                                <Border
+                                    x:Name="AppearanceThemeDivider"
+                                    Height="1"
+                                    Background="{DynamicResource BrushBorder}" />
+                                <StackPanel x:Name="AppearanceNextTokenSection" Spacing="4">
                                     <CheckBox Content="{Binding ShowNextTokenText}" IsChecked="{Binding ShowNextToken, Mode=TwoWay}" />
                                     <TextBlock
                                         Foreground="{DynamicResource BrushTextSecondary}"
                                         Text="{Binding ShowNextTokenHelpText}"
                                         TextWrapping="Wrap" />
                                 </StackPanel>
-                            </Grid>
+                                <Border
+                                    x:Name="AppearanceNextTokenDivider"
+                                    Height="1"
+                                    Background="{DynamicResource BrushBorder}" />
+                                <StackPanel x:Name="AppearanceIssuerLogoSection" Spacing="4">
+                                    <CheckBox
+                                        Content="{Binding ShowIssuerLogoText}"
+                                        IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                    <TextBlock
+                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                        Text="{Binding ShowIssuerLogoDescriptionText}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </StackPanel>
                         </Border>
                         <Border
                             Classes="card"
@@ -1252,6 +1300,8 @@
                                         <Border
                                             x:Name="DisableAppLockConfirmationPanel"
                                             Background="{DynamicResource BrushSurfaceAlternate}"
+                                            Classes="app-lock-confirmation"
+                                            Classes.revealed="{Binding IsDisableAppLockConfirmationVisible}"
                                             CornerRadius="8"
                                             IsVisible="{Binding IsDisableAppLockConfirmationVisible}"
                                             Padding="12">
@@ -2018,6 +2068,8 @@
                         <Expander
                             x:Name="AccountAdvancedOptions"
                             Classes="account-advanced"
+                            Width="{Binding Bounds.Width, ElementName=AccountIssuerBox}"
+                            HorizontalAlignment="Left"
                             Header="{Binding AdvancedOptionsText}"
                             IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">
                             <StackPanel Spacing="8">
@@ -2296,7 +2348,7 @@
         <Grid
             x:Name="AccountListFooter"
             Grid.Row="2"
-            Height="40"
+            Height="36"
             IsVisible="{Binding IsAccountListVisible}">
             <Border
                 x:Name="AccountCountFooter"
@@ -2306,7 +2358,7 @@
                 <TextBlock
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    FontSize="11"
+                    FontSize="13"
                     Foreground="{DynamicResource BrushTextSecondary}"
                     IsHitTestVisible="False"
                     Text="{Binding SearchResultSummary}"
@@ -2365,7 +2417,7 @@
             <ScrollViewer
                 Grid.Row="1"
                 HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto">
+                VerticalScrollBarVisibility="Hidden">
                 <Border
                     Background="{DynamicResource BrushMobileOnboardingPanel}"
                     Padding="20,16,20,18">
@@ -2618,7 +2670,7 @@
                         Grid.Row="4"
                         MaxHeight="320"
                         IsVisible="{Binding HasQrImportConflicts}"
-                        VerticalScrollBarVisibility="Auto">
+                        VerticalScrollBarVisibility="Hidden">
                         <ItemsControl ItemsSource="{Binding QrImportConflicts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:QrImportConflictItem">
@@ -2781,7 +2833,7 @@
                     <ScrollViewer
                         Grid.Row="4"
                         MaxHeight="320"
-                        VerticalScrollBarVisibility="Auto">
+                        VerticalScrollBarVisibility="Hidden">
                         <ItemsControl ItemsSource="{Binding BackupImportConflicts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:BackupImportConflictItem">
@@ -2923,7 +2975,7 @@
                             BorderThickness="0"
                             ItemsSource="{Binding FilteredEditorBrandIconOptions}"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            ScrollViewer.VerticalScrollBarVisibility="Hidden">
                             <ListBox.Styles>
                                 <Style Selector="ListBoxItem">
                                     <Setter Property="Background" Value="Transparent" />
@@ -3109,6 +3161,99 @@
                     </Grid>
                 </StackPanel>
             </Border>
+        </Grid>
+
+        <Grid
+            x:Name="StartupLoadingOverlay"
+            Grid.RowSpan="3"
+            Panel.ZIndex="1000"
+            Background="{DynamicResource BrushWindowBackground}">
+            <Grid.Transitions>
+                <Transitions>
+                    <DoubleTransition
+                        Property="Opacity"
+                        Duration="0:0:0.36"
+                        Easing="CubicEaseOut" />
+                </Transitions>
+            </Grid.Transitions>
+            <StackPanel
+                MaxWidth="360"
+                Margin="32"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="24">
+                <Grid Width="224" Height="224">
+                    <Ellipse
+                        Margin="14"
+                        Opacity="0.38"
+                        Stroke="{DynamicResource BrushControlBorder}"
+                        StrokeThickness="2" />
+                    <Grid
+                        Classes="startup-loading-orbit"
+                        RenderTransformOrigin="50%,50%">
+                        <Grid.RenderTransform>
+                            <RotateTransform />
+                        </Grid.RenderTransform>
+                        <Canvas Width="224" Height="224">
+                            <Path
+                                Data="M 86,14 C 94,5 102,2 110,3"
+                                Opacity="0.5"
+                                Stroke="{DynamicResource BrushAccent}"
+                                StrokeLineCap="Round"
+                                StrokeThickness="5" />
+                            <Ellipse
+                                Canvas.Left="104"
+                                Canvas.Top="2"
+                                Width="17"
+                                Height="17"
+                                Fill="{DynamicResource BrushAccent}" />
+                            <Path
+                                Canvas.Left="198"
+                                Canvas.Top="78"
+                                Data="M 9,0 L 11.7,6.3 L 18,9 L 11.7,11.7 L 9,18 L 6.3,11.7 L 0,9 L 6.3,6.3 Z"
+                                Fill="{DynamicResource BrushFocus}" />
+                            <Ellipse
+                                Canvas.Left="22"
+                                Canvas.Top="164"
+                                Width="19"
+                                Height="19"
+                                Fill="{DynamicResource BrushFocus}" />
+                            <Path
+                                Data="M 17,178 C 25,168 38,166 47,174"
+                                Opacity="0.8"
+                                Stroke="{DynamicResource BrushAccent}"
+                                StrokeLineCap="Round"
+                                StrokeThickness="3" />
+                        </Canvas>
+                    </Grid>
+                    <Image
+                        Width="176"
+                        Height="176"
+                        Classes="startup-loading-logo"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Source="avares://TOTP.UI.Avalonia.Mobile/Assets/app-1024.png"
+                        Stretch="Uniform" />
+                </Grid>
+                <TextBlock
+                    FontSize="18"
+                    Foreground="{DynamicResource BrushTextSecondary}"
+                    IsVisible="{Binding !CanRetry}"
+                    Text="{Binding StartingText}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Foreground="{DynamicResource BrushDanger}"
+                    IsVisible="{Binding CanRetry}"
+                    Text="{Binding NotificationText}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <Button
+                    Classes="wide primary"
+                    Command="{Binding InitializeCommand}"
+                    Content="{Binding RetryText}"
+                    IsVisible="{Binding CanRetry}" />
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

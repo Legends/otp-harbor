@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Platform;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -18,10 +19,17 @@ public partial class MainView : UserControl
     private const string UnlockMethodAttentionClass = "unlock-method-attention";
     private static readonly TimeSpan AccountListScrollIdleDelay = TimeSpan.FromMilliseconds(150);
     private static readonly TimeSpan AccountListScrollStateCheckInterval = TimeSpan.FromMilliseconds(50);
+    private static readonly TimeSpan ConfirmationScrollDuration = TimeSpan.FromMilliseconds(260);
+    private static readonly TimeSpan StartupFadeDuration = TimeSpan.FromMilliseconds(360);
     private Control? _openSwipeRow;
     private Control? _swipedRow;
     private ScrollViewer? _accountListScrollViewer;
     private readonly DispatcherTimer _accountListScrollIdleTimer;
+    private readonly DispatcherTimer _confirmationScrollTimer;
+    private readonly DispatcherTimer _startupFadeTimer;
+    private double _confirmationScrollStartY;
+    private double _confirmationScrollTargetY;
+    private long _confirmationScrollStartedAt;
     private long _lastAccountListScrollTimestamp;
     private bool _isAccountListScrollActive;
     private bool _realizedAccountReportPending;
@@ -30,7 +38,20 @@ public partial class MainView : UserControl
     private bool _backNavigationInProgress;
     private TopLevel? _backNavigationTopLevel;
     private IInputPane? _inputPane;
+    private InputPaneState _inputPaneState;
+    private Rect _inputPaneOccludedRect;
+    private Control? _activePasswordConfirmationPanel;
+    private Thickness? _mobileMainContentBaseMargin;
     private MobileShellViewModel? _nativeAccountListViewModel;
+    private MobileShellViewModel? _startupViewModel;
+    private bool _nativeAccountListRendered;
+    private bool _startupTransitionPending;
+    private bool _startupTransitionStarted;
+    private bool _startupTransitionCompleted;
+    private int _settingsBlendRevision;
+
+    public event EventHandler? StartupContentRevealRequested;
+    public event EventHandler? StartupTransitionCompleted;
 
     public MainView()
     {
@@ -40,10 +61,21 @@ public partial class MainView : UserControl
             Interval = AccountListScrollStateCheckInterval
         };
         _accountListScrollIdleTimer.Tick += AccountListScrollBecameIdle;
+        _confirmationScrollTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(16)
+        };
+        _confirmationScrollTimer.Tick += AnimateConfirmationScroll;
+        _startupFadeTimer = new DispatcherTimer
+        {
+            Interval = StartupFadeDuration
+        };
+        _startupFadeTimer.Tick += CompleteStartupTransition;
         AddHandler(KeyDownEvent, MainViewKeyDown, RoutingStrategies.Tunnel);
         AddHandler(PointerPressedEvent, DismissAccountSearchFocus, RoutingStrategies.Tunnel);
         AttachedToVisualTree += MainViewAttachedToVisualTree;
         DetachedFromVisualTree += MainViewDetachedFromVisualTree;
+        DataContextChanged += MainViewDataContextChanged;
     }
 
     private void MainViewAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
@@ -59,12 +91,16 @@ public partial class MainView : UserControl
                 UpdateAccountBrandIconPickerInputPane(
                     inputPane.State,
                     inputPane.OccludedRect);
+                UpdatePasswordConfirmationInputPane(
+                    inputPane.State,
+                    inputPane.OccludedRect);
             }
         }
 
         Dispatcher.UIThread.Post(
             AttachAccountListScrollViewer,
             DispatcherPriority.Loaded);
+        EvaluateStartupTransition();
     }
 
     private void MainViewDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
@@ -72,14 +108,158 @@ public partial class MainView : UserControl
         if (_inputPane is not null)
             _inputPane.StateChanged -= InputPaneStateChanged;
         _inputPane = null;
+        _activePasswordConfirmationPanel = null;
+        RestoreMobileMainContentMargin();
         if (_backNavigationTopLevel is not null)
             _backNavigationTopLevel.BackRequested -= MainViewBackRequested;
         _backNavigationTopLevel = null;
+        _confirmationScrollTimer.Stop();
         DetachAccountListScrollViewer();
     }
 
-    private void InputPaneStateChanged(object? sender, InputPaneStateEventArgs e) =>
+    private void MainViewDataContextChanged(object? sender, EventArgs e)
+    {
+        if (_startupViewModel is not null)
+            _startupViewModel.PropertyChanged -= StartupViewModelPropertyChanged;
+
+        _startupViewModel = DataContext as MobileShellViewModel;
+        if (_startupViewModel is not null)
+            _startupViewModel.PropertyChanged += StartupViewModelPropertyChanged;
+        EvaluateStartupTransition();
+    }
+
+    private void StartupViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(MobileShellViewModel.IsSettingsVisible)
+            or nameof(MobileShellViewModel.IsSettingsCategoryListVisible)
+            or nameof(MobileShellViewModel.IsSettingsCategoryDetailVisible))
+        {
+            BlendInSettingsSurface();
+        }
+
+        if (e.PropertyName is nameof(MobileShellViewModel.IsBusy)
+            or nameof(MobileShellViewModel.IsStartingVisible)
+            or nameof(MobileShellViewModel.IsAccountListVisible)
+            or nameof(MobileShellViewModel.IsInitialAccountLoadComplete)
+            or nameof(MobileShellViewModel.HasAccounts)
+            or nameof(MobileShellViewModel.HasNoAccounts))
+        {
+            BeginAccountReloadTransitionIfNeeded();
+            EvaluateStartupTransition();
+        }
+    }
+
+    private void BlendInSettingsSurface()
+    {
+        if (_startupViewModel?.IsSettingsVisible != true) return;
+
+        var revision = ++_settingsBlendRevision;
+        SettingsRoot.Opacity = 0;
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (revision != _settingsBlendRevision
+                    || _startupViewModel?.IsSettingsVisible != true)
+                {
+                    return;
+                }
+
+                SettingsRoot.Opacity = 1;
+            },
+            DispatcherPriority.Render);
+    }
+
+    private void BeginAccountReloadTransitionIfNeeded()
+    {
+        if (!_startupTransitionCompleted
+            || _startupViewModel is not
+            {
+                IsBusy: true,
+                IsAccountListVisible: true,
+                IsInitialAccountLoadComplete: false
+            })
+        {
+            return;
+        }
+
+        _startupFadeTimer.Stop();
+        _startupTransitionCompleted = false;
+        _startupTransitionStarted = false;
+        _startupTransitionPending = false;
+        _nativeAccountListRendered = false;
+        StartupLoadingOverlay.Opacity = 1;
+        StartupLoadingOverlay.IsVisible = true;
+    }
+
+    public void NotifyNativeAccountListRendered()
+    {
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                _nativeAccountListRendered = true;
+                EvaluateStartupTransition();
+            },
+            DispatcherPriority.Render);
+    }
+
+    private void EvaluateStartupTransition()
+    {
+        if (_startupTransitionCompleted || _startupTransitionStarted || _startupTransitionPending)
+        {
+            return;
+        }
+
+        if (!CanCompleteStartupTransition()) return;
+
+        _startupTransitionPending = true;
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                _startupTransitionPending = false;
+                if (_startupTransitionCompleted
+                    || _startupTransitionStarted
+                    || !CanCompleteStartupTransition())
+                {
+                    return;
+                }
+                _startupTransitionStarted = true;
+                StartupContentRevealRequested?.Invoke(this, EventArgs.Empty);
+                StartupLoadingOverlay.Opacity = 0;
+                _startupFadeTimer.Start();
+            },
+            DispatcherPriority.Render);
+    }
+
+    private bool CanCompleteStartupTransition()
+    {
+        if (_startupViewModel is not { } viewModel
+            || viewModel.IsBusy
+            || viewModel.IsStartingVisible)
+        {
+            return false;
+        }
+
+        if (!viewModel.IsAccountListVisible) return true;
+        if (!viewModel.IsInitialAccountLoadComplete) return false;
+        if (!viewModel.HasAccounts && !viewModel.HasNoAccounts) return false;
+        return !_usesNativeAccountList || !viewModel.HasAccounts || _nativeAccountListRendered;
+    }
+
+    private void CompleteStartupTransition(object? sender, EventArgs e)
+    {
+        _startupFadeTimer.Stop();
+        if (_startupTransitionCompleted) return;
+
+        _startupTransitionCompleted = true;
+        StartupLoadingOverlay.IsVisible = false;
+        StartupTransitionCompleted?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void InputPaneStateChanged(object? sender, InputPaneStateEventArgs e)
+    {
         UpdateAccountBrandIconPickerInputPane(e.NewState, e.EndRect);
+        UpdatePasswordConfirmationInputPane(e.NewState, e.EndRect);
+    }
 
     private void UpdateAccountBrandIconPickerInputPane(InputPaneState state, Rect occludedRect)
     {
@@ -87,6 +267,83 @@ public partial class MainView : UserControl
             ? Math.Max(0, occludedRect.Height)
             : 0;
         AccountBrandIconPickerModalOverlay.Margin = new Thickness(0, 0, 0, bottomInset);
+    }
+
+    private void UpdatePasswordConfirmationInputPane(
+        InputPaneState state,
+        Rect occludedRect)
+    {
+        _inputPaneState = state;
+        _inputPaneOccludedRect = occludedRect;
+        if (state != InputPaneState.Open)
+        {
+            RestoreMobileMainContentMargin();
+            return;
+        }
+
+        RepositionActivePasswordConfirmation();
+    }
+
+    private void RepositionActivePasswordConfirmation()
+    {
+        if (_inputPaneState != InputPaneState.Open
+            || _activePasswordConfirmationPanel is not { IsVisible: true } confirmationPanel)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_inputPaneState != InputPaneState.Open
+                    || !ReferenceEquals(_activePasswordConfirmationPanel, confirmationPanel)
+                    || !confirmationPanel.IsVisible)
+                {
+                    return;
+                }
+
+                _mobileMainContentBaseMargin ??= MobileMainContent.Margin;
+                var baseMargin = _mobileMainContentBaseMargin.Value;
+                MobileMainContent.Margin = new Thickness(
+                    baseMargin.Left,
+                    baseMargin.Top,
+                    baseMargin.Right,
+                    baseMargin.Bottom + CalculateInputPaneOverlap());
+                Dispatcher.UIThread.Post(
+                    () => ScrollConfirmationIntoView(confirmationPanel),
+                    DispatcherPriority.Render);
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    private void RestoreMobileMainContentMargin()
+    {
+        MobileMainContent.ClearValue(Layoutable.MarginProperty);
+        _mobileMainContentBaseMargin = null;
+    }
+
+    private double CalculateInputPaneOverlap()
+    {
+        if (_inputPaneState != InputPaneState.Open
+            || _inputPaneOccludedRect.Height <= 0
+            || MainScrollViewer.Viewport.Height <= 0)
+        {
+            return 0;
+        }
+
+        if (_backNavigationTopLevel is null
+            || MainScrollViewer.TranslatePoint(default, _backNavigationTopLevel) is not { } origin)
+        {
+            return Math.Min(
+                _inputPaneOccludedRect.Height,
+                MainScrollViewer.Viewport.Height);
+        }
+
+        var viewportBottom = origin.Y + MainScrollViewer.Viewport.Height;
+        return Math.Clamp(
+            viewportBottom - _inputPaneOccludedRect.Top,
+            0,
+            Math.Min(_inputPaneOccludedRect.Height, MainScrollViewer.Viewport.Height));
     }
 
     public void UseNativeAccountList(Control nativeAccountList)
@@ -327,15 +584,9 @@ public partial class MainView : UserControl
         Control confirmationPanel,
         RevealableSecretInput passwordInput)
     {
+        _activePasswordConfirmationPanel = confirmationPanel;
         ScrollConfirmationIntoView(confirmationPanel);
         HighlightPasswordInput(passwordInput);
-
-        // Android resizes the viewport while the software keyboard animates.
-        // Reapply the same panel-top alignment so its hint, field, and actions
-        // remain together in the resized viewport.
-        DispatcherTimer.RunOnce(
-            () => ScrollConfirmationIntoView(confirmationPanel),
-            TimeSpan.FromMilliseconds(250));
     }
 
     private void ScrollConfirmationIntoView(Control confirmationPanel)
@@ -344,15 +595,72 @@ public partial class MainView : UserControl
         if (position is null) return;
 
         const double topMargin = 12;
+        const double bottomMargin = 12;
+        var viewportHeight = Math.Max(
+            0,
+            MainScrollViewer.Viewport.Height - CalculateInputPaneOverlap());
+        if (viewportHeight <= 0) return;
+
+        var panelTop = position.Value.Y;
+        var panelHeight = confirmationPanel.Bounds.Height;
+        var panelBottom = panelTop + panelHeight;
+        if (panelTop >= topMargin
+            && panelBottom <= viewportHeight - bottomMargin)
+        {
+            return;
+        }
+
         var maximumOffset = Math.Max(
             0,
             MainScrollViewer.Extent.Height - MainScrollViewer.Viewport.Height);
+        var availableHeight = Math.Max(0, viewportHeight - topMargin - bottomMargin);
+        var offsetDelta = panelHeight > availableHeight || panelTop < topMargin
+            ? panelTop - topMargin
+            : panelBottom - (viewportHeight - bottomMargin);
         var targetOffset = Math.Clamp(
-            MainScrollViewer.Offset.Y + position.Value.Y - topMargin,
+            MainScrollViewer.Offset.Y + offsetDelta,
             0,
             maximumOffset);
-        MainScrollViewer.Offset = new Vector(MainScrollViewer.Offset.X, targetOffset);
+        BeginConfirmationScrollAnimation(targetOffset);
+    }
+
+    private void BeginConfirmationScrollAnimation(double targetOffset)
+    {
+        _confirmationScrollTimer.Stop();
+        _confirmationScrollStartY = MainScrollViewer.Offset.Y;
+        _confirmationScrollTargetY = targetOffset;
+        if (Math.Abs(_confirmationScrollTargetY - _confirmationScrollStartY) < 0.5)
+        {
+            return;
+        }
+
+        _confirmationScrollStartedAt = Stopwatch.GetTimestamp();
+        _confirmationScrollTimer.Start();
+    }
+
+    private void AnimateConfirmationScroll(object? sender, EventArgs e)
+    {
+        var progress = Math.Clamp(
+            Stopwatch.GetElapsedTime(_confirmationScrollStartedAt).TotalMilliseconds
+                / ConfirmationScrollDuration.TotalMilliseconds,
+            0,
+            1);
+        var easedProgress = 1 - Math.Pow(1 - progress, 3);
+        var maximumOffset = Math.Max(
+            0,
+            MainScrollViewer.Extent.Height - MainScrollViewer.Viewport.Height);
+        var currentOffset = Math.Clamp(
+            _confirmationScrollStartY
+                + ((_confirmationScrollTargetY - _confirmationScrollStartY) * easedProgress),
+            0,
+            maximumOffset);
+        MainScrollViewer.Offset = new Vector(MainScrollViewer.Offset.X, currentOffset);
         UpdateSettingsBackToTopVisibility();
+
+        if (progress >= 1)
+        {
+            _confirmationScrollTimer.Stop();
+        }
     }
 
     private static void HighlightPasswordInput(RevealableSecretInput passwordInput)

@@ -27,26 +27,6 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="TextWrapping" Value="NoWrap" />
         </Style>
-        <Style Selector="Button.master-password-option">
-            <Setter Property="MinHeight" Value="42" />
-            <Setter Property="Padding" Value="14,8" />
-            <Setter Property="CornerRadius" Value="{DynamicResource RadiusLarge}" />
-            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
-            <Setter Property="Foreground" Value="{DynamicResource BrushAccent}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
-            <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.master-password-option:pointerover">
-            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentHover}" />
-        </Style>
-        <Style Selector="Button.master-password-option:pressed">
-            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccentPressed}" />
-        </Style>
         <Style Selector="Grid.authorized-shell">
             <Setter Property="Opacity" Value="0" />
         </Style>
@@ -157,11 +137,14 @@
                         IsVisible="{Binding CanRetry}" />
 
                     <Border
-                        x:Name="QuickUnlockCard"
+                        x:Name="UnlockCard"
                         Classes="unlock-card biometric-card"
-                        IsVisible="{Binding IsQuickUnlockVisible}">
+                        IsVisible="{Binding IsUnlockVisible}">
                         <StackPanel Spacing="8">
-                            <Grid Height="18" ClipToBounds="True">
+                            <Grid
+                                Height="18"
+                                ClipToBounds="True"
+                                IsVisible="{Binding IsQuickUnlockVisible}">
                                 <shared:ValidationMessage
                                     VerticalAlignment="Center"
                                     Classes="quick-unlock-message"
@@ -183,90 +166,57 @@
                                 automation:AutomationProperties.Name="{DynamicResource UnlockWithQuickUnlock}"
                                 Classes="primary biometric-unlock"
                                 Command="{Binding QuickUnlockCommand}"
+                                IsVisible="{Binding IsQuickUnlockVisible}"
                                 ToolTip.Tip="{DynamicResource UnlockWithQuickUnlock}">
                                 <shared:FingerprintIcon IconSize="48" />
                             </Button>
-                            <Grid
-                                x:Name="UnlockMethodDivider"
-                                ColumnDefinitions="*,Auto,*">
-                                <Border
-                                    Height="1"
-                                    VerticalAlignment="Center"
-                                    Background="{DynamicResource BrushBorder}" />
-                                <TextBlock
-                                    x:Name="UnlockMethodSeparatorText"
-                                    Grid.Column="1"
-                                    Margin="10,0"
-                                    Classes="secondary"
-                                    FontSize="11"
-                                    Text="{DynamicResource UnlockMethodSeparator}" />
-                                <Border
-                                    Grid.Column="2"
-                                    Height="1"
-                                    VerticalAlignment="Center"
-                                    Background="{DynamicResource BrushBorder}" />
-                            </Grid>
-                            <Button
-                                x:Name="MasterPasswordFallbackButton"
-                                automation:AutomationProperties.Name="{DynamicResource UseMasterPassword}"
-                                Classes="wide master-password-option"
-                                Command="{Binding UsePasswordFallbackCommand}">
+                            <StackPanel Spacing="3">
                                 <Grid
-                                    x:Name="MasterPasswordFallbackContent"
-                                    ColumnDefinitions="17,*,17"
-                                    VerticalAlignment="Center">
-                                    <shared:SymbolIcon
-                                        x:Name="MasterPasswordFallbackIcon"
+                                    x:Name="UnlockMethodDivider"
+                                    ColumnDefinitions="*,Auto,*"
+                                    IsVisible="{Binding IsQuickUnlockVisible}">
+                                    <Border
+                                        Height="1"
                                         VerticalAlignment="Center"
-                                        IconSize="17"
-                                        Kind="Key" />
+                                        Background="{DynamicResource BrushBorder}" />
                                     <TextBlock
-                                        x:Name="MasterPasswordFallbackText"
+                                        x:Name="UnlockMethodSeparatorText"
                                         Grid.Column="1"
-                                        Margin="8,0"
-                                        HorizontalAlignment="Center"
+                                        Margin="10,0"
+                                        Classes="secondary"
+                                        FontSize="11"
+                                        Text="{DynamicResource UnlockMethodSeparator}" />
+                                    <Border
+                                        Grid.Column="2"
+                                        Height="1"
                                         VerticalAlignment="Center"
-                                        Text="{DynamicResource UseMasterPassword}"
-                                        TextAlignment="Center"
-                                        TextWrapping="Wrap" />
+                                        Background="{DynamicResource BrushBorder}" />
                                 </Grid>
-                            </Button>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Classes="unlock-card" IsVisible="{Binding IsPasswordUnlockVisible}">
-                        <StackPanel Spacing="10">
-                            <ContentControl Content="{Binding PasswordUnlock}">
-                                <ContentControl.ContentTemplate>
-                                    <DataTemplate x:DataType="presentation:PasswordUnlockViewModel">
-                                        <StackPanel Spacing="10">
-                                            <TextBlock
-                                                Classes="section-title"
-                                                Text="{DynamicResource MasterPassword}" />
-                                            <shared:ValidationMessage
-                                                Severity="Error"
-                                                Text="{Binding Message}" />
-                                            <shared:RevealableSecretInput
-                                                x:Name="PasswordUnlockInput"
-                                                AccessibleName="{DynamicResource MasterPassword}"
-                                                HelpText="{DynamicResource MasterPasswordHelp}"
-                                                IsRequired="True"
-                                                PlaceholderText="{DynamicResource MasterPassword}"
-                                                Text="{Binding Password, Mode=TwoWay}" />
-                                            <Button
-                                                Classes="primary wide"
-                                                Command="{Binding UnlockCommand}"
-                                                Content="{DynamicResource Unlock}"
-                                                IsDefault="True" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ContentControl.ContentTemplate>
-                            </ContentControl>
+                                <Border
+                                    x:Name="PasswordUnlockMessageSlot"
+                                    MinHeight="54">
+                                    <shared:ValidationMessage
+                                        x:Name="PasswordUnlockValidationMessage"
+                                        VerticalAlignment="Center"
+                                        Severity="Error"
+                                        Text="{Binding PasswordUnlock.Message}" />
+                                </Border>
+                                <shared:RevealableSecretInput
+                                    x:Name="PasswordUnlockInput"
+                                    AccessibleName="{DynamicResource MasterPassword}"
+                                    HelpText="{DynamicResource MasterPasswordHelp}"
+                                    IsEnabled="{Binding !IsQuickUnlockBusy}"
+                                    IsRequired="True"
+                                    PlaceholderText="{DynamicResource MasterPassword}"
+                                    Text="{Binding PasswordUnlock.Password, Mode=TwoWay}" />
+                            </StackPanel>
                             <Button
-                                Classes="link wide"
-                                Command="{Binding ReturnToQuickUnlockCommand}"
-                                Content="{DynamicResource UnlockWithQuickUnlock}"
-                                IsVisible="{Binding IsReturnToQuickUnlockVisible}" />
+                                x:Name="MasterPasswordUnlockButton"
+                                Classes="primary wide"
+                                Command="{Binding PasswordUnlock.UnlockCommand}"
+                                Content="{DynamicResource Unlock}"
+                                IsDefault="True"
+                                IsEnabled="{Binding !IsQuickUnlockBusy}" />
                         </StackPanel>
                     </Border>
 

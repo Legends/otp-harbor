@@ -135,48 +135,73 @@
                                         Grid.Row="0"
                                         HorizontalScrollBarVisibility="Disabled"
                                         VerticalScrollBarVisibility="Auto">
-                                        <Border
+                                        <StackPanel
                                             x:Name="AppearanceSettingsPanel"
                                             Margin="4,8,4,4"
                                             VerticalAlignment="Top"
-                                            Classes="panel">
-                                            <StackPanel Spacing="8">
-                                            <TextBlock Classes="settings-label" Text="{DynamicResource Language}" />
-                                            <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate x:DataType="localization:LanguageOption">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Image Width="24" Height="18" Source="{Binding Icon}" Stretch="Uniform" />
-                                                            <TextBlock VerticalAlignment="Center" Text="{Binding DisplayName}" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource Theme}" />
-                                            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate x:DataType="presentation:SettingsPageViewModel+ThemeOption">
-                                                        <TextBlock Text="{Binding Label}" />
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                            <CheckBox Content="{DynamicResource ShowNextToken}" IsChecked="{Binding ShowNextToken, Mode=TwoWay}" />
-                                            <TextBlock Classes="secondary" Text="{DynamicResource ShowNextTokenHelp}" TextWrapping="Wrap" />
-                                            <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource QrPreviewScale}" />
-                                            <NumericUpDown Increment="0.5" Maximum="6" Minimum="1" Value="{Binding QrPreviewScaleFactor, Mode=TwoWay}" />
-                                            <StackPanel IsVisible="{Binding IsInterfaceScaleAvailable}" Spacing="8">
-                                                <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource InterfaceScale}" />
-                                                <ComboBox ItemsSource="{Binding InterfaceScales}" SelectedItem="{Binding SelectedInterfaceScale, Mode=TwoWay}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="presentation:SettingsPageViewModel+InterfaceScaleOption">
-                                                            <TextBlock Text="{Binding Label}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                                <TextBlock Classes="secondary" Text="{DynamicResource InterfaceScaleHelp}" TextWrapping="Wrap" />
+                                            Spacing="12">
+                                            <Border x:Name="AppearanceLanguagePanel" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource Language}" />
+                                                    <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="localization:LanguageOption">
+                                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                    <Image Width="24" Height="18" Source="{Binding Icon}" Stretch="Uniform" />
+                                                                    <TextBlock VerticalAlignment="Center" Text="{Binding DisplayName}" />
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="AppearanceThemePanel" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource Theme}" />
+                                                    <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="presentation:SettingsPageViewModel+ThemeOption">
+                                                                <TextBlock Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="AppearanceNextTokenPanel" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <CheckBox Content="{DynamicResource ShowNextToken}" IsChecked="{Binding ShowNextToken, Mode=TwoWay}" />
+                                                    <TextBlock Classes="secondary" Text="{DynamicResource ShowNextTokenHelp}" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="AppearanceIssuerLogoPanel" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <CheckBox Content="{DynamicResource ShowIssuerLogo}" IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                                    <TextBlock Classes="secondary" Text="{DynamicResource ShowIssuerLogoHelp}" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="AppearanceQrPreviewPanel" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource QrPreviewScale}" />
+                                                    <NumericUpDown Increment="0.5" Maximum="6" Minimum="1" Value="{Binding QrPreviewScaleFactor, Mode=TwoWay}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border
+                                                x:Name="AppearanceInterfaceScalePanel"
+                                                Classes="panel"
+                                                IsVisible="{Binding IsInterfaceScaleAvailable}">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource InterfaceScale}" />
+                                                    <ComboBox ItemsSource="{Binding InterfaceScales}" SelectedItem="{Binding SelectedInterfaceScale, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="presentation:SettingsPageViewModel+InterfaceScaleOption">
+                                                                <TextBlock Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <TextBlock Classes="secondary" Text="{DynamicResource InterfaceScaleHelp}" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
                                             </StackPanel>
-                                            </StackPanel>
-                                        </Border>
                                     </ScrollViewer>
                                 </Grid>
                             </DataTemplate>

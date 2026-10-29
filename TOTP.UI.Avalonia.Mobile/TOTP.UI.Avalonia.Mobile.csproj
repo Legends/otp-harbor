@@ -20,4 +20,9 @@
     <ProjectReference Include="..\TOTP.UI.Avalonia.Shared\TOTP.UI.Avalonia.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AvaloniaResource Include="..\TOTP.UI.Avalonia.Desktop\Assets\Icons\app-1024.png"
+                      Link="Assets\app-1024.png" />
+  </ItemGroup>
+
 </Project>

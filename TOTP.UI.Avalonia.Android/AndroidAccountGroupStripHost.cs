@@ -10,6 +10,7 @@ internal sealed class AndroidAccountGroupStripHost(
     : AndroidNativeControlHost
 {
     private NativeAccountGroupRecyclerView? _groupStrip;
+    private bool _startupTransitionCompleted;
 
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
@@ -18,8 +19,18 @@ internal sealed class AndroidAccountGroupStripHost(
         _groupStrip = new NativeAccountGroupRecyclerView(
             context,
             viewModel,
-            dismissAccountSearchFocus);
+            dismissAccountSearchFocus)
+        {
+            Alpha = _startupTransitionCompleted ? 1f : 0f
+        };
         return new AndroidViewControlHandle(_groupStrip);
+    }
+
+    public void CompleteStartupTransition()
+    {
+        _startupTransitionCompleted = true;
+        _groupStrip?.Animate()?.Cancel();
+        if (_groupStrip is { } groupStrip) groupStrip.Alpha = 1f;
     }
 
     protected override void DestroyNativeControlCore(IPlatformHandle control)

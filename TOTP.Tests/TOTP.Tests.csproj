@@ -82,6 +82,15 @@
     <None Include="..\TOTP.UI.Avalonia.Android\Resources\values-v31\styles.xml"
           Link="Fixtures\Android\values-v31\styles.xml"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\Resources\drawable\splash_screen.xml"
+          Link="Fixtures\Android\drawable\splash_screen.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\Resources\drawable-v31\splash_icon_animated.xml"
+          Link="Fixtures\Android\drawable-v31\splash_icon_animated.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\Resources\drawable-v31\splash_icon_orbit_000.xml"
+          Link="Fixtures\Android\drawable-v31\splash_icon_orbit_000.xml"
+          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\TOTP.UI.Avalonia.Android\MainActivity.cs"
           Link="Fixtures\Android\MainActivity.cs"
           CopyToOutputDirectory="PreserveNewest" />
@@ -120,6 +129,12 @@
           CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\TOTP.UI.Avalonia.Android\OtpHarborApplication.cs"
           Link="Fixtures\Android\OtpHarborApplication.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\AndroidAccountListHost.cs"
+          Link="Fixtures\Android\AndroidAccountListHost.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\TOTP.UI.Avalonia.Android\AndroidAccountGroupStripHost.cs"
+          Link="Fixtures\Android\AndroidAccountGroupStripHost.cs"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

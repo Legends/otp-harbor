@@ -46,14 +46,15 @@ public sealed class MainWindowSmokeTests
         {
             window.Show();
             var scroller = Assert.IsType<ScrollViewer>(window.FindControl<ScrollViewer>("AuthorizationScroller"));
-            var quickUnlockCard = Assert.IsType<Border>(window.FindControl<Border>("QuickUnlockCard"));
+            var unlockCard = Assert.IsType<Border>(window.FindControl<Border>("UnlockCard"));
             var notification = Assert.IsType<NotificationBanner>(window.FindControl<NotificationBanner>("QuickUnlockStatusBanner"));
-            var masterPasswordButton = Assert.IsType<Button>(window.FindControl<Button>("MasterPasswordFallbackButton"));
+            var passwordInput = Assert.IsType<RevealableSecretInput>(window.FindControl<RevealableSecretInput>("PasswordUnlockInput"));
+            var passwordMessage = Assert.IsType<ValidationMessage>(window.FindControl<ValidationMessage>("PasswordUnlockValidationMessage"));
+            var masterPasswordButton = Assert.IsType<Button>(window.FindControl<Button>("MasterPasswordUnlockButton"));
             var separator = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("UnlockMethodSeparatorText"));
-            var masterPasswordText = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("MasterPasswordFallbackText"));
 
             scroller.IsVisible = true;
-            quickUnlockCard.IsVisible = true;
+            unlockCard.IsVisible = true;
             Assert.IsType<Border>(notification.Parent).IsVisible = true;
             Assert.Equal(ScrollBarVisibility.Disabled, scroller.VerticalScrollBarVisibility);
 
@@ -64,8 +65,16 @@ public sealed class MainWindowSmokeTests
                 notification.Title = catalog.Get(AvaloniaStringKeys.VaultLockedTitle, culture);
                 notification.Text = catalog.Get(AvaloniaStringKeys.VaultLockedQuickUnlock, culture);
                 separator.Text = catalog.Get(AvaloniaStringKeys.UnlockMethodSeparator, culture);
-                masterPasswordText.Text = catalog.Get(AvaloniaStringKeys.UseMasterPassword, culture);
+                passwordInput.PlaceholderText = catalog.Get(AvaloniaStringKeys.MasterPassword, culture);
+                masterPasswordButton.Content = catalog.Get(AvaloniaStringKeys.Unlock, culture);
+                passwordMessage.Text = string.Empty;
                 window.UpdateLayout();
+                var heightWithoutError = unlockCard.Bounds.Height;
+
+                passwordMessage.Text = catalog.Get(AvaloniaStringKeys.UnlockRejected, culture);
+                window.UpdateLayout();
+
+                Assert.Equal(heightWithoutError, unlockCard.Bounds.Height);
 
                 var buttonBottom = masterPasswordButton.TranslatePoint(
                     new Point(0, masterPasswordButton.Bounds.Height),
@@ -74,7 +83,7 @@ public sealed class MainWindowSmokeTests
                 Assert.NotNull(buttonBottom);
                 Assert.True(
                     buttonBottom.Value.Y >= 0 && buttonBottom.Value.Y <= scroller.Bounds.Height,
-                    $"Quick unlock button for '{cultureName}' ends at {buttonBottom.Value.Y} within a {scroller.Bounds.Height}-pixel viewport (extent {scroller.Extent.Height}, viewport {scroller.Viewport.Height}).");
+                    $"Combined unlock card for '{cultureName}' ends at {buttonBottom.Value.Y} within a {scroller.Bounds.Height}-pixel viewport (extent {scroller.Extent.Height}, viewport {scroller.Viewport.Height}).");
                 Assert.True(
                     scroller.Extent.Height <= scroller.Viewport.Height,
                     $"Quick unlock content for '{cultureName}' exceeds the supported minimum window height.");
@@ -3252,6 +3261,38 @@ public sealed class MainWindowSmokeTests
         try
         {
             window.Show();
+            var appearanceHost = window.FindControl<ContentControl>("AppearanceSettingsHost");
+            Assert.NotNull(appearanceHost?.ContentTemplate);
+            var appearanceContent = Assert.IsAssignableFrom<Control>(
+                appearanceHost.ContentTemplate!.Build(null));
+            var appearancePanel = Assert.Single(
+                appearanceContent.GetLogicalDescendants().OfType<StackPanel>(),
+                panel => panel.Name == "AppearanceSettingsPanel");
+            var appearanceSettingPanels = appearancePanel.Children
+                .OfType<Border>()
+                .ToArray();
+            Assert.Equal(
+                [
+                    "AppearanceLanguagePanel",
+                    "AppearanceThemePanel",
+                    "AppearanceNextTokenPanel",
+                    "AppearanceIssuerLogoPanel",
+                    "AppearanceQrPreviewPanel",
+                    "AppearanceInterfaceScalePanel"
+                ],
+                appearanceSettingPanels.Select(panel => panel.Name));
+            Assert.All(
+                appearanceSettingPanels,
+                panel => Assert.Contains("panel", panel.Classes));
+            var appearanceIssuerLogoPanel = Assert.Single(
+                appearanceSettingPanels,
+                panel => panel.Name == "AppearanceIssuerLogoPanel");
+            var appearanceIssuerLogoCheckBox = Assert.Single(
+                appearanceIssuerLogoPanel.GetLogicalDescendants().OfType<CheckBox>());
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo],
+                appearanceIssuerLogoCheckBox.Content);
+
             var host = window.FindControl<ContentControl>("MiscSettingsHost");
             Assert.NotNull(host?.ContentTemplate);
             var content = Assert.IsAssignableFrom<Control>(host.ContentTemplate.Build(null));

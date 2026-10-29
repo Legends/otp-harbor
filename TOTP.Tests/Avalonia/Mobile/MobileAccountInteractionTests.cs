@@ -5,6 +5,39 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void AndroidScrolling_HidesVerticalScrollbarsWithoutDisablingScrolling()
+    {
+        var fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures");
+        var app = XDocument.Load(Path.Combine(fixtureRoot, "Avalonia", "MobileApp.axaml"));
+        var view = XDocument.Load(Path.Combine(fixtureRoot, "Avalonia", "MobileMainView.axaml"));
+        var accountListSource = File.ReadAllText(Path.Combine(
+            fixtureRoot,
+            "Android",
+            "NativeAccountRecyclerView.cs"));
+        var groupListSource = File.ReadAllText(Path.Combine(
+            fixtureRoot,
+            "Android",
+            "NativeAccountGroupRecyclerView.cs"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var globalScrollViewerStyle = app
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value == "ScrollViewer");
+        Assert.Contains(
+            globalScrollViewerStyle.Elements(avalonia + "Setter"),
+            setter => setter.Attribute("Property")?.Value == "VerticalScrollBarVisibility"
+                && setter.Attribute("Value")?.Value == "Hidden");
+        Assert.DoesNotContain(
+            view.Descendants().Attributes(),
+            attribute => attribute.Name.LocalName.Contains(
+                    "VerticalScrollBarVisibility",
+                    StringComparison.Ordinal)
+                && attribute.Value is "Auto" or "Visible");
+        Assert.Contains("VerticalScrollBarEnabled = false", accountListSource);
+        Assert.Contains("VerticalScrollBarEnabled = false", groupListSource);
+    }
+
+    [Fact]
     public void AndroidActivity_ResizesTheAppViewportAboveTheSoftwareKeyboard()
     {
         var source = File.ReadAllText(Path.Combine(
@@ -213,6 +246,75 @@ public sealed class MobileAccountInteractionTests
         Assert.True(catalogSubmit > catalogRefresh);
         Assert.Contains("HasStableIds = true;", recyclerSource);
         Assert.DoesNotContain("DiffUtil.CalculateDiff", recyclerSource);
+    }
+
+    [Fact]
+    public void AndroidStartup_KeepsOneAnimatedSurfaceUntilTheInitialContentIsRendered()
+    {
+        var viewSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml"));
+        var viewCodeSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "MobileMainView.axaml.cs"));
+        var recyclerSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "NativeAccountRecyclerView.cs"));
+        var applicationSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "OtpHarborApplication.cs"));
+        var accountListHostSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "AndroidAccountListHost.cs"));
+        var accountGroupStripHostSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Android",
+            "AndroidAccountGroupStripHost.cs"));
+
+        Assert.Contains("x:Name=\"StartupLoadingOverlay\"", viewSource);
+        Assert.Contains("Classes=\"startup-loading-logo\"", viewSource);
+        Assert.Contains("Classes=\"startup-loading-orbit\"", viewSource);
+        Assert.Contains("RotateTransform.Angle", viewSource);
+        Assert.DoesNotContain("ScaleTransform.ScaleX", viewSource);
+        Assert.Contains("avares://TOTP.UI.Avalonia.Mobile/Assets/app-1024.png", viewSource);
+        Assert.Contains("IterationCount=\"Infinite\"", viewSource);
+        Assert.Contains("<DoubleTransition", viewSource);
+        Assert.DoesNotContain("IsVisible=\"{Binding IsStartingVisible}\"", viewSource);
+        Assert.Contains("viewModel.IsBusy", viewCodeSource);
+        Assert.Contains("viewModel.IsInitialAccountLoadComplete", viewCodeSource);
+        Assert.Contains(
+            "return !_usesNativeAccountList || !viewModel.HasAccounts || _nativeAccountListRendered;",
+            viewCodeSource);
+        Assert.Contains("!CanCompleteStartupTransition()", viewCodeSource);
+        Assert.Contains("BeginAccountReloadTransitionIfNeeded", viewCodeSource);
+        Assert.Contains("IsInitialAccountLoadComplete: false", viewCodeSource);
+        Assert.Contains("NotifyNativeAccountListRendered", viewCodeSource);
+        Assert.Contains("StartupContentRevealRequested?.Invoke", viewCodeSource);
+        Assert.Contains("StartupTransitionCompleted?.Invoke", viewCodeSource);
+        Assert.True(
+            viewCodeSource.IndexOf("StartupContentRevealRequested?.Invoke", StringComparison.Ordinal)
+            < viewCodeSource.IndexOf("StartupLoadingOverlay.Opacity = 0", StringComparison.Ordinal));
+        Assert.Contains("protected override void OnLayout", recyclerSource);
+        Assert.Contains("_adapter.ItemCount != _viewModel.Accounts.Count", recyclerSource);
+        Assert.Contains("ChildCount == 0", recyclerSource);
+        Assert.Contains("_accountListRendered();", recyclerSource);
+        Assert.Contains("view.NotifyNativeAccountListRendered", applicationSource);
+        Assert.Contains("view.StartupContentRevealRequested +=", applicationSource);
+        Assert.Contains("accountList.Alpha = 1f", accountListHostSource);
+        Assert.Contains("groupStrip.Alpha = 1f", accountGroupStripHostSource);
+        Assert.DoesNotContain("SetDuration", accountListHostSource);
+        Assert.DoesNotContain("SetDuration", accountGroupStripHostSource);
     }
 
     [Fact]
@@ -538,6 +640,10 @@ public sealed class MobileAccountInteractionTests
             .Single(element => element.Attribute(xaml + "Name")?.Value
                 == "AccountAdvancedOptions");
 
+        Assert.Equal(
+            "{Binding Bounds.Width, ElementName=AccountIssuerBox}",
+            advanced.Attribute("Width")?.Value);
+        Assert.Equal("Left", advanced.Attribute("HorizontalAlignment")?.Value);
         Assert.Contains(
             advanced.Descendants(avalonia + "CheckBox"),
             control => control.Attribute("IsChecked")?.Value
@@ -699,7 +805,7 @@ public sealed class MobileAccountInteractionTests
             .Single(element => element.Attribute(xaml + "Name")?.Value
                 == "AccountBrandIconResultsScroller");
         Assert.Equal(
-            "Auto",
+            "Hidden",
             resultsScroller.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
         Assert.Equal(
             "{Binding AccountBrandIconResultsMaxHeight}",
@@ -826,6 +932,45 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains(
             appearance.Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value == "{Binding ThemeText}");
+        var appearanceSections = new[]
+        {
+            "AppearanceLanguageSection",
+            "AppearanceThemeSection",
+            "AppearanceNextTokenSection",
+            "AppearanceIssuerLogoSection"
+        }.Select(name => appearance
+            .Descendants(avalonia + "StackPanel")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == name))
+            .ToArray();
+        Assert.Equal(4, appearanceSections.Length);
+        var appearanceDividers = new[]
+        {
+            "AppearanceLanguageDivider",
+            "AppearanceThemeDivider",
+            "AppearanceNextTokenDivider"
+        }.Select(name => appearance
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value == name))
+            .ToArray();
+        Assert.All(appearanceDividers, divider =>
+        {
+            Assert.Equal("1", divider.Attribute("Height")?.Value);
+            Assert.Equal("{DynamicResource BrushBorder}", divider.Attribute("Background")?.Value);
+        });
+        var appearanceIssuerLogo = Assert.Single(
+            appearanceSections[^1].Descendants(avalonia + "CheckBox"));
+        Assert.Equal("{Binding ShowIssuerLogoText}", appearanceIssuerLogo.Attribute("Content")?.Value);
+        Assert.Equal(
+            "{Binding ShowIssuerLogo, Mode=TwoWay}",
+            appearanceIssuerLogo.Attribute("IsChecked")?.Value);
+        var iconPacks = document
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute("IsVisible")?.Value
+                == "{Binding IsBrandIconSettingsVisible}");
+        Assert.Contains(
+            iconPacks.Descendants(avalonia + "CheckBox"),
+            checkBox => checkBox.Attribute("IsChecked")?.Value
+                == "{Binding ShowIssuerLogo, Mode=TwoWay}");
 
         var security = document
             .Descendants(avalonia + "StackPanel")
@@ -863,6 +1008,11 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "Border")
             .Single(element => element.Attribute(xaml + "Name")?.Value
                 == "DisableAppLockConfirmationPanel");
+        Assert.Equal("app-lock-confirmation", disableConfirmation.Attribute("Classes")?.Value);
+        Assert.Equal(
+            "{Binding IsDisableAppLockConfirmationVisible}",
+            disableConfirmation.Attributes().Single(attribute =>
+                attribute.Name.LocalName == "Classes.revealed").Value);
         Assert.Equal(
             "{DynamicResource BrushWarning}",
             disableConfirmation
@@ -874,6 +1024,23 @@ public sealed class MobileAccountInteractionTests
             disableConfirmation.Descendants(),
             element => element.Attribute(xaml + "Name")?.Value
                 == "DisableAppLockPasswordBox");
+        var confirmationFadeStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value
+                == "Border.app-lock-confirmation.revealed");
+        var confirmationFade = confirmationFadeStyle
+            .Descendants(avalonia + "Animation")
+            .Single();
+        Assert.Equal("0:0:0.22", confirmationFade.Attribute("Duration")?.Value);
+        Assert.Equal("CubicEaseOut", confirmationFade.Attribute("Easing")?.Value);
+        Assert.Equal("OnlyIfVisible", confirmationFade.Attribute("PlaybackBehavior")?.Value);
+        Assert.Equal(
+            ["0", "1"],
+            confirmationFade
+                .Descendants(avalonia + "Setter")
+                .Where(setter => setter.Attribute("Property")?.Value == "Opacity")
+                .Select(setter => setter.Attribute("Value")?.Value ?? string.Empty)
+                .ToArray());
         var unlockConfirmation = security
             .Descendants(avalonia + "StackPanel")
             .Single(element => element.Attribute(xaml + "Name")?.Value
@@ -896,6 +1063,17 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains("DisableAppLockConfirmationPanel", mainViewSource, StringComparison.Ordinal);
         Assert.Contains("UnlockMethodConfirmationPanel", mainViewSource, StringComparison.Ordinal);
         Assert.Contains("ScrollConfirmationIntoView", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("panelBottom <= viewportHeight - bottomMargin", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("BeginConfirmationScrollAnimation", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("Stopwatch.GetElapsedTime", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("UpdatePasswordConfirmationInputPane", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("CalculateInputPaneOverlap", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("RepositionActivePasswordConfirmation", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("DispatcherPriority.Render", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("ClearValue(Layoutable.MarginProperty)", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("baseMargin.Bottom + CalculateInputPaneOverlap()", mainViewSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("MobileMainContent.Margin = default", mainViewSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("TimeSpan.FromMilliseconds(250)", mainViewSource, StringComparison.Ordinal);
 
         var misc = document
             .Descendants(avalonia + "Border")
@@ -984,10 +1162,21 @@ public sealed class MobileAccountInteractionTests
         var settingsRoot = document
             .Descendants(avalonia + "StackPanel")
             .Single(element => element.Attribute("Classes")?.Value == "settings-root");
+        Assert.Equal("SettingsRoot", settingsRoot.Attribute(xaml + "Name")?.Value);
         Assert.Equal("{Binding IsSettingsVisible}", settingsRoot.Attribute("IsVisible")?.Value);
+        var settingsBlend = Assert.Single(
+            settingsRoot
+                .Elements(avalonia + "StackPanel.Transitions")
+                .Descendants(avalonia + "DoubleTransition"));
+        Assert.Equal("Opacity", settingsBlend.Attribute("Property")?.Value);
+        Assert.Equal("0:0:0.2", settingsBlend.Attribute("Duration")?.Value);
+        Assert.Equal("CubicEaseOut", settingsBlend.Attribute("Easing")?.Value);
         Assert.Contains(
             document.Descendants(avalonia + "Style"),
             style => style.Attribute("Selector")?.Value == "StackPanel.settings-root Button.wide");
+        Assert.Contains("BlendInSettingsSurface", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("IsSettingsCategoryListVisible", mainViewSource, StringComparison.Ordinal);
+        Assert.Contains("IsSettingsCategoryDetailVisible", mainViewSource, StringComparison.Ordinal);
         var categoryStyle = document
             .Descendants(avalonia + "Style")
             .Single(style => style.Attribute("Selector")?.Value
@@ -1512,7 +1701,7 @@ public sealed class MobileAccountInteractionTests
         Assert.NotNull(accountListFooter);
         Assert.Equal("AccountListFooter", accountListFooter.Attribute(xaml + "Name")?.Value);
         Assert.Equal("2", accountListFooter.Attribute("Grid.Row")?.Value);
-        Assert.Equal("40", accountListFooter.Attribute("Height")?.Value);
+        Assert.Equal("36", accountListFooter.Attribute("Height")?.Value);
         Assert.Equal("{Binding IsAccountListVisible}", accountListFooter.Attribute("IsVisible")?.Value);
         var accountListNotification = accountListFooter
             .Elements()
@@ -1520,7 +1709,7 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("{Binding NotificationText}", accountListNotification.Attribute("Text")?.Value);
         Assert.Equal("Stretch", accountListNotification.Attribute("VerticalAlignment")?.Value);
         Assert.Equal("Center", accountCountSummary.Attribute("VerticalAlignment")?.Value);
-        Assert.Equal("11", accountCountSummary.Attribute("FontSize")?.Value);
+        Assert.Equal("13", accountCountSummary.Attribute("FontSize")?.Value);
         Assert.DoesNotContain(
             document.Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value == "{Binding AccountSwipeHintText}");

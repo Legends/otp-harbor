@@ -1156,6 +1156,30 @@ public sealed class SharedStylesTests
                 && setter.Attribute("Value")?.Value == "0");
     }
 
+    [Fact]
+    public void DesktopIssuerLogoCheckboxesShareOneTwoWaySettingBinding()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "DesktopSettingsWindow.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var issuerLogoCheckBoxes = document
+            .Descendants(avalonia + "CheckBox")
+            .Where(checkBox => checkBox.Attribute("Content")?.Value
+                == "{DynamicResource ShowIssuerLogo}")
+            .ToArray();
+
+        Assert.Equal(2, issuerLogoCheckBoxes.Length);
+        Assert.All(
+            issuerLogoCheckBoxes,
+            checkBox => Assert.Equal(
+                "{Binding ShowIssuerLogo, Mode=TwoWay}",
+                checkBox.Attribute("IsChecked")?.Value));
+    }
+
     private static string BrushColor(XElement dictionary, XNamespace avalonia, string key) =>
         dictionary
             .Elements(avalonia + "SolidColorBrush")

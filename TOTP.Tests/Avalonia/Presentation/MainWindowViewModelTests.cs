@@ -333,6 +333,7 @@ public sealed class MainWindowViewModelTests
         authorization.Verify(value => value.Lock(), Times.Once);
         Assert.True(sut.IsPasswordUnlockVisible);
         Assert.False(sut.IsQuickUnlockVisible);
+        Assert.True(sut.IsUnlockVisible);
         Assert.False(sut.IsAccountListVisible);
         Assert.Contains("locked", sut.StatusText, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(NotificationSeverity.Information, sut.StatusSeverity);
@@ -355,6 +356,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.True(sut.IsQuickUnlockVisible);
         Assert.False(sut.IsPasswordUnlockVisible);
+        Assert.True(sut.IsUnlockVisible);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, state.PreferredUnlockMethod);
     }
 
@@ -424,6 +426,44 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task TryQuickUnlockAsync_AfterRejectedPassword_ClearsPasswordStateBeforeNextLock()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var authorization = new Mock<IAuthorizationService>();
+        var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
+        authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.TryUnlockWithPasswordAsync("wrong-password"))
+            .ReturnsAsync(AuthorizationResult.InvalidCredentials);
+        authorization.Setup(value => value.TryUnlockWithHelloAsync(It.IsAny<CancellationToken>()))
+            .Returns<CancellationToken>(_ =>
+            {
+                state.Unlock();
+                return Task.FromResult(AuthorizationResult.Success);
+            });
+        using var sut = CreateSut(coordinator.Object, authorization.Object);
+        await sut.InitializeAsync();
+        await sut.LockAsync();
+        sut.PasswordUnlock.Password = "wrong-password";
+        await sut.PasswordUnlock.UnlockAsync();
+        Assert.True(sut.PasswordUnlock.HasMessage);
+
+        await sut.TryQuickUnlockAsync();
+
+        Assert.Empty(sut.PasswordUnlock.Password);
+        Assert.Empty(sut.PasswordUnlock.Message);
+        Assert.False(sut.PasswordUnlock.HasMessage);
+
+        await sut.LockAsync();
+
+        Assert.Empty(sut.PasswordUnlock.Password);
+        Assert.Empty(sut.PasswordUnlock.Message);
+        Assert.False(sut.PasswordUnlock.HasMessage);
+    }
+
+    [Fact]
     public async Task TryQuickUnlockAsync_WhenCancelled_RemainsAtQuickUnlockGate()
     {
         var coordinator = new Mock<IAvaloniaStartupCoordinator>();
@@ -466,6 +506,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(sut.IsQuickUnlockVisible);
         Assert.True(sut.IsPasswordUnlockVisible);
+        Assert.True(sut.IsUnlockVisible);
         Assert.False(sut.IsShellVisible);
     }
 
@@ -487,6 +528,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(sut.IsQuickUnlockVisible);
         Assert.True(sut.IsPasswordUnlockVisible);
+        Assert.True(sut.IsUnlockVisible);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, state.PreferredUnlockMethod);
     }
 
@@ -565,31 +607,6 @@ public sealed class MainWindowViewModelTests
         Assert.Equal("Persisted issuer", sut.AccountList.EditorIssuer);
         Assert.Equal(account.Secret, sut.AccountList.EditorSecret);
         Assert.Equal(account.ID, sut.AccountList.SelectedAccount?.Id);
-    }
-
-    [Fact]
-    public async Task ReturnToQuickUnlockAsync_FromPasswordFallback_RestoresBiometricGateAndClearsPassword()
-    {
-        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
-        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
-        var authorization = new Mock<IAuthorizationService>();
-        var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
-        authorization.SetupGet(value => value.State).Returns(state);
-        authorization.Setup(value => value.Lock()).Callback(state.Lock);
-        using var sut = CreateSut(coordinator.Object, authorization.Object);
-        await sut.InitializeAsync();
-        await sut.LockAsync();
-        await sut.UsePasswordFallbackAsync();
-        sut.PasswordUnlock.Password = "temporary-password";
-
-        await sut.ReturnToQuickUnlockAsync();
-
-        Assert.True(sut.IsQuickUnlockVisible);
-        Assert.False(sut.IsPasswordUnlockVisible);
-        Assert.False(sut.IsReturnToQuickUnlockVisible);
-        Assert.Empty(sut.PasswordUnlock.Password);
-        Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, state.PreferredUnlockMethod);
     }
 
     [Fact]

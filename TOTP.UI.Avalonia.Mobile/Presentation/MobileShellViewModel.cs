@@ -831,6 +831,7 @@ public sealed class MobileShellViewModel :
         _ => SettingsText
     };
     public bool HasAccounts => Accounts.Count > 0;
+    public bool IsInitialAccountLoadComplete => _hasLoadedAccounts;
     public bool HasNoAccounts => _hasLoadedAccounts && _allAccounts.Count == 0;
     public bool HasNoSearchResults => _allAccounts.Count > 0 && Accounts.Count == 0;
     public bool HasSearchText => SearchText.Length > 0;
@@ -2298,6 +2299,9 @@ public sealed class MobileShellViewModel :
 
         IsBusy = true;
         _startupFailed = false;
+        _hasLoadedAccounts = false;
+        OnPropertyChanged(nameof(IsInitialAccountLoadComplete));
+        OnPropertyChanged(nameof(HasNoAccounts));
         OnboardingSlideIndex = 0;
         SetScreen(MobileScreen.Starting);
         SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
@@ -2340,6 +2344,7 @@ public sealed class MobileShellViewModel :
                     RefreshUnlockMethodState();
                     SetScreen(MobileScreen.Accounts);
                     await LoadAccountsAsync();
+                    if (!_hasLoadedAccounts) FailStartup();
                     return;
                 }
             }
@@ -4851,7 +4856,6 @@ public sealed class MobileShellViewModel :
             return;
         }
 
-        _hasLoadedAccounts = true;
         var existingAccounts = _allAccounts.ToDictionary(account => account.Id);
         var refreshedAccounts = new List<MobileAccountItem>(loaded.Value.Count);
         foreach (var account in loaded.Value)
@@ -4903,6 +4907,8 @@ public sealed class MobileShellViewModel :
         }
         RefreshFavoriteState();
         RefreshGroups();
+        _hasLoadedAccounts = true;
+        OnPropertyChanged(nameof(IsInitialAccountLoadComplete));
         ApplyAccountFilter(selectedId);
         StartCodeRefresh();
     }
@@ -4918,7 +4924,6 @@ public sealed class MobileShellViewModel :
             return;
         }
 
-        _hasLoadedAccounts = true;
         var existingAccounts = _allAccounts.ToDictionary(account => account.Id);
         var refreshedAccounts = new List<MobileAccountItem>(loaded.Value.Accounts.Count);
         foreach (var snapshot in loaded.Value.Accounts)
@@ -4983,6 +4988,8 @@ public sealed class MobileShellViewModel :
         }
         RefreshFavoriteState();
         RefreshGroups();
+        _hasLoadedAccounts = true;
+        OnPropertyChanged(nameof(IsInitialAccountLoadComplete));
         ApplyAccountFilter(selectedId);
         StartCodeRefresh(refreshImmediately: false);
 
@@ -5436,6 +5443,7 @@ public sealed class MobileShellViewModel :
         Accounts.Clear();
         _allAccounts.Clear();
         _hasLoadedAccounts = false;
+        OnPropertyChanged(nameof(IsInitialAccountLoadComplete));
         Groups.Clear();
         SearchText = string.Empty;
         _showFavoritesOnly = false;

@@ -7,9 +7,11 @@ namespace TOTP.Avalonia.Android;
 internal sealed class AndroidAccountListHost(
     MobileShellViewModel viewModel,
     NativeBrandIconCache brandIconCache,
-    Action dismissAccountSearchFocus) : AndroidNativeControlHost
+    Action dismissAccountSearchFocus,
+    Action accountListRendered) : AndroidNativeControlHost
 {
     private NativeAccountRecyclerView? _accountList;
+    private bool _startupTransitionCompleted;
 
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
@@ -19,8 +21,19 @@ internal sealed class AndroidAccountListHost(
             context,
             viewModel,
             brandIconCache,
-            dismissAccountSearchFocus);
+            dismissAccountSearchFocus,
+            accountListRendered)
+        {
+            Alpha = _startupTransitionCompleted ? 1f : 0f
+        };
         return new AndroidViewControlHandle(_accountList);
+    }
+
+    public void CompleteStartupTransition()
+    {
+        _startupTransitionCompleted = true;
+        _accountList?.Animate()?.Cancel();
+        if (_accountList is { } accountList) accountList.Alpha = 1f;
     }
 
     protected override void DestroyNativeControlCore(IPlatformHandle control)

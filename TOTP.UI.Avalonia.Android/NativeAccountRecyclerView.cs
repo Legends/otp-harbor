@@ -23,6 +23,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
     private readonly LinearLayoutManager _layoutManager;
     private readonly AccountScrollListener _scrollListener;
     private readonly Action _dismissAccountSearchFocus;
+    private readonly Action _accountListRendered;
     private readonly NativeDeleteConfirmationDialog _deleteConfirmationDialog;
     private readonly object _pendingRuntimeIconRefreshLock = new();
     private readonly HashSet<string> _pendingRuntimeIconRefreshes = new(StringComparer.OrdinalIgnoreCase);
@@ -33,6 +34,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
     private bool _hasResolvableBrands;
     private bool _prewarmAllIcons;
     private bool _runtimeIconRefreshPosted;
+    private bool _initialLayoutReported;
     private CancellationTokenSource? _initialIconPrewarmLifetime;
     private CancellationTokenSource? _iconPrefetchLifetime;
     private bool _disposed;
@@ -41,11 +43,13 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
         Context context,
         MobileShellViewModel viewModel,
         NativeBrandIconCache brandIcons,
-        Action dismissAccountSearchFocus)
+        Action dismissAccountSearchFocus,
+        Action accountListRendered)
         : base(context)
     {
         _viewModel = viewModel;
         _dismissAccountSearchFocus = dismissAccountSearchFocus;
+        _accountListRendered = accountListRendered;
         _layoutManager = new LinearLayoutManager(context, Vertical, false);
         _brandIcons = brandIcons;
         _brandIcons.RuntimeIconReady += RuntimeIconReady;
@@ -82,6 +86,23 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
             _dismissAccountSearchFocus();
 
         return base.DispatchTouchEvent(motionEvent);
+    }
+
+    protected override void OnLayout(bool changed, int left, int top, int right, int bottom)
+    {
+        base.OnLayout(changed, left, top, right, bottom);
+        if (_disposed
+            || _initialLayoutReported
+            || !_viewModel.IsNativeAccountListVisible
+            || _adapter.ItemCount == 0
+            || _adapter.ItemCount != _viewModel.Accounts.Count
+            || ChildCount == 0)
+        {
+            return;
+        }
+
+        _initialLayoutReported = true;
+        _accountListRendered();
     }
 
     public void DisposeHost()
@@ -190,6 +211,7 @@ internal sealed class NativeAccountRecyclerView : RecyclerView
     private void SubmitRows()
     {
         if (_disposed) return;
+        _initialLayoutReported = false;
         var revision = Interlocked.Increment(ref _submitRevision);
         Post(() =>
         {

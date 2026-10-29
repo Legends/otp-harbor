@@ -39,6 +39,8 @@ public sealed class DesktopUnlockInteractionTests
             .Descendants(avalonia + "Border")
             .Single(element => element.Attribute("Classes")?.Value
                 == "unlock-card biometric-card");
+        Assert.Equal("UnlockCard", biometricCard.Attribute(xaml + "Name")?.Value);
+        Assert.Equal("{Binding IsUnlockVisible}", biometricCard.Attribute("IsVisible")?.Value);
         Assert.DoesNotContain(
             biometricCard.Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
@@ -66,49 +68,52 @@ public sealed class DesktopUnlockInteractionTests
             "{DynamicResource UnlockMethodSeparator}",
             divider.Descendants(avalonia + "TextBlock").Single().Attribute("Text")?.Value);
 
-        var passwordButton = biometricCard
+        Assert.DoesNotContain(
+            document.Descendants(avalonia + "Button"),
+            element => element.Attribute("Command")?.Value
+                == "{Binding UsePasswordFallbackCommand}");
+        Assert.DoesNotContain(
+            document.Descendants(avalonia + "Button"),
+            element => element.Attribute("Command")?.Value
+                == "{Binding ReturnToQuickUnlockCommand}");
+
+        var passwordInput = biometricCard
+            .Descendants()
+            .Single(element => element.Name.LocalName == "RevealableSecretInput"
+                && element.Attribute(xaml + "Name")?.Value == "PasswordUnlockInput");
+        Assert.Equal(
+            "{Binding PasswordUnlock.Password, Mode=TwoWay}",
+            passwordInput.Attribute("Text")?.Value);
+        Assert.Equal("{Binding !IsQuickUnlockBusy}", passwordInput.Attribute("IsEnabled")?.Value);
+
+        var passwordMessageSlot = biometricCard
+            .Descendants(avalonia + "Border")
+            .Single(element => element.Attribute(xaml + "Name")?.Value
+                == "PasswordUnlockMessageSlot");
+        Assert.Equal("54", passwordMessageSlot.Attribute("MinHeight")?.Value);
+        Assert.Equal("StackPanel", passwordMessageSlot.Parent?.Name.LocalName);
+        Assert.Equal("3", passwordMessageSlot.Parent?.Attribute("Spacing")?.Value);
+        var passwordMessage = passwordMessageSlot
+            .Descendants()
+            .Single(element => element.Name.LocalName == "ValidationMessage");
+        Assert.Equal(
+            "PasswordUnlockValidationMessage",
+            passwordMessage.Attribute(xaml + "Name")?.Value);
+        Assert.Equal("Error", passwordMessage.Attribute("Severity")?.Value);
+        Assert.Equal(
+            "{Binding PasswordUnlock.Message}",
+            passwordMessage.Attribute("Text")?.Value);
+
+        var passwordUnlockButton = biometricCard
             .Descendants(avalonia + "Button")
             .Single(element => element.Attribute(xaml + "Name")?.Value
-                == "MasterPasswordFallbackButton");
-        Assert.Equal("{Binding UsePasswordFallbackCommand}", passwordButton.Attribute("Command")?.Value);
-        Assert.Equal("wide master-password-option", passwordButton.Attribute("Classes")?.Value);
+                == "MasterPasswordUnlockButton");
         Assert.Equal(
-            "{DynamicResource UseMasterPassword}",
-            passwordButton.Attribute(automation + "AutomationProperties.Name")?.Value);
-        var passwordButtonContent = passwordButton
-            .Descendants(avalonia + "Grid")
-            .Single(element => element.Attribute(xaml + "Name")?.Value
-                == "MasterPasswordFallbackContent");
-        Assert.Equal("Center", passwordButtonContent.Attribute("VerticalAlignment")?.Value);
-        var passwordButtonIcon = passwordButton
-            .Descendants()
-            .Single(element => element.Attribute(xaml + "Name")?.Value
-                == "MasterPasswordFallbackIcon");
-        Assert.Equal("Key", passwordButtonIcon.Attribute("Kind")?.Value);
-        var passwordButtonText = passwordButton
-            .Descendants(avalonia + "TextBlock")
-            .Single(element => element.Attribute(xaml + "Name")?.Value
-                == "MasterPasswordFallbackText");
-        Assert.Equal(
-            "{DynamicResource UseMasterPassword}",
-            passwordButtonText.Attribute("Text")?.Value);
-        Assert.Equal("Center", passwordButtonText.Attribute("VerticalAlignment")?.Value);
-        Assert.Equal("Wrap", passwordButtonText.Attribute("TextWrapping")?.Value);
-
-        var passwordButtonStyle = document
-            .Descendants(avalonia + "Style")
-            .Single(element => element.Attribute("Selector")?.Value
-                == "Button.master-password-option");
-        var passwordButtonSetters = passwordButtonStyle
-            .Descendants(avalonia + "Setter")
-            .ToDictionary(
-                element => element.Attribute("Property")!.Value,
-                element => element.Attribute("Value")!.Value);
-        Assert.Equal("42", passwordButtonSetters["MinHeight"]);
-        Assert.Equal("Stretch", passwordButtonSetters["HorizontalContentAlignment"]);
-        Assert.Equal("Center", passwordButtonSetters["VerticalContentAlignment"]);
-        Assert.Equal("{DynamicResource BrushAccent}", passwordButtonSetters["BorderBrush"]);
-        Assert.Equal("{DynamicResource BrushSurfaceAlternate}", passwordButtonSetters["Background"]);
+            "{Binding PasswordUnlock.UnlockCommand}",
+            passwordUnlockButton.Attribute("Command")?.Value);
+        Assert.Equal("{DynamicResource Unlock}", passwordUnlockButton.Attribute("Content")?.Value);
+        Assert.Equal("True", passwordUnlockButton.Attribute("IsDefault")?.Value);
+        Assert.Equal("{Binding !IsQuickUnlockBusy}", passwordUnlockButton.Attribute("IsEnabled")?.Value);
 
         var message = document
             .Descendants()
@@ -191,15 +196,5 @@ public sealed class DesktopUnlockInteractionTests
             artwork.Attribute("Background")?.Value);
         Assert.Equal("{Binding IsQuickUnlockVisible}", artwork.Attribute("IsVisible")?.Value);
 
-        var returnButton = document
-            .Descendants(avalonia + "Button")
-            .Single(element => element.Attribute("Command")?.Value
-                == "{Binding ReturnToQuickUnlockCommand}");
-        Assert.Equal(
-            "{Binding IsReturnToQuickUnlockVisible}",
-            returnButton.Attribute("IsVisible")?.Value);
-        Assert.Equal(
-            "{DynamicResource UnlockWithQuickUnlock}",
-            returnButton.Attribute("Content")?.Value);
     }
 }

@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <color name="splash_background">#0C1C33</color>
+  <color name="splash_loader_accent">#7D7FF4</color>
+  <color name="splash_loader_focus">#9899FF</color>
+  <color name="splash_loader_orbit">#612F5E9E</color>
   <bool name="splash_light_system_bars">false</bool>
 </resources>

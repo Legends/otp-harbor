@@ -24,4 +24,5 @@ public sealed class SymbolIconRenderingTests
         Assert.True(geometry.Bounds.Width > 0);
         Assert.True(geometry.Bounds.Height > 0);
     }
+
 }

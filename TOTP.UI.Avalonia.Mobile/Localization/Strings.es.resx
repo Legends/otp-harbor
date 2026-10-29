@@ -5,7 +5,7 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
   <data name="AppTitle" xml:space="preserve"><value>OTP Harbor</value></data>
-  <data name="Starting" xml:space="preserve"><value>Iniciando OTP Harbor de forma segura…</value></data>
+  <data name="Starting" xml:space="preserve"><value>Cargando…</value></data>
   <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor no pudo iniciarse de forma segura. Sus datos cifrados no se modificaron.</value></data>
   <data name="Retry" xml:space="preserve"><value>Reintentar</value></data>
   <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Añadir cuentas</value></data>

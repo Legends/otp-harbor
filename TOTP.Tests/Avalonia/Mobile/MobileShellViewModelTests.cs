@@ -234,6 +234,7 @@ public sealed class MobileShellViewModelTests
         await context.Sut.InitializeAsync();
 
         Assert.True(context.Sut.IsAccountsVisible);
+        Assert.True(context.Sut.IsInitialAccountLoadComplete);
         Assert.False(context.Sut.IsManualLockVisible);
         Assert.Single(context.Sut.Accounts);
         context.Authorization.Verify(value => value.TryUnlockOnStartupAsync(), Times.Once);
@@ -1248,10 +1249,12 @@ public sealed class MobileShellViewModelTests
         await WaitUntilAsync(() => context.Sut.IsAccountsVisible);
 
         Assert.True(context.Sut.IsBusy);
+        Assert.False(context.Sut.IsInitialAccountLoadComplete);
         Assert.False(context.Sut.HasNoAccounts);
 
         accountLoad.SetResult(Result.Ok<IReadOnlyList<Account>>([account]));
         await unlock;
+        Assert.True(context.Sut.IsInitialAccountLoadComplete);
         Assert.Single(context.Sut.Accounts);
         Assert.False(context.Sut.HasNoAccounts);
     }

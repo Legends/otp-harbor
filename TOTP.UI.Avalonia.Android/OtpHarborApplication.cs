@@ -48,13 +48,21 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                 {
                     viewModel.UseNativeDeleteConfirmation();
                     var view = new MainView { DataContext = viewModel };
-                    view.UseNativeAccountList(new AndroidAccountListHost(
+                    var accountListHost = new AndroidAccountListHost(
                         viewModel,
                         brandIconCache,
-                        view.DismissAccountSearchFocus));
-                    view.UseNativeAccountGroupStrip(new AndroidAccountGroupStripHost(
+                        view.DismissAccountSearchFocus,
+                        view.NotifyNativeAccountListRendered);
+                    var accountGroupStripHost = new AndroidAccountGroupStripHost(
                         viewModel,
-                        view.DismissAccountSearchFocus));
+                        view.DismissAccountSearchFocus);
+                    view.StartupContentRevealRequested += (_, _) =>
+                    {
+                        accountListHost.CompleteStartupTransition();
+                        accountGroupStripHost.CompleteStartupTransition();
+                    };
+                    view.UseNativeAccountList(accountListHost);
+                    view.UseNativeAccountGroupStrip(accountGroupStripHost);
                     view.UseNativeGroupAccountPicker(new AndroidGroupAccountPickerHost(
                         viewModel,
                         brandIconCache));

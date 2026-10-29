@@ -4,8 +4,45 @@
     <color android:color="@color/splash_background" />
   </item>
   <item
+      android:gravity="center"
+      android:height="224dp"
+      android:width="224dp">
+    <vector
+        android:width="224dp"
+        android:height="224dp"
+        android:viewportWidth="224"
+        android:viewportHeight="224">
+      <path
+          android:fillColor="#00000000"
+          android:pathData="M112,14 A98,98 0,1 1,111.99,14 Z"
+          android:strokeColor="@color/splash_loader_orbit"
+          android:strokeWidth="2" />
+      <path
+          android:fillColor="#00000000"
+          android:pathData="M86,14 C94,5 102,2 110,3"
+          android:strokeColor="@color/splash_loader_accent"
+          android:strokeLineCap="round"
+          android:strokeWidth="5" />
+      <path
+          android:fillColor="@color/splash_loader_accent"
+          android:pathData="M112.5,2 A8.5,8.5 0,1 1,112.49,2 Z" />
+      <path
+          android:fillColor="@color/splash_loader_focus"
+          android:pathData="M207,78 L209.7,84.3 L216,87 L209.7,89.7 L207,96 L204.3,89.7 L198,87 L204.3,84.3 Z" />
+      <path
+          android:fillColor="@color/splash_loader_focus"
+          android:pathData="M31.5,164 A9.5,9.5 0,1 1,31.49,164 Z" />
+      <path
+          android:fillColor="#00000000"
+          android:pathData="M17,178 C25,168 38,166 47,174"
+          android:strokeColor="@color/splash_loader_accent"
+          android:strokeLineCap="round"
+          android:strokeWidth="3" />
+    </vector>
+  </item>
+  <item
       android:drawable="@drawable/app_icon"
       android:gravity="center"
-      android:height="120dp"
-      android:width="120dp" />
+      android:height="176dp"
+      android:width="176dp" />
 </layer-list>

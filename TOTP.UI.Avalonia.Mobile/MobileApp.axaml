@@ -59,6 +59,9 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://TOTP.UI.Avalonia.Shared/Styles/SharedStyles.axaml" />
+        <Style Selector="ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Hidden" />
+        </Style>
         <Style Selector="Button">
             <Setter Property="MinHeight" Value="48" />
             <Setter Property="Padding" Value="16,10" />
