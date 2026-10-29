@@ -41,7 +41,7 @@ if ($Target -eq 'Desktop') {
         throw 'OTP Harbor is already running. Close it first so the startup preview switch can take effect.'
     }
 
-    $projectPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj'
+    $projectPath = Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop\OtpHarbor.UI.Avalonia.Desktop.csproj'
     $previousPreviewSetting = $env:TOTP_Debug__ShowOnboardingOnStartup
     $previousThemeSetting = $env:TOTP_Debug__OnboardingTheme
     try {

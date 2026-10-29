@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>TOTP.UI.Avalonia.Mobile</AssemblyName>
+    <RootNamespace>TOTP.Avalonia.Mobile</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\OtpHarbor.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OtpHarbor.Core\OtpHarbor.Core.csproj" />
+    <ProjectReference Include="..\OtpHarbor.UI.Avalonia.Shared\OtpHarbor.UI.Avalonia.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\OtpHarbor.UI.Avalonia.Desktop\Assets\Icons\app-1024.png"
+                      Link="Assets\app-1024.png" />
+  </ItemGroup>
+
+</Project>

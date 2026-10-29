@@ -5,6 +5,6 @@ biometric unlock and marketing presentation. Keep these masters intact so their 
 provenance remains available.
 
 Runtime assets are optimized derivatives under
-`TOTP.UI.Avalonia.Shared/Assets/Biometric`. They remove generated placeholder text, provide a
+`OtpHarbor.UI.Avalonia.Shared/Assets/Biometric`. They remove generated placeholder text, provide a
 light-theme treatment, and keep the interactive fingerprint separate from the static background
 so Android does not render hundreds of SVG paths during unlock interactions.

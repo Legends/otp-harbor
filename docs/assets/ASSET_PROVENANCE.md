@@ -17,7 +17,7 @@ The generated image was visually reviewed for prohibited text, third-party brand
 `biometric-fingerprint-master.svg` and `biometric-lock-screen-master.svg` are the unmodified
 Recraft exports supplied by the maintainer on 2026-09-30 for OTP Harbor's biometric unlock and
 marketing presentation. Their embedded provenance metadata is retained in the repository. The
-runtime PNGs under `TOTP.UI.Avalonia.Shared/Assets/Biometric` are project-created derivatives:
+runtime PNGs under `OtpHarbor.UI.Avalonia.Shared/Assets/Biometric` are project-created derivatives:
 generated placeholder text was removed, a light-theme treatment was produced, the canonical
 OTP Harbor mark was composited where required, and the interactive fingerprint was separated from
 the static background to keep unlock rendering efficient. The masters and derivatives were
@@ -26,7 +26,7 @@ visually reviewed for unrelated branding, personal data, and unexpected text bef
 ## Onboarding artwork
 
 The five dark desktop onboarding illustrations under
-`TOTP.UI.Avalonia.Shared/Assets/Onboarding` were generated specifically for OTP Harbor on
+`OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding` were generated specifically for OTP Harbor on
 2026-10-12 and 2026-10-13 with OpenAI's built-in image-generation tool. The corresponding
 `*-light.png` variants were generated on 2026-10-13 with the same tool, using only project-owned
 dark artwork as composition references. Dedicated mobile portrait variants were generated on
@@ -190,7 +190,7 @@ One-time codes and the QR workflow, when shown, derive only from synthetic fixtu
 
 ## QR import test fixtures
 
-`TOTP.Tests/Fixtures/Qr/google-authenticator-10-account-export-1.png` and
+`OtpHarbor.Tests/Fixtures/Qr/google-authenticator-10-account-export-1.png` and
 `google-authenticator-10-account-export-2.png` are machine-readable transfer QR fixtures containing
 only synthetic test accounts. They contain no logo, brand artwork, real OTP secret, or personal
 account data. They are retained solely to exercise the offline Google Authenticator migration parser.
@@ -199,26 +199,26 @@ account data. They are retained solely to exercise the offline Google Authentica
 
 | File | SHA-256 |
 | --- | --- |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account-light.png` | `837cf96bd4fad3860bb48abc0d78b2d989366b23c4bd57b2dd5e5c4fd9c4ba9e` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/add-account.png` | `569d1f725e159973ae99cac06dfa7326b8037557705bef34fea8001270b805cd` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts-light.png` | `9a63a76b408b204dcd9ca07b5b24f2a285e8200a172189bd70025924aa6484a9` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/move-accounts.png` | `eed277cf42570eecfaa1acf2090c4e5a1ed19ccdb6aec76415e8e6de39f593c4` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts-light.png` | `d27a300401442d941df2a2484cea3d6598afb2e619ef0391745c7074db8699c8` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts.png` | `190809e484c906734b8815b70f250c36bac5cbb2a26c071dadb4fc1b228875ad` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack-light.png` | `a95a5efa4d23810d21d17c606e381115839773099657bb59bdd0e92cb8db45fe` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/icon-pack.png` | `3dc72dc3ed8dee5e11d6ae662d520d224ce94be631cf7ba642b4a62d6b120ec0` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-dark.png` | `6384deda547838c9c3082b1af17905ce539b950abf7870e71d76a7c85bd15be2` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-light.png` | `378e0c417584e9eaa1f080a973d04b176715365628236c1bc4e583e54c497ac8` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-dark.png` | `6ee4e887d9cf3160ef6bac89e501764f8f71e3de7a8a7a72f3dba44c1d1bfa2c` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-light.png` | `cd2d5f84643615916dbfa89c10747eee73797e6a856972038381271d3f86c48f` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-dark.png` | `2a0ef19918c870d01a60f6055e909372c50b633333b7a9358999bc7173199277` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-light.png` | `d733b032a653d59c49dc314fb13543b6941aec3e7daacc79ae8dbf0d188fcac8` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-dark.png` | `9c65e0b14b971f60dfc24c2ca9e126d74df061e9331bb3e3dfa4ecf2f6bba703` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-light.png` | `a6d466b4a6cef13bfb85fcd583e959d3d03fd843b8041792059cbb19e5a5e047` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-dark.png` | `248091880571503a480be73a8036470efbfc116ab27c002b358eda6f8a8dc404` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-light.png` | `d85bc5e8aa21bdfa78747299c20f79637dd19f03372f4d91907a2e5f5b928e31` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock-light.png` | `a538031256f03d9f343aeb71178394a665325214e3763f107c0e50ce6aa65632` |
-| `TOTP.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock.png` | `cf4c42dcd2c8183512d9dfe9411200f88a263172c5905de740b84c89d0c42bad` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/add-account-light.png` | `837cf96bd4fad3860bb48abc0d78b2d989366b23c4bd57b2dd5e5c4fd9c4ba9e` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/add-account.png` | `569d1f725e159973ae99cac06dfa7326b8037557705bef34fea8001270b805cd` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/move-accounts-light.png` | `9a63a76b408b204dcd9ca07b5b24f2a285e8200a172189bd70025924aa6484a9` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/move-accounts.png` | `eed277cf42570eecfaa1acf2090c4e5a1ed19ccdb6aec76415e8e6de39f593c4` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts-light.png` | `d27a300401442d941df2a2484cea3d6598afb2e619ef0391745c7074db8699c8` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/organize-accounts.png` | `190809e484c906734b8815b70f250c36bac5cbb2a26c071dadb4fc1b228875ad` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/icon-pack-light.png` | `a95a5efa4d23810d21d17c606e381115839773099657bb59bdd0e92cb8db45fe` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/icon-pack.png` | `3dc72dc3ed8dee5e11d6ae662d520d224ce94be631cf7ba642b4a62d6b120ec0` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-dark.png` | `6384deda547838c9c3082b1af17905ce539b950abf7870e71d76a7c85bd15be2` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-add-account-light.png` | `378e0c417584e9eaa1f080a973d04b176715365628236c1bc4e583e54c497ac8` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-dark.png` | `6ee4e887d9cf3160ef6bac89e501764f8f71e3de7a8a7a72f3dba44c1d1bfa2c` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-move-accounts-light.png` | `cd2d5f84643615916dbfa89c10747eee73797e6a856972038381271d3f86c48f` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-dark.png` | `2a0ef19918c870d01a60f6055e909372c50b633333b7a9358999bc7173199277` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-organize-accounts-light.png` | `d733b032a653d59c49dc314fb13543b6941aec3e7daacc79ae8dbf0d188fcac8` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-dark.png` | `9c65e0b14b971f60dfc24c2ca9e126d74df061e9331bb3e3dfa4ecf2f6bba703` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-icon-pack-light.png` | `a6d466b4a6cef13bfb85fcd583e959d3d03fd843b8041792059cbb19e5a5e047` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-dark.png` | `248091880571503a480be73a8036470efbfc116ab27c002b358eda6f8a8dc404` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-light.png` | `d85bc5e8aa21bdfa78747299c20f79637dd19f03372f4d91907a2e5f5b928e31` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock-light.png` | `a538031256f03d9f343aeb71178394a665325214e3763f107c0e50ce6aa65632` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock.png` | `cf4c42dcd2c8183512d9dfe9411200f88a263172c5905de740b84c89d0c42bad` |
 | `packaging/android/marketing/source/captures/10-account-list-dark-icons-blurred.png` | `238c5306e766c905122995f23450855020420785079c5315d89c95fecbfe6265` |
 | `packaging/android/marketing/source/captures/11-account-list-light-icons-blurred.png` | `cd5ff8569f46c4d8bc37a7b9529b1dc508bb417a69fa8472fbaccaba348b5f9d` |
 | `packaging/marketing/source/theme-showcase-background-draft.png` | `affcf38996d604a03b09c9be994f55c4cba017bb4631c1ba6ffdd0ff4f190740` |
@@ -246,17 +246,17 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `fastlane/metadata/android/en-US/images/phoneScreenshots/06-four-languages-1080x1920.png` | `27416b536b1eb7235413ec71b391f843fed1f8475137dfa7fb462f3375257433` |
 | `fastlane/metadata/android/en-US/images/icon.png` | `de5100e5175bbdd9b61d1d9ae22222997f4c41f1ce0439764ec5436ccd89145b` |
 | `fastlane/metadata/android/en-US/images/featureGraphic.png` | `a65a9e4164b2b166d6b4de9fc79ee5a433b44a6a795f10fd60e4390464f42117` |
-| `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png` | `66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4` |
-| `TOTP.UI.Avalonia.Desktop/Assets/Icons/app-128.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
-| `TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico` | `7a71a423982499c438177e3b58126f003c3ece9a66cb2b91c07dc50a812ab81e` |
-| `TOTP.UI.Avalonia.Shared/Assets/flags/en.png` | `1c2bcc20e5985e5f03a3a440f198b5d08a4ac609e9cebba00b639b0e50fba8fc` |
-| `TOTP.UI.Avalonia.Shared/Assets/flags/de.png` | `2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a` |
-| `TOTP.UI.Avalonia.Shared/Assets/flags/fr.png` | `b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340` |
-| `TOTP.UI.Avalonia.Shared/Assets/flags/es.png` | `d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd` |
-| `TOTP.UI.Avalonia.Shared/Assets/Biometric/fingerprint.png` | `8fb24a9f292168bb5cfd696f4d2b476d668445449bc5d0a8474896207d83d503` |
-| `TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-dark.png` | `4af14f62d27b27d68a0c2312c1f40e8a369461e34cbc1ee1d190e55402eae327` |
-| `TOTP.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png` | `176bdef9bec8a6596efa256a36e2ad3c87f1a2a298ff9df77d3a02d771590ba4` |
-| `TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
+| `OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png` | `66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4` |
+| `OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-128.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
+| `OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app.ico` | `7a71a423982499c438177e3b58126f003c3ece9a66cb2b91c07dc50a812ab81e` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/flags/en.png` | `1c2bcc20e5985e5f03a3a440f198b5d08a4ac609e9cebba00b639b0e50fba8fc` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/flags/de.png` | `2c8f253f3401d18df0a47bd7906102cf78ea7e4a2caac9e4c6f4efebc906de0a` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/flags/fr.png` | `b962887c6a6317b8e60a1c0b33ae5fed16b453a83e9026043480ccfd3cc3a340` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/flags/es.png` | `d45958f491e9cf1d10c0e6de74970c5fed11e826e702c14c9009197842e6d1bd` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Biometric/fingerprint.png` | `8fb24a9f292168bb5cfd696f4d2b476d668445449bc5d0a8474896207d83d503` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Biometric/lock-screen-dark.png` | `4af14f62d27b27d68a0c2312c1f40e8a369461e34cbc1ee1d190e55402eae327` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Biometric/lock-screen-light.png` | `176bdef9bec8a6596efa256a36e2ad3c87f1a2a298ff9df77d3a02d771590ba4` |
+| `OtpHarbor.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
 | `packaging/marketing/source/recraft/biometric-fingerprint-master.svg` | `eb8d9731e7884ed53d5bb5ff2e542e37a51e5518d63b72d68f658de313f1534b` |
 | `packaging/marketing/source/recraft/biometric-lock-screen-master.svg` | `1ffb46aab0b9247fa1ee3f9543b3c9e6f4a8bb70385acb24bcf0312a3aafeee0` |
 | `docs/images/readme/app.png` | `f35c44c51e29e7561053cbfe7f6593465df60924feaa3a84d194f2d8b4a07ce6` |
@@ -300,7 +300,7 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `packaging/windows-store/screenshots/fr-FR/marketing/03-add-and-import.png` | `2a5ed9a1b1d12845b3a23fc661e2c75cbac58cbdb99faefa3e8b76dcbdfe0d52` |
 | `packaging/windows-store/screenshots/fr-FR/marketing/04-windows-hello.png` | `885d9e38ff04dadc724ac055fd8f20dae754ac5101c336b68078c9ab3bafe4a5` |
 | `packaging/windows-store/screenshots/fr-FR/marketing/05-import-export.png` | `242772834189dba90a966ee59995a348241b33bc54aab6f2f801c2fe730ef82d` |
-| `TOTP.Tests/Fixtures/Qr/google-authenticator-10-account-export-1.png` | `8187e829ce68e29abed16a344ef9bcc3057e52f02f7e98348f921a2d8fa90640` |
-| `TOTP.Tests/Fixtures/Qr/google-authenticator-10-account-export-2.png` | `c0df83d925168869e81798a2974c7f90c4443dd31eabe8068759108076d130b3` |
+| `OtpHarbor.Tests/Fixtures/Qr/google-authenticator-10-account-export-1.png` | `8187e829ce68e29abed16a344ef9bcc3057e52f02f7e98348f921a2d8fa90640` |
+| `OtpHarbor.Tests/Fixtures/Qr/google-authenticator-10-account-export-2.png` | `c0df83d925168869e81798a2974c7f90c4443dd31eabe8068759108076d130b3` |
 
 Any replacement requires a new provenance record, license review, updated hashes, and visual/build validation.

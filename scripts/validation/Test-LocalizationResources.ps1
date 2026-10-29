@@ -10,9 +10,9 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $groups = [ordered]@{
-    Desktop = 'TOTP.UI.Avalonia.Desktop/Localization/Strings'
-    Mobile = 'TOTP.UI.Avalonia.Mobile/Localization/Strings'
-    Updater = 'TOTP.Updater/Localization/UpdaterStrings'
+    Desktop = 'OtpHarbor.UI.Avalonia.Desktop/Localization/Strings'
+    Mobile = 'OtpHarbor.UI.Avalonia.Mobile/Localization/Strings'
+    Updater = 'OtpHarbor.Updater/Localization/UpdaterStrings'
 }
 $cultures = @('de', 'fr', 'es')
 

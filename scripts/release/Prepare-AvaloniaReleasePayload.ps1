@@ -24,9 +24,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $root "appsettings.json") -PathType 
 }
 
 foreach ($relativePath in @(
-    "TOTP.Updater/ref",
-    "TOTP.Updater/publish",
-    "TOTP.Updater/win-x64")) {
+    "OtpHarbor.Updater/ref",
+    "OtpHarbor.Updater/publish",
+    "OtpHarbor.Updater/win-x64")) {
     if (Test-Path -LiteralPath (Join-Path $root $relativePath)) {
         throw "The release publish contains a stale updater subtree: $relativePath"
     }

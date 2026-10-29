@@ -11,7 +11,7 @@ authentic.
 [CmdletBinding()]
 param(
     [string]$BackgroundPath = 'packaging/windows-store/assets/source/store-abstract-background.png',
-    [string]$IconPath = 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
+    [string]$IconPath = 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
     [string]$OutputDirectory = 'packaging/windows-store/assets'
 )
 

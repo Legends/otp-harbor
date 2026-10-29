@@ -69,7 +69,7 @@ is complete:
 
 ## Build and install
 
-Use the dedicated `TOTP.Android.sln` to open the Android app, mobile UI, Android adapters, and their
+Use the dedicated `OtpHarbor.Android.sln` to open the Android app, mobile UI, Android adapters, and their
 shared Core/Infrastructure dependencies together in Visual Studio. Keeping platform entry points in
 separate solution files avoids requiring the Android workload for ordinary desktop development; CI
 still validates both graphs where shared Core or Infrastructure behavior can affect either app.
@@ -77,15 +77,15 @@ still validates both graphs where shared Core or Infrastructure behavior can aff
 Build the Android solution explicitly:
 
 ```powershell
-dotnet restore .\TOTP.Android.sln --locked-mode --configfile .\NuGet.config
-dotnet build .\TOTP.Android.sln -c Debug --no-restore
+dotnet restore .\OtpHarbor.Android.sln --locked-mode --configfile .\NuGet.config
+dotnet build .\OtpHarbor.Android.sln -c Debug --no-restore
 ```
 
 Or build the application project directly:
 
 ```powershell
-dotnet restore .\TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj --locked-mode --configfile .\NuGet.config
-dotnet build .\TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj -c Debug --no-restore
+dotnet restore .\OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj --locked-mode --configfile .\NuGet.config
+dotnet build .\OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj -c Debug --no-restore
 ```
 
 The repository pins the .NET SDK in `global.json` and commits the NuGet lock files used by the
@@ -201,7 +201,7 @@ reproducibility, metadata, and review gates documented in the
   default. A matching account is replaced only after the user explicitly selects the imported
   version. An incomplete failed export is removed from its document provider when that
   provider permits deletion.
-- **Compatibility impact:** the Android projects remain outside `TOTP.sln`. The infrastructure
+- **Compatibility impact:** the Android projects remain outside `OtpHarbor.sln`. The infrastructure
   dependency on `NSec.Cryptography` was upgraded from 25.4.0 to 26.4.0 for current Android native
   runtime and 16 KB page-size support; the existing version-2 authorization envelope gains an
   optional, strictly validated Android provider wrapper without changing the password wrapper or

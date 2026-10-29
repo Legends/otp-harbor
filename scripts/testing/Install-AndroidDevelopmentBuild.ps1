@@ -65,8 +65,8 @@ if ($ForceBuild -and $FastDeploy) {
 }
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$projectPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj'
-$debugOutputRoot = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android\bin\Debug\net10.0-android'
+$projectPath = Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj'
+$debugOutputRoot = Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Android\bin\Debug\net10.0-android'
 $packageName = 'io.github.legends.otpharbor.debug'
 $deviceWasSupplied = $PSBoundParameters.ContainsKey('Device')
 if ($deviceWasSupplied) {
@@ -317,7 +317,7 @@ function Get-AndroidBuildInputFingerprint {
         'TOTP.UI.Avalonia.Android',
         'TOTP.UI.Avalonia.Mobile',
         'TOTP.UI.Avalonia.Shared',
-        'TOTP.UI.Avalonia.Desktop\Assets\Icons\app-1024.png',
+        'OtpHarbor.UI.Avalonia.Desktop\Assets\Icons\app-1024.png',
         'Directory.Build.props',
         'NuGet.config',
         'global.json',

@@ -2,7 +2,7 @@
 
 ## Scope
 
-UI-thread scheduling and application termination are exposed through contracts in `TOTP.Core`:
+UI-thread scheduling and application termination are exposed through contracts in `OtpHarbor.Core`:
 
 - `IUiScheduler` provides framework-neutral access checks, queued posts, and awaited synchronous/asynchronous invocation.
 - `IApplicationLifetime` provides graceful shutdown and explicit process-exit operations.

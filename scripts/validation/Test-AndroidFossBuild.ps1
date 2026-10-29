@@ -35,21 +35,21 @@ if ($null -eq $nugetConfiguration.configuration.packageSources.clear -or
 }
 
 $lockFiles = @(
-    'TOTP.Core\packages.lock.json',
-    'TOTP.DAL\packages.lock.json',
-    'TOTP.Infrastructure\packages.lock.json',
-    'TOTP.Platform.Android\packages.lock.json',
-    'TOTP.UI.Avalonia.Shared\packages.lock.json',
-    'TOTP.UI.Avalonia.Mobile\packages.lock.json',
-    'TOTP.UI.Avalonia.Android\packages.lock.json')
+    'OtpHarbor.Core\packages.lock.json',
+    'OtpHarbor.DAL\packages.lock.json',
+    'OtpHarbor.Infrastructure\packages.lock.json',
+    'OtpHarbor.Platform.Android\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Shared\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Mobile\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Android\packages.lock.json')
 $expectedLockTargets = [ordered]@{
-    'TOTP.Core\packages.lock.json' = @('net10.0')
-    'TOTP.DAL\packages.lock.json' = @('net10.0')
-    'TOTP.Infrastructure\packages.lock.json' = @('net10.0')
-    'TOTP.Platform.Android\packages.lock.json' = @('net10.0-android36.0')
-    'TOTP.UI.Avalonia.Shared\packages.lock.json' = @('net10.0')
-    'TOTP.UI.Avalonia.Mobile\packages.lock.json' = @('net10.0')
-    'TOTP.UI.Avalonia.Android\packages.lock.json' = @(
+    'OtpHarbor.Core\packages.lock.json' = @('net10.0')
+    'OtpHarbor.DAL\packages.lock.json' = @('net10.0')
+    'OtpHarbor.Infrastructure\packages.lock.json' = @('net10.0')
+    'OtpHarbor.Platform.Android\packages.lock.json' = @('net10.0-android36.0')
+    'OtpHarbor.UI.Avalonia.Shared\packages.lock.json' = @('net10.0')
+    'OtpHarbor.UI.Avalonia.Mobile\packages.lock.json' = @('net10.0')
+    'OtpHarbor.UI.Avalonia.Android\packages.lock.json' = @(
         'net10.0-android36.0',
         'net10.0-android36.0/android-arm64',
         'net10.0-android36.0/android-x64')
@@ -115,8 +115,8 @@ foreach ($packageId in $packageIds) {
 $workflow = Read-RequiredFile '.github\workflows\build-and-test.yml'
 foreach ($required in @(
     'dotnet-version: "10.0.402"',
-    'dotnet restore TOTP.Android.sln --locked-mode',
-    'dotnet restore TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj --locked-mode',
+    'dotnet restore OtpHarbor.Android.sln --locked-mode',
+    'dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode',
     'dotnet workload install android --skip-manifest-update',
     './scripts/validation/Test-AndroidFossBuild.ps1',
     './scripts/validation/Test-AndroidApkPayloadComparison.ps1',
@@ -132,7 +132,7 @@ foreach ($required in @(
     'not currently available from the official F-Droid repository',
     'F-Droid build-server-compatible toolchain',
     'Reproducible APK evidence',
-    'dotnet restore TOTP.Android.sln --locked-mode')) {
+    'dotnet restore OtpHarbor.Android.sln --locked-mode')) {
     if (-not $readiness.Contains($required, [StringComparison]::OrdinalIgnoreCase)) {
         throw "F-Droid readiness documentation is missing required disclosure: $required"
     }

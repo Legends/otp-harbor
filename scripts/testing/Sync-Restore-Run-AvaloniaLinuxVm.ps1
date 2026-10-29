@@ -127,7 +127,7 @@ if (-not $usesMountedRepository) {
     }
 
     if (-not (Test-Path -LiteralPath (
-        Join-Path $LocalRepository "TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj") -PathType Leaf)) {
+        Join-Path $LocalRepository "OtpHarbor.UI.Avalonia.Desktop\OtpHarbor.UI.Avalonia.Desktop.csproj") -PathType Leaf)) {
         throw "The local OTP Harbor repository was not found at '$LocalRepository'."
     }
 
@@ -235,7 +235,7 @@ trap cleanup_sync_inputs EXIT
 case "$source_mode" in
     mounted)
         source_root="$(realpath -m -- "$source_root")"
-        if [[ ! -f "$source_root/TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj" ]]; then
+        if [[ ! -f "$source_root/OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj" ]]; then
             printf 'The mounted repository was not found at %s\n' "$source_root" >&2
             exit 2
         fi
@@ -253,7 +253,7 @@ case "$source_mode" in
         mkdir -p -- "$HOME/source"
         staging_root="$(mktemp -d "$HOME/source/.otp-harbor-sync.XXXXXX")"
         tar -xzf "$source_root" -C "$staging_root"
-        if [[ ! -f "$staging_root/TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj" ]]; then
+        if [[ ! -f "$staging_root/OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj" ]]; then
             printf 'The synchronization archive did not contain the OTP Harbor repository.\n' >&2
             exit 2
         fi
@@ -287,7 +287,7 @@ cd -- "$target_root"
 
 printf 'Restoring the Avalonia desktop project...\n'
 dotnet restore \
-    TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj \
+    OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj \
     --configfile NuGet.config
 
 user_id="$(id -u)"
@@ -336,7 +336,7 @@ fi
 printf 'Starting OTP Harbor (%s) on display %s...\n' "$configuration" "$DISPLAY"
 set +e
 dotnet run \
-    --project TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj \
+    --project OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj \
     --configuration "$configuration" \
     --no-restore \
     -p:Version="$product_version" \

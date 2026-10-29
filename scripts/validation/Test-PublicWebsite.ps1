@@ -33,7 +33,7 @@ $pagesWorkflow = Read-RequiredFile '.github/workflows/pages.yml'
 $indexNowVerificationValue = '1b6f7ab9795743588fa8e24157ad1541'
 $indexNowVerificationFile = Read-RequiredFile "site/$indexNowVerificationValue.txt"
 Read-RequiredFile 'docs/images/readme/app.png' | Out-Null
-Read-RequiredFile 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png' | Out-Null
+Read-RequiredFile 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png' | Out-Null
 
 $androidCampaignFiles = @(
     '01-encrypted-local-vault.png',

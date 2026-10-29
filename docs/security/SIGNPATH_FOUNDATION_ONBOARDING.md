@@ -42,7 +42,7 @@ After acceptance, configure the values expected by the release workflow:
 | GitHub Actions variable | `SIGNPATH_ORGANIZATION_ID` |
 | GitHub Actions secret | `SIGNPATH_API_TOKEN` |
 
-The SignPath project slug remains `totp-manager` as an external compatibility identifier after the OTP Harbor rebrand. The GitHub repository URL and required PE product-name metadata use the current brand. First-party assembly names remain `TOTP.*`; changing them is outside the public rebrand and would require a separately reviewed signing-configuration migration.
+The SignPath project slug remains `totp-manager` as an external compatibility identifier after the OTP Harbor rebrand. The GitHub repository URL and required PE product-name metadata use the current brand. Repository project directories, project files, and solutions use `OtpHarbor.*`, while first-party assembly names remain `TOTP.*`; changing the assembly names is outside the public rebrand and would require a separately reviewed signing-configuration migration.
 
 Use the predefined GitHub.com trusted build system, install the SignPath GitHub App if SignPath requests it, and grant it access only to this repository. Give the API token submitter permission only; do not give it approval or project-configuration authority.
 

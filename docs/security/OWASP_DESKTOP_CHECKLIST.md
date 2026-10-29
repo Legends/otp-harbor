@@ -6,10 +6,10 @@ Status values:
 - `Missing`: control not present or not enforceable yet.
 
 Modules:
-- `UI`: `TOTP.UI.Avalonia.Desktop` and `TOTP.UI.Avalonia.Shared`
-- `Core`: `TOTP.Core`
-- `Infra`: `TOTP.Infrastructure`
-- `DAL`: `TOTP.DAL`
+- `UI`: `OtpHarbor.UI.Avalonia.Desktop` and `OtpHarbor.UI.Avalonia.Shared`
+- `Core`: `OtpHarbor.Core`
+- `Infra`: `OtpHarbor.Infrastructure`
+- `DAL`: `OtpHarbor.DAL`
 - `DevSecOps`: `.github`, `scripts`, `docs/security`
 
 ## Checklist

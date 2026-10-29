@@ -20,7 +20,7 @@ Install only the tools required by the platform or workflow being changed.
 
 | Tool | Development use |
 | --- | --- |
-| .NET Android workload | Builds `TOTP.Android.sln` and the Android host projects. Install with `dotnet workload install android --skip-manifest-update`. |
+| .NET Android workload | Builds `OtpHarbor.Android.sln` and the Android host projects. Install with `dotnet workload install android --skip-manifest-update`. |
 | Android SDK and Platform-Tools | Supplies Android build tools and `adb` for device discovery, installation, relaunch, and logs. `ANDROID_HOME` or the standard `%LOCALAPPDATA%\Android\Sdk` location is used by the scripts. |
 | JDK 21 | Used by Android release builds and signing tooling in CI. `keytool` creates or inspects the external release keystore. |
 | `apksigner` | Verifies the production APK signature and exposes the signing certificate consumed by release validation. It is resolved from the Android SDK build-tools directory. |
@@ -47,7 +47,7 @@ Install only the tools required by the platform or workflow being changed.
 | Serilog | Structured diagnostics with repository redaction controls. |
 | Otp.NET | TOTP generation and validation primitives. |
 | QRCoder and ZXing.Net | QR generation and decoding. |
-| OpenCvSharp | Desktop camera capture behind `TOTP.Camera.OpenCv`. |
+| OpenCvSharp | Desktop camera capture behind `OtpHarbor.Camera.OpenCv`. |
 | AndroidX Camera, Core, and RecyclerView | Android camera lifecycle, platform compatibility, and native account-list rendering. |
 | xUnit v3 | Unit, integration, platform, and regression tests. |
 | Moq and Moq.AutoMock | Dependency isolation in tests. |
@@ -57,26 +57,26 @@ Package versions are defined by the project files and lock files. Update them on
 
 ## Solutions and project boundaries
 
-- [`TOTP.sln`](../TOTP.sln) contains the desktop, shared, infrastructure, persistence, installer, updater, and test projects. Desktop-only work does not require the Android workload.
-- [`TOTP.Android.sln`](../TOTP.Android.sln) contains the Android platform, mobile UI, Android host, and their shared dependencies.
+- [`OtpHarbor.sln`](../OtpHarbor.sln) contains the desktop, shared, infrastructure, persistence, installer, updater, and test projects. Desktop-only work does not require the Android workload.
+- [`OtpHarbor.Android.sln`](../OtpHarbor.Android.sln) contains the Android platform, mobile UI, Android host, and their shared dependencies.
 
 | Project | Responsibility |
 | --- | --- |
-| `TOTP.Core` | Domain models, enums, contracts, validation, and security abstractions. |
-| `TOTP.Infrastructure` | Concrete security orchestration, settings, logging, account, import/export, and backup services. |
-| `TOTP.DAL` | Persistence, filesystem access, and storage mapping. |
-| `TOTP.Camera.OpenCv` | Desktop OpenCV camera capture and QR scanning. |
-| `TOTP.Platform.Windows`, `TOTP.Platform.Linux`, `TOTP.Platform.MacOS`, `TOTP.Platform.Unix` | Operating-system integrations. |
-| `TOTP.Platform.Android` | Android Keystore, biometric/device-credential, and Android platform services. |
-| `TOTP.UI.Avalonia.Shared` | Shared Avalonia controls and presentation contracts. |
-| `TOTP.UI.Avalonia.Desktop` | Desktop views, view models, startup, composition, and UI adapters. |
-| `TOTP.UI.Avalonia.Mobile` | Shared mobile views and mobile presentation logic. |
-| `TOTP.UI.Avalonia.Android` | Android application host and native Android presentation adapters. |
-| `TOTP.Installer` | Custom Windows installer UI. |
-| `TOTP.Updater` | Desktop updater/install support. |
-| `TOTP.Tests`, `TOTP.Tests.Avalonia.Headless`, `TOTP.Tests.Unix` | Unit, regression, headless UI, integration, and Unix-specific tests. |
+| `OtpHarbor.Core` | Domain models, enums, contracts, validation, and security abstractions. |
+| `OtpHarbor.Infrastructure` | Concrete security orchestration, settings, logging, account, import/export, and backup services. |
+| `OtpHarbor.DAL` | Persistence, filesystem access, and storage mapping. |
+| `OtpHarbor.Camera.OpenCv` | Desktop OpenCV camera capture and QR scanning. |
+| `OtpHarbor.Platform.Windows`, `OtpHarbor.Platform.Linux`, `OtpHarbor.Platform.MacOS`, `OtpHarbor.Platform.Unix` | Operating-system integrations. |
+| `OtpHarbor.Platform.Android` | Android Keystore, biometric/device-credential, and Android platform services. |
+| `OtpHarbor.UI.Avalonia.Shared` | Shared Avalonia controls and presentation contracts. |
+| `OtpHarbor.UI.Avalonia.Desktop` | Desktop views, view models, startup, composition, and UI adapters. |
+| `OtpHarbor.UI.Avalonia.Mobile` | Shared mobile views and mobile presentation logic. |
+| `OtpHarbor.UI.Avalonia.Android` | Android application host and native Android presentation adapters. |
+| `OtpHarbor.Installer` | Custom Windows installer UI. |
+| `OtpHarbor.Updater` | Desktop updater/install support. |
+| `OtpHarbor.Tests`, `OtpHarbor.Tests.Avalonia.Headless`, `OtpHarbor.Tests.Unix` | Unit, regression, headless UI, integration, and Unix-specific tests. |
 
-Keep MVVM boundaries strict, keep security and persistence policy out of code-behind, and register desktop composition in `TOTP.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`.
+Keep MVVM boundaries strict, keep security and persistence policy out of code-behind, and register desktop composition in `OtpHarbor.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`.
 
 ## Initial setup
 
@@ -84,17 +84,17 @@ Keep MVVM boundaries strict, keep security and persistence policy out of code-be
 git clone https://github.com/Legends/otp-harbor.git
 cd otp-harbor
 dotnet --version
-dotnet restore TOTP.sln --configfile NuGet.config
-dotnet build TOTP.sln -c Debug
-dotnet test TOTP.sln -c Debug
+dotnet restore OtpHarbor.sln --configfile NuGet.config
+dotnet build OtpHarbor.sln -c Debug
+dotnet test OtpHarbor.sln -c Debug
 ```
 
 `dotnet --version` must report `10.0.401`. Restore Android independently when Android work is required:
 
 ```powershell
 dotnet workload install android --skip-manifest-update
-dotnet restore TOTP.Android.sln --locked-mode --configfile NuGet.config
-dotnet build TOTP.Android.sln -c Debug --no-restore
+dotnet restore OtpHarbor.Android.sln --locked-mode --configfile NuGet.config
+dotnet build OtpHarbor.Android.sln -c Debug --no-restore
 ```
 
 ## Common development workflows
@@ -102,19 +102,19 @@ dotnet build TOTP.Android.sln -c Debug --no-restore
 Run the desktop application:
 
 ```powershell
-dotnet run --project .\TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj
+dotnet run --project .\OtpHarbor.UI.Avalonia.Desktop\OtpHarbor.UI.Avalonia.Desktop.csproj
 ```
 
 Run the full desktop solution tests:
 
 ```powershell
-dotnet test TOTP.sln -c Debug
+dotnet test OtpHarbor.sln -c Debug
 ```
 
 Run the faster PR-style subset after a Release build:
 
 ```powershell
-dotnet test TOTP.sln -c Release --no-build --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~IdleMonitoringBackgroundServiceTests&FullyQualifiedName!~UserActivityServiceTests"
+dotnet test OtpHarbor.sln -c Release --no-build --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~IdleMonitoringBackgroundServiceTests&FullyQualifiedName!~UserActivityServiceTests"
 ```
 
 Prefer a targeted project or test-class filter while iterating. Run the full relevant suite before handing off a cross-cutting or security-sensitive change.

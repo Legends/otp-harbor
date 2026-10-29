@@ -17,8 +17,8 @@ $setupPackagerPath = Join-Path $repositoryRoot 'scripts/release/New-WindowsSetup
 $workflowPath = Join-Path $repositoryRoot '.github/workflows/build-and-test.yml'
 $manifestPath = Join-Path $repositoryRoot 'scripts/release/New-ReleaseArtifactManifest.ps1'
 $installerResourceRoot = Join-Path $repositoryRoot 'scripts/release/installer'
-$customInstallerProject = Join-Path $repositoryRoot 'TOTP.Installer/TOTP.Installer.csproj'
-$customInstallerView = Join-Path $repositoryRoot 'TOTP.Installer/Views/InstallerWindow.axaml'
+$customInstallerProject = Join-Path $repositoryRoot 'OtpHarbor.Installer/OtpHarbor.Installer.csproj'
+$customInstallerView = Join-Path $repositoryRoot 'OtpHarbor.Installer/Views/InstallerWindow.axaml'
 
 $packager = Get-Content -LiteralPath $packagerPath -Raw
 $setupPackager = Get-Content -LiteralPath $setupPackagerPath -Raw
@@ -146,7 +146,7 @@ foreach ($control in @(
     '--self-contained true',
     '-p:PublishSingleFile=true',
     '-p:IncludeNativeLibrariesForSelfExtract=true',
-    'TOTP.Installer/TOTP.Installer.csproj',
+    'OtpHarbor.Installer/OtpHarbor.Installer.csproj',
     'InstallerPayloads.wxi',
     'Remove-Item -LiteralPath $installerUiDirectory -Recurse -Force'
 )) {

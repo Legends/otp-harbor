@@ -68,8 +68,8 @@ $storeListing = Read-RepositoryFile 'packaging/windows-store/STORE_LISTING.md'
 $signPathRunbook = Read-RepositoryFile 'docs/security/SIGNPATH_FOUNDATION_ONBOARDING.md'
 $productAgenda = Read-RepositoryFile 'docs/PRODUCT_AGENDA.md'
 $workflow = Read-RepositoryFile '.github/workflows/build-and-test.yml'
-$desktopProject = Read-RepositoryFile 'TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj'
-$androidProject = Read-RepositoryFile 'TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj'
+$desktopProject = Read-RepositoryFile 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj'
+$androidProject = Read-RepositoryFile 'OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj'
 
 foreach ($requiredText in @(
     'GPLv3-licensed, open-source',

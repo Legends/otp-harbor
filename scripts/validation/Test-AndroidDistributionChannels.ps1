@@ -28,14 +28,14 @@ foreach ($required in @(
     }
 }
 
-$project = Read-RequiredFile 'TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj'
+$project = Read-RequiredFile 'OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj'
 if (-not $project.Contains(
         '<AndroidProductionApplicationId>io.github.legends.otpharbor</AndroidProductionApplicationId>',
         [StringComparison]::Ordinal)) {
     throw 'Android distribution channels must retain the permanent production application ID.'
 }
 
-$manifest = Read-RequiredFile 'TOTP.UI.Avalonia.Android\Properties\AndroidManifest.xml'
+$manifest = Read-RequiredFile 'OtpHarbor.UI.Avalonia.Android\Properties\AndroidManifest.xml'
 if (-not $manifest.Contains('android:allowBackup="false"', [StringComparison]::Ordinal) -or
     -not $manifest.Contains('android:fullBackupContent="false"', [StringComparison]::Ordinal)) {
     throw 'Android distribution migration policy requires system backup to remain disabled.'

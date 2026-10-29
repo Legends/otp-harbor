@@ -23,7 +23,7 @@ $ErrorActionPreference = "Stop"
 
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptDirectory "..\.."))
-$projectPath = Join-Path $repositoryRoot "TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj"
+$projectPath = Join-Path $repositoryRoot "OtpHarbor.UI.Avalonia.Desktop\OtpHarbor.UI.Avalonia.Desktop.csproj"
 
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $configurationDirectory = if ($Configuration -eq 'Debug') {

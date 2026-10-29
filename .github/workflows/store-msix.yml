@@ -9,9 +9,9 @@ on:
       - 'scripts/release/New-MicrosoftStoreMsix.ps1'
       - 'scripts/release/Set-PublicMicrosoftStoreVersion.ps1'
       - 'scripts/validation/Test-MicrosoftStorePackaging.ps1'
-      - 'TOTP.Platform.Windows/**'
-      - 'TOTP.UI.Avalonia.Desktop/**'
-      - 'TOTP.Updater/**'
+      - 'OtpHarbor.Platform.Windows/**'
+      - 'OtpHarbor.UI.Avalonia.Desktop/**'
+      - 'OtpHarbor.Updater/**'
       - 'Directory.Build.props'
   workflow_dispatch:
     inputs:

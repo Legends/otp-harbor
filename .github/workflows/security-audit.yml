@@ -120,11 +120,11 @@ jobs:
 
       - name: Restore
         if: steps.codeql-capability.outputs.enabled == 'true'
-        run: dotnet restore TOTP.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
+        run: dotnet restore OtpHarbor.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
 
       - name: Build
         if: steps.codeql-capability.outputs.enabled == 'true'
-        run: dotnet build TOTP.sln --configuration Release --no-restore --nologo --verbosity minimal
+        run: dotnet build OtpHarbor.sln --configuration Release --no-restore --nologo --verbosity minimal
 
       - name: Analyze
         if: steps.codeql-capability.outputs.enabled == 'true'
@@ -153,17 +153,17 @@ jobs:
         run: New-Item -ItemType Directory -Force -Path $env:NUGET_PACKAGES | Out-Null
 
       - name: Restore
-        run: dotnet restore TOTP.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
+        run: dotnet restore OtpHarbor.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
 
       - name: Scan NuGet vulnerabilities
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           New-Item -Path artifacts -ItemType Directory -Force | Out-Null
-          dotnet list TOTP.sln package --vulnerable --include-transitive --format json > artifacts/dependency-vulnerabilities.json
+          dotnet list OtpHarbor.sln package --vulnerable --include-transitive --format json > artifacts/dependency-vulnerabilities.json
           $vulnerableExitCode = $LASTEXITCODE
 
-          dotnet list TOTP.sln package --deprecated --include-transitive --format json > artifacts/dependency-deprecated.json
+          dotnet list OtpHarbor.sln package --deprecated --include-transitive --format json > artifacts/dependency-deprecated.json
           $deprecatedExitCode = $LASTEXITCODE
 
           if ($vulnerableExitCode -gt 1) {

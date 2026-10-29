@@ -43,8 +43,8 @@ artifacts between environments.
 ```powershell
 dotnet --version
 dotnet workload install android --skip-manifest-update
-dotnet restore TOTP.Android.sln --locked-mode --configfile NuGet.config
-dotnet build TOTP.Android.sln -c Release --no-restore
+dotnet restore OtpHarbor.Android.sln --locked-mode --configfile NuGet.config
+dotnet build OtpHarbor.Android.sln -c Release --no-restore
 ./scripts/validation/Test-AndroidFossBuild.ps1
 ```
 

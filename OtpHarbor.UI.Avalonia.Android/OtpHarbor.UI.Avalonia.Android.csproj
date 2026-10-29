@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>28</SupportedOSPlatformVersion>
+    <AssemblyName>TOTP.UI.Avalonia.Android</AssemblyName>
+    <RootNamespace>TOTP.Avalonia.Android</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- The production ID is permanent and reserved for GitHub/Play releases. -->
+    <AndroidProductionApplicationId>io.github.legends.otpharbor</AndroidProductionApplicationId>
+    <ApplicationId>$(AndroidProductionApplicationId)</ApplicationId>
+    <ApplicationId Condition="'$(Configuration)' == 'Debug'">$(AndroidProductionApplicationId).debug</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0-dev</ApplicationDisplayVersion>
+    <AndroidPackageFormats Condition="'$(Configuration)' == 'Debug'">apk</AndroidPackageFormats>
+    <AndroidPackageFormats Condition="'$(Configuration)' == 'Release'">apk</AndroidPackageFormats>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\OtpHarbor.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(EnableMarketingCapture)' == ''">
+    <!-- Normal Debug builds honor the user's screenshot setting. Marketing capture is an
+         explicit opt-in for the isolated .debug application ID only. -->
+    <EnableMarketingCapture>false</EnableMarketingCapture>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(EnableMarketingCapture)' == 'true'">
+    <DefineConstants>$(DefineConstants);OTP_HARBOR_MARKETING_CAPTURE</DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="RejectReleaseMarketingCapture" BeforeTargets="CoreCompile"
+          Condition="'$(Configuration)' == 'Release' and '$(EnableMarketingCapture)' == 'true'">
+    <Error Text="EnableMarketingCapture is restricted to the isolated Debug package." />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" Version="12.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.11" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Camera2" Version="1.6.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Lifecycle" Version="1.6.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.View" Version="1.6.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Core" Version="1.19.0.1" />
+    <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
+    <PackageReference Include="Xamarin.AndroidX.RecyclerView" Version="1.3.2.5" />
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AndroidResource Include="..\OtpHarbor.UI.Avalonia.Desktop\Assets\Icons\app-1024.png">
+      <Link>Resources\drawable\app_icon.png</Link>
+      <LogicalName>drawable\app_icon.png</LogicalName>
+    </AndroidResource>
+    <AndroidAsset Include="..\LICENSE.txt" Link="LICENSE.txt" />
+    <AndroidAsset Include="..\LICENSING.md" Link="LICENSING.md" />
+    <AndroidAsset Include="..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OtpHarbor.Infrastructure\OtpHarbor.Infrastructure.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Platform.Android\OtpHarbor.Platform.Android.csproj" />
+    <ProjectReference Include="..\OtpHarbor.UI.Avalonia.Mobile\OtpHarbor.UI.Avalonia.Mobile.csproj" />
+  </ItemGroup>
+
+  <Target Name="CenterVisualStudioAndroidEmulator"
+          AfterTargets="Build"
+          Condition="'$(BuildingInsideVisualStudio)' == 'true' and '$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true'">
+    <Exec Command="pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\scripts\Android_Emulator_Move-to-screen-center.ps1&quot; -WaitSeconds 120 -StabilizeSeconds 15 -RunInBackground -IgnoreMissing"
+          ContinueOnError="WarnAndContinue" />
+  </Target>
+
+</Project>

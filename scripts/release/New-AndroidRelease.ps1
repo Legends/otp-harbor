@@ -31,7 +31,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
-$projectPath = Join-Path $repositoryRoot "TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj"
+$projectPath = Join-Path $repositoryRoot "OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj"
 
 foreach ($requiredFile in @($projectPath, $KeyStorePath, $StorePasswordFile, $KeyPasswordFile)) {
     if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {

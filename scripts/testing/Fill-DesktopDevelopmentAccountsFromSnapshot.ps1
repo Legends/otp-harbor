@@ -42,7 +42,7 @@ Write-Host 'The desktop Debug vault now contains the accounts from the encrypted
 if (-not $NoLaunch) {
     if ([string]::IsNullOrWhiteSpace($DesktopExecutable)) {
         $DesktopExecutable = Get-ChildItem `
-            -Path (Join-Path $PSScriptRoot '..\..\TOTP.UI.Avalonia.Desktop\bin\Debug') `
+            -Path (Join-Path $PSScriptRoot '..\..\OtpHarbor.UI.Avalonia.Desktop\bin\Debug') `
             -Filter 'TOTP.UI.Avalonia.Desktop.exe' `
             -File `
             -Recurse `

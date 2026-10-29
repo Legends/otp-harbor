@@ -43,7 +43,7 @@ Never relax screen-capture protection in a release package. Build the separate d
 with the explicit capture flag instead:
 
 ```powershell
-dotnet build TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj `
+dotnet build OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj `
   -c Debug -p:EnableMarketingCapture=true
 ```
 

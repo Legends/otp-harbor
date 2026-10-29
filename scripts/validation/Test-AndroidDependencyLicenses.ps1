@@ -11,13 +11,13 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 
 $lockFiles = @(
-    'TOTP.Core\packages.lock.json',
-    'TOTP.DAL\packages.lock.json',
-    'TOTP.Infrastructure\packages.lock.json',
-    'TOTP.Platform.Android\packages.lock.json',
-    'TOTP.UI.Avalonia.Shared\packages.lock.json',
-    'TOTP.UI.Avalonia.Mobile\packages.lock.json',
-    'TOTP.UI.Avalonia.Android\packages.lock.json')
+    'OtpHarbor.Core\packages.lock.json',
+    'OtpHarbor.DAL\packages.lock.json',
+    'OtpHarbor.Infrastructure\packages.lock.json',
+    'OtpHarbor.Platform.Android\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Shared\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Mobile\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Android\packages.lock.json')
 $packages = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::OrdinalIgnoreCase)
 
 foreach ($lockFile in $lockFiles) {

@@ -91,8 +91,8 @@ function Invoke-OtpHarborSourceLauncher {
         throw 'This launcher must be run from a Git clone of the official OTP Harbor repository.'
     }
 
-    $projectPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj'
-    $solutionPath = Join-Path $repositoryRoot 'TOTP.sln'
+    $projectPath = Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj'
+    $solutionPath = Join-Path $repositoryRoot 'OtpHarbor.sln'
     $nugetConfigPath = Join-Path $repositoryRoot 'NuGet.config'
     foreach ($requiredPath in @($projectPath, $solutionPath, $nugetConfigPath)) {
         if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {

@@ -40,10 +40,10 @@ jobs:
             NuGet.config
 
       - name: Restore with NuGet.config
-        run: dotnet restore TOTP.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
+        run: dotnet restore OtpHarbor.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
 
       - name: Build solution
-        run: dotnet build TOTP.sln --configuration Release --no-restore --nologo --verbosity minimal
+        run: dotnet build OtpHarbor.sln --configuration Release --no-restore --nologo --verbosity minimal
 
       - name: Validate package update and preview signing policies
         shell: pwsh
@@ -105,7 +105,7 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/validation/Test-NuGetVulnerabilities.ps1 `
-            -SolutionPath TOTP.sln `
+            -SolutionPath OtpHarbor.sln `
             -OutputPath TestResults/nuget-vulnerability-audit.json
 
       - name: Upload dependency audit evidence
@@ -119,13 +119,13 @@ jobs:
       - name: Run fast tests (PR)
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          dotnet test TOTP.sln --configuration Release --no-build --nologo --verbosity minimal `
+          dotnet test OtpHarbor.sln --configuration Release --no-build --nologo --verbosity minimal `
             --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~IdleMonitoringBackgroundServiceTests&FullyQualifiedName!~UserActivityServiceTests"
 
       - name: Run full tests (push/tags)
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          dotnet test TOTP.sln --configuration Release --no-build --nologo --verbosity minimal `
+          dotnet test OtpHarbor.sln --configuration Release --no-build --nologo --verbosity minimal `
             --logger "console;verbosity=minimal" `
             --results-directory TestResults `
             --blame-hang-timeout 5m `
@@ -159,7 +159,7 @@ jobs:
           dotnet-version: "10.0.402"
           cache: true
           cache-dependency-path: |
-            TOTP.Android.sln
+            OtpHarbor.Android.sln
             **/*.csproj
             **/packages.lock.json
             NuGet.config
@@ -168,14 +168,14 @@ jobs:
         run: dotnet workload install android --skip-manifest-update
 
       - name: Restore Android solution
-        run: dotnet restore TOTP.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore OtpHarbor.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Audit Android dependency licenses
         shell: pwsh
         run: ./scripts/validation/Test-AndroidDependencyLicenses.ps1
 
       - name: Build Android development package
-        run: dotnet build TOTP.Android.sln --configuration Debug --no-restore --nologo --verbosity minimal
+        run: dotnet build OtpHarbor.Android.sln --configuration Debug --no-restore --nologo --verbosity minimal
 
   unix-file-security:
     name: Unix file security (${{ matrix.name }})
@@ -199,26 +199,26 @@ jobs:
           dotnet-version: "10.0.402"
           cache: true
           cache-dependency-path: |
-            TOTP.Core/TOTP.Core.csproj
-            TOTP.Platform.Linux/TOTP.Platform.Linux.csproj
-            TOTP.Platform.MacOS/TOTP.Platform.MacOS.csproj
-            TOTP.Platform.Unix/TOTP.Platform.Unix.csproj
-            TOTP.Tests.Unix/TOTP.Tests.Unix.csproj
-            TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
-            TOTP.UI.Avalonia.Shared/TOTP.UI.Avalonia.Shared.csproj
+            OtpHarbor.Core/OtpHarbor.Core.csproj
+            OtpHarbor.Platform.Linux/OtpHarbor.Platform.Linux.csproj
+            OtpHarbor.Platform.MacOS/OtpHarbor.Platform.MacOS.csproj
+            OtpHarbor.Platform.Unix/OtpHarbor.Platform.Unix.csproj
+            OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+            OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj
             NuGet.config
 
       - name: Restore Unix security tests
-        run: dotnet restore TOTP.Tests.Unix/TOTP.Tests.Unix.csproj --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Run Unix security tests
-        run: dotnet test TOTP.Tests.Unix/TOTP.Tests.Unix.csproj --configuration Release --no-restore --nologo --verbosity minimal
+        run: dotnet test OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj --configuration Release --no-restore --nologo --verbosity minimal
 
       - name: Restore Avalonia desktop host
-        run: dotnet restore TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Build Avalonia desktop host
-        run: dotnet build TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj --configuration Release --no-restore --nologo --verbosity minimal
+        run: dotnet build OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj --configuration Release --no-restore --nologo --verbosity minimal
 
   avalonia-ui-smoke:
     name: Avalonia UI smoke (${{ matrix.name }})
@@ -243,15 +243,15 @@ jobs:
           dotnet-version: "10.0.402"
           cache: true
           cache-dependency-path: |
-            TOTP.Tests.Avalonia.Headless/TOTP.Tests.Avalonia.Headless.csproj
-            TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+            OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
             NuGet.config
 
       - name: Restore Avalonia headless smoke tests
-        run: dotnet restore TOTP.Tests.Avalonia.Headless/TOTP.Tests.Avalonia.Headless.csproj --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Load real application XAML under the headless platform
-        run: dotnet test TOTP.Tests.Avalonia.Headless/TOTP.Tests.Avalonia.Headless.csproj --configuration Release --no-restore --nologo --verbosity minimal
+        run: dotnet test OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj --configuration Release --no-restore --nologo --verbosity minimal
 
   m3-package-probe:
     name: M3 package probe (${{ matrix.name }})
@@ -282,13 +282,13 @@ jobs:
           dotnet-version: "10.0.402"
           cache: true
           cache-dependency-path: |
-            TOTP.Camera.OpenCv/TOTP.Camera.OpenCv.csproj
-            TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+            OtpHarbor.Camera.OpenCv/OtpHarbor.Camera.OpenCv.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
             NuGet.config
 
       - name: Restore target package graph
         run: >-
-          dotnet restore TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+          dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
           --runtime ${{ matrix.rid }}
           --nologo
           --verbosity minimal
@@ -296,7 +296,7 @@ jobs:
 
       - name: Publish framework-dependent M3 package
         run: >-
-          dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
           --configuration Release
           --runtime ${{ matrix.rid }}
           --self-contained false
@@ -498,12 +498,12 @@ jobs:
           dotnet-version: "10.0.402"
           cache: true
           cache-dependency-path: |
-            TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
             NuGet.config
 
       - name: Restore Windows release graph
         run: >-
-          dotnet restore TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+          dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
           --runtime win-x64
           -p:PublishReadyToRun=true
           --nologo
@@ -519,11 +519,11 @@ jobs:
             "-p:IncludeSourceRevisionInInformationalVersion=false",
             "-p:FileVersion=${{ steps.versioning.outputs.file_version }}",
             "-p:AssemblyVersion=${{ steps.versioning.outputs.assembly_version }}")
-          dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj `
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj `
             --configuration Release --runtime win-x64 --self-contained true --no-restore `
             --nologo --verbosity minimal -p:PublishSingleFile=false -p:PublishTrimmed=false `
             -p:PublishReadyToRun=true -p:DebugType=None -p:DebugSymbols=false @metadata --output release-publish
-          dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj `
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj `
             --configuration Release --runtime win-x64 --self-contained false --no-restore `
             --nologo --verbosity minimal -p:PublishSingleFile=false -p:PublishTrimmed=false `
             -p:PublishReadyToRun=true -p:DebugType=None -p:DebugSymbols=false @metadata --output release-fast
@@ -604,7 +604,7 @@ jobs:
           dotnet-version: "10.0.402"
           cache: true
           cache-dependency-path: |
-            TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
             NuGet.config
 
       - name: Compute release metadata
@@ -631,7 +631,7 @@ jobs:
 
       - name: Restore target release graph
         run: >-
-          dotnet restore TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+          dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
           --runtime ${{ matrix.rid }}
           -p:PublishReadyToRun=${{ matrix.rid == 'win-x64' }}
           --nologo
@@ -640,7 +640,7 @@ jobs:
 
       - name: Publish self-contained Avalonia host
         run: >-
-          dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
           --configuration Release
           --runtime ${{ matrix.rid }}
           --self-contained true
@@ -662,7 +662,7 @@ jobs:
       - name: Publish fast framework-dependent Windows host
         if: ${{ matrix.rid == 'win-x64' && (contains(github.ref_name, '-rc') || vars.SIGNPATH_PRODUCTION_ENABLED == 'true') }}
         run: >-
-          dotnet publish TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
           --configuration Release
           --runtime win-x64
           --self-contained false
@@ -908,7 +908,7 @@ jobs:
           dotnet-version: "10.0.402"
           cache: true
           cache-dependency-path: |
-            TOTP.Android.sln
+            OtpHarbor.Android.sln
             **/*.csproj
             **/packages.lock.json
             NuGet.config
@@ -917,7 +917,7 @@ jobs:
         run: dotnet workload install android --skip-manifest-update
 
       - name: Restore Android release graph
-        run: dotnet restore TOTP.UI.Avalonia.Android/TOTP.UI.Avalonia.Android.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Materialize protected signing inputs
         shell: pwsh
@@ -1124,7 +1124,7 @@ jobs:
               [string]::IsNullOrWhiteSpace($env:NETSPARKLE_PRIVATE_KEY)) {
             throw "Ed25519 release signing credentials are required for preview updates."
           }
-          $clientSettings = Get-Content TOTP.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
+          $clientSettings = Get-Content OtpHarbor.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
           $expectedPublicKey = $clientSettings.AutoUpdate.PublicKey
           if ($expectedPublicKey -cne $env:NETSPARKLE_PUBLIC_KEY.Trim()) {
             throw "The CI public key does not match the key embedded in the Avalonia client."
@@ -1381,7 +1381,7 @@ jobs:
               [string]::IsNullOrWhiteSpace($env:NETSPARKLE_PRIVATE_KEY)) {
             throw "Ed25519 release signing credentials are required."
           }
-          $clientSettings = Get-Content TOTP.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
+          $clientSettings = Get-Content OtpHarbor.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
           $expectedPublicKey = $clientSettings.AutoUpdate.PublicKey
           if ($expectedPublicKey -cne $env:NETSPARKLE_PUBLIC_KEY.Trim()) {
             throw "The CI public key does not match the key embedded in the Avalonia client."

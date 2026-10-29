@@ -35,12 +35,12 @@ artifacts
 *.orig
 *.rej
 *.dmp
-TOTP.Tests/TestResults/
+OtpHarbor.Tests/TestResults/
 /TestResults/
 
 # Encrypted user exports; reviewed synthetic fixtures are explicitly allowlisted.
 *.totp
-!TOTP.Tests/Fixtures/PortableBackups/*.totp
+!OtpHarbor.Tests/Fixtures/PortableBackups/*.totp
 
 # NuGet packages
 *.nupkg

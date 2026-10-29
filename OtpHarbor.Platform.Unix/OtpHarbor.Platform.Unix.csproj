@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TOTP.Platform.Unix</AssemblyName>
+    <RootNamespace>TOTP.Platform.Unix</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\OtpHarbor.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OtpHarbor.Core\OtpHarbor.Core.csproj" />
+  </ItemGroup>
+
+</Project>

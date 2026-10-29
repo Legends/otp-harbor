@@ -164,10 +164,10 @@ Do not log decrypted JSON, Base64 authorization fields, DPAPI blobs, key identif
 
 ## Historical implementation and retained evidence
 
-- `TOTP.DAL/Services/AppSettingsDAL.cs` (removed)
-- `TOTP.Core/Models/AppSettings.cs` (current non-secret settings shape; no legacy authorization member)
-- `TOTP.Core/Security/Models/AuthorizationProfile.cs` (removed; represented only by synthetic fixture DTOs in tests)
-- `TOTP.Infrastructure/Security/MasterPasswordService.cs`
-- `TOTP.Platform.Windows/Security/HelloGate.cs`
-- `TOTP.Platform.Windows/WindowsFileSecurity.cs`
-- `TOTP.Tests/Fixtures/LegacySettings` (synthetic evidence retained)
+- `OtpHarbor.DAL/Services/AppSettingsDAL.cs` (removed)
+- `OtpHarbor.Core/Models/AppSettings.cs` (current non-secret settings shape; no legacy authorization member)
+- `OtpHarbor.Core/Security/Models/AuthorizationProfile.cs` (removed; represented only by synthetic fixture DTOs in tests)
+- `OtpHarbor.Infrastructure/Security/MasterPasswordService.cs`
+- `OtpHarbor.Platform.Windows/Security/HelloGate.cs`
+- `OtpHarbor.Platform.Windows/WindowsFileSecurity.cs`
+- `OtpHarbor.Tests/Fixtures/LegacySettings` (synthetic evidence retained)

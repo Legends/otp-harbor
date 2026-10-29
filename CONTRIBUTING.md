@@ -10,7 +10,7 @@ Start with the [developer guide](docs/DEVELOPMENT.md). It documents the required
 
 - Never persist or log OTP seeds, passwords, derived keys, vault keys, backup passwords, or signing material in plaintext.
 - Keep MVVM boundaries strict. Business, persistence, and cryptographic policy do not belong in Avalonia code-behind.
-- Use constructor injection and existing interfaces. Composition belongs in `TOTP.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`.
+- Use constructor injection and existing interfaces. Composition belongs in `OtpHarbor.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`.
 - Use typed/result-based outcomes for expected failures and catch exceptions at I/O, OS, crypto, camera, update, and startup boundaries.
 - Localize every user-visible string in every supported locale.
 - Add behavioral tests for new behavior and regression tests for security fixes.
@@ -22,15 +22,15 @@ The complete coding-agent and architecture contract is in [AGENTS.md](AGENTS.md)
 
 | Project | Responsibility |
 | --- | --- |
-| `TOTP.Core` | Domain models, contracts, validation, and security abstractions |
-| `TOTP.Infrastructure` | Security orchestration and concrete services |
-| `TOTP.DAL` | Persistence and filesystem data access |
-| `TOTP.UI.Avalonia.Shared` | Shared Avalonia controls and presentation contracts |
-| `TOTP.UI.Avalonia.Desktop` | Desktop views, view models, startup, and UI adapters |
+| `OtpHarbor.Core` | Domain models, contracts, validation, and security abstractions |
+| `OtpHarbor.Infrastructure` | Security orchestration and concrete services |
+| `OtpHarbor.DAL` | Persistence and filesystem data access |
+| `OtpHarbor.UI.Avalonia.Shared` | Shared Avalonia controls and presentation contracts |
+| `OtpHarbor.UI.Avalonia.Desktop` | Desktop views, view models, startup, and UI adapters |
 | `TOTP.Platform.*` | Operating-system integrations |
-| `TOTP.Camera.OpenCv` | Camera capture and QR decoding boundary |
-| `TOTP.Updater` | Windows update installation helper |
-| `TOTP.Tests*` | Unit, integration, platform, and headless UI tests |
+| `OtpHarbor.Camera.OpenCv` | Camera capture and QR decoding boundary |
+| `OtpHarbor.Updater` | Windows update installation helper |
+| `OtpHarbor.Tests*` | Unit, integration, platform, and headless UI tests |
 
 ## Pull requests
 

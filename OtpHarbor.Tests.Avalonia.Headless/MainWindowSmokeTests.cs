@@ -1,0 +1,3710 @@
+using Avalonia;
+using Avalonia.Automation;
+using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
+using Avalonia.Data;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.LogicalTree;
+using Avalonia.Media;
+using Avalonia.Platform;
+using Avalonia.Styling;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using AvaloniaPath = Avalonia.Controls.Shapes.Path;
+using System.Globalization;
+using System.Windows.Input;
+using FluentResults;
+using TOTP.Avalonia.Desktop;
+using TOTP.Avalonia.Shared.Controls;
+using TOTP.Avalonia.Shared.Styles;
+using TOTP.Avalonia.Desktop.Dialogs;
+using TOTP.Avalonia.Desktop.Localization;
+using TOTP.Avalonia.Desktop.Controls;
+using TOTP.Avalonia.Desktop.Presentation;
+using TOTP.Avalonia.Desktop.Presentation.Dialogs;
+using TOTP.Core.Models;
+using TOTP.Core.Security.Interfaces;
+using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Validation;
+
+namespace TOTP.Tests.Avalonia.Headless;
+
+public sealed class MainWindowSmokeTests
+{
+    [AvaloniaFact]
+    public void QuickUnlockGate_FitsStandardWindowWithoutScrolling()
+    {
+        var window = new MainWindow { Width = 380, Height = 540 };
+
+        try
+        {
+            window.Show();
+            var scroller = Assert.IsType<ScrollViewer>(window.FindControl<ScrollViewer>("AuthorizationScroller"));
+            var unlockCard = Assert.IsType<Border>(window.FindControl<Border>("UnlockCard"));
+            var notification = Assert.IsType<NotificationBanner>(window.FindControl<NotificationBanner>("QuickUnlockStatusBanner"));
+            var passwordInput = Assert.IsType<RevealableSecretInput>(window.FindControl<RevealableSecretInput>("PasswordUnlockInput"));
+            var passwordMessage = Assert.IsType<ValidationMessage>(window.FindControl<ValidationMessage>("PasswordUnlockValidationMessage"));
+            var masterPasswordButton = Assert.IsType<Button>(window.FindControl<Button>("MasterPasswordUnlockButton"));
+            var separator = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("UnlockMethodSeparatorText"));
+
+            scroller.IsVisible = true;
+            unlockCard.IsVisible = true;
+            Assert.IsType<Border>(notification.Parent).IsVisible = true;
+            Assert.Equal(ScrollBarVisibility.Disabled, scroller.VerticalScrollBarVisibility);
+            passwordMessage.ApplyTemplate();
+            var passwordMessageText = Assert.Single(
+                passwordMessage.GetVisualDescendants().OfType<TextBlock>());
+            Assert.Equal(12, passwordMessageText.FontSize);
+            Assert.Equal(16, passwordMessageText.LineHeight);
+
+            var catalog = new AvaloniaStringCatalog();
+            foreach (var cultureName in new[] { "en", "de", "es", "fr" })
+            {
+                var culture = CultureInfo.GetCultureInfo(cultureName);
+                notification.Title = catalog.Get(AvaloniaStringKeys.VaultLockedTitle, culture);
+                notification.Text = catalog.Get(AvaloniaStringKeys.VaultLockedQuickUnlock, culture);
+                separator.Text = catalog.Get(AvaloniaStringKeys.UnlockMethodSeparator, culture);
+                passwordInput.PlaceholderText = catalog.Get(AvaloniaStringKeys.MasterPassword, culture);
+                masterPasswordButton.Content = catalog.Get(AvaloniaStringKeys.Unlock, culture);
+                passwordMessage.Text = string.Empty;
+                window.UpdateLayout();
+                var heightWithoutError = unlockCard.Bounds.Height;
+
+                passwordMessage.Text = catalog.Get(AvaloniaStringKeys.UnlockRejected, culture);
+                window.UpdateLayout();
+
+                Assert.True(
+                    Math.Abs(heightWithoutError - unlockCard.Bounds.Height) < 0.01,
+                    $"Unlock error changed the '{cultureName}' card height from {heightWithoutError} to {unlockCard.Bounds.Height}; message bounds are {passwordMessageText.Bounds.Width} x {passwordMessageText.Bounds.Height}.");
+
+                var buttonBottom = masterPasswordButton.TranslatePoint(
+                    new Point(0, masterPasswordButton.Bounds.Height),
+                    scroller);
+
+                Assert.NotNull(buttonBottom);
+                Assert.True(
+                    buttonBottom.Value.Y >= 0 && buttonBottom.Value.Y <= scroller.Bounds.Height,
+                    $"Combined unlock card for '{cultureName}' ends at {buttonBottom.Value.Y} within a {scroller.Bounds.Height}-pixel viewport (extent {scroller.Extent.Height}, viewport {scroller.Viewport.Height}).");
+                Assert.True(
+                    scroller.Extent.Height <= scroller.Viewport.Height,
+                    $"Quick unlock content for '{cultureName}' exceeds the supported minimum window height.");
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void BusyOverlay_AnimatesProgressOnlyWhileBusy()
+    {
+        var overlay = new BusyOverlay { Content = new TextBlock { Text = "content" } };
+        var window = new Window { Content = overlay };
+
+        try
+        {
+            window.Show();
+            overlay.ApplyTemplate();
+            window.UpdateLayout();
+            var progress = Assert.Single(
+                overlay.GetVisualDescendants().OfType<ProgressBar>());
+
+            Assert.False(progress.IsIndeterminate);
+
+            overlay.IsBusy = true;
+
+            Assert.True(progress.IsIndeterminate);
+
+            overlay.IsBusy = false;
+
+            Assert.False(progress.IsIndeterminate);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsFaq_ExpandingOneSectionCollapsesThePreviouslyOpenSection()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var iconPacks = window.FindControl<Expander>("FaqIconPacksExpander");
+            var importFormats = window.FindControl<Expander>("FaqImportFormatsExpander");
+            Assert.NotNull(iconPacks);
+            Assert.NotNull(importFormats);
+
+            iconPacks.IsExpanded = true;
+            iconPacks.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(iconPacks.IsExpanded);
+
+            importFormats.IsExpanded = true;
+            importFormats.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(importFormats.IsExpanded);
+            Assert.False(iconPacks.IsExpanded);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsFaq_ExpandingOneImportFormatCollapsesThePreviouslyOpenFormat()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var formats = window.FindControl<Expander>("FaqImportFormatsExpander");
+            var aegis = window.FindControl<Expander>("FaqImportFormatsAegisExpander");
+            var twoFas = window.FindControl<Expander>("FaqImportFormatsTwoFasExpander");
+            var otpAuth = window.FindControl<Expander>("FaqImportFormatsOtpAuthExpander");
+            Assert.NotNull(formats);
+            Assert.NotNull(aegis);
+            Assert.NotNull(twoFas);
+            Assert.NotNull(otpAuth);
+
+            formats.IsExpanded = true;
+            aegis.IsExpanded = true;
+            aegis.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(aegis.IsExpanded);
+
+            twoFas.IsExpanded = true;
+            twoFas.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(twoFas.IsExpanded);
+            Assert.False(aegis.IsExpanded);
+
+            otpAuth.IsExpanded = true;
+            otpAuth.RaiseEvent(new RoutedEventArgs(Expander.ExpandedEvent));
+            Assert.True(otpAuth.IsExpanded);
+            Assert.False(twoFas.IsExpanded);
+            Assert.True(formats.IsExpanded);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void PeriodClearButton_IsCenteredBeforeSpinnerWithoutOverlap()
+    {
+        var clear = new Button { Content = "×" };
+        clear.Classes.Add("numeric-clear");
+        var input = new NumericUpDown
+        {
+            Width = 320,
+            Value = 30,
+            InnerRightContent = clear
+        };
+        var window = new Window { Content = input };
+
+        try
+        {
+            window.Show();
+            input.ApplyTemplate();
+            window.UpdateLayout();
+
+            var spinner = Assert.Single(
+                input.GetVisualDescendants().OfType<StackPanel>(),
+                panel => panel.Name == "PART_SpinnerPanel");
+            var clearRight = clear.TranslatePoint(
+                new Point(clear.Bounds.Width, clear.Bounds.Height / 2),
+                input);
+            var spinnerLeft = spinner.TranslatePoint(
+                new Point(0, spinner.Bounds.Height / 2),
+                input);
+
+            Assert.NotNull(clearRight);
+            Assert.NotNull(spinnerLeft);
+            Assert.True(clearRight.Value.X <= spinnerLeft.Value.X);
+            Assert.Equal(input.Bounds.Height / 2, clearRight.Value.Y, 3);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void RevealableSecretInput_FocusInputFocusesPasswordTextBox()
+    {
+        var input = new RevealableSecretInput();
+        var window = new Window { Content = input };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            input.FocusInput();
+
+            Assert.True(Assert.Single(input.GetVisualDescendants().OfType<TextBox>()).IsFocused);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task PasswordDialog_AutomaticallyFocusesPrimaryPasswordInput()
+    {
+        var window = new PasswordDialogWindow();
+
+        try
+        {
+            window.Show();
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Input);
+
+            var passwordInputs = window.GetVisualDescendants()
+                .OfType<RevealableSecretInput>()
+                .ToArray();
+            Assert.Equal(2, passwordInputs.Length);
+            Assert.True(Assert.Single(
+                passwordInputs[0].GetVisualDescendants().OfType<TextBox>()).IsFocused);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void RevealableSecretInput_ClickTogglesPersistentDisclosure()
+    {
+        var input = new RevealableSecretInput { Text = "test-secret", Width = 320 };
+        var window = new Window { Content = input };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var textBox = Assert.Single(input.GetVisualDescendants().OfType<TextBox>());
+            var revealButton = Assert.Single(input.GetVisualDescendants().OfType<Button>());
+            var revealIcon = Assert.Single(revealButton.GetVisualDescendants().OfType<SymbolIcon>());
+
+            Assert.Equal(SymbolIconKind.Reveal, revealIcon.Kind);
+            Assert.Equal(3, Assert.IsType<TranslateTransform>(revealIcon.RenderTransform).Y);
+            Assert.Equal(44, revealButton.Bounds.Width);
+            Assert.Equal(textBox.Bounds.Right, revealButton.Bounds.Right);
+            Assert.Equal(default, revealButton.BorderThickness);
+            Assert.Equal(VerticalAlignment.Center, revealButton.VerticalContentAlignment);
+
+            var inputCenter = input.Bounds.Height / 2;
+            var buttonCenter = revealButton.TranslatePoint(
+                new Point(revealButton.Bounds.Width / 2, revealButton.Bounds.Height / 2),
+                input);
+            Assert.NotNull(buttonCenter);
+            Assert.Equal(inputCenter, buttonCenter.Value.Y, 3);
+
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+
+            Assert.True(input.IsRevealed);
+            Assert.Equal('\0', textBox.PasswordChar);
+            Assert.Equal("test-secret", textBox.Text);
+            Assert.True(textBox.IsFocused);
+            Assert.Equal(SymbolIconKind.Conceal, revealIcon.Kind);
+
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.False(input.IsRevealed);
+            Assert.NotEqual('\0', textBox.PasswordChar);
+            Assert.Equal(SymbolIconKind.Reveal, revealIcon.Kind);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void RevealableSecretInput_UnauthorizedRevealRequestsAccessBeforeDisclosure()
+    {
+        var requests = 0;
+        var input = new RevealableSecretInput
+        {
+            IsRevealAuthorized = false,
+            RevealRequestedCommand = new TestCommand(() => requests++),
+            Text = "test-secret",
+            Width = 320
+        };
+        var window = new Window { Content = input };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var textBox = Assert.Single(input.GetVisualDescendants().OfType<TextBox>());
+            var revealButton = Assert.Single(input.GetVisualDescendants().OfType<Button>());
+
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(1, requests);
+            Assert.False(input.IsRevealed);
+            Assert.NotEqual('\0', textBox.PasswordChar);
+
+            input.IsRevealAuthorized = true;
+            input.IsRevealed = true;
+
+            Assert.True(input.IsRevealed);
+            Assert.Equal('\0', textBox.PasswordChar);
+
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            revealButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(1, requests);
+            Assert.True(input.IsRevealed);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void TextBoxStyles_KeepSingleLineTextCenteredAndMultilineTextTopAligned()
+    {
+        var singleLine = new TextBox { Text = "Letters with descenders: gypq" };
+        var multiline = new TextBox
+        {
+            AcceptsReturn = true,
+            MinHeight = 100,
+            Text = "First line\nSecond line"
+        };
+        var window = new Window
+        {
+            Content = new StackPanel { Children = { singleLine, multiline } }
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(new Thickness(12, 6), singleLine.Padding);
+            Assert.Equal(
+                global::Avalonia.Layout.VerticalAlignment.Center,
+                singleLine.VerticalContentAlignment);
+            Assert.True(singleLine.Bounds.Height >= singleLine.MinHeight);
+            Assert.Equal(
+                global::Avalonia.Layout.VerticalAlignment.Top,
+                multiline.VerticalContentAlignment);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void PasswordSetup_EnterFromEitherSecretInputInvokesDefaultAction()
+    {
+        var executionCount = 0;
+        var inputs = new[] { new RevealableSecretInput(), new RevealableSecretInput() };
+        var submit = new Button
+        {
+            IsDefault = true,
+            Command = new TestCommand(() => executionCount++)
+        };
+        var window = new Window
+        {
+            Content = new StackPanel { Children = { inputs[0], inputs[1], submit } }
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            foreach (var input in inputs)
+            {
+                input.ApplyTemplate();
+                var textBox = Assert.Single(input.GetVisualDescendants().OfType<TextBox>());
+                textBox.Focus();
+                window.KeyPress(
+                    Key.Enter,
+                    RawInputModifiers.None,
+                    PhysicalKey.Enter,
+                    null);
+            }
+
+            Assert.Equal(2, executionCount);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountList_RightClickOpensContextWithoutChangingSelection()
+    {
+        var first = new AccountListItemViewModel(Guid.NewGuid(), "First", "selected");
+        var second = new AccountListItemViewModel(Guid.NewGuid(), "Second", "context");
+        var menu = new ContextMenu { ItemsSource = new[] { new MenuItem { Header = "Edit" } } };
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 200,
+            Height = 100,
+            ItemsSource = new[] { first, second },
+            SelectedItem = first,
+            ContextMenu = menu
+        };
+        var window = new Window { Width = 240, Height = 140, Content = list };
+
+        try
+        {
+            window.Show();
+            list.ApplyTemplate();
+            window.UpdateLayout();
+            var secondContainer = Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, second));
+            var clickPoint = secondContainer.TranslatePoint(new Point(8, 8), window);
+            Assert.NotNull(clickPoint);
+
+            window.MouseDown(clickPoint.Value, MouseButton.Right, RawInputModifiers.None);
+            window.MouseUp(clickPoint.Value, MouseButton.Right, RawInputModifiers.None);
+
+            Assert.Same(first, list.SelectedItem);
+            Assert.Same(second, list.ContextAccount);
+            Assert.True(menu.IsOpen);
+            menu.Close();
+            Assert.Null(list.ContextAccount);
+        }
+        finally
+        {
+            menu.Close();
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountContextMenu_UsesProductSurfaceAndDangerTreatment()
+    {
+        var edit = new MenuItem
+        {
+            Header = "Edit",
+            Icon = new SymbolIcon { Kind = SymbolIconKind.Edit, IconSize = 15 }
+        };
+        var showQr = new MenuItem
+        {
+            Header = "Show QR code",
+            Icon = new SymbolIcon { Kind = SymbolIconKind.QrCode, IconSize = 15 }
+        };
+        var delete = new MenuItem
+        {
+            Header = "Delete",
+            Icon = new SymbolIcon { Kind = SymbolIconKind.Delete, IconSize = 15 }
+        };
+        delete.Classes.Add("danger-context-item");
+        var menu = new ContextMenu
+        {
+            ItemsSource = new Control[] { edit, showQr, new Separator(), delete }
+        };
+        menu.Classes.Add("account-context-menu");
+        var host = new Button { Width = 120, Height = 40, ContextMenu = menu };
+        var window = new Window { Content = host };
+
+        try
+        {
+            window.Show();
+            menu.Open(host);
+            window.UpdateLayout();
+
+            Assert.Equal(0, menu.MinWidth);
+            Assert.True(double.IsNaN(menu.Width));
+            Assert.Equal(new Thickness(6), menu.Padding);
+            Assert.Equal(12, menu.FontSize);
+            Assert.Equal(12, edit.FontSize);
+            Assert.Equal(new CornerRadius(6), menu.CornerRadius);
+            Assert.Equal(new Thickness(1), menu.BorderThickness);
+            Assert.Equal(34, edit.MinHeight);
+            Assert.Equal(new Thickness(10, 6), edit.Padding);
+            var normalForeground = Assert.IsType<SolidColorBrush>(edit.Foreground);
+            var dangerForeground = Assert.IsType<SolidColorBrush>(delete.Foreground);
+            Assert.NotEqual(normalForeground.Color, dangerForeground.Color);
+            Assert.Collection(
+                new[] { edit, showQr, delete },
+                item => Assert.Equal(SymbolIconKind.Edit, Assert.IsType<SymbolIcon>(item.Icon).Kind),
+                item => Assert.Equal(SymbolIconKind.QrCode, Assert.IsType<SymbolIcon>(item.Icon).Kind),
+                item => Assert.Equal(SymbolIconKind.Delete, Assert.IsType<SymbolIcon>(item.Icon).Kind));
+        }
+        finally
+        {
+            menu.Close();
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AccountList_ProgrammaticSelectionScrollsImportedRowIntoView()
+    {
+        var accounts = Enumerable.Range(0, 50)
+            .Select(index => new AccountListItemViewModel(
+                Guid.NewGuid(),
+                $"Issuer {index:00}",
+                $"account-{index:00}"))
+            .ToArray();
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 220,
+            Height = 120,
+            ItemsSource = accounts
+        };
+        var window = new Window { Width = 260, Height = 160, Content = list };
+
+        try
+        {
+            window.Show();
+            list.ApplyTemplate();
+            window.UpdateLayout();
+
+            list.SelectedItem = accounts[^1];
+            await Dispatcher.UIThread.InvokeAsync(
+                static () => { },
+                DispatcherPriority.Loaded);
+            window.UpdateLayout();
+
+            Assert.Contains(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, accounts[^1]));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountRowHighlightContainer_ReservesOutlineWithoutMovingContent()
+    {
+        var text = new TextBlock { Text = "new account" };
+        var highlight = new Border { Child = text };
+        highlight.Classes.Add("account-row-container");
+        highlight.Classes.Add("recently-added");
+        var window = new Window { Content = highlight };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(new Thickness(6, 3), highlight.Padding);
+            Assert.Equal(new Thickness(2), highlight.BorderThickness);
+            Assert.True(text.Bounds.X >= 8);
+            Assert.True(text.Bounds.Y >= 5);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountRow_RendersAccountNameBelowIssuerWithAccessibleContext()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var row = new AccountRow { Issuer = "Issuer", AccountName = "account@example.test" };
+        var window = new Window { Content = row };
+
+        try
+        {
+            window.Show();
+            row.ApplyTemplate();
+            window.UpdateLayout();
+
+            var text = row.GetVisualDescendants().OfType<TextBlock>().ToArray();
+            Assert.Equal(2, text.Length);
+            Assert.Equal("Issuer", text[0].Text);
+            Assert.Equal("account@example.test", text[1].Text);
+            Assert.Equal(11, text[1].FontSize);
+            Assert.Equal(
+                Color.Parse("#7E7E84"),
+                Assert.IsType<SolidColorBrush>(text[1].Foreground).Color);
+            Assert.Equal("Issuer, account@example.test", row.AccessibleName);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void DesktopAccountList_SelectedRowUsesSubtleSurfaceWithoutTextRecoloring()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousThemeVariant = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Dark;
+        var item = new Border
+        {
+            Child = new AccountRow { Issuer = "Issuer", AccountName = "account" }
+        };
+        item.Classes.Add("account-row-container");
+        var list = new ListBox
+        {
+            ItemsSource = new[] { item },
+            SelectedItem = item
+        };
+        list.Classes.Add("accounts");
+        list.Classes.Add("desktop-accounts");
+        var window = new Window { Content = list };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var container = Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>());
+            var presenter = Assert.Single(
+                container.GetVisualDescendants().OfType<ContentPresenter>(),
+                candidate => candidate.Name == "PART_ContentPresenter");
+            Assert.Equal(
+                Colors.Transparent,
+                Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Background).Color);
+            Assert.Equal(
+                Color.Parse("#1A2E4E"),
+                Assert.IsType<SolidColorBrush>(item.Background).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = previousThemeVariant;
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AccountEditorFlyout_MatchesWpfFullWidthCollapsedSlideLifecycle()
+    {
+        var transform = new TranslateTransform { X = 380 };
+        var flyout = new Border
+        {
+            Width = 380,
+            Height = 300,
+            IsVisible = false,
+            RenderTransform = transform
+        };
+        flyout.Classes.Add("flyout");
+        var window = new Window { Content = flyout };
+
+        try
+        {
+            window.Show();
+            Assert.False(flyout.IsVisible);
+            Assert.Equal(default, flyout.BorderThickness);
+            Assert.Equal(380, transform.X, precision: 2);
+
+            flyout.IsVisible = true;
+            window.UpdateLayout();
+            Assert.Equal(380, transform.X, precision: 2);
+            flyout.Classes.Add("open");
+            await WaitUntilAsync(() => Math.Abs(transform.X) < 0.005);
+
+            Assert.Equal(0, transform.X, precision: 2);
+
+            flyout.IsVisible = false;
+            flyout.Classes.Remove("open");
+            transform.X = 380;
+            Assert.False(flyout.IsVisible);
+            Assert.Equal(380, transform.X, precision: 2);
+
+            flyout.IsVisible = true;
+            window.UpdateLayout();
+            Assert.Equal(380, transform.X, precision: 2);
+            flyout.Classes.Add("open");
+            await WaitUntilAsync(() => Math.Abs(transform.X) < 0.005);
+            Assert.Equal(0, transform.X, precision: 2);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(false, false, false)]
+    public void AccountPageHeightFit_DoesNotResizeAnOpenEditor(
+        bool isAccountListVisible,
+        bool isEditorVisible,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldFitAccountPage",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [isAccountListVisible, isEditorVisible]));
+    }
+
+    [Theory]
+    [InlineData(true, 200)]
+    [InlineData(null, 200)]
+    [InlineData(false, 540)]
+    public void AccountPageHeightFit_UsesStateAppropriateWindowMinimum(
+        bool? isShellVisible,
+        double expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "GetDesiredMinimumHeight",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, Assert.IsType<double>(policy.Invoke(null, [isShellVisible])));
+    }
+
+    [AvaloniaFact]
+    public void AuthorizedShell_IsImmediatelyOpaqueWhenShown()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+            var shell = Assert.IsType<Grid>(window.FindControl<Grid>("AuthorizedShell"));
+            shell.IsVisible = false;
+            window.UpdateLayout();
+
+            shell.IsVisible = true;
+            window.UpdateLayout();
+
+            Assert.Equal(1, shell.Opacity);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ContentHeightFit_PreservesWindowTopEdge()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+            window.Position = new PixelPoint(120, 130);
+            var resize = typeof(MainWindow).GetMethod(
+                "SetHeightImmediately",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            Assert.NotNull(resize);
+            resize.Invoke(window, [250d]);
+
+            Assert.Equal(new PixelPoint(120, 130), window.Position);
+            Assert.Equal(250, window.Height);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Theory]
+    [InlineData(70, 350, 32, 200, 540, 454)]
+    [InlineData(70, 600, 32, 200, 540, 540)]
+    public void AccountEditorHeight_FitsContentAndHonorsScreenCap(
+        double chromeHeight,
+        double contentHeight,
+        double verticalPadding,
+        double minimumHeight,
+        double maximumHeight,
+        double expectedHeight)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "CalculateAccountEditorWindowHeight",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expectedHeight,
+            Assert.IsType<double>(policy.Invoke(
+                null,
+                [chromeHeight, contentHeight, verticalPadding, minimumHeight, maximumHeight])),
+            precision: 2);
+    }
+
+    [Theory]
+    [InlineData(0, 42, 0, 0)]
+    [InlineData(2, 42, 0, 46)]
+    [InlineData(2, 42, 60, 60)]
+    [InlineData(2, 42, 500, 88)]
+    public void AccountListHeight_PopulatedListNeverCollapsesToZero(
+        int accountCount,
+        double rowHeight,
+        double availableHeight,
+        double expectedHeight)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "CalculateAccountListHeight",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expectedHeight,
+            Assert.IsType<double>(policy.Invoke(
+                null,
+                [accountCount, rowHeight, availableHeight])),
+            precision: 2);
+    }
+
+    [AvaloniaFact]
+    public void AccountContainerPreparation_DoesNotScheduleAnotherWindowFit()
+    {
+        var window = new MainWindow();
+        var containerPrepared = typeof(MainWindow).GetMethod(
+            "AccountContainerPrepared",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var fitScheduled = typeof(MainWindow).GetField(
+            "_fitScheduled",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        Assert.NotNull(containerPrepared);
+        Assert.NotNull(fitScheduled);
+        Assert.False(Assert.IsType<bool>(fitScheduled.GetValue(window)));
+
+        containerPrepared.Invoke(window, [null, null]);
+
+        Assert.False(Assert.IsType<bool>(fitScheduled.GetValue(window)));
+    }
+
+    [Theory]
+    [InlineData(500, 300, 200)]
+    [InlineData(80, 120, 0)]
+    public void AccountPageFixedHeight_ExcludesTheEntireOverlayListRegion(
+        double contentHeight,
+        double listRegionHeight,
+        double expectedHeight)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "CalculateFixedAccountPageHeight",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expectedHeight,
+            Assert.IsType<double>(policy.Invoke(
+                null,
+                [contentHeight, listRegionHeight])),
+            precision: 2);
+    }
+
+    [AvaloniaFact]
+    public void DesktopAccountRow_UsesRequestedLightThemeBackground()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousTheme = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var row = new Border { Child = new TextBlock { Text = "account" } };
+        row.Classes.Add("account-row-container");
+        var item = new ListBoxItem { Content = row };
+        var list = new ListBox { ItemsSource = new[] { item } };
+        list.Classes.Add("accounts");
+        list.Classes.Add("desktop-accounts");
+        var window = new Window { Content = list };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(
+                Color.Parse("#F4F6FB"),
+                Assert.IsType<SolidColorBrush>(row.Background).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = previousTheme;
+        }
+    }
+
+    [AvaloniaFact]
+    public void MobileAccountList_SelectedRowKeepsPrimaryTextColor()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var item = new TextBlock { Text = "Issuer" };
+        var list = new ListBox
+        {
+            ItemsSource = new[] { item },
+            SelectedItem = item
+        };
+        list.Classes.Add("accounts");
+        list.Classes.Add("mobile-accounts");
+        var window = new Window { Content = list };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var container = Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>());
+            var presenter = Assert.Single(
+                container.GetVisualDescendants().OfType<ContentPresenter>(),
+                candidate => candidate.Name == "PART_ContentPresenter");
+            Assert.Equal(
+                Color.Parse("#172033"),
+                Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Foreground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountPageHeightRefit_RestoresTheAccountListScrollOffset()
+    {
+        var content = new Border { Width = 200, Height = 2000 };
+        var scrollViewer = new ScrollViewer
+        {
+            Width = 220,
+            Height = 120,
+            Content = content
+        };
+        var window = new Window { Width = 260, Height = 160, Content = scrollViewer };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            scrollViewer.Offset = new Vector(0, 900);
+            window.UpdateLayout();
+            var offsetBeforeRefit = scrollViewer.Offset;
+            Assert.True(offsetBeforeRefit.Y > 0);
+
+            scrollViewer.Offset = default;
+            var restore = typeof(MainWindow).GetMethod(
+                "RestoreAccountListScrollOffset",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(restore);
+            restore.Invoke(null, [scrollViewer, offsetBeforeRefit]);
+
+            Assert.Equal(offsetBeforeRefit.X, scrollViewer.Offset.X, precision: 2);
+            Assert.Equal(offsetBeforeRefit.Y, scrollViewer.Offset.Y, precision: 2);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Theory]
+    [InlineData(Key.Delete, KeyModifiers.None, true, false, true)]
+    [InlineData(Key.D, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.D, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.D, KeyModifiers.Control | KeyModifiers.Shift, true, false, false)]
+    [InlineData(Key.Delete, KeyModifiers.None, true, true, false)]
+    [InlineData(Key.Delete, KeyModifiers.None, false, false, false)]
+    [InlineData(Key.Delete, KeyModifiers.Control, true, false, false)]
+    [InlineData(Key.Back, KeyModifiers.None, true, false, false)]
+    public void AccountDeleteShortcut_RequiresPlainDeleteOutsideTextEditing(
+        Key key,
+        KeyModifiers modifiers,
+        bool canDelete,
+        bool isTextEditing,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldHandleAccountDeleteKey",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canDelete, isTextEditing]));
+    }
+
+    [AvaloniaFact]
+    public void SearchableBrandIconPicker_FiltersNamesAndKeepsPopupInsideWindow()
+    {
+        var options = new[]
+        {
+            new BrandIconOption(null, "Automatic"),
+            new BrandIconOption("paypal", "PayPal"),
+            new BrandIconOption("proton", "Proton")
+        };
+        var picker = new SearchableComboBox
+        {
+            ItemsSource = options,
+            PopupWidth = 420,
+            PreferredWidth = 420,
+            SelectedItem = options[0]
+        };
+        var window = new Window
+        {
+            Width = 380,
+            Content = new Border
+            {
+                Margin = new Thickness(30),
+                Child = picker
+            }
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            Assert.Equal(options, picker.FilteredItems);
+
+            picker.SearchText = "pro";
+
+            Assert.Equal([options[2]], picker.FilteredItems);
+            Assert.Same(options[0], picker.SelectedItem);
+
+            picker.SearchText = string.Empty;
+
+            Assert.Equal(options, picker.FilteredItems);
+
+            var dropDownButton = Assert.Single(
+                picker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            dropDownButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            var origin = picker.TranslatePoint(new Point(0, 0), window);
+
+            Assert.NotNull(origin);
+            Assert.True(picker.Bounds.Width <= 320);
+            Assert.True(
+                origin.Value.X + picker.EffectivePopupWidth
+                    <= window.ClientSize.Width - 12 + 0.01);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SearchableBrandIconPicker_RanksExactPrefixAndPartialMatches()
+    {
+        var options = new[]
+        {
+            new BrandIconOption("digitalocean", "DigitalOcean"),
+            new BrandIconOption("gitlab", "GitLab"),
+            new BrandIconOption("git", "Git"),
+            new BrandIconOption("github", "GitHub")
+        };
+        var picker = new SearchableComboBox { ItemsSource = options };
+
+        picker.SearchText = "git";
+
+        Assert.Equal(
+            [options[2], options[1], options[3], options[0]],
+            picker.FilteredItems);
+    }
+
+    [AvaloniaTheory]
+    [InlineData("a")]
+    [InlineData("e")]
+    [InlineData("i")]
+    [InlineData("o")]
+    [InlineData("u")]
+    public void SearchableBrandIconPicker_FilteringSelectedItemDoesNotClosePopup(
+        string searchText)
+    {
+        var options = new[]
+        {
+            new BrandIconOption(null, "Automatic issuer match"),
+            new BrandIconOption("github", "GitHub"),
+            new BrandIconOption("paypal", "PayPal")
+        };
+        var picker = new SearchableComboBox
+        {
+            ItemsSource = options,
+            SelectedItem = options[0]
+        };
+        var window = new Window { Content = picker };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var dropDownButton = Assert.Single(
+                picker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            var popup = Assert.Single(
+                picker.GetVisualDescendants().OfType<Popup>(),
+                candidate => candidate.Name == "PART_Popup");
+
+            dropDownButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            Assert.True(popup.IsOpen);
+
+            picker.SearchText = searchText;
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+
+            Assert.True(popup.IsOpen);
+            Assert.Same(options[0], picker.SelectedItem);
+            Assert.Contains(options[0], picker.FilteredItems);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SearchableBrandIconPicker_UserSelectionKeepsTwoWayBindingActive()
+    {
+        var options = new[]
+        {
+            new BrandIconOption(null, "Automatic"),
+            new BrandIconOption(null, "Choose custom SVG", IsCustomPickerAction: true)
+        };
+        var selection = new TestSelectionModel(options[0], options[1]);
+        var picker = new SearchableComboBox
+        {
+            ItemsSource = options
+        };
+        picker.Bind(
+            SearchableComboBox.SelectedItemProperty,
+            new Binding(nameof(TestSelectionModel.SelectedItem))
+            {
+                Source = selection,
+                Mode = BindingMode.TwoWay
+            });
+        var window = new Window { Content = picker };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var dropDownButton = Assert.Single(
+                picker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            var popup = Assert.Single(
+                picker.GetVisualDescendants().OfType<Popup>(),
+                candidate => candidate.Name == "PART_Popup");
+
+            dropDownButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            var items = Assert.Single(
+                popup.Child!.GetVisualDescendants().OfType<ListBox>(),
+                list => list.Name == "PART_ItemsList");
+            items.SelectedItem = options[1];
+
+            Assert.False(popup.IsOpen);
+            Assert.Same(options[0], selection.SelectedItem);
+
+            selection.RestorePreviousSelection();
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Same(options[0], picker.SelectedItem);
+            Assert.Same(options[0], items.SelectedItem);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AccountList_RevealScrollsImportedRowWithoutSelectingIt()
+    {
+        var accounts = Enumerable.Range(0, 50)
+            .Select(index => new AccountListItemViewModel(
+                Guid.NewGuid(),
+                $"Issuer {index:00}",
+                $"account-{index:00}"))
+            .ToArray();
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 220,
+            Height = 120,
+            ItemsSource = accounts
+        };
+        var window = new Window { Width = 260, Height = 160, Content = list };
+
+        try
+        {
+            window.Show();
+            list.ApplyTemplate();
+            window.UpdateLayout();
+
+            list.RevealAccount(accounts[^1]);
+            await Dispatcher.UIThread.InvokeAsync(
+                static () => { },
+                DispatcherPriority.Loaded);
+            window.UpdateLayout();
+
+            Assert.Null(list.SelectedItem);
+            Assert.Contains(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, accounts[^1]));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountEditorScrollPosition_IsResetBeforeEachPresentation()
+    {
+        var scrollViewer = new ScrollViewer
+        {
+            Width = 240,
+            Height = 160,
+            Content = new Border { Width = 240, Height = 800 }
+        };
+        var window = new Window { Content = scrollViewer };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            scrollViewer.Offset = new Vector(0, 320);
+            window.UpdateLayout();
+            Assert.True(scrollViewer.Offset.Y > 0);
+            var reset = typeof(MainWindow).GetMethod(
+                "ResetScrollPosition",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(reset);
+            reset.Invoke(null, [scrollViewer]);
+
+            Assert.Equal(default, scrollViewer.Offset);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Theory]
+    [InlineData(Key.Escape, true, true, true)]
+    [InlineData(Key.Escape, true, false, false)]
+    [InlineData(Key.Escape, false, true, false)]
+    [InlineData(Key.Enter, true, true, false)]
+    public void EscapeClearsGroupFilterOnlyOnVisibleFilteredAccountList(
+        Key key,
+        bool isAccountListVisible,
+        bool hasSelectedGroup,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldClearGroupFilterOnEscape",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expected,
+            policy.Invoke(null, [key, isAccountListVisible, hasSelectedGroup]));
+    }
+
+    [Theory]
+    [InlineData(Key.A, Key.A, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.E, Key.E, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.A, Key.A, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.E, Key.E, KeyModifiers.Control, false, false, false)]
+    [InlineData(Key.A, Key.E, KeyModifiers.Control, true, false, false)]
+    [InlineData(Key.A, Key.A, KeyModifiers.Control | KeyModifiers.Shift, true, false, false)]
+    public void AccountCommandShortcuts_RequireExactControlKeyOutsideTextEditors(
+        Key key,
+        Key expectedKey,
+        KeyModifiers modifiers,
+        bool canExecute,
+        bool isTextEditing,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldHandleAccountCommandShortcut",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expected,
+            policy.Invoke(null, [key, expectedKey, modifiers, canExecute, isTextEditing]));
+    }
+
+    [Theory]
+    [InlineData(Key.L, KeyModifiers.Control, true, true)]
+    [InlineData(Key.L, KeyModifiers.Control, false, false)]
+    [InlineData(Key.L, KeyModifiers.Control | KeyModifiers.Shift, true, false)]
+    [InlineData(Key.K, KeyModifiers.Control, true, false)]
+    public void LockShortcut_RequiresExactControlLAndAvailableLock(
+        Key key,
+        KeyModifiers modifiers,
+        bool canLock,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldHandleLockShortcut",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canLock]));
+    }
+
+    [Theory]
+    [InlineData(Key.C, KeyModifiers.Control, true, false, true)]
+    [InlineData(Key.C, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.C, KeyModifiers.Control, false, false, false)]
+    [InlineData(Key.C, KeyModifiers.Control | KeyModifiers.Shift, true, false, false)]
+    [InlineData(Key.C, KeyModifiers.None, true, false, false)]
+    [InlineData(Key.V, KeyModifiers.Control, true, false, false)]
+    public void AccountCopyShortcut_RequiresControlCWithoutSelectedText(
+        Key key,
+        KeyModifiers modifiers,
+        bool canCopy,
+        bool preserveTextCopy,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldHandleAccountCopyKey",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canCopy, preserveTextCopy]));
+    }
+
+    [Theory]
+    [InlineData(Key.Down, KeyModifiers.None, true, true, true)]
+    [InlineData(Key.Down, KeyModifiers.None, false, true, false)]
+    [InlineData(Key.Down, KeyModifiers.None, true, false, false)]
+    [InlineData(Key.Down, KeyModifiers.Control, true, true, false)]
+    [InlineData(Key.Up, KeyModifiers.None, true, true, false)]
+    public void SearchDownArrow_MovesFocusOnlyToAnAvailableAccountList(
+        Key key,
+        KeyModifiers modifiers,
+        bool canNavigate,
+        bool isSearchSource,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldMoveFocusFromSearch",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canNavigate, isSearchSource]));
+    }
+
+    [AvaloniaFact]
+    public async Task SearchDownArrow_FocusesTheSelectedAccountContainer()
+    {
+        var account = new AccountListItemViewModel(Guid.NewGuid(), "Issuer", "account");
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 220,
+            Height = 120,
+            ItemsSource = new[] { account },
+            SelectedItem = account
+        };
+        var search = new TextBox();
+        var window = new Window
+        {
+            Width = 260,
+            Height = 200,
+            Content = new StackPanel { Children = { search, list } }
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            search.Focus();
+            list.FocusAccount(account);
+            await Dispatcher.UIThread.InvokeAsync(static () => { }, DispatcherPriority.Loaded);
+
+            var container = Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, account));
+            Assert.True(container.IsFocused);
+            Assert.False(search.IsFocused);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountList_ArrowNavigationMovesSelectionAndKeyboardFocus()
+    {
+        var first = new AccountListItemViewModel(Guid.NewGuid(), "First", "account");
+        var second = new AccountListItemViewModel(Guid.NewGuid(), "Second", "account");
+        var list = new ContextPreservingAccountListBox
+        {
+            Width = 220,
+            Height = 120,
+            ItemsSource = new[] { first, second },
+            SelectedItem = first
+        };
+        var window = new Window { Width = 260, Height = 160, Content = list };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            list.FocusAccount(first);
+
+            window.KeyPress(
+                Key.Down,
+                RawInputModifiers.None,
+                PhysicalKey.ArrowDown,
+                null);
+
+            Assert.Same(second, list.SelectedItem);
+            Assert.True(Assert.Single(
+                list.GetVisualDescendants().OfType<ListBoxItem>(),
+                item => ReferenceEquals(item.DataContext, second)).IsFocused);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Theory]
+    [InlineData(Key.Up, KeyModifiers.None, true, true, true, true)]
+    [InlineData(Key.Up, KeyModifiers.None, true, true, false, false)]
+    [InlineData(Key.Up, KeyModifiers.None, true, false, true, false)]
+    [InlineData(Key.Up, KeyModifiers.None, false, true, true, false)]
+    [InlineData(Key.Up, KeyModifiers.Control, true, true, true, false)]
+    [InlineData(Key.Down, KeyModifiers.None, true, true, true, false)]
+    public void FirstSearchResultUpArrow_ReturnsFocusOnlyToVisibleSearch(
+        Key key,
+        KeyModifiers modifiers,
+        bool canNavigate,
+        bool isListSource,
+        bool isAtFirstResult,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldMoveFocusToSearch",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(
+            expected,
+            policy.Invoke(null, [key, modifiers, canNavigate, isListSource, isAtFirstResult]));
+    }
+
+    [Theory]
+    [InlineData(Key.F, KeyModifiers.Control, true, true)]
+    [InlineData(Key.F, KeyModifiers.Control, false, false)]
+    [InlineData(Key.F, KeyModifiers.Control | KeyModifiers.Shift, true, false)]
+    [InlineData(Key.G, KeyModifiers.Control, true, false)]
+    public void SearchShortcut_RequiresExactControlFAndAvailableSearch(
+        Key key,
+        KeyModifiers modifiers,
+        bool canFocus,
+        bool expected)
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "ShouldFocusAccountSearch",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(policy);
+        Assert.Equal(expected, policy.Invoke(null, [key, modifiers, canFocus]));
+    }
+
+    [AvaloniaFact]
+    public void AccountCopyShortcut_PreservesCopyingSelectedSearchText()
+    {
+        var policy = typeof(MainWindow).GetMethod(
+            "HasSelectedText",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var searchBox = new TextBox { Text = "github" };
+
+        searchBox.SelectionStart = searchBox.SelectionEnd = searchBox.Text.Length;
+        Assert.False((bool)policy!.Invoke(null, [searchBox])!);
+
+        searchBox.SelectionStart = 0;
+        Assert.True((bool)policy.Invoke(null, [searchBox])!);
+    }
+
+    [AvaloniaFact]
+    public void WindowNotificationBanner_UsesSharedBottomNonInteractiveOverlay()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousThemeVariant = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Dark;
+        var notification = new NotificationBanner
+        {
+            Width = 240,
+            HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Bottom,
+            IsHitTestVisible = false,
+            Severity = NotificationSeverity.Success,
+            Text = "Synthetic account saved"
+        };
+        notification.Classes.Add("toast");
+        var content = new Border { Height = 300 };
+        var host = new Grid { Children = { content, notification } };
+        var window = new Window { Content = host };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(300, content.Bounds.Height);
+            Assert.True(notification.IsVisible);
+            Assert.False(notification.IsHitTestVisible);
+            Assert.Equal(VerticalAlignment.Bottom, notification.VerticalAlignment);
+            Assert.Equal(HorizontalAlignment.Center, notification.HorizontalAlignment);
+            var banner = Assert.Single(
+                notification.GetVisualDescendants().OfType<Border>(),
+                border => border.Name == "PART_Banner");
+            Assert.Equal(new Thickness(1), banner.BorderThickness);
+            Assert.Equal(new CornerRadius(9), banner.CornerRadius);
+            Assert.Equal(default, banner.BoxShadow);
+            var severityIcon = Assert.Single(
+                notification.GetVisualDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Information);
+            Assert.Equal(16, severityIcon.IconSize);
+            var message = Assert.Single(
+                notification.GetVisualDescendants().OfType<TextBlock>(),
+                textBlock => textBlock.Text == "Synthetic account saved");
+            Assert.Equal(FontWeight.Normal, message.FontWeight);
+            Assert.True(notification.TryFindResource(
+                "BrushSuccess",
+                ThemeVariant.Dark,
+                out var successBrush));
+            Assert.Equal(
+                Assert.IsType<SolidColorBrush>(successBrush).Color,
+                Assert.IsType<SolidColorBrush>(severityIcon.Foreground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = previousThemeVariant;
+        }
+    }
+
+    [AvaloniaFact]
+    public void ToolbarIconStyle_LeavesFullHeightForSearchSymbol()
+    {
+        var symbol = new SymbolIcon
+        {
+            Kind = SymbolIconKind.Search,
+            IconSize = 16
+        };
+        var button = new Button { Content = symbol };
+        button.Classes.Add("icon");
+        var window = new Window { Content = button };
+
+        try
+        {
+            window.Show();
+            button.ApplyTemplate();
+            symbol.ApplyTemplate();
+            window.UpdateLayout();
+
+            Assert.Equal(16, symbol.Bounds.Width);
+            Assert.Equal(16, symbol.Bounds.Height);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void LanguageFlagBinding_DecodesAndProducesImageSource()
+    {
+        using var flags = new AvaloniaLanguageFlagProvider();
+        var localization = new AvaloniaLocalizationService(
+            new ResourceDictionary(),
+            new AvaloniaStringCatalog(),
+            flags);
+        var images = localization.SupportedLanguages.Select(option =>
+        {
+            var image = new Image { DataContext = option };
+            image.Bind(Image.SourceProperty, new Binding(nameof(LanguageOption.Icon)));
+            return image;
+        }).ToArray();
+        var window = new Window
+        {
+            Content = new StackPanel { Children = { images[0], images[1] } }
+        };
+
+        try
+        {
+            window.Show();
+
+            Assert.All(images, image =>
+            {
+                Assert.NotNull(image.Source);
+                Assert.True(image.Source.Size.Width > 0);
+                Assert.True(image.Source.Size.Height > 0);
+            });
+            Assert.NotSame(images[0].Source, images[1].Source);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void CameraScannerDialog_LoadsRealXaml()
+    {
+        var window = new CameraScannerDialogWindow();
+
+        try
+        {
+            window.Show();
+
+            Assert.Equal(2, window.GetVisualDescendants().OfType<Image>().Count());
+            var progress = Assert.Single(window.GetVisualDescendants().OfType<ProgressBar>());
+            Assert.False(progress.IsIndeterminate);
+            Assert.Equal(
+                4,
+                window.GetVisualDescendants().OfType<Button>().Count(button => button.IsVisible));
+            var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
+            Assert.False(titleBar.ShowMinimizeButton);
+            Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Equal(560, window.Width);
+            Assert.Equal(420, window.Height);
+            var instructionIcon = Assert.Single(
+                window.GetVisualDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Information);
+            Assert.Equal(16, instructionIcon.IconSize);
+            var instructionLayout = Assert.IsType<Grid>(instructionIcon.Parent);
+            Assert.Equal(2, instructionLayout.ColumnDefinitions.Count);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountRow_WithoutAccountNameOmitsSecondaryLine()
+    {
+        var row = new AccountRow { Issuer = "Issuer" };
+        var window = new Window { Content = row };
+
+        try
+        {
+            window.Show();
+            row.ApplyTemplate();
+            window.UpdateLayout();
+
+            var text = row.GetVisualDescendants().OfType<TextBlock>().ToArray();
+            Assert.Equal(2, text.Length);
+            Assert.Equal("Issuer", text[0].Text);
+            Assert.False(text[1].IsVisible);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void CameraScannerDialog_CancelButtonSizesToLocalizedContent()
+    {
+        var window = new CameraScannerDialogWindow();
+
+        try
+        {
+            window.Show();
+            var cancel = Assert.Single(
+                window.GetVisualDescendants().OfType<Button>(),
+                button => button.IsCancel);
+            cancel.Content = "Scan abbrechen";
+            window.UpdateLayout();
+
+            Assert.True(double.IsNaN(cancel.Width));
+            Assert.True(cancel.Bounds.Width > 100);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ConfirmationDialog_UsesChromelessDistinctDialogSurface()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Dark;
+        var window = new ConfirmationDialogWindow();
+
+        try
+        {
+            window.Show();
+
+            Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Equal(WindowStartupLocation.CenterOwner, window.WindowStartupLocation);
+            Assert.Equal(SizeToContent.Height, window.SizeToContent);
+            Assert.False(window.CanResize);
+            Assert.False(window.ShowInTaskbar);
+            Assert.Equal(520, window.Width);
+            Assert.Equal(320, window.MinWidth);
+            Assert.Equal(
+                Color.Parse("#192B52"),
+                Assert.IsType<SolidColorBrush>(window.Background).Color);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ActionDialogs_MatchTitlelessWpfPromptChrome()
+    {
+        Window[] windows =
+        [
+            new ConfirmationDialogWindow(),
+            new PasswordDialogWindow(),
+            new ChoiceDialogWindow()
+        ];
+
+        try
+        {
+            foreach (var window in windows)
+            {
+                window.Show();
+
+                Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+                Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
+            }
+        }
+        finally
+        {
+            foreach (var window in windows)
+                window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SharedLanguageFlagImage_LoadsEveryMobileLanguageFlag()
+    {
+        var flags = new[] { "en", "de", "fr", "es" }
+            .Select(cultureName => new LanguageFlagImage { CultureName = cultureName })
+            .ToArray();
+        var window = new Window
+        {
+            Content = new StackPanel { Children = { flags[0], flags[1], flags[2], flags[3] } }
+        };
+
+        try
+        {
+            window.Show();
+            Assert.All(flags, flag =>
+            {
+                Assert.NotNull(flag.Source);
+                Assert.True(flag.Source.Size.Width > 0);
+                Assert.True(flag.Source.Size.Height > 0);
+            });
+            Assert.Equal(4, flags.Select(flag => flag.Source).Distinct().Count());
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ConfirmationDialog_UsesTheSameReadableWidthForDestructiveActions()
+    {
+        var window = new ConfirmationDialogWindow
+        {
+            DataContext = new ConfirmationDialogViewModel(new ConfirmationDialogRequest(
+                "Delete account",
+                "Delete this account?",
+                NotificationSeverity.Warning,
+                "Delete",
+                "Cancel",
+                IsDestructive: true))
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Contains("destructive", window.Classes);
+            Assert.Equal(520, window.Width);
+            Assert.Equal(320, window.MinWidth);
+            Assert.Equal(WindowStartupLocation.CenterOwner, window.WindowStartupLocation);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ConfirmationDialog_FormatsLongMessagesAsReadableMultilineContent()
+    {
+        const string message = "New accounts to import: 4\nExisting accounts skipped: 16\n"
+            + "A recovery backup will be created before any changes are made.";
+        var window = new ConfirmationDialogWindow
+        {
+            DataContext = new ConfirmationDialogViewModel(new ConfirmationDialogRequest(
+                "Restore backup",
+                message,
+                NotificationSeverity.Warning,
+                "Restore backup",
+                "Cancel"))
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var messageCard = window.FindControl<Border>("DialogMessageCard");
+            Assert.NotNull(messageCard);
+            Assert.Contains("dialog-message-card", messageCard.Classes);
+            var messageText = Assert.IsType<TextBlock>(messageCard.Child);
+            Assert.Equal(TextAlignment.Left, messageText.TextAlignment);
+            Assert.Equal(TextWrapping.Wrap, messageText.TextWrapping);
+            Assert.True(messageText.Bounds.Height >= 63);
+            Assert.True(window.Bounds.Width <= 520);
+            Assert.All(
+                window.GetVisualDescendants().OfType<Button>(),
+                button => Assert.True(button.MinWidth >= 112));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void DesktopWindows_UseNativeRoundedCorners()
+    {
+        var window = new Window();
+
+        try
+        {
+            window.Show();
+
+            Assert.Equal(
+                Win32Properties.WindowCornerPreference.Round,
+                Win32Properties.GetWindowCornerPreference(window));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void QrPreviewDialog_TitleHasLeftPaddingWhenIconIsHidden()
+    {
+        var window = new QrPreviewDialogWindow();
+
+        try
+        {
+            window.Show();
+            var titleBar = Assert.Single(
+                window.GetVisualDescendants().OfType<ProductTitleBar>());
+
+            Assert.False(titleBar.ShowIcon);
+            Assert.Equal(new Thickness(8, 0, 0, 0), titleBar.TitlePadding);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ProductTitleBar_CloseGlyphIsCenteredInItsHoverTarget()
+    {
+        var titleBar = new ProductTitleBar();
+        var window = new Window { Content = titleBar };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var closeButton = Assert.Single(
+                titleBar.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("titlebar-close"));
+
+            Assert.Equal(HorizontalAlignment.Center, closeButton.HorizontalContentAlignment);
+            Assert.Equal(VerticalAlignment.Center, closeButton.VerticalContentAlignment);
+            Assert.Equal(34, closeButton.Bounds.Width);
+            Assert.Equal(33, closeButton.Bounds.Height);
+
+            var glyph = Assert.Single(closeButton.GetVisualDescendants().OfType<AvaloniaPath>());
+            var glyphCenter = glyph.TranslatePoint(
+                new Point(glyph.Bounds.Width / 2, glyph.Bounds.Height / 2),
+                closeButton);
+            Assert.NotNull(glyphCenter);
+            Assert.Equal(closeButton.Bounds.Width / 2, glyphCenter.Value.X, 3);
+            Assert.Equal(closeButton.Bounds.Height / 2, glyphCenter.Value.Y, 3);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ProductTitleBar_MinimizeButtonMinimizesOwningWindow()
+    {
+        var titleBar = new ProductTitleBar { ShowMinimizeButton = true };
+        var window = new Window { Content = titleBar };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var minimizeButton = Assert.Single(
+                titleBar.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("titlebar-minimize"));
+
+            Assert.True(minimizeButton.IsVisible);
+            minimizeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(WindowState.Minimized, window.WindowState);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ProductTitleBar_MaximizeToggleRestoresOriginalWindowSize()
+    {
+        var titleBar = new ProductTitleBar();
+        var window = new Window
+        {
+            Width = 420,
+            Height = 300,
+            MinWidth = 200,
+            MinHeight = 150,
+            Content = titleBar
+        };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var originalSize = window.Bounds.Size;
+            var toggle = typeof(ProductTitleBar).GetMethod(
+                "ToggleMaximizedState",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(toggle);
+
+            toggle.Invoke(titleBar, [window]);
+            Assert.Equal(WindowState.Maximized, window.WindowState);
+            window.Width = 900;
+            window.Height = 700;
+
+            toggle.Invoke(titleBar, [window]);
+            await Dispatcher.UIThread.InvokeAsync(static () => { }, DispatcherPriority.Background);
+
+            Assert.Equal(WindowState.Normal, window.WindowState);
+            Assert.Equal(originalSize.Width, window.Width, precision: 2);
+            Assert.Equal(originalSize.Height, window.Height, precision: 2);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void QrPreviewDialog_EscapeClosesWindow()
+    {
+        var window = new QrPreviewDialogWindow();
+
+        window.Show();
+        window.RaiseEvent(new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = Key.Escape
+        });
+
+        Assert.False(window.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_LoadsRealXamlAndEssentialSurfaces()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+
+            Assert.NotNull(window.Icon);
+            Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Empty(window.KeyBindings);
+            var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
+            Assert.Equal(window.Title, titleBar.Title);
+            Assert.True(titleBar.ShowMinimizeButton);
+            Assert.Empty(window.GetVisualDescendants().OfType<BusyOverlay>());
+            var startupLoadingOverlay = Assert.IsType<Grid>(
+                window.FindControl<Grid>("StartupLoadingOverlay"));
+            var desktopStartupContent = Assert.IsType<Grid>(
+                window.FindControl<Grid>("DesktopStartupContent"));
+            var startupLoadingLogo = Assert.IsType<Image>(
+                window.FindControl<Image>("StartupLoadingLogo"));
+            var startupLoadingText = Assert.IsType<TextBlock>(
+                window.FindControl<TextBlock>("StartupLoadingText"));
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Loading],
+                startupLoadingText.Text);
+            Assert.Same(desktopStartupContent.Background, startupLoadingOverlay.Background);
+            Assert.NotNull(startupLoadingLogo.Source);
+            Assert.Single(startupLoadingOverlay.Transitions!);
+            Assert.Single(desktopStartupContent.Transitions!);
+            Assert.True(AssetLoader.Exists(new Uri(
+                "avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png")));
+            Assert.True(window.GetVisualDescendants().OfType<Button>().Count() >= 5);
+            Assert.True(window.GetVisualDescendants().OfType<Border>().Count() >= 5);
+            Assert.NotEmpty(window.GetVisualDescendants().OfType<ScrollViewer>());
+            Assert.Empty(window.GetVisualDescendants().OfType<TabControl>());
+            Assert.True(AssetLoader.Exists(new Uri(
+                "avares://TOTP.UI.Avalonia.Shared/Assets/flags/en.png")));
+            Assert.True(AssetLoader.Exists(new Uri(
+                "avares://TOTP.UI.Avalonia.Shared/Assets/flags/de.png")));
+            var languageSelector = Assert.Single(
+                window.GetVisualDescendants().OfType<ComboBox>(),
+                combo => combo.Width == 64
+                    && combo.HorizontalContentAlignment == global::Avalonia.Layout.HorizontalAlignment.Center);
+            Assert.Same(languageSelector, window.FindControl<ComboBox>("LanguageSelector"));
+            AssertToolbarAutomationName(window, "AddAccountButton", AvaloniaStringKeys.AddAccount);
+            AssertToolbarAutomationName(window, "ToggleSearchButton", AvaloniaStringKeys.SearchAccounts);
+            AssertToolbarAutomationName(window, "ManageGroupsButton", AvaloniaStringKeys.CreateGroup);
+            var manageGroupsButton = window.FindControl<Button>("ManageGroupsButton")!;
+            var toggleSearchButton = window.FindControl<Button>("ToggleSearchButton")!;
+            var clearSearchButton = window.FindControl<Button>("ClearSearchButton")!;
+            var accountSearchBox = window.FindControl<TextBox>("AccountSearchBox")!;
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Search],
+                accountSearchBox.PlaceholderText);
+            Assert.Equal(
+                Application.Current.Resources[AvaloniaStringKeys.SearchAccounts],
+                AutomationProperties.GetName(accountSearchBox));
+            Assert.Equal(2, Grid.GetColumn(manageGroupsButton));
+            Assert.Equal(3, Grid.GetColumn(toggleSearchButton));
+            Assert.Equal(
+                SymbolIconKind.FolderAdd,
+                Assert.IsType<SymbolIcon>(manageGroupsButton.Content).Kind);
+            AssertToolbarAutomationName(window, "ClearSearchButton", AvaloniaStringKeys.ClearSearch);
+            Assert.Equal(24, clearSearchButton.Width);
+            Assert.Equal(24, clearSearchButton.Height);
+            Assert.Equal(24, clearSearchButton.MinWidth);
+            Assert.Equal(24, clearSearchButton.MinHeight);
+            Assert.Equal(HorizontalAlignment.Center, clearSearchButton.HorizontalContentAlignment);
+            Assert.Equal(VerticalAlignment.Center, clearSearchButton.VerticalContentAlignment);
+            Assert.Equal(new CornerRadius(12), clearSearchButton.CornerRadius);
+            Assert.Contains("search-clear", clearSearchButton.Classes);
+            var clearSearchIcon = Assert.IsType<SymbolIcon>(clearSearchButton.Content);
+            Assert.Equal(SymbolIconKind.Close, clearSearchIcon.Kind);
+            Assert.Equal(12, clearSearchIcon.IconSize);
+            AssertToolbarAutomationName(window, "OpenSettingsButton", AvaloniaStringKeys.Settings);
+            AssertToolbarAutomationName(window, "AccountSortButton", AvaloniaStringKeys.SortAccounts);
+            var scanButton = window.FindControl<Button>("ScanQrButton")!;
+            var settingsButton = window.FindControl<Button>("OpenSettingsButton")!;
+            var sortButton = window.FindControl<Button>("AccountSortButton")!;
+            Assert.Equal(
+                new Thickness(0, 2, 0, 0),
+                Assert.IsType<SymbolIcon>(scanButton.Content).Margin);
+            Assert.Equal(
+                new Thickness(0, 2, 0, 0),
+                Assert.IsType<SymbolIcon>(sortButton.Content).Margin);
+            var trailingActions = window.FindControl<StackPanel>("ToolbarTrailingActions")!;
+            Assert.Equal(4, trailingActions.Spacing);
+            Assert.Same(trailingActions, languageSelector.Parent);
+            Assert.Same(trailingActions, settingsButton.Parent);
+            Assert.Same(trailingActions, sortButton.Parent);
+            Assert.All(
+                new Control[] { languageSelector, settingsButton, sortButton },
+                control => Assert.Equal(new Thickness(0), control.Margin));
+            var titleBarLockButton = titleBar.FindControl<Button>("TitleBarLockButton");
+            Assert.NotNull(titleBarLockButton);
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Lock],
+                AutomationProperties.GetName(titleBarLockButton));
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Language],
+                AutomationProperties.GetName(languageSelector));
+            languageSelector.ItemsSource = new[] { new LanguageOption("en", "English") };
+            languageSelector.SelectedIndex = 0;
+            window.UpdateLayout();
+
+            var languageFlag = Assert.Single(languageSelector.GetVisualDescendants().OfType<Image>());
+            Assert.Equal(new Thickness(8, 0, 0, 0), languageFlag.Margin);
+            Assert.Equal(380, window.Width);
+            Assert.Equal(540, window.Height);
+            Assert.Equal(360, window.MinWidth);
+            Assert.Equal(200, window.MinHeight);
+            var screen = window.Screens.ScreenFromWindow(window);
+            Assert.NotNull(screen);
+            Assert.InRange(
+                window.MaxWidth,
+                0,
+                (screen.WorkingArea.Width / screen.Scaling) * 0.92);
+            Assert.InRange(
+                window.MaxHeight,
+                0,
+                (screen.WorkingArea.Height / screen.Scaling) * 0.60);
+            Assert.Equal(WindowStartupLocation.CenterScreen, window.WindowStartupLocation);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountSortMenu_UsesFullWidthStructuredRows()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+            var menu = window.FindControl<Border>("AccountSortMenu");
+            Assert.NotNull(menu);
+            menu.IsVisible = true;
+            window.UpdateLayout();
+
+            Assert.Equal(176, menu.Width);
+            Assert.Equal(new Thickness(0, 48, 42, 0), menu.Margin);
+            Assert.Equal(new Thickness(0), menu.Padding);
+            Assert.True(menu.ClipToBounds);
+
+            var rows = menu.GetLogicalDescendants()
+                .OfType<Button>()
+                .Where(button => button.Classes.Contains("sort-option"))
+                .ToArray();
+            Assert.Equal(4, rows.Length);
+            Assert.All(rows, row =>
+            {
+                Assert.Equal(50, row.MinHeight);
+                Assert.Equal(new Thickness(14, 0, 10, 0), row.Padding);
+                Assert.Equal(HorizontalAlignment.Stretch, row.HorizontalContentAlignment);
+                Assert.Equal(new CornerRadius(0), row.CornerRadius);
+                Assert.Equal(menu.Background, row.Background);
+
+                var checkmark = Assert.Single(
+                    row.GetLogicalDescendants().OfType<TextBlock>(),
+                    text => text.Text == "✓");
+                var label = Assert.Single(
+                    row.GetLogicalDescendants().OfType<TextBlock>(),
+                    text => text.Text != "✓");
+                Assert.Equal(14, label.FontSize);
+                Assert.Equal(16, checkmark.FontSize);
+                Assert.Equal(HorizontalAlignment.Right, checkmark.HorizontalAlignment);
+                Assert.Equal(1, Grid.GetColumn(checkmark));
+            });
+            Assert.All(rows[..^1], row =>
+                Assert.Equal(new Thickness(0, 0, 0, 1), row.BorderThickness));
+            Assert.Equal(new Thickness(0), rows[^1].BorderThickness);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void MainToolbar_TabAndShiftTabFollowVisualWorkflowOrder()
+    {
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+            window.FindControl<Grid>("AuthorizedShell")!.IsVisible = true;
+            window.FindControl<Border>("MainToolbar")!.IsEnabled = true;
+            window.FindControl<Grid>("AccountSearchHost")!.IsVisible = true;
+            window.FindControl<Button>("ClearSearchButton")!.IsVisible = true;
+            window.FindControl<Button>("AccountSortButton")!.IsVisible = true;
+            window.UpdateLayout();
+
+            Control[] expectedOrder =
+            [
+                window.FindControl<Button>("ScanQrButton")!,
+                window.FindControl<Button>("AddAccountButton")!,
+                window.FindControl<Button>("ManageGroupsButton")!,
+                window.FindControl<Button>("ToggleSearchButton")!,
+                window.FindControl<TextBox>("AccountSearchBox")!,
+                window.FindControl<Button>("ClearSearchButton")!,
+                window.FindControl<ComboBox>("LanguageSelector")!,
+                window.FindControl<Button>("AccountSortButton")!,
+                window.FindControl<Button>("OpenSettingsButton")!
+            ];
+            foreach (var button in expectedOrder.OfType<Button>())
+                button.Command = new TestCommand(static () => { });
+            window.UpdateLayout();
+
+            Assert.True(
+                expectedOrder[0].IsEffectivelyVisible,
+                "The scanner button must be effectively visible for focus traversal.");
+            Assert.True(
+                expectedOrder[0].IsEffectivelyEnabled,
+                "The scanner button must be effectively enabled for focus traversal.");
+            Assert.True(expectedOrder[0].Focusable);
+            Assert.True(expectedOrder[0].Focus());
+            Assert.True(expectedOrder[0].IsFocused);
+            for (var index = 1; index < expectedOrder.Length; index++)
+            {
+                window.KeyPress(
+                    Key.Tab,
+                    RawInputModifiers.None,
+                    PhysicalKey.Tab,
+                    null);
+                Assert.True(
+                    expectedOrder[index].IsFocused,
+                    $"Expected forward focus on {expectedOrder[index].Name}.");
+            }
+
+            for (var index = expectedOrder.Length - 2; index >= 0; index--)
+            {
+                window.KeyPress(
+                    Key.Tab,
+                    RawInputModifiers.Shift,
+                    PhysicalKey.Tab,
+                    null);
+                Assert.True(
+                    expectedOrder[index].IsFocused,
+                    $"Expected reverse focus on {expectedOrder[index].Name}.");
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private static void AssertToolbarAutomationName(
+        MainWindow window,
+        string controlName,
+        string resourceKey)
+    {
+        var button = window.FindControl<Button>(controlName);
+
+        Assert.NotNull(button);
+        Assert.Equal(
+            Application.Current!.Resources[resourceKey],
+            AutomationProperties.GetName(button));
+    }
+
+    [AvaloniaFact]
+    public void DesktopOnboardingWindow_IsWideFullSurfaceWithoutScrollbars()
+    {
+        var window = new OnboardingWindow();
+
+        try
+        {
+            window.Show();
+            Assert.Equal(920, window.Width);
+            Assert.Equal(660, window.Height);
+            Assert.Equal(720, window.MinWidth);
+            Assert.Equal(500, window.MinHeight);
+            Assert.Equal(WindowStartupLocation.CenterScreen, window.WindowStartupLocation);
+            Assert.Empty(window.GetVisualDescendants().OfType<ScrollViewer>());
+            Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
+
+            var surface = window.FindControl<Grid>("OnboardingSurface");
+            Assert.NotNull(surface);
+            Assert.Equal(HorizontalAlignment.Stretch, surface.HorizontalAlignment);
+            Assert.Equal(VerticalAlignment.Stretch, surface.VerticalAlignment);
+            Assert.Equal(default(Thickness), surface.Margin);
+
+            var artworkLayer = Assert.IsType<Grid>(window.FindControl<Grid>("OnboardingArtworkLayer"));
+            Assert.Equal(0, Grid.GetRow(artworkLayer));
+            Assert.Null(artworkLayer.RenderTransform);
+
+            var contentPanel = window.FindControl<Border>("OnboardingContentPanel");
+            Assert.NotNull(contentPanel);
+            Assert.Equal(1, Grid.GetRow(contentPanel));
+            Assert.Equal(new Thickness(0, -56, 0, 0), contentPanel.Margin);
+            Assert.Equal(new Thickness(36, 72, 36, 26), contentPanel.Padding);
+            Assert.Equal(VerticalAlignment.Bottom, contentPanel.VerticalAlignment);
+            Assert.IsType<LinearGradientBrush>(contentPanel.Background);
+
+            (string Intent, string Artwork)[] slides =
+            [
+                ("OnboardingAddAccountsIntent", "OnboardingAddAccountsSlide"),
+                ("OnboardingMoveAccountsIntent", "OnboardingMoveAccountsSlide"),
+                ("OnboardingOrganizeAccountsIntent", "OnboardingOrganizeAccountsSlide"),
+                ("OnboardingIconPackIntent", "OnboardingIconPackSlide"),
+                ("OnboardingQuickUnlockIntent", "OnboardingQuickUnlockSlide")
+            ];
+
+            foreach (var (intentName, artworkName) in slides)
+            {
+                var intent = window.FindControl<TextBlock>(intentName);
+                Assert.NotNull(intent);
+                Assert.IsType<StackPanel>(intent.Parent);
+                Assert.Contains(intent, contentPanel.GetVisualDescendants());
+
+                var artwork = window.FindControl<Image>(artworkName);
+                Assert.NotNull(artwork);
+                Assert.Equal(Stretch.UniformToFill, artwork.Stretch);
+                Assert.Equal(HorizontalAlignment.Stretch, artwork.HorizontalAlignment);
+                Assert.Equal(VerticalAlignment.Stretch, artwork.VerticalAlignment);
+            }
+
+            var skipButton = window.FindControl<Button>("SkipOnboardingButton");
+            Assert.NotNull(skipButton);
+            var previousButton = window.FindControl<Button>("PreviousOnboardingButton");
+            Assert.NotNull(previousButton);
+            var nextButton = window.FindControl<Button>("NextOnboardingButton");
+            Assert.NotNull(nextButton);
+            var finishButton = window.FindControl<Button>("FinishOnboardingButton");
+            Assert.NotNull(finishButton);
+
+            foreach (var button in new[] { skipButton, previousButton, nextButton, finishButton })
+            {
+                Assert.Contains("onboarding-action", button.Classes);
+                Assert.Equal(new Thickness(1), button.BorderThickness);
+                Assert.Equal(VerticalAlignment.Center, button.VerticalContentAlignment);
+                Assert.Equal(
+                    Colors.Transparent,
+                    Assert.IsAssignableFrom<ISolidColorBrush>(button.Background).Color);
+                Assert.NotEqual(
+                    Colors.Transparent,
+                    Assert.IsAssignableFrom<ISolidColorBrush>(button.BorderBrush).Color);
+                var contentPresenter = Assert.Single(
+                    button.GetVisualDescendants().OfType<ContentPresenter>(),
+                    presenter => presenter.Name == "OnboardingButtonContent");
+                Assert.Equal(VerticalAlignment.Stretch, contentPresenter.VerticalAlignment);
+                Assert.Equal(VerticalAlignment.Center, contentPresenter.VerticalContentAlignment);
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void DesktopOnboardingWindow_SwitchesArtworkWithTheActiveTheme()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var window = new OnboardingWindow();
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var image = Assert.IsType<Image>(window.FindControl<Image>("OnboardingAddAccountsSlide"));
+            var lightArtwork = Assert.IsAssignableFrom<IImage>(image.Source);
+            var intent = Assert.IsType<TextBlock>(window.FindControl<TextBlock>("OnboardingAddAccountsIntent"));
+            var contentPanel = window.FindControl<Border>("OnboardingContentPanel");
+            Assert.NotNull(contentPanel);
+            var lightPanel = Assert.IsType<LinearGradientBrush>(contentPanel.Background);
+            Assert.Equal(
+                Color.Parse("#669FA9D9"),
+                lightPanel.GradientStops[0].Color);
+            Assert.Equal(
+                Color.Parse("#1C2944"),
+                Assert.IsType<SolidColorBrush>(intent.Foreground).Color);
+            var nextButton = Assert.IsType<Button>(window.FindControl<Button>("NextOnboardingButton"));
+            Assert.Equal(
+                Color.Parse("#315F8E"),
+                Assert.IsType<SolidColorBrush>(nextButton.Foreground).Color);
+            Assert.Equal(
+                Color.Parse("#315F8E"),
+                Assert.IsType<SolidColorBrush>(nextButton.BorderBrush).Color);
+
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+            window.UpdateLayout();
+
+            var darkArtwork = Assert.IsAssignableFrom<IImage>(image.Source);
+            Assert.NotSame(lightArtwork, darkArtwork);
+            var darkPanel = Assert.IsType<LinearGradientBrush>(contentPanel.Background);
+            Assert.Equal(
+                Color.Parse("#73101A35"),
+                darkPanel.GradientStops[0].Color);
+            Assert.Equal(
+                Colors.White,
+                Assert.IsType<SolidColorBrush>(intent.Foreground).Color);
+            Assert.Equal(
+                Color.Parse("#63D4FF"),
+                Assert.IsType<SolidColorBrush>(nextButton.Foreground).Color);
+            Assert.Equal(
+                Color.Parse("#63D4FF"),
+                Assert.IsType<SolidColorBrush>(nextButton.BorderBrush).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void DesktopOnboardingButtons_PreserveThemeColorsWhilePressed()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+
+        try
+        {
+            foreach (var (theme, expectedAccent) in new[]
+                     {
+                         (ThemeVariant.Light, Color.Parse("#315F8E")),
+                         (ThemeVariant.Dark, Color.Parse("#63D4FF"))
+                     })
+            {
+                application.RequestedThemeVariant = theme;
+                var window = new OnboardingWindow();
+
+                try
+                {
+                    window.Show();
+                    window.UpdateLayout();
+                    var button = Assert.IsType<Button>(window.FindControl<Button>("NextOnboardingButton"));
+                    var buttonBorder = Assert.Single(
+                        button.GetVisualDescendants().OfType<Border>(),
+                        border => border.Name == "OnboardingButtonBorder");
+                    var contentPresenter = Assert.Single(
+                        button.GetVisualDescendants().OfType<ContentPresenter>(),
+                        presenter => presenter.Name == "OnboardingButtonContent");
+                    var pseudoClasses = Assert.IsAssignableFrom<IPseudoClasses>(button.Classes);
+
+                    pseudoClasses.Add(":pressed");
+                    window.UpdateLayout();
+
+                    Assert.True(pseudoClasses.Contains(":pressed"));
+                    Assert.Equal(
+                        Colors.Transparent,
+                        Assert.IsAssignableFrom<ISolidColorBrush>(buttonBorder.Background).Color);
+                    Assert.Equal(
+                        expectedAccent,
+                        Assert.IsAssignableFrom<ISolidColorBrush>(buttonBorder.BorderBrush).Color);
+                    Assert.Equal(
+                        expectedAccent,
+                        Assert.IsAssignableFrom<ISolidColorBrush>(contentPresenter.Foreground).Color);
+
+                    pseudoClasses.Remove(":pressed");
+                }
+                finally
+                {
+                    window.Close();
+                }
+            }
+        }
+        finally
+        {
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void FirstAccountOnboardingCard_ProvidesDirectLocalizedAddAction()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 540 };
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage?.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+
+            var card = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "FirstAccountOnboardingCard");
+            Assert.Equal(320, card.MaxWidth);
+            var addButton = Assert.Single(
+                card.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "AddFirstAccountButton");
+            var resources = Application.Current!.Resources;
+            Assert.Equal(resources[AvaloniaStringKeys.AddAccount], addButton.Content);
+            Assert.Equal(
+                resources[AvaloniaStringKeys.AddAccount],
+                AutomationProperties.GetName(addButton));
+            Assert.Contains(
+                card.GetLogicalDescendants().OfType<TextBlock>(),
+                text => Equals(
+                    text.Text,
+                    resources[AvaloniaStringKeys.SetUpFirstAccount]));
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ProductTitleBar_LockButtonExecutesBeforeMinimizeControl()
+    {
+        var executed = false;
+        var titleBar = new ProductTitleBar
+        {
+            ShowLockButton = true,
+            ShowMinimizeButton = true,
+            LockCommand = new TestCommand(() => executed = true)
+        };
+        var window = new Window { Content = titleBar };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var lockButton = titleBar.FindControl<Button>("TitleBarLockButton");
+            var minimizeButton = Assert.Single(
+                titleBar.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("titlebar-minimize"));
+            Assert.NotNull(lockButton);
+            Assert.True(lockButton.IsVisible);
+            Assert.True(Grid.GetColumn(lockButton) < Grid.GetColumn(minimizeButton));
+
+            Assert.Same(titleBar.LockCommand, lockButton.Command);
+            lockButton.Command!.Execute(null);
+
+            Assert.True(executed);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountEditorContent_KeepsNarrowClearanceFromOverlayScrollBar()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 540 };
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage);
+            Assert.NotNull(accountPage.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+            var flyout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "AccountEditorFlyout");
+            var advancedOptions = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Expander>(),
+                expander => expander.Name == "AccountAdvancedOptions");
+            var brandIconPicker = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<SearchableComboBox>(),
+                comboBox => comboBox.Name == "AccountBrandIconComboBox");
+            var customIconButton = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "AccountCustomIconButton");
+            var customIconMessage = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<ValidationMessage>(),
+                message => message.Name == "AccountCustomIconValidationMessage");
+            var noPackCallout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "NoBrandIconPackCallout");
+            var customIconFileNameHost = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "SelectedEditorCustomIconFileNameHost");
+            var periodInput = Assert.Single(
+                advancedOptions.GetLogicalDescendants().OfType<NumericUpDown>());
+            var scrollViewer = Assert.Single(
+                templateHost.GetVisualDescendants().OfType<ScrollViewer>(),
+                viewer => viewer.Name == "AccountEditorScrollViewer");
+            flyout.IsVisible = true;
+            advancedOptions.IsExpanded = false;
+            templateHost.UpdateLayout();
+            var issuer = Assert.Single(
+                templateHost.GetVisualDescendants().OfType<TextBox>(),
+                textBox => textBox.Name == "AccountIssuerBox");
+            Assert.Equal(HorizontalAlignment.Stretch, advancedOptions.HorizontalAlignment);
+            Assert.InRange(
+                Math.Abs(advancedOptions.Bounds.Width - issuer.Bounds.Width),
+                0,
+                0.5);
+
+            advancedOptions.IsExpanded = true;
+            scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
+            templateHost.UpdateLayout();
+            Assert.InRange(
+                Math.Abs(advancedOptions.Bounds.Width - issuer.Bounds.Width),
+                0,
+                0.5);
+
+            Assert.True(brandIconPicker.IsVisible);
+            Assert.True(brandIconPicker.Bounds.Height > 0);
+            Assert.Equal(HorizontalAlignment.Stretch, brandIconPicker.HorizontalAlignment);
+            Assert.Equal(new Thickness(), brandIconPicker.Margin);
+            Assert.InRange(
+                Math.Abs(brandIconPicker.Bounds.Width - periodInput.Bounds.Width),
+                0,
+                0.5);
+            var brandIconDropDownButton = Assert.Single(
+                brandIconPicker.GetVisualDescendants().OfType<Button>(),
+                button => button.Name == "PART_DropDownButton");
+            Assert.InRange(
+                Math.Abs(brandIconDropDownButton.Bounds.Width - periodInput.Bounds.Width),
+                0,
+                0.5);
+            var pickerOrigin = brandIconPicker.TranslatePoint(new Point(0, 0), advancedOptions);
+            var periodOrigin = periodInput.TranslatePoint(new Point(0, 0), advancedOptions);
+            Assert.NotNull(pickerOrigin);
+            Assert.NotNull(periodOrigin);
+            Assert.InRange(Math.Abs(pickerOrigin.Value.X - periodOrigin.Value.X), 0, 0.5);
+            Assert.Contains(brandIconPicker, advancedOptions.GetLogicalDescendants());
+            Assert.Equal(new Thickness(8, 0), customIconButton.Margin);
+            Assert.Contains("account-custom-icon", customIconButton.Classes);
+            Assert.Equal(new Thickness(8, 0), noPackCallout.Margin);
+            Assert.Contains(
+                noPackCallout.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.NoBrandIconPackInstalled]));
+            Assert.Contains(
+                noPackCallout.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.NoBrandIconPackInstructions]));
+            Assert.Equal(16, customIconFileNameHost.MinHeight);
+            Assert.Contains(customIconFileNameHost, advancedOptions.GetLogicalDescendants());
+            Assert.Equal(new Thickness(), customIconMessage.Margin);
+            var advancedContent = Assert.IsType<StackPanel>(advancedOptions.Content);
+            Assert.True(
+                advancedContent.Children.IndexOf(customIconMessage)
+                    > advancedContent.Children.IndexOf(customIconButton));
+
+            var accountEditorContent = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<StackPanel>(),
+                panel => panel.Name == "AccountEditorContent");
+            Assert.Equal(new Thickness(0, 10, 20, 10), accountEditorContent.Margin);
+
+            var verticalScrollBar = Assert.Single(
+                scrollViewer.GetVisualDescendants().OfType<ScrollBar>(),
+                scrollBar => scrollBar.Orientation == Orientation.Vertical && scrollBar.IsVisible);
+            var issuerRight = issuer.TranslatePoint(new Point(issuer.Bounds.Width, 0), scrollViewer);
+            var scrollBarLeft = verticalScrollBar.TranslatePoint(new Point(0, 0), scrollViewer);
+            Assert.NotNull(issuerRight);
+            Assert.NotNull(scrollBarLeft);
+            Assert.InRange(scrollBarLeft.Value.X - issuerRight.Value.X, 4, 12);
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountRow_ReservesSecondaryCodeLineWithoutChangingHeight()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 160 };
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            var accountPageTemplate = accountPage?.ContentTemplate
+                ?? throw new InvalidOperationException("The account page template is unavailable.");
+            var accountPageContent = accountPageTemplate.Build(null)
+                ?? throw new InvalidOperationException("The account page could not be built.");
+            var accountList = Assert.Single(
+                accountPageContent.GetLogicalDescendants().OfType<ListBox>(),
+                list => list.Name == "AccountsListBox");
+            var accountRowTemplate = accountList.ItemTemplate
+                ?? throw new InvalidOperationException("The account row template is unavailable.");
+
+            var account = new AccountListItemViewModel(
+                Guid.NewGuid(),
+                "Issuer",
+                "account");
+            account.UpdateCustomPeriodLabel("60 s");
+            account.UpdateNextTokenPreference(true);
+            account.UpdateCode("123456", 6, 60, "654321");
+            var row = accountRowTemplate.Build(account)
+                ?? throw new InvalidOperationException("The account row could not be built.");
+            row.DataContext = account;
+            templateHost.Content = row;
+            templateHost.Show();
+            templateHost.UpdateLayout();
+            var initialHeight = row.Bounds.Height;
+
+            account.Tick();
+            templateHost.UpdateLayout();
+            var nextTokenHeight = row.Bounds.Height;
+
+            account.ShowCopyConfirmation("Copied");
+            templateHost.UpdateLayout();
+            var confirmationHeight = row.Bounds.Height;
+
+            var codeButton = Assert.Single(
+                row.GetLogicalDescendants().OfType<Button>(),
+                button => button.Classes.Contains("row-code"));
+            var codeStack = Assert.IsType<StackPanel>(codeButton.Content);
+            Assert.Equal(Orientation.Vertical, codeStack.Orientation);
+            Assert.Equal(2, codeStack.Children.Count);
+            Assert.Equal(
+                Orientation.Horizontal,
+                Assert.IsType<StackPanel>(codeStack.Children[0]).Orientation);
+            var secondaryCodeLine = Assert.IsType<Grid>(codeStack.Children[1]);
+            var confirmation = Assert.Single(
+                secondaryCodeLine.Children.OfType<TextBlock>(),
+                textBlock => textBlock.Text == "Copied");
+            Assert.Equal("Copied", confirmation.Text);
+            Assert.Equal(16, secondaryCodeLine.Height);
+            Assert.Equal(2, secondaryCodeLine.Children.OfType<TextBlock>().Count());
+            Assert.Equal(initialHeight, nextTokenHeight, precision: 2);
+            Assert.Equal(initialHeight, confirmationHeight, precision: 2);
+            var periodLabel = Assert.Single(
+                row.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => textBlock.Text == "60 s");
+            var favoriteButtons = row.GetLogicalDescendants()
+                .OfType<Button>()
+                .Where(button => button.GetLogicalDescendants()
+                    .OfType<SymbolIcon>()
+                    .Any(icon => icon.Kind == SymbolIconKind.Favorite))
+                .ToArray();
+            Assert.Equal(2, Grid.GetColumn(periodLabel));
+            Assert.NotEmpty(favoriteButtons);
+            Assert.All(favoriteButtons, button => Assert.Equal(3, Grid.GetColumn(button)));
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void GroupEditorFlyout_ProvidesBoundedNameColorAndAccountSelection()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 540 };
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage?.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+            var groupScroller = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<ScrollViewer>(),
+                viewer => viewer.Name == "GroupCardsScrollViewer");
+            Assert.Equal(ScrollBarVisibility.Hidden, groupScroller.HorizontalScrollBarVisibility);
+            Assert.Equal(52, groupScroller.MaxHeight);
+            var groupStrip = Assert.IsType<StackPanel>(groupScroller.Content);
+            Assert.Equal(Orientation.Horizontal, groupStrip.Orientation);
+            var favorites = Assert.IsType<Border>(groupStrip.Children[0]);
+            Assert.Equal("FavoritesGroupCard", favorites.Name);
+            Assert.Equal(42, favorites.MinHeight);
+            var favoritesButton = Assert.IsType<Button>(favorites.Child);
+            var favoritesContent = Assert.IsType<Grid>(favoritesButton.Content);
+            var favoritesLabelRow = Assert.IsType<Grid>(favoritesContent.Children[1]);
+            Assert.Equal("FavoritesGroupLabelRow", favoritesLabelRow.Name);
+            Assert.Equal(2, favoritesLabelRow.ColumnDefinitions.Count);
+            Assert.True(favoritesLabelRow.ColumnDefinitions[0].Width.IsStar);
+            Assert.True(favoritesLabelRow.ColumnDefinitions[1].Width.IsAuto);
+            var favoriteLabels = favoritesLabelRow.Children.OfType<TextBlock>().ToArray();
+            Assert.Equal(2, favoriteLabels.Length);
+            Assert.Equal(0, Grid.GetColumn(favoriteLabels[0]));
+            Assert.Equal(1, Grid.GetColumn(favoriteLabels[1]));
+            Assert.Equal(HorizontalAlignment.Right, favoriteLabels[1].HorizontalAlignment);
+            var favoritesMenu = Assert.IsType<ContextMenu>(favorites.ContextMenu);
+            var favoriteEdit = Assert.Single(favoritesMenu.Items.Cast<MenuItem>());
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.EditFavorites],
+                favoriteEdit.Header);
+            var groupItems = Assert.IsType<ItemsControl>(groupStrip.Children[1]);
+            var noOpCommand = new TestCommand(() => { });
+            groupItems.ItemsSource = new[]
+            {
+                new AccountGroupListItemViewModel(
+                    new AccountGroup(Guid.NewGuid(), "Test group", "#0078D4"),
+                    12,
+                    false,
+                    noOpCommand,
+                    noOpCommand,
+                    noOpCommand),
+            };
+            templateHost.UpdateLayout();
+            var groupCard = Assert.Single(
+                groupItems.GetLogicalDescendants().OfType<Border>(),
+                border => border.Classes.Contains("group-card"));
+            Assert.Equal(42, groupCard.MinHeight);
+            var groupLabelRow = Assert.Single(
+                groupCard.GetLogicalDescendants().OfType<Grid>(),
+                grid => grid.Name == "GroupCardLabelRow");
+            var groupLabels = groupLabelRow.Children.OfType<TextBlock>().ToArray();
+            Assert.Equal(2, groupLabels.Length);
+            Assert.Equal(0, Grid.GetColumn(groupLabels[0]));
+            Assert.Equal(1, Grid.GetColumn(groupLabels[1]));
+            Assert.Equal(HorizontalAlignment.Right, groupLabels[1].HorizontalAlignment);
+            Assert.Equal(2, groupStrip.Children.Count);
+            Assert.DoesNotContain(
+                templateHost.GetLogicalDescendants().OfType<Control>(),
+                control => control.Name is "AllAccountsGroupCard" or "UngroupedGroupCard");
+            var groupBackButton = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "GroupBackButton");
+            Assert.Same(groupScroller.Parent, groupBackButton.Parent);
+            Assert.Equal(0, Grid.GetColumn(groupBackButton));
+            Assert.Equal(1, Grid.GetColumn(groupScroller));
+            var groupNavigationGrid = Assert.IsType<Grid>(groupScroller.Parent);
+            Assert.Equal(new GridLength(10), groupNavigationGrid.ColumnDefinitions[0].Width);
+            Assert.Equal(new Thickness(-7, 2, 1, 2), groupBackButton.Margin);
+            Assert.Equal(42, groupBackButton.Height);
+            Assert.Equal(16, groupBackButton.Width);
+            Assert.Empty(groupBackButton.GetLogicalDescendants().OfType<TextBlock>());
+            Assert.Equal(
+                12,
+                Assert.Single(groupBackButton.GetLogicalDescendants().OfType<SymbolIcon>()).IconSize);
+            var accountSort = mainWindow.FindControl<Button>("AccountSortButton");
+            Assert.NotNull(accountSort);
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.SortAccounts],
+                AutomationProperties.GetName(accountSort));
+            Assert.Equal(
+                SymbolIconKind.Sort,
+                Assert.IsType<SymbolIcon>(accountSort.Content).Kind);
+            var flyout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "GroupEditorFlyout");
+            flyout.IsVisible = true;
+            templateHost.UpdateLayout();
+
+            var name = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<TextBox>(),
+                textBox => textBox.Name == "GroupNameBox");
+            Assert.Equal(AccountGroupPolicy.MaximumNameLength, name.MaxLength);
+            Assert.Single(
+                flyout.GetLogicalDescendants().OfType<TextBox>(),
+                textBox => textBox.Name == "GroupAccountSearchBox");
+            var colorList = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<ListBox>(),
+                listBox => listBox.Classes.Contains("group-color-picker"));
+            var groupNameIcon = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Folder);
+            Assert.Equal(SymbolIconKind.Folder, groupNameIcon.Kind);
+            Assert.Equal(27, groupNameIcon.IconSize);
+            var favoritesIcon = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<SymbolIcon>(),
+                icon => icon.Kind == SymbolIconKind.Favorite);
+            Assert.Equal(27, favoritesIcon.IconSize);
+            Assert.Equal(SelectionMode.Single, colorList.SelectionMode);
+            Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(colorList));
+            Assert.Equal(ScrollBarVisibility.Disabled, ScrollViewer.GetVerticalScrollBarVisibility(colorList));
+            var accountPicker = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<ListBox>(),
+                listBox => listBox.Name == "GroupAccountPicker");
+            Assert.Equal(240, Assert.IsType<Grid>(accountPicker.Parent).Height);
+            Assert.Equal(
+                ScrollBarVisibility.Hidden,
+                ScrollViewer.GetVerticalScrollBarVisibility(accountPicker));
+            Assert.Single(accountPicker.GetVisualDescendants().OfType<VirtualizingStackPanel>());
+            Assert.True(flyout.Bounds.Height > 0);
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_IsCompactWithTwoRowsOfTabs()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(520, window.Width);
+            Assert.Equal(520, window.MinWidth);
+            Assert.True(window.Topmost);
+            Assert.Equal(WindowDecorations.None, window.WindowDecorations);
+            Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
+            var settingsTabs = Assert.Single(
+                window.GetVisualDescendants().OfType<TabControl>(),
+                tabControl => tabControl.Classes.Contains("settings-tabs"));
+            var tabs = settingsTabs.GetVisualDescendants().OfType<TabItem>().ToArray();
+            Assert.Equal(8, tabs.Length);
+            var tabHeaders = tabs
+                .Select(tab => Assert.IsType<StackPanel>(tab.Header))
+                .ToArray();
+            Assert.Equal(
+                [
+                    Application.Current!.Resources[AvaloniaStringKeys.Appearance],
+                    Application.Current.Resources[AvaloniaStringKeys.IconPacks],
+                    Application.Current.Resources[AvaloniaStringKeys.Security],
+                    Application.Current.Resources[AvaloniaStringKeys.Backups],
+                    Application.Current.Resources[AvaloniaStringKeys.ImportExport],
+                    Application.Current.Resources[AvaloniaStringKeys.Miscellaneous],
+                    Application.Current.Resources[AvaloniaStringKeys.Faq],
+                    Application.Current.Resources[AvaloniaStringKeys.About]
+                ],
+                tabHeaders.Select(header => Assert.Single(header.Children.OfType<TextBlock>()).Text));
+            Assert.Equal(
+                [
+                    SymbolIconKind.Palette,
+                    SymbolIconKind.ImageStack,
+                    SymbolIconKind.Vault,
+                    SymbolIconKind.BackupRestore,
+                    SymbolIconKind.Import,
+                    SymbolIconKind.Diagnostics,
+                    SymbolIconKind.Help,
+                    SymbolIconKind.Information
+                ],
+                tabHeaders.Select(header => Assert.Single(header.Children.OfType<SymbolIcon>()).Kind));
+            Assert.True(tabs.Take(4).Sum(tab => tab.MinWidth) <= window.Width - 32);
+            Assert.All(
+                tabs,
+                tab => Assert.Equal(tabs[0].Bounds.Width, tab.Bounds.Width, precision: 2));
+            Assert.Equal(2, tabs.Select(tab => tab.Bounds.Top).Distinct().Count());
+            Assert.All(tabs.Take(4), tab => Assert.Equal(tabs[0].Bounds.Top, tab.Bounds.Top, precision: 2));
+            Assert.All(tabs.Skip(4), tab => Assert.Equal(tabs[4].Bounds.Top, tab.Bounds.Top, precision: 2));
+            Assert.True(tabs[4].Bounds.Top > tabs[0].Bounds.Top);
+            for (var index = 1; index < 4; index++)
+            {
+                Assert.Equal(
+                    tabs[index - 1].Bounds.Right,
+                    tabs[index].Bounds.Left,
+                    precision: 2);
+            }
+            for (var index = 5; index < tabs.Length; index++)
+            {
+                Assert.Equal(
+                    tabs[index - 1].Bounds.Right,
+                    tabs[index].Bounds.Left,
+                    precision: 2);
+            }
+            Assert.All(
+                tabs,
+                tabItem =>
+                {
+                    Assert.Equal(104, tabItem.MinWidth);
+                    Assert.Equal(12, tabItem.FontSize);
+                    Assert.Equal(FontWeight.SemiBold, tabItem.FontWeight);
+                    Assert.Equal(
+                        global::Avalonia.Layout.HorizontalAlignment.Center,
+                        tabItem.HorizontalContentAlignment);
+                });
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void MasterPasswordChange_UsesNeutralActionStyle()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var settingsTabs = Assert.Single(
+                window.GetVisualDescendants().OfType<TabControl>(),
+                tabControl => tabControl.Classes.Contains("settings-tabs"));
+            settingsTabs.SelectedIndex = 2;
+            window.UpdateLayout();
+
+            var authorizationHost = Assert.Single(
+                window.GetVisualDescendants().OfType<ContentControl>(),
+                control => control.Name == "AuthorizationSettingsHost");
+            var contentTemplate = authorizationHost.ContentTemplate;
+            Assert.NotNull(contentTemplate);
+            var content = Assert.IsAssignableFrom<Control>(contentTemplate.Build(null));
+            var changeButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                control => control.Name == "MasterPasswordChangeButton");
+
+            Assert.DoesNotContain("primary", changeButton.Classes);
+            Assert.DoesNotContain("danger", changeButton.Classes);
+            Assert.Contains("settings-action", changeButton.Classes);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void GroupEditorAccountPicker_RealizesOnlyViewportRowsForLargeVault()
+    {
+        var mainWindow = new MainWindow();
+        var templateHost = new Window { Width = 380, Height = 540 };
+        var accounts = Enumerable.Range(0, 800)
+            .Select(index => new GroupAccountSelectionViewModel(
+                Guid.NewGuid(),
+                $"Issuer {index:000}",
+                $"account-{index:000}",
+                TOTP.Avalonia.Shared.Branding.BrandInfo.Generic($"Issuer {index:000}"),
+                showIssuerLogo: true,
+                isSelected: false))
+            .ToArray();
+
+        try
+        {
+            mainWindow.Show();
+            var accountPage = mainWindow.FindControl<ContentControl>("AccountListPage");
+            Assert.NotNull(accountPage?.ContentTemplate);
+            templateHost.Content = accountPage.ContentTemplate.Build(null);
+            templateHost.Show();
+
+            var flyout = Assert.Single(
+                templateHost.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "GroupEditorFlyout");
+            flyout.IsVisible = true;
+            var accountPicker = Assert.Single(
+                flyout.GetLogicalDescendants().OfType<ListBox>(),
+                listBox => listBox.Name == "GroupAccountPicker");
+            accountPicker.ItemsSource = accounts;
+            templateHost.UpdateLayout();
+
+            var realizedRows = accountPicker.GetVisualDescendants().OfType<ListBoxItem>().Count();
+            Assert.InRange(realizedRows, 1, 20);
+            Assert.Equal(800, accountPicker.ItemCount);
+        }
+        finally
+        {
+            templateHost.Close();
+            mainWindow.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_DarkFaqCardsUseConfiguredHeaderBackground()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        var previousTheme = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Dark;
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var settingsTabs = Assert.Single(
+                window.GetVisualDescendants().OfType<TabControl>(),
+                tabControl => tabControl.Classes.Contains("settings-tabs"));
+            settingsTabs.SelectedIndex = 6;
+            window.UpdateLayout();
+
+            var faqCards = window
+                .GetVisualDescendants()
+                .OfType<Border>()
+                .Where(border => border.Name is "FaqIconPacksCard" or "FaqImportFormatsCard")
+                .ToArray();
+            Assert.Equal(2, faqCards.Length);
+            Assert.All(faqCards, card => Assert.Equal(
+                Color.Parse("#0E192D"),
+                Assert.IsType<SolidColorBrush>(card.Background).Color));
+            var renderedHeaders = faqCards
+                .Select(card => Assert.Single(
+                    card.GetVisualDescendants().OfType<ToggleButton>(),
+                    toggle => toggle.Name == "ExpanderHeader"))
+                .ToArray();
+            Assert.All(renderedHeaders, header =>
+            {
+                Assert.Equal(
+                    Color.Parse("#0E192D"),
+                    Assert.IsType<SolidColorBrush>(header.Background).Color);
+                var renderedHeaderSurface = Assert.Single(
+                    header.GetVisualDescendants().OfType<Border>(),
+                    border => border.Name == "ToggleButtonBackground");
+                Assert.Equal(
+                    Color.Parse("#0E192D"),
+                    Assert.IsType<SolidColorBrush>(renderedHeaderSurface.Background).Color);
+            });
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = previousTheme;
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_LongImportsUseCenteredOverlayProgressOutsideLayoutFlow()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            var overlay = window.FindControl<Border>("SettingsImportProgressOverlay");
+            Assert.NotNull(overlay);
+            Assert.Equal(100, overlay.GetValue(Panel.ZIndexProperty));
+            var progress = Assert.Single(
+                overlay.GetVisualDescendants().OfType<ProgressBar>());
+            Assert.False(progress.IsIndeterminate);
+            var panel = Assert.Single(
+                overlay.GetVisualChildren().OfType<Border>());
+            Assert.Equal(
+                global::Avalonia.Layout.HorizontalAlignment.Center,
+                panel.HorizontalAlignment);
+            Assert.Equal(
+                global::Avalonia.Layout.VerticalAlignment.Center,
+                panel.VerticalAlignment);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_CloseButtonHasLocalizedAutomationName()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var closeButton = Assert.Single(
+                window.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("icon")
+                    && button.Content is SymbolIcon { Kind: SymbolIconKind.Close });
+
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.CloseSettings],
+                AutomationProperties.GetName(closeButton));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void BackupAndImportSettings_AreSeparatedIntoDedicatedTabs()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var host = window.FindControl<ContentControl>("ImportExportSettingsHost");
+            Assert.NotNull(host?.ContentTemplate);
+            var content = Assert.IsAssignableFrom<Control>(host.ContentTemplate!.Build(null));
+
+            var exportButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "EncryptedBackupExportButton");
+            var restoreButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "EncryptedBackupRestoreButton");
+            var openFolderButton = Assert.Single(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "OpenLastBackupFolderButton");
+            var openExportAfterCheckBox = Assert.Single(
+                content.GetLogicalDescendants().OfType<CheckBox>(),
+                checkBox => checkBox.Name == "OpenExportAfterCheckBox");
+            var exportPanel = Assert.Single(
+                content.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "EncryptedBackupExportPanel");
+            var restorePanel = Assert.Single(
+                content.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "EncryptedBackupRestorePanel");
+            var restoreConflictStrategy = Assert.Single(
+                content.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "RestoreConflictStrategyComboBox");
+            Assert.Contains("primary", exportButton.Classes);
+            Assert.Contains("wide", exportButton.Classes);
+            Assert.Contains("wide", restoreButton.Classes);
+            Assert.Contains("secondary", openFolderButton.Classes);
+            Assert.Contains("wide", openFolderButton.Classes);
+            Assert.Contains(openFolderButton, exportPanel.GetLogicalDescendants());
+            Assert.Contains(openExportAfterCheckBox, exportPanel.GetLogicalDescendants());
+            Assert.DoesNotContain(openFolderButton, restorePanel.GetLogicalDescendants());
+            Assert.NotNull(restoreConflictStrategy);
+            Assert.DoesNotContain(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name is "OtherFormatsImportButton" or "GoogleAuthenticatorImportButton");
+            Assert.DoesNotContain(
+                content.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
+
+            var importHost = window.FindControl<ContentControl>("AccountImportSettingsHost");
+            Assert.NotNull(importHost?.ContentTemplate);
+            var importContent = Assert.IsAssignableFrom<Control>(importHost.ContentTemplate!.Build(null));
+            var importButtons = new[]
+            {
+                Assert.Single(importContent.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtherFormatsImportButton"),
+                Assert.Single(importContent.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton")
+            };
+            Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));
+            Assert.Single(
+                importContent.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "OtherFormatsConflictStrategyComboBox");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AppearanceAndBrandIconSettings_AreSeparatedIntoDedicatedTabs()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var appearanceHost = window.FindControl<ContentControl>("AppearanceSettingsHost");
+            Assert.NotNull(appearanceHost?.ContentTemplate);
+            var appearanceContent = Assert.IsAssignableFrom<Control>(
+                appearanceHost.ContentTemplate!.Build(null));
+            var appearancePanel = Assert.Single(
+                appearanceContent.GetLogicalDescendants().OfType<StackPanel>(),
+                panel => panel.Name == "AppearanceSettingsPanel");
+            var appearanceSettingPanels = appearancePanel.Children
+                .OfType<Border>()
+                .ToArray();
+            Assert.Equal(
+                [
+                    "AppearanceLanguagePanel",
+                    "AppearanceThemePanel",
+                    "AppearanceNextTokenPanel",
+                    "AppearanceIssuerLogoPanel",
+                    "AppearanceQrPreviewPanel",
+                    "AppearanceInterfaceScalePanel"
+                ],
+                appearanceSettingPanels.Select(panel => panel.Name));
+            Assert.All(
+                appearanceSettingPanels,
+                panel => Assert.Contains("panel", panel.Classes));
+            var appearanceIssuerLogoPanel = Assert.Single(
+                appearanceSettingPanels,
+                panel => panel.Name == "AppearanceIssuerLogoPanel");
+            var appearanceIssuerLogoCheckBox = Assert.Single(
+                appearanceIssuerLogoPanel.GetLogicalDescendants().OfType<CheckBox>());
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo],
+                appearanceIssuerLogoCheckBox.Content);
+
+            var host = window.FindControl<ContentControl>("MiscSettingsHost");
+            Assert.NotNull(host?.ContentTemplate);
+            var content = Assert.IsAssignableFrom<Control>(host.ContentTemplate.Build(null));
+            var panel = Assert.Single(
+                content.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "MiscSettingsPanel");
+            var loggingPicker = Assert.Single(
+                panel.GetLogicalDescendants().OfType<ComboBox>(),
+                comboBox => comboBox.Name == "MinimumLoggingLevelPicker");
+            Assert.NotNull(loggingPicker);
+            Assert.DoesNotContain(
+                panel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
+
+            var brandIconHost = window.FindControl<ContentControl>("BrandIconSettingsHost");
+            Assert.NotNull(brandIconHost?.ContentTemplate);
+            var brandIconContent = Assert.IsAssignableFrom<Control>(
+                brandIconHost.ContentTemplate!.Build(null));
+            var brandIconsPanel = Assert.Single(
+                brandIconContent.GetLogicalDescendants().OfType<Border>(),
+                border => border.Name == "BrandIconsPanel");
+            var importButton = Assert.Single(
+                brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "BrandIconsImportButton");
+            var resetButton = Assert.Single(
+                brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "BrandIconsResetButton");
+            Assert.Contains("wide", importButton.Classes);
+            Assert.Contains("secondary", resetButton.Classes);
+            Assert.Contains("wide", resetButton.Classes);
+            var resetButtonLabel = Assert.IsType<SymbolIconLabel>(resetButton.Content);
+            Assert.Equal(SymbolIconKind.Delete, resetButtonLabel.Kind);
+            var builderLink = Assert.Single(
+                brandIconsPanel.GetLogicalDescendants().OfType<HyperlinkButton>());
+            Assert.Equal(
+                new Uri("https://github.com/Legends/otp-harbor-icon-pack-builder"),
+                builderLink.NavigateUri);
+            var builderLinkLabel = Assert.IsType<SymbolIconLabel>(builderLink.Content);
+            Assert.Equal(SymbolIconKind.ExternalLink, builderLinkLabel.Kind);
+            Assert.Contains(
+                brandIconsPanel.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.BrandIconsHelp]));
+            Assert.Contains(
+                brandIconsPanel.GetLogicalDescendants().OfType<CheckBox>(),
+                checkBox => Equals(
+                    checkBox.Content,
+                    Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo]));
+            Assert.DoesNotContain(
+                panel.GetLogicalDescendants().OfType<CheckBox>(),
+                checkBox => checkBox.Name == "OpenExportAfterCheckBox");
+            Assert.DoesNotContain(
+                panel.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => textBlock.Text is not null
+                    && Equals(
+                        textBlock.Text,
+                        Application.Current!.Resources[AvaloniaStringKeys.SettingsAutoSaveHint]));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsTabs_UseOneBottomOverlayOutsideTabContent()
+    {
+        var window = new SettingsWindow();
+
+        try
+        {
+            window.Show();
+            var settingsTabs = Assert.Single(
+                window.GetVisualDescendants().OfType<TabControl>(),
+                tabControl => tabControl.Classes.Contains("settings-tabs"));
+            Assert.Equal(8, settingsTabs.ItemCount);
+            NotificationBanner? overlay = null;
+            for (var tabIndex = 0; tabIndex < settingsTabs.ItemCount; tabIndex++)
+            {
+                settingsTabs.SelectedIndex = tabIndex;
+                window.UpdateLayout();
+
+                var currentOverlay = Assert.Single(
+                    window.GetVisualDescendants().OfType<NotificationBanner>(),
+                    control => control.Name == "SettingsNotificationToast");
+                overlay ??= currentOverlay;
+                Assert.Same(overlay, currentOverlay);
+                Assert.Equal(VerticalAlignment.Bottom, currentOverlay.VerticalAlignment);
+                Assert.Equal(HorizontalAlignment.Center, currentOverlay.HorizontalAlignment);
+                Assert.False(currentOverlay.IsHitTestVisible);
+                Assert.Contains("toast", currentOverlay.Classes);
+                Assert.Equal(new Thickness(16, 16, 16, 18), currentOverlay.Margin);
+                Assert.DoesNotContain(
+                    currentOverlay,
+                    settingsTabs.GetVisualDescendants());
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SecurityBehaviorSettings_AreInsideSecurityTab()
+    {
+        var window = new SettingsWindow();
+        using var settingsPage = new SettingsPageViewModel(new TestSettingsService());
+
+        try
+        {
+            window.Show();
+            var settingsTabs = Assert.Single(
+                window.GetVisualDescendants().OfType<TabControl>(),
+                tabControl => tabControl.Classes.Contains("settings-tabs"));
+            settingsTabs.SelectedIndex = 2;
+            window.UpdateLayout();
+            var settingsHost = Assert.Single(
+                window.GetVisualDescendants().OfType<ContentControl>(),
+                control => control.Name == "SecurityBehaviorSettingsHost");
+            settingsHost.Content = settingsPage;
+            window.UpdateLayout();
+
+            var scrollViewer = Assert.Single(
+                window.GetVisualDescendants().OfType<ScrollViewer>(),
+                control => control.Name == "SecuritySettingsScroll");
+            var behaviorSettings = Assert.Single(
+                window.GetVisualDescendants().OfType<Border>(),
+                control => control.Name == "SecurityBehaviorSettings");
+            Assert.Contains(behaviorSettings, scrollViewer.GetVisualDescendants());
+            var autoLockSelector = Assert.Single(
+                behaviorSettings.GetVisualDescendants().OfType<ComboBox>(),
+                control => control.Name == "AutoLockSelector");
+            Assert.Equal(9, autoLockSelector.ItemCount);
+            Assert.Equal(
+                TimeSpan.FromMinutes(10),
+                Assert.IsType<SettingsPageViewModel.AutoLockOption>(
+                    autoLockSelector.SelectedItem).Timeout);
+            var clipboardLifetimeSelector = Assert.Single(
+                behaviorSettings.GetVisualDescendants().OfType<ComboBox>(),
+                control => control.Name == "ClipboardLifetimeSelector");
+            Assert.Equal(6, clipboardLifetimeSelector.ItemCount);
+            Assert.Equal(
+                [5, 10, 15, 20, 30, 60],
+                settingsPage.ClipboardLifetimeOptions.Select(option => option.Seconds));
+            Assert.Empty(behaviorSettings.GetVisualDescendants().OfType<NumericUpDown>());
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void DarkVariant_UsesOriginalNavyAndPurplePalette()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Dark;
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+
+            Assert.True(window.TryFindResource(
+                "BrushWindowBackground",
+                ThemeVariant.Dark,
+                out var background));
+            Assert.Equal(
+                Color.Parse("#0C1C33"),
+                Assert.IsType<SolidColorBrush>(background).Color);
+            Assert.True(window.TryFindResource(
+                "BrushAccent",
+                ThemeVariant.Dark,
+                out var accent));
+            Assert.Equal(
+                Color.Parse("#7D7FF4"),
+                Assert.IsType<SolidColorBrush>(accent).Color);
+            Assert.True(window.TryFindResource(
+                "BrushToastBackground",
+                ThemeVariant.Dark,
+                out var toastBackground));
+            Assert.Equal(
+                Color.Parse("#243C63"),
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
+            Assert.NotEqual(
+                Assert.IsType<SolidColorBrush>(background).Color,
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void LightVariant_UsesBrightSurfaceAndMatchingBlueAccent()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+
+            Assert.True(window.TryFindResource(
+                "BrushWindowBackground",
+                ThemeVariant.Light,
+                out var background));
+            Assert.Equal(
+                Colors.White,
+                Assert.IsType<SolidColorBrush>(background).Color);
+            Assert.True(window.TryFindResource(
+                "BrushAccountItemBackground",
+                ThemeVariant.Light,
+                out var accountBackground));
+            Assert.Equal(
+                Color.Parse("#F2F4FB"),
+                Assert.IsType<SolidColorBrush>(accountBackground).Color);
+            Assert.True(window.TryFindResource(
+                "BrushAccent",
+                ThemeVariant.Light,
+                out var accent));
+            Assert.Equal(
+                Color.Parse("#168AE0"),
+                Assert.IsType<SolidColorBrush>(accent).Color);
+            Assert.True(window.TryFindResource(
+                "BrushToastBackground",
+                ThemeVariant.Light,
+                out var toastBackground));
+            Assert.Equal(
+                Color.Parse("#F7F8FC"),
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
+            Assert.NotEqual(
+                Assert.IsType<SolidColorBrush>(background).Color,
+                Assert.IsType<SolidColorBrush>(toastBackground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void ExpiringAccountProgress_UsesCountdownWarningRed()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = ThemeVariant.Light;
+        var progress = new ProgressBar { Maximum = 30, Value = 10 };
+        progress.Classes.Add("account-countdown");
+        progress.Classes.Add("expiring");
+        var window = new Window { Content = progress };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(
+                Color.Parse("#F44336"),
+                Assert.IsType<SolidColorBrush>(progress.Foreground).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    [AvaloniaFact]
+    public void AccountCountdownProgress_RendersAsOneDipHairline()
+    {
+        var progress = new ProgressBar
+        {
+            Width = 200,
+            Maximum = 30,
+            Value = 15
+        };
+        progress.Classes.Add("account-countdown");
+        var window = new Window { Content = progress };
+
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.Equal(1, progress.Bounds.Height, precision: 2);
+            Assert.Equal(0, progress.MinHeight);
+            Assert.Equal(1, progress.MaxHeight);
+            Assert.True(progress.ClipToBounds);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void HighContrastVariant_ResolvesDedicatedSemanticPalette()
+    {
+        var application = Assert.IsType<App>(Application.Current);
+        application.RequestedThemeVariant = AvaloniaThemeVariants.HighContrast;
+        var window = new MainWindow();
+
+        try
+        {
+            window.Show();
+
+            Assert.True(window.TryFindResource(
+                "BrushWindowBackground",
+                AvaloniaThemeVariants.HighContrast,
+                out var background));
+            Assert.Equal(Colors.Black, Assert.IsType<SolidColorBrush>(background).Color);
+            Assert.True(window.TryFindResource(
+                "BrushFocus",
+                AvaloniaThemeVariants.HighContrast,
+                out var focus));
+            Assert.Equal(Color.Parse("#00FFFF"), Assert.IsType<SolidColorBrush>(focus).Color);
+        }
+        finally
+        {
+            window.Close();
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+        }
+    }
+
+    private sealed class TestCommand(Action execute) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => execute();
+    }
+
+    private sealed class TestSelectionModel(object? selectedItem, object? rejectedItem) :
+        System.ComponentModel.INotifyPropertyChanged
+    {
+        private object? _selectedItem = selectedItem;
+        private readonly object? _rejectedItem = rejectedItem;
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+        public object? SelectedItem
+        {
+            get => _selectedItem;
+            set
+            {
+                if (ReferenceEquals(value, _rejectedItem)) return;
+                if (ReferenceEquals(_selectedItem, value)) return;
+                _selectedItem = value;
+                NotifySelectionChanged();
+            }
+        }
+
+        public void RestorePreviousSelection()
+        {
+            var previous = _selectedItem;
+            _selectedItem = null;
+            NotifySelectionChanged();
+            _selectedItem = previous;
+            NotifySelectionChanged();
+        }
+
+        private void NotifySelectionChanged() => PropertyChanged?.Invoke(
+            this,
+            new System.ComponentModel.PropertyChangedEventArgs(nameof(SelectedItem)));
+    }
+
+    private sealed class TestSettingsService : ISettingsService
+    {
+        public IAppSettings Current { get; } = new AppSettings();
+
+        public Task<Result<IAppSettings>> LoadAsync() =>
+            Task.FromResult(Result.Ok(Current));
+
+        public Task<Result> SaveAsync() => Task.FromResult(Result.Ok());
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> predicate)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(3));
+
+        while (!predicate())
+            await Task.Delay(10, timeout.Token);
+    }
+}

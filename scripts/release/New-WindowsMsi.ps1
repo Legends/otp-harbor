@@ -47,7 +47,7 @@ $licensePath = Join-Path $installerResourceRoot "License.$Culture.rtf"
 $languageId = @{ 'en-us' = 1033; 'de-de' = 1031; 'fr-fr' = 1036; 'es-es' = 3082 }[$Culture]
 $dialogBitmapPath = Join-Path $installerResourceRoot 'InstallerDialog.bmp'
 $bannerBitmapPath = Join-Path $installerResourceRoot 'InstallerBanner.bmp'
-$applicationIconPath = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico'
+$applicationIconPath = Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app.ico'
 if (-not (Test-Path -LiteralPath $mainExecutable -PathType Leaf)) {
     throw "The Windows publish payload is missing its application executable: $mainExecutable"
 }

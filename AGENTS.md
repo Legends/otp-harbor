@@ -98,38 +98,38 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 
 ### Project layout
 
-- `TOTP.Core`
+- `OtpHarbor.Core`
   - domain models, enums, common primitives, contracts, security abstractions
-- `TOTP.Infrastructure`
+- `OtpHarbor.Infrastructure`
   - concrete implementations for logging, crypto orchestration, security, settings, account management, export, QR generation
-- `TOTP.DAL`
+- `OtpHarbor.DAL`
   - persistence and filesystem-facing data access
-- `TOTP.Camera.OpenCv`
+- `OtpHarbor.Camera.OpenCv`
   - OpenCV camera capture and QR scanning
-- `TOTP.Platform.Windows`
+- `OtpHarbor.Platform.Windows`
   - Windows-specific platform implementation
-- `TOTP.Platform.Linux`
+- `OtpHarbor.Platform.Linux`
   - Linux-specific platform implementation
-- `TOTP.Platform.MacOS`
+- `OtpHarbor.Platform.MacOS`
   - macOS-specific platform implementation
-- `TOTP.Platform.Unix`
+- `OtpHarbor.Platform.Unix`
   - shared Unix-specific implementation
-- `TOTP.UI.Avalonia.Shared`
+- `OtpHarbor.UI.Avalonia.Shared`
   - portable presentation contracts and shared Avalonia-facing workflows
-- `TOTP.UI.Avalonia.Desktop`
+- `OtpHarbor.UI.Avalonia.Desktop`
   - Avalonia views, view models, commands, bootstrap, platform UI adapters, and assets
-- `TOTP.Installer`
+- `OtpHarbor.Installer`
   - installer-related functionality
-- `TOTP.Tests`
+- `OtpHarbor.Tests`
   - unit, regression, security-adjacent, and integration tests
-- `TOTP.Tests.Avalonia.Headless`
+- `OtpHarbor.Tests.Avalonia.Headless`
   - Avalonia headless UI and interaction tests
-- `TOTP.Tests.Unix`
+- `OtpHarbor.Tests.Unix`
   - Unix/platform-specific tests
-- `TOTP.Updater`
+- `OtpHarbor.Updater`
   - updater/install support UI and logic
-- `TOTP.UI.Avalonia.Mobile`, `TOTP.UI.Avalonia.Android`, and `TOTP.Platform.Android`
-  - adjacent shared mobile UI, Android host, and Android platform projects built by the Android workflow rather than `TOTP.sln`
+- `OtpHarbor.UI.Avalonia.Mobile`, `OtpHarbor.UI.Avalonia.Android`, and `OtpHarbor.Platform.Android`
+  - adjacent shared mobile UI, Android host, and Android platform projects built by the Android workflow rather than `OtpHarbor.sln`
 - `scripts`
   - release, security, and local update/testing helpers
 - `docs/security`
@@ -170,7 +170,7 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 - Keep MVVM boundaries strict.
 - Keep business/security decisions out of Avalonia code-behind.
 - Prefer interface-driven services and constructor injection.
-- Keep desktop composition rooted in `TOTP.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`.
+- Keep desktop composition rooted in `OtpHarbor.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`.
 - Do not add service-locator-style resolution inside feature code unless there is already a clear repo pattern and no cleaner seam.
 
 ### Error handling rules
@@ -225,7 +225,7 @@ issuer; the optional account name is not an automatic icon-matching input.
 
 ## Architectural Intent By Layer
 
-### `TOTP.Core`
+### `OtpHarbor.Core`
 
 Owns:
 
@@ -240,7 +240,7 @@ Should not own:
 - filesystem details
 - concrete infrastructure wiring
 
-### `TOTP.Infrastructure`
+### `OtpHarbor.Infrastructure`
 
 Owns:
 
@@ -254,7 +254,7 @@ Should not become:
 - a second UI layer
 - a dumping ground for unrelated helpers
 
-### `TOTP.DAL`
+### `OtpHarbor.DAL`
 
 Owns:
 
@@ -268,7 +268,7 @@ Should not own:
 - authorization decisions
 - UI messaging
 
-### `TOTP.UI.Avalonia.Desktop`
+### `OtpHarbor.UI.Avalonia.Desktop`
 
 Owns:
 
@@ -321,13 +321,13 @@ Examples:
 ### Restore
 
 ```powershell
-dotnet restore TOTP.sln --configfile NuGet.config
+dotnet restore OtpHarbor.sln --configfile NuGet.config
 ```
 
 ### Build
 
 ```powershell
-dotnet build TOTP.sln -c Debug
+dotnet build OtpHarbor.sln -c Debug
 ```
 
 ### Run tests
@@ -335,19 +335,19 @@ dotnet build TOTP.sln -c Debug
 Full:
 
 ```powershell
-dotnet test TOTP.sln -c Debug
+dotnet test OtpHarbor.sln -c Debug
 ```
 
 Fast PR-like subset:
 
 ```powershell
-dotnet test TOTP.sln -c Release --no-build --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~IdleMonitoringBackgroundServiceTests&FullyQualifiedName!~UserActivityServiceTests"
+dotnet test OtpHarbor.sln -c Release --no-build --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~IdleMonitoringBackgroundServiceTests&FullyQualifiedName!~UserActivityServiceTests"
 ```
 
 ### Run locally
 
 ```powershell
-dotnet run --project .\TOTP.UI.Avalonia.Desktop\TOTP.UI.Avalonia.Desktop.csproj
+dotnet run --project .\OtpHarbor.UI.Avalonia.Desktop\OtpHarbor.UI.Avalonia.Desktop.csproj
 ```
 
 ### Debug auto-update locally
@@ -417,10 +417,10 @@ When touching startup code:
 
 Key files:
 
-- [`TOTP.UI.Avalonia.Desktop/Program.cs`](TOTP.UI.Avalonia.Desktop/Program.cs)
-- [`TOTP.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`](TOTP.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs)
-- [`TOTP.Infrastructure/Logging/LoggingConfigurator.cs`](TOTP.Infrastructure/Logging/LoggingConfigurator.cs)
-- [`TOTP.Infrastructure/Logging/SensitiveTextRedactor.cs`](TOTP.Infrastructure/Logging/SensitiveTextRedactor.cs)
+- [`OtpHarbor.UI.Avalonia.Desktop/Program.cs`](OtpHarbor.UI.Avalonia.Desktop/Program.cs)
+- [`OtpHarbor.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`](OtpHarbor.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs)
+- [`OtpHarbor.Infrastructure/Logging/LoggingConfigurator.cs`](OtpHarbor.Infrastructure/Logging/LoggingConfigurator.cs)
+- [`OtpHarbor.Infrastructure/Logging/SensitiveTextRedactor.cs`](OtpHarbor.Infrastructure/Logging/SensitiveTextRedactor.cs)
 
 ## Security Review Triggers
 
@@ -550,7 +550,7 @@ Do not rediscover repository structure repeatedly during the same task.
 4. Scope searches as narrowly as practical. Prefer:
 
    ```powershell
-   rg -n "SymbolName" TOTP.UI.Avalonia.Desktop TOTP.Tests
+   rg -n "SymbolName" OtpHarbor.UI.Avalonia.Desktop OtpHarbor.Tests
    ```
 
    over:
@@ -623,7 +623,7 @@ Do not build the complete solution after every change. Prefer the narrowest
 applicable project build first, for example:
 
 ```powershell
-dotnet build TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj
+dotnet build OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
 ```
 
 Build the full solution when:
@@ -644,11 +644,11 @@ relevant test project, test class, or filtered set before the complete suite.
 Examples:
 
 ```powershell
-dotnet test TOTP.Tests/TOTP.Tests.csproj --filter "FullyQualifiedName~AccountListViewModel"
+dotnet test OtpHarbor.Tests/OtpHarbor.Tests.csproj --filter "FullyQualifiedName~AccountListViewModel"
 ```
 
 ```powershell
-dotnet test TOTP.Tests.Avalonia.Headless/TOTP.Tests.Avalonia.Headless.csproj
+dotnet test OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj
 ```
 
 Expand to broader tests when shared behavior changed, targeted tests reveal
@@ -664,10 +664,10 @@ that information. For example, after establishing:
 
 ```text
 AccountListViewModel
-  -> TOTP.UI.Avalonia.Desktop/Presentation/AccountListViewModel.cs
+  -> OtpHarbor.UI.Avalonia.Desktop/Presentation/AccountListViewModel.cs
 
 AccountListViewModelTests
-  -> TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs
+  -> OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs
 ```
 
 do not search the entire repository for those types again during the same task
@@ -692,7 +692,7 @@ For desktop UI behavior, inspect in this approximate order when applicable:
 
 Do not automatically scan all UI projects for desktop-only changes. For
 keyboard, focus, pointer, routing, window, or desktop-shell behavior, prioritize
-`TOTP.UI.Avalonia.Desktop` and corresponding Avalonia tests.
+`OtpHarbor.UI.Avalonia.Desktop` and corresponding Avalonia tests.
 
 #### Documentation tasks
 

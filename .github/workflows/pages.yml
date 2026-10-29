@@ -9,8 +9,8 @@ on:
       - 'docs/images/social/otp-harbor-social-preview.jpg'
       - 'packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png'
       - 'packaging/android/marketing/en-US/**'
-      - 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'
-      - 'TOTP.UI.Avalonia.Desktop/appsettings.json'
+      - 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'
+      - 'OtpHarbor.UI.Avalonia.Desktop/appsettings.json'
       - 'scripts/release/Select-PublishedUpdateFeed.ps1'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
@@ -52,7 +52,7 @@ jobs:
           cp docs/images/social/otp-harbor-social-preview.jpg _site/assets/social-preview.jpg
           cp packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png _site/assets/otp-harbor-totp-authenticator-windows.png
           cp packaging/android/marketing/en-US/*.png _site/assets/android/
-          cp TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
+          cp OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
 
       - name: Stamp independent public release versions
         shell: pwsh
@@ -140,7 +140,7 @@ jobs:
             --dir $feedDirectory
 
           dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator --version 2.9.0
-          $settings = Get-Content TOTP.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
+          $settings = Get-Content OtpHarbor.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
           $keyDirectory = Join-Path $env:RUNNER_TEMP 'netsparkle-public-key'
           New-Item -ItemType Directory -Path $keyDirectory | Out-Null
           [IO.File]::WriteAllText(

@@ -56,7 +56,7 @@ Store distribution and macOS App Store sandboxing are out of scope for the first
 
 ## Delivery consequences
 
-- `TOTP.Core` remains UI-neutral.
+- `OtpHarbor.Core` remains UI-neutral.
 - Portable infrastructure must compile without Windows or WPF assemblies.
 - OS integration belongs behind injected platform contracts.
 - The WPF client was required to build throughout the side-by-side phase and was removed after the Avalonia cutover decision.

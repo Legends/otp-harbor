@@ -1,0 +1,149 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TOTP.Tests</AssemblyName>
+    <RootNamespace>TOTP.Tests</RootNamespace>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <SignAssembly>True</SignAssembly>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyFile>..\OtpHarbor.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
+    <PublicSign>true</PublicSign>
+    <NoWarn>$(NoWarn);CS8002</NoWarn>
+    <UserSecretsId>eae90785-030b-456f-b23c-5ab39239447f</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Serilog" Version="4.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OtpHarbor.Camera.OpenCv\OtpHarbor.Camera.OpenCv.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Core\OtpHarbor.Core.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Infrastructure\OtpHarbor.Infrastructure.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Installer\OtpHarbor.Installer.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Platform.Linux\OtpHarbor.Platform.Linux.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Platform.MacOS\OtpHarbor.Platform.MacOS.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Platform.Windows\OtpHarbor.Platform.Windows.csproj" />
+    <ProjectReference Include="..\OtpHarbor.UI.Avalonia.Desktop\OtpHarbor.UI.Avalonia.Desktop.csproj" />
+    <ProjectReference Include="..\OtpHarbor.UI.Avalonia.Mobile\OtpHarbor.UI.Avalonia.Mobile.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Updater\OtpHarbor.Updater.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Compile Include="..\OtpHarbor.UI.Avalonia.Android\NativeTextSizing.cs"
+             Link="Fixtures\Android\NativeTextSizing.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Fixtures\LegacySettings\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Fixtures\Qr\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Shared\Styles\SharedStyles.axaml"
+          Link="Fixtures\Avalonia\SharedStyles.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Desktop\App.axaml"
+          Link="Fixtures\Avalonia\App.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Desktop\MainWindow.axaml"
+          Link="Fixtures\Avalonia\DesktopMainWindow.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Desktop\SettingsWindow.axaml"
+          Link="Fixtures\Avalonia\DesktopSettingsWindow.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Desktop\Dialogs\CameraScannerDialogWindow.axaml"
+          Link="Fixtures\Avalonia\DesktopCameraScannerDialogWindow.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Mobile\Views\MainView.axaml"
+          Link="Fixtures\Avalonia\MobileMainView.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Mobile\Views\MainView.axaml.cs"
+          Link="Fixtures\Avalonia\MobileMainView.axaml.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Mobile\MobileApp.axaml"
+          Link="Fixtures\Avalonia\MobileApp.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\values\colors.xml"
+          Link="Fixtures\Android\values\colors.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\values-night\colors.xml"
+          Link="Fixtures\Android\values-night\colors.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\values\styles.xml"
+          Link="Fixtures\Android\values\styles.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\values-v31\styles.xml"
+          Link="Fixtures\Android\values-v31\styles.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\drawable\splash_screen.xml"
+          Link="Fixtures\Android\drawable\splash_screen.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\drawable-v31\splash_icon_animated.xml"
+          Link="Fixtures\Android\drawable-v31\splash_icon_animated.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\drawable-v31\splash_icon_orbit_000.xml"
+          Link="Fixtures\Android\drawable-v31\splash_icon_orbit_000.xml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\MainActivity.cs"
+          Link="Fixtures\Android\MainActivity.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\AndroidCompositionRoot.cs"
+          Link="Fixtures\Android\AndroidCompositionRoot.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Desktop\Program.cs"
+          Link="Fixtures\Avalonia\DesktopProgram.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\AndroidAutomaticBackupDestinationAdapter.cs"
+          Link="Fixtures\Android\AndroidAutomaticBackupDestinationAdapter.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeAccountRowView.cs"
+          Link="Fixtures\Android\NativeAccountRowView.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeAccountRecyclerView.cs"
+          Link="Fixtures\Android\NativeAccountRecyclerView.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeBrandIcon.cs"
+          Link="Fixtures\Android\NativeBrandIcon.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeBrandIconCache.cs"
+          Link="Fixtures\Android\NativeBrandIconCache.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\AndroidQrScanner.cs"
+          Link="Fixtures\Android\AndroidQrScanner.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\LiveQrScannerActivity.cs"
+          Link="Fixtures\Android\LiveQrScannerActivity.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeAccountGroupRecyclerView.cs"
+          Link="Fixtures\Android\NativeAccountGroupRecyclerView.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeDeleteConfirmationDialog.cs"
+          Link="Fixtures\Android\NativeDeleteConfirmationDialog.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\OtpHarborApplication.cs"
+          Link="Fixtures\Android\OtpHarborApplication.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\AndroidAccountListHost.cs"
+          Link="Fixtures\Android\AndroidAccountListHost.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\AndroidAccountGroupStripHost.cs"
+          Link="Fixtures\Android\AndroidAccountGroupStripHost.cs"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- In OtpHarbor.Tests.csproj -->
+  <Target Name="RunTestsAfterBuild" AfterTargets="Build" Condition="'$(CI)' != 'true' AND '$(RunTestsOnBuild)' == 'true'">
+    <Exec Command="dotnet test &quot;$(MSBuildProjectFullPath)&quot; --configuration $(Configuration) --no-build" />
+  </Target>
+
+
+</Project>

@@ -10,7 +10,7 @@ cannot alter product claims, account data, or interface details.
 [CmdletBinding()]
 param(
     [string]$BackgroundPath = 'packaging/windows-store/assets/source/store-marketing-screenshot-background.png',
-    [string]$IconPath = 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
+    [string]$IconPath = 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
     [string]$ScreenshotDirectory = 'packaging/windows-store/screenshots/en-US',
     [string]$WindowsHelloPromptPath = 'packaging/windows-store/assets/source/windows-hello-prompt.png',
     [string]$QuickUnlockPath = 'packaging/windows-store/assets/source/quick-unlock-screen.png',

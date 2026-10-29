@@ -22,7 +22,7 @@ $outputPath = Join-Path $resolvedOutput "OTP-Harbor-windows-x64-setup-$ReleaseVe
 $installerUiDirectory = Join-Path ([IO.Path]::GetTempPath()) ("otp-harbor-installer-ui-" + [Guid]::NewGuid().ToString('N'))
 
 try {
-    & $DotNetExecutable publish (Join-Path $repoRoot 'TOTP.Installer/TOTP.Installer.csproj') `
+    & $DotNetExecutable publish (Join-Path $repoRoot 'OtpHarbor.Installer/OtpHarbor.Installer.csproj') `
         -c Release `
         -r win-x64 `
         --self-contained true `
@@ -57,7 +57,7 @@ try {
         -d "ReleaseVersion=$ReleaseVersion" `
         -d "MsiPath=$resolvedMsi" `
         -d "InstallerPayloads=$payloadIncludePath" `
-        -d "ApplicationIcon=$(Join-Path $repoRoot 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app.ico')" `
+        -d "ApplicationIcon=$(Join-Path $repoRoot 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app.ico')" `
         -o $outputPath `
         (Join-Path $resourceRoot 'HarborSetup.wxs')
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $outputPath -PathType Leaf)) {

@@ -27,13 +27,13 @@ function Read-RepositoryFile {
 
 $policy = Read-RepositoryFile 'docs/assets/BRAND_ICONS.md'
 $assetProvenance = Read-RepositoryFile 'docs/assets/ASSET_PROVENANCE.md'
-$brandService = Read-RepositoryFile 'TOTP.Infrastructure/Services/SimpleIconsBrandIconPackService.cs'
-$iconArchive = Read-RepositoryFile 'TOTP.Infrastructure/Icons/IconImportArchive.cs'
+$brandService = Read-RepositoryFile 'OtpHarbor.Infrastructure/Services/SimpleIconsBrandIconPackService.cs'
+$iconArchive = Read-RepositoryFile 'OtpHarbor.Infrastructure/Icons/IconImportArchive.cs'
 $iconImporterPaths = @(
-    'TOTP.Infrastructure/Icons/OtpHarborIconPackImporter.cs'
+    'OtpHarbor.Infrastructure/Icons/OtpHarborIconPackImporter.cs'
 )
 $iconImporters = ($iconImporterPaths | ForEach-Object { Read-RepositoryFile $_ }) -join "`n"
-$resolverDatabaseText = Read-RepositoryFile 'TOTP.Infrastructure/Branding/issuer-resolver.v1.json'
+$resolverDatabaseText = Read-RepositoryFile 'OtpHarbor.Infrastructure/Branding/issuer-resolver.v1.json'
 $iconPackContract = Read-RepositoryFile 'docs/security/ICON_PACK_IMPORT_CONTRACT.md'
 
 foreach ($requiredText in @(
@@ -83,8 +83,8 @@ $requiredDisclosureText = @(
     'Compatibility with an icon pack does not imply affiliation with, sponsorship by, or endorsement by its provider or any trademark owner.'
 )
 foreach ($disclosure in @(
-    @{ Path = 'TOTP.UI.Avalonia.Desktop/Localization/Strings.resx'; Key = 'BrandIconsHelp' },
-    @{ Path = 'TOTP.UI.Avalonia.Mobile/Localization/Strings.resx'; Key = 'BrandIconsDescription' }
+    @{ Path = 'OtpHarbor.UI.Avalonia.Desktop/Localization/Strings.resx'; Key = 'BrandIconsHelp' },
+    @{ Path = 'OtpHarbor.UI.Avalonia.Mobile/Localization/Strings.resx'; Key = 'BrandIconsDescription' }
 )) {
     [xml]$strings = Read-RepositoryFile $disclosure.Path
     $brandHelp = @($strings.root.data | Where-Object name -eq $disclosure.Key)
@@ -99,7 +99,7 @@ foreach ($disclosure in @(
     }
 }
 
-[xml]$desktopStrings = Read-RepositoryFile 'TOTP.UI.Avalonia.Desktop/Localization/Strings.resx'
+[xml]$desktopStrings = Read-RepositoryFile 'OtpHarbor.UI.Avalonia.Desktop/Localization/Strings.resx'
 $brandFormatHelp = @($desktopStrings.root.data | Where-Object name -eq 'BrandIconsFormatHelp')
 if ($brandFormatHelp.Count -ne 1) {
     throw 'The invariant BrandIconsFormatHelp disclosure is missing or duplicated.'
@@ -134,7 +134,7 @@ $approvedDesktopAssets = @(
     'Icons/app-128.png',
     'Icons/app.ico'
 )
-$desktopAssetsRoot = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Assets'
+$desktopAssetsRoot = Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/Assets'
 $actualDesktopAssets = @(Get-ChildItem -LiteralPath $desktopAssetsRoot -Recurse -File |
     ForEach-Object {
         [IO.Path]::GetRelativePath($desktopAssetsRoot, $_.FullName).Replace('\', '/')
@@ -150,7 +150,7 @@ if ($unexpectedAssets.Count -gt 0 -or $missingAssets.Count -gt 0) {
 }
 
 $approvedAndroidDrawables = @('splash_screen.xml')
-$androidDrawablesRoot = Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Android/Resources/drawable'
+$androidDrawablesRoot = Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Android/Resources/drawable'
 $actualAndroidDrawables = @(Get-ChildItem -LiteralPath $androidDrawablesRoot -Recurse -File |
     ForEach-Object {
         [IO.Path]::GetRelativePath($androidDrawablesRoot, $_.FullName).Replace(

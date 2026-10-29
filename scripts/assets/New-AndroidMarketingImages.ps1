@@ -9,7 +9,7 @@ campaign background. The script never reconstructs application or Android system
 [CmdletBinding()]
 param(
     [string]$BackgroundPath = 'packaging/android/marketing/source/android-marketing-background.png',
-    [string]$IconPath = 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
+    [string]$IconPath = 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png',
     [string]$CaptureDirectory = 'packaging/android/marketing/source/captures',
     [string]$OutputDirectory = 'packaging/android/marketing/en-US',
     [string]$StoreListingOutputDirectory = 'fastlane/metadata/android/en-US/images'

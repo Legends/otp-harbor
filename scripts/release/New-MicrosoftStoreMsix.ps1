@@ -122,7 +122,7 @@ try {
         }
         $assemblyVersion = "$resolvedProductVersion.0"
         & dotnet publish `
-            (Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/TOTP.UI.Avalonia.Desktop.csproj') `
+            (Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj') `
             --configuration Release `
             --runtime win-x64 `
             --self-contained true `
@@ -164,7 +164,7 @@ try {
     New-Item -ItemType Directory -Path $assetsDirectory -Force | Out-Null
     Add-Type -AssemblyName System.Drawing
     $sourceIcon = [Drawing.Image]::FromFile(
-        (Join-Path $repositoryRoot 'TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'))
+        (Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'))
     try {
         New-StoreImage $sourceIcon 44 44 (Join-Path $assetsDirectory 'Square44x44Logo.png')
         New-StoreImage $sourceIcon 150 150 (Join-Path $assetsDirectory 'Square150x150Logo.png')

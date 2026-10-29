@@ -13,8 +13,8 @@ function Read-RequiredFile([string]$RelativePath) {
     [IO.File]::ReadAllText($path)
 }
 
-$project = Read-RequiredFile "TOTP.UI.Avalonia.Android\TOTP.UI.Avalonia.Android.csproj"
-$manifest = Read-RequiredFile "TOTP.UI.Avalonia.Android\Properties\AndroidManifest.xml"
+$project = Read-RequiredFile "OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj"
+$manifest = Read-RequiredFile "OtpHarbor.UI.Avalonia.Android\Properties\AndroidManifest.xml"
 $installer = Read-RequiredFile "scripts\testing\Install-AndroidDevelopmentBuild.ps1"
 $workflow = Read-RequiredFile ".github\workflows\build-and-test.yml"
 $documentation = Read-RequiredFile "docs\release\ANDROID.md"
@@ -35,8 +35,8 @@ foreach ($required in @(
         throw "The Android project is missing a permanent identity or distribution control: $required"
     }
 }
-$activity = Read-RequiredFile "TOTP.UI.Avalonia.Android\MainActivity.cs"
-$mobileMainView = Read-RequiredFile "TOTP.UI.Avalonia.Mobile\Views\MainView.axaml.cs"
+$activity = Read-RequiredFile "OtpHarbor.UI.Avalonia.Android\MainActivity.cs"
+$mobileMainView = Read-RequiredFile "OtpHarbor.UI.Avalonia.Mobile\Views\MainView.axaml.cs"
 if (-not $activity.Contains('#if OTP_HARBOR_MARKETING_CAPTURE', [StringComparison]::Ordinal)) {
     throw 'The isolated Debug capture mode is not compile-time restricted.'
 }

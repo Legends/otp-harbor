@@ -28,7 +28,7 @@ jobs:
             NuGet.config
 
       - name: Restore test project
-        run: dotnet restore TOTP.Tests/TOTP.Tests.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config
+        run: dotnet restore OtpHarbor.Tests/OtpHarbor.Tests.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Download latest upstream releases
         id: assets
@@ -47,7 +47,7 @@ jobs:
           OTP_HARBOR_AEGIS_ICON_PACK: ${{ steps.assets.outputs.aegis_path }}
           OTP_HARBOR_SIMPLE_ICONS_PACK: ${{ steps.assets.outputs.simple_icons_path }}
         run: >-
-          dotnet test TOTP.Tests/TOTP.Tests.csproj
+          dotnet test OtpHarbor.Tests/OtpHarbor.Tests.csproj
           --configuration Release
           --no-restore
           --nologo
