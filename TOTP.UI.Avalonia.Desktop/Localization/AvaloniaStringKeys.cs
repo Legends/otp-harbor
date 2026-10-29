@@ -4,6 +4,7 @@ public static class AvaloniaStringKeys
 {
     public const string AppTitle = nameof(AppTitle);
     public const string AppHeading = nameof(AppHeading);
+    public const string Loading = nameof(Loading);
     public const string StartingSafely = nameof(StartingSafely);
     public const string StartupCreateMasterPassword = nameof(StartupCreateMasterPassword);
     public const string StartupEnterMasterPassword = nameof(StartupEnterMasterPassword);
@@ -519,7 +520,7 @@ public static class AvaloniaStringKeys
 
     public static IReadOnlyList<string> All { get; } =
     [
-        AppTitle, AppHeading, StartingSafely, StartupCreateMasterPassword,
+        AppTitle, AppHeading, Loading, StartingSafely, StartupCreateMasterPassword,
         StartupEnterMasterPassword, StartupPreferencesUnavailable, StartupFailedSafely,
         StartupCancelled, ClosingSafely, Retry,
         OnboardingAddAccountsTitle, OnboardingAddAccountsDescription,

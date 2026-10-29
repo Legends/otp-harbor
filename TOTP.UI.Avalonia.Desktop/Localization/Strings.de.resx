@@ -6,6 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
   <data name="AppTitle" xml:space="preserve"><value>OTP Harbor</value></data>
   <data name="AppHeading" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="Loading" xml:space="preserve"><value>Wird geladen…</value></data>
   <data name="StartingSafely" xml:space="preserve"><value>OTP Harbor wird sicher gestartet…</value></data>
   <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Richten Sie den sicheren lokalen Speicher ein.</value></data>
   <data name="StartupEnterMasterPassword" xml:space="preserve"><value>Geben Sie Ihr Master-Passwort ein, um Ihren Authenticator zu entsperren.</value></data>
@@ -407,7 +408,7 @@
   <data name="QrPreviewUnavailable" xml:space="preserve"><value>Auf dieser Plattform ist keine QR-Code-Vorschau verfügbar.</value></data>
   <data name="QrPreviewDisplayFailed" xml:space="preserve"><value>Der vergrößerte QR-Code konnte nicht sicher angezeigt werden.</value></data>
   <data name="UnlockTooManyAttempts" xml:space="preserve"><value>Zu viele Versuche. Warten Sie, bevor Sie es erneut versuchen.</value></data>
-  <data name="UnlockRejected" xml:space="preserve"><value>Der Tresor konnte mit diesem Master-Passwort nicht entsperrt werden.</value></data>
+  <data name="UnlockRejected" xml:space="preserve"><value>Falsches Master-Passwort.</value></data>
   <data name="UnlockFailedSafely" xml:space="preserve"><value>Der Tresor konnte nicht sicher entsperrt werden. Versuchen Sie es erneut.</value></data>
   <data name="TotpFiles" xml:space="preserve"><value>TOTP-Dateien</value></data>
   <data name="SelectTotpImportFile" xml:space="preserve"><value>TOTP-Importdatei auswählen</value></data>

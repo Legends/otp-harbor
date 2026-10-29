@@ -57,6 +57,11 @@ public sealed class MainWindowSmokeTests
             unlockCard.IsVisible = true;
             Assert.IsType<Border>(notification.Parent).IsVisible = true;
             Assert.Equal(ScrollBarVisibility.Disabled, scroller.VerticalScrollBarVisibility);
+            passwordMessage.ApplyTemplate();
+            var passwordMessageText = Assert.Single(
+                passwordMessage.GetVisualDescendants().OfType<TextBlock>());
+            Assert.Equal(12, passwordMessageText.FontSize);
+            Assert.Equal(16, passwordMessageText.LineHeight);
 
             var catalog = new AvaloniaStringCatalog();
             foreach (var cultureName in new[] { "en", "de", "es", "fr" })
@@ -74,7 +79,9 @@ public sealed class MainWindowSmokeTests
                 passwordMessage.Text = catalog.Get(AvaloniaStringKeys.UnlockRejected, culture);
                 window.UpdateLayout();
 
-                Assert.Equal(heightWithoutError, unlockCard.Bounds.Height);
+                Assert.True(
+                    Math.Abs(heightWithoutError - unlockCard.Bounds.Height) < 0.01,
+                    $"Unlock error changed the '{cultureName}' card height from {heightWithoutError} to {unlockCard.Bounds.Height}; message bounds are {passwordMessageText.Bounds.Width} x {passwordMessageText.Bounds.Height}.");
 
                 var buttonBottom = masterPasswordButton.TranslatePoint(
                     new Point(0, masterPasswordButton.Bounds.Height),
@@ -2061,7 +2068,24 @@ public sealed class MainWindowSmokeTests
             var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
             Assert.Equal(window.Title, titleBar.Title);
             Assert.True(titleBar.ShowMinimizeButton);
-            Assert.Single(window.GetVisualDescendants().OfType<BusyOverlay>());
+            Assert.Empty(window.GetVisualDescendants().OfType<BusyOverlay>());
+            var startupLoadingOverlay = Assert.IsType<Grid>(
+                window.FindControl<Grid>("StartupLoadingOverlay"));
+            var desktopStartupContent = Assert.IsType<Grid>(
+                window.FindControl<Grid>("DesktopStartupContent"));
+            var startupLoadingLogo = Assert.IsType<Image>(
+                window.FindControl<Image>("StartupLoadingLogo"));
+            var startupLoadingText = Assert.IsType<TextBlock>(
+                window.FindControl<TextBlock>("StartupLoadingText"));
+            Assert.Equal(
+                Application.Current!.Resources[AvaloniaStringKeys.Loading],
+                startupLoadingText.Text);
+            Assert.Same(desktopStartupContent.Background, startupLoadingOverlay.Background);
+            Assert.NotNull(startupLoadingLogo.Source);
+            Assert.Single(startupLoadingOverlay.Transitions!);
+            Assert.Single(desktopStartupContent.Transitions!);
+            Assert.True(AssetLoader.Exists(new Uri(
+                "avares://TOTP.UI.Avalonia.Desktop/Assets/Icons/app-1024.png")));
             Assert.True(window.GetVisualDescendants().OfType<Button>().Count() >= 5);
             Assert.True(window.GetVisualDescendants().OfType<Border>().Count() >= 5);
             Assert.NotEmpty(window.GetVisualDescendants().OfType<ScrollViewer>());

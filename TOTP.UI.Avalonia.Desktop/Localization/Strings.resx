@@ -6,6 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
   <data name="AppTitle" xml:space="preserve"><value>OTP Harbor</value></data>
   <data name="AppHeading" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="Loading" xml:space="preserve"><value>Loading…</value></data>
   <data name="StartingSafely" xml:space="preserve"><value>Starting OTP Harbor safely…</value></data>
   <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Set up secure local storage.</value></data>
   <data name="StartupEnterMasterPassword" xml:space="preserve"><value>Enter your master password to unlock your authenticator.</value></data>
@@ -407,7 +408,7 @@
   <data name="QrPreviewUnavailable" xml:space="preserve"><value>A QR code preview is not available on this platform.</value></data>
   <data name="QrPreviewDisplayFailed" xml:space="preserve"><value>The enlarged QR code could not be displayed safely.</value></data>
   <data name="UnlockTooManyAttempts" xml:space="preserve"><value>Too many attempts. Wait before trying again.</value></data>
-  <data name="UnlockRejected" xml:space="preserve"><value>The master password could not unlock this vault.</value></data>
+  <data name="UnlockRejected" xml:space="preserve"><value>Incorrect master password.</value></data>
   <data name="UnlockFailedSafely" xml:space="preserve"><value>The vault could not be unlocked safely. Try again.</value></data>
   <data name="TotpFiles" xml:space="preserve"><value>TOTP files</value></data>
   <data name="SelectTotpImportFile" xml:space="preserve"><value>Select TOTP import file</value></data>

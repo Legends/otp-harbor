@@ -6,6 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
   <data name="AppTitle" xml:space="preserve"><value>OTP Harbor</value></data>
   <data name="AppHeading" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="Loading" xml:space="preserve"><value>Cargando…</value></data>
   <data name="StartingSafely" xml:space="preserve"><value>Iniciando OTP Harbor de forma segura…</value></data>
   <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Configura el almacenamiento local seguro.</value></data>
   <data name="StartupEnterMasterPassword" xml:space="preserve"><value>Introduce tu contraseña maestra para desbloquear tu autenticador.</value></data>
@@ -407,7 +408,7 @@
   <data name="QrPreviewUnavailable" xml:space="preserve"><value>La vista previa del código QR no está disponible en esta plataforma.</value></data>
   <data name="QrPreviewDisplayFailed" xml:space="preserve"><value>El código QR ampliado no se pudo mostrar de forma segura.</value></data>
   <data name="UnlockTooManyAttempts" xml:space="preserve"><value>Demasiados intentos. Espera antes de volver a intentarlo.</value></data>
-  <data name="UnlockRejected" xml:space="preserve"><value>La contraseña maestra no pudo desbloquear esta caja fuerte.</value></data>
+  <data name="UnlockRejected" xml:space="preserve"><value>Contraseña maestra incorrecta.</value></data>
   <data name="UnlockFailedSafely" xml:space="preserve"><value>La caja fuerte no se pudo desbloquear de forma segura. Reinténtalo.</value></data>
   <data name="TotpFiles" xml:space="preserve"><value>Archivos TOTP</value></data>
   <data name="SelectTotpImportFile" xml:space="preserve"><value>Seleccionar archivo TOTP para importar</value></data>

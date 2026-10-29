@@ -22,12 +22,14 @@ public partial class MainWindow : Window
     private const double DefaultMinimumWidth = 360;
     private const double StandardMinimumHeight = 200;
     private static readonly TimeSpan HeightAnimationDuration = TimeSpan.FromMilliseconds(220);
+    private static readonly TimeSpan StartupCrossfadeDuration = TimeSpan.FromMilliseconds(320);
     private bool _initialized;
     private bool _fitScheduled;
     private bool _editorFitScheduled;
     private bool _groupEditorOpenScheduled;
     private bool _realizedAccountReportPending;
     private bool _shellPresentationPending;
+    private int _startupTransitionRevision;
     private MainWindowViewModel? _observedViewModel;
     private AccountListViewModel? _observedAccountList;
     private ContextPreservingAccountListBox? _realizedAccountList;
@@ -615,6 +617,12 @@ public partial class MainWindow : Window
 
     private void MainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainWindowViewModel.IsBusy))
+        {
+            SyncStartupLoadingState();
+            return;
+        }
+
         if (e.PropertyName == nameof(MainWindowViewModel.IsShellVisible))
         {
             SyncShellPresentation();
@@ -670,6 +678,33 @@ public partial class MainWindow : Window
             MinHeight = Math.Min(StandardMinimumHeight, MaxHeight);
             StartHeightAnimation(Math.Min(MaxHeight, DefaultPageHeight));
         }
+    }
+
+    private void SyncStartupLoadingState()
+    {
+        var revision = ++_startupTransitionRevision;
+        if (_observedViewModel?.IsBusy == true)
+        {
+            StartupLoadingOverlay.IsVisible = true;
+            StartupLoadingOverlay.IsHitTestVisible = true;
+            StartupLoadingOverlay.Opacity = 1;
+            DesktopStartupContent.Opacity = 0;
+            return;
+        }
+
+        DesktopStartupContent.Opacity = 1;
+        StartupLoadingOverlay.IsHitTestVisible = false;
+        StartupLoadingOverlay.Opacity = 0;
+        DispatcherTimer.RunOnce(
+            () =>
+            {
+                if (revision == _startupTransitionRevision
+                    && _observedViewModel?.IsBusy != true)
+                {
+                    StartupLoadingOverlay.IsVisible = false;
+                }
+            },
+            StartupCrossfadeDuration);
     }
 
     private void SyncShellPresentation()

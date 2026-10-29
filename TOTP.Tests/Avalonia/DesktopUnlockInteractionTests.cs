@@ -90,7 +90,8 @@ public sealed class DesktopUnlockInteractionTests
             .Descendants(avalonia + "Border")
             .Single(element => element.Attribute(xaml + "Name")?.Value
                 == "PasswordUnlockMessageSlot");
-        Assert.Equal("54", passwordMessageSlot.Attribute("MinHeight")?.Value);
+        Assert.Null(passwordMessageSlot.Attribute("Margin"));
+        Assert.Equal("32", passwordMessageSlot.Attribute("MinHeight")?.Value);
         Assert.Equal("StackPanel", passwordMessageSlot.Parent?.Name.LocalName);
         Assert.Equal("3", passwordMessageSlot.Parent?.Attribute("Spacing")?.Value);
         var passwordMessage = passwordMessageSlot
@@ -99,10 +100,22 @@ public sealed class DesktopUnlockInteractionTests
         Assert.Equal(
             "PasswordUnlockValidationMessage",
             passwordMessage.Attribute(xaml + "Name")?.Value);
+        Assert.Equal("password-unlock-message", passwordMessage.Attribute("Classes")?.Value);
         Assert.Equal("Error", passwordMessage.Attribute("Severity")?.Value);
         Assert.Equal(
             "{Binding PasswordUnlock.Message}",
             passwordMessage.Attribute("Text")?.Value);
+        var passwordMessageStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value
+                == "shared|ValidationMessage.password-unlock-message /template/ TextBlock#PART_Message");
+        var passwordMessageSetters = passwordMessageStyle
+            .Elements(avalonia + "Setter")
+            .ToDictionary(
+                element => element.Attribute("Property")!.Value,
+                element => element.Attribute("Value")!.Value);
+        Assert.Equal("12", passwordMessageSetters["FontSize"]);
+        Assert.Equal("16", passwordMessageSetters["LineHeight"]);
 
         var passwordUnlockButton = biometricCard
             .Descendants(avalonia + "Button")
