@@ -673,6 +673,29 @@ public sealed class SharedStylesTests
     }
 
     [Fact]
+    public void DesktopSettingsCategoriesHideVerticalScrollbarsWithoutDisablingScrolling()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "Avalonia",
+            "DesktopSettingsWindow.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+
+        var categoryScrollViewers = document
+            .Descendants(avalonia + "ScrollViewer")
+            .Where(element => element.Attribute("VerticalScrollBarVisibility") is not null)
+            .ToArray();
+
+        Assert.Equal(8, categoryScrollViewers.Length);
+        Assert.All(
+            categoryScrollViewers,
+            scrollViewer => Assert.Equal(
+                "Hidden",
+                scrollViewer.Attribute("VerticalScrollBarVisibility")?.Value));
+    }
+
+    [Fact]
     public void DesktopLoggingControlsLiveInMiscAndAboutPanelIsRemoved()
     {
         var document = XDocument.Load(Path.Combine(

@@ -2934,7 +2934,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void SettingsWindow_IsCompactWithTwoRowsOfTabs()
+    public void SettingsWindow_UsesPlatformAppropriateResponsiveSizeWithTwoRowsOfTabs()
     {
         var window = new SettingsWindow();
 
@@ -2943,7 +2943,8 @@ public sealed class MainWindowSmokeTests
             window.Show();
             window.UpdateLayout();
 
-            Assert.Equal(520, window.Width);
+            Assert.Equal(OperatingSystem.IsLinux() ? 720 : 520, window.Width);
+            Assert.Equal(OperatingSystem.IsLinux() ? 760 : 620, window.Height);
             Assert.Equal(520, window.MinWidth);
             Assert.True(window.Topmost);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
@@ -3013,6 +3014,39 @@ public sealed class MainWindowSmokeTests
                         global::Avalonia.Layout.HorizontalAlignment.Center,
                         tabItem.HorizontalContentAlignment);
                 });
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_ExpandedViewportFitsDefaultAppearanceCategoryWithoutVerticalScrolling()
+    {
+        var window = new SettingsWindow
+        {
+            Width = 720,
+            Height = 760
+        };
+        using var settingsPage = new SettingsPageViewModel(new TestSettingsService());
+
+        try
+        {
+            window.Show();
+            var appearanceHost = Assert.Single(
+                window.GetVisualDescendants().OfType<ContentControl>(),
+                control => control.Name == "AppearanceSettingsHost");
+            appearanceHost.Content = settingsPage;
+            window.UpdateLayout();
+
+            var scroller = Assert.Single(
+                window.GetVisualDescendants().OfType<ScrollViewer>(),
+                control => control.Name == "AppearanceSettingsScroll");
+            Assert.True(scroller.Viewport.Height > 0);
+            Assert.True(
+                scroller.Extent.Height <= scroller.Viewport.Height + 0.5,
+                $"Appearance settings extent {scroller.Extent.Height} exceeded viewport {scroller.Viewport.Height}.");
         }
         finally
         {
@@ -3338,9 +3372,11 @@ public sealed class MainWindowSmokeTests
             var resetButton = Assert.Single(
                 brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "BrandIconsResetButton");
-            Assert.Contains("wide", importButton.Classes);
+            Assert.DoesNotContain("wide", importButton.Classes);
+            Assert.Equal(HorizontalAlignment.Left, importButton.HorizontalAlignment);
             Assert.Contains("secondary", resetButton.Classes);
-            Assert.Contains("wide", resetButton.Classes);
+            Assert.DoesNotContain("wide", resetButton.Classes);
+            Assert.Equal(HorizontalAlignment.Left, resetButton.HorizontalAlignment);
             var resetButtonLabel = Assert.IsType<SymbolIconLabel>(resetButton.Content);
             Assert.Equal(SymbolIconKind.Delete, resetButtonLabel.Kind);
             var builderLink = Assert.Single(

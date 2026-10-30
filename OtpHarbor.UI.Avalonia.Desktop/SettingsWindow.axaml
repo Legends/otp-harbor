@@ -134,7 +134,7 @@
                                         x:Name="AppearanceSettingsScroll"
                                         Grid.Row="0"
                                         HorizontalScrollBarVisibility="Disabled"
-                                        VerticalScrollBarVisibility="Auto">
+                                        VerticalScrollBarVisibility="Hidden">
                                         <StackPanel
                                             x:Name="AppearanceSettingsPanel"
                                             Margin="4,8,4,4"
@@ -218,7 +218,7 @@
                     <ContentControl x:Name="BrandIconSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:SettingsPageViewModel">
-                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                                     <Border x:Name="BrandIconsPanel" Margin="4,8,4,4" Classes="panel">
                                         <StackPanel Spacing="8">
                                             <TextBlock Classes="section-title" Text="{DynamicResource BrandIcons}" />
@@ -236,13 +236,15 @@
                                                 TextWrapping="Wrap" />
                                             <Button
                                                 x:Name="BrandIconsImportButton"
-                                                Classes="wide settings-action"
+                                                HorizontalAlignment="Left"
+                                                Classes="settings-action"
                                                 Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}">
                                                 <shared:SymbolIconLabel Kind="Import" Text="{DynamicResource ImportSimpleIconsPack}" />
                                             </Button>
                                             <Button
                                                 x:Name="BrandIconsResetButton"
-                                                Classes="secondary wide settings-action"
+                                                HorizontalAlignment="Left"
+                                                Classes="secondary settings-action"
                                                 Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
                                                 IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}">
                                                 <shared:SymbolIconLabel Kind="Delete" Text="{DynamicResource ResetBrandIcons}" />
@@ -268,7 +270,7 @@
                             x:Name="SecuritySettingsScroll"
                             Grid.Row="0"
                             HorizontalScrollBarVisibility="Disabled"
-                            VerticalScrollBarVisibility="Auto">
+                            VerticalScrollBarVisibility="Hidden">
                             <StackPanel Margin="4,8,4,4" Spacing="12">
                             <ContentControl x:Name="AuthorizationSettingsHost" Content="{Binding AuthorizationSettings}">
                             <ContentControl.ContentTemplate>
@@ -377,7 +379,7 @@
                                     <ScrollViewer
                                         Grid.Row="0"
                                         HorizontalScrollBarVisibility="Disabled"
-                                        VerticalScrollBarVisibility="Auto">
+                                        VerticalScrollBarVisibility="Hidden">
                                         <StackPanel Margin="4,8,4,4" VerticalAlignment="Top" Spacing="12">
                                             <Border Classes="panel">
                                                 <StackPanel Spacing="10">
@@ -540,7 +542,7 @@
                     <ContentControl x:Name="AccountImportSettingsHost" Content="{Binding NativeFilePicker}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:NativeFilePickerViewModel">
-                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                                     <StackPanel Margin="4,8,4,4" VerticalAlignment="Top" Spacing="12">
                                         <Border Classes="panel">
                                             <StackPanel Spacing="8">
@@ -587,7 +589,7 @@
                     <ContentControl x:Name="MiscSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="presentation:SettingsPageViewModel">
-                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                                     <Border x:Name="MiscSettingsPanel" Margin="4,8,4,4" VerticalAlignment="Top" Classes="panel">
                                         <StackPanel Spacing="8">
                                             <TextBlock Classes="settings-label" Text="{DynamicResource LoggingLevel}" />
@@ -615,7 +617,7 @@
                             <TextBlock VerticalAlignment="Center" Text="{DynamicResource Faq}" />
                         </StackPanel>
                     </TabItem.Header>
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Margin="4,8,4,4" Spacing="10">
                                 <Border
                                     x:Name="FaqIconPacksCard"
@@ -771,7 +773,7 @@
                             <TextBlock VerticalAlignment="Center" Text="{DynamicResource About}" />
                         </StackPanel>
                     </TabItem.Header>
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Margin="4,8" Spacing="12">
                             <ContentControl Content="{Binding UpdateCheck}">
                                 <ContentControl.ContentTemplate>

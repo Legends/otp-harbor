@@ -2,9 +2,41 @@ namespace TOTP.Avalonia.Desktop;
 
 public partial class SettingsWindow : global::Avalonia.Controls.Window
 {
+    private const double LinuxPreferredWidth = 720;
+    private const double LinuxPreferredHeight = 760;
+    private const double WorkingAreaMargin = 24;
+
     public SettingsWindow()
     {
         InitializeComponent();
+        if (OperatingSystem.IsLinux())
+        {
+            Width = LinuxPreferredWidth;
+            Height = LinuxPreferredHeight;
+        }
+    }
+
+    protected override void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+        if (!OperatingSystem.IsLinux()) return;
+
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        if (screen is null) return;
+
+        var scaling = screen.Scaling > 0 ? screen.Scaling : 1;
+        var availableWidth = Math.Max(
+            1,
+            (screen.WorkingArea.Width / scaling) - WorkingAreaMargin);
+        var availableHeight = Math.Max(
+            1,
+            (screen.WorkingArea.Height / scaling) - WorkingAreaMargin);
+        MaxWidth = availableWidth;
+        MaxHeight = availableHeight;
+        MinWidth = Math.Min(MinWidth, availableWidth);
+        MinHeight = Math.Min(MinHeight, availableHeight);
+        Width = Math.Min(LinuxPreferredWidth, availableWidth);
+        Height = Math.Min(LinuxPreferredHeight, availableHeight);
     }
 
     private void FaqSectionExpanded(
