@@ -23,43 +23,51 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($Token)) {
-    try {
-        $secretToken = Get-Secret -Name "GitHub.Token.TOTPManager" -AsPlainText -ErrorAction Stop
-        if (-not [string]::IsNullOrWhiteSpace($secretToken)) {
-            $Token = $secretToken
+    foreach ($secretName in @('GitHub.Token.OtpHarbor', 'GitHub.Token.TOTPManager')) {
+        try {
+            $secretToken = Get-Secret -Name $secretName -AsPlainText -ErrorAction Stop
+            if (-not [string]::IsNullOrWhiteSpace($secretToken)) {
+                $Token = $secretToken
+                break
+            }
         }
-    }
-    catch {
-        # Fallback below.
+        catch {
+            # Fallback below.
+        }
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($Token)) {
-    try {
-        $tokenFile = Join-Path $env:APPDATA "TOTP-Manager\github-token.dpapi"
-        if (Test-Path $tokenFile) {
-            $secure = Get-Content -Path $tokenFile -ErrorAction Stop | ConvertTo-SecureString
-            $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-            try {
-                $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
-                if (-not [string]::IsNullOrWhiteSpace($plain)) {
-                    $Token = $plain
+    foreach ($relativeTokenPath in @(
+            'OTP-Harbor\github-token.dpapi',
+            'TOTP-Manager\github-token.dpapi')) {
+        try {
+            $tokenFile = Join-Path $env:APPDATA $relativeTokenPath
+            if (Test-Path -LiteralPath $tokenFile -PathType Leaf) {
+                $secure = Get-Content -LiteralPath $tokenFile -ErrorAction Stop | ConvertTo-SecureString
+                $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+                try {
+                    $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+                    if (-not [string]::IsNullOrWhiteSpace($plain)) {
+                        $Token = $plain
+                        break
+                    }
                 }
-            }
-            finally {
-                if ($bstr -ne [IntPtr]::Zero) {
-                    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+                finally {
+                    if ($bstr -ne [IntPtr]::Zero) {
+                        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+                    }
                 }
             }
         }
-    }
-    catch {
-        # Validation below.
+        catch {
+            # Validation below.
+        }
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($Token)) {
-    throw "Missing GitHub token. Use -Token, user env GITHUB_TOKEN, SecretStore secret 'GitHub.Token.TOTPManager', or DPAPI file at %APPDATA%\\TOTP-Manager\\github-token.dpapi."
+    throw "Missing GitHub token. Use -Token, user env GITHUB_TOKEN, SecretStore secret 'GitHub.Token.OtpHarbor', or DPAPI file at %APPDATA%\\OTP-Harbor\\github-token.dpapi."
 }
 
 $headers = @{

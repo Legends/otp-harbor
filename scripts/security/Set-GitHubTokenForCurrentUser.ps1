@@ -18,8 +18,8 @@ $secureToken = Read-Host -AsSecureString
 
 if ($UseSecretStore) {
     try {
-        Set-Secret -Name "GitHub.Token.TOTPManager" -Secret $secureToken -ErrorAction Stop
-        Write-Host "Token stored in SecretStore as 'GitHub.Token.TOTPManager' (current user scope)."
+        Set-Secret -Name "GitHub.Token.OtpHarbor" -Secret $secureToken -ErrorAction Stop
+        Write-Host "Token stored in SecretStore as 'GitHub.Token.OtpHarbor' (current user scope)."
         return
     }
     catch {
@@ -27,7 +27,7 @@ if ($UseSecretStore) {
     }
 }
 
-$targetDir = Join-Path $env:APPDATA "TOTP-Manager"
+$targetDir = Join-Path $env:APPDATA "OTP-Harbor"
 $targetFile = Join-Path $targetDir "github-token.dpapi"
 
 New-Item -Path $targetDir -ItemType Directory -Force | Out-Null

@@ -13,7 +13,7 @@ Packages the current working tree without build outputs or Git metadata, transfe
 .\scripts\testing\Sync-Restore-Run-AvaloniaLinuxVm.ps1 -VmHost 192.168.1.50
 
 .EXAMPLE
-.\scripts\testing\Sync-Restore-Run-AvaloniaLinuxVm.ps1 -MountedRepository /mnt/otp-harbor
+.\scripts\testing\Sync-Restore-Run-AvaloniaLinuxVm.ps1 -MountedRepository /mnt/OTP-Harbor
 
 .EXAMPLE
 .\scripts\testing\Sync-Restore-Run-AvaloniaLinuxVm.ps1 -SshIdentityFile $env:USERPROFILE\.ssh\id_ed25519
@@ -28,7 +28,7 @@ param(
     [string]$GitExecutable,
     [string]$LocalRepository,
     [string]$MountedRepository,
-    [string]$VmRepository = "~/source/otp-harbor",
+    [string]$VmRepository = "~/source/OTP-Harbor",
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release"
 )
@@ -222,6 +222,7 @@ esac
 
 archive_path=''
 staging_root=''
+runtime_fallback=''
 cleanup_sync_inputs() {
     if [[ -n "$staging_root" ]]; then
         rm -rf -- "$staging_root"
@@ -229,6 +230,9 @@ cleanup_sync_inputs() {
     if [[ -n "$archive_path" ]]; then
         rm -f -- "$archive_path"
     fi
+    case "$runtime_fallback" in
+        /tmp/otp-harbor-xdg-*) rm -rf -- "$runtime_fallback" ;;
+    esac
 }
 trap cleanup_sync_inputs EXIT
 
@@ -267,6 +271,38 @@ esac
 
 printf 'Synchronizing %s to %s...\n' "$source_root" "$target_root"
 mkdir -p -- "$target_root"
+
+# Excluded bin/obj directories can otherwise keep pre-rename project folders
+# alive after rsync --delete. Remove only the known legacy project roots from
+# the already-guarded VM mirror before synchronization.
+legacy_project_directories=(
+    TOTP.Camera.OpenCv
+    TOTP.Core
+    TOTP.DAL
+    TOTP.Infrastructure
+    TOTP.Installer
+    TOTP.Platform.Android
+    TOTP.Platform.Linux
+    TOTP.Platform.MacOS
+    TOTP.Platform.Unix
+    TOTP.Platform.Windows
+    TOTP.Tests
+    TOTP.Tests.Avalonia.Headless
+    TOTP.Tests.Unix
+    TOTP.UI.Avalonia.Android
+    TOTP.UI.Avalonia.Desktop
+    TOTP.UI.Avalonia.Mobile
+    TOTP.UI.Avalonia.Shared
+    TOTP.Updater
+)
+for legacy_project_directory in "${legacy_project_directories[@]}"; do
+    legacy_project_path="$target_root/$legacy_project_directory"
+    if [[ -d "$legacy_project_path" && ! -e "$source_root/$legacy_project_directory" ]]; then
+        printf 'Removing obsolete pre-rename project directory %s...\n' "$legacy_project_path"
+        rm -rf -- "$legacy_project_path"
+    fi
+done
+
 rsync -a --delete \
     --exclude='.git/' \
     --exclude='.vs/' \
@@ -284,11 +320,6 @@ if [[ "$source_mode" == 'archive' ]]; then
 fi
 
 cd -- "$target_root"
-
-printf 'Restoring the Avalonia desktop project...\n'
-dotnet restore \
-    OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj \
-    --configfile NuGet.config
 
 user_id="$(id -u)"
 desktop_session_pid=''
@@ -310,8 +341,32 @@ if [[ -n "$desktop_session_pid" && -r "/proc/$desktop_session_pid/environ" ]]; t
     done < "/proc/$desktop_session_pid/environ"
 fi
 
-export DISPLAY="${DISPLAY:-:0}"
+# .NET 10.0.13 uses XDG_RUNTIME_DIR for user-scoped named mutexes, including
+# NuGet migration synchronization. SSH does not reliably inherit this value
+# from the graphical login, so establish it before the first dotnet command.
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$user_id}"
+if [[ ! -d "$XDG_RUNTIME_DIR" || ! -w "$XDG_RUNTIME_DIR" ]]; then
+    runtime_fallback="$(mktemp -d "/tmp/otp-harbor-xdg-$user_id.XXXXXX")"
+    chmod 700 -- "$runtime_fallback"
+    export XDG_RUNTIME_DIR="$runtime_fallback"
+fi
+
+# Keep this VM helper isolated from stale global NuGet migration and package
+# state while retaining a persistent cache between runs.
+export DOTNET_CLI_HOME="${DOTNET_CLI_HOME:-$HOME/.cache/otp-harbor/dotnet-cli}"
+export NUGET_PACKAGES="${NUGET_PACKAGES:-$HOME/.cache/otp-harbor/nuget-packages}"
+mkdir -p -- "$DOTNET_CLI_HOME" "$NUGET_PACKAGES"
+chmod 700 -- "$DOTNET_CLI_HOME" "$NUGET_PACKAGES"
+
+printf 'Restoring the Avalonia desktop project...\n'
+DOTNET_SYSTEM_NET_DISABLEIPV6=1 dotnet restore \
+    OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj \
+    --configfile NuGet.config \
+    --disable-parallel \
+    --tl:off \
+    --verbosity minimal
+
+export DISPLAY="${DISPLAY:-:0}"
 if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" && -S "$XDG_RUNTIME_DIR/bus" ]]; then
     export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 fi

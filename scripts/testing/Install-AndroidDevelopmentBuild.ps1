@@ -310,13 +310,13 @@ function Resolve-CachedAndroidApk([object]$State, [string]$OutputRoot) {
 
 function Get-AndroidBuildInputFingerprint {
     $inputPaths = @(
-        'TOTP.Core',
-        'TOTP.DAL',
-        'TOTP.Infrastructure',
-        'TOTP.Platform.Android',
-        'TOTP.UI.Avalonia.Android',
-        'TOTP.UI.Avalonia.Mobile',
-        'TOTP.UI.Avalonia.Shared',
+        'OtpHarbor.Core',
+        'OtpHarbor.DAL',
+        'OtpHarbor.Infrastructure',
+        'OtpHarbor.Platform.Android',
+        'OtpHarbor.UI.Avalonia.Android',
+        'OtpHarbor.UI.Avalonia.Mobile',
+        'OtpHarbor.UI.Avalonia.Shared',
         'OtpHarbor.UI.Avalonia.Desktop\Assets\Icons\app-1024.png',
         'Directory.Build.props',
         'NuGet.config',
