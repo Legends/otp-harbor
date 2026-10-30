@@ -83,6 +83,7 @@ public sealed class MainWindowViewModelTests
     [Theory]
     [InlineData(AvaloniaStartupOutcome.ReadyForPasswordSetup, false, "StartupCreateMasterPassword")]
     [InlineData(AvaloniaStartupOutcome.ReadyForUnlock, false, "StartupEnterMasterPassword")]
+    [InlineData(AvaloniaStartupOutcome.ReadyForQuickUnlock, false, "VaultLockedQuickUnlock")]
     [InlineData(AvaloniaStartupOutcome.ReadyForPasswordFallback, false, "QuickUnlockFallback")]
     [InlineData(AvaloniaStartupOutcome.ReadyUnlocked, false, "VaultUnlocked")]
     [InlineData(AvaloniaStartupOutcome.PreferencesUnavailable, true, "StartupPreferencesUnavailable")]
@@ -105,6 +106,14 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(
             outcome is AvaloniaStartupOutcome.ReadyForUnlock or AvaloniaStartupOutcome.ReadyForPasswordFallback,
             sut.IsPasswordUnlockVisible);
+        Assert.Equal(
+            outcome is AvaloniaStartupOutcome.ReadyForUnlock
+                or AvaloniaStartupOutcome.ReadyForQuickUnlock
+                or AvaloniaStartupOutcome.ReadyForPasswordFallback,
+            sut.IsQuickUnlockVisible);
+        Assert.Equal(
+            outcome == AvaloniaStartupOutcome.ReadyForQuickUnlock,
+            sut.IsQuickUnlockAvailable);
         Assert.Equal(outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup, sut.IsOnboardingVisible);
         Assert.False(sut.IsPasswordSetupVisible);
         Assert.Equal(outcome == AvaloniaStartupOutcome.ReadyUnlocked, sut.IsShellVisible);
@@ -332,7 +341,9 @@ public sealed class MainWindowViewModelTests
 
         authorization.Verify(value => value.Lock(), Times.Once);
         Assert.True(sut.IsPasswordUnlockVisible);
-        Assert.False(sut.IsQuickUnlockVisible);
+        Assert.True(sut.IsQuickUnlockVisible);
+        Assert.False(sut.IsQuickUnlockAvailable);
+        Assert.False(sut.QuickUnlockCommand.CanExecute(null));
         Assert.True(sut.IsUnlockVisible);
         Assert.False(sut.IsAccountListVisible);
         Assert.Contains("locked", sut.StatusText, StringComparison.OrdinalIgnoreCase);
@@ -349,15 +360,42 @@ public sealed class MainWindowViewModelTests
         var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
         authorization.SetupGet(value => value.State).Returns(state);
         authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
         using var sut = CreateSut(coordinator.Object, authorization.Object);
         await sut.InitializeAsync();
 
         await sut.LockAsync();
 
         Assert.True(sut.IsQuickUnlockVisible);
+        Assert.True(sut.IsQuickUnlockAvailable);
+        Assert.True(sut.QuickUnlockCommand.CanExecute(null));
         Assert.False(sut.IsPasswordUnlockVisible);
         Assert.True(sut.IsUnlockVisible);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, state.PreferredUnlockMethod);
+    }
+
+    [Fact]
+    public async Task LockAsync_WhenConfiguredQuickUnlockIsUnavailable_DisablesBiometricAction()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var authorization = new Mock<IAuthorizationService>();
+        var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
+        authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(false);
+        using var sut = CreateSut(coordinator.Object, authorization.Object);
+        await sut.InitializeAsync();
+
+        await sut.LockAsync();
+
+        Assert.True(sut.IsQuickUnlockVisible);
+        Assert.False(sut.IsQuickUnlockAvailable);
+        Assert.False(sut.QuickUnlockCommand.CanExecute(null));
+        Assert.False(sut.IsPasswordUnlockVisible);
+        Assert.True(sut.IsUnlockVisible);
+        authorization.Verify(value => value.IsHelloAvailableAsync(), Times.Once);
     }
 
     [Fact]
@@ -407,6 +445,7 @@ public sealed class MainWindowViewModelTests
         var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
         authorization.SetupGet(value => value.State).Returns(state);
         authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
         authorization.Setup(value => value.TryUnlockWithHelloAsync(It.IsAny<CancellationToken>()))
             .Returns<CancellationToken>(_ =>
             {
@@ -435,6 +474,7 @@ public sealed class MainWindowViewModelTests
         var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
         authorization.SetupGet(value => value.State).Returns(state);
         authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
         authorization.Setup(value => value.TryUnlockWithPasswordAsync("wrong-password"))
             .ReturnsAsync(AuthorizationResult.InvalidCredentials);
         authorization.Setup(value => value.TryUnlockWithHelloAsync(It.IsAny<CancellationToken>()))
@@ -473,6 +513,7 @@ public sealed class MainWindowViewModelTests
         var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
         authorization.SetupGet(value => value.State).Returns(state);
         authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
         authorization.Setup(value => value.TryUnlockWithHelloAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(AuthorizationResult.Cancelled);
         using var sut = CreateSut(coordinator.Object, authorization.Object);
@@ -486,6 +527,34 @@ public sealed class MainWindowViewModelTests
         Assert.Empty(sut.QuickUnlockMessage);
     }
 
+    [Theory]
+    [InlineData(AuthorizationResult.NotConfigured)]
+    [InlineData(AuthorizationResult.NotAvailable)]
+    [InlineData(AuthorizationResult.DisabledByPolicy)]
+    public async Task TryQuickUnlockAsync_WhenProviderBecomesUnavailable_DisablesBiometricAction(
+        AuthorizationResult result)
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyForQuickUnlock);
+        var authorization = new Mock<IAuthorizationService>();
+        var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
+        state.Lock();
+        authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.TryUnlockWithHelloAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(result);
+        using var sut = CreateSut(coordinator.Object, authorization.Object);
+        await sut.InitializeAsync();
+
+        await sut.TryQuickUnlockAsync();
+
+        Assert.True(sut.IsQuickUnlockVisible);
+        Assert.False(sut.IsQuickUnlockAvailable);
+        Assert.False(sut.QuickUnlockCommand.CanExecute(null));
+        Assert.False(sut.IsShellVisible);
+        Assert.NotEmpty(sut.QuickUnlockMessage);
+    }
+
     [Fact]
     public async Task TryQuickUnlockAsync_WhenPasswordIsRequired_ShowsRecoveryGate()
     {
@@ -496,6 +565,7 @@ public sealed class MainWindowViewModelTests
         var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
         authorization.SetupGet(value => value.State).Returns(state);
         authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
         authorization.Setup(value => value.TryUnlockWithHelloAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(AuthorizationResult.PasswordRequired);
         using var sut = CreateSut(coordinator.Object, authorization.Object);
@@ -504,7 +574,8 @@ public sealed class MainWindowViewModelTests
 
         await sut.TryQuickUnlockAsync();
 
-        Assert.False(sut.IsQuickUnlockVisible);
+        Assert.True(sut.IsQuickUnlockVisible);
+        Assert.False(sut.IsQuickUnlockAvailable);
         Assert.True(sut.IsPasswordUnlockVisible);
         Assert.True(sut.IsUnlockVisible);
         Assert.False(sut.IsShellVisible);
@@ -520,13 +591,15 @@ public sealed class MainWindowViewModelTests
         var state = CreateAuthorizationState(PreferredUnlockMethod.PlatformQuickUnlock);
         authorization.SetupGet(value => value.State).Returns(state);
         authorization.Setup(value => value.Lock()).Callback(state.Lock);
+        authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
         using var sut = CreateSut(coordinator.Object, authorization.Object);
         await sut.InitializeAsync();
         await sut.LockAsync();
 
         await sut.UsePasswordFallbackAsync();
 
-        Assert.False(sut.IsQuickUnlockVisible);
+        Assert.True(sut.IsQuickUnlockVisible);
+        Assert.False(sut.IsQuickUnlockAvailable);
         Assert.True(sut.IsPasswordUnlockVisible);
         Assert.True(sut.IsUnlockVisible);
         Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, state.PreferredUnlockMethod);

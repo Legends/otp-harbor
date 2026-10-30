@@ -45,6 +45,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _canRetry;
     private bool _isPasswordUnlockVisible;
     private bool _isQuickUnlockVisible;
+    private bool _isQuickUnlockAvailable;
     private bool _isQuickUnlockBusy;
     private string _quickUnlockMessage = string.Empty;
     private bool _isOnboardingVisible;
@@ -59,6 +60,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _automaticUpdateCheckStarted;
     private bool _shutdownPrepared;
     private bool _disposed;
+    private int _quickUnlockAvailabilityRevision;
     private int _selectedSettingsTabIndex;
     private ShellResumeState? _resumeState;
     private readonly OnboardingPreviewOptions _onboardingPreviewOptions;
@@ -176,7 +178,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             () => _isShellVisible && !_isSettingsVisible);
         _quickUnlockCommand = new AsyncCommand(
             TryQuickUnlockAsync,
-            () => _isQuickUnlockVisible && !_isQuickUnlockBusy);
+            () => _isQuickUnlockVisible && _isQuickUnlockAvailable && !_isQuickUnlockBusy);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -293,6 +295,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         {
             if (!SetField(ref _isQuickUnlockVisible, value)) return;
             OnPropertyChanged(nameof(IsUnlockVisible));
+            NotifyQuickUnlockCommands();
+        }
+    }
+
+    public bool IsQuickUnlockAvailable
+    {
+        get => _isQuickUnlockAvailable;
+        private set
+        {
+            if (!SetField(ref _isQuickUnlockAvailable, value)) return;
             NotifyQuickUnlockCommands();
         }
     }
@@ -414,6 +426,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         IsBusy = true;
         CanRetry = false;
+        InvalidateQuickUnlockAvailability();
         IsPasswordUnlockVisible = false;
         IsQuickUnlockVisible = false;
         QuickUnlockMessage = string.Empty;
@@ -438,6 +451,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                     (_localization.GetString(AvaloniaStringKeys.StartupCreateMasterPassword), false, NotificationSeverity.Information),
                 AvaloniaStartupOutcome.ReadyForUnlock =>
                     (_localization.GetString(AvaloniaStringKeys.StartupEnterMasterPassword), false, NotificationSeverity.Information),
+                AvaloniaStartupOutcome.ReadyForQuickUnlock =>
+                    (_localization.GetString(AvaloniaStringKeys.VaultLockedQuickUnlock), false, NotificationSeverity.Information),
                 AvaloniaStartupOutcome.ReadyForPasswordFallback =>
                     (_localization.GetString(AvaloniaStringKeys.QuickUnlockFallback), false, NotificationSeverity.Warning),
                 AvaloniaStartupOutcome.ReadyUnlocked =>
@@ -449,6 +464,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             };
             IsPasswordUnlockVisible = outcome is AvaloniaStartupOutcome.ReadyForUnlock
                 or AvaloniaStartupOutcome.ReadyForPasswordFallback;
+            IsQuickUnlockVisible = outcome is AvaloniaStartupOutcome.ReadyForUnlock
+                or AvaloniaStartupOutcome.ReadyForQuickUnlock
+                or AvaloniaStartupOutcome.ReadyForPasswordFallback;
+            IsQuickUnlockAvailable = outcome == AvaloniaStartupOutcome.ReadyForQuickUnlock;
             IsOnboardingVisible = outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup;
             IsPasswordSetupVisible = false;
             if (outcome == AvaloniaStartupOutcome.ReadyUnlocked)
@@ -458,6 +477,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             }
             if (_onboardingPreviewOptions.ShowOnStartup
                 && outcome is AvaloniaStartupOutcome.ReadyForUnlock
+                    or AvaloniaStartupOutcome.ReadyForQuickUnlock
                     or AvaloniaStartupOutcome.ReadyForPasswordFallback
                     or AvaloniaStartupOutcome.ReadyUnlocked)
             {
@@ -605,6 +625,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(IsOnboardingPreview));
             IsPasswordUnlockVisible = resumeState.PasswordUnlockVisible;
             IsQuickUnlockVisible = resumeState.QuickUnlockVisible;
+            IsQuickUnlockAvailable = resumeState.QuickUnlockAvailable;
             IsPasswordSetupVisible = resumeState.PasswordSetupVisible;
             IsShellVisible = resumeState.ShellVisible;
             IsAccountListVisible = resumeState.AccountListVisible;
@@ -624,6 +645,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _onboardingPreviewResumeState = new OnboardingPreviewResumeState(
             IsPasswordUnlockVisible,
             IsQuickUnlockVisible,
+            IsQuickUnlockAvailable,
             IsPasswordSetupVisible,
             IsShellVisible,
             IsAccountListVisible,
@@ -649,6 +671,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplyLockedUiState()
     {
+        var availabilityRevision = InvalidateQuickUnlockAvailability();
         CaptureResumeState();
         AccountList.Clear();
         CameraScanner.Dismiss();
@@ -659,7 +682,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         IsAccountListVisible = false;
         var quickUnlockPreferred = _authorizationService.State is { } state
             && state.PreferredUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock;
-        IsQuickUnlockVisible = quickUnlockPreferred;
+        IsQuickUnlockVisible = true;
         IsPasswordUnlockVisible = !quickUnlockPreferred;
         IsPasswordSetupVisible = false;
         QuickUnlockMessage = string.Empty;
@@ -668,11 +691,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 ? AvaloniaStringKeys.VaultLockedQuickUnlock
                 : AvaloniaStringKeys.VaultLockedPassword);
         StatusSeverity = NotificationSeverity.Information;
+        if (quickUnlockPreferred)
+            _ = RefreshQuickUnlockAvailabilityAsync(availabilityRevision);
     }
 
     public async Task TryQuickUnlockAsync()
     {
-        if (!IsQuickUnlockVisible || IsQuickUnlockBusy) return;
+        if (!IsQuickUnlockVisible || !IsQuickUnlockAvailable || IsQuickUnlockBusy) return;
 
         IsQuickUnlockBusy = true;
         QuickUnlockMessage = string.Empty;
@@ -700,6 +725,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 return;
             }
 
+            if (result is AuthorizationResult.NotConfigured
+                or AuthorizationResult.NotAvailable
+                or AuthorizationResult.DisabledByPolicy)
+            {
+                InvalidateQuickUnlockAvailability();
+            }
+
             QuickUnlockMessage = _localization.GetString(AvaloniaStringKeys.QuickUnlockFailed);
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
@@ -718,7 +750,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public Task UsePasswordFallbackAsync()
     {
         if (!IsQuickUnlockVisible) return Task.CompletedTask;
-        IsQuickUnlockVisible = false;
+        InvalidateQuickUnlockAvailability();
+        IsQuickUnlockVisible = true;
         IsPasswordUnlockVisible = true;
         QuickUnlockMessage = string.Empty;
         StatusText = _localization.GetString(AvaloniaStringKeys.QuickUnlockFallback);
@@ -843,6 +876,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private async Task EnterAuthorizedShellAsync()
     {
+        InvalidateQuickUnlockAvailability();
         PasswordUnlock.Clear();
         QuickUnlockMessage = string.Empty;
 
@@ -963,6 +997,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _quickUnlockCommand?.NotifyCanExecuteChanged();
     }
 
+    private int InvalidateQuickUnlockAvailability()
+    {
+        var revision = ++_quickUnlockAvailabilityRevision;
+        IsQuickUnlockAvailable = false;
+        return revision;
+    }
+
+    private async Task RefreshQuickUnlockAvailabilityAsync(int revision)
+    {
+        var isAvailable = false;
+        try
+        {
+            isAvailable = await _authorizationService.IsHelloAvailableAsync();
+        }
+        catch
+        {
+            // Availability checks fail closed while master-password recovery remains usable.
+        }
+
+        if (_disposed
+            || revision != _quickUnlockAvailabilityRevision
+            || !IsQuickUnlockVisible
+            || IsShellVisible)
+        {
+            return;
+        }
+
+        IsQuickUnlockAvailable = isAvailable;
+    }
+
     private void NotifyOnboardingCommands()
     {
         _previousOnboardingCommand?.NotifyCanExecuteChanged();
@@ -989,6 +1053,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private sealed record OnboardingPreviewResumeState(
         bool PasswordUnlockVisible,
         bool QuickUnlockVisible,
+        bool QuickUnlockAvailable,
         bool PasswordSetupVisible,
         bool ShellVisible,
         bool AccountListVisible,

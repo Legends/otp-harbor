@@ -68,10 +68,13 @@ public sealed class AvaloniaStartupCoordinator(
                 quickUnlock == AuthorizationResult.Success);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var outcome = quickUnlock == AuthorizationResult.Success
-                && authorizationService.State.IsUnlocked
-                    ? AvaloniaStartupOutcome.ReadyUnlocked
-                    : AvaloniaStartupOutcome.ReadyForPasswordFallback;
+            var outcome = quickUnlock switch
+            {
+                AuthorizationResult.Success when authorizationService.State.IsUnlocked =>
+                    AvaloniaStartupOutcome.ReadyUnlocked,
+                AuthorizationResult.Cancelled => AvaloniaStartupOutcome.ReadyForQuickUnlock,
+                _ => AvaloniaStartupOutcome.ReadyForPasswordFallback
+            };
             RecordCompleted(true);
             return outcome;
         }

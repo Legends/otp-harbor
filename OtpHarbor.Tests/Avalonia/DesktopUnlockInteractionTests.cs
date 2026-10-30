@@ -21,6 +21,9 @@ public sealed class DesktopUnlockInteractionTests
             .Single(element => element.Attribute(xaml + "Name")?.Value == "BiometricUnlockButton");
 
         Assert.Equal("{Binding QuickUnlockCommand}", button.Attribute("Command")?.Value);
+        Assert.Equal(
+            "{Binding IsQuickUnlockAvailable}",
+            button.Attribute("IsEnabled")?.Value);
         Assert.Null(button.Attribute("Content"));
         Assert.Equal(
             "{DynamicResource UnlockWithQuickUnlock}",
@@ -30,6 +33,13 @@ public sealed class DesktopUnlockInteractionTests
             button.Attribute("ToolTip.Tip")?.Value);
         Assert.Equal("64", button.Attribute("Width")?.Value);
         Assert.Equal("primary biometric-unlock", button.Attribute("Classes")?.Value);
+        var disabledStyle = document
+            .Descendants(avalonia + "Style")
+            .Single(element => element.Attribute("Selector")?.Value
+                == "Button.biometric-unlock:disabled");
+        Assert.Equal(
+            "0.42",
+            disabledStyle.Elements(avalonia + "Setter").Single().Attribute("Value")?.Value);
         var fingerprint = button
             .Descendants()
             .Single(element => element.Name.LocalName == "FingerprintIcon");
@@ -58,8 +68,11 @@ public sealed class DesktopUnlockInteractionTests
             "{DynamicResource VaultLockedTitle}",
             statusBanner.Attribute("Title")?.Value);
         Assert.Equal(
-            "{DynamicResource VaultLockedQuickUnlock}",
+            "{Binding Notification.Text}",
             statusBanner.Attribute("Text")?.Value);
+        Assert.Equal(
+            "{Binding Notification.Severity}",
+            statusBanner.Attribute("Severity")?.Value);
 
         var divider = biometricCard
             .Descendants(avalonia + "Grid")

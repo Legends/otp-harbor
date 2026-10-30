@@ -22,6 +22,9 @@
             <Setter Property="Background" Value="{DynamicResource BrushBiometricCardBackground}" />
             <Setter Property="Padding" Value="12" />
         </Style>
+        <Style Selector="Button.biometric-unlock:disabled">
+            <Setter Property="Opacity" Value="0.42" />
+        </Style>
         <Style Selector="shared|ValidationMessage.quick-unlock-message /template/ TextBlock#PART_Message">
             <Setter Property="MaxLines" Value="1" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -128,8 +131,8 @@
                     <Border IsVisible="{Binding IsQuickUnlockVisible}">
                         <shared:NotificationBanner
                             x:Name="QuickUnlockStatusBanner"
-                            Severity="Information"
-                            Text="{DynamicResource VaultLockedQuickUnlock}"
+                            Severity="{Binding Notification.Severity}"
+                            Text="{Binding Notification.Text}"
                             Title="{DynamicResource VaultLockedTitle}" />
                     </Border>
                     <Border IsVisible="{Binding !IsQuickUnlockVisible}">
@@ -174,6 +177,7 @@
                                 automation:AutomationProperties.Name="{DynamicResource UnlockWithQuickUnlock}"
                                 Classes="primary biometric-unlock"
                                 Command="{Binding QuickUnlockCommand}"
+                                IsEnabled="{Binding IsQuickUnlockAvailable}"
                                 IsVisible="{Binding IsQuickUnlockVisible}"
                                 ToolTip.Tip="{DynamicResource UnlockWithQuickUnlock}">
                                 <shared:FingerprintIcon IconSize="48" />
