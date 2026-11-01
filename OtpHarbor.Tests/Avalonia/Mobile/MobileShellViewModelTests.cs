@@ -998,6 +998,8 @@ public sealed class MobileShellViewModelTests
 
         context.Sut.OnEnteredBackground(lockImmediately: true);
 
+        await context.Sut.InitializeAsync(); // Recreating a locked view must not reinitialize authorization.
+        context.Authorization.Verify(value => value.InitializeAsync(), Times.Once);
         context.Authorization.Verify(value => value.Lock(), Times.Once);
         Assert.True(context.Sut.IsUnlockVisible);
         Assert.Empty(context.Sut.Accounts);
@@ -3608,6 +3610,97 @@ public sealed class MobileShellViewModelTests
 
         Assert.False(context.Sut.IsImportProgressVisible);
         Assert.Empty(context.Sut.ImportProgressText);
+    }
+
+    [Theory]
+    [InlineData("success")]
+    [InlineData("failure")]
+    [InlineData("exception")]
+    [InlineData("cancel")]
+    public async Task ImportBrandIconsAsync_ViewRecreationPreservesSessionSettingsAndProgress(string outcome)
+    {
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status).Returns(new BrandIconPackStatus(false, null, 0));
+        var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user@example.test");
+        var context = CreateContext(isConfigured: true, [account], brandIconPackService: brandIcons.Object);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        var picker = new TaskCompletionSource<MobileReadableDocument?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        context.Documents.Setup(value => value.OpenBrandIconPackAsync(It.IsAny<CancellationToken>()))
+            .Returns(picker.Task);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var importing = new TaskCompletionSource<Result<BrandIconPackImportResult>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        brandIcons.Setup(value => value.ImportAsync(It.IsAny<Stream>(), "synthetic.otphicons", It.IsAny<CancellationToken>()))
+            .Callback(() => started.SetResult()).Returns(importing.Task);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        var projectedAccount = Assert.Single(context.Sut.Accounts);
+
+        var importTask = context.Sut.ImportBrandIconsAsync();
+        context.Sut.OnEnteredBackground(lockImmediately: false);
+        context.Time.Advance(TimeSpan.FromSeconds(1));
+        context.Sut.OnReturnedToForeground();
+        await context.Sut.InitializeAsync(); // The recreated Android view reuses this shell.
+        Assert.True(context.Sut.IsInitialized);
+        Assert.True(context.Sut.IsSettingsVisible);
+        Assert.False(context.Sut.IsStartingVisible);
+
+        picker.SetResult(outcome == "cancel" ? null
+            : new MobileReadableDocument(new MemoryStream([1, 2, 3]), "synthetic.otphicons"));
+        if (outcome != "cancel")
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5), Xunit.TestContext.Current.CancellationToken);
+            context.Time.Advance(TimeSpan.FromMinutes(2)); // Long foreground imports must not relock.
+            await context.Sut.InitializeAsync();
+            Assert.True(context.Sut.IsImportProgressVisible);
+            Assert.Equal(context.Strings.Get(MobileStringKeys.ImportingBrandIcons), context.Sut.ImportProgressText);
+            Assert.True(context.Sut.IsSettingsVisible);
+            Assert.True(context.State.IsUnlocked);
+            if (outcome == "exception") importing.SetException(new IOException("synthetic import failure"));
+            else importing.SetResult(outcome == "success"
+                ? Result.Ok(new BrandIconPackImportResult("3", 1, BrandIconPackFormat.OtpHarbor))
+                : Result.Fail("synthetic import failure"));
+        }
+        await importTask;
+        await context.Sut.InitializeAsync();
+
+        Assert.True(context.State.IsUnlocked);
+        Assert.True(context.Sut.IsSettingsVisible);
+        Assert.True(context.Sut.IsInitialAccountLoadComplete);
+        Assert.Same(projectedAccount, Assert.Single(context.Sut.Accounts));
+        Assert.False(context.Sut.IsStartingVisible);
+        Assert.False(context.Sut.IsUnlockVisible);
+        Assert.False(context.Sut.IsBusy);
+        Assert.False(context.Sut.IsImportProgressVisible);
+        Assert.False(context.Sut.InitializeCommand.CanExecute(null));
+        context.Authorization.Verify(value => value.InitializeAsync(), Times.Once);
+        context.Authorization.Verify(value => value.Lock(), Times.Never);
+        context.Authorization.Verify(value => value.Logout(), Times.Never);
+        context.Settings.Verify(value => value.LoadAsync(), Times.Once);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
+    public async Task InitializeAsync_AfterStartupFailure_CanRetrySuccessfully()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Settings.SetupSequence(value => value.LoadAsync())
+            .ReturnsAsync(Result.Fail<IAppSettings>("synthetic settings failure"))
+            .ReturnsAsync(Result.Ok<IAppSettings>(context.SettingsValue));
+        await context.Sut.InitializeAsync();
+        Assert.False(context.Sut.IsInitialized);
+        Assert.True(context.Sut.CanRetry);
+        Assert.True(context.Sut.InitializeCommand.CanExecute(null));
+
+        await context.Sut.InitializeAsync();
+
+        Assert.True(context.Sut.IsInitialized);
+        Assert.True(context.Sut.IsUnlockVisible);
+        Assert.False(context.Sut.CanRetry);
+        context.Settings.Verify(value => value.LoadAsync(), Times.Exactly(2));
+        context.Sut.Dispose();
     }
 
     [Fact]

@@ -333,7 +333,7 @@ public sealed class MobileShellViewModel :
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged += AutomaticBackupStatusChanged;
 
-        _initializeCommand = new MobileAsyncCommand(InitializeAsync, () => !IsBusy);
+        _initializeCommand = new MobileAsyncCommand(InitializeAsync, () => !IsBusy && !IsInitialized);
         _previousOnboardingCommand = new MobileAsyncCommand(
             PreviousOnboardingAsync,
             () => IsOnboardingVisible && !IsFirstOnboardingSlide && !IsBusy);
@@ -1044,6 +1044,8 @@ public sealed class MobileShellViewModel :
             _ = SetAllowScreenshotsAsync(value);
         }
     }
+
+    public bool IsInitialized { get; private set; }
 
     public bool IsBusy
     {
@@ -2295,7 +2297,7 @@ public sealed class MobileShellViewModel :
 
     public async Task InitializeAsync()
     {
-        if (IsBusy || _disposed) return;
+        if (IsInitialized || IsBusy || _disposed) return;
 
         IsBusy = true;
         _startupFailed = false;
@@ -2361,6 +2363,7 @@ public sealed class MobileShellViewModel :
         }
         finally
         {
+            IsInitialized = !_startupFailed;
             IsBusy = false;
             if (_onboardingPreviewRequested)
             {

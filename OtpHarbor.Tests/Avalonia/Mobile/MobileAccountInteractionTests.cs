@@ -5,6 +5,30 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void IconImport_RestoredViewRetainsTheModalProgressDialogInsteadOfStartupOverlay()
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
+        var view = XDocument.Load(Path.Combine(directory, "MobileMainView.axaml"));
+        var code = File.ReadAllText(Path.Combine(directory, "MobileMainView.axaml.cs"));
+        XNamespace ui = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var overlay = Assert.Single(view.Descendants(ui + "Grid"),
+            element => (string?)element.Attribute(xaml + "Name") == "ImportProgressOverlay");
+        Assert.Equal("{Binding IsImportProgressVisible}", (string?)overlay.Attribute("IsVisible"));
+        Assert.Equal("{DynamicResource BrushOverlayLight}", (string?)overlay.Attribute("Background"));
+        Assert.Single(overlay.Descendants(ui + "ProgressBar"));
+        Assert.Contains(overlay.Descendants(ui + "TextBlock"),
+            element => (string?)element.Attribute("Text") == "{Binding ImportProgressText}");
+        var restoreStart = code.IndexOf("if (_startupViewModel?.IsInitialized == true)", StringComparison.Ordinal);
+        Assert.True(restoreStart >= 0);
+        var restoreEnd = code.IndexOf("EvaluateStartupTransition();", restoreStart, StringComparison.Ordinal);
+        var restore = code[restoreStart..restoreEnd];
+        Assert.Contains("StartupLoadingOverlay.IsVisible = false;", restore);
+        Assert.Contains("StartupContentRevealRequested?.Invoke", restore);
+        Assert.Contains("CompleteStartupTransition(this, EventArgs.Empty);", restore);
+    }
+
+    [Fact]
     public void AndroidScrolling_HidesVerticalScrollbarsWithoutDisablingScrolling()
     {
         var fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures");

@@ -125,6 +125,20 @@ public partial class MainView : UserControl
         _startupViewModel = DataContext as MobileShellViewModel;
         if (_startupViewModel is not null)
             _startupViewModel.PropertyChanged += StartupViewModelPropertyChanged;
+        if (_startupViewModel?.IsInitialized == true)
+        {
+            // Activity recreation reuses the session, including any in-flight import dialog.
+            _startupTransitionPending = true;
+            StartupLoadingOverlay.IsVisible = false;
+            Dispatcher.UIThread.Post(() =>
+            {
+                _startupTransitionPending = false;
+                _startupTransitionStarted = true;
+                StartupContentRevealRequested?.Invoke(this, EventArgs.Empty);
+                CompleteStartupTransition(this, EventArgs.Empty);
+            }, DispatcherPriority.Render);
+            return;
+        }
         EvaluateStartupTransition();
     }
 

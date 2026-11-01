@@ -2531,7 +2531,8 @@
             Grid.RowSpan="3"
             Panel.ZIndex="90"
             Background="{DynamicResource BrushOverlayLight}"
-            IsVisible="{Binding IsImportProgressVisible}">
+            IsVisible="{Binding IsImportProgressVisible}"
+            x:Name="ImportProgressOverlay">
             <Border
                 MaxWidth="360"
                 Margin="24"
