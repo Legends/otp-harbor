@@ -1353,7 +1353,7 @@
           "Xamarin.Kotlin.StdLib": "2.4.0.1"
         }
       },
-      "TOTP.Core": {
+      "totp.core": {
         "type": "Project",
         "dependencies": {
           "FluentResults": "[4.0.0, )",
@@ -1362,7 +1362,7 @@
           "Serilog": "[4.4.0, )"
         }
       },
-      "TOTP.DAL": {
+      "totp.dal": {
         "type": "Project",
         "dependencies": {
           "FluentResults": "[4.0.0, )",
@@ -1370,7 +1370,7 @@
           "TOTP.Core": "[1.0.0, )"
         }
       },
-      "TOTP.Infrastructure": {
+      "totp.infrastructure": {
         "type": "Project",
         "dependencies": {
           "FluentResults": "[4.0.0, )",
@@ -1393,14 +1393,14 @@
           "TOTP.DAL": "[1.0.0, )"
         }
       },
-      "TOTP.Platform.Android": {
+      "totp.platform.android": {
         "type": "Project",
         "dependencies": {
           "FluentResults": "[4.0.0, )",
           "TOTP.Core": "[1.0.0, )"
         }
       },
-      "TOTP.UI.Avalonia.Mobile": {
+      "totp.ui.avalonia.mobile": {
         "type": "Project",
         "dependencies": {
           "Avalonia": "[12.1.1, )",
@@ -1409,7 +1409,7 @@
           "TOTP.UI.Avalonia.Shared": "[1.0.0, )"
         }
       },
-      "TOTP.UI.Avalonia.Shared": {
+      "totp.ui.avalonia.shared": {
         "type": "Project",
         "dependencies": {
           "Avalonia": "[12.1.1, )",

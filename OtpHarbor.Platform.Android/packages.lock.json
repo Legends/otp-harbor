@@ -34,7 +34,7 @@
         "resolved": "4.4.0",
         "contentHash": "ZC6Le3rr4TVJJjS4KsQAesxeF1EhW9qcZmmG7eP5Y2G3+gTGkJEUXkq4+tZNPtyp05I0wWOxnIjwtxFweJsObw=="
       },
-      "TOTP.Core": {
+      "totp.core": {
         "type": "Project",
         "dependencies": {
           "FluentResults": "[4.0.0, )",
