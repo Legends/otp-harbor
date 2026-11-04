@@ -12,6 +12,24 @@ public sealed class IconPackImporterTests
     private const string ValidSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M0 0h24v24H0z\"/></svg>";
 
     [Fact]
+    public async Task FictionalMarketingPack_ImportsAllOriginalThemedIcons()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "OtpHarbor.sln")))
+            directory = directory.Parent;
+        Assert.NotNull(directory);
+        var path = Path.Combine(directory.FullName, "artifacts", "marketing", "demo-data", "otp-harbor-demo-icons.otphicons");
+        await using var stream = File.OpenRead(path);
+        var result = await new OtpHarborIconPackImporter().ImportAsync(
+            new IconPackSource { Stream = stream, FileName = Path.GetFileName(path) },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess, string.Join("; ", result.Errors.Select(error => error.Message)));
+        Assert.Equal(26, result.Value.Icons.Count);
+        Assert.All(result.Value.Icons, icon => Assert.NotNull(icon.RuntimeAppearances));
+    }
+
+    [Fact]
     public async Task SimpleIconsImporter_AcceptsReleaseRootAndFutureOptionalMetadata()
     {
         await using var source = CreateArchive(archive =>

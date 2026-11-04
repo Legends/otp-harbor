@@ -6,5 +6,6 @@ public enum ApplicationActivationKind
     DebugBulkAddSyntheticAccounts,
     DebugBulkDeleteSyntheticAccounts,
     DebugImportAccounts,
-    DebugDeleteAllAccounts
+    DebugDeleteAllAccounts,
+    DebugImportIconPack
 }

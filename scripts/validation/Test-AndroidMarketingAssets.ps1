@@ -33,44 +33,78 @@ function Read-RequiredText([string]$RelativePath) {
     return [IO.File]::ReadAllText($path)
 }
 
+function Assert-CanonicalMirror([string]$CanonicalRelativePath, [string]$MirrorRelativePath) {
+    $canonicalPath = Join-Path $repositoryRoot $CanonicalRelativePath
+    $mirrorPath = Join-Path $repositoryRoot $MirrorRelativePath
+    if (-not (Test-Path -LiteralPath $canonicalPath -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $mirrorPath -PathType Leaf)) {
+        throw "Android marketing mirror or canonical source is missing: $MirrorRelativePath"
+    }
+    if ((Get-FileHash -LiteralPath $canonicalPath -Algorithm SHA256).Hash -cne
+        (Get-FileHash -LiteralPath $mirrorPath -Algorithm SHA256).Hash) {
+        throw "Android marketing mirror differs from its reviewed canonical asset: $MirrorRelativePath"
+    }
+}
+
 $websiteFiles = @(
-    '01-encrypted-local-vault.png',
-    '02-camera-and-google-qr.png',
-    '03-biometric-quick-unlock.png',
-    '04-swipe-manage-show-qr.png',
-    '05-backup-and-languages.png'
+    '01-dark-account-list.png',
+    '02-dark-settings.png',
+    '03-dark-qr-scanning.png',
+    '04-dark-backup-restore.png',
+    '05-light-account-list.png',
+    '06-light-settings.png',
+    '07-light-qr-scanning.png',
+    '08-light-backup-restore.png'
 )
 foreach ($file in $websiteFiles) {
     $info = Get-PngInfo "packaging/android/marketing/en-US/$file"
     if ($info.Width -ne 1920 -or $info.Height -ne 1080 -or $info.BitDepth -ne 8 -or $info.ColorType -ne 2) {
         throw "Website campaign asset must be an opaque 24-bit 1920x1080 PNG: $file"
     }
+    Assert-CanonicalMirror `
+        "artifacts/marketing/store/android/website-campaign/en-US/$file" `
+        "packaging/android/marketing/en-US/$file"
+}
+$actualWebsiteFiles = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'packaging/android/marketing/en-US') -File |
+    Select-Object -ExpandProperty Name | Sort-Object)
+if (Compare-Object ($websiteFiles | Sort-Object) $actualWebsiteFiles) {
+    throw 'The committed Android campaign contains stale or missing files.'
 }
 
 $phoneFiles = @(
-    '01-local-vault-1080x1920.png',
-    '02-swipe-and-qr-1080x1920.png',
-    '03-camera-google-import-1080x1920.png',
-    '04-unlock-methods-1080x1920.png',
-    '05-encrypted-backup-1080x1920.png',
-    '06-four-languages-1080x1920.png'
+    '01-dark-account-list-1080x1920.png',
+    '02-dark-settings-1080x1920.png',
+    '03-dark-scanner-1080x1920.png',
+    '04-light-account-list-1080x1920.png',
+    '05-light-settings-1080x1920.png',
+    '06-light-scanner-1080x1920.png'
 )
 foreach ($file in $phoneFiles) {
     $info = Get-PngInfo "fastlane/metadata/android/en-US/images/phoneScreenshots/$file"
     if ($info.Width -ne 1080 -or $info.Height -ne 1920 -or $info.BitDepth -ne 8 -or $info.ColorType -ne 2) {
         throw "Android store phone asset must be an opaque 24-bit 1080x1920 PNG: $file"
     }
+    Assert-CanonicalMirror `
+        "artifacts/marketing/store/android/phone-screenshots/$file" `
+        "fastlane/metadata/android/en-US/images/phoneScreenshots/$file"
+}
+$actualPhoneFiles = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'fastlane/metadata/android/en-US/images/phoneScreenshots') -File |
+    Select-Object -ExpandProperty Name | Sort-Object)
+if (Compare-Object ($phoneFiles | Sort-Object) $actualPhoneFiles) {
+    throw 'The committed Android phone screenshots contain stale or missing files.'
 }
 
 $feature = Get-PngInfo 'fastlane/metadata/android/en-US/images/featureGraphic.png'
 if ($feature.Width -ne 1024 -or $feature.Height -ne 500 -or $feature.BitDepth -ne 8 -or $feature.ColorType -ne 2) {
     throw 'The Android store feature graphic must be an opaque 24-bit 1024x500 PNG.'
 }
+Assert-CanonicalMirror 'artifacts/marketing/store/android/featureGraphic.png' 'fastlane/metadata/android/en-US/images/featureGraphic.png'
 
 $icon = Get-PngInfo 'fastlane/metadata/android/en-US/images/icon.png'
 if ($icon.Width -ne 512 -or $icon.Height -ne 512 -or $icon.BitDepth -ne 8 -or $icon.ColorType -ne 6 -or $icon.Length -ge 1MB) {
     throw 'The Android store app icon must be a 32-bit 512x512 PNG with alpha below 1,024 KB.'
 }
+Assert-CanonicalMirror 'artifacts/marketing/store/android/icon.png' 'fastlane/metadata/android/en-US/images/icon.png'
 
 foreach ($locale in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
     $metadataRoot = "fastlane/metadata/android/$locale"
@@ -90,21 +124,13 @@ foreach ($locale in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
     }
 }
 
-foreach ($source in @(
-    '01-account-list.jpg',
-    '02-swipe-actions.jpg',
-    '02-swipe-delete.mp4',
-    '03-account-qr.jpg',
-    '04-camera-scanner.png',
-    '05-language-settings.jpg',
-    '06-security-settings.jpg',
-    '07-import-export-settings.jpg',
-    '08-lock-screen.jpg',
-    '09-synthetic-qr-source.png'
-)) {
-    if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot "packaging/android/marketing/source/captures/$source") -PathType Leaf)) {
-        throw "Reviewed Android marketing source is missing: $source"
-    }
+if (Test-Path -LiteralPath (Join-Path $repositoryRoot 'scripts/assets/New-AndroidMarketingImages.ps1')) {
+    throw 'The obsolete v2 Android marketing generator must not be restored.'
+}
+$obsoleteCaptureRoot = Join-Path $repositoryRoot 'packaging/android/marketing/source/captures'
+if ((Test-Path -LiteralPath $obsoleteCaptureRoot) -and
+    @(Get-ChildItem -LiteralPath $obsoleteCaptureRoot -Recurse -File).Count -ne 0) {
+    throw 'Obsolete v2 Android marketing captures remain in the packaging source tree.'
 }
 
-Write-Output 'Android website and shared F-Droid/Google Play metadata meet the required content and image constraints.'
+Write-Output 'Android v3 website and shared F-Droid/Google Play metadata meet the required content and image constraints.'

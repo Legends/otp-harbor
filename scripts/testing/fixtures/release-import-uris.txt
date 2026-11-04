@@ -1,0 +1,3 @@
+# Synthetic v3 physical-release import fixture
+otpauth://totp/Release%20URI%20Alpha%3Auri-alpha%40example.invalid?secret=JBSWY3DPEHPK3PXP&issuer=Release%20URI%20Alpha&period=30
+otpauth://totp/Release%20URI%20Beta%3Auri-beta%40example.invalid?secret=KRSXG5DSNFXGOIDB&issuer=Release%20URI%20Beta&period=60

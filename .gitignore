@@ -7,7 +7,11 @@ obj/
 .vs/
 .git-commands/
 .codex
-artifacts
+artifacts/*
+!artifacts/marketing/
+artifacts/marketing/staging/
+__pycache__/
+*.pyc
 
 # Rider IDE
 .idea/

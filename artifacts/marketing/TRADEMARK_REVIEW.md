@@ -1,0 +1,7 @@
+# Fictional demo name review
+
+On 2026-11-01, an initial exact-name web search found real-world use of several proposed demo names. For example, **Avelune** appears in a [Canadian trademark application](https://ised-isde.canada.ca/cipo/trademark-search/2479933?wbdisable=true), and **Caldrift** is used by [Caldrift Technologies Ltd](https://caldrift.com/). Every name in that initial set was retired before public marketing use; provisional images showing them were moved to ignored staging and removed from the publication manifest.
+
+The replacement dataset uses 26 newly coined names. Exact-phrase web searches for each replacement returned no indexed results on 2026-11-01. This is a **preliminary collision screen, not legal clearance**: search indexes are incomplete, similar-sounding marks can conflict, and classes and jurisdictions matter. The original geometric icon drawings have been visually checked for internal uniqueness; they have not received a formal visual trademark search.
+
+Before publishing, a qualified human reviewer must check every name and mark in the relevant jurisdictions and product classes using official trademark registries, including the [USPTO Trademark Search](https://tmsearch.uspto.gov/), [EUIPO eSearch](https://www.euipo.europa.eu/en/search-ip), and other relevant national registries. Record the reviewer, date, scope, results, and any replacements here. Until then, the manifest remains blocked for publication.

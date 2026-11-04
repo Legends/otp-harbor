@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using TOTP.Core.Common;
 using TOTP.Core.Services.Interfaces;
+using TOTP.DAL.Storage;
 
 namespace TOTP.Infrastructure.Storage;
 
@@ -17,14 +18,24 @@ public static class VaultFileNameMigration
         ArgumentNullException.ThrowIfNull(applicationPaths);
         ArgumentNullException.ThrowIfNull(fileSecurity);
 
-        if (!string.IsNullOrWhiteSpace(
-                configuration[StringsConstants.TokensStorageFilePathConfigKey]))
+        var configuredPath = configuration[StringsConstants.TokensStorageFilePathConfigKey];
+        if (!string.IsNullOrWhiteSpace(configuredPath))
         {
+            var customPath = Path.GetFullPath(configuredPath);
+            if (File.Exists(customPath) && HasLegacyHeader(customPath))
+                LegacyVaultRollbackSnapshot.Ensure(
+                    customPath, applicationPaths.AuthorizationEnvelopeFilePath, fileSecurity);
             return;
         }
 
         var currentPath = Path.GetFullPath(applicationPaths.VaultFilePath);
-        if (File.Exists(currentPath)) return;
+        if (File.Exists(currentPath))
+        {
+            if (HasLegacyHeader(currentPath))
+                LegacyVaultRollbackSnapshot.Ensure(
+                    currentPath, applicationPaths.AuthorizationEnvelopeFilePath, fileSecurity);
+            return;
+        }
         if (Directory.Exists(currentPath))
         {
             throw new InvalidDataException(
@@ -45,6 +56,8 @@ public static class VaultFileNameMigration
             return;
         }
 
+        LegacyVaultRollbackSnapshot.Ensure(
+            legacyPath, applicationPaths.AuthorizationEnvelopeFilePath, fileSecurity, currentPath);
         for (var generation = 1; generation <= RotatingBackupCount; generation++)
         {
             MigrateFileIfDestinationIsMissing(
@@ -54,6 +67,16 @@ public static class VaultFileNameMigration
         }
 
         MigrateFileIfDestinationIsMissing(legacyPath, currentPath, fileSecurity);
+    }
+
+    private static bool HasLegacyHeader(string path)
+    {
+        if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+            throw new InvalidDataException("The vault path is a reparse point.");
+
+        Span<byte> header = stackalloc byte[4];
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return stream.Read(header) == header.Length && header.SequenceEqual("TVLT"u8);
     }
 
     private static void MigrateFileIfDestinationIsMissing(

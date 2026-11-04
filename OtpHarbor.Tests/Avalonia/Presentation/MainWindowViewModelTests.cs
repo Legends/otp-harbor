@@ -21,6 +21,112 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class MainWindowViewModelTests
 {
     [Fact]
+    public async Task InitializeAsync_WithBothVaults_PromptsInActiveLocaleAndKeepsCurrentUnlockFlow()
+    {
+        var localization = CreateLocalization();
+        localization.ApplyCulture("de");
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyForUnlock);
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.HasConflict()).Returns(true);
+        ChoiceDialogRequest? prompt = null;
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ChooseAsync(
+                It.IsAny<ChoiceDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<ChoiceDialogRequest, CancellationToken>((request, _) => prompt = request)
+            .ReturnsAsync(ChoiceDialogResult.Primary);
+        using var sut = CreateSut(coordinator.Object, Mock.Of<IAuthorizationService>(),
+            localization: localization, dialogs: dialogs.Object,
+            legacyVaultRecovery: recovery.Object);
+
+        await sut.InitializeAsync();
+
+        Assert.NotNull(prompt);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultConflictMessage), prompt.Message);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultContinueCurrent), prompt.PrimaryText);
+        Assert.True(sut.IsPasswordUnlockVisible);
+        recovery.Verify(value => value.ReadOlderAccountsAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WithBothVaultsAndMissingAuthorization_BlocksNewVaultSetup()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyForPasswordSetup);
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.HasConflict()).Returns(true);
+        var localization = CreateLocalization();
+        using var sut = CreateSut(coordinator.Object, Mock.Of<IAuthorizationService>(),
+            localization: localization, legacyVaultRecovery: recovery.Object);
+
+        await sut.InitializeAsync();
+
+        Assert.False(sut.IsOnboardingVisible);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultCurrentUnavailable), sut.StatusText);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WhenOlderAccountsAreChosen_RequiresPasswordAndRecoveryCheckpoint()
+    {
+        var olderAccount = new Account(Guid.NewGuid(), "Synthetic", "JBSWY3DPEHPK3PXP");
+        var committed = false;
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(
+                committed ? [olderAccount] : []));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback(() => committed = true)
+            .ReturnsAsync(Result.Ok());
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.HasConflict()).Returns(true);
+        recovery.Setup(value => value.ReadOlderAccountsAsync(
+                "older-password", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([olderAccount]));
+        var choices = new Queue<ChoiceDialogResult>(
+            [ChoiceDialogResult.Secondary]);
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ChooseAsync(
+                It.IsAny<ChoiceDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => choices.Dequeue());
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("older-password");
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var settings = new Mock<ISettingsService>();
+        settings.SetupGet(value => value.Current).Returns(new AppSettings());
+        var filePicker = new NativeFilePickerViewModel(
+            Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(), accounts.Object,
+            new AccountImportService(accounts.Object), dialogs.Object,
+            Mock.Of<IPasswordValidationService>(), Mock.Of<IPlatformFileSecurity>(),
+            settings.Object, Mock.Of<IPlatformFolderLauncher>(), CreateLocalization());
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        using var sut = CreateSut(coordinator.Object, Mock.Of<IAuthorizationService>(),
+            accountManager: accounts.Object, nativeFilePicker: filePicker,
+            dialogs: dialogs.Object, legacyVaultRecovery: recovery.Object);
+
+        await sut.InitializeAsync();
+
+        Assert.Empty(choices);
+        Assert.True(committed);
+        Assert.Equal(olderAccount.ID, Assert.Single(sut.AccountList.Accounts).Id);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        recovery.Verify(value => value.ReadOlderAccountsAsync(
+            "older-password", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ClosingSettingsAfterImport_AwaitsAccountListRefresh()
     {
         var imported = new Account(Guid.NewGuid(), "Imported issuer", "JBSWY3DPEHPK3PXP", "Imported account");
@@ -1000,7 +1106,9 @@ public sealed class MainWindowViewModelTests
         UpdateCheckViewModel? updateCheck = null,
         TimeSpan? settingsNotificationDuration = null,
         CameraScannerViewModel? cameraScanner = null,
-        OnboardingPreviewOptions? onboardingPreviewOptions = null) =>
+        OnboardingPreviewOptions? onboardingPreviewOptions = null,
+        IAvaloniaDialogService? dialogs = null,
+        ILegacyVaultRecoveryService? legacyVaultRecovery = null) =>
         new(
             coordinator,
             authorization,
@@ -1024,7 +1132,9 @@ public sealed class MainWindowViewModelTests
             scannerDialogs ?? Mock.Of<IAvaloniaCameraScannerDialogService>(),
             idleLockPolicy: idleLockPolicy,
             settingsNotificationDuration: settingsNotificationDuration,
-            onboardingPreviewOptions: onboardingPreviewOptions);
+            onboardingPreviewOptions: onboardingPreviewOptions,
+            dialogs: dialogs,
+            legacyVaultRecovery: legacyVaultRecovery);
 
     private static async Task WaitUntilAsync(Func<bool> predicate)
     {

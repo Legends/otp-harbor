@@ -5,9 +5,8 @@ on:
     branches: [master]
     paths:
       - 'site/**'
-      - 'docs/images/readme/app.png'
-      - 'docs/images/social/otp-harbor-social-preview.jpg'
-      - 'packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png'
+      - 'artifacts/marketing/website/**'
+      - 'packaging/windows-store/screenshots/**'
       - 'packaging/android/marketing/en-US/**'
       - 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'
       - 'OtpHarbor.UI.Avalonia.Desktop/appsettings.json'
@@ -35,6 +34,16 @@ jobs:
           ./scripts/validation/Test-PublicWebsite.ps1
           ./scripts/validation/Test-AndroidMarketingAssets.ps1
 
+      - name: Validate approved v3 gallery before publishing it
+        shell: bash
+        run: |
+          if python3 -c 'import json; from pathlib import Path; m=json.loads(Path("artifacts/marketing/manifest.json").read_text()); raise SystemExit(0 if m.get("publicationStatus")=="approved for website publication" else 1)'; then
+            test -f artifacts/marketing/website/gallery.json
+            python3 -m venv "$RUNNER_TEMP/otp-marketing-venv"
+            "$RUNNER_TEMP/otp-marketing-venv/bin/pip" install -r scripts/marketing/requirements.txt
+            "$RUNNER_TEMP/otp-marketing-venv/bin/python" scripts/marketing/Validate-MarketingAssets.py --require-captures
+          fi
+
       - name: Setup .NET SDK for signed-feed verification
         uses: actions/setup-dotnet@v5
         with:
@@ -43,16 +52,19 @@ jobs:
       - name: Assemble static website
         shell: bash
         run: |
-          mkdir -p _site/assets/android _site/android/guide
-          cp site/index.html site/styles.css site/robots.txt site/sitemap.xml _site/
-          cp site/android/index.html _site/android/index.html
+          mkdir -p _site/assets/android _site/assets/marketing _site/android/guide
+          cp site/index.html site/styles.css site/gallery.js site/robots.txt site/sitemap.xml _site/
+          cp site/android/index.html site/android/gallery.js _site/android/
           cp site/android/guide/index.html _site/android/guide/index.html
           cp site/1b6f7ab9795743588fa8e24157ad1541.txt _site/
-          cp docs/images/readme/app.png _site/assets/app.png
-          cp docs/images/social/otp-harbor-social-preview.jpg _site/assets/social-preview.jpg
-          cp packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png _site/assets/otp-harbor-totp-authenticator-windows.png
+          cp packaging/windows-store/screenshots/en-US/marketing/02-dark-account-list.png _site/assets/otp-harbor-totp-authenticator-windows.png
           cp packaging/android/marketing/en-US/*.png _site/assets/android/
           cp OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png _site/assets/app-icon.png
+          if [ -f artifacts/marketing/website/gallery.json ] && \
+             python3 -c 'import json; from pathlib import Path; m=json.loads(Path("artifacts/marketing/manifest.json").read_text()); raise SystemExit(0 if m.get("publicationStatus")=="approved for website publication" else 1)'; then
+            cp artifacts/marketing/website/gallery.json _site/assets/marketing/gallery.json
+            cp -R artifacts/marketing/website/optimized/. _site/assets/marketing/
+          fi
 
       - name: Stamp independent public release versions
         shell: pwsh

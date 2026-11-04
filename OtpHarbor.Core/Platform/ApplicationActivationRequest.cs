@@ -22,5 +22,8 @@ public sealed record ApplicationActivationRequest(
     public static ApplicationActivationRequest DebugDeleteAllAccounts() =>
         new(CurrentVersion, ApplicationActivationKind.DebugDeleteAllAccounts);
 
+    public static ApplicationActivationRequest DebugImportIconPack(string filePath) =>
+        new(CurrentVersion, ApplicationActivationKind.DebugImportIconPack, filePath);
+
     public bool IsSupported => Version == CurrentVersion && Enum.IsDefined(Kind);
 }

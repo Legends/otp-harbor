@@ -482,8 +482,12 @@
   <data name="IconPacks" xml:space="preserve"><value>Icon packs</value></data>
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>How do I import icon packs?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Open the separate OTP Harbor Icon Pack Builder project and follow its instructions to create otp-harbor-icons.otphicons. Then choose Settings → Icon packs → Import OTP Harbor icon pack. OTP Harbor does not download source icon collections or import provider archives directly. The generated pack records its selected icons, licenses, attribution, and source provenance; review that information before using or sharing it. Automatic matching uses the account issuer only.</value></data>
-  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Builder and upstream legal information:</value></data>
+  <data name="FaqImportIconPacksStepDownload" xml:space="preserve"><value>Download OTP Harbor Icon Pack Builder (desktop only) from GitHub.</value></data>
+  <data name="FaqImportIconPacksDownloadLink" xml:space="preserve"><value>GitHub releases</value></data>
+  <data name="FaqImportIconPacksStepBuild" xml:space="preserve"><value>Run the builder. It downloads its tested icon sources and creates otp-harbor-icons.otphicons.</value></data>
+  <data name="FaqImportIconPacksStepImport" xml:space="preserve"><value>In OTP Harbor Authenticator, choose Settings → Icon packs → Import OTP Harbor icon pack, then select the generated file.</value></data>
+  <data name="FaqImportIconPacksCustomIconTip" xml:space="preserve"><value>To use an individual SVG or PNG icon instead, edit the account, open Advanced options, and select the Choose custom SVG or PNG… action under Account icon (icon pack).</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Third-party icon legal information:</value></data>
   <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — legal disclaimer</value></data>
   <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons — license and trademark notice</value></data>
   <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons — license and legal notice</value></data>
@@ -519,4 +523,19 @@
   <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Backup checkpoint failed</value></data>
   <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor could not create or verify a current recovery checkpoint. You can cancel and retry, or explicitly delete the account without a current backup.</value></data>
   <data name="DeleteAnyway" xml:space="preserve"><value>Delete anyway</value></data>
+  <data name="OlderVaultRecoveryTitle" xml:space="preserve"><value>Older vault found</value></data>
+  <data name="OlderVaultConflictMessage" xml:space="preserve"><value>An older encrypted vault and the current vault were found. Both remain in place. Continue with current accounts, or review older accounts after unlocking the current vault. No accounts are replaced without confirmation.</value></data>
+  <data name="OlderVaultContinueCurrent" xml:space="preserve"><value>Continue with current vault</value></data>
+  <data name="OlderVaultReviewOlder" xml:space="preserve"><value>Review older accounts</value></data>
+  <data name="OlderVaultCurrentUnavailable" xml:space="preserve"><value>A current vault and an older vault exist, but current authorization is unavailable. Both remain in place. Restore the current authorization envelope before creating a new vault.</value></data>
+  <data name="OlderVaultPasswordPrompt" xml:space="preserve"><value>Enter the older vault's master password to review its accounts. The current vault remains unchanged until you confirm a restore.</value></data>
+  <data name="OlderVaultPasswordRequired" xml:space="preserve"><value>Enter the older master password.</value></data>
+  <data name="OlderVaultRecoveryFailed" xml:space="preserve"><value>The older vault could not be opened or recovered. Check its master password and files, then review your accounts before retrying.</value></data>
+  <data name="OlderVaultConflictStrategyTitle" xml:space="preserve"><value>Choose how to handle matching accounts</value></data>
+  <data name="OlderVaultConflictStrategyMessage" xml:space="preserve"><value>Keep current versions of matching accounts, or replace them with older versions. New accounts from the older vault can be added after confirmation. A recovery checkpoint is required before changes.</value></data>
+  <data name="OlderVaultReviewTitle" xml:space="preserve"><value>Review older accounts</value></data>
+  <data name="OlderVaultReviewMessage" xml:space="preserve"><value>Older vault: {0} accounts. Matching current accounts: {1}. New accounts: {2}.&#10;&#10;{3}&#10;&#10;Choose whether to keep current versions of matching accounts or replace them with older versions. A recovery checkpoint and final confirmation are required before any changes.</value></data>
+  <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>New accounts to import from the older vault: {0}. Unchanged matches kept automatically: {1}.&#10;&#10;Older vault accounts:&#10;{2}&#10;&#10;A recovery checkpoint is required before any changes. Cancel to leave the current vault unchanged.</value></data>
+  <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Keep current</value></data>
+  <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Use older</value></data>
 </root>

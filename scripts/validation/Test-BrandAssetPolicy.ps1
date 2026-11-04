@@ -169,7 +169,10 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Unable to enumerate tracked repository files for brand-asset validation.'
 }
 
-$trackedArchives = @($trackedFiles | Where-Object { $_ -match '\.(?:7z|rar|tar|tar\.gz|tgz|zip)$' })
+$trackedArchives = @($trackedFiles | Where-Object {
+    $_ -match '\.(?:7z|rar|tar|tar\.gz|tgz|zip)$' -and
+    (Test-Path -LiteralPath (Join-Path $repositoryRoot $_) -PathType Leaf)
+})
 if ($trackedArchives.Count -gt 0) {
     throw "Tracked archives require removal or an explicit policy exception: $($trackedArchives -join ', ')"
 }
@@ -183,8 +186,79 @@ foreach ($match in [Text.RegularExpressions.Regex]::Matches($assetProvenance, $r
     }
 }
 
+$marketingManifestPath = Join-Path $repositoryRoot 'artifacts/marketing/manifest.json'
+if (Test-Path -LiteralPath $marketingManifestPath -PathType Leaf) {
+    $marketingManifest = [IO.File]::ReadAllText($marketingManifestPath) | ConvertFrom-Json
+    $marketingEntries = @($marketingManifest.captures) +
+        @($marketingManifest.generated) +
+        @($marketingManifest.demoIconMasters)
+    foreach ($entry in $marketingEntries) {
+        $relativePath = 'artifacts/marketing/' + ([string]$entry.path).Replace('\', '/')
+        if (-not $reviewedAssets.TryAdd($relativePath, [string]$entry.sha256)) {
+            throw "Marketing manifest duplicates a reviewed asset path: $relativePath"
+        }
+    }
+
+    foreach ($culture in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
+        foreach ($entry in @($marketingManifest.storeCampaignOrder.$culture)) {
+            if (-not ([string]$entry.status).StartsWith('branded', [StringComparison]::Ordinal)) {
+                continue
+            }
+            $canonicalPath = Join-Path $repositoryRoot ('artifacts/marketing/' + [string]$entry.path)
+            if (-not (Test-Path -LiteralPath $canonicalPath -PathType Leaf)) {
+                throw "Canonical Store campaign asset is missing: $canonicalPath"
+            }
+            $relativePath = "packaging/windows-store/screenshots/$culture/marketing/" +
+                [IO.Path]::GetFileName([string]$entry.path)
+            $hash = (Get-FileHash -LiteralPath $canonicalPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            if (-not $reviewedAssets.TryAdd($relativePath, $hash)) {
+                throw "Store campaign mirror duplicates a reviewed asset path: $relativePath"
+            }
+        }
+    }
+
+    foreach ($entry in @($marketingManifest.androidWebsiteCampaignOrder)) {
+        $canonicalPath = Join-Path $repositoryRoot ('artifacts/marketing/' + [string]$entry.path)
+        if (-not (Test-Path -LiteralPath $canonicalPath -PathType Leaf)) {
+            throw "Canonical Android campaign asset is missing: $canonicalPath"
+        }
+        $relativePath = 'packaging/android/marketing/en-US/' +
+            [IO.Path]::GetFileName([string]$entry.path)
+        $hash = (Get-FileHash -LiteralPath $canonicalPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        if (-not $reviewedAssets.TryAdd($relativePath, $hash)) {
+            throw "Android campaign mirror duplicates a reviewed asset path: $relativePath"
+        }
+    }
+
+    foreach ($entry in @($marketingManifest.androidPhoneScreenshotOrder)) {
+        $canonicalPath = Join-Path $repositoryRoot ('artifacts/marketing/' + [string]$entry.path)
+        if (-not (Test-Path -LiteralPath $canonicalPath -PathType Leaf)) {
+            throw "Canonical Android phone screenshot is missing: $canonicalPath"
+        }
+        $relativePath = 'fastlane/metadata/android/en-US/images/phoneScreenshots/' +
+            [IO.Path]::GetFileName([string]$entry.path)
+        $hash = (Get-FileHash -LiteralPath $canonicalPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        if (-not $reviewedAssets.TryAdd($relativePath, $hash)) {
+            throw "Android phone screenshot mirror duplicates a reviewed asset path: $relativePath"
+        }
+    }
+
+    foreach ($fileName in @('featureGraphic.png', 'icon.png')) {
+        $canonicalPath = Join-Path $repositoryRoot "artifacts/marketing/store/android/$fileName"
+        if (-not (Test-Path -LiteralPath $canonicalPath -PathType Leaf)) {
+            throw "Canonical Android store asset is missing: $canonicalPath"
+        }
+        $relativePath = "fastlane/metadata/android/en-US/images/$fileName"
+        $hash = (Get-FileHash -LiteralPath $canonicalPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        if (-not $reviewedAssets.TryAdd($relativePath, $hash)) {
+            throw "Android store mirror duplicates a reviewed asset path: $relativePath"
+        }
+    }
+}
+
 $trackedVisualAssets = @($trackedFiles | Where-Object {
-    $_ -match '\.(?:avif|bmp|gif|heic|ico|jpe?g|mkv|mov|mp4|pdf|png|svg|webm|webp)$'
+    $_ -match '\.(?:avif|bmp|gif|heic|ico|jpe?g|mkv|mov|mp4|pdf|png|svg|webm|webp)$' -and
+    (Test-Path -LiteralPath (Join-Path $repositoryRoot $_) -PathType Leaf)
 })
 foreach ($relativePath in $trackedVisualAssets) {
     if (-not $reviewedAssets.ContainsKey($relativePath)) {

@@ -275,30 +275,60 @@ Assert-PngDimensions 'packaging/windows-store/assets/store-box-art-1080x1080.png
 Assert-PngDimensions 'packaging/windows-store/assets/store-app-tile-300x300.png' 300 300
 Assert-PngDimensions 'packaging/windows-store/assets/store-logo-150x150.png' 150 150
 Assert-PngDimensions 'packaging/windows-store/assets/store-logo-71x71.png' 71 71
-Assert-PngDimensions 'packaging/windows-store/assets/source/windows-hello-prompt.png' 1140 1191
-Assert-PngDimensions 'packaging/windows-store/assets/source/quick-unlock-screen.png' 950 1224
-Assert-PngDimensions 'packaging/windows-store/assets/source/import-export-settings.png' 1300 1550
-Assert-PngDimensions 'packaging/windows-store/assets/source/import-qr-camera.png' 1400 1050
+Assert-PngDimensions 'packaging/windows-store/assets/source/store-abstract-background.png' 1672 941
+Assert-PngDimensions 'packaging/windows-store/assets/source/store-marketing-screenshot-background.png' 1672 941
 
-foreach ($screenshot in @(
-    'packaging/windows-store/screenshots/en-US/01-account-dashboard.png',
-    'packaging/windows-store/screenshots/en-US/02-search-accounts.png',
-    'packaging/windows-store/screenshots/en-US/03-add-account.png',
-    'packaging/windows-store/screenshots/en-US/04-quick-unlock.png'
-)) {
-    Assert-PngMinimumDimensions $screenshot
+$expectedV3Campaign = @(
+    '02-dark-account-list.png',
+    '03-light-dark-themes.png',
+    '04-appearance-settings.png',
+    '05-account-actions.png',
+    '06-quick-unlock.png',
+    '07-qr-import.png',
+    '08-groups-favourites.png',
+    '09-icon-pack.png',
+    '10-backup-restore.png',
+    '11-import-formats.png'
+)
+foreach ($culture in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
+    $submissionDirectory = Join-Path $repositoryRoot "packaging/windows-store/screenshots/$culture/marketing"
+    $actualCampaign = @(Get-ChildItem -LiteralPath $submissionDirectory -Filter '*.png' -File |
+        Select-Object -ExpandProperty Name | Sort-Object)
+    $expectedSorted = @($expectedV3Campaign | Sort-Object)
+    if ([string]::Join('|', $actualCampaign) -cne [string]::Join('|', $expectedSorted)) {
+        throw "The committed $culture Store campaign does not contain exactly the reviewed v3 files."
+    }
+    foreach ($marketingScreenshot in $expectedV3Campaign) {
+        $relativeSubmission = "packaging/windows-store/screenshots/$culture/marketing/$marketingScreenshot"
+        $generated = Join-Path $repositoryRoot "artifacts/marketing/store/windows/promotional/$culture/$marketingScreenshot"
+        Assert-PngDimensions $relativeSubmission 1920 1080
+        if (-not (Test-Path -LiteralPath $generated -PathType Leaf)) {
+            throw "Canonical generated Store campaign file is missing: $generated"
+        }
+        $submission = Join-Path $repositoryRoot $relativeSubmission
+        if ((Get-FileHash -LiteralPath $submission -Algorithm SHA256).Hash -cne
+            (Get-FileHash -LiteralPath $generated -Algorithm SHA256).Hash) {
+            throw "Committed Store campaign differs from the canonical generated file: $relativeSubmission"
+        }
+    }
 }
 
-foreach ($culture in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
-    foreach ($marketingScreenshot in @(
-        '01-local-vault.png',
-        '02-search-and-copy.png',
-        '03-add-and-import.png',
-        '04-windows-hello.png',
-        '05-import-export.png'
-    )) {
-        Assert-PngDimensions "packaging/windows-store/screenshots/$culture/marketing/$marketingScreenshot" 1920 1080
+foreach ($obsoleteSource in @(
+    'import-export-settings.png',
+    'import-qr-camera.png',
+    'quick-unlock-screen.png',
+    'windows-hello-prompt.png',
+    'windows-hello-quick-unlock.png'
+)) {
+    if (Test-Path -LiteralPath (Join-Path $repositoryRoot "packaging/windows-store/assets/source/$obsoleteSource")) {
+        throw "Obsolete v2 Store UI source remains: $obsoleteSource"
     }
+}
+if (Test-Path -LiteralPath (Join-Path $repositoryRoot 'scripts/assets/New-WindowsStoreMarketingScreenshots.ps1')) {
+    throw 'The obsolete v2 Store screenshot generator must not remain in the release tree.'
+}
+if (-not $listing.Contains('### Draft version 3.0.0 release notes', [StringComparison]::Ordinal)) {
+    throw 'The Store listing is missing localized draft v3.0.0 release notes.'
 }
 
 Write-Output 'Microsoft Store packaging controls are present.'

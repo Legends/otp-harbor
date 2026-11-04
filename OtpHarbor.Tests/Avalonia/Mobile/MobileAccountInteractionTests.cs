@@ -5,6 +5,28 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void EmptyAccountActions_RenderLocalizedLabelsInBothThemes()
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
+        var view = XDocument.Load(Path.Combine(directory, "MobileMainView.axaml"));
+        XNamespace ui = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        foreach (var (name, binding, brush) in new[]
+        {
+            ("AddFirstAccountButton", "{Binding AddAccountText}", "{DynamicResource BrushOnAccent}"),
+            ("ScanFirstAccountButton", "{Binding ScanQrText}", "{DynamicResource BrushTextPrimary}")
+        })
+        {
+            var button = Assert.Single(view.Descendants(ui + "Button"),
+                element => (string?)element.Attribute(xaml + "Name") == name);
+            var label = Assert.Single(button.Elements(ui + "TextBlock"));
+            Assert.Equal(binding, (string?)label.Attribute("Text"));
+            Assert.Equal(brush, (string?)label.Attribute("Foreground"));
+            Assert.Equal("Wrap", (string?)label.Attribute("TextWrapping"));
+        }
+    }
+
+    [Fact]
     public void IconImport_RestoredViewRetainsTheModalProgressDialogInsteadOfStartupOverlay()
     {
         var directory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");

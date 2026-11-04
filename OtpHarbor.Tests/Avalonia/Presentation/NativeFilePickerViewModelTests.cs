@@ -17,6 +17,249 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class NativeFilePickerViewModelTests
 {
+    [Fact]
+    public async Task RecoverOlderVaultAsync_UsesLocalizedPasswordPromptAndConfirmedRecoveryImport()
+    {
+        var localization = Localization("de");
+        var olderAccount = new Account(Guid.NewGuid(), "Synthetic", "JBSWY3DPEHPK3PXP");
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.ReadOlderAccountsAsync(
+                "older-password", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([olderAccount]));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        PasswordDialogRequest? passwordPrompt = null;
+        ConfirmationDialogRequest? confirmation = null;
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<PasswordDialogRequest, CancellationToken>((request, _) => passwordPrompt = request)
+            .ReturnsAsync("older-password");
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<ConfirmationDialogRequest, CancellationToken>((request, _) => confirmation = request)
+            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var sut = Create(Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(),
+            accounts.Object, dialogs.Object, localization: localization);
+        var changeEvents = 0;
+        sut.AccountsChanged += (_, _) => changeEvents++;
+
+        var changed = await sut.RecoverOlderVaultAsync(
+            recovery.Object, TestContext.Current.CancellationToken);
+
+        Assert.True(changed);
+        Assert.Equal(1, changeEvents);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultPasswordPrompt), passwordPrompt?.Message);
+        Assert.NotNull(confirmation);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultReviewTitle), confirmation.Title);
+        Assert.Contains("• Synthetic", confirmation.Message, StringComparison.Ordinal);
+        Assert.Contains("Neue Konten aus dem älteren Tresor: 1", confirmation.Message, StringComparison.Ordinal);
+        dialogs.Verify(value => value.ChooseAsync(
+            It.IsAny<ChoiceDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(list => list.Count == 1
+                && list.Single().ID == olderAccount.ID)), Times.Once);
+    }
+
+    [Fact]
+    public async Task RecoverOlderVaultAsync_WhenAccountIsUnchanged_SkipsItWithoutAConflictChoice()
+    {
+        var account = new Account(Guid.NewGuid(), "Synthetic", "JBSWY3DPEHPK3PXP", "person@example.invalid");
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.ReadOlderAccountsAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("older-password");
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var sut = Create(Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(),
+            accounts.Object, dialogs.Object);
+
+        var changed = await sut.RecoverOlderVaultAsync(
+            recovery.Object, TestContext.Current.CancellationToken);
+
+        Assert.False(changed);
+        dialogs.Verify(value => value.ChooseAsync(
+            It.IsAny<ChoiceDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        dialogs.Verify(value => value.ConfirmAsync(
+            It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RecoverOlderVaultAsync_CancelImportAll_LeavesCurrentVaultUntouched()
+    {
+        var older = new Account(Guid.NewGuid(), "Synthetic", "JBSWY3DPEHPK3PXP");
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.ReadOlderAccountsAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([older]));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("older-password");
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var sut = Create(Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(),
+            accounts.Object, dialogs.Object);
+
+        var changed = await sut.RecoverOlderVaultAsync(
+            recovery.Object, TestContext.Current.CancellationToken);
+
+        Assert.False(changed);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RecoverOlderVaultAsync_ReviewsMatchingAccountBeforeReplacingIt()
+    {
+        var current = new Account(
+            Guid.NewGuid(), "Synthetic", "JBSWY3DPEHPK3PXP", "person@example.invalid");
+        var older = new Account(
+            Guid.NewGuid(), "Synthetic", "KRUGS4ZANFZSAYJA", "person@example.invalid");
+        Assert.NotEqual(current.ID, older.ID);
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.ReadOlderAccountsAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([older]));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([current]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        ChoiceDialogRequest? review = null;
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("older-password");
+        dialogs.Setup(value => value.ChooseAsync(
+                It.IsAny<ChoiceDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<ChoiceDialogRequest, CancellationToken>((request, _) => review = request)
+            .ReturnsAsync(ChoiceDialogResult.Secondary);
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        using var sut = Create(Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(),
+            accounts.Object, dialogs.Object);
+
+        var changed = await sut.RecoverOlderVaultAsync(
+            recovery.Object, TestContext.Current.CancellationToken);
+
+        Assert.True(changed);
+        Assert.NotNull(review);
+        Assert.Contains("• Synthetic", review.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(older.Secret, review.Message, StringComparison.Ordinal);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(list => list.Count == 1
+                && list.Single().ID == current.ID
+                && list.Single().Secret == older.Secret)), Times.Once);
+    }
+
+    [Fact]
+    public async Task RecoverOlderVaultAsync_WhenOlderPasswordFails_DoesNotBackUpOrChangeCurrentVault()
+    {
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.ReadOlderAccountsAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail<IReadOnlyList<Account>>("synthetic password failure"));
+        var accounts = new Mock<IAccountManager>();
+        MessageDialogRequest? failure = null;
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("wrong-password");
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<MessageDialogRequest, CancellationToken>((request, _) => failure = request)
+            .Returns(Task.CompletedTask);
+        var localization = Localization("fr");
+        using var sut = Create(Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(),
+            accounts.Object, dialogs.Object, localization: localization);
+
+        var changed = await sut.RecoverOlderVaultAsync(
+            recovery.Object, TestContext.Current.CancellationToken);
+
+        Assert.False(changed);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultRecoveryFailed), failure?.Message);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RecoverOlderVaultAsync_WhenRecoveryCheckpointFails_DoesNotCommitAccounts()
+    {
+        var account = new Account(Guid.NewGuid(), "Synthetic", "JBSWY3DPEHPK3PXP");
+        var recovery = new Mock<ILegacyVaultRecoveryService>();
+        recovery.Setup(value => value.ReadOlderAccountsAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Fail("synthetic backup failure"));
+        MessageDialogRequest? outcome = null;
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.PromptForPasswordAsync(
+                It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("older-password");
+        dialogs.Setup(value => value.ChooseAsync(
+                It.IsAny<ChoiceDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ChoiceDialogResult.Primary);
+        dialogs.Setup(value => value.ConfirmAsync(
+                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ShowMessageAsync(
+                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<MessageDialogRequest, CancellationToken>((request, _) => outcome = request)
+            .Returns(Task.CompletedTask);
+        var localization = Localization("es");
+        using var sut = Create(Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(),
+            accounts.Object, dialogs.Object, localization: localization);
+
+        var changed = await sut.RecoverOlderVaultAsync(
+            recovery.Object, TestContext.Current.CancellationToken);
+
+        Assert.False(changed);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.ImportRecoveryBackupFailed), outcome?.Message);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+    }
+
     [Theory]
     [InlineData("en", "42 local icons installed (Simple Icons v13.4.0).")]
     [InlineData("de", "42 lokale Symbole installiert (Simple Icons v13.4.0).")]

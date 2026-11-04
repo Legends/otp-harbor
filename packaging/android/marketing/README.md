@@ -1,68 +1,64 @@
-# Android website marketing images
+# Android v3 marketing images
 
-This folder holds the authentic Android campaign captures and the reproducible composites used by
-`https://legends.github.io/otp-harbor/android/`.
+This folder contains the committed Android campaign mirrored to
+`https://legends.github.io/otp-harbor/android/`. The canonical, manifest-backed derivatives live
+under `artifacts/marketing/store/android`; do not edit the committed mirrors directly.
 
-## Synthetic capture vault
+## Synthetic capture data
 
-Marketing captures must use synthetic data only. The reviewed account roster is:
+All captures must use the deterministic fictional roster and project-owned geometric icons from
+`artifacts/marketing/demo-data`. Never capture a real account, OTP seed, backup password,
+notification, device identifier, or personal file name. The reviewed source captures are stored in
+`artifacts/marketing/source/android/<theme>` and their hashes are recorded in
+`artifacts/marketing/manifest.json`.
 
-| Issuer | Account name |
-| --- | --- |
-| Amazon | `Mason` |
-| Apple | `Olivia` |
-| Discord | `Lucas` |
-| Dropbox | `Ava` |
-| GitHub | `Ethan` |
-| Google | `Sophia` |
+The QR scanner campaign uses a labeled demonstration QR that resolves only to the OTP Harbor
+GitHub repository. It is not an OTP account or migration payload.
 
-Use only dedicated synthetic Base32 test values. Never capture a real account, seed, backup,
-password, notification, device identifier, or personal file name. The visible rotating codes and
-the Dropbox transfer QR in the reviewed captures are generated exclusively from the synthetic
-fixture seed. Treat even this synthetic QR as sensitive-looking material: do not reuse it outside
-the documented campaign or mistake it for a live account.
+## v3 campaign set
 
-## Planned campaign set
+The English website set contains eight opaque 1920×1080 PNGs:
 
-The English website set uses five 1920×1080 composites:
+1. `01-dark-account-list.png`
+2. `02-dark-settings.png`
+3. `03-dark-qr-scanning.png`
+4. `04-dark-backup-restore.png`
+5. `05-light-account-list.png`
+6. `06-light-settings.png`
+7. `07-light-qr-scanning.png`
+8. `08-light-backup-restore.png`
 
-1. `01-encrypted-local-vault.png` — the account list with the reviewed synthetic roster.
-2. `02-camera-and-google-qr.png` — camera scanning and Google Authenticator transfer QR import.
-3. `03-biometric-quick-unlock.png` — OTP Harbor unlock plus its genuine biometric-security state.
-4. `04-swipe-manage-show-qr.png` — swipe actions and a per-account synthetic QR preview.
-5. `05-backup-and-languages.png` — portable encrypted backups and the four supported languages.
+The account-list, settings, and scanner visuals contain genuine app pixels. Backup/restore is a
+labeled marketing composition that combines a genuine settings capture with project-owned
+onboarding artwork; it must not be described as a literal backup screen.
 
-The generated backdrop contains no product UI. Authentic app/system captures are composited later so
-the campaign never invents a security control or advertises an unavailable feature. Google
-Authenticator's documented Android transfer flow scans the export QR with the camera. The current
-OTP Harbor Android build does not import an existing QR image file.
+The shared Play/Fastlane set contains six 1080×1920 phone screenshots—Dark and Light account list,
+settings, and scanner—plus the 1024×500 feature graphic and 512×512 high-resolution icon. All are
+generated from the same reviewed sources.
+
+## Regeneration
+
+From the repository root, run:
+
+```powershell
+./scripts/marketing/Generate-MarketingAssets.ps1 -Platform android
+```
+
+The workflow generates and validates the canonical derivatives, synchronizes this folder and
+`fastlane/metadata/android/en-US/images`, removes stale v2 files from those destinations, and
+verifies every mirror by SHA-256. The reusable background source remains at
+`source/android-marketing-background.png`; the obsolete v2 `source/captures` set is intentionally
+not used.
 
 ## Isolated capture build
 
-Never relax screen-capture protection in a release package. Build the separate debug application ID
-with the explicit capture flag instead:
+Never relax screen-capture protection in a release package. Create new reviewed source captures
+only with the separate debug application ID and explicit capture flag:
 
 ```powershell
 dotnet build OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj `
   -c Debug -p:EnableMarketingCapture=true
 ```
 
-This defines `OTP_HARBOR_MARKETING_CAPTURE` only for Debug. The resulting
-`io.github.legends.otpharbor.debug` package keeps its own app data and can be populated solely with
-the reviewed synthetic roster. Normal Debug and every Release build retain Android's secure-window
-protection for the account list.
-
-## Source layout
-
-- `source/android-marketing-background.png`: generated reusable background.
-- `source/captures/`: reviewed raw Android captures from the isolated synthetic-data package.
-- `en-US/`: five final 1920×1080 website composites.
-- `../../../fastlane/metadata/android/en-US/images/`: six 1080×1920 phone screenshots, the 1024×500
-  feature graphic, and the 512×512 high-resolution app icon shared by F-Droid-compatible tooling and
-  Play Console.
-
-Run `scripts/assets/New-AndroidMarketingImages.ps1` to regenerate both final sets. The compositor
-keeps all app and Android-system UI pixel-authentic; only crop, scale, rounded clipping, framing,
-background, and campaign copy are added.
-
-The public site should reference only final files under `en-US/`, never raw device captures.
+This defines `OTP_HARBOR_MARKETING_CAPTURE` only for Debug. Normal Debug and every Release build
+retain Android secure-window protection for secret-bearing screens.

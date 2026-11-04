@@ -15,7 +15,7 @@ They were last reviewed for this repository on 2026-09-27.
 | Gate | Status | Evidence or remaining work |
 | --- | --- | --- |
 | Public source and compatible license | Implemented | GPL-3.0-only source and notices are versioned in the repository. |
-| Deterministic .NET SDK input | Implemented | `global.json` pins SDK `10.0.401` with roll-forward disabled. |
+| Deterministic .NET SDK input | Implemented | `global.json` pins SDK `10.0.402` with roll-forward disabled. |
 | Deterministic NuGet graph | Implemented baseline | Every project in `OtpHarbor.Android.sln` has a committed `packages.lock.json`; Android CI and release jobs restore with `--locked-mode`. |
 | Proprietary runtime dependency exclusion | Implemented baseline | `Test-AndroidFossBuild.ps1` rejects known proprietary service, analytics, advertising, and billing package families. This supplements, but does not replace, F-Droid's scanner and human review. |
 | Locked NuGet license declarations | Implemented baseline | All 108 locked package ID/version pairs declare reviewed FLOSS licenses and cached package hashes must match the lock graph. Publisher metadata does not prove source correspondence or F-Droid acceptance. |
@@ -37,7 +37,7 @@ dotnet build OtpHarbor.Android.sln -c Release --no-restore
 ./scripts/validation/Test-AndroidFossBuild.ps1
 ```
 
-`dotnet --version` must print `10.0.401`. A package update is an explicit review operation: update
+`dotnet --version` must print `10.0.402`. A package update is an explicit review operation: update
 the project reference, regenerate the Android lock files with `--use-lock-file --force-evaluate`,
 review resolved versions and content hashes, run the vulnerability and license checks, and commit
 the project and lock changes together.

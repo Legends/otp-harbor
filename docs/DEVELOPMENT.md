@@ -10,7 +10,7 @@ OTP Harbor is security-sensitive. Never use real OTP seeds, passwords, vaults, b
 | --- | --- |
 | Git | Source control, safe source-launcher updates, version metadata, release-tag validation, and tracked-asset policy checks. |
 | PowerShell | Runs the repository's development, test, validation, asset, security, and release automation. PowerShell 7 is recommended for cross-platform work; some Windows-only scripts require Windows APIs or an elevated session. |
-| .NET SDK `10.0.401` | Builds and tests all projects. The exact SDK is pinned by [`global.json`](../global.json); roll-forward is disabled. |
+| .NET SDK `10.0.402` | Builds and tests all projects. The exact SDK is pinned by [`global.json`](../global.json); roll-forward is disabled. |
 | NuGet and [`NuGet.config`](../NuGet.config) | Restores the locked dependency graph through the `dotnet` CLI. Android and release validation expect locked restores. |
 | An editor or IDE | Visual Studio, JetBrains Rider, VS Code, or another C# editor may be used. The command-line workflows remain authoritative. |
 
@@ -89,7 +89,7 @@ dotnet build OtpHarbor.sln -c Debug
 dotnet test OtpHarbor.sln -c Debug
 ```
 
-`dotnet --version` must report `10.0.401`. Restore Android independently when Android work is required:
+`dotnet --version` must report `10.0.402`. Restore Android independently when Android work is required:
 
 ```powershell
 dotnet workload install android --skip-manifest-update
@@ -165,9 +165,11 @@ This catalog covers all 59 version-controlled PowerShell scripts currently maint
 | [`scripts/assets/Capture-WindowsStoreScreenshot.ps1`](../scripts/assets/Capture-WindowsStoreScreenshot.ps1) | Resizes and captures only the visible OTP Harbor window for Store artwork; requires explicit confirmation that all visible data is synthetic. |
 | [`scripts/assets/Generate-AdditionalLanguageFlags.ps1`](../scripts/assets/Generate-AdditionalLanguageFlags.ps1) | Deterministically generates the reviewed French, German, and Spanish desktop language-flag PNG files in the approved asset directory. |
 | [`scripts/assets/Generate-AppIcon.ps1`](../scripts/assets/Generate-AppIcon.ps1) | Produces required PNG sizes and the multi-resolution Windows ICO from a supplied source image. |
-| [`scripts/assets/New-AndroidMarketingImages.ps1`](../scripts/assets/New-AndroidMarketingImages.ps1) | Composites reviewed synthetic Android captures into website and store campaign artwork without reconstructing application or system UI. |
 | [`scripts/assets/New-WindowsStoreMarketingAssets.ps1`](../scripts/assets/New-WindowsStoreMarketingAssets.ps1) | Generates exact-size Partner Center hero, poster, box-art, and Store-logo assets from reviewed sources. |
-| [`scripts/assets/New-WindowsStoreMarketingScreenshots.ps1`](../scripts/assets/New-WindowsStoreMarketingScreenshots.ps1) | Generates localized Microsoft Store screenshot campaigns from reviewed synthetic captures and localized copy. |
+| [`scripts/marketing/Generate-MarketingAssets.ps1`](../scripts/marketing/Generate-MarketingAssets.ps1) | Generates and validates the canonical v3 website and Store campaign from reviewed synthetic captures. |
+| [`scripts/marketing/Generate-AndroidStoreAssets.py`](../scripts/marketing/Generate-AndroidStoreAssets.py) | Derives the Android website campaign, Play/Fastlane phone screenshots, feature graphic, and icon from reviewed v3 marketing captures. |
+| [`scripts/marketing/Sync-AndroidSubmissionAssets.ps1`](../scripts/marketing/Sync-AndroidSubmissionAssets.ps1) | Synchronizes the canonical v3 Android campaign and Play/Fastlane images into committed submission directories and removes stale files. |
+| [`scripts/marketing/Sync-WindowsStoreSubmissionAssets.ps1`](../scripts/marketing/Sync-WindowsStoreSubmissionAssets.ps1) | Copies the canonical localized v3 campaign into the committed Partner Center submission tree and removes stale screenshots. |
 
 ### Local development tooling
 
@@ -233,7 +235,7 @@ The testing directory also contains two shell helpers: `configure-ubuntu-hyperv-
 | [`scripts/validation/Test-AndroidDependencyLicenses.ps1`](../scripts/validation/Test-AndroidDependencyLicenses.ps1) | Validates license declarations and cached hashes for the locked Android NuGet graph after restore. |
 | [`scripts/validation/Test-AndroidDistributionChannels.ps1`](../scripts/validation/Test-AndroidDistributionChannels.ps1) | Enforces Android application identity, signing-channel migration guidance, disabled Android system backup, and CI policy wiring. |
 | [`scripts/validation/Test-AndroidFossBuild.ps1`](../scripts/validation/Test-AndroidFossBuild.ps1) | Checks the pinned SDK, locked Android dependency graph, package source, prohibited dependency families, CI restore controls, and F-Droid readiness disclosure. |
-| [`scripts/validation/Test-AndroidMarketingAssets.ps1`](../scripts/validation/Test-AndroidMarketingAssets.ps1) | Validates Android website/store image formats and dimensions, localized listing limits and claims, and the reviewed source-capture inventory. |
+| [`scripts/validation/Test-AndroidMarketingAssets.ps1`](../scripts/validation/Test-AndroidMarketingAssets.ps1) | Validates Android v3 website/store image formats, dimensions, canonical hashes, localized listing limits and claims, and rejects stale v2 captures. |
 | [`scripts/validation/Test-AndroidReleasePackaging.ps1`](../scripts/validation/Test-AndroidReleasePackaging.ps1) | Regression-checks Android identity, Debug isolation, version mapping, signing-certificate parsing, device installer controls, workflow separation, and release documentation. |
 | [`scripts/validation/Test-BrandAssetPolicy.ps1`](../scripts/validation/Test-BrandAssetPolicy.ps1) | Enforces reviewed first-party asset allowlists/provenance and the offline, user-initiated, third-party icon-pack legal boundary. |
 | [`scripts/validation/Test-LocalizationResources.ps1`](../scripts/validation/Test-LocalizationResources.ps1) | Compares invariant, German, French, and Spanish resource catalogs and rejects missing, extra, empty, duplicate, or format-placeholder-incompatible entries. |

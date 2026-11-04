@@ -37,11 +37,6 @@ internal static class Program
 
         try
         {
-            var platformServices = DesktopPlatformServiceFactory.Create(
-                migrateLegacyApplicationData: true);
-            LoggingConfigurator.SetupEarlyLogger(args, platformServices.ApplicationPaths);
-            ApplyLoggingLevelPreference(platformServices);
-            ApplyInterfaceScalePreference(platformServices);
             using var instance = new SingleInstanceCoordinator(
                 new NamedMutexInstanceLock(DesktopInstanceIdentity.MutexName),
                 new NamedPipeActivationDispatcher(DesktopInstanceIdentity.PipeName));
@@ -53,6 +48,12 @@ internal static class Program
                 Environment.ExitCode = 1;
                 return;
             }
+
+            var platformServices = DesktopPlatformServiceFactory.Create(
+                migrateLegacyApplicationData: true);
+            LoggingConfigurator.SetupEarlyLogger(args, platformServices.ApplicationPaths);
+            ApplyLoggingLevelPreference(platformServices);
+            ApplyInterfaceScalePreference(platformServices);
 
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
@@ -101,6 +102,9 @@ internal static class Program
             return ApplicationActivationRequest.DebugImportAccounts(Path.GetFullPath(filePath));
         if (args is ["--debug-delete-all-accounts"])
             return ApplicationActivationRequest.DebugDeleteAllAccounts();
+        if (args is ["--debug-import-icon-pack", var iconPackPath]
+            && !string.IsNullOrWhiteSpace(iconPackPath))
+            return ApplicationActivationRequest.DebugImportIconPack(Path.GetFullPath(iconPackPath));
 #endif
         return ApplicationActivationRequest.ActivateMainWindow();
     }

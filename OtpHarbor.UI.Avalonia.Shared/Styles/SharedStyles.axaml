@@ -1552,10 +1552,10 @@
     </Style>
     <Style Selector="Border.dialog-message-card">
         <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
-        <Setter Property="BorderThickness" Value="4,1,1,1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
-        <Setter Property="Padding" Value="14,12" />
+        <Setter Property="Padding" Value="16" />
     </Style>
     <Style Selector="Border.dialog-message-card TextBlock">
         <Setter Property="Width" Value="420" />

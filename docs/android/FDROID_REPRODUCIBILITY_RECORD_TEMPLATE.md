@@ -28,7 +28,7 @@ published safely.
 | Provisioning source or image digest | |
 | Host OS and architecture | |
 | Container or VM runtime/version | |
-| .NET SDK (`dotnet --version`) | Must be `10.0.401` |
+| .NET SDK (`dotnet --version`) | Must be `10.0.402` |
 | Installed Android workload manifest versions | |
 | Java runtime/version | |
 | Android SDK packages and versions | |

@@ -1,0 +1,34 @@
+{
+  "services": [
+    {
+      "name": "Release 2FAS",
+      "secret": "ONSWG4TFOQXW4ZBA",
+      "updatedAt": 1,
+      "serviceTypeID": null,
+      "otp": {
+        "link": null,
+        "label": "twofas@example.invalid",
+        "account": "twofas@example.invalid",
+        "issuer": "Release 2FAS",
+        "digits": 6,
+        "period": 30,
+        "algorithm": "SHA1",
+        "counter": null,
+        "tokenType": "TOTP",
+        "source": "Manual"
+      },
+      "order": { "position": 0 },
+      "badge": null,
+      "icon": null,
+      "groupId": null
+    }
+  ],
+  "groups": [],
+  "updatedAt": 1,
+  "schemaVersion": 4,
+  "appVersionCode": 1,
+  "appVersionName": "v3-release-test",
+  "appOrigin": "android",
+  "servicesEncrypted": null,
+  "reference": null
+}

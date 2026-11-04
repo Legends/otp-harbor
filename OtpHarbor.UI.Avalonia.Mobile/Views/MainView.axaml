@@ -698,13 +698,23 @@
                                 <Button
                                     x:Name="AddFirstAccountButton"
                                     Classes="wide primary"
-                                    Command="{Binding BeginAddCommand}"
-                                    Content="{Binding AddAccountText}" />
+                                    Command="{Binding BeginAddCommand}">
+                                    <TextBlock
+                                        Foreground="{DynamicResource BrushOnAccent}"
+                                        Text="{Binding AddAccountText}"
+                                        TextAlignment="Center"
+                                        TextWrapping="Wrap" />
+                                </Button>
                                 <Button
                                     x:Name="ScanFirstAccountButton"
                                     Classes="wide secondary"
-                                    Command="{Binding ScanQrCommand}"
-                                    Content="{Binding ScanQrText}" />
+                                    Command="{Binding ScanQrCommand}">
+                                    <TextBlock
+                                        Foreground="{DynamicResource BrushTextPrimary}"
+                                        Text="{Binding ScanQrText}"
+                                        TextAlignment="Center"
+                                        TextWrapping="Wrap" />
+                                </Button>
                             </StackPanel>
                         </Border>
 
@@ -1762,7 +1772,7 @@
                                                     Foreground="{DynamicResource BrushTextSecondary}"
                                                     Text="{Binding FaqImportIconPacksCustomIconTipText}"
                                                     TextWrapping="Wrap" />
-                                                <TextBlock FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
+                                                <TextBlock Margin="0,8,0,0" FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
                                                     NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"

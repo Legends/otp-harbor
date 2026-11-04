@@ -1,0 +1,33 @@
+name: Validate marketing assets
+
+on:
+  pull_request:
+    paths:
+      - 'artifacts/marketing/**'
+      - 'scripts/marketing/**'
+      - '.github/workflows/marketing-assets.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'artifacts/marketing/**'
+      - 'scripts/marketing/**'
+      - '.github/workflows/marketing-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Install pinned image validator dependency
+        shell: bash
+        run: |
+          python3 -m venv "$RUNNER_TEMP/otp-marketing-venv"
+          "$RUNNER_TEMP/otp-marketing-venv/bin/pip" install -r scripts/marketing/requirements.txt
+      - name: Check demo data, image provenance and export constraints
+        shell: bash
+        run: "$RUNNER_TEMP/otp-marketing-venv/bin/python" scripts/marketing/Validate-MarketingAssets.py

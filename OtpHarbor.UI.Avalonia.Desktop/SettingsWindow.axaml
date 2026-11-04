@@ -236,15 +236,13 @@
                                                 TextWrapping="Wrap" />
                                             <Button
                                                 x:Name="BrandIconsImportButton"
-                                                HorizontalAlignment="Left"
-                                                Classes="settings-action"
+                                                Classes="wide settings-action"
                                                 Command="{Binding DataContext.NativeFilePicker.ImportBrandIconsCommand, ElementName=SettingsRoot}">
                                                 <shared:SymbolIconLabel Kind="Import" Text="{DynamicResource ImportSimpleIconsPack}" />
                                             </Button>
                                             <Button
                                                 x:Name="BrandIconsResetButton"
-                                                HorizontalAlignment="Left"
-                                                Classes="secondary settings-action"
+                                                Classes="wide secondary settings-action"
                                                 Command="{Binding DataContext.NativeFilePicker.ResetBrandIconsCommand, ElementName=SettingsRoot}"
                                                 IsVisible="{Binding DataContext.NativeFilePicker.HasImportedBrandIcons, ElementName=SettingsRoot}">
                                                 <shared:SymbolIconLabel Kind="Delete" Text="{DynamicResource ResetBrandIcons}" />
@@ -652,14 +650,42 @@
                                             CornerRadius="0,0,8,8"
                                             Padding="12">
                                             <StackPanel Spacing="8">
-                                                <TextBlock Classes="secondary" Text="{DynamicResource FaqImportIconPacksAnswer}" TextWrapping="Wrap" />
-                                                <TextBlock FontWeight="SemiBold" Text="{DynamicResource FaqImportIconPacksSources}" TextWrapping="Wrap" />
-                                                <HyperlinkButton
-                                                    HorizontalAlignment="Left"
-                                                    NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder"
-                                                    Padding="0,3">
-                                                    <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource IconPackBuilderLink}" />
-                                                </HyperlinkButton>
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                    <TextBlock Grid.Column="0" Text="1." />
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock
+                                                            Classes="secondary"
+                                                            Text="{DynamicResource FaqImportIconPacksStepDownload}"
+                                                            TextWrapping="Wrap" />
+                                                        <HyperlinkButton
+                                                            HorizontalAlignment="Left"
+                                                            NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest"
+                                                            Padding="0,4">
+                                                            <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource FaqImportIconPacksDownloadLink}" />
+                                                        </HyperlinkButton>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                    <TextBlock Grid.Column="0" Text="2." />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource FaqImportIconPacksStepBuild}"
+                                                        TextWrapping="Wrap" />
+                                                </Grid>
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                    <TextBlock Grid.Column="0" Text="3." />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource FaqImportIconPacksStepImport}"
+                                                        TextWrapping="Wrap" />
+                                                </Grid>
+                                                <TextBlock
+                                                    Classes="secondary"
+                                                    Text="{DynamicResource FaqImportIconPacksCustomIconTip}"
+                                                    TextWrapping="Wrap" />
+                                                <TextBlock Margin="0,8,0,0" FontWeight="SemiBold" Text="{DynamicResource FaqImportIconPacksSources}" TextWrapping="Wrap" />
                                                 <HyperlinkButton
                                                     HorizontalAlignment="Left"
                                                     NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"

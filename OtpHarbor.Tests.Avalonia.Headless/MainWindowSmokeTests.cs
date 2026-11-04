@@ -132,6 +132,80 @@ public sealed class MainWindowSmokeTests
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData(520, 480)]
+    [InlineData(520, 620)]
+    [InlineData(800, 620)]
+    public void SettingsFaq_IconPackStepsStayLocalizedAndFitScrollableViewport(int width, int height)
+    {
+        var window = new SettingsWindow { Width = width, Height = height };
+        var catalog = new AvaloniaStringCatalog();
+        var localization = new AvaloniaLocalizationService(window.Resources, catalog);
+
+        try
+        {
+            window.Show();
+            var tabs = Assert.Single(window.GetVisualDescendants().OfType<TabControl>(),
+                control => control.Classes.Contains("settings-tabs"));
+            tabs.SelectedIndex = 6;
+            var section = Assert.IsType<Expander>(window.FindControl<Expander>("FaqIconPacksExpander"));
+            section.IsExpanded = true;
+            window.UpdateLayout();
+            var content = Assert.IsType<StackPanel>(Assert.IsType<Border>(section.Content).Child);
+            var scroller = Assert.Single(section.GetVisualAncestors().OfType<ScrollViewer>());
+
+            foreach (var cultureName in new[] { "en", "de", "es", "fr" })
+            {
+                localization.ApplyCulture(cultureName);
+                window.UpdateLayout();
+                var culture = CultureInfo.GetCultureInfo(cultureName);
+                var steps = content.Children.OfType<Grid>().ToArray();
+                Assert.Equal(3, steps.Length);
+                var stepKeys = new[]
+                {
+                    AvaloniaStringKeys.FaqImportIconPacksStepDownload,
+                    AvaloniaStringKeys.FaqImportIconPacksStepBuild,
+                    AvaloniaStringKeys.FaqImportIconPacksStepImport
+                };
+                for (var index = 0; index < steps.Length; index++)
+                {
+                    Assert.Equal($"{index + 1}.", steps[index].Children.OfType<TextBlock>().First().Text);
+                    Assert.Contains(steps[index].GetVisualDescendants().OfType<TextBlock>(),
+                        text => text.Text == catalog.Get(stepKeys[index], culture));
+                }
+
+                var download = Assert.Single(steps[0].GetVisualDescendants().OfType<HyperlinkButton>());
+                Assert.Equal("https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest",
+                    download.NavigateUri?.AbsoluteUri);
+                Assert.Equal(catalog.Get(AvaloniaStringKeys.FaqImportIconPacksDownloadLink, culture),
+                    Assert.IsType<SymbolIconLabel>(download.Content).Text);
+                Assert.Contains(content.Children.OfType<TextBlock>(),
+                    text => text.Text == catalog.Get(AvaloniaStringKeys.FaqImportIconPacksCustomIconTip, culture));
+                Assert.Equal(3, content.Children.OfType<HyperlinkButton>().Count());
+                var disclaimer = Assert.IsType<TextBlock>(content.Children.Last());
+                Assert.Equal(catalog.Get(AvaloniaStringKeys.FaqImportIconPacksDisclaimer, culture), disclaimer.Text);
+                Assert.True(scroller.Viewport.Width > 0);
+                Assert.True(scroller.Extent.Width <= scroller.Viewport.Width + 1);
+                foreach (var text in content.GetVisualDescendants().OfType<TextBlock>())
+                {
+                    var left = text.TranslatePoint(default, scroller)!.Value.X;
+                    Assert.True(left >= -1 && left + text.Bounds.Width <= scroller.Viewport.Width + 1,
+                        $"FAQ text exceeds the {cultureName} viewport at {width} x {height}.");
+                }
+
+                disclaimer.BringIntoView();
+                window.UpdateLayout();
+                var bottom = disclaimer.TranslatePoint(new Point(0, disclaimer.Bounds.Height), scroller);
+                Assert.NotNull(bottom);
+                Assert.InRange(bottom.Value.Y, 1, scroller.Viewport.Height + 1);
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public void SettingsFaq_ExpandingOneSectionCollapsesThePreviouslyOpenSection()
     {
@@ -1797,6 +1871,81 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
+    public void RecoveryChoiceDialog_ShortMessageUsesCompactHeight()
+    {
+        var window = new ChoiceDialogWindow
+        {
+            DataContext = new ChoiceDialogViewModel(new ChoiceDialogRequest(
+                "Review older accounts",
+                "One older account is available.",
+                NotificationSeverity.Information,
+                "Keep current",
+                "Use older",
+                "Cancel"))
+        };
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+
+            Assert.True(window.Bounds.Height < 450,
+                $"A short recovery choice should fit compactly, but is {window.Bounds.Height} high.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void OlderVaultChoiceDialog_FitsCompactOwnerInEveryLocale()
+    {
+        var catalog = new AvaloniaStringCatalog();
+        foreach (var cultureName in new[] { "en", "de", "fr", "es" })
+        {
+            var culture = CultureInfo.GetCultureInfo(cultureName);
+            var request = new ChoiceDialogRequest(
+                catalog.Get(AvaloniaStringKeys.OlderVaultRecoveryTitle, culture),
+                catalog.Get(AvaloniaStringKeys.OlderVaultConflictMessage, culture),
+                NotificationSeverity.Warning,
+                catalog.Get(AvaloniaStringKeys.OlderVaultContinueCurrent, culture),
+                catalog.Get(AvaloniaStringKeys.OlderVaultReviewOlder, culture),
+                catalog.Get(AvaloniaStringKeys.Cancel, culture));
+            var window = new ChoiceDialogWindow
+            {
+                DataContext = new ChoiceDialogViewModel(request),
+                Width = 348,
+                MaxWidth = 348,
+                MaxHeight = 508
+            };
+            try
+            {
+                var card = Assert.Single(window.GetLogicalDescendants().OfType<Border>(),
+                    value => value.Classes.Contains("dialog-message-card"));
+                Assert.IsType<TextBlock>(card.Child).Width = 248;
+                window.Show();
+                window.UpdateLayout();
+
+                Assert.True(window.Bounds.Height <= 540,
+                    $"The {cultureName} older-vault choice exceeds the compact window height.");
+                foreach (var button in window.GetVisualDescendants().OfType<Button>())
+                {
+                    var lowerRight = button.TranslatePoint(
+                        new Point(button.Bounds.Width, button.Bounds.Height), window);
+                    Assert.NotNull(lowerRight);
+                    Assert.True(lowerRight.Value.X <= window.Bounds.Width + 0.5
+                        && lowerRight.Value.Y <= window.Bounds.Height + 0.5,
+                        $"A {cultureName} older-vault action ends at {lowerRight.Value} inside {window.Bounds.Size}.");
+                }
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+    }
+
+    [AvaloniaFact]
     public void SharedLanguageFlagImage_LoadsEveryMobileLanguageFlag()
     {
         var flags = new[] { "en", "de", "fr", "es" }
@@ -3366,17 +3515,18 @@ public sealed class MainWindowSmokeTests
             var brandIconsPanel = Assert.Single(
                 brandIconContent.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "BrandIconsPanel");
+            Assert.Equal(new Thickness(4, 8, 4, 4), brandIconsPanel.Margin);
             var importButton = Assert.Single(
                 brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "BrandIconsImportButton");
             var resetButton = Assert.Single(
                 brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "BrandIconsResetButton");
-            Assert.DoesNotContain("wide", importButton.Classes);
-            Assert.Equal(HorizontalAlignment.Left, importButton.HorizontalAlignment);
+            Assert.Contains("wide", importButton.Classes);
+            Assert.Equal(HorizontalAlignment.Stretch, importButton.HorizontalAlignment);
             Assert.Contains("secondary", resetButton.Classes);
-            Assert.DoesNotContain("wide", resetButton.Classes);
-            Assert.Equal(HorizontalAlignment.Left, resetButton.HorizontalAlignment);
+            Assert.Contains("wide", resetButton.Classes);
+            Assert.Equal(HorizontalAlignment.Stretch, resetButton.HorizontalAlignment);
             var resetButtonLabel = Assert.IsType<SymbolIconLabel>(resetButton.Content);
             Assert.Equal(SymbolIconKind.Delete, resetButtonLabel.Kind);
             var builderLink = Assert.Single(

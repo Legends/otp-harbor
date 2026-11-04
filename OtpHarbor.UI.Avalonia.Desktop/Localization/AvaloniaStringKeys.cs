@@ -10,6 +10,21 @@ public static class AvaloniaStringKeys
     public const string StartupEnterMasterPassword = nameof(StartupEnterMasterPassword);
     public const string StartupPreferencesUnavailable = nameof(StartupPreferencesUnavailable);
     public const string StartupFailedSafely = nameof(StartupFailedSafely);
+    public const string OlderVaultRecoveryTitle = nameof(OlderVaultRecoveryTitle);
+    public const string OlderVaultConflictMessage = nameof(OlderVaultConflictMessage);
+    public const string OlderVaultContinueCurrent = nameof(OlderVaultContinueCurrent);
+    public const string OlderVaultReviewOlder = nameof(OlderVaultReviewOlder);
+    public const string OlderVaultCurrentUnavailable = nameof(OlderVaultCurrentUnavailable);
+    public const string OlderVaultPasswordPrompt = nameof(OlderVaultPasswordPrompt);
+    public const string OlderVaultPasswordRequired = nameof(OlderVaultPasswordRequired);
+    public const string OlderVaultRecoveryFailed = nameof(OlderVaultRecoveryFailed);
+    public const string OlderVaultConflictStrategyTitle = nameof(OlderVaultConflictStrategyTitle);
+    public const string OlderVaultConflictStrategyMessage = nameof(OlderVaultConflictStrategyMessage);
+    public const string OlderVaultReviewTitle = nameof(OlderVaultReviewTitle);
+    public const string OlderVaultReviewMessage = nameof(OlderVaultReviewMessage);
+    public const string OlderVaultImportAllMessage = nameof(OlderVaultImportAllMessage);
+    public const string OlderVaultKeepCurrentMatches = nameof(OlderVaultKeepCurrentMatches);
+    public const string OlderVaultUseOlderMatches = nameof(OlderVaultUseOlderMatches);
     public const string StartupCancelled = nameof(StartupCancelled);
     public const string ClosingSafely = nameof(ClosingSafely);
     public const string Retry = nameof(Retry);
@@ -159,7 +174,11 @@ public static class AvaloniaStringKeys
     public const string IconPacks = nameof(IconPacks);
     public const string Faq = nameof(Faq);
     public const string FaqImportIconPacksQuestion = nameof(FaqImportIconPacksQuestion);
-    public const string FaqImportIconPacksAnswer = nameof(FaqImportIconPacksAnswer);
+    public const string FaqImportIconPacksStepDownload = nameof(FaqImportIconPacksStepDownload);
+    public const string FaqImportIconPacksDownloadLink = nameof(FaqImportIconPacksDownloadLink);
+    public const string FaqImportIconPacksStepBuild = nameof(FaqImportIconPacksStepBuild);
+    public const string FaqImportIconPacksStepImport = nameof(FaqImportIconPacksStepImport);
+    public const string FaqImportIconPacksCustomIconTip = nameof(FaqImportIconPacksCustomIconTip);
     public const string FaqImportIconPacksSources = nameof(FaqImportIconPacksSources);
     public const string FaqSimpleIconsOfficialLink = nameof(FaqSimpleIconsOfficialLink);
     public const string FaqAegisIconPackDocsLink = nameof(FaqAegisIconPackDocsLink);
@@ -522,6 +541,12 @@ public static class AvaloniaStringKeys
     [
         AppTitle, AppHeading, Loading, StartingSafely, StartupCreateMasterPassword,
         StartupEnterMasterPassword, StartupPreferencesUnavailable, StartupFailedSafely,
+        OlderVaultRecoveryTitle, OlderVaultConflictMessage, OlderVaultContinueCurrent,
+        OlderVaultReviewOlder, OlderVaultCurrentUnavailable, OlderVaultPasswordPrompt,
+        OlderVaultPasswordRequired, OlderVaultRecoveryFailed,
+        OlderVaultConflictStrategyTitle, OlderVaultConflictStrategyMessage,
+        OlderVaultReviewTitle, OlderVaultReviewMessage, OlderVaultImportAllMessage,
+        OlderVaultKeepCurrentMatches, OlderVaultUseOlderMatches,
         StartupCancelled, ClosingSafely, Retry,
         OnboardingAddAccountsTitle, OnboardingAddAccountsDescription,
         OnboardingMoveAccountsTitle, OnboardingMoveAccountsDescription,
@@ -570,7 +595,9 @@ public static class AvaloniaStringKeys
         CameraInitializing, CameraActive, CameraScanCancelled,
         CameraScanFailedSafely, CameraRuntimeUnavailable, CameraNotFound, CameraStartFailed,
         SecuritySettings, Security, Backups, ImportExport, IconPacks, Faq,
-        FaqImportIconPacksQuestion, FaqImportIconPacksAnswer, FaqImportIconPacksSources,
+        FaqImportIconPacksQuestion,
+        FaqImportIconPacksStepDownload, FaqImportIconPacksDownloadLink, FaqImportIconPacksStepBuild, FaqImportIconPacksStepImport, FaqImportIconPacksCustomIconTip,
+        FaqImportIconPacksSources,
         FaqSimpleIconsOfficialLink, FaqAegisIconPackDocsLink, FaqDashboardIconsLegalLink, FaqImportIconPacksDisclaimer,
         FaqImportFormatsQuestion, FaqImportFormatsIntro,
         FaqImportFormatsAegisTitle, FaqImportFormatsAegisDescription, FaqImportFormatsAegisExample,

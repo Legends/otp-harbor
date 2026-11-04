@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Collections.Specialized;
 using Avalonia.Media;
 using FluentResults;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
@@ -18,6 +19,7 @@ using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
+using TOTP.Infrastructure.Services;
 
 namespace TOTP.Tests.Avalonia.Mobile;
 
@@ -3521,6 +3523,86 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task ImportAccountFileAsync_MixedDesktopAndroidScenario_UsesPerAccountResolution()
+    {
+        var currentAccounts = await LoadScenarioFixtureAsync("mixed-account-current-v3.json");
+        var olderAccounts = await LoadScenarioFixtureAsync("mixed-account-older.json");
+        var olderPath = GetScenarioFixturePath("mixed-account-older.json");
+        var olderBytes = await File.ReadAllBytesAsync(
+            olderPath, global::Xunit.TestContext.Current.CancellationToken);
+        var workingAccounts = currentAccounts.ToList();
+        var context = CreateContext(isConfigured: true, accounts: workingAccounts);
+        context.Authorization
+            .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => new MobileReadableDocument(
+                new MemoryStream(olderBytes, writable: false),
+                "mixed-account-older.json"));
+        var parser = new ExportService(NullLogger<ExportService>.Instance);
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(),
+                "mixed-account-older.json",
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns((Stream stream, string name, string? password, CancellationToken token) =>
+                parser.ImportFromStreamAsync(stream, name, password, token));
+        context.AccountManager.Setup(value => value.BackupOtpEntriesStorageFileAsync())
+            .ReturnsAsync(Result.Ok());
+        context.AccountManager.Setup(value => value.CommitImportAsync(
+                It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(batch =>
+            {
+                workingAccounts.Clear();
+                workingAccounts.AddRange(batch);
+            })
+            .ReturnsAsync(Result.Ok());
+        var sharedImport = new AccountImportService(context.AccountManager.Object);
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+                It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((
+                IReadOnlyList<Account> imported,
+                Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve,
+                CancellationToken token) =>
+                sharedImport.ImportWithConflictResolutionAsync(imported, resolve, token));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        var importTask = context.Sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => context.Sut.IsBackupConflictResolutionVisible);
+
+        Assert.Contains("1 new, 1 unchanged, 1 need review", context.Sut.BackupConflictResolutionText);
+        var conflict = Assert.Single(context.Sut.BackupImportConflicts);
+        Assert.Equal("Current: Scenario Collision: collision@example.invalid", conflict.CurrentDisplayName);
+        Assert.Equal("Imported: Scenario Collision: collision@example.invalid", conflict.BackupDisplayName);
+        Assert.Contains(context.Sut.SecretFieldText, conflict.ChangedFieldsText, StringComparison.Ordinal);
+        await context.Sut.SelectAllBackupConflictsAsync(AccountImportConflictAction.Replace);
+        await context.Sut.ConfirmBackupConflictResolutionAsync();
+        await importTask;
+
+        var currentCollisionId = currentAccounts.Single(
+            account => account.Issuer == "Scenario Collision").ID;
+        var olderCollision = olderAccounts.Single(
+            account => account.Issuer == "Scenario Collision");
+        var olderNewId = olderAccounts.Single(
+            account => account.Issuer == "Scenario Older New").ID;
+        Assert.Equal(4, workingAccounts.Count);
+        Assert.Contains(workingAccounts, account =>
+            account.ID == currentCollisionId && account.Secret == olderCollision.Secret);
+        Assert.DoesNotContain(workingAccounts, account => account.ID == olderCollision.ID);
+        Assert.Contains(workingAccounts, account => account.ID == olderNewId);
+        Assert.Equal(
+            string.Format(context.Strings.Get(MobileStringKeys.AccountFileImported), 1, 1, 1),
+            context.Sut.NotificationText);
+    }
+
+    [Fact]
     public async Task ImportAccountFileAsync_WhenParsingTakesLong_ShowsLocalizedProgressAfterDelay()
     {
         var context = CreateContext(isConfigured: true, cultureName: "de");
@@ -5195,6 +5277,26 @@ public sealed class MobileShellViewModelTests
         ManualTimeProvider Time,
         Mock<IAppearanceSettingsService> Appearance,
         Mock<IAutomaticBackupSnapshotService> AutomaticBackupSnapshots);
+
+    private static async Task<List<Account>> LoadScenarioFixtureAsync(string name)
+    {
+        var path = GetScenarioFixturePath(name);
+        await using var stream = File.OpenRead(path);
+        var parser = new ExportService(NullLogger<ExportService>.Instance);
+        var result = await parser.ImportFromStreamAsync(
+            stream, name, cancellationToken: global::Xunit.TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        return result.Value;
+    }
+
+    private static string GetScenarioFixturePath(string name)
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "OtpHarbor.sln")))
+            directory = directory.Parent;
+        Assert.NotNull(directory);
+        return Path.Combine(directory.FullName, "scripts", "testing", "fixtures", name);
+    }
 
     private sealed class ManualTimeProvider : TimeProvider
     {

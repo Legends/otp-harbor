@@ -19,6 +19,8 @@ using TOTP.Avalonia.Desktop.Localization;
 using Serilog;
 using TOTP.Avalonia.Shared.Branding;
 using TOTP.Core.Backup;
+using TOTP.Core.Common;
+using TOTP.Infrastructure.Storage;
 using AppLifetime = TOTP.Core.Services.Interfaces.IApplicationLifetime;
 #if TOTP_PLATFORM_WINDOWS
 using TOTP.Platform.Windows;
@@ -106,6 +108,21 @@ public static class AvaloniaCompositionRoot
 #if TOTP_PLATFORM_WINDOWS
         services.AddSingleton<IWindowsUpdateInstallerRuntime, WindowsUpdateInstallerRuntime>();
         services.AddSingleton<IUpdateInstallerLauncher, WindowsUpdateInstallerLauncher>();
+        var windowsPaths = (WindowsApplicationPaths)platformServices.ApplicationPaths;
+        var configuredVaultPath = configuration[StringsConstants.TokensStorageFilePathConfigKey];
+        var activeVaultPath = string.IsNullOrWhiteSpace(configuredVaultPath)
+            ? windowsPaths.VaultFilePath
+            : Path.GetFullPath(Environment.ExpandEnvironmentVariables(configuredVaultPath));
+        services.AddSingleton<ILegacyVaultRecoveryService>(provider =>
+            new LegacyVaultRecoveryService(
+                activeVaultPath,
+                Path.Combine(windowsPaths.LegacyApplicationDataDirectory,
+                    StringsConstants.LegacyTokensStorageFileName),
+                Path.Combine(windowsPaths.LegacyApplicationDataDirectory,
+                    StringsConstants.AuthorizationEnvelopeFileName),
+                provider.GetRequiredService<IPlatformFileSecurity>(),
+                provider.GetRequiredService<IMasterPasswordService>(),
+                provider.GetRequiredService<IVaultSnapshotReader>()));
 #endif
         services.AddSingleton(new AvaloniaUiScheduler(Dispatcher.UIThread));
         services.AddSingleton<IUiScheduler>(provider =>

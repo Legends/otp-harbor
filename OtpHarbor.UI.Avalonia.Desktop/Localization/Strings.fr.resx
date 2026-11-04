@@ -482,8 +482,12 @@
   <data name="IconPacks" xml:space="preserve"><value>Packs d’icônes</value></data>
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>Comment importer des packs d’icônes ?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Ouvrez le projet séparé OTP Harbor Icon Pack Builder et suivez ses instructions pour créer otp-harbor-icons.otphicons. Choisissez ensuite Paramètres → Packs d’icônes → Importer un pack d’icônes OTP Harbor. OTP Harbor ne télécharge aucune collection d’icônes source et n’importe pas directement les archives des fournisseurs. Le pack généré consigne les icônes sélectionnées, les licences, les attributions et la provenance des sources ; examinez ces informations avant de l’utiliser ou de le partager. La correspondance automatique utilise uniquement l’émetteur du compte.</value></data>
-  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Générateur et informations juridiques des sources :</value></data>
+  <data name="FaqImportIconPacksStepDownload" xml:space="preserve"><value>Téléchargez OTP Harbor Icon Pack Builder (ordinateur uniquement) depuis GitHub.</value></data>
+  <data name="FaqImportIconPacksDownloadLink" xml:space="preserve"><value>Versions GitHub</value></data>
+  <data name="FaqImportIconPacksStepBuild" xml:space="preserve"><value>Exécutez le générateur. Il télécharge ses sources d’icônes testées et crée otp-harbor-icons.otphicons.</value></data>
+  <data name="FaqImportIconPacksStepImport" xml:space="preserve"><value>Dans OTP Harbor Authenticator, choisissez Paramètres → Packs d’icônes → Importer un pack d’icônes OTP Harbor, puis sélectionnez le fichier généré.</value></data>
+  <data name="FaqImportIconPacksCustomIconTip" xml:space="preserve"><value>Pour utiliser plutôt une icône SVG ou PNG individuelle, modifiez le compte, ouvrez Options avancées, puis sélectionnez l’action Choisir un SVG ou PNG personnalisé… sous Icône du compte (pack d’icônes).</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Informations juridiques sur les icônes tierces :</value></data>
   <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — avertissement juridique</value></data>
   <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons — licence et avis sur les marques</value></data>
   <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons — licence et mentions légales</value></data>
@@ -519,4 +523,19 @@
   <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Échec du point de contrôle de sauvegarde</value></data>
   <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor n’a pas pu créer ou vérifier un point de récupération à jour. Vous pouvez annuler et réessayer, ou confirmer la suppression du compte sans sauvegarde à jour.</value></data>
   <data name="DeleteAnyway" xml:space="preserve"><value>Supprimer quand même</value></data>
+  <data name="OlderVaultRecoveryTitle" xml:space="preserve"><value>Ancien coffre détecté</value></data>
+  <data name="OlderVaultConflictMessage" xml:space="preserve"><value>Un ancien coffre chiffré et le coffre actuel ont été trouvés. Les deux sont conservés. Continuez avec les comptes actuels ou examinez les anciens comptes après avoir déverrouillé le coffre actuel. Aucun compte n'est remplacé sans confirmation.</value></data>
+  <data name="OlderVaultContinueCurrent" xml:space="preserve"><value>Continuer avec le coffre actuel</value></data>
+  <data name="OlderVaultReviewOlder" xml:space="preserve"><value>Examiner les anciens comptes</value></data>
+  <data name="OlderVaultCurrentUnavailable" xml:space="preserve"><value>Un coffre actuel et un ancien coffre existent, mais l'autorisation actuelle est indisponible. Les deux sont conservés. Restaurez l'enveloppe d'autorisation actuelle avant de créer un nouveau coffre.</value></data>
+  <data name="OlderVaultPasswordPrompt" xml:space="preserve"><value>Saisissez le mot de passe principal de l'ancien coffre pour examiner ses comptes. Le coffre actuel reste inchangé jusqu'à votre confirmation de la restauration.</value></data>
+  <data name="OlderVaultPasswordRequired" xml:space="preserve"><value>Saisissez l'ancien mot de passe principal.</value></data>
+  <data name="OlderVaultRecoveryFailed" xml:space="preserve"><value>L'ancien coffre n'a pas pu être ouvert ou restauré. Vérifiez son mot de passe principal et ses fichiers, puis contrôlez vos comptes avant de réessayer.</value></data>
+  <data name="OlderVaultConflictStrategyTitle" xml:space="preserve"><value>Choisir le traitement des comptes correspondants</value></data>
+  <data name="OlderVaultConflictStrategyMessage" xml:space="preserve"><value>Conservez les versions actuelles des comptes correspondants ou remplacez-les par les anciennes versions. Les nouveaux comptes de l'ancien coffre peuvent être ajoutés après confirmation. Un point de restauration est requis avant toute modification.</value></data>
+  <data name="OlderVaultReviewTitle" xml:space="preserve"><value>Examiner les anciens comptes</value></data>
+  <data name="OlderVaultReviewMessage" xml:space="preserve"><value>Ancien coffre : {0} comptes. Comptes correspondant aux comptes actuels : {1}. Nouveaux comptes : {2}.&#10;&#10;{3}&#10;&#10;Choisissez de conserver les versions actuelles des comptes correspondants ou de les remplacer par les anciennes versions. Un point de restauration et une confirmation finale sont requis avant toute modification.</value></data>
+  <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>Nouveaux comptes à importer de l'ancien coffre : {0}. Correspondances inchangées conservées automatiquement : {1}.&#10;&#10;Comptes de l'ancien coffre :&#10;{2}&#10;&#10;Un point de restauration est requis avant toute modification. Annuler laisse le coffre actuel inchangé.</value></data>
+  <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Garder les actuels</value></data>
+  <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Utiliser les anciens</value></data>
 </root>

@@ -14,17 +14,22 @@
     WindowDecorations="None"
     WindowStartupLocation="CenterOwner"
     Title="{DynamicResource AppTitle}">
-    <StackPanel Classes="dialog-content" Spacing="16">
-        <TextBlock
-            Classes="heading"
-            Text="{Binding Title}"
-            TextWrapping="Wrap" />
-        <Border
-            x:Name="DialogMessageCard"
-            Classes="dialog-message-card">
-            <TextBlock Text="{Binding Message}" />
-        </Border>
+    <Grid Classes="dialog-content" Margin="22" RowDefinitions="Auto,Auto" RowSpacing="16">
+        <ScrollViewer x:Name="DialogContentScroll" Grid.Row="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="14">
+                <TextBlock
+                    Classes="heading"
+                    Text="{Binding Title}"
+                    TextWrapping="Wrap" />
+                <Border
+                    x:Name="DialogMessageCard"
+                    Classes="dialog-message-card">
+                    <TextBlock Text="{Binding Message}" />
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
         <StackPanel
+            Grid.Row="1"
             Classes="dialog-actions">
             <Button
                 Classes="secondary"
@@ -39,5 +44,5 @@
                 Content="{Binding ConfirmText}"
                 IsDefault="True" />
         </StackPanel>
-    </StackPanel>
+    </Grid>
 </Window>

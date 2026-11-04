@@ -1,8 +1,10 @@
 # Android store metadata
 
-This directory is the canonical source for the Android listing text and store screenshots used by
-F-Droid-compatible tooling. The English images are generated from reviewed synthetic-data captures
-by `scripts/assets/New-AndroidMarketingImages.ps1`; they may also be uploaded to Google Play.
+This directory is the canonical source for Android listing text and the committed image mirrors
+used by F-Droid-compatible tooling. The English images are generated from reviewed v3
+synthetic-data captures by `scripts/marketing/Generate-MarketingAssets.ps1`; their manifest-backed
+canonical files live under `artifacts/marketing/store/android` and may also be uploaded to Google
+Play.
 
 Listing text is maintained for every language supported by the app. English screenshots are shared
 across locales until a complete, reviewed capture set exists for each language. Do not add screenshots

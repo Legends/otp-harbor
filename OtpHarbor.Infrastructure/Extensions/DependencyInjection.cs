@@ -132,7 +132,8 @@ public static class DependencyInjection
             var logger = sp.GetRequiredService<ILogger<AccountDAL>>();
             var vault = sp.GetRequiredService<IVaultService>();
             var fileSecurity = sp.GetRequiredService<IPlatformFileSecurity>();
-            return new AccountDAL(logger, vault, resolvedVaultPath, fileSecurity);
+            return new AccountDAL(logger, vault, resolvedVaultPath, fileSecurity,
+                applicationPaths.AuthorizationEnvelopeFilePath);
         });
 
         // 3. Authorization Logic (The bridge)

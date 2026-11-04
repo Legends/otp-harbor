@@ -9,6 +9,7 @@ using TOTP.Core.Services.Models;
 using TOTP.Avalonia.Desktop.Startup;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Platform;
+using TOTP.Avalonia.Desktop.Presentation.Dialogs;
 using TOTP.Infrastructure.Services;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
@@ -23,6 +24,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly IdleMonitoringBackgroundService? _idleLockPolicy;
     private readonly IUiScheduler? _uiScheduler;
     private readonly IAvaloniaCameraScannerDialogService _cameraScannerDialogs;
+    private readonly IAvaloniaDialogService? _dialogs;
+    private readonly ILegacyVaultRecoveryService? _legacyVaultRecovery;
     private readonly AsyncCommand _initializeCommand;
     private readonly AsyncCommand _previousOnboardingCommand;
     private readonly AsyncCommand _nextOnboardingCommand;
@@ -60,6 +63,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _automaticUpdateCheckStarted;
     private bool _shutdownPrepared;
     private bool _disposed;
+    private bool _legacyConflictPrompted;
+    private bool _recoverOlderVaultAfterUnlock;
     private int _quickUnlockAvailabilityRevision;
     private int _selectedSettingsTabIndex;
     private ShellResumeState? _resumeState;
@@ -85,11 +90,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         IUiScheduler? uiScheduler = null,
         IdleMonitoringBackgroundService? idleLockPolicy = null,
         TimeSpan? settingsNotificationDuration = null,
-        OnboardingPreviewOptions? onboardingPreviewOptions = null)
+        OnboardingPreviewOptions? onboardingPreviewOptions = null,
+        IAvaloniaDialogService? dialogs = null,
+        ILegacyVaultRecoveryService? legacyVaultRecovery = null)
     {
         _startupCoordinator = startupCoordinator ?? throw new ArgumentNullException(nameof(startupCoordinator));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+        _dialogs = dialogs;
+        _legacyVaultRecovery = legacyVaultRecovery;
         Notification = new NotificationState();
         SettingsNotification = new NotificationState(settingsNotificationDuration);
         Notification.ShowPersistent(
@@ -470,9 +479,33 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             IsQuickUnlockAvailable = outcome == AvaloniaStartupOutcome.ReadyForQuickUnlock;
             IsOnboardingVisible = outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup;
             IsPasswordSetupVisible = false;
+            if (_legacyVaultRecovery?.HasConflict() == true)
+            {
+                if (outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup)
+                {
+                    IsOnboardingVisible = false;
+                    StatusText = _localization.GetString(AvaloniaStringKeys.OlderVaultCurrentUnavailable);
+                    StatusSeverity = NotificationSeverity.Error;
+                    return;
+                }
+
+                if (!_legacyConflictPrompted && _dialogs is not null)
+                {
+                    var choice = await _dialogs.ChooseAsync(new ChoiceDialogRequest(
+                        _localization.GetString(AvaloniaStringKeys.OlderVaultRecoveryTitle),
+                        _localization.GetString(AvaloniaStringKeys.OlderVaultConflictMessage),
+                        NotificationSeverity.Warning,
+                        _localization.GetString(AvaloniaStringKeys.OlderVaultContinueCurrent),
+                        _localization.GetString(AvaloniaStringKeys.OlderVaultReviewOlder),
+                        _localization.GetString(AvaloniaStringKeys.Cancel)), _lifetime.Token);
+                    _legacyConflictPrompted = true;
+                    _recoverOlderVaultAfterUnlock = choice == ChoiceDialogResult.Secondary;
+                }
+            }
             if (outcome == AvaloniaStartupOutcome.ReadyUnlocked)
             {
                 await EnterAuthorizedShellAsync();
+                await RecoverOlderVaultIfRequestedAsync();
                 StartAutomaticUpdateCheck();
             }
             if (_onboardingPreviewOptions.ShowOnStartup
@@ -555,7 +588,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         await EnterAuthorizedShellAsync();
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultUnlocked);
         StatusSeverity = NotificationSeverity.Success;
+        await RecoverOlderVaultIfRequestedAsync();
         StartAutomaticUpdateCheck();
+    }
+
+    private async Task RecoverOlderVaultIfRequestedAsync()
+    {
+        if (!_recoverOlderVaultAfterUnlock || _legacyVaultRecovery is null) return;
+        _recoverOlderVaultAfterUnlock = false;
+        if (await NativeFilePicker.RecoverOlderVaultAsync(_legacyVaultRecovery, _lifetime.Token))
+            await AccountList.LoadAsync();
     }
 
     private async void OnConfigured(object? sender, EventArgs e)

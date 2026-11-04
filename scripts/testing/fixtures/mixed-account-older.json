@@ -1,0 +1,26 @@
+[
+  {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "issuer": "Scenario Exact",
+    "secret": "JBSWY3DPEHPK3PXP",
+    "account_name": "exact@example.invalid",
+    "period": 30,
+    "favorite": false
+  },
+  {
+    "id": "33333333-3333-4333-8333-333333333333",
+    "issuer": "Scenario Collision",
+    "secret": "GEZDGNBVGY3TQOJQ",
+    "account_name": "collision@example.invalid",
+    "period": 30,
+    "favorite": false
+  },
+  {
+    "id": "55555555-5555-4555-8555-555555555555",
+    "issuer": "Scenario Older New",
+    "secret": "ONSWG4TFOQXW4ZBA",
+    "account_name": "older-new@example.invalid",
+    "period": 30,
+    "favorite": false
+  }
+]

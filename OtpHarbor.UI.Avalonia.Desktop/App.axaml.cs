@@ -95,6 +95,12 @@ public partial class App : Application
                         _ = DeleteAllAccountsAsync(
                             _services.GetRequiredService<AccountListViewModel>());
                     }
+                    if (request.Kind == ApplicationActivationKind.DebugImportIconPack)
+                    {
+                        _ = ImportDebugIconPackAsync(
+                            _services.GetRequiredService<IBrandIconPackService>(),
+                            request.Payload);
+                    }
 #endif
                 });
             }
@@ -179,6 +185,26 @@ public partial class App : Application
         {
             Log.Warning(
                 "Debug deletion of all accounts failed with {ExceptionType}.",
+                exception.GetType().FullName);
+        }
+    }
+
+    private static async Task ImportDebugIconPackAsync(
+        IBrandIconPackService iconPacks,
+        string? filePath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(filePath)
+                || !Path.GetExtension(filePath).Equals(".otphicons", StringComparison.OrdinalIgnoreCase)
+                || !File.Exists(filePath)) return;
+            await using var stream = File.OpenRead(filePath);
+            var imported = await iconPacks.ImportAsync(stream, Path.GetFileName(filePath));
+            Log.Information("Debug icon pack import completed: {Succeeded}.", imported.IsSuccess);
+        }
+        catch (Exception exception)
+        {
+            Log.Warning("Debug icon pack import failed with {ExceptionType}.",
                 exception.GetType().FullName);
         }
     }

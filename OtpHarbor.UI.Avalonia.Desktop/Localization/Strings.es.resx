@@ -482,8 +482,12 @@
   <data name="IconPacks" xml:space="preserve"><value>Paquetes de iconos</value></data>
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>¿Cómo importo paquetes de iconos?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Abre el proyecto independiente OTP Harbor Icon Pack Builder y sigue sus instrucciones para crear otp-harbor-icons.otphicons. Después, selecciona Ajustes → Paquetes de iconos → Importar paquete de iconos de OTP Harbor. OTP Harbor no descarga colecciones de iconos de origen ni importa directamente los archivos de los proveedores. El paquete generado registra los iconos seleccionados, las licencias, las atribuciones y la procedencia de las fuentes; revisa esa información antes de usarlo o compartirlo. La coincidencia automática solo utiliza el emisor de la cuenta.</value></data>
-  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Generador e información legal de las fuentes:</value></data>
+  <data name="FaqImportIconPacksStepDownload" xml:space="preserve"><value>Descarga OTP Harbor Icon Pack Builder (solo para escritorio) desde GitHub.</value></data>
+  <data name="FaqImportIconPacksDownloadLink" xml:space="preserve"><value>Versiones de GitHub</value></data>
+  <data name="FaqImportIconPacksStepBuild" xml:space="preserve"><value>Ejecuta el generador. Descarga sus fuentes de iconos probadas y crea otp-harbor-icons.otphicons.</value></data>
+  <data name="FaqImportIconPacksStepImport" xml:space="preserve"><value>En OTP Harbor Authenticator, selecciona Ajustes → Paquetes de iconos → Importar paquete de iconos de OTP Harbor y, a continuación, elige el archivo generado.</value></data>
+  <data name="FaqImportIconPacksCustomIconTip" xml:space="preserve"><value>Para usar un icono SVG o PNG individual, edita la cuenta, abre Opciones avanzadas y selecciona la acción Elegir SVG o PNG personalizado… en Icono de la cuenta (paquete de iconos).</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Información legal sobre iconos de terceros:</value></data>
   <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — aviso legal</value></data>
   <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons — licencia y aviso de marcas</value></data>
   <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons — licencia y aviso legal</value></data>
@@ -519,4 +523,19 @@
   <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Falló el punto de control de la copia</value></data>
   <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor no pudo crear o verificar un punto de recuperación actualizado. Puedes cancelar y reintentar, o confirmar la eliminación de la cuenta sin una copia actual.</value></data>
   <data name="DeleteAnyway" xml:space="preserve"><value>Eliminar de todos modos</value></data>
+  <data name="OlderVaultRecoveryTitle" xml:space="preserve"><value>Se encontró una bóveda anterior</value></data>
+  <data name="OlderVaultConflictMessage" xml:space="preserve"><value>Se encontraron una bóveda cifrada anterior y la bóveda actual. Ambas se conservan. Continúa con las cuentas actuales o revisa las anteriores después de desbloquear la bóveda actual. No se reemplazará ninguna cuenta sin confirmación.</value></data>
+  <data name="OlderVaultContinueCurrent" xml:space="preserve"><value>Continuar con la bóveda actual</value></data>
+  <data name="OlderVaultReviewOlder" xml:space="preserve"><value>Revisar cuentas anteriores</value></data>
+  <data name="OlderVaultCurrentUnavailable" xml:space="preserve"><value>Existen una bóveda actual y una anterior, pero la autorización actual no está disponible. Ambas se conservan. Restaura la envoltura de autorización actual antes de crear una bóveda nueva.</value></data>
+  <data name="OlderVaultPasswordPrompt" xml:space="preserve"><value>Introduce la contraseña maestra de la bóveda anterior para revisar sus cuentas. La bóveda actual permanece intacta hasta que confirmes la restauración.</value></data>
+  <data name="OlderVaultPasswordRequired" xml:space="preserve"><value>Introduce la contraseña maestra anterior.</value></data>
+  <data name="OlderVaultRecoveryFailed" xml:space="preserve"><value>No se pudo abrir o recuperar la bóveda anterior. Comprueba su contraseña maestra y sus archivos, y revisa tus cuentas antes de intentarlo de nuevo.</value></data>
+  <data name="OlderVaultConflictStrategyTitle" xml:space="preserve"><value>Elige cómo tratar las cuentas coincidentes</value></data>
+  <data name="OlderVaultConflictStrategyMessage" xml:space="preserve"><value>Conserva las versiones actuales de las cuentas coincidentes o reemplázalas por las anteriores. Las cuentas nuevas de la bóveda anterior se pueden añadir tras la confirmación. Se requiere un punto de recuperación antes de realizar cambios.</value></data>
+  <data name="OlderVaultReviewTitle" xml:space="preserve"><value>Revisar las cuentas anteriores</value></data>
+  <data name="OlderVaultReviewMessage" xml:space="preserve"><value>Bóveda anterior: {0} cuentas. Cuentas que coinciden con las actuales: {1}. Cuentas nuevas: {2}.&#10;&#10;{3}&#10;&#10;Elige si quieres conservar las versiones actuales de las cuentas coincidentes o reemplazarlas por las anteriores. Se requieren un punto de recuperación y una confirmación final antes de realizar cambios.</value></data>
+  <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>Cuentas nuevas que se importarán de la bóveda anterior: {0}. Coincidencias sin cambios conservadas automáticamente: {1}.&#10;&#10;Cuentas de la bóveda anterior:&#10;{2}&#10;&#10;Se requiere un punto de recuperación antes de realizar cambios. Cancelar deja la bóveda actual sin cambios.</value></data>
+  <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Mantener actuales</value></data>
+  <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Usar anteriores</value></data>
 </root>

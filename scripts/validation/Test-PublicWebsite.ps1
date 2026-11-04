@@ -27,20 +27,23 @@ $compactAndroidIndex = [Text.RegularExpressions.Regex]::Replace($androidIndex, '
 $androidGuide = Read-RequiredFile 'site/android/guide/index.html'
 $compactAndroidGuide = [Text.RegularExpressions.Regex]::Replace($androidGuide, '\s+', ' ')
 $styles = Read-RequiredFile 'site/styles.css'
+$galleryScript = Read-RequiredFile 'site/gallery.js'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
 $pagesWorkflow = Read-RequiredFile '.github/workflows/pages.yml'
 $indexNowVerificationValue = '1b6f7ab9795743588fa8e24157ad1541'
 $indexNowVerificationFile = Read-RequiredFile "site/$indexNowVerificationValue.txt"
-Read-RequiredFile 'docs/images/readme/app.png' | Out-Null
 Read-RequiredFile 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png' | Out-Null
 
 $androidCampaignFiles = @(
-    '01-encrypted-local-vault.png',
-    '02-camera-and-google-qr.png',
-    '03-biometric-quick-unlock.png',
-    '04-swipe-manage-show-qr.png',
-    '05-backup-and-languages.png'
+    '01-dark-account-list.png',
+    '02-dark-settings.png',
+    '03-dark-qr-scanning.png',
+    '04-dark-backup-restore.png',
+    '05-light-account-list.png',
+    '06-light-settings.png',
+    '07-light-qr-scanning.png',
+    '08-light-backup-restore.png'
 )
 foreach ($file in $androidCampaignFiles) {
     Read-RequiredFile "packaging/android/marketing/en-US/$file" | Out-Null
@@ -51,8 +54,40 @@ foreach ($file in $androidCampaignFiles) {
 if (-not $pagesWorkflow.Contains('cp packaging/android/marketing/en-US/*.png _site/assets/android/', [StringComparison]::Ordinal)) {
     throw 'The Android campaign assets are not included in the Pages artifact.'
 }
+if (-not $compactIndex.Contains('id="showcase"', [StringComparison]::Ordinal) -or
+    -not $compactIndex.Contains('id="showcase-dialog"', [StringComparison]::Ordinal) -or
+    -not $compactIndex.Contains('src="gallery.js?v=3-progressive-gallery-1"', [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains("fetch('assets/marketing/gallery.json', { cache: 'no-store' })", [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('cp -R artifacts/marketing/website/optimized/. _site/assets/marketing/', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('approved for website publication', [StringComparison]::Ordinal)) {
+    throw 'The canonical v3 screenshot gallery is not wired into the website.'
+}
+if (-not $compactIndex.Contains('id="showcase-platform-label">Platform</span>', [StringComparison]::Ordinal) -or
+    -not $compactIndex.Contains('id="showcase-theme-label">Theme</span>', [StringComparison]::Ordinal) -or
+    -not $compactIndex.Contains('data-gallery-platform="desktop" aria-pressed="true"', [StringComparison]::Ordinal) -or
+    -not $compactIndex.Contains('data-gallery-theme="dark" aria-pressed="true"', [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains("const state = { platform: 'desktop', theme: 'dark' }", [StringComparison]::Ordinal)) {
+    throw 'The v3 gallery must label its controls and open on Desktop in Dark mode.'
+}
+if (-not $galleryScript.Contains("let pageLoaded = document.readyState === 'complete'", [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains("window.addEventListener('load'", [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains('window.setTimeout(() => void startDeferredLoading(), 0);', [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains('if (!pageLoaded || !galleryItems || deferredLoadingStarted) return;', [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains('await initialGalleryRequest;', [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains("{ platform: 'desktop', theme: 'light' }", [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains("{ platform: 'android', theme: 'dark' }", [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains("{ platform: 'android', theme: 'light' }", [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains('const existingRequest = imageRequests.get(src);', [StringComparison]::Ordinal)) {
+    throw 'The gallery must reuse image requests and defer alternate galleries until the page has fully loaded.'
+}
+$desktopLightIndex = $galleryScript.IndexOf("{ platform: 'desktop', theme: 'light' }", [StringComparison]::Ordinal)
+$androidDarkIndex = $galleryScript.IndexOf("{ platform: 'android', theme: 'dark' }", [StringComparison]::Ordinal)
+$androidLightIndex = $galleryScript.IndexOf("{ platform: 'android', theme: 'light' }", [StringComparison]::Ordinal)
+if ($desktopLightIndex -ge $androidDarkIndex -or $androidDarkIndex -ge $androidLightIndex) {
+    throw 'The alternate gallery preload order must be Desktop Light, Android Dark, then Android Light.'
+}
 
-$preferredImageRelativePath = 'packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png'
+$preferredImageRelativePath = 'packaging/windows-store/screenshots/en-US/marketing/02-dark-account-list.png'
 $preferredImageUrl = 'https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png'
 $preferredImagePath = Join-Path $repositoryRoot $preferredImageRelativePath
 if (-not (Test-Path -LiteralPath $preferredImagePath -PathType Leaf)) {
@@ -69,14 +104,6 @@ $preferredImageHeight = [BitConverter]::ToInt32(
     [byte[]]($preferredImageBytes[23], $preferredImageBytes[22], $preferredImageBytes[21], $preferredImageBytes[20]), 0)
 if ($preferredImageWidth -ne 1920 -or $preferredImageHeight -ne 1080) {
     throw "The preferred search-preview image must be 1920x1080; found ${preferredImageWidth}x${preferredImageHeight}."
-}
-
-$socialPreviewPath = Join-Path $repositoryRoot 'docs/images/social/otp-harbor-social-preview.jpg'
-if (-not (Test-Path -LiteralPath $socialPreviewPath -PathType Leaf)) {
-    throw 'The optimized social-preview image is missing.'
-}
-if ((Get-Item -LiteralPath $socialPreviewPath).Length -ge 1MB) {
-    throw 'The social-preview image must remain smaller than 1 MB for GitHub upload.'
 }
 
 foreach ($requiredText in @(
@@ -102,7 +129,7 @@ foreach ($requiredText in @(
     'OTP Harbor 2.0.1 is now publicly available from Microsoft Store, the primary Windows channel.',
     'OTP Harbor 2.0.1 is the stable desktop GitHub release for Linux and source archives.',
     'OTP Harbor Android 2.0.1 is the current APK version; Android updates use dedicated GitHub releases.',
-    'Can you test OTP Harbor on a MacBook?',
+    'Help test OTP Harbor v3 on Windows, Linux and Android',
     'Test only with synthetic accounts',
     'Right-click an existing desktop account to edit it, show its QR code or delete it after confirmation.',
     'Settings &gt; Import / Export'
@@ -141,11 +168,6 @@ foreach ($requiredType in @('WebSite', 'WebPage', 'ImageObject', 'SoftwareApplic
     }
 }
 
-$mainScreenshotPath = Join-Path $repositoryRoot 'docs/images/readme/app.png'
-if ((Get-Item -LiteralPath $mainScreenshotPath).Length -ge 1MB) {
-    throw 'The main application screenshot must remain smaller than 1 MB.'
-}
-
 if ($index -match 'aggregateRating|reviewCount|downloadCount|google-analytics|googletagmanager') {
     throw 'The website must not publish unverified popularity signals or analytics.'
 }
@@ -159,9 +181,9 @@ if (-not $robots.Contains('Sitemap: https://legends.github.io/otp-harbor/sitemap
     throw 'The website crawl metadata does not use the canonical Pages URL.'
 }
 
-if (-not $compactIndex.Contains("<img src=`"assets/otp-harbor-totp-authenticator-windows.png`"", [StringComparison]::Ordinal) -or
+if ($compactIndex.Contains('class="search-preview-image"', [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains("cp $preferredImageRelativePath _site/assets/otp-harbor-totp-authenticator-windows.png", [StringComparison]::Ordinal)) {
-    throw 'The preferred search-preview image is not visible and deployable from the canonical page.'
+    throw 'The former Windows campaign image must not duplicate the v3 hero on the page.'
 }
 
 foreach ($requiredText in @(
@@ -179,7 +201,7 @@ foreach ($requiredText in @(
 if (-not $compactIndex.Contains('href="android/"', [StringComparison]::Ordinal) -or
     -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/android/</loc>', [StringComparison]::Ordinal) -or
     -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/android/guide/</loc>', [StringComparison]::Ordinal) -or
-    -not $pagesWorkflow.Contains('cp site/android/index.html _site/android/index.html', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('cp site/android/index.html site/android/gallery.js _site/android/', [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains('cp site/android/guide/index.html _site/android/guide/index.html', [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains('urlList = @($siteUrl, $androidUrl, $androidGuideUrl)', [StringComparison]::Ordinal)) {
     throw 'The Android product page is not cross-linked, deployable, and discoverable.'

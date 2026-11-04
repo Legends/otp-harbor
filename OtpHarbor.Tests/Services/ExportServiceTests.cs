@@ -9,6 +9,53 @@ public sealed class ExportServiceTests
 {
     private readonly ExportService _sut = new(NullLogger<ExportService>.Instance);
 
+    [Theory]
+    [InlineData("release-import-uris.txt", 2, "Release URI Alpha")]
+    [InlineData("release-aegis.json", 1, "Release Aegis")]
+    [InlineData("release-twofas.2fas", 1, "Release 2FAS")]
+    [InlineData("release-native.csv", 1, "Release CSV")]
+    public async Task PhysicalReleaseFixtures_ImportThroughProductionParsers(
+        string fileName,
+        int expectedCount,
+        string expectedIssuer)
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "OtpHarbor.sln")))
+            directory = directory.Parent;
+        Assert.NotNull(directory);
+        var path = Path.Combine(directory.FullName, "scripts", "testing", "fixtures", fileName);
+        await using var stream = File.OpenRead(path);
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream,
+            fileName,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(expectedCount, result.Value.Count);
+        Assert.Contains(result.Value, account => account.Issuer == expectedIssuer);
+        Assert.All(result.Value, account => Assert.EndsWith("@example.invalid", account.AccountName));
+    }
+
+    [Fact]
+    public async Task FictionalMarketingAccounts_ImportThroughTheNormalAndroidJsonContract()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "OtpHarbor.sln")))
+            directory = directory.Parent;
+        Assert.NotNull(directory);
+        var path = Path.Combine(directory.FullName, "artifacts", "marketing", "demo-data", "otp-harbor-demo-accounts.json");
+        await using var stream = File.OpenRead(path);
+
+        var result = await _sut.ImportFromStreamAsync(
+            stream, Path.GetFileName(path), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(26, result.Value.Count);
+        Assert.Equal(26, result.Value.Select(account => account.Issuer).Distinct(StringComparer.Ordinal).Count());
+        Assert.All(result.Value, account => Assert.EndsWith("@example.com", account.AccountName));
+    }
+
     [Fact]
     public void SupportedImportFileExtensions_IncludeCurrentAndLegacyEncryptedBackups()
     {

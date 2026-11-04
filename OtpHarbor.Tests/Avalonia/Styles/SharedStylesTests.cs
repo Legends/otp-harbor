@@ -595,7 +595,7 @@ public sealed class SharedStylesTests
                 .Attribute("Kind")?.Value));
         Assert.Equal(
             [
-                "https://github.com/Legends/otp-harbor-icon-pack-builder",
+                "https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest",
                 "https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md",
                 "https://github.com/aegis-icons/aegis-icons#disclaimer",
                 "https://github.com/homarr-labs/dashboard-icons#legal"

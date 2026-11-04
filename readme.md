@@ -2,27 +2,51 @@
 
 **The local-first authenticator for desktop and Android.**
 
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-5C6BC0)](https://github.com/Legends/otp-harbor)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Android-5C6BC0)](https://github.com/Legends/otp-harbor)
 [![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-2.0.1-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE.txt)
 
-**OTP Harbor** is a GPLv3-licensed, open-source, local-first TOTP and 2FA authenticator for Windows, macOS, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
+**OTP Harbor** is a GPLv3-licensed, open-source, local-first TOTP and 2FA authenticator for Windows, Linux, and Android. It protects OTP seeds in an encrypted local vault and supports QR workflows, platform quick unlock, and encrypted backup and restore without requiring a cloud account.
+
+> **v3 status:** The Light and Dark theme refresh is being prepared; no public v3 release is confirmed. The downloads below remain the current published versions.
 
 > **Release status:** OTP Harbor `v2.0.1` is the stable desktop GitHub release. Windows is delivered only through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `2.0.1` is publicly available and Microsoft signs accepted MSIX packages. The [latest desktop release](https://github.com/Legends/otp-harbor/releases/latest) provides Linux packages, integrity metadata, and source archives. Production-signed APKs use [independent Android releases](https://github.com/Legends/otp-harbor/releases?q=android-v) so mobile and desktop versions can ship separately.
 
+<h3>Desktop app: Light and Dark themes</h3>
+
 <p align="center">
-  <img src="packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png" alt="OTP Harbor for Windows with an encrypted local TOTP vault and synthetic sample accounts" width="960" />
+  <img src="artifacts/marketing/website/optimized/desktop/light/account-list.png" alt="OTP Harbor desktop account list in Light theme with fictional demo accounts and original icons" width="420" />
+  &emsp;&emsp;
+  <img src="artifacts/marketing/website/optimized/desktop/dark/account-list.png" alt="OTP Harbor desktop account list in Dark theme with the same fictional demo accounts and icons" width="420" />
 </p>
+
+<h3>Android app: Light and Dark themes</h3>
+
+<p align="center">
+  <img src="artifacts/marketing/website/optimized/android/light/account-list.png" alt="OTP Harbor Android account list in Light theme with fictional demo accounts and original icons" width="280" />
+  &emsp;&emsp;
+  <img src="artifacts/marketing/website/optimized/android/dark/account-list.png" alt="OTP Harbor Android account list in Dark theme with the same fictional demo accounts and icons" width="280" />
+</p>
+
+These are optimized captures from live apps using disposable demo vaults. Each pair shows the same account list in Light and Dark themes. [Browse the full screenshot gallery](https://legends.github.io/otp-harbor/#showcase) when the v3 marketing review is complete.
+
+## Optional brand icons in v3
+
+1. Visit the separate [OTP Harbor Icon Pack Builder](https://github.com/Legends/otp-harbor-icon-pack-builder) project and download the build for your computer from its [latest release](https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest). Check the download against that release's `SHA256SUMS.txt` before running it.
+2. Run the builder and follow its prompt to create `otp-harbor-icons.otphicons` in Downloads. The builder downloads its pinned, tested icon sources when run; OTP Harbor does not fetch icons while you use the app.
+3. In the v3 app, open **Settings → Icon packs → Import OTP Harbor icon pack** and select the generated `.otphicons` file. To import on Android, transfer the file to that device first. Matching brand icons then become available for accounts whose issuers the pack recognizes.
+
+**Legal notice:** The builder can use artwork from the independent Aegis Icons, Simple Icons, and Dashboard Icons projects. OTP Harbor does not bundle or host their collections or generated packs, and it grants no rights to third-party icons, names, or trademarks. Project-level licenses do not necessarily cover each depicted brand mark; individual assets may have separate license, attribution, trademark, and brand-guideline requirements. Before using or sharing a pack, check its available notices and provenance, the upstream [Aegis Icons license](https://github.com/aegis-icons/aegis-icons/blob/master/LICENSE.md), [Simple Icons license](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md) and [disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md), [Dashboard Icons license](https://github.com/homarr-labs/dashboard-icons/blob/main/LICENSE), and each relevant rights holder's terms. You are responsible for compliant use; compatibility does not imply affiliation, sponsorship, or endorsement. Seek qualified legal advice if redistribution rights are unclear.
 
 ## Features
 
 - AES-256-GCM encrypted local vault with Argon2id password derivation
-- Windows Hello and macOS quick unlock with master-password recovery
+- Windows Hello and Android device quick unlock with master-password recovery
 - Account creation, editing, search, deletion, QR import/export, Google Authenticator bulk migration, and local `otpauth://` URI-list import
 - Automatic clipboard clearing and idle/session locking
 - Encrypted `.totp` backup, restore, and conflict handling
 - English, German, French, and Spanish UI
-- Desktop application for Windows, macOS, and Linux
+- Desktop application for Windows and Linux
 - Focused Android app with strong-biometric, device-screen-lock (PIN, pattern, or password), or master-password unlock,
   camera-based QR import, swipe actions, and the
   same encrypted backup format as desktop
@@ -43,7 +67,6 @@
 
 - Windows 10 or 11 on x64 for the Microsoft Store edition
 - Ubuntu 24.04 on x64 for the published DEB and portable Linux packages
-- macOS on ARM64 is supported by the application, but no supported public installer is currently offered
 
 The public [Android product page](https://legends.github.io/otp-harbor/android/) presents the mobile edition, while the dedicated [Android user guide](https://legends.github.io/otp-harbor/android/guide/) explains first-run setup, tap-to-copy, left/right swipe actions, camera and Google Authenticator QR workflows, per-account QR display, encrypted backup conflict handling, unlock-method recovery, and the optional app-lock setting.
 
@@ -59,28 +82,15 @@ Treat migration QR codes as secrets: anyone who captures one can recreate the ex
 
 Desktop and Android can also import a local `.txt` file containing one standard `otpauth://` TOTP URI per line, an unencrypted [Aegis JSON vault export](https://github.com/beemdevelopment/Aegis/blob/master/docs/vault.md), or an unencrypted [2FAS `.2fas` backup](https://2fas.com/support/2fas-auth-mobile-app/i-want-to-move-copy-transfer-tokens-codes-between-ios-and-android/). JSON, CSV, and OTP Harbor text account files remain supported. Password-protected Aegis and 2FAS backups are deliberately rejected rather than attempting a partial or incompatible decryption flow. Imports are parsed locally, previewed before mutation, and protected by the same recovery-backup and conflict-resolution workflow. Treat every unencrypted account file as secret material and remove it from shared storage after verifying the migration.
 
+## Upgrading from v2 to v3
+
+During upgrade, v3 accepts a supported v2 `TVLT` vault as migration input. It first creates a private `pre-upgrade-rollback` copy beside the vault containing the original encrypted `master.totp`, its authorization envelope when present, and available rotating backups. After the original master password unlocks the vault, the first account load converts the active vault to v3's `TVL2` format before showing the accounts. V3 then uses the converted vault; the v2 copy remains available for rollback. An external encrypted export is still recommended because the local copy shares the same device.
+
+To return to v2 after conversion, close OTP Harbor, preserve the current data directory, and restore the matching vault and authorization envelope from `pre-upgrade-rollback` to the paths expected by v2. On Windows, v2 uses `%APPDATA%\TOTP-Manager` and v3 uses `%APPDATA%\OTP-Harbor`. Unlock with the original master password. V2 cannot open a v3 `TVL2` vault directly. See the [recovery guide](docs/RECOVERY.md) for the complete procedure and Android limitations.
+
 ## Desktop experience
 
-<table>
-  <tr>
-    <td><img src="packaging/windows-store/screenshots/en-US/marketing/02-search-and-copy.png" alt="OTP Harbor instant account search and one-click TOTP copy workflow" /></td>
-    <td><img src="packaging/windows-store/screenshots/en-US/marketing/03-add-and-import.png" alt="OTP Harbor account creation and QR-code import workflow" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Find and copy codes quickly</strong></td>
-    <td align="center"><strong>Add accounts or import QR codes</strong></td>
-  </tr>
-  <tr>
-    <td><img src="packaging/windows-store/screenshots/en-US/marketing/04-windows-hello.png" alt="OTP Harbor quick unlock protected by Windows Hello with master-password recovery" /></td>
-    <td><img src="packaging/windows-store/screenshots/en-US/marketing/05-import-export.png" alt="OTP Harbor Google Authenticator import and encrypted backup export workflows" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Unlock securely with Windows Hello</strong></td>
-    <td align="center"><strong>Migrate and back up your vault</strong></td>
-  </tr>
-</table>
-
-All accounts, codes, and QR payloads shown in the marketing artwork are synthetic. Never publish screenshots containing a real account secret.
+The v3 preview above shows Light and Dark themes with 26 fictional demo accounts. Account creation, search, QR import, quick unlock, and encrypted backup remain available; feature screenshots will join the gallery after visual review. Never publish screenshots containing a real account secret.
 
 ### Keyboard shortcuts
 
@@ -104,7 +114,6 @@ All accounts, codes, and QR payloads shown in the marketing artwork are syntheti
 | --- | --- |
 | Windows 10/11 x64 | Public Microsoft Store MSIX only; Microsoft signs accepted packages and manages updates |
 | Ubuntu 24.04 x64 | DEB or self-contained tarball |
-| macOS ARM64 | No supported public installer is currently available |
 | Android 9 or newer | Production-signed universal APK from an independent `android-vX.Y.Z` GitHub release; manual installation with in-place upgrade support |
 
 After launch, create a master password and add an account manually, scan an `otpauth://` QR code, or import each saved QR image from a Google Authenticator bulk export in sequence. Treat QR images, OTPs, seeds, exports, and backups as secrets.

@@ -1,4 +1,5 @@
 using FluentResults;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
@@ -510,6 +511,66 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
+    public async Task RestoreBackupWithConflictResolutionAsync_MixedVault_UsesIdsAndLogicalIdentitySafely()
+    {
+        var currentFixture = await LoadScenarioFixtureAsync("mixed-account-current-v3.json");
+        var olderFixture = await LoadScenarioFixtureAsync("mixed-account-older.json");
+        var unchanged = currentFixture.Single(account => account.Issuer == "Scenario Exact");
+        var currentCollision = currentFixture.Single(account => account.Issuer == "Scenario Collision");
+        var currentOnly = currentFixture.Single(account => account.Issuer == "Scenario Current Only");
+        var olderCollision = olderFixture.Single(account => account.Issuer == "Scenario Collision");
+        var olderNew = olderFixture.Single(account => account.Issuer == "Scenario Older New");
+        Assert.NotEqual(currentCollision.ID, olderCollision.ID);
+
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(currentFixture));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+
+        var result = await sut.RestoreBackupWithConflictResolutionAsync(
+            olderFixture,
+            (preview, _) =>
+            {
+                Assert.Equal(3, preview.TotalCount);
+                Assert.Equal(1, preview.UnchangedCount);
+                Assert.Equal(1, preview.NewCount);
+                var conflict = Assert.Single(preview.ChangedConflicts);
+                Assert.Equal(1, conflict.ImportIndex);
+                Assert.Equal(currentCollision.Issuer, conflict.CurrentIssuer);
+                Assert.Equal(currentCollision.AccountName, conflict.CurrentAccountName);
+                Assert.Equal(olderCollision.Issuer, conflict.BackupIssuer);
+                Assert.Equal(olderCollision.AccountName, conflict.BackupAccountName);
+                Assert.True(conflict.SecretChanged);
+                return Task.FromResult<AccountImportResolution?>(new AccountImportResolution(
+                    [new AccountImportConflictResolution(
+                        conflict.ImportIndex,
+                        AccountImportConflictAction.Replace)]));
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccountImportStatus.Completed, result.Value.Status);
+        Assert.Equal(1, result.Value.Added);
+        Assert.Equal(1, result.Value.Replaced);
+        Assert.Equal(1, result.Value.Skipped);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
+        accounts.Verify(value => value.CommitImportAsync(
+            It.Is<IReadOnlyCollection<Account>>(batch =>
+                batch.Count == 4
+                && batch.Any(account => account.ID == unchanged.ID
+                    && account.Secret == unchanged.Secret)
+                && batch.Any(account => account.ID == currentCollision.ID
+                    && account.Secret == olderCollision.Secret)
+                && batch.All(account => account.ID != olderCollision.ID)
+                && batch.Any(account => account.ID == currentOnly.ID
+                    && account.Secret == currentOnly.Secret)
+                && batch.Any(account => account.ID == olderNew.ID))), Times.Once);
+    }
+
+    [Fact]
     public async Task ImportWithConflictResolutionAsync_WhenResolutionIsIncomplete_FailsBeforeBackupOrWrites()
     {
         var existing = new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP", "current");
@@ -561,5 +622,20 @@ public sealed class AccountImportServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(1, result.Value.Skipped);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+    }
+
+    private static async Task<List<Account>> LoadScenarioFixtureAsync(string name)
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "OtpHarbor.sln")))
+            directory = directory.Parent;
+        Assert.NotNull(directory);
+        var path = Path.Combine(directory.FullName, "scripts", "testing", "fixtures", name);
+        await using var stream = File.OpenRead(path);
+        var export = new ExportService(NullLogger<ExportService>.Instance);
+        var decoded = await export.ImportFromStreamAsync(
+            stream, name, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.True(decoded.IsSuccess);
+        return decoded.Value;
     }
 }

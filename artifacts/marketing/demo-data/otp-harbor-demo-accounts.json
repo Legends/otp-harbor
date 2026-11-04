@@ -1,0 +1,210 @@
+[
+  {
+    "id": "1b5c432e-4d3a-51fa-9190-ff5a0486ea62",
+    "issuer": "Qelvorith",
+    "secret": "I7I3BGARR3WUZUSIOCUZE7TN4G4I4TKB",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "fae983f9-32d3-53cc-8d9e-9f23a8e88da8",
+    "issuer": "Vunqelora",
+    "secret": "FKH6EYM5ZMFZTAV5LOWCCTH4C3KXDWVF",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "d225264e-8b82-54d9-963c-5ab418f3c5b2",
+    "issuer": "Zevqoralis",
+    "secret": "IKUGPS6RILENNF25HXWIEPXYQZLCINIJ",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "0742d2aa-295c-5dac-972b-7ddb4872634e",
+    "issuer": "Fenqaviel",
+    "secret": "PPSL3NNRYFME4C7BIUI4NVUXD4Z264PQ",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "fe488537-9803-53b7-a2fa-cedc64e824e7",
+    "issuer": "Noxaveliq",
+    "secret": "DCNEELKHQDTMPWHQUBI6EACLHRSP562S",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "12aa6be5-175e-5b8c-9913-59386d29a271",
+    "issuer": "Tavelqora",
+    "secret": "QOSTPT7LHJGLHVBPLI67GZBML65EUBGD",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "ab1ed1f5-6920-5d84-b009-7a916890160c",
+    "issuer": "Brinovexel",
+    "secret": "GZGBT6WP4GJEZPR4B5CSWGUN5PIMFAEC",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "8826473f-c3a8-5936-826a-3ce2925fc480",
+    "issuer": "Cerynqel",
+    "secret": "AMSSUMKMUYR7UTOONXLNREMV6FAZYSW3",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "8b4860b2-bb10-52c5-a29a-e84d116a6da7",
+    "issuer": "Dravqenor",
+    "secret": "7RME77AJJDC6MY64JZGQJQ52TRQLHZ6F",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "a2efd390-230a-5b23-ba16-a96a31dcea59",
+    "issuer": "Elyqorun",
+    "secret": "HNIICD25MGPXBJKEQMBUTBTG3CETKT4S",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "a9cee36f-1811-549c-8a91-951f36d422f5",
+    "issuer": "Fexavoryn",
+    "secret": "PGFJ5EW4XPA3XAGOTQE3DY23YLVS3YOT",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "905b0882-0004-52cc-8cc3-29c65af5c5e4",
+    "issuer": "Grynolith",
+    "secret": "P5VMIWJDARPZH57DN6IAEQCOUNKYGT56",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "02b7eedc-f901-551d-b1f4-1be45e02b3fa",
+    "issuer": "Havorqen",
+    "secret": "3OEUEWSYC3KGQKIXNVP2EONANU6KMUOP",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "dfb0db5f-fd7c-50f2-bea4-3e4f7219076c",
+    "issuer": "Jexaloria",
+    "secret": "SA7PEH4KTSEAUOWHYQZDGRQU56MXJY5W",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "278a3464-30a7-5fcb-9a37-639938dab8e0",
+    "issuer": "Kynoverix",
+    "secret": "UOV3S2P7QT3QC7SYIAEYO5MRMAHYGT6B",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "8e3d2f21-7fe0-52df-abc6-7f260528e0c9",
+    "issuer": "Lurqavena",
+    "secret": "JRQ2Y5337AMBE7ACSKMUUWBBL5NSMYDD",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "55146fec-9a9d-5d82-a608-e5814a81265e",
+    "issuer": "Merviqel",
+    "secret": "5ERP3TNP4643XWSM45RTM7ZSHIRJ2FLQ",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "b6b41d4e-5fcf-5ed0-9ae9-653f446bd463",
+    "issuer": "Nyrathove",
+    "secret": "FU6DF34YD6NB7AC3DVZRD4NJFD3NJLYH",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "c20c45ac-83f7-5267-80ba-2f9bcf3cc75f",
+    "issuer": "Orvexalin",
+    "secret": "6FJYBUX4ZH3K7QYDC7F22I5TW4O7YC5Q",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "83583c79-fc6a-5c6f-82e7-48cb6cfa9cea",
+    "issuer": "Pynqelith",
+    "secret": "QWZSNTAZX4RWLVRZKQHFNTIXP3WLD6QE",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "021cf858-b671-5f60-9e5a-c6b580beb78a",
+    "issuer": "Ravolqith",
+    "secret": "4QR3FFHQNQC3MURI7BGVBD4BLM53PU4F",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "f876f656-d1bc-551a-b357-f9d3a0e7bfef",
+    "issuer": "Selyqavor",
+    "secret": "NNZBYKSIYKFWPPUFFY36FPBEODWEHDBX",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "cc404716-61ea-572f-ad0d-f6d0f81ba7a7",
+    "issuer": "Tynovelq",
+    "secret": "GWZZPDLY4C744UNS6LK3X33SAN2TZ3HB",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "8c3b15b2-18b8-5c95-b900-631828baab52",
+    "issuer": "Varyqenor",
+    "secret": "IAINFOGY32VG5GAYRPHOKZOXGUNN545T",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "4e6de55e-7f64-556e-b3e3-0df86d219275",
+    "issuer": "Wexarune",
+    "secret": "7KUQI5VCCDR42VBJF3K74DI6WQ626HOV",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  },
+  {
+    "id": "76030a15-9db1-518d-9eb3-4566bc61802a",
+    "issuer": "Zolqavith",
+    "secret": "PK2OU7LA4BQFSEFLCLEFSAPYABKPN2N6",
+    "account_name": "capture1@example.com",
+    "period": 30,
+    "groups": []
+  }
+]

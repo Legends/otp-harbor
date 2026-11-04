@@ -365,6 +365,153 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         AvaloniaStringKeys.NoBackupFileSelected,
         isBackupRestore: true);
 
+    public async Task<bool> RecoverOlderVaultAsync(
+        ILegacyVaultRecoveryService recoveryService,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(recoveryService);
+        if (!BeginOperation()) return false;
+        string? password = null;
+        try
+        {
+            password = await _dialogs.PromptForPasswordAsync(new PasswordDialogRequest(
+                Localized(AvaloniaStringKeys.OlderVaultRecoveryTitle),
+                Localized(AvaloniaStringKeys.OlderVaultPasswordPrompt),
+                Localized(AvaloniaStringKeys.Continue),
+                Localized(AvaloniaStringKeys.Cancel),
+                Localized(AvaloniaStringKeys.OlderVaultPasswordRequired),
+                Localized(AvaloniaStringKeys.OlderVaultPasswordRequired)), cancellationToken);
+            if (password is null) return false;
+
+            BeginImportProgress(AvaloniaStringKeys.ImportingAccounts);
+            await Task.Yield();
+            var olderAccounts = await recoveryService.ReadOlderAccountsAsync(password, cancellationToken);
+            if (olderAccounts.IsFailed)
+            {
+                await ShowOlderVaultMessageAsync(
+                    AvaloniaStringKeys.OlderVaultRecoveryFailed, NotificationSeverity.Error);
+                return false;
+            }
+
+            var restored = await _accountImportService.RestoreBackupWithConflictResolutionAsync(
+                olderAccounts.Value,
+                async (preview, token) =>
+                {
+                    var accountList = string.Join(Environment.NewLine,
+                        olderAccounts.Value.Select(account =>
+                        {
+                            var issuer = SafePreviewText(account.Issuer);
+                            var name = SafePreviewText(account.AccountName);
+                            return string.IsNullOrEmpty(name) ? $"• {issuer}" : $"• {issuer}: {name}";
+                        }));
+                    if (preview.ChangedConflictCount == 0)
+                    {
+                        if (preview.NewCount == 0)
+                            return new AccountImportResolution([]);
+
+                        var importNew = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                            Localized(AvaloniaStringKeys.OlderVaultReviewTitle),
+                            Localized(AvaloniaStringKeys.OlderVaultImportAllMessage,
+                                preview.NewCount, preview.UnchangedCount, accountList),
+                            NotificationSeverity.Information,
+                            Localized(AvaloniaStringKeys.ImportAccounts),
+                            Localized(AvaloniaStringKeys.Cancel)), token);
+                        return importNew ? new AccountImportResolution([]) : null;
+                    }
+
+                    var choice = await _dialogs.ChooseAsync(new ChoiceDialogRequest(
+                        Localized(AvaloniaStringKeys.OlderVaultReviewTitle),
+                        Localized(AvaloniaStringKeys.OlderVaultReviewMessage,
+                            preview.TotalCount, preview.ConflictCount, preview.NewCount, accountList),
+                        NotificationSeverity.Warning,
+                        Localized(AvaloniaStringKeys.OlderVaultKeepCurrentMatches),
+                        Localized(AvaloniaStringKeys.OlderVaultUseOlderMatches),
+                        Localized(AvaloniaStringKeys.Cancel)), token);
+                    if (choice == ChoiceDialogResult.Cancel) return null;
+
+                    var strategy = choice == ChoiceDialogResult.Primary
+                        ? ImportConflictStrategy.SkipExisting
+                        : ImportConflictStrategy.ReplaceExisting;
+                    var confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                        Localized(AvaloniaStringKeys.OlderVaultRecoveryTitle),
+                        ImportConfirmationMessage(preview with { ConflictStrategy = strategy }),
+                        NotificationSeverity.Warning,
+                        Localized(AvaloniaStringKeys.RestoreBackup),
+                        Localized(AvaloniaStringKeys.Cancel)), token);
+                    if (!confirmed) return null;
+
+                    var action = strategy == ImportConflictStrategy.ReplaceExisting
+                        ? AccountImportConflictAction.Replace
+                        : AccountImportConflictAction.Skip;
+                    return new AccountImportResolution(preview.ChangedConflicts
+                        .Select(conflict => new AccountImportConflictResolution(conflict.ImportIndex, action))
+                        .ToList());
+                },
+                cancellationToken);
+            if (restored.IsFailed)
+            {
+                await ShowOlderVaultMessageAsync(
+                    AvaloniaStringKeys.ImportWorkflowFailed, NotificationSeverity.Error);
+                return false;
+            }
+
+            var outcome = restored.Value;
+            var changed = outcome.Status == AccountImportStatus.Completed
+                && outcome.Added + outcome.Replaced > 0;
+            if (changed) AccountsChanged?.Invoke(this, EventArgs.Empty);
+            await ShowOlderVaultOutcomeAsync(outcome, cancellationToken);
+            return changed;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+        catch (Exception)
+        {
+            await ShowOlderVaultMessageAsync(
+                AvaloniaStringKeys.OlderVaultRecoveryFailed, NotificationSeverity.Error);
+            return false;
+        }
+        finally
+        {
+            password = null;
+            EndOperation();
+        }
+
+        async Task ShowOlderVaultOutcomeAsync(
+            AccountImportOutcome outcome, CancellationToken token)
+        {
+            var message = OutcomeMessage(outcome);
+            var severity = outcome.Status == AccountImportStatus.Completed
+                ? NotificationSeverity.Success : NotificationSeverity.Warning;
+            try
+            {
+                await _dialogs.ShowMessageAsync(new MessageDialogRequest(
+                    Localized(AvaloniaStringKeys.OlderVaultRecoveryTitle),
+                    message, severity, Localized(AvaloniaStringKeys.Ok)), token);
+            }
+            catch (Exception)
+            {
+                SetMessage(message, severity);
+            }
+        }
+
+        async Task ShowOlderVaultMessageAsync(string messageKey, NotificationSeverity severity)
+        {
+            var message = Localized(messageKey);
+            try
+            {
+                await _dialogs.ShowMessageAsync(new MessageDialogRequest(
+                    Localized(AvaloniaStringKeys.OlderVaultRecoveryTitle),
+                    message, severity, Localized(AvaloniaStringKeys.Ok)));
+            }
+            catch (Exception)
+            {
+                SetMessage(message, severity);
+            }
+        }
+    }
+
     private async Task ImportSelectedFileAsync(
         Func<CancellationToken, Task<INativeStorageFile?>> pickFile,
         string noSelectionMessageKey,
@@ -843,6 +990,10 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
     private string StrategyLabel(ImportConflictStrategy strategy) =>
         ConflictStrategies.First(option => option.Strategy == strategy).Label;
+
+    private static string SafePreviewText(string? value) =>
+        string.Concat((value ?? string.Empty).Select(character =>
+            char.IsControl(character) ? ' ' : character)).Trim();
 
     private string ImportConfirmationMessage(AccountImportPreview preview)
     {

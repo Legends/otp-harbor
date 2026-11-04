@@ -8,7 +8,7 @@
   <title>OTP Harbor — Open-Source TOTP & 2FA Authenticator</title>
 
   <meta name="description"
-    content="OTP Harbor is a GPLv3-licensed open-source TOTP and 2FA authenticator for Windows, macOS, Linux and Android with encrypted local storage, QR import and encrypted backups.">
+    content="OTP Harbor is a GPLv3-licensed open-source TOTP and 2FA authenticator for Windows, Linux and Android with encrypted local storage, QR import and encrypted backups.">
 
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
@@ -50,8 +50,7 @@
 
   <link rel="icon" href="assets/app-icon.png" type="image/png">
   <link rel="apple-touch-icon" href="assets/app-icon.png">
-  <link rel="preload" as="image" href="assets/otp-harbor-totp-authenticator-windows.png" type="image/png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=3-framed-captures-3">
 
   <!-- Structured data: page, preferred image and application -->
   <script type="application/ld+json">
@@ -70,7 +69,7 @@
         "@id": "https://legends.github.io/otp-harbor/#webpage",
         "url": "https://legends.github.io/otp-harbor/",
         "name": "OTP Harbor — Open-Source TOTP & 2FA Authenticator",
-        "description": "OTP Harbor is a GPLv3-licensed open-source TOTP and 2FA authenticator for Windows, macOS and Linux with encrypted local storage, QR import and encrypted backups.",
+        "description": "OTP Harbor is a GPLv3-licensed open-source TOTP and 2FA authenticator for Windows and Linux with encrypted local storage, QR import and encrypted backups.",
         "primaryImageOfPage": {
           "@id": "https://legends.github.io/otp-harbor/#primaryimage"
         },
@@ -101,7 +100,6 @@
         "operatingSystem": [
           "Windows 10",
           "Windows 11",
-          "macOS",
           "Linux",
           "Android 9 and newer"
         ],
@@ -143,6 +141,7 @@
     </a>
 
     <nav aria-label="Primary navigation">
+      <a href="#showcase">Screenshots</a>
       <a href="#features">Features</a>
       <a href="#security">Security</a>
       <a href="#platforms">Platforms</a>
@@ -174,8 +173,8 @@
         </h1>
 
         <p class="lede">
-          OTP Harbor is a GPLv3-licensed open-source TOTP authenticator for Windows, Linux and Android,
-          with macOS support in final platform testing. OTP Harbor keeps your two-factor
+          OTP Harbor is a GPLv3-licensed open-source TOTP authenticator for Windows, Linux and Android.
+          OTP Harbor keeps your two-factor
           authentication secrets in an encrypted local vault.
           Scan QR codes, generate one-time passwords, use quick
           unlock and create portable encrypted backups without
@@ -219,13 +218,43 @@
 
       <figure class="product-shot">
 
-        <img src="assets/app.png"
-          alt="OTP Harbor desktop authenticator showing synthetic GitHub, Microsoft, Google and other accounts with inline one-time passwords"
-          width="1900" height="2128" fetchpriority="high" decoding="async">
+        <img id="hero-product-image" src="assets/otp-harbor-totp-authenticator-windows.png"
+          alt="OTP Harbor desktop account list with synthetic demonstration accounts"
+          width="1920" height="1080" fetchpriority="high" decoding="async">
 
       </figure>
 
     </section>
+
+    <section id="showcase" class="showcase" aria-labelledby="showcase-title" hidden>
+      <p class="eyebrow">A closer look</p>
+      <h2 id="showcase-title">Explore OTP Harbor on Desktop and Android.</h2>
+      <p class="showcase-intro">Choose a platform and theme to see selected app screens and labeled marketing images on our blue campaign backgrounds. Captures use fictional demo accounts and original icons. The gallery opens on Desktop in Dark mode.</p>
+      <div class="showcase-controls">
+        <div class="showcase-control">
+          <span id="showcase-platform-label">Platform</span>
+          <div class="showcase-switch" role="group" aria-labelledby="showcase-platform-label">
+            <button type="button" data-gallery-platform="desktop" aria-pressed="true">Desktop</button>
+            <button type="button" data-gallery-platform="android" aria-pressed="false">Android</button>
+          </div>
+        </div>
+        <div class="showcase-control">
+          <span id="showcase-theme-label">Theme</span>
+          <div class="showcase-switch" role="group" aria-labelledby="showcase-theme-label">
+            <button type="button" data-gallery-theme="dark" aria-pressed="true">Dark</button>
+            <button type="button" data-gallery-theme="light" aria-pressed="false">Light</button>
+          </div>
+        </div>
+      </div>
+      <p id="showcase-current" class="showcase-current" aria-live="polite">Showing Desktop · Dark theme</p>
+      <div id="showcase-grid" class="showcase-grid"></div>
+    </section>
+
+    <dialog id="showcase-dialog" class="showcase-dialog" aria-label="Enlarged OTP Harbor screenshot">
+      <button type="button" class="showcase-close" aria-label="Close enlarged screenshot">×</button>
+      <img alt="">
+      <p></p>
+    </dialog>
 
 
     <!-- =========================================================
@@ -470,7 +499,7 @@
       </p>
 
       <h2>
-        OTP Harbor for Windows, macOS, Linux and Android.
+        OTP Harbor for Windows, Linux and Android.
       </h2>
 
       <p class="lede">
@@ -478,12 +507,6 @@
         Release stages differ by operating system. The Windows app is
         publicly available from Microsoft Store.
       </p>
-
-      <figure class="search-preview-image">
-        <img src="assets/otp-harbor-totp-authenticator-windows.png"
-          alt="OTP Harbor TOTP and 2FA authenticator for Windows with encrypted local storage" width="1920"
-          height="1080" loading="eager" decoding="async">
-      </figure>
 
       <div class="platform-grid">
 
@@ -500,17 +523,7 @@
         </article>
 
 
-        <article>
 
-          <strong>macOS ARM64</strong>
-
-          <p>
-            The macOS authenticator implementation is built and
-            exercised in CI. Physical MacBook acceptance,
-            production signing and notarization are still required.
-          </p>
-
-        </article>
 
 
         <article>
@@ -725,8 +738,8 @@
           </strong>
 
           <p>
-            OTP Harbor targets Windows, macOS, Linux and Android 9 or newer.
-            Distribution and acceptance status differs by platform.
+            OTP Harbor is currently distributed for Windows, Linux and Android 9 or newer.
+            v3 is in preparation; current downloads remain the published versions.
           </p>
 
         </article>
@@ -764,13 +777,13 @@
         </p>
 
         <h2>
-          Can you test OTP Harbor on a MacBook?
+          Help test OTP Harbor v3 on Windows, Linux and Android
         </h2>
 
         <p>
           We need physical validation of installation,
-          Keychain quick unlock, camera and QR behavior,
-          encrypted backup and restore, locking and packaging.
+          quick unlock, camera and QR behavior,
+          encrypted backup and restore, both themes, locking and packaging.
           Test only with synthetic accounts—never real secrets.
         </p>
 
@@ -842,6 +855,7 @@
 
   </footer>
 
+  <script src="gallery.js?v=3-progressive-gallery-1" defer></script>
 </body>
 
 </html>

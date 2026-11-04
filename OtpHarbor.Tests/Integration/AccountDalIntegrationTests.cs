@@ -1,10 +1,15 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+using NSec.Cryptography;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using TOTP.Core.Common;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.DAL.Services;
+using TOTP.DAL.Storage;
+using TOTP.Infrastructure.Security;
 using TOTP.Tests.Common;
 
 namespace TOTP.Tests.Integration;
@@ -12,6 +17,209 @@ namespace TOTP.Tests.Integration;
 [Collection(NonParallelCollectionDefinition.NonParallel)]
 public sealed class AccountDalIntegrationTests
 {
+    [Fact]
+    public async Task GetAllAsync_WithWrongKeyForLegacyVault_LeavesOriginalBytesAndNoSnapshot()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "master.vault");
+        var correctKey = RandomNumberGenerator.GetBytes(32);
+        var wrongKey = RandomNumberGenerator.GetBytes(32);
+        var nonce = RandomNumberGenerator.GetBytes(AeadAlgorithm.Aes256Gcm.NonceSize);
+        var plaintext = JsonSerializer.SerializeToUtf8Bytes(Array.Empty<object>());
+        byte[]? ciphertext = null;
+        try
+        {
+            using (var key = Key.Import(AeadAlgorithm.Aes256Gcm, correctKey, KeyBlobFormat.RawSymmetricKey))
+                ciphertext = AeadAlgorithm.Aes256Gcm.Encrypt(key, nonce, ReadOnlySpan<byte>.Empty, plaintext);
+            var original = "TVLT"u8.ToArray().Concat(nonce).Concat(ciphertext).ToArray();
+            await File.WriteAllBytesAsync(path, original, TestContext.Current.CancellationToken);
+
+            var securityContext = new Mock<ISecurityContext>();
+            securityContext.SetupGet(value => value.IsUnlocked).Returns(true);
+            securityContext.Setup(value => value.GetDekCopy()).Returns(() => (byte[])wrongKey.Clone());
+            using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance,
+                new VaultService(securityContext.Object), path, NoOpPlatformFileSecurity.Instance,
+                Path.Combine(temp.Path, "authorization-envelope.bin"));
+
+            var result = await sut.GetAllAsync();
+
+            Assert.True(result.IsFailed);
+            Assert.Equal(original, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+            Assert.False(Directory.Exists(Path.Combine(temp.Path, LegacyVaultRollbackSnapshot.DirectoryName)));
+            CryptographicOperations.ZeroMemory(original);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(correctKey);
+            CryptographicOperations.ZeroMemory(wrongKey);
+            CryptographicOperations.ZeroMemory(nonce);
+            CryptographicOperations.ZeroMemory(plaintext);
+            if (ciphertext is not null) CryptographicOperations.ZeroMemory(ciphertext);
+        }
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithCurrentFormat_DoesNotRewriteOrCreateLegacySnapshot()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "master.vault");
+        var current = "TVL2-current-encrypted-data"u8.ToArray();
+        await File.WriteAllBytesAsync(path, current, TestContext.Current.CancellationToken);
+        var vault = new LegacyMigrationTestVaultService();
+        using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance, vault, path,
+            NoOpPlatformFileSecurity.Instance, Path.Combine(temp.Path, "authorization-envelope.bin"));
+
+        var result = await sut.GetAllAsync();
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(current, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+        Assert.Equal(0, vault.EncryptionCount);
+        Assert.False(Directory.Exists(Path.Combine(temp.Path, LegacyVaultRollbackSnapshot.DirectoryName)));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenLegacyVaultIsCorrupt_LeavesOriginalBytesAndNoSnapshot()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "master.vault");
+        var original = "TVLT-corrupt-encrypted-data"u8.ToArray();
+        await File.WriteAllBytesAsync(path, original, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(temp.Path, "authorization-envelope.bin"), "synthetic-envelope", TestContext.Current.CancellationToken);
+        using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance,
+            new ThrowingVaultService(new CryptographicException("synthetic invalid vault")), path,
+            NoOpPlatformFileSecurity.Instance, Path.Combine(temp.Path, "authorization-envelope.bin"));
+
+        var result = await sut.GetAllAsync();
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(original, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+        Assert.False(Directory.Exists(Path.Combine(temp.Path, LegacyVaultRollbackSnapshot.DirectoryName)));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenLegacySnapshotFails_LeavesOriginalVaultInPlace()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "master.vault");
+        var original = "TVLT-encrypted-data"u8.ToArray();
+        await File.WriteAllBytesAsync(path, original, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(temp.Path, "authorization-envelope.bin"), "synthetic-envelope", TestContext.Current.CancellationToken);
+        var vault = new LegacyMigrationTestVaultService();
+        using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance, vault, path,
+            new DelegatingPlatformFileSecurity
+            {
+                RestrictDirectory = directory =>
+                {
+                    if (directory.Contains("pre-upgrade-rollback.", StringComparison.Ordinal))
+                        throw new UnauthorizedAccessException("synthetic snapshot denial");
+                }
+            }, Path.Combine(temp.Path, "authorization-envelope.bin"));
+
+        var result = await sut.GetAllAsync();
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(original, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+        Assert.False(Directory.Exists(Path.Combine(temp.Path, LegacyVaultRollbackSnapshot.DirectoryName)));
+        Assert.Empty(Directory.GetDirectories(temp.Path, "pre-upgrade-rollback.*.tmp"));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenLegacyConversionCommitFails_KeepsOldVaultAndRollbackCopy()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "master.vault");
+        var original = "TVLT-encrypted-data"u8.ToArray();
+        await File.WriteAllBytesAsync(path, original, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(temp.Path, "authorization-envelope.bin"), "synthetic-envelope", TestContext.Current.CancellationToken);
+        using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance,
+            new LegacyMigrationTestVaultService(), path,
+            new DelegatingPlatformFileSecurity
+            {
+                RestrictFile = file =>
+                {
+                    if (file.StartsWith(path + ".", StringComparison.Ordinal)
+                        && file.EndsWith(".tmp", StringComparison.Ordinal))
+                        File.WriteAllText(file, "synthetic truncated staging");
+                }
+            }, Path.Combine(temp.Path, "authorization-envelope.bin"));
+
+        var result = await sut.GetAllAsync();
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(original, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+        Assert.Equal(original, await File.ReadAllBytesAsync(Path.Combine(
+            temp.Path, LegacyVaultRollbackSnapshot.DirectoryName, "master.totp"), TestContext.Current.CancellationToken));
+        Assert.Empty(Directory.GetFiles(temp.Path, "master.vault.*.tmp"));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithCustomVaultAndSeparateEnvelope_ConvertsBesideCustomPath()
+    {
+        using var temp = new TempDir();
+        var vaultDirectory = Path.Combine(temp.Path, "vault");
+        var configDirectory = Path.Combine(temp.Path, "config");
+        Directory.CreateDirectory(vaultDirectory);
+        Directory.CreateDirectory(configDirectory);
+        var path = Path.Combine(vaultDirectory, "custom.vault");
+        var envelopePath = Path.Combine(configDirectory, "authorization-envelope.bin");
+        var original = "TVLT-custom-encrypted-data"u8.ToArray();
+        await File.WriteAllBytesAsync(path, original, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(envelopePath, "synthetic-envelope", TestContext.Current.CancellationToken);
+        using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance,
+            new LegacyMigrationTestVaultService(), path,
+            NoOpPlatformFileSecurity.Instance, envelopePath);
+
+        var result = await sut.GetAllAsync();
+
+        Assert.True(result.IsSuccess);
+        Assert.StartsWith("TVL2", Encoding.ASCII.GetString(
+            await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken)));
+        Assert.Equal(original, await File.ReadAllBytesAsync(Path.Combine(vaultDirectory,
+            LegacyVaultRollbackSnapshot.DirectoryName, "master.totp"), TestContext.Current.CancellationToken));
+        Assert.Equal("synthetic-envelope", await File.ReadAllTextAsync(Path.Combine(vaultDirectory,
+            LegacyVaultRollbackSnapshot.DirectoryName, "authorization-envelope.bin"), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenExistingRollbackVaultDiffers_LeavesLegacyVaultInPlace()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "master.vault");
+        var envelopePath = Path.Combine(temp.Path, "authorization-envelope.bin");
+        var original = "TVLT-original-encrypted-data"u8.ToArray();
+        await File.WriteAllBytesAsync(path, original, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(envelopePath, "synthetic-envelope", TestContext.Current.CancellationToken);
+        LegacyVaultRollbackSnapshot.Ensure(path, envelopePath, NoOpPlatformFileSecurity.Instance);
+        await File.WriteAllTextAsync(Path.Combine(temp.Path,
+            LegacyVaultRollbackSnapshot.DirectoryName, "master.totp"), "tampered-copy", TestContext.Current.CancellationToken);
+        using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance,
+            new LegacyMigrationTestVaultService(), path,
+            NoOpPlatformFileSecurity.Instance, envelopePath);
+
+        var result = await sut.GetAllAsync();
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(original, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task CommitImportAsync_WithoutLegacyEnvelope_DoesNotReplaceOldVault()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "master.vault");
+        var original = "TVLT-encrypted-data"u8.ToArray();
+        await File.WriteAllBytesAsync(path, original, TestContext.Current.CancellationToken);
+        using var sut = new AccountDAL(NullLogger<AccountDAL>.Instance,
+            new LegacyMigrationTestVaultService(), path,
+            NoOpPlatformFileSecurity.Instance, Path.Combine(temp.Path, "authorization-envelope.bin"));
+
+        var result = await sut.CommitImportAsync([new Account(Guid.NewGuid(), "Synthetic", "AAAA")]);
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(original, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+        Assert.False(Directory.Exists(Path.Combine(temp.Path, LegacyVaultRollbackSnapshot.DirectoryName)));
+    }
+
     [Fact]
     public async Task GetAllAsync_WhenStorageMissing_ReturnsEmptyList()
     {
@@ -688,6 +896,20 @@ public sealed class AccountDalIntegrationTests
 
         public byte[] EncryptVault(List<Account> entries) =>
             System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(entries);
+    }
+
+    private sealed class LegacyMigrationTestVaultService : IVaultService
+    {
+        public int EncryptionCount { get; private set; }
+
+        public List<Account> DecryptVault(byte[] encryptedBlob) =>
+            [new Account(Guid.NewGuid(), "Synthetic", "AAAA")];
+
+        public byte[] EncryptVault(List<Account> entries)
+        {
+            EncryptionCount++;
+            return "TVL2-current-encrypted-data"u8.ToArray();
+        }
     }
 
     private sealed class ThrowingVaultService(Exception exception) : IVaultService

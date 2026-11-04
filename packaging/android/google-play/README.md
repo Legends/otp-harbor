@@ -1,7 +1,8 @@
 # Google Play listing artwork
 
-The English Google Play artwork is generated from reviewed, synthetic-data Android captures by
-`scripts/assets/New-AndroidMarketingImages.ps1`. The canonical files live under
+The English Google Play artwork is generated from reviewed v3 synthetic-data Android captures by
+`scripts/marketing/Generate-MarketingAssets.ps1`. Canonical, manifest-backed files live under
+`artifacts/marketing/store/android` and are synchronized into
 `fastlane/metadata/android/en-US/images` so F-Droid-compatible tooling and Google Play use the same
 reviewed images.
 
@@ -21,12 +22,9 @@ https://support.google.com/googleplay/android-developer/answer/9866151
 
 Suggested English alt text, each below 140 characters:
 
-1. OTP Harbor encrypted account vault with synthetic Amazon, Apple, Discord, Dropbox, GitHub, and Google accounts.
-2. OTP Harbor swipe actions for editing and deliberately revealing a synthetic account transfer QR.
-3. OTP Harbor camera scan and Google Authenticator transfer import workflows.
-4. OTP Harbor unlock choices: strong biometrics, Android screen lock, and master password.
-5. OTP Harbor password-protected backup import and export controls.
-6. OTP Harbor language selection for English, German, French, and Spanish.
-
-The source video is retained only as future website material. Google Play accepts a YouTube URL,
-not an uploaded MP4, for the optional preview-video field.
+1. OTP Harbor account list in Dark theme with fictional demo accounts and project-owned icons.
+2. OTP Harbor settings in Dark theme with local security and appearance options.
+3. OTP Harbor QR scanner in Dark theme with camera scanning and image-import controls.
+4. OTP Harbor account list in Light theme with fictional demo accounts and project-owned icons.
+5. OTP Harbor settings in Light theme with local security and appearance options.
+6. OTP Harbor QR scanner in Light theme with camera scanning and image-import controls.

@@ -482,8 +482,12 @@
   <data name="IconPacks" xml:space="preserve"><value>Symbolpakete</value></data>
   <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
   <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>Wie importiere ich Symbolpakete?</value></data>
-  <data name="FaqImportIconPacksAnswer" xml:space="preserve"><value>Öffne das separate Projekt OTP Harbor Icon Pack Builder und folge dessen Anleitung, um otp-harbor-icons.otphicons zu erstellen. Wähle anschließend Einstellungen → Symbolpakete → OTP-Harbor-Symbolpaket importieren. OTP Harbor lädt keine Quell-Symbolsammlungen herunter und importiert keine Anbieterarchive direkt. Das erzeugte Paket dokumentiert ausgewählte Symbole, Lizenzen, Namensnennungen und Herkunftsangaben; prüfe diese Informationen vor der Nutzung oder Weitergabe. Der automatische Abgleich verwendet nur den Aussteller des Kontos.</value></data>
-  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Builder und rechtliche Informationen der Quellen:</value></data>
+  <data name="FaqImportIconPacksStepDownload" xml:space="preserve"><value>Lade den OTP Harbor Icon Pack Builder (nur Desktop) von GitHub herunter.</value></data>
+  <data name="FaqImportIconPacksDownloadLink" xml:space="preserve"><value>GitHub-Releases</value></data>
+  <data name="FaqImportIconPacksStepBuild" xml:space="preserve"><value>Führe den Builder aus. Er lädt seine getesteten Symbolquellen herunter und erstellt otp-harbor-icons.otphicons.</value></data>
+  <data name="FaqImportIconPacksStepImport" xml:space="preserve"><value>Wähle in OTP Harbor Authenticator Einstellungen → Symbolpakete → OTP-Harbor-Symbolpaket importieren und anschließend die erzeugte Datei aus.</value></data>
+  <data name="FaqImportIconPacksCustomIconTip" xml:space="preserve"><value>Um stattdessen ein einzelnes SVG- oder PNG-Symbol zu verwenden, bearbeite das Konto, öffne Erweiterte Optionen und wähle die Aktion Benutzerdefiniertes SVG oder PNG auswählen… unter Kontosymbol (Symbolpaket).</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Rechtliche Informationen zu Drittanbieter-Symbolen:</value></data>
   <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons – rechtlicher Hinweis</value></data>
   <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons – Lizenz- und Markenhinweis</value></data>
   <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons – Lizenz und rechtliche Hinweise</value></data>
@@ -519,4 +523,19 @@
   <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Sicherungsprüfpunkt fehlgeschlagen</value></data>
   <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor konnte keinen aktuellen Wiederherstellungsprüfpunkt erstellen oder überprüfen. Sie können abbrechen und es erneut versuchen oder das Konto ausdrücklich ohne aktuelle Sicherung löschen.</value></data>
   <data name="DeleteAnyway" xml:space="preserve"><value>Trotzdem löschen</value></data>
+  <data name="OlderVaultRecoveryTitle" xml:space="preserve"><value>Älterer Tresor gefunden</value></data>
+  <data name="OlderVaultConflictMessage" xml:space="preserve"><value>Ein älterer verschlüsselter Tresor und der aktuelle Tresor wurden gefunden. Beide bleiben erhalten. Fahren Sie mit den aktuellen Konten fort oder prüfen Sie die älteren Konten nach dem Entsperren des aktuellen Tresors. Ohne Bestätigung werden keine Konten ersetzt.</value></data>
+  <data name="OlderVaultContinueCurrent" xml:space="preserve"><value>Aktuellen Tresor verwenden</value></data>
+  <data name="OlderVaultReviewOlder" xml:space="preserve"><value>Ältere Konten prüfen</value></data>
+  <data name="OlderVaultCurrentUnavailable" xml:space="preserve"><value>Ein aktueller und ein älterer Tresor sind vorhanden, aber die aktuelle Autorisierung ist nicht verfügbar. Beide bleiben erhalten. Stellen Sie die aktuelle Autorisierungshülle wieder her, bevor Sie einen neuen Tresor erstellen.</value></data>
+  <data name="OlderVaultPasswordPrompt" xml:space="preserve"><value>Geben Sie das Master-Passwort des älteren Tresors ein, um dessen Konten zu prüfen. Der aktuelle Tresor bleibt unverändert, bis Sie eine Wiederherstellung bestätigen.</value></data>
+  <data name="OlderVaultPasswordRequired" xml:space="preserve"><value>Geben Sie das ältere Master-Passwort ein.</value></data>
+  <data name="OlderVaultRecoveryFailed" xml:space="preserve"><value>Der ältere Tresor konnte nicht geöffnet oder wiederhergestellt werden. Prüfen Sie sein Master-Passwort und seine Dateien und kontrollieren Sie Ihre Konten vor einem erneuten Versuch.</value></data>
+  <data name="OlderVaultConflictStrategyTitle" xml:space="preserve"><value>Umgang mit übereinstimmenden Konten wählen</value></data>
+  <data name="OlderVaultConflictStrategyMessage" xml:space="preserve"><value>Behalten Sie die aktuellen Versionen übereinstimmender Konten oder ersetzen Sie sie durch ältere Versionen. Neue Konten aus dem älteren Tresor können nach Bestätigung hinzugefügt werden. Vor Änderungen ist ein Wiederherstellungspunkt erforderlich.</value></data>
+  <data name="OlderVaultReviewTitle" xml:space="preserve"><value>Ältere Konten prüfen</value></data>
+  <data name="OlderVaultReviewMessage" xml:space="preserve"><value>Älterer Tresor: {0} Konten. Übereinstimmende aktuelle Konten: {1}. Neue Konten: {2}.&#10;&#10;{3}&#10;&#10;Wählen Sie, ob die aktuellen Versionen übereinstimmender Konten behalten oder durch ältere Versionen ersetzt werden sollen. Vor Änderungen sind ein Wiederherstellungspunkt und eine abschließende Bestätigung erforderlich.</value></data>
+  <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>Neue Konten aus dem älteren Tresor: {0}. Automatisch beibehaltene unveränderte Übereinstimmungen: {1}.&#10;&#10;Konten im älteren Tresor:&#10;{2}&#10;&#10;Vor Änderungen ist ein Wiederherstellungspunkt erforderlich. Abbrechen lässt den aktuellen Tresor unverändert.</value></data>
+  <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Aktuelle behalten</value></data>
+  <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Ältere verwenden</value></data>
 </root>

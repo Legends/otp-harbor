@@ -14,6 +14,23 @@ Website URL: `https://legends.github.io/otp-harbor/`
 
 ## Partner Center visual assets
 
+### Upcoming v3 artwork
+
+The current published screenshots below are the older listing set and must not be described as v3. The new localized v3 branded campaign candidates are generated from the canonical marketing assets at `artifacts/marketing/store/windows/promotional/<culture>/` (`en-US`, `de-DE`, `fr-FR`, `es-ES`). Each folder contains ten 1920 × 1080 PNG slides in this order:
+
+1. `02-dark-account-list.png` — Dark theme is the main visual.
+2. `03-light-dark-themes.png` — Light/Dark comparison; retained at the user's request.
+3. `04-appearance-settings.png`
+4. `05-account-actions.png`
+5. `06-quick-unlock.png` — Actual Windows Security prompt cutout, no Loading screen.
+6. `07-qr-import.png` — Documented demonstration composite; example QR opens the project website.
+7. `08-groups-favourites.png` — Designed groups and favourites slide using OTP Harbor's own account-organization onboarding artwork.
+8. `09-icon-pack.png` — Designed icon-pack slide using OTP Harbor's own icon-pack onboarding artwork. It points users to the [OTP Harbor Icon Pack Builder on GitHub](https://github.com/Legends/otp-harbor-icon-pack-builder), explains local pack import, and states that users remain responsible for third-party logo license and trademark compliance. No third-party logos are bundled in the slide.
+9. `10-backup-restore.png` — Designed backup/restore illustration using OTP Harbor's own account-migration artwork.
+10. `11-import-formats.png` — Designed Add accounts illustration and text listing verified import formats, without third-party logos.
+
+Run `scripts/marketing/Generate-MarketingAssets.ps1` to regenerate them. `artifacts/marketing/manifest.json` records source capture and onboarding illustration hashes, crops, app placement, and `storeCampaignOrder`. The Light-only opener `01-light-account-list.png` was removed; the Dark account list leads. These are designed campaign composites like the existing Store gallery, not genuine unedited screenshots. Slides 08–11 are conceptual illustrations, clearly distinguished from the real app captures in 02–07. Slide 11 names supported formats as compatibility information: unencrypted Aegis JSON, unencrypted 2FAS `.2fas`, standard `otpauth://` URI lists in `.txt`, and Google Authenticator QR images; it uses no provider logos. The separate plain screenshot candidates are under `artifacts/marketing/store/windows/screenshots/`. The prompt depicts the user's actual PIN fallback; fingerprint availability depends on the Windows device and is not represented by a fabricated fingerprint screen. Manually review all v3 slides, fictional marks, localized copy, and Partner Center acceptance before replacing the current listing. No v3 listing has been submitted.
+
 In **Store logos / Images for Store display**, upload these files from
 `packaging/windows-store/assets` in the matching square slots:
 
@@ -37,30 +54,27 @@ but Partner Center accepts them for this app listing and they keep the optional 
 For each localized Store listing, upload its polished 1920 x 1080 campaign set from
 `packaging/windows-store/screenshots/<culture>/marketing` in this order:
 
-1. `01-local-vault.png`
-2. `02-search-and-copy.png`
-3. `03-add-and-import.png`
-4. `04-windows-hello.png`
-5. `05-import-export.png`
+1. `02-dark-account-list.png`
+2. `03-light-dark-themes.png`
+3. `04-appearance-settings.png`
+4. `05-account-actions.png`
+5. `06-quick-unlock.png`
+6. `07-qr-import.png`
+7. `08-groups-favourites.png`
+8. `09-icon-pack.png`
+9. `10-backup-restore.png`
+10. `11-import-formats.png`
 
-Available culture folders are `en-US`, `de-DE`, `fr-FR`, and `es-ES`. The generator
-[`New-WindowsStoreMarketingScreenshots.ps1`](../../scripts/assets/New-WindowsStoreMarketingScreenshots.ps1)
-keeps the campaign layout and authentic product captures identical while rendering reviewed copy
-for each locale. Run it after changing any campaign text or source capture; Store artwork is kept
-outside the MSIX and is validated as a static release asset.
+Available culture folders are `en-US`, `de-DE`, `fr-FR`, and `es-ES`.
+[`Generate-MarketingAssets.ps1`](../../scripts/marketing/Generate-MarketingAssets.ps1) creates the
+campaign from canonical v3 captures and then hash-verifies the committed submission copies through
+`Sync-WindowsStoreSubmissionAssets.ps1`. Run it after changing campaign copy or a source capture;
+Store artwork remains outside the MSIX and is validated as a static release asset.
 
-These marketing screenshots combine the reviewed campaign background with authentic app captures.
-They contain only deterministic synthetic accounts. Their issuer labels are `Amazon`, `Cloudflare`,
-`Discord`, `Dropbox`, `GitHub`, `Google`, `Microsoft`, and `Proton`; account names use the reserved
-`example.invalid` domain. The captures under `screenshots/en-US` remain the authentic source set.
-
-Suggested German captions, in upload order:
-
-1. `Alle TOTP-Konten übersichtlich in einem lokal verschlüsselten Tresor.`
-2. `Konten sofort finden und den aktuellen Code mit einem Klick kopieren.`
-3. `TOTP-Konten manuell oder per QR-Code hinzufügen.`
-4. `Schnell mit Windows Hello entsperren; das Masterpasswort bleibt die Wiederherstellungsmethode.`
-5. `Verschlüsselte Backups importieren und exportieren, Google-Authenticator-QR-Exporte übernehmen oder einzelne Konten per Kamera scannen.`
+These campaign images use the reviewed background, deterministic fictional v3 accounts and
+original geometric marks. Slides 02–07 contain genuine captures or documented composites. Slides
+08–11 are explicitly conceptual OTP Harbor promotions and must not be represented as literal UI.
+The canonical genuine captures remain under `artifacts/marketing/source/desktop`.
 
 ## English (en-US)
 
@@ -175,3 +189,13 @@ German: `Behält nach dem Kopieren eines Codes die Position in langen Kontoliste
 French: `Conserve votre position dans les longues listes de comptes après la copie d’un code, au lieu de revenir en haut lorsque la confirmation disparaît.`
 
 Spanish: `Mantiene la posición en listas de cuentas largas después de copiar un código, en lugar de volver al principio cuando desaparece la confirmación.`
+
+### Draft version 3.0.0 release notes
+
+English: `Adds Light and Dark themes, account groups and favourites, optional locally imported icon packs, safer v2 vault migration with rollback snapshots, and clearer conflict review for backups and older vaults.`
+
+German: `Führt helle und dunkle Designs, Kontogruppen und Favoriten, optional lokal importierte Symbolpakete, eine sicherere Migration von v2-Tresoren mit Rollback-Sicherungen sowie eine übersichtlichere Konfliktprüfung für Backups und ältere Tresore ein.`
+
+French: `Ajoute les thèmes clair et sombre, les groupes de comptes et les favoris, des packs d’icônes importés localement en option, une migration plus sûre des coffres v2 avec instantanés de restauration et un examen plus clair des conflits pour les sauvegardes et les anciens coffres.`
+
+Spanish: `Añade temas claro y oscuro, grupos de cuentas y favoritos, paquetes de iconos importados localmente de forma opcional, una migración más segura de bóvedas v2 con instantáneas de reversión y una revisión más clara de conflictos para copias de seguridad y bóvedas anteriores.`

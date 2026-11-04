@@ -57,15 +57,6 @@ accounts between a phone and laptop; organizing generic account cards into group
 protected folders; importing a local pack of generic account icons; and quick unlock with a
 fingerprint, secure vault, and key.
 
-The two Android MainView theme captures
-`packaging/android/marketing/source/captures/10-account-list-dark-icons-blurred.png` and
-`11-account-list-light-icons-blurred.png` began as authentic Debug app/system captures populated
-only with the repository's synthetic `demo-*@otp-harbor.test` account fixture. On 2026-10-13,
-OpenAI's built-in image-generation edit tool was instructed to preserve the UI while applying a
-strong localized blur to every visible account-icon tile. The edited captures were reviewed to
-confirm that the account icon artwork is no longer recognizable. The visible issuer labels remain
-illustrative product UI and do not imply affiliation, sponsorship, or endorsement.
-
 ## Language flags
 
 `en.png` and `de.png` were rendered inside the project workspace on 2026-08-29 from geometric primitives. `fr.png` and `es.png` were rendered on 2026-09-03 by [`Generate-AdditionalLanguageFlags.ps1`](../../scripts/assets/Generate-AdditionalLanguageFlags.ps1), also from geometric primitives. They do not derive from downloaded image files:
@@ -74,18 +65,6 @@ illustrative product UI and do not imply affiliation, sponsorship, or endorsemen
 - `de.png` is a project-rendered representation of the public-domain German federal flag design, used for the German locale.
 - `fr.png` is a project-rendered representation of the public-domain French flag design, used for the French locale.
 - `es.png` is a project-rendered language indicator based on the public-domain Spanish flag layout, used for the Spanish locale.
-
-## README screenshot
-
-`docs/images/readme/app.png` is a maintainer-provided screenshot of the application populated only with synthetic `example.invalid` sample accounts. It was replaced on 2026-09-10 to document the current compact account layout with inline one-time passwords and countdown progress bars for prominent issuer labels. The screenshot was visually reviewed for private account data and third-party secrets before inclusion.
-
-## Social preview
-
-`docs/images/social/otp-harbor-social-preview.jpg` was generated specifically for the project on 2026-09-03 with OpenAI's built-in image-generation tool. The reviewed OTP Harbor icon and synthetic-account application screenshot were supplied as visual references. The output was checked for exact product spelling, synthetic-only account data, third-party branding, and the required 2:1 social-preview ratio. On 2026-09-04, the reviewed image was re-encoded as a 92-quality JPEG without resizing or content changes so it remains below GitHub's 1 MB social-preview upload limit.
-
-Final generation prompt:
-
-> Use case: GitHub social media preview. Create a professional, minimal 2:1 launch banner for the open-source app OTP Harbor. Preserve the supplied official OTP Harbor icon and the supplied authentic application screenshot; do not redesign, distort, or invent interface content. Use the app's deep navy background with restrained violet and cyan accents. Place the exact title “OTP Harbor” and the exact tagline “Local-first authentication. Your secrets stay yours.” in clear, highly legible typography. Balance the brand mark, product text, and a clean framed view of the app. Include no additional logos, badges, claims, ratings, people, devices, decorative clutter, or watermark.
 
 ## Windows installer artwork
 
@@ -122,20 +101,16 @@ Final generation prompt:
 
 > Use case: ads-marketing. Asset type: reusable 16:9 Microsoft Store marketing screenshot backdrop for OTP Harbor. Preserve the reference image's deep navy, cyan, and violet visual identity, but create a new original campaign composition. Create a premium futuristic cybersecurity backdrop with a calm dark navy text zone across the left 42 percent and an illuminated dimensional product stage across the right 58 percent. Use restrained flowing cyan and violet light ribbons, subtle encrypted-data particles, soft depth, and a polished desktop-software launch aesthetic. Make the center and right suitable for compositing authentic app windows later. Keep an exact landscape 16:9 feel, clean hierarchy, generous safe margins, no critical detail at the edges, a darker upper-left for large white copy, and a brighter right-side halo behind future UI. Background only: no text, letters, numbers, logos, icons, shields, locks, fingerprints, QR codes, app UI, devices, monitors, phones, people, or watermarks.
 
-[`New-WindowsStoreMarketingScreenshots.ps1`](../../scripts/assets/New-WindowsStoreMarketingScreenshots.ps1)
-deterministically composites the canonical icon, reviewed localized marketing copy, and authentic
-app captures onto that background. It creates five 1920 x 1080 outputs for each supported Store
-locale (`en-US`, `de-DE`, `fr-FR`, and `es-ES`). The 20 outputs contain only synthetic accounts. The
-Windows Hello visual combines the maintainer-provided empty-PIN prompt in
-`windows-hello-prompt.png` with the authentic locked-app capture in `quick-unlock-screen.png`.
-The import/export visual combines the authentic settings and QR camera/file workflows from
-`import-export-settings.png` and `import-qr-camera.png`. No credential, biometric data, OTP secret,
-QR code, or private account is present. Text remains editable in the generator and is rendered at
-asset-build time; the generated screenshots themselves are not shipped inside the MSIX.
-
-Since 2026-09-13, the repository README presents the reviewed English five-image campaign instead
-of the former small raw detail screenshots. The superseded README-only captures were removed; the
-separate authentic `docs/images/readme/app.png` capture remains in use on the public product page.
+The v3 marketing generator at
+[`Generate-MarketingAssets.py`](../../scripts/marketing/Generate-MarketingAssets.py)
+deterministically composites the canonical icon, localized campaign copy, genuine v3 captures,
+documented QR/Windows Security composites, and project-owned onboarding illustrations onto that
+background. It creates ten 1920 x 1080 outputs for each supported Store locale (`en-US`, `de-DE`,
+`fr-FR`, and `es-ES`). `Sync-WindowsStoreSubmissionAssets.ps1` copies those 40 files byte-for-byte
+into `packaging/windows-store/screenshots`; Store validation compares every SHA-256 with the
+canonical generated file. The former v2 raw UI sources and five-slide generator were removed so
+they cannot be submitted accidentally. The generated screenshots are Store listing material and
+are not shipped inside the MSIX.
 
 ## Light and dark theme showcase draft
 
@@ -165,28 +140,31 @@ Final generation prompt:
 
 > Use case: ads-marketing. Asset type: reusable 16:9 website campaign backdrop for OTP Harbor Android. Create an original premium futuristic cybersecurity background suitable for compositing authentic Android phone screenshots and editable HTML-generated marketing copy later. Use a deep navy abstract digital space with restrained cyan and violet flowing light ribbons, subtle encrypted-data particles, and a softly illuminated dimensional stage. Keep a dark calm copy-safe area across the left 42 percent and a brighter cyan-violet halo and product stage across the right 58 percent, with generous safe margins and no important details at the edges. The mood should be a calm, high-trust security product. Background only: no text, letters, numbers, logos, brands, icons, shields, locks, fingerprints, QR codes, app UI, devices, phones, monitors, people, watermarks, or borders.
 
-The capture plan and reviewed synthetic account roster are documented in
-[`packaging/android/marketing/README.md`](../../packaging/android/marketing/README.md). Final
-composites must use authentic Android app/system captures. No generated or reconstructed UI may be
-presented as an application screenshot.
+The v3 capture plan and synthetic-data policy are documented in
+[`packaging/android/marketing/README.md`](../../packaging/android/marketing/README.md). Reviewed
+Dark and Light captures live under `artifacts/marketing/source/android`; the v3 marketing manifest
+records their hashes, purposes, crops, and every generated derivative. The deterministic marketing
+pipeline creates eight 1920×1080 website campaign images, six 1080×1920 Play/Fastlane phone
+screenshots, the feature graphic, and the high-resolution icon. The committed packaging and
+Fastlane files are hash-verified mirrors of `artifacts/marketing/store/android`.
 
-On 2026-09-13, the maintainer supplied the current Android account list, swipe actions, per-account
-QR, camera scanner, settings, import/export, and lock-screen captures from the screenshot-enabled
-debug package. They were visually reviewed as synthetic-only: Amazon/Mason, Apple/Olivia,
-Discord/Lucas, Dropbox/Ava, GitHub/Ethan, and Google/Sophia. The QR and rotating codes derive only
-from the dedicated synthetic fixture. No generated UI is used. The deterministic
-[`New-AndroidMarketingImages.ps1`](../../scripts/assets/New-AndroidMarketingImages.ps1) compositor
-adds the project background, exact project icon, framing, and English campaign copy to create five
-1920×1080 website images and the separate Google Play asset set.
+The account-list, settings, and scanner visuals preserve genuine app pixels. The backup/restore
+campaign is explicitly recorded as a marketing promotion using a genuine settings capture and the
+project-owned `move-accounts.png` onboarding illustration; it must not be represented as a literal
+application screen. The labeled scanner demonstration QR points only to the OTP Harbor GitHub
+repository. The retired v2 capture set under `packaging/android/marketing/source/captures` is not a
+source of v3 publication assets.
 
 ## Microsoft Store screenshots
 
-The four-image Store upload set under `packaging/windows-store/screenshots/en-US` was captured from
-the current Windows desktop build on 2026-09-10. Before capture, the existing synthetic-only vault was
-cleared and repopulated with eight deterministic synthetic accounts using prominent issuer labels
-and reserved `example.invalid` account names. The screenshots were visually reviewed to confirm
-that they contain no real accounts, OTP seeds, personal paths, desktop content, or OS notifications.
-One-time codes and the QR workflow, when shown, derive only from synthetic fixture material.
+The committed Store upload set under `packaging/windows-store/screenshots/<culture>/marketing`
+contains the 40 synchronized v3 campaign candidates generated from the canonical sources under
+`artifacts/marketing`. Each locale contains the same ten reviewed layouts, beginning with the Dark
+account list. The source captures use deterministic fictional accounts and project-owned geometric
+marks. Slides 08–11 are conceptual promotions built from project-owned onboarding artwork and must
+not be described as literal UI. `artifacts/marketing/manifest.json` records source and derivative
+hashes, crops, placements, locale, and publication status; automated validation does not replace
+the required full-resolution visual and trademark review.
 
 ## QR import test fixtures
 
@@ -219,33 +197,8 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/mobile-quick-unlock-light.png` | `d85bc5e8aa21bdfa78747299c20f79637dd19f03372f4d91907a2e5f5b928e31` |
 | `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock-light.png` | `a538031256f03d9f343aeb71178394a665325214e3763f107c0e50ce6aa65632` |
 | `OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/quick-unlock.png` | `cf4c42dcd2c8183512d9dfe9411200f88a263172c5905de740b84c89d0c42bad` |
-| `packaging/android/marketing/source/captures/10-account-list-dark-icons-blurred.png` | `238c5306e766c905122995f23450855020420785079c5315d89c95fecbfe6265` |
-| `packaging/android/marketing/source/captures/11-account-list-light-icons-blurred.png` | `cd5ff8569f46c4d8bc37a7b9529b1dc508bb417a69fa8472fbaccaba348b5f9d` |
 | `packaging/marketing/source/theme-showcase-background-draft.png` | `affcf38996d604a03b09c9be994f55c4cba017bb4631c1ba6ffdd0ff4f190740` |
 | `packaging/android/marketing/source/android-marketing-background.png` | `282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383` |
-| `packaging/android/marketing/source/captures/01-account-list.jpg` | `dc38f2fd24fe8f7dd56bdcd7ff7bc018697e077666bc48174969b539b6cf524c` |
-| `packaging/android/marketing/source/captures/02-swipe-actions.jpg` | `1baee259f20dfd4851f74872ededc900dd6e4466fcf9c3edb5cefb446e7ce258` |
-| `packaging/android/marketing/source/captures/02-swipe-delete.mp4` | `ddc7d8862abfc89745fc39d14ab854e3b393d8c7c910748148cd127c7c49a88c` |
-| `packaging/android/marketing/source/captures/03-account-qr.jpg` | `dcecff7d7d9a5aed611d1d59ff1e3800d0d0b16baa4c86b611cb35b2a9aba0a7` |
-| `packaging/android/marketing/source/captures/04-camera-scanner.png` | `71ab01432d8adf3801f257e5a2e2222884046861cf3400004e99350da7672e22` |
-| `packaging/android/marketing/source/captures/05-language-settings.jpg` | `d44afd264ec4adf7d1a45b36a5a6cd04eb9aa966ffdbe813167fe410d4e3b866` |
-| `packaging/android/marketing/source/captures/06-security-settings.jpg` | `56feba32bdb40c87ec94768e8312087d592e6efcf0e4f4bd269774449896b18d` |
-| `packaging/android/marketing/source/captures/07-import-export-settings.jpg` | `52b9a89e1f9740165ecfedb6ea586ec3f45350b48662e50240f1ae9ad4ba6193` |
-| `packaging/android/marketing/source/captures/08-lock-screen.jpg` | `c05bd37e41d20055b42352456d1f184f4836cc4e30db195e91096332a4e65bf5` |
-| `packaging/android/marketing/source/captures/09-synthetic-qr-source.png` | `26f4e702b6883b6cef403687ad1bd2c8c5fbcc293f05e4f46e07c93194de2ebc` |
-| `packaging/android/marketing/en-US/01-encrypted-local-vault.png` | `064d08073213f597b6cd852c269c8d3692e61e0576faeaaae21bd089c8ddc97c` |
-| `packaging/android/marketing/en-US/02-camera-and-google-qr.png` | `b242f936660570e2a8b165caa0dba42385551dffca8d2b33360d5d4319feb1b8` |
-| `packaging/android/marketing/en-US/03-biometric-quick-unlock.png` | `7bb5f90aca40e00ab93c7f2c2fccd6d3ae9024201be86e81557d51f785a4ffe9` |
-| `packaging/android/marketing/en-US/04-swipe-manage-show-qr.png` | `dae3b22f5c5f73ef3b293de10cb94836593672a94e6a9308096d208f81a687d3` |
-| `packaging/android/marketing/en-US/05-backup-and-languages.png` | `60b6693ea085acab6b99b3c0aea23bf8d7a976d8d528f6d19bb00a1efc12fcd4` |
-| `fastlane/metadata/android/en-US/images/phoneScreenshots/01-local-vault-1080x1920.png` | `1ef559b481435d68502c72bbcad61d99165de4795c3f731367f772628df95c09` |
-| `fastlane/metadata/android/en-US/images/phoneScreenshots/02-swipe-and-qr-1080x1920.png` | `72453a272032dfd73608f69d095d86b997851830dc0f0b1c46639c2de83dd387` |
-| `fastlane/metadata/android/en-US/images/phoneScreenshots/03-camera-google-import-1080x1920.png` | `00ec947db6c99ee51a197ce85db3792d94bc198c5d5910e705d865479ce01c89` |
-| `fastlane/metadata/android/en-US/images/phoneScreenshots/04-unlock-methods-1080x1920.png` | `fc4ded8671007ed4b0b0bc987bc13c1b2966b7c61191dee0679c76b8ca597613` |
-| `fastlane/metadata/android/en-US/images/phoneScreenshots/05-encrypted-backup-1080x1920.png` | `876b3d210c9bc74f679b119421363d60520e11d68ae45e573197cab632620a94` |
-| `fastlane/metadata/android/en-US/images/phoneScreenshots/06-four-languages-1080x1920.png` | `27416b536b1eb7235413ec71b391f843fed1f8475137dfa7fb462f3375257433` |
-| `fastlane/metadata/android/en-US/images/icon.png` | `de5100e5175bbdd9b61d1d9ae22222997f4c41f1ce0439764ec5436ccd89145b` |
-| `fastlane/metadata/android/en-US/images/featureGraphic.png` | `a65a9e4164b2b166d6b4de9fc79ee5a433b44a6a795f10fd60e4390464f42117` |
 | `OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png` | `66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4` |
 | `OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-128.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
 | `OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app.ico` | `7a71a423982499c438177e3b58126f003c3ece9a66cb2b91c07dc50a812ab81e` |
@@ -259,47 +212,16 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `OtpHarbor.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
 | `packaging/marketing/source/recraft/biometric-fingerprint-master.svg` | `eb8d9731e7884ed53d5bb5ff2e542e37a51e5518d63b72d68f658de313f1534b` |
 | `packaging/marketing/source/recraft/biometric-lock-screen-master.svg` | `1ffb46aab0b9247fa1ee3f9543b3c9e6f4a8bb70385acb24bcf0312a3aafeee0` |
-| `docs/images/readme/app.png` | `f35c44c51e29e7561053cbfe7f6593465df60924feaa3a84d194f2d8b4a07ce6` |
-| `docs/images/social/otp-harbor-social-preview.jpg` | `2ca1ebc4d4dabbb5f8061013432c4d3dc5708efa03ab746b20e4e83686de6725` |
 | `scripts/release/installer/InstallerDialog.bmp` | `be89b19fbb5e0c3abcf6e6d6df916e8f79fa9c3528a3c2cdf5881f5b419ddacc` |
 | `scripts/release/installer/InstallerBanner.bmp` | `7ba45f2c67dafb51e370d97cc31ac7555d986703ea1dcada4403b458108e8a58` |
 | `packaging/windows-store/assets/source/store-abstract-background.png` | `9a45a1d07a9b3912af600cd0156847117b2cf2f9367665cf5c439df8324eb102` |
 | `packaging/windows-store/assets/source/store-marketing-screenshot-background.png` | `2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4` |
-| `packaging/windows-store/assets/source/windows-hello-quick-unlock.png` | `6ff8db7a3f08c4b34d047538148071b50b6541d8cb63b2820fdc4914a9a32a41` |
-| `packaging/windows-store/assets/source/windows-hello-prompt.png` | `f86d932878865889c094690ad73ad55c4b14f19e0f0f0075813c1af31f946672` |
-| `packaging/windows-store/assets/source/quick-unlock-screen.png` | `75730074e7e3bc43c01c6aa86a6734eaf944f68aebaf63371d5eb23d382b985d` |
-| `packaging/windows-store/assets/source/import-export-settings.png` | `58a46d85bb904bd96c9905d2dbb804fb8067e9a370d80e7a688e43d36a4c09d0` |
-| `packaging/windows-store/assets/source/import-qr-camera.png` | `ba4e39868cc899841bd288977832fe8e23d76489642a8c2ebced91638cff1ff2` |
 | `packaging/windows-store/assets/store-super-hero-1920x1080.png` | `1df8efd083a88c7aaef390ec3b5c9774458aa8ff5db8055e188a737a30184a41` |
 | `packaging/windows-store/assets/store-poster-art-720x1080.png` | `ec5893f4574003d64376c18a720596a5a55ff3039d408e52c10665f04d93e65f` |
 | `packaging/windows-store/assets/store-box-art-1080x1080.png` | `243ea8dabc8371a18582aa451fb053b8235b679b670caffa5908350c904248f0` |
 | `packaging/windows-store/assets/store-app-tile-300x300.png` | `cab7d95f5b6e8d20a39d6b60af33f034dc904409783adfb9eb2eb5bca57faf30` |
 | `packaging/windows-store/assets/store-logo-150x150.png` | `796e08817f41658d05c25e1826ece092df73602b9072b31c76c00e85adb95979` |
 | `packaging/windows-store/assets/store-logo-71x71.png` | `d7716fa64f2e7aafcb85d3ee6bb98647f874a5328500a3e140dddf42bfe4ab20` |
-| `packaging/windows-store/screenshots/en-US/01-account-dashboard.png` | `f35c44c51e29e7561053cbfe7f6593465df60924feaa3a84d194f2d8b4a07ce6` |
-| `packaging/windows-store/screenshots/en-US/02-search-accounts.png` | `70eee4716ccfbc278789e92bb71b3864573e821a0888a1431f44a852c014592f` |
-| `packaging/windows-store/screenshots/en-US/03-add-account.png` | `f2a6594983eddb8955fd3275e6ddbb2063579a139d182c7c2931e9f3f2211861` |
-| `packaging/windows-store/screenshots/en-US/04-quick-unlock.png` | `c80dd15aad7c584c444784fa29ec559c1e4bf38fd32df1632bfdfbb4b6947c3c` |
-| `packaging/windows-store/screenshots/de-DE/marketing/01-local-vault.png` | `1ef8cb148b6f18b8083d3f1e7f1483fc301debd1fbaf5b57c82dd67b2e3c3c0f` |
-| `packaging/windows-store/screenshots/de-DE/marketing/02-search-and-copy.png` | `0190328c0e3a042a1ac2b955269427f3cf597bfea9dba37b796adf0568fcc6c4` |
-| `packaging/windows-store/screenshots/de-DE/marketing/03-add-and-import.png` | `9cae1c0573688f0bfedaa22a056b3c1560776e5c2d2523f9c9e397e4b8c85e5b` |
-| `packaging/windows-store/screenshots/de-DE/marketing/04-windows-hello.png` | `d62c6518ec516da09d47591893c5b27ca80389ecd20fa82f2e04bb520cf4e898` |
-| `packaging/windows-store/screenshots/de-DE/marketing/05-import-export.png` | `8a163c3925a2547948f680d378fdef1691128778bb62a8372b77cb049e70c66c` |
-| `packaging/windows-store/screenshots/en-US/marketing/01-local-vault.png` | `cb51058dfeb6064133558ceaac6dff559f0242c1a2f29fd25b46306d5679a778` |
-| `packaging/windows-store/screenshots/en-US/marketing/02-search-and-copy.png` | `79ccd68cbca820f11957dfa7c62ccbbe5b912508a83ea2313b95c6cd42d62040` |
-| `packaging/windows-store/screenshots/en-US/marketing/03-add-and-import.png` | `41cfcb9322386dfc8a0a3ecf4bf2f76e0bf67ad426e63850603ae43bd13fbd68` |
-| `packaging/windows-store/screenshots/en-US/marketing/04-windows-hello.png` | `6ff17afe947a5e47635b65763f3237747a4fc715465ba645779cff4d0b2c687f` |
-| `packaging/windows-store/screenshots/en-US/marketing/05-import-export.png` | `d6de618621fa1fdf550d2126dbcb43b4c90293d4764cda42c5fc3bc2e8161264` |
-| `packaging/windows-store/screenshots/es-ES/marketing/01-local-vault.png` | `059092199174042a0b42f22f8197a83594585f683681d59171af0656f6d4fed6` |
-| `packaging/windows-store/screenshots/es-ES/marketing/02-search-and-copy.png` | `3e682a7f58e90d0195001d24f68d7a12dd42ac797cbf625cc7037aeb89530ecb` |
-| `packaging/windows-store/screenshots/es-ES/marketing/03-add-and-import.png` | `71cc9dd13f6ab647a21790a8a95054a789ffedc09d134106c1db19e0e133684d` |
-| `packaging/windows-store/screenshots/es-ES/marketing/04-windows-hello.png` | `7b1e84462a0323910a4e12a4760898d17f8cca27b7ac69127194e60c4615875c` |
-| `packaging/windows-store/screenshots/es-ES/marketing/05-import-export.png` | `0bb82cdaa4014c268967843449acf3fc42d2b57589dedd5c0f73c9986c3f9bb1` |
-| `packaging/windows-store/screenshots/fr-FR/marketing/01-local-vault.png` | `5142ea36d83266cd9434d86563a20d776084cb64bab08d1cfa3d6f9cf852521a` |
-| `packaging/windows-store/screenshots/fr-FR/marketing/02-search-and-copy.png` | `559287d3e48e8c06bbdfc2d24bde70cf67aa1e193bd650698011a1290a87c0d0` |
-| `packaging/windows-store/screenshots/fr-FR/marketing/03-add-and-import.png` | `2a5ed9a1b1d12845b3a23fc661e2c75cbac58cbdb99faefa3e8b76dcbdfe0d52` |
-| `packaging/windows-store/screenshots/fr-FR/marketing/04-windows-hello.png` | `885d9e38ff04dadc724ac055fd8f20dae754ac5101c336b68078c9ab3bafe4a5` |
-| `packaging/windows-store/screenshots/fr-FR/marketing/05-import-export.png` | `242772834189dba90a966ee59995a348241b33bc54aab6f2f801c2fe730ef82d` |
 | `OtpHarbor.Tests/Fixtures/Qr/google-authenticator-10-account-export-1.png` | `8187e829ce68e29abed16a344ef9bcc3057e52f02f7e98348f921a2d8fa90640` |
 | `OtpHarbor.Tests/Fixtures/Qr/google-authenticator-10-account-export-2.png` | `c0df83d925168869e81798a2974c7f90c4443dd31eabe8068759108076d130b3` |
 

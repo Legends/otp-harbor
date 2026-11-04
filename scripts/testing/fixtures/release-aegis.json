@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "header": { "slots": null, "params": null },
+  "db": {
+    "version": 3,
+    "entries": [
+      {
+        "type": "totp",
+        "uuid": "66666666-6666-4666-8666-666666666666",
+        "name": "aegis@example.invalid",
+        "issuer": "Release Aegis",
+        "info": {
+          "secret": "MFRGGZDFMZTWQ2LK",
+          "algo": "SHA1",
+          "digits": 6,
+          "period": 30
+        }
+      }
+    ],
+    "groups": []
+  }
+}

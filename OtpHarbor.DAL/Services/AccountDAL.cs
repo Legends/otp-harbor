@@ -6,12 +6,14 @@ using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
 using TOTP.DAL.Common;
+using TOTP.DAL.Storage;
 
 namespace TOTP.DAL.Services;
 
 public sealed class AccountDAL : IAccountDAL
 {
     private readonly string _secretsPath;
+    private readonly string _authorizationEnvelopePath;
     private readonly IVaultService _vaultService;
     private readonly ILogger<AccountDAL> _logger;
     private readonly IPlatformFileSecurity _fileSecurity;
@@ -21,7 +23,8 @@ public sealed class AccountDAL : IAccountDAL
         ILogger<AccountDAL> logger,
         IVaultService vaultService,
         string storageFilePath,
-        IPlatformFileSecurity fileSecurity)
+        IPlatformFileSecurity fileSecurity,
+        string? authorizationEnvelopePath = null)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _vaultService = vaultService ?? throw new ArgumentNullException(nameof(vaultService));
@@ -31,6 +34,8 @@ public sealed class AccountDAL : IAccountDAL
             throw new ArgumentException("Path required.", nameof(storageFilePath));
 
         _secretsPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(storageFilePath));
+        _authorizationEnvelopePath = Path.GetFullPath(authorizationEnvelopePath
+            ?? Path.Combine(Path.GetDirectoryName(_secretsPath)!, StringsConstants.AuthorizationEnvelopeFileName));
     }
 
     public async Task<Result<List<Account>>> GetAllAsync()
@@ -47,8 +52,7 @@ public sealed class AccountDAL : IAccountDAL
             SecureStorageDirectory();
             _fileSecurity.RestrictFileToCurrentUser(_secretsPath);
             blob = await File.ReadAllBytesAsync(_secretsPath).ConfigureAwait(false);
-            var accounts = await Task.Run(() => _vaultService.DecryptVault(blob))
-                .ConfigureAwait(false);
+            var accounts = await DecryptAndMigrateLegacyVaultAsync(blob).ConfigureAwait(false);
             return Result.Ok(accounts);
         }
         catch (Exception ex)
@@ -106,13 +110,38 @@ public sealed class AccountDAL : IAccountDAL
         byte[] blob = await File.ReadAllBytesAsync(_secretsPath).ConfigureAwait(false);
         try
         {
-            return await Task.Run(() => _vaultService.DecryptVault(blob)).ConfigureAwait(false);
+            return await DecryptAndMigrateLegacyVaultAsync(blob).ConfigureAwait(false);
         }
         finally
         {
             CryptographicOperations.ZeroMemory(blob);
         }
     }
+
+    private async Task<List<Account>> DecryptAndMigrateLegacyVaultAsync(byte[] blob)
+    {
+        var accounts = await Task.Run(() => _vaultService.DecryptVault(blob)).ConfigureAwait(false);
+        if (!HasVaultHeader(blob, "TVLT"u8))
+            return accounts;
+
+        byte[]? migrated = null;
+        try
+        {
+            await VerifyFileBytesAsync(_secretsPath, blob).ConfigureAwait(false);
+            migrated = await Task.Run(() => _vaultService.EncryptVault(accounts)).ConfigureAwait(false);
+            if (!HasVaultHeader(migrated, "TVL2"u8))
+                throw new InvalidDataException("The legacy vault migration did not produce a current-format vault.");
+            await CommitEncryptedBlobAsync(_secretsPath, migrated).ConfigureAwait(false);
+            return accounts;
+        }
+        finally
+        {
+            if (migrated is not null) CryptographicOperations.ZeroMemory(migrated);
+        }
+    }
+
+    private static bool HasVaultHeader(ReadOnlySpan<byte> blob, ReadOnlySpan<byte> header) =>
+        blob.Length >= header.Length && blob[..header.Length].SequenceEqual(header);
 
     public async Task<Result> AddNewAsync(Account newItem) =>
         await ExecuteWriteAsync(list => list.Add(newItem), AppErrorCode.OtpCreateFailed, "Failed to create OTP entry.");
@@ -361,6 +390,21 @@ public sealed class AccountDAL : IAccountDAL
         byte[]? previousHash = null;
         try
         {
+            if (string.Equals(destinationPath, _secretsPath, StringComparison.Ordinal)
+                && File.Exists(_secretsPath))
+            {
+                Span<byte> existingHeader = stackalloc byte[4];
+                using (var stream = new FileStream(_secretsPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    if (stream.Read(existingHeader) == existingHeader.Length
+                        && existingHeader.SequenceEqual("TVLT"u8))
+                    {
+                        LegacyVaultRollbackSnapshot.EnsureForFormatMigration(
+                            _secretsPath, _authorizationEnvelopePath, _fileSecurity);
+                    }
+                }
+            }
+
             await WriteStagingFileAsync(tempPath, encryptedBlob);
             _fileSecurity.RestrictFileToCurrentUser(tempPath);
             await VerifyFileBytesAsync(tempPath, encryptedBlob);
