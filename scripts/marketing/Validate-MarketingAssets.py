@@ -5,11 +5,14 @@ from PIL import Image, ImageChops, ImageDraw, ImageOps, ImageStat
 import zxingcpp
 from screenshot_cleanup import rounded_alpha
 ROOT=Path(__file__).resolve().parents[2]/'artifacts/marketing'
+def normalized_text_sha256(path):
+    text=path.read_text(encoding='utf-8').replace('\r\n','\n').replace('\r','\n')
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
 parser=argparse.ArgumentParser(); parser.add_argument('--require-captures',action='store_true')
 args=parser.parse_args()
 accounts=json.loads((ROOT/'demo-data/otp-harbor-demo-accounts.json').read_text(encoding='utf-8'))
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-assert hashlib.sha256((ROOT/'demo-data/otp-harbor-demo-accounts.json').read_bytes()).hexdigest()==manifest['demoAccountsSha256']
+assert normalized_text_sha256(ROOT/'demo-data/otp-harbor-demo-accounts.json')==manifest['demoAccountsSha256']
 assert hashlib.sha256((ROOT/'demo-data/otp-harbor-demo-icons.otphicons').read_bytes()).hexdigest()==manifest['demoIconPackSha256']
 masters=manifest.get('demoIconMasters',[])
 assert len(masters)==26 and len({item['path'] for item in masters})==26

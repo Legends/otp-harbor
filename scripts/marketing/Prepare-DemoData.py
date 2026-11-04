@@ -127,8 +127,9 @@ with zipfile.ZipFile(ROOT/'otp-harbor-demo-icons.otphicons','w',compression=zipf
 release_manifest_path=ROOT.parent/'manifest.json'
 if release_manifest_path.is_file():
     release_manifest=json.loads(release_manifest_path.read_text(encoding='utf-8'))
-    release_manifest['demoAccountsSha256']=hashlib.sha256(
-        (ROOT/'otp-harbor-demo-accounts.json').read_bytes()).hexdigest()
+    accounts_text=(ROOT/'otp-harbor-demo-accounts.json').read_text(encoding='utf-8')
+    accounts_bytes=accounts_text.replace('\r\n','\n').replace('\r','\n').encode('utf-8')
+    release_manifest['demoAccountsSha256']=hashlib.sha256(accounts_bytes).hexdigest()
     release_manifest['demoIconPackSha256']=hashlib.sha256(
         (ROOT/'otp-harbor-demo-icons.otphicons').read_bytes()).hexdigest()
     release_manifest['demoIconMasters']=[{
