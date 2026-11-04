@@ -74,6 +74,9 @@ GALLERY_TITLES = {
 
 
 def digest(path):
+    if path.suffix.lower() == '.json':
+        text = path.read_text(encoding='utf-8').replace('\r\n', '\n').replace('\r', '\n')
+        return hashlib.sha256(text.encode('utf-8')).hexdigest()
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 

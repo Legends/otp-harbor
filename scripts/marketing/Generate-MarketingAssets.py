@@ -22,11 +22,16 @@ generated=[entry for entry in previous_generated if not belongs_to_selected(entr
 publishable_screens={'account-list','settings','account-context-menu','account-editor','search','appearance','backup','imports','icon-management','security','create-group','delete-swipe','edit-swipe'}
 rejected_captures={('android','light','delete-swipe'),('android','light','edit-swipe')}
 store_screens={'account-list','settings','account-context-menu','search','appearance','backup','imports','icon-management','security'}
+def digest(path):
+    if path.suffix.lower()=='.json':
+        text=path.read_text(encoding='utf-8').replace('\r\n','\n').replace('\r','\n')
+        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 def record(path, kind, parents=(), platform=None):
     relative=path.relative_to(ROOT).as_posix()
-    entry={'path':relative,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'kind':kind}
+    entry={'path':relative,'sha256':digest(path),'kind':kind}
     if platform: entry['platform']=platform
-    if parents: entry['sourceSha256']=[hashlib.sha256(p.read_bytes()).hexdigest() for p in parents]
+    if parents: entry['sourceSha256']=[digest(p) for p in parents]
     return entry
 for platform in selected:
     for theme in ('light','dark'):

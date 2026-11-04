@@ -8,6 +8,8 @@ ROOT=Path(__file__).resolve().parents[2]/'artifacts/marketing'
 def normalized_text_sha256(path):
     text=path.read_text(encoding='utf-8').replace('\r\n','\n').replace('\r','\n')
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
+def file_sha256(path):
+    return normalized_text_sha256(path) if path.suffix.lower()=='.json' else hashlib.sha256(path.read_bytes()).hexdigest()
 parser=argparse.ArgumentParser(); parser.add_argument('--require-captures',action='store_true')
 args=parser.parse_args()
 accounts=json.loads((ROOT/'demo-data/otp-harbor-demo-accounts.json').read_text(encoding='utf-8'))
@@ -89,7 +91,7 @@ source_hashes.update(item['sha256'] for item in manifest['generated'] if item['k
 for item in manifest['generated']:
     path=ROOT/item['path']
     assert path.is_file(),f'Missing generated image: {path}'
-    assert hashlib.sha256(path.read_bytes()).hexdigest()==item['sha256'],f'Stale generated image: {path}'
+    assert file_sha256(path)==item['sha256'],f'Stale generated image: {path}'
     assert item.get('sourceSha256') and set(item['sourceSha256'])<=source_hashes,f'Unknown source for {path}'
     if item['kind']=='cleaned-website-capture':
         capture=ROOT/item['sourcePath']
