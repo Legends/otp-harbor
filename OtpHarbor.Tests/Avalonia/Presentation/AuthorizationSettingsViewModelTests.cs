@@ -67,8 +67,7 @@ public sealed class AuthorizationSettingsViewModelTests
         Assert.False(sut.IsQuickUnlockAvailable);
         Assert.True(sut.ShowQuickUnlockRetry);
         Assert.Equal(AvaloniaStringKeys.QuickUnlockUnavailable, sut.Message);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
-        Assert.Empty(sut.Message);
+        await WaitUntilAsync(() => string.IsNullOrEmpty(sut.Message));
     }
 
     [Fact]
@@ -97,8 +96,7 @@ public sealed class AuthorizationSettingsViewModelTests
         authorization.Verify(value => value.ConfigureHelloAsync("recovery-password"), Times.Once);
         Assert.True(sut.IsQuickUnlockEnabled);
         Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
-        Assert.Empty(sut.Message);
+        await WaitUntilAsync(() => string.IsNullOrEmpty(sut.Message));
     }
 
     [Fact]
@@ -264,5 +262,12 @@ public sealed class AuthorizationSettingsViewModelTests
         localization.Setup(value => value.GetString(It.IsAny<string>()))
             .Returns((string key) => key);
         return localization.Object;
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> predicate)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        while (!predicate())
+            await Task.Delay(10, timeout.Token);
     }
 }

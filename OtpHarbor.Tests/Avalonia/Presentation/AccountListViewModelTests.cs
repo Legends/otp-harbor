@@ -2942,8 +2942,7 @@ public sealed class AccountListViewModelTests
             sut.Notification.Text);
         Assert.Equal(NotificationSeverity.Warning, sut.Notification.Severity);
         Assert.Empty(sut.CodeMessage);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
-        Assert.Empty(sut.Notification.Text);
+        await WaitUntilAsync(() => string.IsNullOrEmpty(sut.Notification.Text));
     }
 
     [Fact]
