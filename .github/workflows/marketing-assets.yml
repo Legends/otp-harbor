@@ -23,6 +23,10 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
       - name: Install pinned image validator dependency
         shell: bash
         run: |
@@ -30,4 +34,5 @@ jobs:
           "$RUNNER_TEMP/otp-marketing-venv/bin/pip" install -r scripts/marketing/requirements.txt
       - name: Check demo data, image provenance and export constraints
         shell: bash
-        run: "$RUNNER_TEMP/otp-marketing-venv/bin/python" scripts/marketing/Validate-MarketingAssets.py
+        run: |
+          "$RUNNER_TEMP/otp-marketing-venv/bin/python" scripts/marketing/Validate-MarketingAssets.py
