@@ -19,6 +19,8 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 {
     private ServiceProvider? _services;
     private NativeBrandIconCache? _brandIconCache;
+    private MainActivity? _mainActivity;
+    private bool _startupSurfaceReady;
 
     protected OtpHarborApplication(nint javaReference, JniHandleOwnership transfer)
         : base(javaReference, transfer)
@@ -47,7 +49,22 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                 app.MainViewFactory = () =>
                 {
                     viewModel.UseNativeDeleteConfirmation();
+                    if (!_startupSurfaceReady)
+                        viewModel.DeferAutomaticBiometricUnlockUntilStartupSurfaceReady();
                     var view = new MainView { DataContext = viewModel };
+                    EventHandler? firstLayout = null;
+                    firstLayout = (_, _) =>
+                    {
+                        var topLevel = global::Avalonia.Controls.TopLevel.GetTopLevel(view);
+                        if (topLevel is null || view.Bounds.Width <= 0 || view.Bounds.Height <= 0)
+                            return;
+                        view.LayoutUpdated -= firstLayout;
+                        // Layout alone does not mean that the renderer has submitted a frame.
+                        // Keep the native surface across the first rendering opportunity.
+                        topLevel.RequestAnimationFrame(_ =>
+                            topLevel.RequestAnimationFrame(_ => NotifyStartupSurfaceReady()));
+                    };
+                    view.LayoutUpdated += firstLayout;
                     var accountListHost = new AndroidAccountListHost(
                         viewModel,
                         brandIconCache,
@@ -162,6 +179,9 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 
     public void AttachActivity(MainActivity activity)
     {
+        _mainActivity = activity;
+        if (_startupSurfaceReady)
+            activity.ReleaseStartupSplash();
         _services?.GetService<AndroidActivityProvider>()?.Attach(activity);
         var viewModel = _services?.GetService<MobileShellViewModel>();
         if (viewModel is not null)
@@ -172,6 +192,20 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     {
         activity.DetachScreenCapturePolicy();
         _services?.GetService<AndroidActivityProvider>()?.Detach(activity);
+        if (ReferenceEquals(_mainActivity, activity))
+            _mainActivity = null;
+    }
+
+    private void NotifyStartupSurfaceReady()
+    {
+        _startupSurfaceReady = true;
+        _mainActivity?.ReleaseStartupSplash();
+    }
+
+    internal void NotifyStartupSplashRemoved(MainActivity activity)
+    {
+        if (_startupSurfaceReady && ReferenceEquals(_mainActivity, activity))
+            _services?.GetService<MobileShellViewModel>()?.NotifyStartupSurfaceReady();
     }
 
     public void NotifyReturnedToForeground()

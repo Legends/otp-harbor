@@ -162,6 +162,15 @@
   <data name="LogFolderOpened" xml:space="preserve"><value>Protokollordner geöffnet.</value></data>
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>Der Protokollordner konnte nicht geöffnet werden.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>Der Protokollordner konnte nicht sicher geöffnet werden.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Diagnoseprotokoll per E-Mail senden…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Protokolle sind so ausgelegt, dass sie keine Kontogeheimnisse enthalten, können aber Geräte-, System- und Dateipfaddetails enthalten. Prüfen Sie Entwurf und Anhang vor dem Senden.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>OTP Harbor-Diagnoseprotokoll</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Beschreiben Sie bitte, was passiert ist und welche Schritte zu dem Problem geführt haben. Ein Schnappschuss des Diagnoseprotokolls ist angehängt.</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>E-Mail-Entwurf mit angehängtem Diagnoseprotokoll geöffnet.</value></data>
+  <data name="DiagnosticLogEmailManualAttachment" xml:space="preserve"><value>E-Mail-Entwurf und Protokollordner geöffnet. Hängen Sie vor dem Senden die neueste Protokolldatei manuell an.</value></data>
+  <data name="DiagnosticLogEmailManualAttachmentFolderFailed" xml:space="preserve"><value>Der E-Mail-Entwurf wurde geöffnet, der Protokollordner jedoch nicht. Verwenden Sie „Protokollordner öffnen“, um das neueste Protokoll manuell anzuhängen.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Noch kein Diagnoseprotokoll verfügbar.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>Der Diagnose-E-Mail-Entwurf konnte nicht geöffnet werden.</value></data>
   <data name="Lock" xml:space="preserve"><value>Sperren</value></data>
   <data name="LockShortcut" xml:space="preserve"><value>Sperren (Strg+L)</value></data>
   <data name="Accounts" xml:space="preserve"><value>Konten</value></data>

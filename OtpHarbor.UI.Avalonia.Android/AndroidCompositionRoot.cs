@@ -50,6 +50,7 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IMobileQrScanner, AndroidQrScanner>();
         services.AddSingleton<IMobileQrImageFactory, MobileQrImageFactory>();
         services.AddSingleton<IMobileDocumentService, AndroidDocumentService>();
+        services.AddSingleton<IDiagnosticLogEmailService, AndroidDiagnosticLogEmailService>();
         services.AddSingleton<AndroidPlatformUnattendedUnlock>();
         services.AddSingleton<IPlatformUnattendedUnlock>(provider =>
             provider.GetRequiredService<AndroidPlatformUnattendedUnlock>());

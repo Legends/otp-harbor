@@ -595,6 +595,16 @@
                                                 x:Name="MinimumLoggingLevelPicker"
                                                 ItemsSource="{Binding LogLevels}"
                                                 SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
+                                            <TextBlock
+                                                Classes="secondary"
+                                                Text="{DynamicResource DiagnosticLogSharingNotice}"
+                                                TextWrapping="Wrap" />
+                                            <Button
+                                                x:Name="EmailDiagnosticLogButton"
+                                                Classes="wide settings-action"
+                                                Command="{Binding EmailDiagnosticLogCommand}">
+                                                <shared:SymbolIconLabel Kind="Diagnostics" Text="{DynamicResource EmailDiagnosticLog}" />
+                                            </Button>
                                             <Button
                                                 x:Name="OpenLogFolderButton"
                                                 Classes="wide settings-action"

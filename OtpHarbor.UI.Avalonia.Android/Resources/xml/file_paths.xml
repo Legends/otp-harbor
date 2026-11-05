@@ -3,4 +3,7 @@
   <cache-path
       name="camera_cache"
       path="." />
+  <cache-path
+      name="diagnostic_log_share"
+      path="diagnostic-log-share/" />
 </paths>

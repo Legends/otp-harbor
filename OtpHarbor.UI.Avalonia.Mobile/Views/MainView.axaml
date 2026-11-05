@@ -1227,6 +1227,17 @@
                                 <ComboBox
                                     ItemsSource="{Binding LogLevels}"
                                     SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding DiagnosticLogSharingNoticeText}"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    Classes="wide primary"
+                                    Command="{Binding EmailDiagnosticLogCommand}">
+                                    <controls:SymbolIconLabel
+                                        Kind="Diagnostics"
+                                        Text="{Binding EmailDiagnosticLogText}" />
+                                </Button>
                                 <Button
                                     Classes="wide secondary"
                                     Command="{Binding ExportDiagnosticLogCommand}">
@@ -3194,11 +3205,6 @@
                 VerticalAlignment="Center"
                 Spacing="24">
                 <Grid Width="224" Height="224">
-                    <Ellipse
-                        Margin="14"
-                        Opacity="0.38"
-                        Stroke="{DynamicResource BrushControlBorder}"
-                        StrokeThickness="2" />
                     <Grid
                         Classes="startup-loading-orbit"
                         RenderTransformOrigin="50%,50%">
@@ -3206,40 +3212,17 @@
                             <RotateTransform />
                         </Grid.RenderTransform>
                         <Canvas Width="224" Height="224">
-                            <Path
-                                Data="M 86,14 C 94,5 102,2 110,3"
-                                Opacity="0.5"
-                                Stroke="{DynamicResource BrushAccent}"
-                                StrokeLineCap="Round"
-                                StrokeThickness="5" />
-                            <Ellipse
-                                Canvas.Left="104"
-                                Canvas.Top="2"
-                                Width="17"
-                                Height="17"
-                                Fill="{DynamicResource BrushAccent}" />
-                            <Path
-                                Canvas.Left="198"
-                                Canvas.Top="78"
-                                Data="M 9,0 L 11.7,6.3 L 18,9 L 11.7,11.7 L 9,18 L 6.3,11.7 L 0,9 L 6.3,6.3 Z"
-                                Fill="{DynamicResource BrushFocus}" />
-                            <Ellipse
-                                Canvas.Left="22"
-                                Canvas.Top="164"
-                                Width="19"
-                                Height="19"
-                                Fill="{DynamicResource BrushFocus}" />
-                            <Path
-                                Data="M 17,178 C 25,168 38,166 47,174"
-                                Opacity="0.8"
-                                Stroke="{DynamicResource BrushAccent}"
-                                StrokeLineCap="Round"
-                                StrokeThickness="3" />
+                            <Path Data="M112,20 L115,27 L122,30 L115,33 L112,40 L109,33 L102,30 L109,27 Z"
+                                  Fill="{DynamicResource BrushAccent}" />
+                            <Path Data="M191,82 L193.4,87.6 L199,90 L193.4,92.4 L191,98 L188.6,92.4 L183,90 L188.6,87.6 Z"
+                                  Fill="{DynamicResource BrushFocus}" />
+                            <Path Data="M53,160 L55.7,166.3 L62,169 L55.7,171.7 L53,178 L50.3,171.7 L44,169 L50.3,166.3 Z"
+                                  Fill="{DynamicResource BrushFocus}" />
                         </Canvas>
                     </Grid>
                     <Image
-                        Width="176"
-                        Height="176"
+                        Width="140"
+                        Height="140"
                         Classes="startup-loading-logo"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"

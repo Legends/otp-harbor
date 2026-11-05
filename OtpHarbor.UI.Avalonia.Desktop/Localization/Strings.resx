@@ -162,6 +162,15 @@
   <data name="LogFolderOpened" xml:space="preserve"><value>Log folder opened.</value></data>
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>The log folder could not be opened.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>The log folder could not be opened safely.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Email diagnostic log…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Logs are designed to exclude account secrets, but may contain device, system, and file-path details. Review the draft and attachment before sending.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>OTP Harbor diagnostic log</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Please describe what happened and the steps that led to the problem. A diagnostic log snapshot is attached.</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Email draft opened with the diagnostic log attached.</value></data>
+  <data name="DiagnosticLogEmailManualAttachment" xml:space="preserve"><value>Email draft and log folder opened. Attach the newest log file manually before sending.</value></data>
+  <data name="DiagnosticLogEmailManualAttachmentFolderFailed" xml:space="preserve"><value>Email draft opened, but the log folder could not be opened. Use “Open log folder” to attach the newest log manually.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>No diagnostic log is available yet.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>The diagnostic email draft could not be opened.</value></data>
   <data name="Lock" xml:space="preserve"><value>Lock</value></data>
   <data name="LockShortcut" xml:space="preserve"><value>Lock (Ctrl+L)</value></data>
   <data name="Accounts" xml:space="preserve"><value>Accounts</value></data>

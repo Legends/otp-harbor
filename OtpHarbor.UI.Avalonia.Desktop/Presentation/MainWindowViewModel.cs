@@ -479,7 +479,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             IsQuickUnlockAvailable = outcome == AvaloniaStartupOutcome.ReadyForQuickUnlock;
             IsOnboardingVisible = outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup;
             IsPasswordSetupVisible = false;
-            if (_legacyVaultRecovery?.HasConflict() == true)
+            if (_legacyVaultRecovery?.HasUnreviewedConflict() == true)
             {
                 if (outcome == AvaloniaStartupOutcome.ReadyForPasswordSetup)
                 {
@@ -500,6 +500,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                         _localization.GetString(AvaloniaStringKeys.Cancel)), _lifetime.Token);
                     _legacyConflictPrompted = true;
                     _recoverOlderVaultAfterUnlock = choice == ChoiceDialogResult.Secondary;
+                    if (choice == ChoiceDialogResult.Primary)
+                        await _legacyVaultRecovery.MarkConflictReviewedAsync(_lifetime.Token);
                 }
             }
             if (outcome == AvaloniaStartupOutcome.ReadyUnlocked)
@@ -596,8 +598,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         if (!_recoverOlderVaultAfterUnlock || _legacyVaultRecovery is null) return;
         _recoverOlderVaultAfterUnlock = false;
-        if (await NativeFilePicker.RecoverOlderVaultAsync(_legacyVaultRecovery, _lifetime.Token))
+        var outcome = await NativeFilePicker.RecoverOlderVaultAsync(
+            _legacyVaultRecovery, _lifetime.Token);
+        if (outcome == OlderVaultReviewOutcome.ReviewedWithChanges)
             await AccountList.LoadAsync();
+        if (outcome is OlderVaultReviewOutcome.ReviewedWithChanges
+            or OlderVaultReviewOutcome.ReviewedWithoutChanges)
+        {
+            await _legacyVaultRecovery.MarkConflictReviewedAsync(_lifetime.Token);
+        }
     }
 
     private async void OnConfigured(object? sender, EventArgs e)

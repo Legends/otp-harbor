@@ -63,6 +63,13 @@ public static class MobileStringKeys
     public const string DiagnosticLogExported = nameof(DiagnosticLogExported);
     public const string DiagnosticLogUnavailable = nameof(DiagnosticLogUnavailable);
     public const string DiagnosticLogExportFailed = nameof(DiagnosticLogExportFailed);
+    public const string EmailDiagnosticLog = nameof(EmailDiagnosticLog);
+    public const string DiagnosticLogSharingNotice = nameof(DiagnosticLogSharingNotice);
+    public const string DiagnosticLogEmailSubject = nameof(DiagnosticLogEmailSubject);
+    public const string DiagnosticLogEmailBody = nameof(DiagnosticLogEmailBody);
+    public const string DiagnosticLogEmailChooser = nameof(DiagnosticLogEmailChooser);
+    public const string DiagnosticLogEmailDraftOpened = nameof(DiagnosticLogEmailDraftOpened);
+    public const string DiagnosticLogEmailFailed = nameof(DiagnosticLogEmailFailed);
     public const string Faq = nameof(Faq);
     public const string FaqSettingsDescription = nameof(FaqSettingsDescription);
     public const string FaqImportIconPacksQuestion = nameof(FaqImportIconPacksQuestion);
@@ -448,6 +455,13 @@ public static class MobileStringKeys
         DiagnosticLogExported,
         DiagnosticLogUnavailable,
         DiagnosticLogExportFailed,
+        EmailDiagnosticLog,
+        DiagnosticLogSharingNotice,
+        DiagnosticLogEmailSubject,
+        DiagnosticLogEmailBody,
+        DiagnosticLogEmailChooser,
+        DiagnosticLogEmailDraftOpened,
+        DiagnosticLogEmailFailed,
         Faq,
         FaqSettingsDescription,
         FaqImportIconPacksQuestion,

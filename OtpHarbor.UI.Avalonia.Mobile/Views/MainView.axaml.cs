@@ -152,6 +152,7 @@ public partial class MainView : UserControl
         }
 
         if (e.PropertyName is nameof(MobileShellViewModel.IsBusy)
+            or nameof(MobileShellViewModel.IsWaitingForStartupSurface)
             or nameof(MobileShellViewModel.IsStartingVisible)
             or nameof(MobileShellViewModel.IsAccountListVisible)
             or nameof(MobileShellViewModel.IsInitialAccountLoadComplete)
@@ -248,6 +249,7 @@ public partial class MainView : UserControl
     {
         if (_startupViewModel is not { } viewModel
             || viewModel.IsBusy
+            || viewModel.IsWaitingForStartupSurface
             || viewModel.IsStartingVisible)
         {
             return false;

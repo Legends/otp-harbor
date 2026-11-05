@@ -14,6 +14,7 @@ public sealed class LegacyVaultRecoveryService(
     string currentVaultPath,
     string olderVaultPath,
     string olderEnvelopePath,
+    string reviewedStatePath,
     IPlatformFileSecurity fileSecurity,
     IMasterPasswordService passwordService,
     IVaultSnapshotReader vaultReader) : ILegacyVaultRecoveryService
@@ -21,11 +22,78 @@ public sealed class LegacyVaultRecoveryService(
     private readonly string _currentVaultPath = Path.GetFullPath(currentVaultPath);
     private readonly string _olderVaultPath = Path.GetFullPath(olderVaultPath);
     private readonly string _olderEnvelopePath = Path.GetFullPath(olderEnvelopePath);
+    private readonly string _reviewedStatePath = Path.GetFullPath(reviewedStatePath);
 
     public bool HasConflict() =>
         !string.Equals(_currentVaultPath, _olderVaultPath, StringComparison.OrdinalIgnoreCase)
         && File.Exists(_currentVaultPath)
         && File.Exists(_olderVaultPath);
+
+    public bool HasUnreviewedConflict()
+    {
+        if (!HasConflict()) return false;
+
+        try
+        {
+            if (!File.Exists(_reviewedStatePath)) return true;
+            var info = new FileInfo(_reviewedStatePath);
+            if ((info.Attributes & FileAttributes.ReparsePoint) != 0 || info.Length is <= 0 or > 256)
+                return true;
+
+            var reviewedFingerprint = File.ReadAllText(_reviewedStatePath).Trim();
+            return !CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.ASCII.GetBytes(reviewedFingerprint),
+                System.Text.Encoding.ASCII.GetBytes(CreateConflictFingerprint()));
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    public async Task<Result> MarkConflictReviewedAsync(CancellationToken cancellationToken = default)
+    {
+        if (!HasConflict()) return Result.Fail("No older-vault conflict is available to review.");
+
+        var temporaryPath = $"{_reviewedStatePath}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            var directory = Path.GetDirectoryName(_reviewedStatePath)
+                ?? throw new DirectoryNotFoundException("The recovery-state directory is unavailable.");
+            Directory.CreateDirectory(directory);
+            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("The recovery-state directory is a reparse point.");
+            if (File.Exists(_reviewedStatePath)
+                && (File.GetAttributes(_reviewedStatePath) & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("The recovery-state file is a reparse point.");
+
+            var fingerprint = CreateConflictFingerprint();
+            await File.WriteAllTextAsync(temporaryPath, fingerprint, cancellationToken).ConfigureAwait(false);
+            fileSecurity.RestrictFileToCurrentUser(temporaryPath);
+            File.Move(temporaryPath, _reviewedStatePath, overwrite: true);
+            fileSecurity.RestrictFileToCurrentUser(_reviewedStatePath);
+            return Result.Ok();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(new ExceptionalError("The older-vault review state could not be saved.", ex));
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+            }
+            catch
+            {
+                // A stale, user-private temporary marker is harmless and can be replaced later.
+            }
+        }
+    }
 
     public async Task<Result<IReadOnlyList<Account>>> ReadOlderAccountsAsync(
         string masterPassword,
@@ -97,5 +165,35 @@ public sealed class LegacyVaultRecoveryService(
         if ((info.Attributes & FileAttributes.ReparsePoint) != 0
             || info.Length <= 0 || info.Length > maximumBytes)
             throw new InvalidDataException("A sensitive older-vault file is invalid.");
+    }
+
+    private string CreateConflictFingerprint()
+    {
+        ValidateRegularBoundedFile(_olderVaultPath, AutomaticBackupPackageV1Codec.MaximumVaultSize);
+        ValidateRegularBoundedFile(_olderEnvelopePath, AuthorizationEnvelopeV2Codec.MaximumPayloadSize);
+
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        AppendFile(hash, _olderVaultPath);
+        AppendFile(hash, _olderEnvelopePath);
+        return $"v1:{Convert.ToHexString(hash.GetHashAndReset())}";
+    }
+
+    private static void AppendFile(IncrementalHash hash, string path)
+    {
+        var length = new FileInfo(path).Length;
+        hash.AppendData(BitConverter.GetBytes(length));
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
+            FileShare.Read, 81920, FileOptions.SequentialScan);
+        var buffer = new byte[81920];
+        try
+        {
+            int read;
+            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+                hash.AppendData(buffer, 0, read);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(buffer);
+        }
     }
 }

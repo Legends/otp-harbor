@@ -6,6 +6,7 @@ using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Core.Enums;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
@@ -279,6 +280,87 @@ public sealed class SettingsPageViewModelTests
         Assert.Contains("opened", sut.LogFolderMessage, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("synthetic", sut.LogFolderMessage, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(sut.Message);
+    }
+
+    [Fact]
+    public async Task EmailDiagnosticLogAsync_UsesSupportRecipientAndLatestLogWithoutDisplayingPath()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"otp-harbor-settings-email-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(root);
+            var configuredPath = Path.Combine(root, "app.log");
+            var latestPath = Path.Combine(root, "app20261105.log");
+            await File.WriteAllTextAsync(latestPath, "redacted",
+                TestContext.Current.CancellationToken);
+            var paths = new Mock<IPlatformApplicationPaths>();
+            paths.SetupGet(value => value.LogDirectory).Returns(root);
+            paths.SetupGet(value => value.LogFilePath).Returns(configuredPath);
+            DiagnosticLogEmailRequest? request = null;
+            var email = new Mock<IDiagnosticLogEmailService>();
+            email.Setup(value => value.OpenDraftAsync(
+                    It.IsAny<DiagnosticLogEmailRequest>(),
+                    It.IsAny<CancellationToken>()))
+                .Callback<DiagnosticLogEmailRequest, CancellationToken>((value, _) => request = value)
+                .ReturnsAsync(Result.Ok(DiagnosticLogEmailOutcome.AttachmentIncluded));
+            using var sut = new SettingsPageViewModel(
+                CreateSettings(new AppSettings()).Object,
+                applicationPaths: paths.Object,
+                diagnosticLogEmail: email.Object);
+
+            await sut.EmailDiagnosticLogAsync();
+
+            Assert.NotNull(request);
+            Assert.Equal(latestPath, request.SourcePath);
+            Assert.Equal(DiagnosticSupportContact.EmailAddress, request.Recipient);
+            Assert.EndsWith(".log", request.AttachmentFileName, StringComparison.Ordinal);
+            Assert.DoesNotContain(root, sut.LogFolderMessage, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(NotificationSeverity.Success, sut.LogFolderMessageSeverity);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task EmailDiagnosticLogAsync_WhenAttachmentIsUnsupported_OpensLogFolderForManualChoice()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"otp-harbor-settings-manual-{Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(root);
+            var logPath = Path.Combine(root, "app.log");
+            await File.WriteAllTextAsync(logPath, "redacted",
+                TestContext.Current.CancellationToken);
+            var paths = new Mock<IPlatformApplicationPaths>();
+            paths.SetupGet(value => value.LogDirectory).Returns(root);
+            paths.SetupGet(value => value.LogFilePath).Returns(logPath);
+            var email = new Mock<IDiagnosticLogEmailService>();
+            email.Setup(value => value.OpenDraftAsync(
+                    It.IsAny<DiagnosticLogEmailRequest>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Ok(DiagnosticLogEmailOutcome.ManualAttachmentRequired));
+            var folder = new Mock<IPlatformFolderLauncher>();
+            folder.Setup(value => value.OpenFolderAsync(root, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Ok());
+            using var sut = new SettingsPageViewModel(
+                CreateSettings(new AppSettings()).Object,
+                applicationPaths: paths.Object,
+                folderLauncher: folder.Object,
+                diagnosticLogEmail: email.Object);
+
+            await sut.EmailDiagnosticLogAsync();
+
+            folder.Verify(value => value.OpenFolderAsync(
+                root, It.IsAny<CancellationToken>()), Times.Once);
+            Assert.Contains("manually", sut.LogFolderMessage, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(NotificationSeverity.Information, sut.LogFolderMessageSeverity);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

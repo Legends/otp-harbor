@@ -56,48 +56,48 @@ public sealed class AndroidSplashResourceTests
         var splashTheme = styles
             .Descendants("style")
             .Single(element => element.Attribute("name")?.Value == "OtpHarborTheme");
+        var mainTheme = styles
+            .Descendants("style")
+            .Single(element => element.Attribute("name")?.Value == "OtpHarborTheme.Main");
         var animation = XDocument.Load(Path.Combine(
             fixtureRoot,
             "drawable-v31",
             "splash_icon_animated.xml"));
-        var orbitFrame = XDocument.Load(Path.Combine(
-            fixtureRoot,
-            "drawable-v31",
-            "splash_icon_orbit_000.xml"));
 
         Assert.Equal(
             "@drawable/splash_icon_animated",
             GetStyleItem(splashTheme, "android:windowSplashScreenAnimatedIcon"));
         Assert.Equal(
-            "4000",
+            "3200",
             GetStyleItem(splashTheme, "android:windowSplashScreenAnimationDuration"));
-        Assert.Equal("false", animation.Root?.Attribute(AndroidNamespace + "oneshot")?.Value);
-        Assert.Equal(8, animation.Root?.Elements("item").Count());
-        Assert.Contains(
-            animation.Root!.Elements("item"),
-            item => item.Attribute(AndroidNamespace + "drawable")?.Value
-                == "@drawable/splash_icon_orbit_000");
+        Assert.Equal("3200", GetStyleItem(splashTheme, "windowSplashScreenAnimationDuration"));
+        var mobileView = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory, "Fixtures", "Avalonia", "MobileMainView.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        var orbitStyle = mobileView.Descendants(avalonia + "Style").Single(style =>
+            style.Attribute("Selector")?.Value == "Grid.startup-loading-orbit");
+        var rotationDuration = TimeSpan.Parse(
+            orbitStyle.Descendants(avalonia + "Animation").Single().Attribute("Duration")!.Value,
+            System.Globalization.CultureInfo.InvariantCulture);
+        var animator = Assert.Single(animation.Descendants("objectAnimator"));
+        Assert.Equal(rotationDuration.TotalMilliseconds,
+            double.Parse(animator.Attribute(AndroidNamespace + "duration")!.Value,
+                System.Globalization.CultureInfo.InvariantCulture));
         Assert.Equal(
-            "@drawable/app_icon",
-            orbitFrame.Descendants("item").Single(item =>
-                    item.Attribute(AndroidNamespace + "drawable") is not null)
-                .Attribute(AndroidNamespace + "drawable")?.Value);
-        Assert.Equal(
-            "224dp",
-            orbitFrame.Descendants("item").First()
-                .Attribute(AndroidNamespace + "width")?.Value);
-        Assert.Equal(
-            "176dp",
-            orbitFrame.Descendants("item").Last()
-                .Attribute(AndroidNamespace + "width")?.Value);
-        Assert.Contains(
-            orbitFrame.Descendants("group"),
-            group => group.Attribute(AndroidNamespace + "rotation")?.Value == "0");
-        Assert.True(orbitFrame.Descendants("path").Count() >= 5);
-        Assert.Contains(
-            orbitFrame.Descendants("path"),
-            path => path.Attribute(AndroidNamespace + "strokeColor")?.Value
-                == "@color/splash_loader_orbit");
+            "@drawable/splash_screen",
+            GetStyleItem(mainTheme, "android:windowBackground"));
+        Assert.Equal("animated-vector", animation.Root!.Name.LocalName);
+        Assert.Equal("-1", animator.Attribute(AndroidNamespace + "repeatCount")?.Value);
+        Assert.Equal("@android:interpolator/linear", animator.Attribute(AndroidNamespace + "interpolator")?.Value);
+        Assert.Equal("rotation", animator.Attribute(AndroidNamespace + "propertyName")?.Value);
+        Assert.Equal("0", animator.Attribute(AndroidNamespace + "valueFrom")?.Value);
+        Assert.Equal("360", animator.Attribute(AndroidNamespace + "valueTo")?.Value);
+        Assert.Equal("stars", Assert.Single(animation.Descendants("target")).Attribute(AndroidNamespace + "name")?.Value);
+        var vector = Assert.Single(animation.Descendants("vector"));
+        Assert.Equal("432dp", vector.Attribute(AndroidNamespace + "width")?.Value);
+        var logo = animation.Descendants("group").Single(group => group.Attribute(AndroidNamespace + "name")?.Value == "logo");
+        Assert.Equal("0.13671875", logo.Attribute(AndroidNamespace + "scaleX")?.Value);
+        Assert.NotEmpty(logo.Elements("path"));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public sealed class AndroidSplashResourceTests
             fixtureRoot,
             "Android",
             "drawable-v31",
-            "splash_icon_orbit_000.xml"));
+            "splash_icon_animated.xml"));
         var mobileView = XDocument.Load(Path.Combine(
             fixtureRoot,
             "Avalonia",
@@ -122,7 +122,8 @@ public sealed class AndroidSplashResourceTests
         XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
 
         AssertNativeLoaderDimensions(legacySplash);
-        AssertNativeLoaderDimensions(android12Splash);
+        Assert.Equal("288", android12Splash.Descendants("vector").Single()
+            .Attribute(AndroidNamespace + "viewportWidth")?.Value);
 
         var overlay = mobileView
             .Descendants(avalonia + "Grid")
@@ -137,25 +138,66 @@ public sealed class AndroidSplashResourceTests
                 == "startup-loading-logo");
 
         Assert.Equal("224", loaderCanvas.Attribute("Height")?.Value);
-        Assert.Equal("176", loaderLogo.Attribute("Width")?.Value);
-        Assert.Equal("176", loaderLogo.Attribute("Height")?.Value);
-        Assert.Contains(
-            overlay.Descendants(avalonia + "Ellipse"),
-            ellipse => ellipse.Attribute("Stroke")?.Value
-                == "{DynamicResource BrushControlBorder}");
+        Assert.Equal("140", loaderLogo.Attribute("Width")?.Value);
+        Assert.Equal("140", loaderLogo.Attribute("Height")?.Value);
+        Assert.Empty(overlay.Descendants(avalonia + "Ellipse"));
+        var mobileStars = loaderCanvas.Descendants(avalonia + "Path").ToArray();
+        var nativeStars = android12Splash.Descendants("group")
+            .Single(group => group.Attribute(AndroidNamespace + "name")?.Value == "stars")
+            .Elements("path").ToArray();
+        Assert.Equal(3, mobileStars.Length);
+        for (var i = 0; i < mobileStars.Length; i++)
+        {
+            Assert.Equal(nativeStars[i].Attribute(AndroidNamespace + "pathData")!.Value,
+                mobileStars[i].Attribute("Data")!.Value);
+            // Rotation preserves this radius; every vertex must fit in Android's
+            // 192dp-diameter visible region, with a small safety margin.
+            var coordinates = System.Text.RegularExpressions.Regex.Matches(
+                mobileStars[i].Attribute("Data")!.Value, @"-?\d+(?:\.\d+)?")
+                .Select(match => double.Parse(match.Value,
+                    System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            for (var point = 0; point < coordinates.Length; point += 2)
+                Assert.True(double.Hypot(coordinates[point] - 112, coordinates[point + 1] - 112) <= 94);
+        }
     }
 
-    private static void AssertNativeLoaderDimensions(XDocument loader)
+    [Fact]
+    public void Splash_HoldsNativeSurfaceUntilAvaloniaLoaderIsLaidOut()
+    {
+        var fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Android");
+        var activitySource = File.ReadAllText(Path.Combine(fixtureRoot, "MainActivity.cs"));
+        var applicationSource = File.ReadAllText(Path.Combine(
+            fixtureRoot,
+            "OtpHarborApplication.cs"));
+
+        var installIndex = activitySource.IndexOf(
+            "AndroidXSplashScreen.InstallSplashScreen(this);",
+            StringComparison.Ordinal);
+        var baseCreateIndex = activitySource.IndexOf(
+            "base.OnCreate(savedInstanceState);",
+            StringComparison.Ordinal);
+        Assert.True(installIndex >= 0 && installIndex < baseCreateIndex);
+        Assert.Contains("SetOnExitAnimationListener(_startupSplashExitListener)", activitySource);
+        Assert.Contains("IOnExitAnimationListener", activitySource);
+        Assert.DoesNotContain("SetKeepOnScreenCondition", activitySource);
+        Assert.Contains("view.LayoutUpdated += firstLayout;", applicationSource);
+        Assert.Contains("view.LayoutUpdated -= firstLayout;", applicationSource);
+        Assert.Contains("topLevel.RequestAnimationFrame", applicationSource);
+        Assert.Contains("topLevel.RequestAnimationFrame(_ => NotifyStartupSurfaceReady())", applicationSource);
+        Assert.Contains("activity.ReleaseStartupSplash();", applicationSource);
+    }
+
+    private static void AssertNativeLoaderDimensions(XDocument loader, string size = "224dp")
     {
         var items = loader.Root!.Elements("item").ToArray();
         var orbit = items.Single(item => item.Element("vector") is not null);
         var logo = items.Single(item =>
             item.Attribute(AndroidNamespace + "drawable")?.Value == "@drawable/app_icon");
 
-        Assert.Equal("224dp", orbit.Attribute(AndroidNamespace + "width")?.Value);
-        Assert.Equal("224dp", orbit.Attribute(AndroidNamespace + "height")?.Value);
-        Assert.Equal("176dp", logo.Attribute(AndroidNamespace + "width")?.Value);
-        Assert.Equal("176dp", logo.Attribute(AndroidNamespace + "height")?.Value);
+        Assert.Equal(size, orbit.Attribute(AndroidNamespace + "width")?.Value);
+        Assert.Equal(size, orbit.Attribute(AndroidNamespace + "height")?.Value);
+        Assert.Equal("140dp", logo.Attribute(AndroidNamespace + "width")?.Value);
+        Assert.Equal("140dp", logo.Attribute(AndroidNamespace + "height")?.Value);
     }
 
     private static readonly XNamespace AndroidNamespace =

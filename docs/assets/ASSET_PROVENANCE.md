@@ -12,6 +12,8 @@ Final generation prompt:
 
 The generated image was visually reviewed for prohibited text, third-party branding, and small-size legibility before conversion.
 
+The static logo paths in `OtpHarbor.UI.Avalonia.Android/Resources/drawable-v31/splash_icon_animated.xml` are a hand-traced vector rendition of this project-owned icon, added on 2026-11-05 for Android's animated-vector splash format. Only the three surrounding geometric stars rotate. No third-party artwork was used.
+
 ## Biometric unlock artwork
 
 `biometric-fingerprint-master.svg` and `biometric-lock-screen-master.svg` are the unmodified

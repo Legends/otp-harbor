@@ -90,9 +90,6 @@
     <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\drawable-v31\splash_icon_animated.xml"
           Link="Fixtures\Android\drawable-v31\splash_icon_animated.xml"
           CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\drawable-v31\splash_icon_orbit_000.xml"
-          Link="Fixtures\Android\drawable-v31\splash_icon_orbit_000.xml"
-          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\OtpHarbor.UI.Avalonia.Android\MainActivity.cs"
           Link="Fixtures\Android\MainActivity.cs"
           CopyToOutputDirectory="PreserveNewest" />

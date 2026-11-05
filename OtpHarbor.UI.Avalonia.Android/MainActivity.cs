@@ -6,6 +6,7 @@ using Android.Views;
 using Avalonia.Android;
 using System.ComponentModel;
 using TOTP.Avalonia.Mobile.Presentation;
+using AndroidXSplashScreen = AndroidX.Core.SplashScreen.SplashScreen;
 
 namespace TOTP.Avalonia.Android;
 
@@ -23,12 +24,18 @@ namespace TOTP.Avalonia.Android;
 public class MainActivity : AvaloniaMainActivity
 {
     private MobileShellViewModel? _screenCapturePolicy;
+    private StartupSplashExitListener? _startupSplashExitListener;
+    private AndroidX.Core.SplashScreen.SplashScreenViewProvider? _startupSplash;
+    private bool _startupSurfaceReady;
 
     internal event Action<int, Result, Intent?>? ActivityResultReceived;
     internal bool IsInternalQrScannerActive { get; set; }
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
+        _startupSplashExitListener = new StartupSplashExitListener(this);
+        var splashScreen = AndroidXSplashScreen.InstallSplashScreen(this);
+        splashScreen.SetOnExitAnimationListener(_startupSplashExitListener);
         base.OnCreate(savedInstanceState);
         ApplyScreenCapturePolicy();
         if (Application is OtpHarborApplication host) host.AttachActivity(this);
@@ -53,7 +60,30 @@ public class MainActivity : AvaloniaMainActivity
     protected override void OnDestroy()
     {
         if (Application is OtpHarborApplication host) host.DetachActivity(this);
+        _startupSplash?.Remove();
+        _startupSplash = null;
+        _startupSplashExitListener?.Dispose();
+        _startupSplashExitListener = null;
         base.OnDestroy();
+    }
+
+    internal void ReleaseStartupSplash()
+    {
+        _startupSurfaceReady = true;
+        if (_startupSplash is { } provider)
+            RemoveStartupSplash(provider);
+    }
+
+    private void RemoveStartupSplash(AndroidX.Core.SplashScreen.SplashScreenViewProvider provider)
+    {
+        provider.Remove();
+        _startupSplash = null;
+        // Let the removal reach a rendering opportunity before showing system UI.
+        Window?.DecorView?.PostOnAnimation(new Java.Lang.Runnable(() =>
+        {
+            if (Application is OtpHarborApplication host)
+                host.NotifyStartupSplashRemoved(this);
+        }));
     }
 
     internal void AttachScreenCapturePolicy(MobileShellViewModel viewModel)
@@ -113,5 +143,17 @@ public class MainActivity : AvaloniaMainActivity
                 : (WindowManagerFlags)0;
             window.SetFlags(flags, WindowManagerFlags.Secure);
         });
+    }
+
+    private sealed class StartupSplashExitListener(MainActivity activity) : Java.Lang.Object,
+        AndroidXSplashScreen.IOnExitAnimationListener
+    {
+        public void OnSplashScreenExit(AndroidX.Core.SplashScreen.SplashScreenViewProvider provider)
+        {
+            if (activity._startupSurfaceReady)
+                activity.RemoveStartupSplash(provider);
+            else
+                activity._startupSplash = provider;
+        }
     }
 }

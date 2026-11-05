@@ -65,6 +65,13 @@
   <data name="DiagnosticLogExported" xml:space="preserve"><value>Diagnostic log exported.</value></data>
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>No diagnostic log is available yet.</value></data>
   <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>The diagnostic log could not be exported.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Email diagnostic log…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Logs are designed to exclude account secrets, but may contain device, system, and file-path details. Review the draft and attachment before sending.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>OTP Harbor diagnostic log</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Please describe what happened and the steps that led to the problem. A diagnostic log snapshot is attached.</value></data>
+  <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Send diagnostic log</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Choose an email app to review and send the diagnostic log.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>The diagnostic email draft could not be opened.</value></data>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>English</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>German</value></data>

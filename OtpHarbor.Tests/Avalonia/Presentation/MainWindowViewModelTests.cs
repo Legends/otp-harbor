@@ -29,7 +29,9 @@ public sealed class MainWindowViewModelTests
         coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(AvaloniaStartupOutcome.ReadyForUnlock);
         var recovery = new Mock<ILegacyVaultRecoveryService>();
-        recovery.Setup(value => value.HasConflict()).Returns(true);
+        recovery.Setup(value => value.HasUnreviewedConflict()).Returns(true);
+        recovery.Setup(value => value.MarkConflictReviewedAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
         ChoiceDialogRequest? prompt = null;
         var dialogs = new Mock<IAvaloniaDialogService>();
         dialogs.Setup(value => value.ChooseAsync(
@@ -48,6 +50,8 @@ public sealed class MainWindowViewModelTests
         Assert.True(sut.IsPasswordUnlockVisible);
         recovery.Verify(value => value.ReadOlderAccountsAsync(
             It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        recovery.Verify(value => value.MarkConflictReviewedAsync(
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -57,7 +61,7 @@ public sealed class MainWindowViewModelTests
         coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(AvaloniaStartupOutcome.ReadyForPasswordSetup);
         var recovery = new Mock<ILegacyVaultRecoveryService>();
-        recovery.Setup(value => value.HasConflict()).Returns(true);
+        recovery.Setup(value => value.HasUnreviewedConflict()).Returns(true);
         var localization = CreateLocalization();
         using var sut = CreateSut(coordinator.Object, Mock.Of<IAuthorizationService>(),
             localization: localization, legacyVaultRecovery: recovery.Object);
@@ -83,7 +87,9 @@ public sealed class MainWindowViewModelTests
             .Callback(() => committed = true)
             .ReturnsAsync(Result.Ok());
         var recovery = new Mock<ILegacyVaultRecoveryService>();
-        recovery.Setup(value => value.HasConflict()).Returns(true);
+        recovery.Setup(value => value.HasUnreviewedConflict()).Returns(true);
+        recovery.Setup(value => value.MarkConflictReviewedAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
         recovery.Setup(value => value.ReadOlderAccountsAsync(
                 "older-password", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([olderAccount]));
@@ -124,6 +130,8 @@ public sealed class MainWindowViewModelTests
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
         recovery.Verify(value => value.ReadOlderAccountsAsync(
             "older-password", It.IsAny<CancellationToken>()), Times.Once);
+        recovery.Verify(value => value.MarkConflictReviewedAsync(
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

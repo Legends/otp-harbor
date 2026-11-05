@@ -162,6 +162,15 @@
   <data name="LogFolderOpened" xml:space="preserve"><value>Carpeta de registros abierta.</value></data>
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>No se pudo abrir la carpeta de registros.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>No se pudo abrir la carpeta de registros de forma segura.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Enviar registro de diagnóstico por correo…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Los registros están diseñados para excluir secretos de las cuentas, pero pueden contener detalles del dispositivo, del sistema y de rutas de archivos. Revise el borrador y el archivo adjunto antes de enviarlos.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>Registro de diagnóstico de OTP Harbor</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Describa qué ocurrió y los pasos que llevaron al problema. Se adjunta una copia del registro de diagnóstico.</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Se abrió un borrador de correo con el registro de diagnóstico adjunto.</value></data>
+  <data name="DiagnosticLogEmailManualAttachment" xml:space="preserve"><value>Se abrieron el borrador de correo y la carpeta de registros. Adjunte manualmente el registro más reciente antes de enviarlo.</value></data>
+  <data name="DiagnosticLogEmailManualAttachmentFolderFailed" xml:space="preserve"><value>Se abrió el borrador de correo, pero no la carpeta de registros. Use «Abrir carpeta de registros» para adjuntar manualmente el registro más reciente.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Todavía no hay ningún registro de diagnóstico disponible.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>No se pudo abrir el borrador del correo de diagnóstico.</value></data>
   <data name="Lock" xml:space="preserve"><value>Bloquear</value></data>
   <data name="LockShortcut" xml:space="preserve"><value>Bloquear (Ctrl+L)</value></data>
   <data name="Accounts" xml:space="preserve"><value>Cuentas</value></data>

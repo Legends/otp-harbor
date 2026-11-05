@@ -62,6 +62,7 @@ public sealed class MobileShellViewModel :
     private readonly ILogSwitchService? _logSwitchService;
     private readonly IAutomaticBackupCoordinator? _automaticBackup;
     private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
+    private readonly IDiagnosticLogEmailService? _diagnosticLogEmail;
     private Task _brandIconInitializationTask = Task.CompletedTask;
     private Task _automaticBackupInitializationTask = Task.CompletedTask;
     private readonly MobileAsyncCommand _initializeCommand;
@@ -135,6 +136,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _automaticBackupNowCommand;
     private readonly MobileAsyncCommand _disableAutomaticBackupCommand;
     private readonly MobileAsyncCommand _exportDiagnosticLogCommand;
+    private readonly MobileAsyncCommand _emailDiagnosticLogCommand;
     private readonly MobileAsyncCommand _importBackupCommand;
     private readonly MobileAsyncCommand _importAccountFileCommand;
     private readonly MobileAsyncCommand _importBrandIconsCommand;
@@ -273,6 +275,7 @@ public sealed class MobileShellViewModel :
     private long? _backgroundedAtTimestamp;
     private ITimer? _backgroundLockTimer;
     private bool _automaticBiometricUnlockPending;
+    private bool _startupSurfaceReady = true;
     private bool _isAccountListScrolling;
     private bool _isFavoriteUpdateInProgress;
     private bool _disposed;
@@ -301,7 +304,8 @@ public sealed class MobileShellViewModel :
         ILogSwitchService? logSwitchService = null,
         IAutomaticBackupCoordinator? automaticBackup = null,
         IAutomaticBackupSnapshotService? automaticBackupSnapshots = null,
-        IAccountListSnapshotService? accountListSnapshots = null)
+        IAccountListSnapshotService? accountListSnapshots = null,
+        IDiagnosticLogEmailService? diagnosticLogEmail = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
@@ -329,6 +333,7 @@ public sealed class MobileShellViewModel :
         _logSwitchService = logSwitchService;
         _automaticBackup = automaticBackup;
         _automaticBackupSnapshots = automaticBackupSnapshots;
+        _diagnosticLogEmail = diagnosticLogEmail;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged += AutomaticBackupStatusChanged;
@@ -540,6 +545,9 @@ public sealed class MobileShellViewModel :
         _exportDiagnosticLogCommand = new MobileAsyncCommand(
             ExportDiagnosticLogAsync,
             () => IsMiscSettingsVisible && !IsBusy);
+        _emailDiagnosticLogCommand = new MobileAsyncCommand(
+            EmailDiagnosticLogAsync,
+            () => IsMiscSettingsVisible && !IsBusy && _diagnosticLogEmail is not null);
         _importBackupCommand = new MobileAsyncCommand(
             ImportBackupAsync,
             () => IsSettingsVisible && !IsBusy);
@@ -682,6 +690,7 @@ public sealed class MobileShellViewModel :
     public ICommand AutomaticBackupNowCommand => _automaticBackupNowCommand;
     public ICommand DisableAutomaticBackupCommand => _disableAutomaticBackupCommand;
     public ICommand ExportDiagnosticLogCommand => _exportDiagnosticLogCommand;
+    public ICommand EmailDiagnosticLogCommand => _emailDiagnosticLogCommand;
     public ICommand ImportBackupCommand => _importBackupCommand;
     public ICommand ImportAccountFileCommand => _importAccountFileCommand;
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
@@ -2015,6 +2024,9 @@ public sealed class MobileShellViewModel :
     public string MiscSettingsDescriptionText => Get(MobileStringKeys.MiscSettingsDescription);
     public string LoggingLevelText => Get(MobileStringKeys.LoggingLevel);
     public string ExportDiagnosticLogText => Get(MobileStringKeys.ExportDiagnosticLog);
+    public string EmailDiagnosticLogText => Get(MobileStringKeys.EmailDiagnosticLog);
+    public string DiagnosticLogSharingNoticeText =>
+        Get(MobileStringKeys.DiagnosticLogSharingNotice);
     public string FaqText => Get(MobileStringKeys.Faq);
     public string FaqSettingsDescriptionText => Get(MobileStringKeys.FaqSettingsDescription);
     public string FaqImportIconPacksQuestionText =>
@@ -3034,6 +3046,8 @@ public sealed class MobileShellViewModel :
             ClearMasterPasswordChangeInputs();
         }
         _settingsCategory = category;
+        if (category == MobileSettingsCategory.Miscellaneous)
+            OnPropertyChanged(nameof(MinimumLogLevel));
         ClearNotification();
         NotifySettingsCategoryChanged();
         return Task.CompletedTask;
@@ -3139,6 +3153,7 @@ public sealed class MobileShellViewModel :
             var saved = await _settings.SaveAsync();
             if (saved.IsSuccess)
             {
+                _logSwitchService?.SetLevel(level);
                 ClearNotification();
                 return;
             }
@@ -3746,6 +3761,43 @@ public sealed class MobileShellViewModel :
         finally
         {
             document?.Dispose();
+            IsBusy = false;
+        }
+    }
+
+    public async Task EmailDiagnosticLogAsync()
+    {
+        if (!IsMiscSettingsVisible || IsBusy || _diagnosticLogEmail is null) return;
+        var sourcePath = TryGetCurrentLogFilePath();
+        if (sourcePath is null)
+        {
+            SetError(MobileStringKeys.DiagnosticLogUnavailable);
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var attachmentName =
+                $"otp-harbor-diagnostic-{_timeProvider.GetUtcNow():yyyyMMdd-HHmmss}.log";
+            var result = await _diagnosticLogEmail.OpenDraftAsync(new DiagnosticLogEmailRequest(
+                sourcePath,
+                attachmentName,
+                DiagnosticSupportContact.EmailAddress,
+                Get(MobileStringKeys.DiagnosticLogEmailSubject),
+                Get(MobileStringKeys.DiagnosticLogEmailBody),
+                Get(MobileStringKeys.DiagnosticLogEmailChooser)));
+            if (result.IsSuccess)
+                SetSuccess(MobileStringKeys.DiagnosticLogEmailDraftOpened);
+            else
+                SetError(MobileStringKeys.DiagnosticLogEmailFailed);
+        }
+        catch (Exception)
+        {
+            SetError(MobileStringKeys.DiagnosticLogEmailFailed);
+        }
+        finally
+        {
             IsBusy = false;
         }
     }
@@ -4758,6 +4810,7 @@ public sealed class MobileShellViewModel :
 
     public void OnEnteredBackground(bool lockImmediately)
     {
+        _automaticBiometricUnlockPending = false;
         CloseAccountBrandIconPicker();
         if (!_authorization.State.IsUnlocked || _disposed) return;
 
@@ -5537,9 +5590,26 @@ public sealed class MobileShellViewModel :
         TryStartAutomaticBiometricUnlock();
     }
 
+    public bool IsWaitingForStartupSurface => !_startupSurfaceReady;
+
+    public void DeferAutomaticBiometricUnlockUntilStartupSurfaceReady()
+    {
+        _startupSurfaceReady = false;
+        OnPropertyChanged(nameof(IsWaitingForStartupSurface));
+    }
+
+    public void NotifyStartupSurfaceReady()
+    {
+        if (_startupSurfaceReady || _disposed) return;
+        _startupSurfaceReady = true;
+        TryStartAutomaticBiometricUnlock();
+        OnPropertyChanged(nameof(IsWaitingForStartupSurface));
+    }
+
     private void TryStartAutomaticBiometricUnlock()
     {
         if (!_automaticBiometricUnlockPending
+            || !_startupSurfaceReady
             || !IsBiometricUnlockVisible
             || IsBusy
             || _disposed)
@@ -6704,6 +6774,7 @@ public sealed class MobileShellViewModel :
         _automaticBackupNowCommand.NotifyCanExecuteChanged();
         _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
         _exportDiagnosticLogCommand.NotifyCanExecuteChanged();
+        _emailDiagnosticLogCommand.NotifyCanExecuteChanged();
         _importBackupCommand.NotifyCanExecuteChanged();
         _importAccountFileCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
@@ -6830,6 +6901,8 @@ public sealed class MobileShellViewModel :
         nameof(MiscSettingsDescriptionText),
         nameof(LoggingLevelText),
         nameof(ExportDiagnosticLogText),
+        nameof(EmailDiagnosticLogText),
+        nameof(DiagnosticLogSharingNoticeText),
         nameof(FaqText),
         nameof(FaqSettingsDescriptionText),
         nameof(FaqImportIconPacksQuestionText),

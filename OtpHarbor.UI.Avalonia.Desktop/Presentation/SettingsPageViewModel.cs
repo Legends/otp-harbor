@@ -7,6 +7,7 @@ using TOTP.Core.Enums;
 using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
@@ -17,9 +18,11 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private readonly AvaloniaStringCatalog _fallbackLocalization = new();
     private readonly IPlatformApplicationPaths? _applicationPaths;
     private readonly IPlatformFolderLauncher? _folderLauncher;
+    private readonly IDiagnosticLogEmailService? _diagnosticLogEmail;
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly IAppearanceSettingsService? _appearanceSettingsService;
     private readonly AsyncCommand _openLogFolderCommand;
+    private readonly AsyncCommand _emailDiagnosticLogCommand;
     private readonly TimeSpan _autoSaveDelay;
     private CancellationTokenSource? _autoSaveCts;
     private AutoLockOption? _selectedAutoLock;
@@ -50,12 +53,14 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         TimeSpan? autoSaveDelay = null,
         TimeSpan? transientMessageDuration = null,
         IBrandIconPackService? brandIconPackService = null,
-        IAppearanceSettingsService? appearanceSettingsService = null)
+        IAppearanceSettingsService? appearanceSettingsService = null,
+        IDiagnosticLogEmailService? diagnosticLogEmail = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _localization = localization;
         _applicationPaths = applicationPaths;
         _folderLauncher = folderLauncher;
+        _diagnosticLogEmail = diagnosticLogEmail;
         _brandIconPackService = brandIconPackService;
         _appearanceSettingsService = appearanceSettingsService;
         _autoSaveDelay = autoSaveDelay ?? TimeSpan.FromMilliseconds(200);
@@ -73,6 +78,9 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         _openLogFolderCommand = new AsyncCommand(
             OpenLogFolderAsync,
             () => !_isBusy && _applicationPaths is not null && _folderLauncher is not null);
+        _emailDiagnosticLogCommand = new AsyncCommand(
+            EmailDiagnosticLogAsync,
+            () => !_isBusy && _applicationPaths is not null && _diagnosticLogEmail is not null);
         Reload();
     }
 
@@ -88,6 +96,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public IReadOnlyList<ThemeOption> Themes => _themes;
     public bool IsInterfaceScaleAvailable => OperatingSystem.IsLinux();
     public ICommand OpenLogFolderCommand => _openLogFolderCommand;
+    public ICommand EmailDiagnosticLogCommand => _emailDiagnosticLogCommand;
     public NotificationState SettingsNotification { get; }
     public NotificationState LogFolderNotification { get; }
 
@@ -274,7 +283,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
 
         _isBusy = true;
         _saveRequested = false;
-        _openLogFolderCommand.NotifyCanExecuteChanged();
+        NotifyLogCommandsCanExecuteChanged();
         var previous = TOTP.Core.Models.AppPreferencesMapper.FromSettings(_settingsService.Current);
         try
         {
@@ -342,7 +351,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         finally
         {
             _isBusy = false;
-            _openLogFolderCommand.NotifyCanExecuteChanged();
+            NotifyLogCommandsCanExecuteChanged();
             if (_saveRequested) QueueAutoSave();
         }
     }
@@ -397,7 +406,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     {
         if (_isBusy || _applicationPaths is null || _folderLauncher is null) return;
         _isBusy = true;
-        _openLogFolderCommand.NotifyCanExecuteChanged();
+        NotifyLogCommandsCanExecuteChanged();
         try
         {
             var opened = await _folderLauncher.OpenFolderAsync(_applicationPaths.LogDirectory);
@@ -423,8 +432,102 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         finally
         {
             _isBusy = false;
-            _openLogFolderCommand.NotifyCanExecuteChanged();
+            NotifyLogCommandsCanExecuteChanged();
         }
+    }
+
+    public async Task EmailDiagnosticLogAsync()
+    {
+        if (_isBusy || _applicationPaths is null || _diagnosticLogEmail is null) return;
+        var sourcePath = TryGetCurrentLogFilePath();
+        if (sourcePath is null)
+        {
+            ShowTransientLogFolderMessage(
+                Localize(AvaloniaStringKeys.DiagnosticLogUnavailable),
+                NotificationSeverity.Warning);
+            return;
+        }
+
+        _isBusy = true;
+        NotifyLogCommandsCanExecuteChanged();
+        try
+        {
+            var attachmentName = $"otp-harbor-diagnostic-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.log";
+            var result = await _diagnosticLogEmail.OpenDraftAsync(new DiagnosticLogEmailRequest(
+                sourcePath,
+                attachmentName,
+                DiagnosticSupportContact.EmailAddress,
+                Localize(AvaloniaStringKeys.DiagnosticLogEmailSubject),
+                Localize(AvaloniaStringKeys.DiagnosticLogEmailBody),
+                Localize(AvaloniaStringKeys.EmailDiagnosticLog)));
+            if (result.IsFailed)
+            {
+                ShowTransientLogFolderMessage(
+                    Localize(AvaloniaStringKeys.DiagnosticLogEmailFailed),
+                    NotificationSeverity.Error);
+                return;
+            }
+
+            if (result.Value == DiagnosticLogEmailOutcome.ManualAttachmentRequired)
+            {
+                var opened = _folderLauncher is not null
+                    ? await _folderLauncher.OpenFolderAsync(_applicationPaths.LogDirectory)
+                    : FluentResults.Result.Fail("The log folder launcher is unavailable.");
+                ShowTransientLogFolderMessage(
+                    Localize(opened.IsSuccess
+                        ? AvaloniaStringKeys.DiagnosticLogEmailManualAttachment
+                        : AvaloniaStringKeys.DiagnosticLogEmailManualAttachmentFolderFailed),
+                    opened.IsSuccess ? NotificationSeverity.Information : NotificationSeverity.Warning);
+                return;
+            }
+
+            ShowTransientLogFolderMessage(
+                Localize(AvaloniaStringKeys.DiagnosticLogEmailDraftOpened),
+                NotificationSeverity.Success);
+        }
+        catch (Exception)
+        {
+            ShowTransientLogFolderMessage(
+                Localize(AvaloniaStringKeys.DiagnosticLogEmailFailed),
+                NotificationSeverity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+            NotifyLogCommandsCanExecuteChanged();
+        }
+    }
+
+    private string? TryGetCurrentLogFilePath()
+    {
+        try
+        {
+            var logDirectory = Path.GetFullPath(_applicationPaths!.LogDirectory);
+            if (!Directory.Exists(logDirectory)) return null;
+            var configuredName = Path.GetFileNameWithoutExtension(_applicationPaths.LogFilePath);
+            var extension = Path.GetExtension(_applicationPaths.LogFilePath);
+            return Directory
+                .EnumerateFiles(logDirectory, $"{configuredName}*{extension}", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFullPath)
+                .Where(path => string.Equals(
+                    Path.GetDirectoryName(path),
+                    logDirectory,
+                    OperatingSystem.IsWindows()
+                        ? StringComparison.OrdinalIgnoreCase
+                        : StringComparison.Ordinal))
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .FirstOrDefault();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private void NotifyLogCommandsCanExecuteChanged()
+    {
+        _openLogFolderCommand.NotifyCanExecuteChanged();
+        _emailDiagnosticLogCommand.NotifyCanExecuteChanged();
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

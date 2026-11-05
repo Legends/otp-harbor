@@ -3,8 +3,8 @@
 Builds when needed and deploys the OTP Harbor Android development APK to a specific device.
 
 .DESCRIPTION
-Locates adb, discovers the previously used phone through ADB mDNS and its stable
-ro.serialno value, and fingerprints the Android build inputs. The normal path builds
+Locates adb, discovers the previously used phone through its stable ro.serialno value,
+prefers its direct USB transport when available, and fingerprints the Android build inputs. The normal path builds
 an incremental signed Debug APK only for the connected device ABI. CleanBuild retains
 the non-incremental universal-package verification path, while FastDeploy uses the
 .NET for Android Install target and external Debug assemblies. The script preserves
@@ -435,11 +435,11 @@ else {
     }
 
     $selectedRecord = $targetGroup.Group |
-        Where-Object IsMdnsEndpoint |
+        Where-Object { $_.Device -ceq $_.PhysicalSerial } |
         Select-Object -First 1
     if ($null -eq $selectedRecord) {
         $selectedRecord = $targetGroup.Group |
-            Where-Object { $_.Device -match ':' } |
+            Where-Object IsMdnsEndpoint |
             Select-Object -First 1
     }
     if ($null -eq $selectedRecord) {
@@ -615,7 +615,7 @@ if (-not $FastDeploy) {
     Write-Host "Timestamp: $($apk.LastWriteTime.ToString('O'))"
     Write-Host "SHA-256: $apkHash"
 
-    & $adbPath -s $device install -r $apkPath
+    & $adbPath -s $device install --no-incremental -r $apkPath
     if ($LASTEXITCODE -ne 0) {
         throw 'Installing the Android development APK failed.'
     }

@@ -78,6 +78,8 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IHelloVerificationRequester, WindowsHelloVerificationRequester>();
         services.AddSingleton<IHelloGate, HelloGate>();
         services.AddSingleton<IPlatformQuickUnlock, WindowsPlatformQuickUnlock>();
+        services.AddSingleton<IWindowsEmailComposer, WindowsEmailComposer>();
+        services.AddSingleton<IDiagnosticLogEmailService, WindowsDiagnosticLogEmailService>();
 #elif TOTP_PLATFORM_MACOS
         services.AddSingleton<IMacOSSessionStateReader, MacOSSessionStateReader>();
         services.AddSingleton<IPlatformSessionEventSource, MacOSSessionEventSource>();
@@ -87,6 +89,7 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IPlatformSecretStore>(provider =>
             provider.GetRequiredService<MacOSKeychainSecretStore>());
         services.AddSingleton<IPlatformQuickUnlock, MacOSPlatformQuickUnlock>();
+        services.AddSingleton<IDiagnosticLogEmailService, ShellDiagnosticLogEmailService>();
 #elif TOTP_PLATFORM_LINUX
         services.AddSingleton<ILinuxSessionMonitorRuntime, LinuxSessionMonitorRuntime>();
         services.AddSingleton<IPlatformSessionEventSource, LinuxSessionEventSource>();
@@ -97,9 +100,11 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IPlatformSecretStore>(provider =>
             provider.GetRequiredService<LinuxSecretServiceStore>());
         services.AddSingleton<IPlatformQuickUnlock, UnavailablePlatformQuickUnlock>();
+        services.AddSingleton<IDiagnosticLogEmailService, ShellDiagnosticLogEmailService>();
 #else
         services.AddSingleton<IPlatformSessionEventSource, UnavailablePlatformSessionEventSource>();
         services.AddSingleton<IPlatformQuickUnlock, UnavailablePlatformQuickUnlock>();
+        services.AddSingleton<IDiagnosticLogEmailService, ShellDiagnosticLogEmailService>();
 #endif
         services.AddInfrastructure(
             configuration,
@@ -120,6 +125,8 @@ public static class AvaloniaCompositionRoot
                     StringsConstants.LegacyTokensStorageFileName),
                 Path.Combine(windowsPaths.LegacyApplicationDataDirectory,
                     StringsConstants.AuthorizationEnvelopeFileName),
+                Path.Combine(windowsPaths.ApplicationDataDirectory,
+                    "older-vault-reviewed.state"),
                 provider.GetRequiredService<IPlatformFileSecurity>(),
                 provider.GetRequiredService<IMasterPasswordService>(),
                 provider.GetRequiredService<IVaultSnapshotReader>()));

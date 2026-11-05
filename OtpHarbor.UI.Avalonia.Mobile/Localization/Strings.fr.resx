@@ -65,6 +65,13 @@
   <data name="DiagnosticLogExported" xml:space="preserve"><value>Journal de diagnostic exporté.</value></data>
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Aucun journal de diagnostic n’est encore disponible.</value></data>
   <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>Le journal de diagnostic n’a pas pu être exporté.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Envoyer le journal de diagnostic par e-mail…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Les journaux sont conçus pour exclure les secrets des comptes, mais peuvent contenir des détails sur l’appareil, le système et les chemins de fichiers. Vérifiez le brouillon et la pièce jointe avant l’envoi.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>Journal de diagnostic OTP Harbor</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Décrivez ce qui s’est passé et les étapes ayant mené au problème. Un instantané du journal de diagnostic est joint.</value></data>
+  <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Envoyer le journal de diagnostic</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Choisissez une application de messagerie pour vérifier et envoyer le journal de diagnostic.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>Le brouillon d’e-mail de diagnostic n’a pas pu être ouvert.</value></data>
   <data name="Language" xml:space="preserve"><value>Langue</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Anglais</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Allemand</value></data>

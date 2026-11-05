@@ -536,6 +536,15 @@ public static class AvaloniaStringKeys
     public const string LogFolderOpened = nameof(LogFolderOpened);
     public const string LogFolderOpenFailed = nameof(LogFolderOpenFailed);
     public const string LogFolderOpenFailedSafely = nameof(LogFolderOpenFailedSafely);
+    public const string EmailDiagnosticLog = nameof(EmailDiagnosticLog);
+    public const string DiagnosticLogSharingNotice = nameof(DiagnosticLogSharingNotice);
+    public const string DiagnosticLogEmailSubject = nameof(DiagnosticLogEmailSubject);
+    public const string DiagnosticLogEmailBody = nameof(DiagnosticLogEmailBody);
+    public const string DiagnosticLogEmailDraftOpened = nameof(DiagnosticLogEmailDraftOpened);
+    public const string DiagnosticLogEmailManualAttachment = nameof(DiagnosticLogEmailManualAttachment);
+    public const string DiagnosticLogEmailManualAttachmentFolderFailed = nameof(DiagnosticLogEmailManualAttachmentFolderFailed);
+    public const string DiagnosticLogUnavailable = nameof(DiagnosticLogUnavailable);
+    public const string DiagnosticLogEmailFailed = nameof(DiagnosticLogEmailFailed);
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -700,6 +709,9 @@ public static class AvaloniaStringKeys
         UpdateDownloadFailed, UpdateInstallerStartFailed, UpdateInstallerStarted,
         UpdateInstallCancelled, UpdateInstallerFailedSafely,
         About, Version, OpenLogFolder, LogFolderOpened, LogFolderOpenFailed,
-        LogFolderOpenFailedSafely
+        LogFolderOpenFailedSafely, EmailDiagnosticLog, DiagnosticLogSharingNotice,
+        DiagnosticLogEmailSubject, DiagnosticLogEmailBody, DiagnosticLogEmailDraftOpened,
+        DiagnosticLogEmailManualAttachment, DiagnosticLogEmailManualAttachmentFolderFailed,
+        DiagnosticLogUnavailable, DiagnosticLogEmailFailed
     ];
 }

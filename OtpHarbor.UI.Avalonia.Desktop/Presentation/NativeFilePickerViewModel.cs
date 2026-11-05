@@ -365,12 +365,12 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         AvaloniaStringKeys.NoBackupFileSelected,
         isBackupRestore: true);
 
-    public async Task<bool> RecoverOlderVaultAsync(
+    public async Task<OlderVaultReviewOutcome> RecoverOlderVaultAsync(
         ILegacyVaultRecoveryService recoveryService,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(recoveryService);
-        if (!BeginOperation()) return false;
+        if (!BeginOperation()) return OlderVaultReviewOutcome.Cancelled;
         string? password = null;
         try
         {
@@ -381,7 +381,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 Localized(AvaloniaStringKeys.Cancel),
                 Localized(AvaloniaStringKeys.OlderVaultPasswordRequired),
                 Localized(AvaloniaStringKeys.OlderVaultPasswordRequired)), cancellationToken);
-            if (password is null) return false;
+            if (password is null) return OlderVaultReviewOutcome.Cancelled;
 
             BeginImportProgress(AvaloniaStringKeys.ImportingAccounts);
             await Task.Yield();
@@ -390,7 +390,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             {
                 await ShowOlderVaultMessageAsync(
                     AvaloniaStringKeys.OlderVaultRecoveryFailed, NotificationSeverity.Error);
-                return false;
+                return OlderVaultReviewOutcome.Failed;
             }
 
             var restored = await _accountImportService.RestoreBackupWithConflictResolutionAsync(
@@ -452,7 +452,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             {
                 await ShowOlderVaultMessageAsync(
                     AvaloniaStringKeys.ImportWorkflowFailed, NotificationSeverity.Error);
-                return false;
+                return OlderVaultReviewOutcome.Failed;
             }
 
             var outcome = restored.Value;
@@ -460,17 +460,23 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 && outcome.Added + outcome.Replaced > 0;
             if (changed) AccountsChanged?.Invoke(this, EventArgs.Empty);
             await ShowOlderVaultOutcomeAsync(outcome, cancellationToken);
-            return changed;
+            return outcome.Status switch
+            {
+                AccountImportStatus.Completed when changed => OlderVaultReviewOutcome.ReviewedWithChanges,
+                AccountImportStatus.Completed => OlderVaultReviewOutcome.ReviewedWithoutChanges,
+                AccountImportStatus.Cancelled => OlderVaultReviewOutcome.Cancelled,
+                _ => OlderVaultReviewOutcome.Failed
+            };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return false;
+            return OlderVaultReviewOutcome.Cancelled;
         }
         catch (Exception)
         {
             await ShowOlderVaultMessageAsync(
                 AvaloniaStringKeys.OlderVaultRecoveryFailed, NotificationSeverity.Error);
-            return false;
+            return OlderVaultReviewOutcome.Failed;
         }
         finally
         {

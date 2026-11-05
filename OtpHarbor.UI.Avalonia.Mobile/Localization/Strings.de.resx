@@ -65,6 +65,13 @@
   <data name="DiagnosticLogExported" xml:space="preserve"><value>Diagnoseprotokoll wurde exportiert.</value></data>
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Noch kein Diagnoseprotokoll verfügbar.</value></data>
   <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>Das Diagnoseprotokoll konnte nicht exportiert werden.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Diagnoseprotokoll per E-Mail senden…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Protokolle sind so ausgelegt, dass sie keine Kontogeheimnisse enthalten, können aber Geräte-, System- und Dateipfaddetails enthalten. Prüfen Sie Entwurf und Anhang vor dem Senden.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>OTP Harbor-Diagnoseprotokoll</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Beschreiben Sie bitte, was passiert ist und welche Schritte zu dem Problem geführt haben. Ein Schnappschuss des Diagnoseprotokolls ist angehängt.</value></data>
+  <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Diagnoseprotokoll senden</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Wählen Sie eine E-Mail-App, um das Diagnoseprotokoll zu prüfen und zu senden.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>Der Diagnose-E-Mail-Entwurf konnte nicht geöffnet werden.</value></data>
   <data name="Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Englisch</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Deutsch</value></data>

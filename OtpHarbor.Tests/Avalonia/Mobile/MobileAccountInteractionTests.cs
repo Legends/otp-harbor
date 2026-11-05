@@ -1168,7 +1168,9 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal(
             ["QrCode", "Import"],
             importButtons.Select(button => button.Elements().Single().Attribute("Kind")?.Value));
-        var diagnosticExport = Assert.Single(misc.Descendants(avalonia + "Button"));
+        var diagnosticExport = Assert.Single(
+            misc.Descendants(avalonia + "Button"),
+            button => button.Attribute("Command")?.Value == "{Binding ExportDiagnosticLogCommand}");
         Assert.Equal(
             "{Binding ExportDiagnosticLogCommand}",
             diagnosticExport.Attribute("Command")?.Value);
@@ -1176,6 +1178,16 @@ public sealed class MobileAccountInteractionTests
             diagnosticExport.Elements(),
             element => element.Name.LocalName == "SymbolIconLabel");
         Assert.Equal("Export", diagnosticLabel.Attribute("Kind")?.Value);
+        var diagnosticEmail = Assert.Single(
+            misc.Descendants(avalonia + "Button"),
+            button => button.Attribute("Command")?.Value == "{Binding EmailDiagnosticLogCommand}");
+        var diagnosticEmailLabel = Assert.Single(
+            diagnosticEmail.Elements(),
+            element => element.Name.LocalName == "SymbolIconLabel");
+        Assert.Equal("Diagnostics", diagnosticEmailLabel.Attribute("Kind")?.Value);
+        Assert.Contains(
+            misc.Descendants(avalonia + "TextBlock"),
+            text => text.Attribute("Text")?.Value == "{Binding DiagnosticLogSharingNoticeText}");
         Assert.Equal(
             [
                 "{Binding ImportFormatAegisText}",

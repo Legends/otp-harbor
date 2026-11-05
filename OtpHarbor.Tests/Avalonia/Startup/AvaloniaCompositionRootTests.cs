@@ -90,6 +90,8 @@ public sealed class AvaloniaCompositionRootTests
             services.GetRequiredService<IQrImageDecoder>());
         Assert.IsType<AvaloniaPlatformFolderLauncher>(
             services.GetRequiredService<IPlatformFolderLauncher>());
+        Assert.IsType<WindowsDiagnosticLogEmailService>(
+            services.GetRequiredService<IDiagnosticLogEmailService>());
         Assert.IsType<AvaloniaDialogService>(
             services.GetRequiredService<IAvaloniaDialogService>());
         Assert.IsType<AvaloniaCameraScannerDialogService>(

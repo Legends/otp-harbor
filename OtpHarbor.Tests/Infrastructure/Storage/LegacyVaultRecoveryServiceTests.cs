@@ -17,6 +17,25 @@ namespace TOTP.Tests.Infrastructure.Storage;
 public sealed class LegacyVaultRecoveryServiceTests
 {
     [Fact]
+    public async Task MarkConflictReviewedAsync_SuppressesOnlyTheReviewedOlderVaultRevision()
+    {
+        using var fixture = await Fixture.CreateAsync();
+
+        Assert.True(fixture.Service.HasUnreviewedConflict());
+
+        var marked = await fixture.Service.MarkConflictReviewedAsync(
+            TestContext.Current.CancellationToken);
+
+        Assert.True(marked.IsSuccess);
+        Assert.False(fixture.Service.HasUnreviewedConflict());
+
+        await File.AppendAllTextAsync(fixture.OlderVaultPath, "changed",
+            TestContext.Current.CancellationToken);
+
+        Assert.True(fixture.Service.HasUnreviewedConflict());
+    }
+
+    [Fact]
     public async Task ReadOlderAccountsAsync_WithCorrectPassword_RecoversAccountsWithoutChangingEitherVault()
     {
         using var fixture = await Fixture.CreateAsync();
@@ -118,10 +137,12 @@ public sealed class LegacyVaultRecoveryServiceTests
             CurrentVaultPath = Path.Combine(root, "OTP-Harbor", "master.vault");
             OlderVaultPath = Path.Combine(root, "TOTP-Manager", "master.totp");
             OlderEnvelopePath = Path.Combine(root, "TOTP-Manager", "authorization-envelope.bin");
+            ReviewedStatePath = Path.Combine(root, "OTP-Harbor", "older-vault-reviewed.state");
             Service = new LegacyVaultRecoveryService(
                 CurrentVaultPath,
                 OlderVaultPath,
                 OlderEnvelopePath,
+                ReviewedStatePath,
                 NoOpPlatformFileSecurity.Instance,
                 new MasterPasswordService(NullLogger<MasterPasswordService>.Instance),
                 new VaultService(Mock.Of<ISecurityContext>()));
@@ -131,6 +152,7 @@ public sealed class LegacyVaultRecoveryServiceTests
         public string CurrentVaultPath { get; }
         public string OlderVaultPath { get; }
         public string OlderEnvelopePath { get; }
+        public string ReviewedStatePath { get; }
         public ILegacyVaultRecoveryService Service { get; }
 
         public static async Task<Fixture> CreateAsync()

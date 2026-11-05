@@ -90,7 +90,7 @@ foreach ($requiredInstallerControl in @(
     'Enter the six-digit code when ADB prompts for the pairing code.',
     '& $adbPath pair $pairingEndpoint',
     'Pairing succeeded, but Android device',
-    '& $adbPath -s $device install -r $apkPath',
+    '& $adbPath -s $device install --no-incremental -r $apkPath',
     'shell am force-stop $packageName')) {
     if (-not $installer.Contains($requiredInstallerControl, [StringComparison]::Ordinal)) {
         throw "The Android development installer is missing a build-reuse or targeted-device control: $requiredInstallerControl"

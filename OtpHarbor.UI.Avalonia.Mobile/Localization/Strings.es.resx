@@ -65,6 +65,13 @@
   <data name="DiagnosticLogExported" xml:space="preserve"><value>Registro de diagnóstico exportado.</value></data>
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Todavía no hay ningún registro de diagnóstico disponible.</value></data>
   <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>No se pudo exportar el registro de diagnóstico.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Enviar registro de diagnóstico por correo…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Los registros están diseñados para excluir secretos de las cuentas, pero pueden contener detalles del dispositivo, del sistema y de rutas de archivos. Revise el borrador y el archivo adjunto antes de enviarlos.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>Registro de diagnóstico de OTP Harbor</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Describa qué ocurrió y los pasos que llevaron al problema. Se adjunta una copia del registro de diagnóstico.</value></data>
+  <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Enviar registro de diagnóstico</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Elija una aplicación de correo para revisar y enviar el registro de diagnóstico.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>No se pudo abrir el borrador del correo de diagnóstico.</value></data>
   <data name="Language" xml:space="preserve"><value>Idioma</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Inglés</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Alemán</value></data>

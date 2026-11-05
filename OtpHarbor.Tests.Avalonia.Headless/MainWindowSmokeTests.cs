@@ -3504,6 +3504,15 @@ public sealed class MainWindowSmokeTests
                 panel.GetLogicalDescendants().OfType<ComboBox>(),
                 comboBox => comboBox.Name == "MinimumLoggingLevelPicker");
             Assert.NotNull(loggingPicker);
+            var emailLogButton = Assert.Single(
+                panel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "EmailDiagnosticLogButton");
+            Assert.Contains("wide", emailLogButton.Classes);
+            Assert.Contains(
+                panel.GetLogicalDescendants().OfType<TextBlock>(),
+                textBlock => Equals(
+                    textBlock.Text,
+                    Application.Current!.Resources[AvaloniaStringKeys.DiagnosticLogSharingNotice]));
             Assert.DoesNotContain(
                 panel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");

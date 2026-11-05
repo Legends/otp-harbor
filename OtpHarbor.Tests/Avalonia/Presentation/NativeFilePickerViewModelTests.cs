@@ -55,7 +55,7 @@ public sealed class NativeFilePickerViewModelTests
         var changed = await sut.RecoverOlderVaultAsync(
             recovery.Object, TestContext.Current.CancellationToken);
 
-        Assert.True(changed);
+        Assert.Equal(OlderVaultReviewOutcome.ReviewedWithChanges, changed);
         Assert.Equal(1, changeEvents);
         Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultPasswordPrompt), passwordPrompt?.Message);
         Assert.NotNull(confirmation);
@@ -94,7 +94,7 @@ public sealed class NativeFilePickerViewModelTests
         var changed = await sut.RecoverOlderVaultAsync(
             recovery.Object, TestContext.Current.CancellationToken);
 
-        Assert.False(changed);
+        Assert.Equal(OlderVaultReviewOutcome.ReviewedWithoutChanges, changed);
         dialogs.Verify(value => value.ChooseAsync(
             It.IsAny<ChoiceDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
         dialogs.Verify(value => value.ConfirmAsync(
@@ -131,7 +131,7 @@ public sealed class NativeFilePickerViewModelTests
         var changed = await sut.RecoverOlderVaultAsync(
             recovery.Object, TestContext.Current.CancellationToken);
 
-        Assert.False(changed);
+        Assert.Equal(OlderVaultReviewOutcome.Cancelled, changed);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
         accounts.Verify(value => value.CommitImportAsync(
             It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
@@ -177,7 +177,7 @@ public sealed class NativeFilePickerViewModelTests
         var changed = await sut.RecoverOlderVaultAsync(
             recovery.Object, TestContext.Current.CancellationToken);
 
-        Assert.True(changed);
+        Assert.Equal(OlderVaultReviewOutcome.ReviewedWithChanges, changed);
         Assert.NotNull(review);
         Assert.Contains("• Synthetic", review.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(older.Secret, review.Message, StringComparison.Ordinal);
@@ -212,7 +212,7 @@ public sealed class NativeFilePickerViewModelTests
         var changed = await sut.RecoverOlderVaultAsync(
             recovery.Object, TestContext.Current.CancellationToken);
 
-        Assert.False(changed);
+        Assert.Equal(OlderVaultReviewOutcome.Failed, changed);
         Assert.Equal(localization.GetString(AvaloniaStringKeys.OlderVaultRecoveryFailed), failure?.Message);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
         accounts.Verify(value => value.CommitImportAsync(
@@ -254,7 +254,7 @@ public sealed class NativeFilePickerViewModelTests
         var changed = await sut.RecoverOlderVaultAsync(
             recovery.Object, TestContext.Current.CancellationToken);
 
-        Assert.False(changed);
+        Assert.Equal(OlderVaultReviewOutcome.Failed, changed);
         Assert.Equal(localization.GetString(AvaloniaStringKeys.ImportRecoveryBackupFailed), outcome?.Message);
         accounts.Verify(value => value.CommitImportAsync(
             It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);

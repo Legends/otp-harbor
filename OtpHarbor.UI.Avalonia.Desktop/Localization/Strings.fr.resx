@@ -162,6 +162,15 @@
   <data name="LogFolderOpened" xml:space="preserve"><value>Dossier des journaux ouvert.</value></data>
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>Le dossier des journaux n’a pas pu être ouvert.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>Le dossier des journaux n’a pas pu être ouvert de manière sécurisée.</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Envoyer le journal de diagnostic par e-mail…</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Les journaux sont conçus pour exclure les secrets des comptes, mais peuvent contenir des détails sur l’appareil, le système et les chemins de fichiers. Vérifiez le brouillon et la pièce jointe avant l’envoi.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>Journal de diagnostic OTP Harbor</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Décrivez ce qui s’est passé et les étapes ayant mené au problème. Un instantané du journal de diagnostic est joint.</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Un brouillon d’e-mail avec le journal de diagnostic joint a été ouvert.</value></data>
+  <data name="DiagnosticLogEmailManualAttachment" xml:space="preserve"><value>Le brouillon d’e-mail et le dossier des journaux ont été ouverts. Joignez manuellement le journal le plus récent avant l’envoi.</value></data>
+  <data name="DiagnosticLogEmailManualAttachmentFolderFailed" xml:space="preserve"><value>Le brouillon d’e-mail a été ouvert, mais pas le dossier des journaux. Utilisez « Ouvrir le dossier des journaux » pour joindre manuellement le journal le plus récent.</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Aucun journal de diagnostic n’est encore disponible.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>Le brouillon d’e-mail de diagnostic n’a pas pu être ouvert.</value></data>
   <data name="Lock" xml:space="preserve"><value>Verrouiller</value></data>
   <data name="LockShortcut" xml:space="preserve"><value>Verrouiller (Ctrl+L)</value></data>
   <data name="Accounts" xml:space="preserve"><value>Comptes</value></data>

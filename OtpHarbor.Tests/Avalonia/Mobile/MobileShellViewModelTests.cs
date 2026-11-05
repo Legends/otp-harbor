@@ -547,6 +547,77 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task EmailDiagnosticLogAsync_FromMiscSettingsOpensLocalizedSupportDraft()
+    {
+        var logDirectory = Path.Combine(Path.GetTempPath(), $"otp-harbor-email-logs-{Guid.NewGuid():N}");
+        var logPath = Path.Combine(logDirectory, "app20261105.log");
+        try
+        {
+            Directory.CreateDirectory(logDirectory);
+            await File.WriteAllTextAsync(logPath, "redacted diagnostic entry",
+                global::Xunit.TestContext.Current.CancellationToken);
+            var context = CreateContext(
+                isConfigured: true,
+                appLockEnabled: false,
+                logFilePath: Path.Combine(logDirectory, "app.log"));
+            context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+                .Callback(context.State.Unlock)
+                .ReturnsAsync(AuthorizationResult.Success);
+            DiagnosticLogEmailRequest? request = null;
+            context.DiagnosticLogEmail.Setup(value => value.OpenDraftAsync(
+                    It.IsAny<DiagnosticLogEmailRequest>(),
+                    It.IsAny<CancellationToken>()))
+                .Callback<DiagnosticLogEmailRequest, CancellationToken>((value, _) => request = value)
+                .ReturnsAsync(Result.Ok(DiagnosticLogEmailOutcome.AttachmentIncluded));
+
+            await context.Sut.InitializeAsync();
+            await context.Sut.ShowSettingsAsync();
+            context.Sut.ShowMiscSettingsCommand.Execute(null);
+            await context.Sut.EmailDiagnosticLogAsync();
+
+            Assert.NotNull(request);
+            Assert.Equal(logPath, request.SourcePath);
+            Assert.Equal(DiagnosticSupportContact.EmailAddress, request.Recipient);
+            Assert.Equal(context.Strings.Get(MobileStringKeys.DiagnosticLogEmailSubject), request.Subject);
+            Assert.Equal(context.Strings.Get(MobileStringKeys.DiagnosticLogEmailBody), request.Body);
+            Assert.Equal(
+                context.Strings.Get(MobileStringKeys.DiagnosticLogEmailDraftOpened),
+                context.Sut.NotificationText);
+        }
+        finally
+        {
+            if (Directory.Exists(logDirectory))
+                Directory.Delete(logDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task OpeningMiscSettings_RestoresMinimumLogLevelInUiWithoutStartupNotification()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        context.SettingsValue.MinimumLogLevel = AppLogLevel.Information;
+        context.Settings.Setup(value => value.LoadAsync())
+            .Callback(() => context.SettingsValue.MinimumLogLevel = AppLogLevel.Verbose)
+            .ReturnsAsync(() => Result.Ok<IAppSettings>(context.SettingsValue));
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        var changedProperties = new List<string?>();
+        context.Sut.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        await context.Sut.InitializeAsync();
+
+        Assert.Equal(AppLogLevel.Verbose, context.Sut.MinimumLogLevel);
+        context.LogSwitch.Verify(value => value.SetLevel(AppLogLevel.Verbose), Times.Once);
+        Assert.DoesNotContain(nameof(MobileShellViewModel.MinimumLogLevel), changedProperties);
+
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ShowMiscSettingsCommand.Execute(null);
+
+        Assert.Contains(nameof(MobileShellViewModel.MinimumLogLevel), changedProperties);
+    }
+
+    [Fact]
     public async Task Settings_MinimumLogLevelPersistsAndRollsBackOnFailure()
     {
         var context = CreateContext(isConfigured: true, appLockEnabled: false);
@@ -560,6 +631,7 @@ public sealed class MobileShellViewModelTests
 
         Assert.Equal(AppLogLevel.Warning, context.SettingsValue.MinimumLogLevel);
         context.Settings.Verify(value => value.SaveAsync(), Times.Once);
+        context.LogSwitch.Verify(value => value.SetLevel(AppLogLevel.Warning), Times.Once);
 
         context.Settings.Setup(value => value.SaveAsync())
             .ReturnsAsync(Result.Fail("simulated settings failure"));
@@ -567,6 +639,7 @@ public sealed class MobileShellViewModelTests
 
         Assert.Equal(AppLogLevel.Warning, context.SettingsValue.MinimumLogLevel);
         Assert.Equal(AppLogLevel.Warning, context.Sut.MinimumLogLevel);
+        context.LogSwitch.Verify(value => value.SetLevel(AppLogLevel.Error), Times.Never);
         Assert.NotEmpty(context.Sut.NotificationText);
     }
 
@@ -1201,6 +1274,78 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsUnlockVisible);
         Assert.True(context.Sut.IsBiometricUnlockVisible);
         Assert.Empty(context.Sut.NotificationText);
+        context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task AutomaticBiometrics_WaitsForBothInitializationAndStartupSurface(bool surfaceReadyFirst)
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: true,
+            preferredUnlockMethod: TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization.Setup(value => value.TryUnlockWithHelloAsync())
+            .ReturnsAsync(AuthorizationResult.Cancelled);
+        context.Sut.DeferAutomaticBiometricUnlockUntilStartupSurfaceReady();
+        context.Sut.OnReturnedToForeground();
+
+        if (surfaceReadyFirst)
+            context.Sut.NotifyStartupSurfaceReady();
+        else
+            await context.Sut.InitializeAsync();
+
+        context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Never);
+        if (surfaceReadyFirst)
+            await context.Sut.InitializeAsync();
+        else
+        {
+            Assert.True(context.Sut.IsWaitingForStartupSurface);
+            context.Sut.NotifyStartupSurfaceReady();
+        }
+
+        context.Sut.NotifyStartupSurfaceReady();
+        Assert.False(context.Sut.IsWaitingForStartupSurface);
+        Assert.True(context.Sut.IsUnlockVisible);
+        Assert.True(context.Sut.IsBiometricUnlockVisible);
+        context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task StartupSurfaceReady_WithoutForegroundRequest_DoesNotOpenBiometrics()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: true,
+            preferredUnlockMethod: TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Sut.DeferAutomaticBiometricUnlockUntilStartupSurfaceReady();
+        await context.Sut.InitializeAsync();
+
+        context.Sut.NotifyStartupSurfaceReady();
+
+        Assert.False(context.Sut.IsWaitingForStartupSurface);
+        context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task StartupSurfaceReady_AfterBackgrounding_WaitsForForegroundBeforePrompting()
+    {
+        var context = CreateContext(
+            isConfigured: true,
+            biometricAvailable: true,
+            preferredUnlockMethod: TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock);
+        context.Authorization.Setup(value => value.TryUnlockWithHelloAsync())
+            .ReturnsAsync(AuthorizationResult.Cancelled);
+        context.Sut.DeferAutomaticBiometricUnlockUntilStartupSurfaceReady();
+        context.Sut.OnReturnedToForeground();
+        await context.Sut.InitializeAsync();
+        context.Sut.OnEnteredBackground(lockImmediately: true);
+
+        context.Sut.NotifyStartupSurfaceReady();
+        context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Never);
+
+        context.Sut.OnReturnedToForeground();
         context.Authorization.Verify(value => value.TryUnlockWithHelloAsync(), Times.Once);
     }
 
@@ -5174,6 +5319,8 @@ public sealed class MobileShellViewModelTests
         var documents = new Mock<IMobileDocumentService>();
         var exportService = new Mock<IExportService>();
         var accountImport = new Mock<IAccountImportService>();
+        var diagnosticLogEmail = new Mock<IDiagnosticLogEmailService>();
+        var logSwitch = new Mock<ILogSwitchService>();
         var automaticBackupSnapshots = new Mock<IAutomaticBackupSnapshotService>();
 
         var settingsValue = new AppSettings
@@ -5230,9 +5377,11 @@ public sealed class MobileShellViewModelTests
             time,
             brandIconPackService: brandIconPackService,
             appearanceSettingsService: appearance.Object,
+            logSwitchService: logSwitch.Object,
             automaticBackup: automaticBackup,
             automaticBackupSnapshots: automaticBackupSnapshots.Object,
-            accountListSnapshots: accountListSnapshots);
+            accountListSnapshots: accountListSnapshots,
+            diagnosticLogEmail: diagnosticLogEmail.Object);
         return new TestContext(
             sut,
             state,
@@ -5253,7 +5402,9 @@ public sealed class MobileShellViewModelTests
             strings,
             time,
             appearance,
-            automaticBackupSnapshots);
+            logSwitch,
+            automaticBackupSnapshots,
+            diagnosticLogEmail);
     }
 
     private sealed record TestContext(
@@ -5276,7 +5427,9 @@ public sealed class MobileShellViewModelTests
         MobileStringCatalog Strings,
         ManualTimeProvider Time,
         Mock<IAppearanceSettingsService> Appearance,
-        Mock<IAutomaticBackupSnapshotService> AutomaticBackupSnapshots);
+        Mock<ILogSwitchService> LogSwitch,
+        Mock<IAutomaticBackupSnapshotService> AutomaticBackupSnapshots,
+        Mock<IDiagnosticLogEmailService> DiagnosticLogEmail);
 
     private static async Task<List<Account>> LoadScenarioFixtureAsync(string name)
     {
