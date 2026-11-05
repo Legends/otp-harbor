@@ -1434,14 +1434,24 @@ jobs:
         run: |
           $currentTag = "${{ github.ref_name }}"
           $previousTag = gh release list `
-            --repo "${{ github.repository }}" `
-            --limit 100 `
-            --exclude-drafts `
-            --json tagName,publishedAt `
-            --jq ".[] | select(.tagName != `"$currentTag`") | [.publishedAt, .tagName] | @tsv" |
-            Sort-Object -Descending |
-            Select-Object -First 1 |
-            ForEach-Object { ($_ -split "`t", 2)[1] }
+          --repo "${{ github.repository }}" `
+          --limit 100 `
+          --exclude-drafts `
+          --json tagName,publishedAt `
+          --jq ".[] | select(.tagName != `"$currentTag`") | [.publishedAt, .tagName] | @tsv" |
+          Where-Object { ($_ -split "`t", 2)[1] -match '^v\d+\.\d+\.\d+$' } |
+          Sort-Object -Descending |
+          Select-Object -First 1 |
+          ForEach-Object { ($_ -split "`t", 2)[1] }
+          # $previousTag = gh release list `
+          #   --repo "${{ github.repository }}" `
+          #   --limit 100 `
+          #   --exclude-drafts `
+          #   --json tagName,publishedAt `
+          #   --jq ".[] | select(.tagName != `"$currentTag`") | [.publishedAt, .tagName] | @tsv" |
+          #   Sort-Object -Descending |
+          #   Select-Object -First 1 |
+          #   ForEach-Object { ($_ -split "`t", 2)[1] }
           if ([string]::IsNullOrWhiteSpace($previousTag)) {
             throw "A previous published release is required to generate the change summary."
           }
