@@ -8,6 +8,7 @@ using TOTP.Core.Models;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
+using TOTP.Avalonia.Shared.Diagnostics;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
@@ -19,6 +20,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private readonly IPlatformApplicationPaths? _applicationPaths;
     private readonly IPlatformFolderLauncher? _folderLauncher;
     private readonly IDiagnosticLogEmailService? _diagnosticLogEmail;
+    private readonly IDiagnosticEnvironmentProvider? _diagnosticEnvironment;
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly IAppearanceSettingsService? _appearanceSettingsService;
     private readonly AsyncCommand _openLogFolderCommand;
@@ -54,13 +56,15 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         TimeSpan? transientMessageDuration = null,
         IBrandIconPackService? brandIconPackService = null,
         IAppearanceSettingsService? appearanceSettingsService = null,
-        IDiagnosticLogEmailService? diagnosticLogEmail = null)
+        IDiagnosticLogEmailService? diagnosticLogEmail = null,
+        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _localization = localization;
         _applicationPaths = applicationPaths;
         _folderLauncher = folderLauncher;
         _diagnosticLogEmail = diagnosticLogEmail;
+        _diagnosticEnvironment = diagnosticEnvironment;
         _brandIconPackService = brandIconPackService;
         _appearanceSettingsService = appearanceSettingsService;
         _autoSaveDelay = autoSaveDelay ?? TimeSpan.FromMilliseconds(200);
@@ -458,7 +462,14 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
                 attachmentName,
                 DiagnosticSupportContact.EmailAddress,
                 Localize(AvaloniaStringKeys.DiagnosticLogEmailSubject),
-                Localize(AvaloniaStringKeys.DiagnosticLogEmailBody),
+                DiagnosticEmailBody.Format(
+                    Localize(AvaloniaStringKeys.DiagnosticLogEmailBody),
+                    Localize(AvaloniaStringKeys.DiagnosticSystemSummary),
+                    Localize(AvaloniaStringKeys.DiagnosticDeviceSummary),
+                    Localize(AvaloniaStringKeys.ThemeDark), Localize(AvaloniaStringKeys.ThemeLight),
+                    MinimumLogLevel.ToString(), _diagnosticEnvironment,
+                    _localization?.CurrentLanguage.CultureName ?? CultureInfo.CurrentUICulture.Name,
+                    Localize(AvaloniaStringKeys.DiagnosticPortrait), Localize(AvaloniaStringKeys.DiagnosticLandscape)),
                 Localize(AvaloniaStringKeys.EmailDiagnosticLog)));
             if (result.IsFailed)
             {

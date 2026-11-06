@@ -15,7 +15,9 @@ using TOTP.Infrastructure.Services;
 using TOTP.Infrastructure.Storage;
 using TOTP.Platform.Android;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Avalonia.Shared.Diagnostics;
 using TOTP.Core.Backup;
+using AndroidBuild = global::Android.OS.Build;
 
 namespace TOTP.Avalonia.Android;
 
@@ -51,6 +53,34 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IMobileQrImageFactory, MobileQrImageFactory>();
         services.AddSingleton<IMobileDocumentService, AndroidDocumentService>();
         services.AddSingleton<IDiagnosticLogEmailService, AndroidDiagnosticLogEmailService>();
+        services.AddSingleton<IDiagnosticEnvironmentProvider>(new DiagnosticEnvironmentProvider(
+            typeof(AndroidCompositionRoot).Assembly,
+#if DEBUG
+            "debug",
+#else
+            "direct",
+#endif
+            () => global::Avalonia.Application.Current?.ApplicationLifetime is
+                global::Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime { MainView: { } view }
+                    ? global::Avalonia.Controls.TopLevel.GetTopLevel(view) : null,
+            () => new DiagnosticDevice(AndroidBuild.Manufacturer ?? string.Empty,
+                AndroidBuild.Model ?? string.Empty,
+                $"Android {AndroidBuild.VERSION.Release} (API {(int)AndroidBuild.VERSION.SdkInt})"),
+            () =>
+            {
+                var package = context.PackageManager?.GetPackageInfo(context.PackageName!, 0);
+                return package is null ? null : $"{package.VersionName} ({package.LongVersionCode})";
+            },
+            getDistribution: () =>
+            {
+#if DEBUG
+                return "debug";
+#else
+                if (!OperatingSystem.IsAndroidVersionAtLeast(30)) return "direct";
+                return context.PackageManager?.GetInstallSourceInfo(context.PackageName!)?.InstallingPackageName
+                    == "com.android.vending" ? "play" : "direct";
+#endif
+            }));
         services.AddSingleton<AndroidPlatformUnattendedUnlock>();
         services.AddSingleton<IPlatformUnattendedUnlock>(provider =>
             provider.GetRequiredService<AndroidPlatformUnattendedUnlock>());

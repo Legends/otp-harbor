@@ -18,6 +18,7 @@ using TOTP.Camera.OpenCv;
 using TOTP.Avalonia.Desktop.Localization;
 using Serilog;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Avalonia.Shared.Diagnostics;
 using TOTP.Core.Backup;
 using TOTP.Core.Common;
 using TOTP.Infrastructure.Storage;
@@ -57,6 +58,14 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<AvaloniaStringCatalog>();
         services.AddSingleton<IAvaloniaLocalizationService, AvaloniaLocalizationService>();
         services.AddSingleton<IConfiguration>(configuration);
+        services.AddSingleton<IDiagnosticEnvironmentProvider>(new DiagnosticEnvironmentProvider(
+            typeof(AvaloniaCompositionRoot).Assembly,
+#if DEBUG
+            "debug",
+#else
+            configuration["AutoUpdate:DistributionMode"] ?? "direct",
+#endif
+            () => desktopLifetime.MainWindow));
 #if DEBUG
         services.AddSingleton(new OnboardingPreviewOptions(
             bool.TryParse(configuration["Debug:ShowOnboardingOnStartup"], out var showOnboarding)

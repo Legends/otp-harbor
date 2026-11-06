@@ -540,6 +540,10 @@ public static class AvaloniaStringKeys
     public const string DiagnosticLogSharingNotice = nameof(DiagnosticLogSharingNotice);
     public const string DiagnosticLogEmailSubject = nameof(DiagnosticLogEmailSubject);
     public const string DiagnosticLogEmailBody = nameof(DiagnosticLogEmailBody);
+    public const string DiagnosticSystemSummary = nameof(DiagnosticSystemSummary);
+    public const string DiagnosticDeviceSummary = nameof(DiagnosticDeviceSummary);
+    public const string DiagnosticPortrait = nameof(DiagnosticPortrait);
+    public const string DiagnosticLandscape = nameof(DiagnosticLandscape);
     public const string DiagnosticLogEmailDraftOpened = nameof(DiagnosticLogEmailDraftOpened);
     public const string DiagnosticLogEmailManualAttachment = nameof(DiagnosticLogEmailManualAttachment);
     public const string DiagnosticLogEmailManualAttachmentFolderFailed = nameof(DiagnosticLogEmailManualAttachmentFolderFailed);
@@ -711,6 +715,8 @@ public static class AvaloniaStringKeys
         About, Version, OpenLogFolder, LogFolderOpened, LogFolderOpenFailed,
         LogFolderOpenFailedSafely, EmailDiagnosticLog, DiagnosticLogSharingNotice,
         DiagnosticLogEmailSubject, DiagnosticLogEmailBody, DiagnosticLogEmailDraftOpened,
+        DiagnosticSystemSummary, DiagnosticDeviceSummary,
+        DiagnosticPortrait, DiagnosticLandscape,
         DiagnosticLogEmailManualAttachment, DiagnosticLogEmailManualAttachmentFolderFailed,
         DiagnosticLogUnavailable, DiagnosticLogEmailFailed
     ];

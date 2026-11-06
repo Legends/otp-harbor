@@ -66,9 +66,13 @@
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Aucun journal de diagnostic n’est encore disponible.</value></data>
   <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>Le journal de diagnostic n’a pas pu être exporté.</value></data>
   <data name="EmailDiagnosticLog" xml:space="preserve"><value>Envoyer le journal de diagnostic par e-mail…</value></data>
-  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Les journaux sont conçus pour exclure les secrets des comptes, mais peuvent contenir des détails sur l’appareil, le système et les chemins de fichiers. Vérifiez le brouillon et la pièce jointe avant l’envoi.</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>L’e-mail comprend des informations sur l’application, le système, l’environnement d’exécution, l’affichage, la langue et le niveau de journalisation ; sous Android, il inclut aussi le fabricant et le modèle. Aucune donnée de compte ni aucun identifiant d’appareil n’est ajouté au résumé. Les journaux peuvent contenir des détails système et des chemins de fichiers. Vérifiez le brouillon et la pièce jointe avant l’envoi.</value></data>
   <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>Journal de diagnostic OTP Harbor</value></data>
-  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Décrivez ce qui s’est passé et les étapes ayant mené au problème. Un instantané du journal de diagnostic est joint.</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Décrivez ce qui s’est passé et les étapes ayant mené au problème. Vérifiez le résumé système et le journal de diagnostic avant l’envoi ; joignez manuellement le journal le plus récent s’il n’est pas déjà joint.</value></data>
+  <data name="DiagnosticSystemSummary" xml:space="preserve"><value>Informations système (recueillies lors du partage)&#10;Date : {0}&#10;Version de l’application : {1}&#10;Build : {2}&#10;Configuration : {3}&#10;Distribution : {4}&#10;Système : {5}&#10;Architecture (application / système) : {6}&#10;Environnement d’exécution : {7}&#10;Fenêtre (pixels logiques) ; échelle d’affichage : {8}&#10;Thème : {9}&#10;Langue : {10}&#10;Niveau de journalisation : {11}&#10;{12}</value></data>
+  <data name="DiagnosticDeviceSummary" xml:space="preserve"><value>Appareil : {0}</value></data>
+  <data name="DiagnosticPortrait" xml:space="preserve"><value>Portrait</value></data>
+  <data name="DiagnosticLandscape" xml:space="preserve"><value>Paysage</value></data>
   <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Envoyer le journal de diagnostic</value></data>
   <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Choisissez une application de messagerie pour vérifier et envoyer le journal de diagnostic.</value></data>
   <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>Le brouillon d’e-mail de diagnostic n’a pas pu être ouvert.</value></data>

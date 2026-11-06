@@ -67,6 +67,10 @@ public static class MobileStringKeys
     public const string DiagnosticLogSharingNotice = nameof(DiagnosticLogSharingNotice);
     public const string DiagnosticLogEmailSubject = nameof(DiagnosticLogEmailSubject);
     public const string DiagnosticLogEmailBody = nameof(DiagnosticLogEmailBody);
+    public const string DiagnosticSystemSummary = nameof(DiagnosticSystemSummary);
+    public const string DiagnosticDeviceSummary = nameof(DiagnosticDeviceSummary);
+    public const string DiagnosticPortrait = nameof(DiagnosticPortrait);
+    public const string DiagnosticLandscape = nameof(DiagnosticLandscape);
     public const string DiagnosticLogEmailChooser = nameof(DiagnosticLogEmailChooser);
     public const string DiagnosticLogEmailDraftOpened = nameof(DiagnosticLogEmailDraftOpened);
     public const string DiagnosticLogEmailFailed = nameof(DiagnosticLogEmailFailed);
@@ -459,6 +463,10 @@ public static class MobileStringKeys
         DiagnosticLogSharingNotice,
         DiagnosticLogEmailSubject,
         DiagnosticLogEmailBody,
+        DiagnosticSystemSummary,
+        DiagnosticDeviceSummary,
+        DiagnosticPortrait,
+        DiagnosticLandscape,
         DiagnosticLogEmailChooser,
         DiagnosticLogEmailDraftOpened,
         DiagnosticLogEmailFailed,

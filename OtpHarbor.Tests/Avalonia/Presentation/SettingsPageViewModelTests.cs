@@ -7,6 +7,7 @@ using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Core.Enums;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
+using TOTP.Avalonia.Shared.Diagnostics;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
@@ -285,6 +286,8 @@ public sealed class SettingsPageViewModelTests
     [Fact]
     public async Task EmailDiagnosticLogAsync_UsesSupportRecipientAndLatestLogWithoutDisplayingPath()
     {
+        var environment = new Mock<IDiagnosticEnvironmentProvider>();
+        environment.Setup(value => value.Capture()).Returns(DiagnosticEnvironmentTests.Sample());
         var root = Path.Combine(Path.GetTempPath(), $"otp-harbor-settings-email-{Guid.NewGuid():N}");
         try
         {
@@ -306,7 +309,8 @@ public sealed class SettingsPageViewModelTests
             using var sut = new SettingsPageViewModel(
                 CreateSettings(new AppSettings()).Object,
                 applicationPaths: paths.Object,
-                diagnosticLogEmail: email.Object);
+                diagnosticLogEmail: email.Object,
+                diagnosticEnvironment: environment.Object);
 
             await sut.EmailDiagnosticLogAsync();
 
@@ -314,6 +318,10 @@ public sealed class SettingsPageViewModelTests
             Assert.Equal(latestPath, request.SourcePath);
             Assert.Equal(DiagnosticSupportContact.EmailAddress, request.Recipient);
             Assert.EndsWith(".log", request.AttachmentFileName, StringComparison.Ordinal);
+            Assert.Contains("3.0.1+synthetic-build", request.Body);
+            Assert.Contains("Synthetic OS 16", request.Body);
+            Assert.DoesNotContain(latestPath, request.Body);
+            environment.Verify(value => value.Capture(), Times.Once);
             Assert.DoesNotContain(root, sut.LogFolderMessage, StringComparison.OrdinalIgnoreCase);
             Assert.Equal(NotificationSeverity.Success, sut.LogFolderMessageSeverity);
         }

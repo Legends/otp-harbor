@@ -8,6 +8,7 @@ using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Avalonia.Shared.Branding;
+using TOTP.Avalonia.Shared.Diagnostics;
 using TOTP.Core.Backup;
 using TOTP.Core.Common;
 using TOTP.Core.Icons;
@@ -549,6 +550,8 @@ public sealed class MobileShellViewModelTests
     [Fact]
     public async Task EmailDiagnosticLogAsync_FromMiscSettingsOpensLocalizedSupportDraft()
     {
+        var environment = new Mock<IDiagnosticEnvironmentProvider>();
+        environment.Setup(value => value.Capture()).Returns(DiagnosticEnvironmentTests.Sample("Synthetic Phone"));
         var logDirectory = Path.Combine(Path.GetTempPath(), $"otp-harbor-email-logs-{Guid.NewGuid():N}");
         var logPath = Path.Combine(logDirectory, "app20261105.log");
         try
@@ -559,7 +562,8 @@ public sealed class MobileShellViewModelTests
             var context = CreateContext(
                 isConfigured: true,
                 appLockEnabled: false,
-                logFilePath: Path.Combine(logDirectory, "app.log"));
+                logFilePath: Path.Combine(logDirectory, "app.log"),
+                diagnosticEnvironment: environment.Object);
             context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
                 .Callback(context.State.Unlock)
                 .ReturnsAsync(AuthorizationResult.Success);
@@ -579,7 +583,10 @@ public sealed class MobileShellViewModelTests
             Assert.Equal(logPath, request.SourcePath);
             Assert.Equal(DiagnosticSupportContact.EmailAddress, request.Recipient);
             Assert.Equal(context.Strings.Get(MobileStringKeys.DiagnosticLogEmailSubject), request.Subject);
-            Assert.Equal(context.Strings.Get(MobileStringKeys.DiagnosticLogEmailBody), request.Body);
+            Assert.StartsWith(context.Strings.Get(MobileStringKeys.DiagnosticLogEmailBody), request.Body);
+            Assert.Contains("Synthetic Phone", request.Body);
+            Assert.DoesNotContain(logPath, request.Body);
+            environment.Verify(value => value.Capture(), Times.Once);
             Assert.Equal(
                 context.Strings.Get(MobileStringKeys.DiagnosticLogEmailDraftOpened),
                 context.Sut.NotificationText);
@@ -5259,7 +5266,8 @@ public sealed class MobileShellViewModelTests
         IBrandIconPackService? brandIconPackService = null,
         string? logFilePath = null,
         IAutomaticBackupCoordinator? automaticBackup = null,
-        IAccountListSnapshotService? accountListSnapshots = null)
+        IAccountListSnapshotService? accountListSnapshots = null,
+        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -5381,7 +5389,8 @@ public sealed class MobileShellViewModelTests
             automaticBackup: automaticBackup,
             automaticBackupSnapshots: automaticBackupSnapshots.Object,
             accountListSnapshots: accountListSnapshots,
-            diagnosticLogEmail: diagnosticLogEmail.Object);
+            diagnosticLogEmail: diagnosticLogEmail.Object,
+            diagnosticEnvironment: diagnosticEnvironment);
         return new TestContext(
             sut,
             state,

@@ -66,9 +66,13 @@
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Noch kein Diagnoseprotokoll verfügbar.</value></data>
   <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>Das Diagnoseprotokoll konnte nicht exportiert werden.</value></data>
   <data name="EmailDiagnosticLog" xml:space="preserve"><value>Diagnoseprotokoll per E-Mail senden…</value></data>
-  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Protokolle sind so ausgelegt, dass sie keine Kontogeheimnisse enthalten, können aber Geräte-, System- und Dateipfaddetails enthalten. Prüfen Sie Entwurf und Anhang vor dem Senden.</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Die E-Mail enthält Angaben zu App, Betriebssystem, Laufzeit, Anzeige, Sprache und Protokollstufe; unter Android auch Hersteller und Modell. Dem Systembericht werden keine Kontodaten oder Gerätekennungen hinzugefügt. Protokolle können weiterhin System- und Dateipfaddetails enthalten. Prüfen Sie Entwurf und Anhang vor dem Senden.</value></data>
   <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>OTP Harbor-Diagnoseprotokoll</value></data>
-  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Beschreiben Sie bitte, was passiert ist und welche Schritte zu dem Problem geführt haben. Ein Schnappschuss des Diagnoseprotokolls ist angehängt.</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Beschreiben Sie bitte, was passiert ist und welche Schritte zu dem Problem geführt haben. Prüfen Sie Systembericht und Diagnoseprotokoll vor dem Senden. Hängen Sie das neueste Protokoll manuell an, falls es noch nicht angehängt ist.</value></data>
+  <data name="DiagnosticSystemSummary" xml:space="preserve"><value>Systeminformationen (beim Teilen erfasst)&#10;Erfasst: {0}&#10;App-Version: {1}&#10;Build: {2}&#10;Konfiguration: {3}&#10;Verteilung: {4}&#10;Betriebssystem: {5}&#10;Architektur (App / Betriebssystem): {6}&#10;Laufzeit: {7}&#10;Fenster (logische Pixel); Anzeigeskalierung: {8}&#10;Design: {9}&#10;Sprache: {10}&#10;Protokollstufe: {11}&#10;{12}</value></data>
+  <data name="DiagnosticDeviceSummary" xml:space="preserve"><value>Gerät: {0}</value></data>
+  <data name="DiagnosticPortrait" xml:space="preserve"><value>Hochformat</value></data>
+  <data name="DiagnosticLandscape" xml:space="preserve"><value>Querformat</value></data>
   <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Diagnoseprotokoll senden</value></data>
   <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Wählen Sie eine E-Mail-App, um das Diagnoseprotokoll zu prüfen und zu senden.</value></data>
   <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>Der Diagnose-E-Mail-Entwurf konnte nicht geöffnet werden.</value></data>

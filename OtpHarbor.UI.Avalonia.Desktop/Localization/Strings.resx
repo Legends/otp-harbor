@@ -163,9 +163,13 @@
   <data name="LogFolderOpenFailed" xml:space="preserve"><value>The log folder could not be opened.</value></data>
   <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>The log folder could not be opened safely.</value></data>
   <data name="EmailDiagnosticLog" xml:space="preserve"><value>Email diagnostic log…</value></data>
-  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Logs are designed to exclude account secrets, but may contain device, system, and file-path details. Review the draft and attachment before sending.</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>The email includes app, OS, runtime, display, language and log-level information. No account data or device identifiers are added to the summary. Logs may still contain system and file-path details. Review the draft and attachment before sending.</value></data>
   <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>OTP Harbor diagnostic log</value></data>
-  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Please describe what happened and the steps that led to the problem. A diagnostic log snapshot is attached.</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Please describe what happened and the steps that led to the problem. Review the system summary and diagnostic log before sending; attach the newest log manually if it is not already attached.</value></data>
+  <data name="DiagnosticSystemSummary" xml:space="preserve"><value>System information (collected when sharing)&#10;Collected: {0}&#10;App version: {1}&#10;Build: {2}&#10;Configuration: {3}&#10;Distribution: {4}&#10;OS: {5}&#10;Architecture (app / OS): {6}&#10;Runtime: {7}&#10;Window (logical pixels); display scale: {8}&#10;Theme: {9}&#10;Language: {10}&#10;Log level: {11}&#10;{12}</value></data>
+  <data name="DiagnosticDeviceSummary" xml:space="preserve"><value>Device: {0}</value></data>
+  <data name="DiagnosticPortrait" xml:space="preserve"><value>Portrait</value></data>
+  <data name="DiagnosticLandscape" xml:space="preserve"><value>Landscape</value></data>
   <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Email draft opened with the diagnostic log attached.</value></data>
   <data name="DiagnosticLogEmailManualAttachment" xml:space="preserve"><value>Email draft and log folder opened. Attach the newest log file manually before sending.</value></data>
   <data name="DiagnosticLogEmailManualAttachmentFolderFailed" xml:space="preserve"><value>Email draft opened, but the log folder could not be opened. Use “Open log folder” to attach the newest log manually.</value></data>

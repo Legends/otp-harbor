@@ -66,9 +66,13 @@
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Todavía no hay ningún registro de diagnóstico disponible.</value></data>
   <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>No se pudo exportar el registro de diagnóstico.</value></data>
   <data name="EmailDiagnosticLog" xml:space="preserve"><value>Enviar registro de diagnóstico por correo…</value></data>
-  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Los registros están diseñados para excluir secretos de las cuentas, pero pueden contener detalles del dispositivo, del sistema y de rutas de archivos. Revise el borrador y el archivo adjunto antes de enviarlos.</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>El correo incluye información sobre la aplicación, el sistema, el entorno de ejecución, la pantalla, el idioma y el nivel de registro; en Android también incluye el fabricante y el modelo. No se añaden datos de cuentas ni identificadores de dispositivos al resumen. Los registros pueden contener detalles del sistema y rutas de archivos. Revise el borrador y el archivo adjunto antes de enviarlos.</value></data>
   <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>Registro de diagnóstico de OTP Harbor</value></data>
-  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Describa qué ocurrió y los pasos que llevaron al problema. Se adjunta una copia del registro de diagnóstico.</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Describa qué ocurrió y los pasos que llevaron al problema. Revise el resumen del sistema y el registro de diagnóstico antes de enviarlos; adjunte manualmente el registro más reciente si aún no está adjunto.</value></data>
+  <data name="DiagnosticSystemSummary" xml:space="preserve"><value>Información del sistema (recopilada al compartir)&#10;Fecha: {0}&#10;Versión de la aplicación: {1}&#10;Compilación: {2}&#10;Configuración: {3}&#10;Distribución: {4}&#10;Sistema operativo: {5}&#10;Arquitectura (aplicación / sistema): {6}&#10;Entorno de ejecución: {7}&#10;Ventana (píxeles lógicos); escala de pantalla: {8}&#10;Tema: {9}&#10;Idioma: {10}&#10;Nivel de registro: {11}&#10;{12}</value></data>
+  <data name="DiagnosticDeviceSummary" xml:space="preserve"><value>Dispositivo: {0}</value></data>
+  <data name="DiagnosticPortrait" xml:space="preserve"><value>Vertical</value></data>
+  <data name="DiagnosticLandscape" xml:space="preserve"><value>Horizontal</value></data>
   <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Enviar registro de diagnóstico</value></data>
   <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Elija una aplicación de correo para revisar y enviar el registro de diagnóstico.</value></data>
   <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>No se pudo abrir el borrador del correo de diagnóstico.</value></data>

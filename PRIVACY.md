@@ -1,6 +1,6 @@
 # Privacy policy
 
-OTP Harbor is a local-first desktop application. It does not contain telemetry, analytics, advertising, or a project-operated cloud service. Account labels, OTP seeds, generated codes, passwords, vault contents, exports, application logs, and camera frames are not sent to the project maintainers.
+OTP Harbor is a local-first desktop and Android application. It does not contain telemetry, analytics, advertising, or a project-operated cloud service. Account labels, OTP seeds, generated codes, passwords, vault contents, exports, application logs, and camera frames are not automatically sent to the project maintainers.
 
 ## Network activity
 
@@ -11,6 +11,8 @@ Packages managed by an operating-system package manager or app store use that di
 The application accesses the camera only during a user-initiated QR scan. Camera frames are processed on the device and are not transmitted. Platform quick-unlock services, the clipboard, application-data storage, and log files are also used locally through operating-system interfaces.
 
 If a user explicitly follows a link, downloads a release, reports an issue, or contacts a maintainer, the selected external service processes the information the user chooses to provide under that service's privacy policy. Never include OTP seeds, passwords, recovery data, vault files, or other secrets in a support request.
+
+Choosing to email diagnostic logs opens an editable email/share draft addressed to `otpharbor.support@proton.me`. The draft contains a system summary collected at that time: app version/build/configuration and distribution mode, OS version, CPU architecture, .NET/Avalonia versions, logical window size and display scaling where available, theme, app language, log level, and a UTC collection timestamp. Android also includes its API level, manufacturer, and model; desktop reports do not query computer manufacturer/model. No account/vault data, hardware serial numbers, persistent device identifiers, usernames, computer names, network addresses, screenshots, or clipboard contents are added to this summary. Existing logs may contain system and file-path details despite secret redaction. Users can review or remove the summary and attachment before sending through their chosen email application. Attachments depend on client support; manual attachment may be required. No message is sent automatically.
 
 ## Data retention
 

@@ -18,6 +18,7 @@ using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
+using TOTP.Avalonia.Shared.Diagnostics;
 using TOTP.Core.Validation;
 using TOTP.Avalonia.Shared.Branding;
 using TOTP.Avalonia.Shared.Presentation;
@@ -63,6 +64,7 @@ public sealed class MobileShellViewModel :
     private readonly IAutomaticBackupCoordinator? _automaticBackup;
     private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
     private readonly IDiagnosticLogEmailService? _diagnosticLogEmail;
+    private readonly IDiagnosticEnvironmentProvider? _diagnosticEnvironment;
     private Task _brandIconInitializationTask = Task.CompletedTask;
     private Task _automaticBackupInitializationTask = Task.CompletedTask;
     private readonly MobileAsyncCommand _initializeCommand;
@@ -305,7 +307,8 @@ public sealed class MobileShellViewModel :
         IAutomaticBackupCoordinator? automaticBackup = null,
         IAutomaticBackupSnapshotService? automaticBackupSnapshots = null,
         IAccountListSnapshotService? accountListSnapshots = null,
-        IDiagnosticLogEmailService? diagnosticLogEmail = null)
+        IDiagnosticLogEmailService? diagnosticLogEmail = null,
+        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
@@ -334,6 +337,7 @@ public sealed class MobileShellViewModel :
         _automaticBackup = automaticBackup;
         _automaticBackupSnapshots = automaticBackupSnapshots;
         _diagnosticLogEmail = diagnosticLogEmail;
+        _diagnosticEnvironment = diagnosticEnvironment;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged += AutomaticBackupStatusChanged;
@@ -3785,7 +3789,13 @@ public sealed class MobileShellViewModel :
                 attachmentName,
                 DiagnosticSupportContact.EmailAddress,
                 Get(MobileStringKeys.DiagnosticLogEmailSubject),
-                Get(MobileStringKeys.DiagnosticLogEmailBody),
+                DiagnosticEmailBody.Format(
+                    Get(MobileStringKeys.DiagnosticLogEmailBody),
+                    Get(MobileStringKeys.DiagnosticSystemSummary),
+                    Get(MobileStringKeys.DiagnosticDeviceSummary),
+                    Get(MobileStringKeys.ThemeDark), Get(MobileStringKeys.ThemeLight),
+                    MinimumLogLevel.ToString(), _diagnosticEnvironment, _strings.Culture.Name,
+                    Get(MobileStringKeys.DiagnosticPortrait), Get(MobileStringKeys.DiagnosticLandscape)),
                 Get(MobileStringKeys.DiagnosticLogEmailChooser)));
             if (result.IsSuccess)
                 SetSuccess(MobileStringKeys.DiagnosticLogEmailDraftOpened);

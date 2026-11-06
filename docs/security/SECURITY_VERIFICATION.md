@@ -114,6 +114,10 @@ Workflow: `.github/workflows/security-audit.yml`
 - The native splash uses an Android animated vector with a looping 3.2-second rotation of three stars. Its static logo is a vector rendition of the existing project-owned icon. No new sensitive data flow, persistence, localization, or migration is introduced.
 - Regression coverage checks both readiness orders, duplicate readiness notifications, backgrounding, cancellation/password fallback, animation format/speed, and star safe bounds. All 189 focused checks passed; the Android build completed without warnings/errors. On 2026-11-05 the maintainer confirmed the updated development build resolved the pause on the physical Android phone. Animation format and sequencing changed together; their individual causal contributions were not isolated.
 
+## User-initiated diagnostic system summary (2026-11-06)
+
+The existing log-email draft adds an allowlisted, localized environment summary only when the user selects the email action. Desktop composition supplies its main window, assembly metadata and distribution mode; Android additionally supplies manufacturer/model/API and installed app version. Optional OS/UI metadata failures preserve the draft with available information. The collector does not query accounts, vaults, credentials, clipboard, screenshots, hardware identifiers, usernames, machine names, network addresses or filesystem paths. Existing redacted-log attachment and manual-attachment fallbacks are unchanged. No authorization, crypto, vault/backup format or migration changes are involved. The email client retains user control over review and sending. Regression tests cover active-language formatting, platform-specific device inclusion, on-demand collection, metadata failure fallback and both email entry points; physical draft rendering remains a manual acceptance check.
+
 ## Exception Handling
 When a finding cannot be fixed immediately:
 1. Create a tracked issue with:
