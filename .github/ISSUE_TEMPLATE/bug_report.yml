@@ -7,22 +7,19 @@ body:
     attributes:
       value: |
         Thanks for helping improve OTP Harbor. Never attach real OTP seeds, QR codes, passwords, vaults, backups, codes, or unreviewed logs. Report security vulnerabilities privately through the repository Security policy instead.
-  - type: dropdown
+  - type: input
     id: platform
     attributes:
       label: Platform
-      options:
-        - Windows 10/11
-        - macOS ARM64
-        - Linux x64
-        - Android 9+
+      description: The app prefills this when you choose Report on GitHub. Please check the OS version.
+      placeholder: Windows, macOS, Linux or Android, including the OS version
     validations:
       required: true
   - type: input
     id: version
     attributes:
       label: OTP Harbor version or commit
-      placeholder: v2.0.0-rc10 or full commit SHA
+      placeholder: Installed app version or full commit SHA
     validations:
       required: true
   - type: textarea
