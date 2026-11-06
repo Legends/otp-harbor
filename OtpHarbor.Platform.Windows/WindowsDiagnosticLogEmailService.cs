@@ -1,4 +1,5 @@
 using FluentResults;
+using Microsoft.Extensions.Logging;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using Windows.ApplicationModel.Email;
@@ -61,7 +62,8 @@ public sealed class WindowsEmailComposer : IWindowsEmailComposer
 public sealed class WindowsDiagnosticLogEmailService(
     IPlatformApplicationPaths applicationPaths,
     IPlatformFileSecurity fileSecurity,
-    IWindowsEmailComposer emailComposer) : IDiagnosticLogEmailService
+    IWindowsEmailComposer emailComposer,
+    ILogger<WindowsDiagnosticLogEmailService>? logger = null) : IDiagnosticLogEmailService
 {
     internal const long MaximumAttachmentBytes = 10 * 1024 * 1024;
     private readonly string _logDirectory = Path.GetFullPath(applicationPaths.LogDirectory);
@@ -94,19 +96,22 @@ public sealed class WindowsDiagnosticLogEmailService(
                     normalizedRequest,
                     snapshotPath,
                     cancellationToken).ConfigureAwait(false);
+                logger?.LogInformation("Diagnostic email draft opened with attachment.");
                 return Result.Ok(DiagnosticLogEmailOutcome.AttachmentIncluded);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
             }
-            catch
+            catch (Exception exception)
             {
+                logger?.LogDebug("Diagnostic attachment handoff unavailable. Exception type: {ExceptionType}.", exception.GetType().Name);
                 TryDelete(snapshotPath);
                 snapshotPath = null;
                 await emailComposer.OpenDraftWithoutAttachmentAsync(
                     normalizedRequest,
                     cancellationToken).ConfigureAwait(false);
+                logger?.LogInformation("Diagnostic email draft opened with manual attachment fallback.");
                 return Result.Ok(DiagnosticLogEmailOutcome.ManualAttachmentRequired);
             }
         }
@@ -116,6 +121,7 @@ public sealed class WindowsDiagnosticLogEmailService(
         }
         catch (Exception ex)
         {
+            logger?.LogError("Diagnostic email draft failed. Exception type: {ExceptionType}.", ex.GetType().Name);
             if (snapshotPath is not null) TryDelete(snapshotPath);
             return Result.Fail<DiagnosticLogEmailOutcome>(new ExceptionalError(
                 "The diagnostic email draft could not be opened.", ex));

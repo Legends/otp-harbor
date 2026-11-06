@@ -118,6 +118,12 @@ Workflow: `.github/workflows/security-audit.yml`
 
 The existing log-email draft adds an allowlisted, localized environment summary only when the user selects the email action. Desktop composition supplies its main window, assembly metadata and distribution mode; Android additionally supplies manufacturer/model/API and installed app version. Optional OS/UI metadata failures preserve the draft with available information. The collector does not query accounts, vaults, credentials, clipboard, screenshots, hardware identifiers, usernames, machine names, network addresses or filesystem paths. Existing redacted-log attachment and manual-attachment fallbacks are unchanged. No authorization, crypto, vault/backup format or migration changes are involved. The email client retains user control over review and sending. Regression tests cover active-language formatting, platform-specific device inclusion, on-demand collection, metadata failure fallback and both email entry points; physical draft rendering remains a manual acceptance check.
 
+## Operational logging coverage (2026-11-06)
+
+All six configured levels reach the shared Serilog pipeline; desktop's Microsoft logging filter is explicitly Trace, matching Android. Shared services now emit startup/workflow milestones and result status/count events for account CRUD/import/export, preferences, authorization, automatic backups and email integration. Verbose/Debug record bounded workflow details rather than per-frame/per-token activity; failed/cancelled operations retain their existing return and authorization behavior. Android fatal handling flushes the existing asynchronous sink.
+
+Threat/data-flow review: new events contain fixed templates, numeric counts/timings, program enum/method names and exception type only. Account/QR/secret/password/key/URI/error payloads are never passed to new logging calls. Counts and unlock/lock activity are diagnostic metadata retained locally and shared only through the existing user-reviewed email flow. Redaction and storage formats are unchanged; no vault/KDF/migration policy changes. Regression evidence includes all six level thresholds through actual async rolling-file output, a real ten-account Google QR fixture with issuer/name/seed/payload absence assertions, result-error omission, startup-to-email file discovery, the desktop filter registration, and the full Release suite. Physical Android verification remains pending while no device is connected.
+
 ## Exception Handling
 When a finding cannot be fixed immediately:
 1. Create a tracked issue with:

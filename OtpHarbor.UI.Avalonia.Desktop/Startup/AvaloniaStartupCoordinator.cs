@@ -93,9 +93,13 @@ public sealed class AvaloniaStartupCoordinator(
             return AvaloniaStartupOutcome.UnexpectedFailure;
         }
 
-        void RecordCompleted(bool succeeded) => startupDiagnostics?.Record(
-            StartupDiagnosticStage.Completed,
-            Stopwatch.GetElapsedTime(totalStarted),
-            succeeded);
+        void RecordCompleted(bool succeeded)
+        {
+            var elapsed = Stopwatch.GetElapsedTime(totalStarted);
+            logger.Log(succeeded ? LogLevel.Information : LogLevel.Error,
+                "Desktop startup completed. Success: {Success}; duration: {ElapsedMilliseconds} ms.",
+                succeeded, elapsed.TotalMilliseconds);
+            startupDiagnostics?.Record(StartupDiagnosticStage.Completed, elapsed, succeeded);
+        }
     }
 }

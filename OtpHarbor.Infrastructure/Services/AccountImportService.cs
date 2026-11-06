@@ -1,4 +1,6 @@
 using FluentResults;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
@@ -6,8 +8,10 @@ using TOTP.Core.Validation;
 
 namespace TOTP.Infrastructure.Services;
 
-public sealed class AccountImportService(IAccountManager accountManager) : IAccountImportService
+public sealed class AccountImportService(IAccountManager accountManager,
+    ILogger<AccountImportService>? logger = null) : IAccountImportService
 {
+    private readonly ILogger<AccountImportService> _logger = logger ?? NullLogger<AccountImportService>.Instance;
     private const int MaximumImportAccounts = 10_000;
 
     public async Task<Result<AccountImportOutcome>> ImportAsync(
@@ -88,11 +92,50 @@ public sealed class AccountImportService(IAccountManager accountManager) : IAcco
         bool profileAuthoritative,
         CancellationToken cancellationToken)
     {
+        _logger.LogDebug("Account import started. Incoming count: {IncomingCount}; backup restore: {IsBackupRestore}.",
+            importedAccounts.Count, profileAuthoritative);
+        Result<AccountImportOutcome> result;
+        try
+        {
+            result = await ExecuteImportAsync(importedAccounts, requestedStrategy, confirmAsync,
+                resolveAsync, profileAuthoritative, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogDebug("Account import cancelled.");
+            throw;
+        }
+        if (result.IsFailed)
+            _logger.LogError("Account import failed safely.");
+        else
+        {
+            var outcome = result.Value;
+            var level = outcome.Status switch
+            {
+                AccountImportStatus.Completed => LogLevel.Information,
+                AccountImportStatus.Cancelled => LogLevel.Debug,
+                _ => LogLevel.Warning
+            };
+            _logger.Log(level, "Account import finished. Status: {Status}; added: {Added}; replaced: {Replaced}; skipped: {Skipped}.",
+                outcome.Status, outcome.Added, outcome.Replaced, outcome.Skipped);
+        }
+        return result;
+    }
+
+    private async Task<Result<AccountImportOutcome>> ExecuteImportAsync(
+        IReadOnlyList<Account> importedAccounts,
+        ImportConflictStrategy? requestedStrategy,
+        Func<AccountImportPreview, CancellationToken, Task<bool>>? confirmAsync,
+        Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>? resolveAsync,
+        bool profileAuthoritative,
+        CancellationToken cancellationToken)
+    {
 
         try
         {
             if (!TryValidate(importedAccounts, out var validated))
                 return Result.Ok(new AccountImportOutcome(AccountImportStatus.InvalidTargets));
+            _logger.LogTrace("Account import validation completed. Valid account count: {AccountCount}.", validated.Count);
 
             var currentResult = await accountManager.GetAllOtpEntriesSortedAsync();
             if (currentResult.IsFailed)

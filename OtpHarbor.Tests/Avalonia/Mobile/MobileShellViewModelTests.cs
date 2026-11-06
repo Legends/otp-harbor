@@ -3,6 +3,8 @@ using System.Collections.Specialized;
 using Avalonia.Media;
 using FluentResults;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using Moq;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
@@ -596,6 +598,48 @@ public sealed class MobileShellViewModelTests
             if (Directory.Exists(logDirectory))
                 Directory.Delete(logDirectory, recursive: true);
         }
+    }
+
+    [Fact]
+    public async Task EmailDiagnosticLogAsync_AfterStartup_FindsNewRollingLog()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"otp-mobile-startup-log-{Guid.NewGuid():N}");
+        try
+        {
+            var configuredPath = Path.Combine(root, "app.log");
+            using var sink = new Serilog.LoggerConfiguration().MinimumLevel.Verbose()
+                .WriteTo.Async(write => write.File(
+                    new TOTP.Infrastructure.Logging.RedactingTextFormatter("{Level:u3} {Message:lj}{NewLine}"),
+                    configuredPath, rollingInterval: Serilog.RollingInterval.Day, shared: true)).CreateLogger();
+            using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Trace).AddSerilog(sink));
+            var context = CreateContext(isConfigured: true, appLockEnabled: false,
+                logFilePath: configuredPath, logger: factory.CreateLogger<MobileShellViewModel>());
+            context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+                .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+            context.DiagnosticLogEmail.Setup(value => value.OpenDraftAsync(
+                It.IsAny<DiagnosticLogEmailRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Ok(DiagnosticLogEmailOutcome.AttachmentIncluded));
+
+            await context.Sut.InitializeAsync();
+            string ReadLog(string path)
+            {
+                using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var reader = new StreamReader(file);
+                return reader.ReadToEnd();
+            }
+            await WaitUntilAsync(() => Directory.Exists(root) && Directory.EnumerateFiles(root, "app*.log")
+                .Any(path => ReadLog(path).Contains("Mobile application startup completed", StringComparison.Ordinal)));
+            await context.Sut.ShowSettingsAsync();
+            context.Sut.ShowMiscSettingsCommand.Execute(null);
+            await context.Sut.EmailDiagnosticLogAsync();
+
+            context.DiagnosticLogEmail.Verify(value => value.OpenDraftAsync(
+                It.Is<DiagnosticLogEmailRequest>(request => File.Exists(request.SourcePath)),
+                It.IsAny<CancellationToken>()), Times.Once);
+            Assert.Contains("Mobile application startup completed", ReadLog(
+                Directory.EnumerateFiles(root, "app*.log").Single()));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
     }
 
     [Fact]
@@ -5267,7 +5311,8 @@ public sealed class MobileShellViewModelTests
         string? logFilePath = null,
         IAutomaticBackupCoordinator? automaticBackup = null,
         IAccountListSnapshotService? accountListSnapshots = null,
-        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null)
+        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
+        ILogger<MobileShellViewModel>? logger = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -5390,7 +5435,8 @@ public sealed class MobileShellViewModelTests
             automaticBackupSnapshots: automaticBackupSnapshots.Object,
             accountListSnapshots: accountListSnapshots,
             diagnosticLogEmail: diagnosticLogEmail.Object,
-            diagnosticEnvironment: diagnosticEnvironment);
+            diagnosticEnvironment: diagnosticEnvironment,
+            logger: logger);
         return new TestContext(
             sut,
             state,

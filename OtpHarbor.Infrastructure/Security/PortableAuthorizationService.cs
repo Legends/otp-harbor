@@ -65,6 +65,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         }
 
         ApplySessionState();
+        _logger.LogDebug("Portable authorization initialized. Configured: {IsConfigured}.", State.IsConfigured);
     }
 
     public async Task<bool> IsHelloAvailableAsync() =>
@@ -332,8 +333,10 @@ public sealed class PortableAuthorizationService : IAuthorizationService
 
     public void Lock()
     {
+        var wasUnlocked = State.IsUnlocked;
         _securityContext.Lock();
         State.Lock();
+        if (wasUnlocked) _logger.LogInformation("Vault locked.");
     }
 
     private AuthorizationResult CompleteUnlock(
@@ -355,6 +358,9 @@ public sealed class PortableAuthorizationService : IAuthorizationService
             State.SetConfiguration(State.IsConfigured, PreferredUnlockMethod.Password);
         }
 
+        _logger.Log(result.Value == AuthorizationResult.Success ? LogLevel.Information
+                : result.Value == AuthorizationResult.Cancelled ? LogLevel.Debug : LogLevel.Warning,
+            "Vault unlock completed. Outcome: {Outcome}.", result.Value);
         return result.Value;
     }
 

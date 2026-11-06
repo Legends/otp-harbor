@@ -7,6 +7,8 @@ using System.Windows.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using FluentResults;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Core.Backup;
@@ -65,6 +67,7 @@ public sealed class MobileShellViewModel :
     private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
     private readonly IDiagnosticLogEmailService? _diagnosticLogEmail;
     private readonly IDiagnosticEnvironmentProvider? _diagnosticEnvironment;
+    private readonly ILogger<MobileShellViewModel> _logger;
     private Task _brandIconInitializationTask = Task.CompletedTask;
     private Task _automaticBackupInitializationTask = Task.CompletedTask;
     private readonly MobileAsyncCommand _initializeCommand;
@@ -308,7 +311,8 @@ public sealed class MobileShellViewModel :
         IAutomaticBackupSnapshotService? automaticBackupSnapshots = null,
         IAccountListSnapshotService? accountListSnapshots = null,
         IDiagnosticLogEmailService? diagnosticLogEmail = null,
-        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null)
+        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
+        ILogger<MobileShellViewModel>? logger = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
@@ -338,6 +342,7 @@ public sealed class MobileShellViewModel :
         _automaticBackupSnapshots = automaticBackupSnapshots;
         _diagnosticLogEmail = diagnosticLogEmail;
         _diagnosticEnvironment = diagnosticEnvironment;
+        _logger = logger ?? NullLogger<MobileShellViewModel>.Instance;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged += AutomaticBackupStatusChanged;
@@ -2339,6 +2344,7 @@ public sealed class MobileShellViewModel :
             OnPropertyChanged(nameof(AllowScreenshots));
             OnPropertyChanged(nameof(IsScreenCaptureProtectionRequired));
             _logSwitchService?.SetLevel(_settings.Current.MinimumLogLevel);
+            _logger.LogDebug("Mobile startup preferences loaded. Log level: {LogLevel}.", _settings.Current.MinimumLogLevel);
             _strings.ApplyCulture(_settings.Current.CultureName);
             NotifyLocalizedTextChanged();
             SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
@@ -2373,13 +2379,15 @@ public sealed class MobileShellViewModel :
                 ? MobileScreen.Unlock
                 : MobileScreen.Onboarding);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            _logger.LogError("Mobile startup failed with exception type {ExceptionType}.", exception.GetType().Name);
             FailStartup();
         }
         finally
         {
             IsInitialized = !_startupFailed;
+            if (IsInitialized) _logger.LogInformation("Mobile application startup completed.");
             IsBusy = false;
             if (_onboardingPreviewRequested)
             {
@@ -3158,6 +3166,7 @@ public sealed class MobileShellViewModel :
             if (saved.IsSuccess)
             {
                 _logSwitchService?.SetLevel(level);
+                _logger.LogInformation("Mobile diagnostic log level changed to {LogLevel}.", level);
                 ClearNotification();
                 return;
             }
@@ -6533,6 +6542,7 @@ public sealed class MobileShellViewModel :
 
     private void FailStartup()
     {
+        _logger.LogError("Mobile application startup failed safely.");
         _startupFailed = true;
         SetScreen(MobileScreen.Starting);
         SetError(MobileStringKeys.StartupFailed);

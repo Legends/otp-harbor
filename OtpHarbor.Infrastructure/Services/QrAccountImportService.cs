@@ -1,4 +1,6 @@
 using FluentResults;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
@@ -7,8 +9,10 @@ using TOTP.Infrastructure.Parser;
 
 namespace TOTP.Infrastructure.Services;
 
-public sealed class QrAccountImportService(IAccountManager accounts) : IQrAccountImportService
+public sealed class QrAccountImportService(IAccountManager accounts,
+    ILogger<QrAccountImportService>? logger = null) : IQrAccountImportService
 {
+    private readonly ILogger<QrAccountImportService> _logger = logger ?? NullLogger<QrAccountImportService>.Instance;
     private const int MaximumPayloadLength = 4096;
 
     private enum PlannedWriteKind
@@ -50,6 +54,38 @@ public sealed class QrAccountImportService(IAccountManager accounts) : IQrAccoun
     }
 
     public async Task<Result<QrAccountImportOutcome>> ImportWithConflictResolutionAsync(
+        string decodedPayload,
+        Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>> resolveImport,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(resolveImport);
+        _logger.LogDebug("QR account import started.");
+        _logger.LogTrace("QR account import validation requested.");
+        try
+        {
+            var result = await ExecuteImportAsync(decodedPayload, resolveImport, cancellationToken);
+            if (result.IsFailed)
+                _logger.LogWarning("QR account import could not be completed.");
+            else
+                _logger.Log(result.Value.Status == QrAccountImportStatus.Cancelled ? LogLevel.Debug : LogLevel.Information,
+                    "QR account import finished. Status: {Status}; imported: {ImportedCount}; skipped: {SkippedCount}; failed: {FailedCount}.",
+                    result.Value.Status, result.Value.ImportedCount,
+                    result.Value.UnchangedOrSkippedCount, result.Value.FailedCount);
+            return result;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogDebug("QR account import cancelled.");
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError("QR account import failed with exception type {ExceptionType}.", exception.GetType().Name);
+            throw;
+        }
+    }
+
+    private async Task<Result<QrAccountImportOutcome>> ExecuteImportAsync(
         string decodedPayload,
         Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>> resolveImport,
         CancellationToken cancellationToken = default)

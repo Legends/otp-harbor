@@ -1,6 +1,7 @@
 using Android.Content;
 using AndroidX.Core.Content;
 using FluentResults;
+using Microsoft.Extensions.Logging;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 
@@ -8,7 +9,8 @@ namespace TOTP.Avalonia.Android;
 
 internal sealed class AndroidDiagnosticLogEmailService(
     AndroidActivityProvider activityProvider,
-    IPlatformApplicationPaths applicationPaths) : IDiagnosticLogEmailService
+    IPlatformApplicationPaths applicationPaths,
+    ILogger<AndroidDiagnosticLogEmailService>? logger = null) : IDiagnosticLogEmailService
 {
     private const long MaximumAttachmentBytes = 10 * 1024 * 1024;
     private const string ShareDirectoryName = "diagnostic-log-share";
@@ -53,6 +55,7 @@ internal sealed class AndroidDiagnosticLogEmailService(
                 ?? throw new InvalidOperationException("The Android share chooser is unavailable.");
             chooser.AddFlags(ActivityFlags.GrantReadUriPermission);
             activity.StartActivity(chooser);
+            logger?.LogInformation("Android diagnostic log share chooser opened.");
             return FluentResults.Result.Ok(DiagnosticLogEmailOutcome.AttachmentIncluded);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -61,6 +64,7 @@ internal sealed class AndroidDiagnosticLogEmailService(
         }
         catch (Exception ex)
         {
+            logger?.LogError("Android diagnostic log sharing failed. Exception type: {ExceptionType}.", ex.GetType().Name);
             if (snapshotPath is not null) TryDelete(snapshotPath);
             return FluentResults.Result.Fail<DiagnosticLogEmailOutcome>(new ExceptionalError(
                 "The diagnostic email draft could not be opened.", ex));

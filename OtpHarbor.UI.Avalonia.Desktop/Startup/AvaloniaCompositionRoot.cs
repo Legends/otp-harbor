@@ -80,7 +80,8 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton(new OnboardingPreviewOptions(false));
 #endif
         services.AddSingleton<IPlatformApplicationPaths>(platformServices.ApplicationPaths);
-        services.AddLogging(builder => builder.AddSerilog(Log.Logger, dispose: false));
+        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Trace)
+            .AddSerilog(Log.Logger, dispose: false));
 #if TOTP_PLATFORM_WINDOWS
         services.AddSingleton<IPlatformSessionEventSource, TOTP.Platform.Windows.WindowsSessionEventSource>();
         services.AddSingleton<IHelloPromptWindowHandleProvider, AvaloniaHelloPromptWindowHandleProvider>();

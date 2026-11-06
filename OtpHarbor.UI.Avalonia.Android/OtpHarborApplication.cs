@@ -103,6 +103,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 
     public void NotifyEnteredBackground(bool lockImmediately)
     {
+        Log.Debug("Android application entered the background.");
         _services?.GetService<IMobileLifecycleSink>()?.OnEnteredBackground(lockImmediately);
     }
 
@@ -210,6 +211,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 
     public void NotifyReturnedToForeground()
     {
+        Log.Debug("Android application returned to the foreground.");
         _services?.GetService<IMobileLifecycleSink>()?.OnReturnedToForeground();
     }
 
@@ -250,5 +252,6 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
         global::Android.Util.Log.Error(
             "OtpHarborCrash",
             $"{boundary}: {sanitizedDiagnostic}");
+        LoggingConfigurator.Shutdown();
     }
 }

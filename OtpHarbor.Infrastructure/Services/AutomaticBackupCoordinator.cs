@@ -289,6 +289,7 @@ public sealed class AutomaticBackupCoordinator : IAutomaticBackupCoordinator
                     var healthy = await RecordSuccessAsync(cancellationToken);
                     if (healthy.IsFailed) return Result.Fail<AutomaticBackupRunResult>(healthy.Errors);
                     SetStatus(CreateStatus(AutomaticBackupStatusKind.UpToDate));
+                    _logger.LogDebug("Automatic backup verified as up to date.");
                     return Result.Ok(new AutomaticBackupRunResult(
                         AutomaticBackupRunStatus.UpToDate,
                         _configuration.LastSuccessfulUtc));
@@ -328,6 +329,7 @@ public sealed class AutomaticBackupCoordinator : IAutomaticBackupCoordinator
             _configuration = updatedConfiguration;
             await ApplyRetentionAsync(destination, cancellationToken);
             SetStatus(CreateStatus(AutomaticBackupStatusKind.Succeeded));
+            _logger.LogInformation("Encrypted automatic backup created successfully.");
             return Result.Ok(new AutomaticBackupRunResult(AutomaticBackupRunStatus.Created, createdUtc));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -381,6 +383,7 @@ public sealed class AutomaticBackupCoordinator : IAutomaticBackupCoordinator
         AutomaticBackupStatusKind statusKind,
         CancellationToken cancellationToken)
     {
+        _logger.LogWarning("Automatic backup did not complete. Failure kind: {FailureKind}.", failureKind);
         if (_configuration is null)
         {
             SetStatus(AutomaticBackupStatus.NotConfigured with { Kind = statusKind });

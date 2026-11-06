@@ -55,6 +55,7 @@ public sealed class PortableSettingsService : ISettingsService, IDisposable
             }
 
             _isLoaded = true;
+            _logger.LogDebug("Portable application preferences loaded.");
             return Result.Ok<IAppSettings>(_current);
         }
         catch (Exception ex)
@@ -84,6 +85,7 @@ public sealed class PortableSettingsService : ISettingsService, IDisposable
                 return saved;
             }
 
+            _logger.LogInformation("Portable application preferences saved.");
             return Result.Ok();
         }
         catch (Exception ex)

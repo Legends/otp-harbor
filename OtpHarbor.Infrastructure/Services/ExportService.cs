@@ -137,8 +137,10 @@ public sealed class ExportService : IExportService
         try
         {
             payloadBytes = Encoding.UTF8.GetBytes(SerializeTokens(accounts, format));
+            _logger.LogDebug("Account export prepared. Format: {Format}; encrypted: {Encrypted}.", format, false);
             await destination.WriteAsync(payloadBytes, cancellationToken);
             await destination.FlushAsync(cancellationToken);
+            _logger.LogInformation("Account export completed. Format: {Format}; encrypted: {Encrypted}.", format, false);
             return Result.Ok();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -176,6 +178,7 @@ public sealed class ExportService : IExportService
         try
         {
             plaintext = Encoding.UTF8.GetBytes(SerializeTokens(accounts, format));
+            _logger.LogDebug("Account export prepared. Format: {Format}; encrypted: {Encrypted}.", format, true);
             passwordBytes = Encoding.UTF8.GetBytes(password);
             salt = RandomNumberGenerator.GetBytes(SaltSize);
             nonce = RandomNumberGenerator.GetBytes(VaultAesGcm.NonceSize);
@@ -193,6 +196,7 @@ public sealed class ExportService : IExportService
             await destination.WriteAsync(nonce, cancellationToken);
             await destination.WriteAsync(ciphertextWithTag, cancellationToken);
             await destination.FlushAsync(cancellationToken);
+            _logger.LogInformation("Account export completed. Format: {Format}; encrypted: {Encrypted}.", format, true);
             return Result.Ok();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -247,7 +251,10 @@ public sealed class ExportService : IExportService
         {
             (fileBytes, var length) = await ReadBoundedAsync(source, cancellationToken);
             var content = StrictUtf8.GetString(fileBytes, 0, length);
-            return Result.Ok(DeserializeTokens(content, format));
+            var imported = DeserializeTokens(content, format);
+            _logger.LogInformation("Account import file decoded. Format: {Format}; encrypted: {Encrypted}; account count: {AccountCount}.",
+                format, false, imported.Count);
+            return Result.Ok(imported);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -326,13 +333,17 @@ public sealed class ExportService : IExportService
             }
             catch (CryptographicException)
             {
+                _logger.LogWarning("Encrypted account import could not be authenticated.");
                 return Result.Fail(new AppError(
                     AppErrorCode.ImportWrongPasswordOrTampered,
                     "Import decryption failed."));
             }
 
             var content = StrictUtf8.GetString(decryptedBytes);
-            return Result.Ok(DeserializeTokens(content, format));
+            var imported = DeserializeTokens(content, format);
+            _logger.LogInformation("Account import file decoded. Format: {Format}; encrypted: {Encrypted}; account count: {AccountCount}.",
+                format, true, imported.Count);
+            return Result.Ok(imported);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

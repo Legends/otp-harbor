@@ -17,6 +17,7 @@ internal sealed class AndroidQrScanner(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        logger.LogDebug("Android QR scan requested.");
         var activity = activityProvider.GetCurrent();
         if (activity is null) return MobileQrScanResult.Unavailable;
 
@@ -50,6 +51,7 @@ internal sealed class AndroidQrScanner(
             activity.IsInternalQrScannerActive = true;
             activity.StartActivityForResult(intent, ScanRequestCode);
             var scan = await completion.Task;
+            logger.LogDebug("Android QR scanner returned. Successful result: {Success}.", scan.Code == AndroidResult.Ok);
             if (scan.Code != AndroidResult.Ok)
             {
                 return scan.Data?.GetStringExtra(LiveQrScannerActivity.StatusExtra) switch

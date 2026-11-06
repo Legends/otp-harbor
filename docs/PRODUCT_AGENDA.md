@@ -62,6 +62,13 @@ assumptions. Preserve the existing F-Droid readiness work, but do not change lic
 policy implicitly; large-vault acceptance and onboarding visuals take priority while distribution
 and commercial positioning are evaluated.
 
+## Engineering TODO — behavior-preserving refactoring
+
+- [ ] Unify desktop/Android diagnostic snapshot validation, bounded copying and expiry cleanup in a shared service; retain platform-specific file permissions and email/share integration. Preserve attachment/manual fallback and secret-redaction coverage.
+- [ ] Share latest-log selection behind an asynchronous service so both settings screens use identical matching/error rules without filesystem work on the UI thread.
+- [ ] Extract focused settings/diagnostics collaborators from MobileShellViewModel incrementally, preserving bindings, cancellation, authorization and lifecycle behavior.
+- [ ] Profile synchronous first-draw icon loading with cold caches and large vaults. Consider asynchronous prewarming only if measurements show improvement while retaining visible icons, smooth scrolling and the established splash/biometric/main-screen transition.
+
 ## F-Droid acceptance gate
 
 Do not claim that OTP Harbor is available from the official F-Droid repository until it has been

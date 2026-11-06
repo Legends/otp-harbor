@@ -31,6 +31,8 @@ public sealed class AvaloniaCompositionRootTests
         var languageFlags = new Mock<ILanguageFlagProvider>().Object;
 
         using var services = AvaloniaCompositionRoot.Build(desktopLifetime, languageFlags);
+        Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Trace,
+            services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.Extensions.Logging.LoggerFilterOptions>>().Value.MinLevel);
 
         Assert.Same(
             desktopLifetime,

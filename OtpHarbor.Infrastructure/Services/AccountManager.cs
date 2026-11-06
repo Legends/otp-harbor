@@ -1,4 +1,7 @@
 using FluentResults;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using System.Runtime.CompilerServices;
 using TOTP.Core.Backup;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
@@ -11,8 +14,10 @@ namespace TOTP.Infrastructure.Services;
 /// <param name="otpDal">The data access layer used to persist and retrieve otp information.</param>
 public class AccountManager(
     IAccountDAL otpDal,
-    IAutomaticBackupCoordinator? automaticBackup = null) : IAccountManager
+    IAutomaticBackupCoordinator? automaticBackup = null,
+    ILogger<AccountManager>? logger = null) : IAccountManager
 {
+    private readonly ILogger<AccountManager> _logger = logger ?? NullLogger<AccountManager>.Instance;
     public async Task<Result> AddNewAsync(Account newItem)
     {
         return TrackMutation(await otpDal.AddNewAsync(newItem));
@@ -63,11 +68,15 @@ public class AccountManager(
         var result = await otpDal.GetAllAsync().ConfigureAwait(false);
 
         if (result.IsFailed)
+        {
+            _logger.LogError("Account list could not be loaded.");
             return result.ToResult();
+        }
 
         result.Value.Sort(new Comparison<Account>((a, b) => string.Compare(a.Issuer, b.Issuer, StringComparison.OrdinalIgnoreCase)));
 
         var allOtps = result.Value ?? [];
+        _logger.LogTrace("Account list loaded. Account count: {AccountCount}.", allOtps.Count);
         return Result.Ok<IReadOnlyList<Account>>(allOtps);
     }
 
@@ -78,11 +87,16 @@ public class AccountManager(
 
     public async Task<Result> BackupOtpEntriesStorageFileAsync()
     {
-        return await otpDal.BackupOtpEntriesStorageFileAsync();
+        var result = await otpDal.BackupOtpEntriesStorageFileAsync();
+        _logger.Log(result.IsSuccess ? LogLevel.Information : LogLevel.Error,
+            "Recovery checkpoint completed. Success: {Success}.", result.IsSuccess);
+        return result;
     }
 
-    private Result TrackMutation(Result result)
+    private Result TrackMutation(Result result, [CallerMemberName] string operation = "")
     {
+        _logger.Log(result.IsSuccess ? LogLevel.Information : LogLevel.Error,
+            "Account operation {Operation} completed. Success: {Success}.", operation, result.IsSuccess);
         if (result.IsSuccess) automaticBackup?.RequestBackup();
         return result;
     }

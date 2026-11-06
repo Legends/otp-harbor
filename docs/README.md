@@ -6,6 +6,7 @@ This index lists maintained documentation. Git history preserves completed migra
 
 - [Product agenda](PRODUCT_AGENDA.md)
 - [Recovery guide](RECOVERY.md)
+- [Diagnostic logging and level behavior](LOGGING.md)
 - [Public Android user guide](https://legends.github.io/otp-harbor/android/guide/)
 
 ## Development and contribution
