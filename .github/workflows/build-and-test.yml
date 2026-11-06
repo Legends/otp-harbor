@@ -1443,15 +1443,6 @@ jobs:
           Sort-Object -Descending |
           Select-Object -First 1 |
           ForEach-Object { ($_ -split "`t", 2)[1] }
-          # $previousTag = gh release list `
-          #   --repo "${{ github.repository }}" `
-          #   --limit 100 `
-          #   --exclude-drafts `
-          #   --json tagName,publishedAt `
-          #   --jq ".[] | select(.tagName != `"$currentTag`") | [.publishedAt, .tagName] | @tsv" |
-          #   Sort-Object -Descending |
-          #   Select-Object -First 1 |
-          #   ForEach-Object { ($_ -split "`t", 2)[1] }
           if ([string]::IsNullOrWhiteSpace($previousTag)) {
             throw "A previous published release is required to generate the change summary."
           }
@@ -1615,9 +1606,6 @@ jobs:
               'OtpHarbor.Platform.Android')
             @(git log "$previousTag..$currentTag" --no-merges --pretty=format:'- %s (`%h`)' -- $releasePaths)
           }
-          # if ($LASTEXITCODE -ne 0 -or $changes.Count -eq 0) {
-          #   throw "The Android release contains no changes after '$previousTag'."
-          # }
           if ($LASTEXITCODE -ne 0) {
               throw "Failed to generate Android release changelog."
           }

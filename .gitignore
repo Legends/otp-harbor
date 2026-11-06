@@ -81,8 +81,6 @@ cert.txt
 _ReSharper*/
 *.DotSettings.user
 
-# Rider
-.idea/
 /ResXManager.config.xml
 
 # Decompiled/re-signed third-party artifacts (must not be committed)
