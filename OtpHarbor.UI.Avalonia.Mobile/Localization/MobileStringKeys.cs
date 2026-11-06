@@ -69,6 +69,11 @@ public static class MobileStringKeys
     public const string DiagnosticLogEmailBody = nameof(DiagnosticLogEmailBody);
     public const string DiagnosticSystemSummary = nameof(DiagnosticSystemSummary);
     public const string DiagnosticDeviceSummary = nameof(DiagnosticDeviceSummary);
+    public const string ReportProblemTitle = nameof(ReportProblemTitle);
+    public const string ReportOnGitHub = nameof(ReportOnGitHub);
+    public const string GitHubReportNotice = nameof(GitHubReportNotice);
+    public const string GitHubReportOpened = nameof(GitHubReportOpened);
+    public const string GitHubReportFailed = nameof(GitHubReportFailed);
     public const string DiagnosticPortrait = nameof(DiagnosticPortrait);
     public const string DiagnosticLandscape = nameof(DiagnosticLandscape);
     public const string DiagnosticLogEmailChooser = nameof(DiagnosticLogEmailChooser);
@@ -465,6 +470,11 @@ public static class MobileStringKeys
         DiagnosticLogEmailBody,
         DiagnosticSystemSummary,
         DiagnosticDeviceSummary,
+        ReportProblemTitle,
+        ReportOnGitHub,
+        GitHubReportNotice,
+        GitHubReportOpened,
+        GitHubReportFailed,
         DiagnosticPortrait,
         DiagnosticLandscape,
         DiagnosticLogEmailChooser,

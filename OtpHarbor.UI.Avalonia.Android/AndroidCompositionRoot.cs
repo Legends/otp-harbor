@@ -53,6 +53,15 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IMobileQrImageFactory, MobileQrImageFactory>();
         services.AddSingleton<IMobileDocumentService, AndroidDocumentService>();
         services.AddSingleton<IDiagnosticLogEmailService, AndroidDiagnosticLogEmailService>();
+        services.AddSingleton<AndroidBrowserLauncher>();
+        global::Avalonia.Controls.TopLevel? CurrentTopLevel() =>
+            global::Avalonia.Application.Current?.ApplicationLifetime is
+                global::Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime { MainView: { } view }
+                    ? global::Avalonia.Controls.TopLevel.GetTopLevel(view) : null;
+        services.AddSingleton<IGitHubIssueReporter>(provider => new GitHubIssueReporter(
+            provider.GetRequiredService<IDiagnosticEnvironmentProvider>(),
+            provider.GetRequiredService<AndroidBrowserLauncher>().OpenAsync,
+            provider.GetRequiredService<ILogger<GitHubIssueReporter>>()));
         services.AddSingleton<IDiagnosticEnvironmentProvider>(new DiagnosticEnvironmentProvider(
             typeof(AndroidCompositionRoot).Assembly,
 #if DEBUG
@@ -60,9 +69,7 @@ internal static class AndroidCompositionRoot
 #else
             "direct",
 #endif
-            () => global::Avalonia.Application.Current?.ApplicationLifetime is
-                global::Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime { MainView: { } view }
-                    ? global::Avalonia.Controls.TopLevel.GetTopLevel(view) : null,
+            CurrentTopLevel,
             () => new DiagnosticDevice(AndroidBuild.Manufacturer ?? string.Empty,
                 AndroidBuild.Model ?? string.Empty,
                 $"Android {AndroidBuild.VERSION.Release} (API {(int)AndroidBuild.VERSION.SdkInt})"),

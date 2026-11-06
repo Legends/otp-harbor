@@ -542,6 +542,11 @@ public static class AvaloniaStringKeys
     public const string DiagnosticLogEmailBody = nameof(DiagnosticLogEmailBody);
     public const string DiagnosticSystemSummary = nameof(DiagnosticSystemSummary);
     public const string DiagnosticDeviceSummary = nameof(DiagnosticDeviceSummary);
+    public const string ReportProblemTitle = nameof(ReportProblemTitle);
+    public const string ReportOnGitHub = nameof(ReportOnGitHub);
+    public const string GitHubReportNotice = nameof(GitHubReportNotice);
+    public const string GitHubReportOpened = nameof(GitHubReportOpened);
+    public const string GitHubReportFailed = nameof(GitHubReportFailed);
     public const string DiagnosticPortrait = nameof(DiagnosticPortrait);
     public const string DiagnosticLandscape = nameof(DiagnosticLandscape);
     public const string DiagnosticLogEmailDraftOpened = nameof(DiagnosticLogEmailDraftOpened);
@@ -716,6 +721,11 @@ public static class AvaloniaStringKeys
         LogFolderOpenFailedSafely, EmailDiagnosticLog, DiagnosticLogSharingNotice,
         DiagnosticLogEmailSubject, DiagnosticLogEmailBody, DiagnosticLogEmailDraftOpened,
         DiagnosticSystemSummary, DiagnosticDeviceSummary,
+        ReportProblemTitle,
+        ReportOnGitHub,
+        GitHubReportNotice,
+        GitHubReportOpened,
+        GitHubReportFailed,
         DiagnosticPortrait, DiagnosticLandscape,
         DiagnosticLogEmailManualAttachment, DiagnosticLogEmailManualAttachmentFolderFailed,
         DiagnosticLogUnavailable, DiagnosticLogEmailFailed

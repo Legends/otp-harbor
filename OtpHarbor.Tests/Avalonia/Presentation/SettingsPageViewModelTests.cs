@@ -13,6 +13,138 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class SettingsPageViewModelTests
 {
+    [Theory]
+    [InlineData("en", true)]
+    [InlineData("de", false)]
+    [InlineData("fr", true)]
+    [InlineData("es", false)]
+    public async Task ReportOnGitHubAsync_WithoutLogFile_UsesLocalizedResult(string cultureName, bool opened)
+    {
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+        var catalog = new AvaloniaStringCatalog();
+        var language = new LanguageOption(cultureName, cultureName);
+        var localization = new Mock<IAvaloniaLocalizationService>();
+        localization.SetupGet(value => value.CurrentLanguage).Returns(language);
+        localization.SetupGet(value => value.SupportedLanguages).Returns([language]);
+        localization.Setup(value => value.GetString(It.IsAny<string>())).Returns((string key) => catalog.Get(key, culture));
+        var reporter = new Mock<IGitHubIssueReporter>();
+        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        reporter.Setup(value => value.OpenAsync()).Returns(completion.Task);
+        using var sut = new SettingsPageViewModel(CreateSettings(new AppSettings()).Object,
+            localization.Object, gitHubIssueReporter: reporter.Object);
+        Assert.True(sut.ReportOnGitHubCommand.CanExecute(null));
+        var report = sut.ReportOnGitHubAsync();
+        Assert.False(sut.ReportOnGitHubCommand.CanExecute(null));
+        completion.SetResult(opened);
+        await report;
+        Assert.True(sut.ReportOnGitHubCommand.CanExecute(null));
+        Assert.Equal(catalog.Get(opened ? AvaloniaStringKeys.GitHubReportOpened : AvaloniaStringKeys.GitHubReportFailed, culture),
+            sut.LogFolderMessage);
+        reporter.Verify(value => value.OpenAsync(), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(AppLogLevel.Verbose)]
+    [InlineData(AppLogLevel.Debug)]
+    [InlineData(AppLogLevel.Information)]
+    [InlineData(AppLogLevel.Warning)]
+    [InlineData(AppLogLevel.Error)]
+    [InlineData(AppLogLevel.Fatal)]
+    public async Task SaveAsync_AppliesLogLevelOnlyAfterPersistenceCompletes(AppLogLevel level)
+    {
+        var settings = CreateSettings(new AppSettings());
+        var saved = new TaskCompletionSource<Result>(TaskCreationOptions.RunContinuationsAsynchronously);
+        settings.Setup(value => value.SaveAsync()).Returns(saved.Task);
+        var logSwitch = new Mock<ILogSwitchService>();
+        using var sut = new SettingsPageViewModel(settings.Object,
+            autoSaveDelay: TimeSpan.FromHours(1), logSwitchService: logSwitch.Object);
+        sut.MinimumLogLevel = level;
+
+        var save = sut.SaveAsync();
+        logSwitch.Verify(value => value.SetLevel(It.IsAny<AppLogLevel>()), Times.Never);
+        saved.SetResult(Result.Ok());
+        await save;
+
+        Assert.Equal(level, settings.Object.Current.MinimumLogLevel);
+        logSwitch.Verify(value => value.SetLevel(level), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SaveAsync_WhenLogLevelPersistenceFails_DoesNotChangeRuntimeLevel(bool throws)
+    {
+        var settings = CreateSettings(new AppSettings { MinimumLogLevel = AppLogLevel.Information });
+        if (throws) settings.Setup(value => value.SaveAsync()).ThrowsAsync(new IOException("synthetic failure"));
+        else settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Fail("synthetic failure"));
+        var logSwitch = new Mock<ILogSwitchService>();
+        using var sut = new SettingsPageViewModel(settings.Object,
+            autoSaveDelay: TimeSpan.FromHours(1), logSwitchService: logSwitch.Object);
+        sut.MinimumLogLevel = AppLogLevel.Verbose;
+
+        await sut.SaveAsync();
+
+        Assert.Equal(AppLogLevel.Information, settings.Object.Current.MinimumLogLevel);
+        logSwitch.Verify(value => value.SetLevel(It.IsAny<AppLogLevel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithCommandLineOverride_PersistsPreferenceWithoutReplacingOverride()
+    {
+        var settings = CreateSettings(new AppSettings());
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        var logSwitch = new Mock<ILogSwitchService>();
+        logSwitch.SetupGet(value => value.IsCliOverrideActive).Returns(true);
+        using var sut = new SettingsPageViewModel(settings.Object,
+            autoSaveDelay: TimeSpan.FromHours(1), logSwitchService: logSwitch.Object);
+        sut.MinimumLogLevel = AppLogLevel.Verbose;
+
+        await sut.SaveAsync();
+
+        Assert.Equal(AppLogLevel.Verbose, settings.Object.Current.MinimumLogLevel);
+        logSwitch.Verify(value => value.SetLevel(It.IsAny<AppLogLevel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WhenSelectionChangesDuringSave_AppliesPersistedLevel()
+    {
+        var settings = CreateSettings(new AppSettings());
+        var saved = new TaskCompletionSource<Result>(TaskCreationOptions.RunContinuationsAsynchronously);
+        settings.Setup(value => value.SaveAsync()).Returns(saved.Task);
+        var logSwitch = new Mock<ILogSwitchService>();
+        using var sut = new SettingsPageViewModel(settings.Object,
+            autoSaveDelay: TimeSpan.FromHours(1), logSwitchService: logSwitch.Object);
+        sut.MinimumLogLevel = AppLogLevel.Warning;
+        var save = sut.SaveAsync();
+        sut.MinimumLogLevel = AppLogLevel.Verbose;
+
+        saved.SetResult(Result.Ok());
+        await save;
+
+        logSwitch.Verify(value => value.SetLevel(AppLogLevel.Warning), Times.Once);
+        logSwitch.Verify(value => value.SetLevel(AppLogLevel.Verbose), Times.Never);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WhenUnrelatedBrandSettingFails_StillAppliesPersistedLogLevel()
+    {
+        var settings = CreateSettings(new AppSettings());
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        var brands = new Mock<IBrandIconPackService>();
+        brands.Setup(value => value.SetShowIssuerLogoAsync(It.IsAny<bool>()))
+            .ReturnsAsync(Result.Fail("synthetic failure"));
+        var logSwitch = new Mock<ILogSwitchService>();
+        using var sut = new SettingsPageViewModel(settings.Object,
+            autoSaveDelay: TimeSpan.FromHours(1), brandIconPackService: brands.Object,
+            logSwitchService: logSwitch.Object);
+        sut.MinimumLogLevel = AppLogLevel.Verbose;
+
+        await sut.SaveAsync();
+
+        Assert.Equal(AppLogLevel.Verbose, settings.Object.Current.MinimumLogLevel);
+        logSwitch.Verify(value => value.SetLevel(AppLogLevel.Verbose), Times.Once);
+    }
+
     [Fact]
     public void TransientNotices_UseReadableSeverityAwareDefaults()
     {

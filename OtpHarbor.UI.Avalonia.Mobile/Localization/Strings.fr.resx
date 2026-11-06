@@ -60,7 +60,7 @@
   <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Importer des comptes depuis des codes QR ou des fichiers pris en charge.</value></data>
   <data name="Miscellaneous" xml:space="preserve"><value>Divers</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Configurer la journalisation des diagnostics.</value></data>
-  <data name="LoggingLevel" xml:space="preserve"><value>Niveau minimal de journalisation (appliqué après redémarrage)</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Niveau minimal de journalisation</value></data>
   <data name="ExportDiagnosticLog" xml:space="preserve"><value>Exporter le journal de diagnostic…</value></data>
   <data name="DiagnosticLogExported" xml:space="preserve"><value>Journal de diagnostic exporté.</value></data>
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Aucun journal de diagnostic n’est encore disponible.</value></data>
@@ -397,4 +397,9 @@
   <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Échec du point de contrôle de sauvegarde</value></data>
   <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor n’a pas pu créer ou vérifier un point de récupération à jour. Vous pouvez annuler et réessayer, ou confirmer la suppression du compte sans sauvegarde à jour.</value></data>
   <data name="DeleteAnyway" xml:space="preserve"><value>Supprimer quand même</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Signaler un problème avec OTP Harbor</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Signaler sur GitHub</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>Les tickets GitHub sont publics. La version de l’application et le système sont préremplis. Vérifiez le formulaire avant de l’envoyer. N’incluez aucune donnée de compte, aucun secret, code QR, fichier de sauvegarde ou journal non vérifié. Signalez les failles de sécurité en privé.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Vérifiez le formulaire prérempli dans votre navigateur, puis envoyez-le sur GitHub.</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>Le formulaire GitHub n’a pas pu être ouvert. Veuillez réessayer.</value></data>
 </root>

@@ -611,6 +611,11 @@
                                                 Command="{Binding OpenLogFolderCommand}">
                                                 <shared:SymbolIconLabel Kind="Folder" Text="{DynamicResource OpenLogFolder}" />
                                             </Button>
+                                            <TextBlock Classes="section-title" Text="{DynamicResource ReportProblemTitle}" TextWrapping="Wrap" />
+                                            <TextBlock Classes="secondary" Text="{DynamicResource GitHubReportNotice}" TextWrapping="Wrap" />
+                                            <Button x:Name="ReportOnGitHubButton" Classes="wide settings-action" Command="{Binding ReportOnGitHubCommand}">
+                                                <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource ReportOnGitHub}" />
+                                            </Button>
                                         </StackPanel>
                                     </Border>
                                 </ScrollViewer>

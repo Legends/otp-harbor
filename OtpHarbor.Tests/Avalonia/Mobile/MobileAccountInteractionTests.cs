@@ -1185,6 +1185,12 @@ public sealed class MobileAccountInteractionTests
             diagnosticEmail.Elements(),
             element => element.Name.LocalName == "SymbolIconLabel");
         Assert.Equal("Diagnostics", diagnosticEmailLabel.Attribute("Kind")?.Value);
+        var githubReport = Assert.Single(misc.Descendants(avalonia + "Button"),
+            button => button.Attribute("Command")?.Value == "{Binding ReportOnGitHubCommand}");
+        Assert.Equal("wide secondary", githubReport.Attribute("Classes")?.Value);
+        Assert.Contains(misc.Descendants(avalonia + "TextBlock"), text =>
+            text.Attribute("Text")?.Value == "{Binding GitHubReportNoticeText}"
+            && text.Attribute("TextWrapping")?.Value == "Wrap");
         Assert.Contains(
             misc.Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value == "{Binding DiagnosticLogSharingNoticeText}");

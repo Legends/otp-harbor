@@ -155,7 +155,7 @@
   <data name="SystemInterfaceScale" xml:space="preserve"><value>Systemstandard (empfohlen)</value></data>
   <data name="InterfaceScaleRestartRequired" xml:space="preserve"><value>Oberflächengröße gespeichert. Starten Sie die Anwendung neu, um sie anzuwenden.</value></data>
   <data name="OpenExportAfter" xml:space="preserve"><value>Exportordner nach dem Export öffnen</value></data>
-  <data name="LoggingLevel" xml:space="preserve"><value>Minimale Protokollstufe (gilt nach Neustart)</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Minimale Protokollstufe</value></data>
   <data name="About" xml:space="preserve"><value>Info</value></data>
   <data name="Version" xml:space="preserve"><value>Version</value></data>
   <data name="OpenLogFolder" xml:space="preserve"><value>Protokollordner öffnen</value></data>
@@ -551,4 +551,9 @@
   <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>Neue Konten aus dem älteren Tresor: {0}. Automatisch beibehaltene unveränderte Übereinstimmungen: {1}.&#10;&#10;Konten im älteren Tresor:&#10;{2}&#10;&#10;Vor Änderungen ist ein Wiederherstellungspunkt erforderlich. Abbrechen lässt den aktuellen Tresor unverändert.</value></data>
   <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Aktuelle behalten</value></data>
   <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Ältere verwenden</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Ein Problem mit OTP Harbor melden</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Auf GitHub melden</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>GitHub-Issues sind öffentlich. App-Version und Betriebssystem sind vorausgefüllt. Prüfen Sie das Formular vor dem Absenden. Geben Sie keine Kontodaten, Geheimnisse, QR-Codes, Sicherungen oder ungeprüften Protokolle an. Melden Sie Sicherheitslücken vertraulich.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Prüfen Sie das vorausgefüllte Formular im Browser und senden Sie es auf GitHub ab.</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>Das GitHub-Meldeformular konnte nicht geöffnet werden. Versuchen Sie es erneut.</value></data>
 </root>

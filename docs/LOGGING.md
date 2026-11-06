@@ -3,6 +3,9 @@
 Desktop and Android use the same Serilog level switch and secret-redacting rolling-file formatter.
 The Microsoft logging bridge accepts Trace and above, allowing the selected app level to perform
 the filtering. Levels persist in preferences and take effect at runtime.
+Changing a level in Settings takes effect after its successful automatic save; no restart is
+required. A desktop command-line logging override continues to control that process. The selected
+preference is still saved for future launches without an override.
 
 | App level | Microsoft logging | Typical events |
 | --- | --- | --- |
@@ -38,3 +41,10 @@ To verify on a device: select Verbose, restart and unlock, import the synthetic 
 QR fixture, then choose **Email diagnostic logs** in Misc. Confirm the draft has a log with startup
 and import count/status events. Review it before sending. Repeat at Information; normal successes
 should remain visible while Debug/Verbose detail is filtered out.
+
+**Report on GitHub**, also in Misc, opens the bug-report form with the installed application
+version and OS prefilled. It works even when no diagnostic log exists. GitHub issues are public;
+logs and private diagnostic fields are never automatically attached. Review the form and use
+synthetic reproduction data before submitting. Security issues belong in the private process in
+`SECURITY.md`. The repository's platform field is a text input so GitHub's documented custom-field
+URL prefilling applies; deploy that template change on the default branch along with this feature.

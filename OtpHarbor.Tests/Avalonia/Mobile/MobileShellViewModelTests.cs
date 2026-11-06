@@ -5291,6 +5291,30 @@ public sealed class MobileShellViewModelTests
             context.Sut.EditorSecretMessage);
     }
 
+    [Theory]
+    [InlineData("en", true)]
+    [InlineData("de", false)]
+    [InlineData("fr", true)]
+    [InlineData("es", false)]
+    public async Task ReportOnGitHubAsync_FromMiscWithoutLogs_UsesLocalizedResult(string cultureName, bool opened)
+    {
+        var reporter = new Mock<IGitHubIssueReporter>();
+        reporter.Setup(value => value.OpenAsync()).ReturnsAsync(opened);
+        var context = CreateContext(isConfigured: true, appLockEnabled: false, cultureName: cultureName,
+            gitHubIssueReporter: reporter.Object);
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        await context.Sut.ShowSettingsAsync();
+        context.Sut.ShowMiscSettingsCommand.Execute(null);
+        Assert.True(context.Sut.ReportOnGitHubCommand.CanExecute(null));
+        await context.Sut.ReportOnGitHubAsync();
+        Assert.Equal(context.Strings.Get(opened ? MobileStringKeys.GitHubReportOpened : MobileStringKeys.GitHubReportFailed),
+            context.Sut.NotificationText);
+        Assert.True(context.Sut.ReportOnGitHubCommand.CanExecute(null));
+        reporter.Verify(value => value.OpenAsync(), Times.Once);
+    }
+
     private static async Task WaitUntilAsync(Func<bool> predicate)
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
@@ -5312,7 +5336,8 @@ public sealed class MobileShellViewModelTests
         IAutomaticBackupCoordinator? automaticBackup = null,
         IAccountListSnapshotService? accountListSnapshots = null,
         IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
-        ILogger<MobileShellViewModel>? logger = null)
+        ILogger<MobileShellViewModel>? logger = null,
+        IGitHubIssueReporter? gitHubIssueReporter = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -5436,7 +5461,8 @@ public sealed class MobileShellViewModelTests
             accountListSnapshots: accountListSnapshots,
             diagnosticLogEmail: diagnosticLogEmail.Object,
             diagnosticEnvironment: diagnosticEnvironment,
-            logger: logger);
+            logger: logger,
+            gitHubIssueReporter: gitHubIssueReporter);
         return new TestContext(
             sut,
             state,

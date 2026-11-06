@@ -155,7 +155,7 @@
   <data name="SystemInterfaceScale" xml:space="preserve"><value>Valor del sistema (recomendado)</value></data>
   <data name="InterfaceScaleRestartRequired" xml:space="preserve"><value>Tamaño de la interfaz guardado. Reinicia la aplicación para aplicarlo.</value></data>
   <data name="OpenExportAfter" xml:space="preserve"><value>Abrir la ubicación de exportación después de exportar</value></data>
-  <data name="LoggingLevel" xml:space="preserve"><value>Nivel mínimo de registro (se aplica después de reiniciar)</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Nivel mínimo de registro</value></data>
   <data name="About" xml:space="preserve"><value>Acerca de</value></data>
   <data name="Version" xml:space="preserve"><value>Versión</value></data>
   <data name="OpenLogFolder" xml:space="preserve"><value>Abrir carpeta de registros</value></data>
@@ -551,4 +551,9 @@
   <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>Cuentas nuevas que se importarán de la bóveda anterior: {0}. Coincidencias sin cambios conservadas automáticamente: {1}.&#10;&#10;Cuentas de la bóveda anterior:&#10;{2}&#10;&#10;Se requiere un punto de recuperación antes de realizar cambios. Cancelar deja la bóveda actual sin cambios.</value></data>
   <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Mantener actuales</value></data>
   <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Usar anteriores</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Informar de un problema con OTP Harbor</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Informar en GitHub</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>Las incidencias de GitHub son públicas. La versión de la aplicación y el sistema operativo se rellenan automáticamente. Revise el formulario antes de enviarlo. No incluya datos de cuentas, secretos, códigos QR, copias de seguridad ni registros sin revisar. Informe de vulnerabilidades de seguridad en privado.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Revise el formulario en su navegador y envíelo en GitHub.</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>No se pudo abrir el formulario de GitHub. Vuelva a intentarlo.</value></data>
 </root>

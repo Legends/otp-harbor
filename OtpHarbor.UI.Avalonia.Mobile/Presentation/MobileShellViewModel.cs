@@ -67,6 +67,7 @@ public sealed class MobileShellViewModel :
     private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
     private readonly IDiagnosticLogEmailService? _diagnosticLogEmail;
     private readonly IDiagnosticEnvironmentProvider? _diagnosticEnvironment;
+    private readonly IGitHubIssueReporter? _gitHubIssueReporter;
     private readonly ILogger<MobileShellViewModel> _logger;
     private Task _brandIconInitializationTask = Task.CompletedTask;
     private Task _automaticBackupInitializationTask = Task.CompletedTask;
@@ -142,6 +143,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _disableAutomaticBackupCommand;
     private readonly MobileAsyncCommand _exportDiagnosticLogCommand;
     private readonly MobileAsyncCommand _emailDiagnosticLogCommand;
+    private readonly MobileAsyncCommand _reportOnGitHubCommand;
     private readonly MobileAsyncCommand _importBackupCommand;
     private readonly MobileAsyncCommand _importAccountFileCommand;
     private readonly MobileAsyncCommand _importBrandIconsCommand;
@@ -312,7 +314,8 @@ public sealed class MobileShellViewModel :
         IAccountListSnapshotService? accountListSnapshots = null,
         IDiagnosticLogEmailService? diagnosticLogEmail = null,
         IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
-        ILogger<MobileShellViewModel>? logger = null)
+        ILogger<MobileShellViewModel>? logger = null,
+        IGitHubIssueReporter? gitHubIssueReporter = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _passwordValidation = passwordValidation
@@ -342,6 +345,7 @@ public sealed class MobileShellViewModel :
         _automaticBackupSnapshots = automaticBackupSnapshots;
         _diagnosticLogEmail = diagnosticLogEmail;
         _diagnosticEnvironment = diagnosticEnvironment;
+        _gitHubIssueReporter = gitHubIssueReporter;
         _logger = logger ?? NullLogger<MobileShellViewModel>.Instance;
         _brandIconResolver.CatalogChanged += BrandCatalogChanged;
         if (_automaticBackup is not null)
@@ -557,6 +561,8 @@ public sealed class MobileShellViewModel :
         _emailDiagnosticLogCommand = new MobileAsyncCommand(
             EmailDiagnosticLogAsync,
             () => IsMiscSettingsVisible && !IsBusy && _diagnosticLogEmail is not null);
+        _reportOnGitHubCommand = new MobileAsyncCommand(ReportOnGitHubAsync,
+            () => IsMiscSettingsVisible && !IsBusy && _gitHubIssueReporter is not null);
         _importBackupCommand = new MobileAsyncCommand(
             ImportBackupAsync,
             () => IsSettingsVisible && !IsBusy);
@@ -700,6 +706,7 @@ public sealed class MobileShellViewModel :
     public ICommand DisableAutomaticBackupCommand => _disableAutomaticBackupCommand;
     public ICommand ExportDiagnosticLogCommand => _exportDiagnosticLogCommand;
     public ICommand EmailDiagnosticLogCommand => _emailDiagnosticLogCommand;
+    public ICommand ReportOnGitHubCommand => _reportOnGitHubCommand;
     public ICommand ImportBackupCommand => _importBackupCommand;
     public ICommand ImportAccountFileCommand => _importAccountFileCommand;
     public ICommand ImportBrandIconsCommand => _importBrandIconsCommand;
@@ -2034,6 +2041,9 @@ public sealed class MobileShellViewModel :
     public string LoggingLevelText => Get(MobileStringKeys.LoggingLevel);
     public string ExportDiagnosticLogText => Get(MobileStringKeys.ExportDiagnosticLog);
     public string EmailDiagnosticLogText => Get(MobileStringKeys.EmailDiagnosticLog);
+    public string ReportProblemTitleText => Get(MobileStringKeys.ReportProblemTitle);
+    public string ReportOnGitHubText => Get(MobileStringKeys.ReportOnGitHub);
+    public string GitHubReportNoticeText => Get(MobileStringKeys.GitHubReportNotice);
     public string DiagnosticLogSharingNoticeText =>
         Get(MobileStringKeys.DiagnosticLogSharingNotice);
     public string FaqText => Get(MobileStringKeys.Faq);
@@ -3776,6 +3786,19 @@ public sealed class MobileShellViewModel :
             document?.Dispose();
             IsBusy = false;
         }
+    }
+
+    public async Task ReportOnGitHubAsync()
+    {
+        if (!IsMiscSettingsVisible || IsBusy || _gitHubIssueReporter is null) return;
+        IsBusy = true;
+        try
+        {
+            if (await _gitHubIssueReporter.OpenAsync()) SetSuccess(MobileStringKeys.GitHubReportOpened);
+            else SetError(MobileStringKeys.GitHubReportFailed);
+        }
+        catch { SetError(MobileStringKeys.GitHubReportFailed); }
+        finally { IsBusy = false; }
     }
 
     public async Task EmailDiagnosticLogAsync()
@@ -6795,6 +6818,7 @@ public sealed class MobileShellViewModel :
         _disableAutomaticBackupCommand.NotifyCanExecuteChanged();
         _exportDiagnosticLogCommand.NotifyCanExecuteChanged();
         _emailDiagnosticLogCommand.NotifyCanExecuteChanged();
+        _reportOnGitHubCommand.NotifyCanExecuteChanged();
         _importBackupCommand.NotifyCanExecuteChanged();
         _importAccountFileCommand.NotifyCanExecuteChanged();
         _importBrandIconsCommand.NotifyCanExecuteChanged();
@@ -6922,6 +6946,9 @@ public sealed class MobileShellViewModel :
         nameof(LoggingLevelText),
         nameof(ExportDiagnosticLogText),
         nameof(EmailDiagnosticLogText),
+        nameof(ReportProblemTitleText),
+        nameof(ReportOnGitHubText),
+        nameof(GitHubReportNoticeText),
         nameof(DiagnosticLogSharingNoticeText),
         nameof(FaqText),
         nameof(FaqSettingsDescriptionText),

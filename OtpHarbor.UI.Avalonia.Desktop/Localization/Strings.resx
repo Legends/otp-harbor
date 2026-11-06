@@ -155,7 +155,7 @@
   <data name="SystemInterfaceScale" xml:space="preserve"><value>System default (recommended)</value></data>
   <data name="InterfaceScaleRestartRequired" xml:space="preserve"><value>Interface size saved. Restart the application to apply it.</value></data>
   <data name="OpenExportAfter" xml:space="preserve"><value>Open export location after export</value></data>
-  <data name="LoggingLevel" xml:space="preserve"><value>Minimum logging level (applies after restart)</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Minimum logging level</value></data>
   <data name="About" xml:space="preserve"><value>About</value></data>
   <data name="Version" xml:space="preserve"><value>Version</value></data>
   <data name="OpenLogFolder" xml:space="preserve"><value>Open log folder</value></data>
@@ -551,4 +551,9 @@
   <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>New accounts to import from the older vault: {0}. Unchanged matches kept automatically: {1}.&#10;&#10;Older vault accounts:&#10;{2}&#10;&#10;A recovery checkpoint is required before any changes. Cancel to leave the current vault unchanged.</value></data>
   <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Keep current</value></data>
   <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Use older</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Report an OTP Harbor problem</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Report on GitHub</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>GitHub issues are public. The app version and OS are prefilled. Review the form before submitting. Never include account data, secrets, QR codes, backups or unreviewed logs. Report security vulnerabilities privately.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Review the prefilled form in your browser, then submit it on GitHub.</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>The GitHub report form could not be opened. Please try again.</value></data>
 </root>

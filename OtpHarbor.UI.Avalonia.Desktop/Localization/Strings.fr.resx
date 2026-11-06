@@ -155,7 +155,7 @@
   <data name="SystemInterfaceScale" xml:space="preserve"><value>Valeur système (recommandée)</value></data>
   <data name="InterfaceScaleRestartRequired" xml:space="preserve"><value>Taille de l’interface enregistrée. Redémarrez l’application pour l’appliquer.</value></data>
   <data name="OpenExportAfter" xml:space="preserve"><value>Ouvrir l’emplacement d’exportation après l’exportation</value></data>
-  <data name="LoggingLevel" xml:space="preserve"><value>Niveau minimal de journalisation (appliqué après redémarrage)</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Niveau minimal de journalisation</value></data>
   <data name="About" xml:space="preserve"><value>À propos</value></data>
   <data name="Version" xml:space="preserve"><value>Version</value></data>
   <data name="OpenLogFolder" xml:space="preserve"><value>Ouvrir le dossier des journaux</value></data>
@@ -551,4 +551,9 @@
   <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>Nouveaux comptes à importer de l'ancien coffre : {0}. Correspondances inchangées conservées automatiquement : {1}.&#10;&#10;Comptes de l'ancien coffre :&#10;{2}&#10;&#10;Un point de restauration est requis avant toute modification. Annuler laisse le coffre actuel inchangé.</value></data>
   <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Garder les actuels</value></data>
   <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Utiliser les anciens</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Signaler un problème avec OTP Harbor</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Signaler sur GitHub</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>Les tickets GitHub sont publics. La version de l’application et le système sont préremplis. Vérifiez le formulaire avant de l’envoyer. N’incluez aucune donnée de compte, aucun secret, code QR, fichier de sauvegarde ou journal non vérifié. Signalez les failles de sécurité en privé.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Vérifiez le formulaire prérempli dans votre navigateur, puis envoyez-le sur GitHub.</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>Le formulaire GitHub n’a pas pu être ouvert. Veuillez réessayer.</value></data>
 </root>

@@ -5,6 +5,19 @@ namespace TOTP.Tests.Avalonia.Localization;
 
 public sealed class AvaloniaLocalizationServiceTests
 {
+    [Theory]
+    [InlineData("en", "Minimum logging level")]
+    [InlineData("de", "Minimale Protokollstufe")]
+    [InlineData("fr", "Niveau minimal de journalisation")]
+    [InlineData("es", "Nivel mínimo de registro")]
+    public void LoggingLevel_UsesSameLivePreferenceLabelOnDesktopAndMobile(string cultureName, string expected)
+    {
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+        Assert.Equal(expected, new AvaloniaStringCatalog().Get(AvaloniaStringKeys.LoggingLevel, culture));
+        Assert.Equal(expected, new TOTP.Avalonia.Mobile.Localization.MobileStringCatalog(culture)
+            .Get(TOTP.Avalonia.Mobile.Localization.MobileStringKeys.LoggingLevel));
+    }
+
     [Fact]
     public void Catalog_DesktopSettingsUsesCompactEnglishTabNames()
     {

@@ -1245,6 +1245,11 @@
                                         Kind="Export"
                                         Text="{Binding ExportDiagnosticLogText}" />
                                 </Button>
+                                <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding ReportProblemTitleText}" TextWrapping="Wrap" />
+                                <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding GitHubReportNoticeText}" TextWrapping="Wrap" />
+                                <Button x:Name="ReportOnGitHubButton" Classes="wide secondary" Command="{Binding ReportOnGitHubCommand}">
+                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding ReportOnGitHubText}" />
+                                </Button>
                             </StackPanel>
                         </Border>
                         <StackPanel

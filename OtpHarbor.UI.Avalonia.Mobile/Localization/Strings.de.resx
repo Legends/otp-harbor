@@ -60,7 +60,7 @@
   <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Konten aus QR-Codes oder unterstützten Dateien importieren.</value></data>
   <data name="Miscellaneous" xml:space="preserve"><value>Sonstiges</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Diagnoseprotokollierung konfigurieren.</value></data>
-  <data name="LoggingLevel" xml:space="preserve"><value>Minimale Protokollstufe (gilt nach Neustart)</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Minimale Protokollstufe</value></data>
   <data name="ExportDiagnosticLog" xml:space="preserve"><value>Diagnoseprotokoll exportieren…</value></data>
   <data name="DiagnosticLogExported" xml:space="preserve"><value>Diagnoseprotokoll wurde exportiert.</value></data>
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Noch kein Diagnoseprotokoll verfügbar.</value></data>
@@ -397,4 +397,9 @@
   <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Sicherungsprüfpunkt fehlgeschlagen</value></data>
   <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor konnte keinen aktuellen Wiederherstellungsprüfpunkt erstellen oder überprüfen. Sie können abbrechen und es erneut versuchen oder das Konto ausdrücklich ohne aktuelle Sicherung löschen.</value></data>
   <data name="DeleteAnyway" xml:space="preserve"><value>Trotzdem löschen</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Ein Problem mit OTP Harbor melden</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Auf GitHub melden</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>GitHub-Issues sind öffentlich. App-Version und Betriebssystem sind vorausgefüllt. Prüfen Sie das Formular vor dem Absenden. Geben Sie keine Kontodaten, Geheimnisse, QR-Codes, Sicherungen oder ungeprüften Protokolle an. Melden Sie Sicherheitslücken vertraulich.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Prüfen Sie das vorausgefüllte Formular im Browser und senden Sie es auf GitHub ab.</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>Das GitHub-Meldeformular konnte nicht geöffnet werden. Versuchen Sie es erneut.</value></data>
 </root>

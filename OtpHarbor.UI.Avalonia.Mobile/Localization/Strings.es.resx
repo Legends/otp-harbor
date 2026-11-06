@@ -60,7 +60,7 @@
   <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Importa cuentas desde códigos QR o archivos compatibles.</value></data>
   <data name="Miscellaneous" xml:space="preserve"><value>Varios</value></data>
   <data name="MiscSettingsDescription" xml:space="preserve"><value>Configura el registro de diagnóstico.</value></data>
-  <data name="LoggingLevel" xml:space="preserve"><value>Nivel mínimo de registro (se aplica después de reiniciar)</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Nivel mínimo de registro</value></data>
   <data name="ExportDiagnosticLog" xml:space="preserve"><value>Exportar registro de diagnóstico…</value></data>
   <data name="DiagnosticLogExported" xml:space="preserve"><value>Registro de diagnóstico exportado.</value></data>
   <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Todavía no hay ningún registro de diagnóstico disponible.</value></data>
@@ -397,4 +397,9 @@
   <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Falló el punto de control de la copia</value></data>
   <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor no pudo crear o verificar un punto de recuperación actualizado. Puedes cancelar y reintentar, o confirmar la eliminación de la cuenta sin una copia actual.</value></data>
   <data name="DeleteAnyway" xml:space="preserve"><value>Eliminar de todos modos</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Informar de un problema con OTP Harbor</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Informar en GitHub</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>Las incidencias de GitHub son públicas. La versión de la aplicación y el sistema operativo se rellenan automáticamente. Revise el formulario antes de enviarlo. No incluya datos de cuentas, secretos, códigos QR, copias de seguridad ni registros sin revisar. Informe de vulnerabilidades de seguridad en privado.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Revise el formulario en su navegador y envíelo en GitHub.</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>No se pudo abrir el formulario de GitHub. Vuelva a intentarlo.</value></data>
 </root>

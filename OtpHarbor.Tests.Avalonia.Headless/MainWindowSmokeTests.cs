@@ -3508,6 +3508,12 @@ public sealed class MainWindowSmokeTests
                 panel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "EmailDiagnosticLogButton");
             Assert.Contains("wide", emailLogButton.Classes);
+            var githubReportButton = Assert.Single(panel.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "ReportOnGitHubButton");
+            Assert.Contains("wide", githubReportButton.Classes);
+            Assert.Contains(panel.GetLogicalDescendants().OfType<TextBlock>(), text =>
+                Equals(text.Text, Application.Current!.Resources[AvaloniaStringKeys.GitHubReportNotice])
+                && text.TextWrapping == TextWrapping.Wrap);
             Assert.Contains(
                 panel.GetLogicalDescendants().OfType<TextBlock>(),
                 textBlock => Equals(

@@ -31,6 +31,9 @@ public sealed class AvaloniaCompositionRootTests
         var languageFlags = new Mock<ILanguageFlagProvider>().Object;
 
         using var services = AvaloniaCompositionRoot.Build(desktopLifetime, languageFlags);
+        Assert.IsType<TOTP.Infrastructure.Logging.LogSwitchService>(services.GetRequiredService<ILogSwitchService>());
+        Assert.IsType<TOTP.Avalonia.Shared.Diagnostics.GitHubIssueReporter>(
+            services.GetRequiredService<TOTP.Avalonia.Shared.Diagnostics.IGitHubIssueReporter>());
         Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Trace,
             services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.Extensions.Logging.LoggerFilterOptions>>().Value.MinLevel);
 

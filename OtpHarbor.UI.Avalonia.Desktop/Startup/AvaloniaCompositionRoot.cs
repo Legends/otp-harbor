@@ -22,6 +22,7 @@ using TOTP.Avalonia.Shared.Diagnostics;
 using TOTP.Core.Backup;
 using TOTP.Core.Common;
 using TOTP.Infrastructure.Storage;
+using TOTP.Infrastructure.Logging;
 using AppLifetime = TOTP.Core.Services.Interfaces.IApplicationLifetime;
 #if TOTP_PLATFORM_WINDOWS
 using TOTP.Platform.Windows;
@@ -66,6 +67,10 @@ public static class AvaloniaCompositionRoot
             configuration["AutoUpdate:DistributionMode"] ?? "direct",
 #endif
             () => desktopLifetime.MainWindow));
+        services.AddSingleton<IGitHubIssueReporter>(provider => new GitHubIssueReporter(
+            provider.GetRequiredService<IDiagnosticEnvironmentProvider>(),
+            uri => desktopLifetime.MainWindow?.Launcher.LaunchUriAsync(uri) ?? Task.FromResult(false),
+            provider.GetRequiredService<ILogger<GitHubIssueReporter>>()));
 #if DEBUG
         services.AddSingleton(new OnboardingPreviewOptions(
             bool.TryParse(configuration["Debug:ShowOnboardingOnStartup"], out var showOnboarding)
@@ -82,6 +87,9 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IPlatformApplicationPaths>(platformServices.ApplicationPaths);
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Trace)
             .AddSerilog(Log.Logger, dispose: false));
+        services.AddSingleton<ILogSwitchService>(_ => new LogSwitchService(
+            LogSwitchService.SharedSwitch.MinimumLevel.ToAppLevel(),
+            LoggingConfigurator.ManualOverrideLevel.HasValue));
 #if TOTP_PLATFORM_WINDOWS
         services.AddSingleton<IPlatformSessionEventSource, TOTP.Platform.Windows.WindowsSessionEventSource>();
         services.AddSingleton<IHelloPromptWindowHandleProvider, AvaloniaHelloPromptWindowHandleProvider>();

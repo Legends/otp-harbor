@@ -21,6 +21,9 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private readonly IPlatformFolderLauncher? _folderLauncher;
     private readonly IDiagnosticLogEmailService? _diagnosticLogEmail;
     private readonly IDiagnosticEnvironmentProvider? _diagnosticEnvironment;
+    private readonly ILogSwitchService? _logSwitchService;
+    private readonly IGitHubIssueReporter? _gitHubIssueReporter;
+    private readonly AsyncCommand _reportOnGitHubCommand;
     private readonly IBrandIconPackService? _brandIconPackService;
     private readonly IAppearanceSettingsService? _appearanceSettingsService;
     private readonly AsyncCommand _openLogFolderCommand;
@@ -57,7 +60,9 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         IBrandIconPackService? brandIconPackService = null,
         IAppearanceSettingsService? appearanceSettingsService = null,
         IDiagnosticLogEmailService? diagnosticLogEmail = null,
-        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null)
+        IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
+        ILogSwitchService? logSwitchService = null,
+        IGitHubIssueReporter? gitHubIssueReporter = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _localization = localization;
@@ -65,6 +70,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         _folderLauncher = folderLauncher;
         _diagnosticLogEmail = diagnosticLogEmail;
         _diagnosticEnvironment = diagnosticEnvironment;
+        _logSwitchService = logSwitchService;
+        _gitHubIssueReporter = gitHubIssueReporter;
         _brandIconPackService = brandIconPackService;
         _appearanceSettingsService = appearanceSettingsService;
         _autoSaveDelay = autoSaveDelay ?? TimeSpan.FromMilliseconds(200);
@@ -85,6 +92,8 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         _emailDiagnosticLogCommand = new AsyncCommand(
             EmailDiagnosticLogAsync,
             () => !_isBusy && _applicationPaths is not null && _diagnosticLogEmail is not null);
+        _reportOnGitHubCommand = new AsyncCommand(ReportOnGitHubAsync,
+            () => !_isBusy && _gitHubIssueReporter is not null);
         Reload();
     }
 
@@ -101,6 +110,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public bool IsInterfaceScaleAvailable => OperatingSystem.IsLinux();
     public ICommand OpenLogFolderCommand => _openLogFolderCommand;
     public ICommand EmailDiagnosticLogCommand => _emailDiagnosticLogCommand;
+    public ICommand ReportOnGitHubCommand => _reportOnGitHubCommand;
     public NotificationState SettingsNotification { get; }
     public NotificationState LogFolderNotification { get; }
 
@@ -300,10 +310,13 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             _settingsService.Current.InterfaceScalePercent = SelectedInterfaceScale.Percent;
             _settingsService.Current.OpenExportFileAfterExport = OpenExportFileAfterExport;
             _settingsService.Current.ShowNextToken = ShowNextToken;
-            _settingsService.Current.MinimumLogLevel = MinimumLogLevel;
+            var savedLogLevel = MinimumLogLevel;
+            _settingsService.Current.MinimumLogLevel = savedLogLevel;
             if (SelectedLanguage is not null)
                 _settingsService.Current.CultureName = SelectedLanguage.CultureName;
             var result = await _settingsService.SaveAsync();
+            if (result.IsSuccess && _logSwitchService is { IsCliOverrideActive: false })
+                _logSwitchService.SetLevel(savedLogLevel);
             var brandResult = result.IsSuccess && _brandIconPackService is not null
                 ? await _brandIconPackService.SetShowIssuerLogoAsync(ShowIssuerLogo)
                 : FluentResults.Result.Ok();
@@ -440,6 +453,28 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public async Task ReportOnGitHubAsync()
+    {
+        if (_isBusy || _gitHubIssueReporter is null) return;
+        _isBusy = true;
+        NotifyLogCommandsCanExecuteChanged();
+        try
+        {
+            var opened = await _gitHubIssueReporter.OpenAsync();
+            ShowTransientLogFolderMessage(Localize(opened ? AvaloniaStringKeys.GitHubReportOpened
+                : AvaloniaStringKeys.GitHubReportFailed), opened ? NotificationSeverity.Success : NotificationSeverity.Error);
+        }
+        catch
+        {
+            ShowTransientLogFolderMessage(Localize(AvaloniaStringKeys.GitHubReportFailed), NotificationSeverity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+            NotifyLogCommandsCanExecuteChanged();
+        }
+    }
+
     public async Task EmailDiagnosticLogAsync()
     {
         if (_isBusy || _applicationPaths is null || _diagnosticLogEmail is null) return;
@@ -539,6 +574,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     {
         _openLogFolderCommand.NotifyCanExecuteChanged();
         _emailDiagnosticLogCommand.NotifyCanExecuteChanged();
+        _reportOnGitHubCommand.NotifyCanExecuteChanged();
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
