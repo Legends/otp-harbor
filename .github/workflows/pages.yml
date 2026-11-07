@@ -31,6 +31,9 @@ concurrency:
 jobs:
   fdroid-repository:
     uses: ./.github/workflows/fdroid-repository.yml
+    secrets:
+      FDROID_INDEX_KEYSTORE_BASE64: ${{ secrets.FDROID_INDEX_KEYSTORE_BASE64 }}
+      FDROID_INDEX_KEYSTORE_PASSWORD: ${{ secrets.FDROID_INDEX_KEYSTORE_PASSWORD }}
 
   build:
     needs: fdroid-repository

@@ -3,6 +3,11 @@ name: Build OTP Harbor F-Droid repository
 on:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      FDROID_INDEX_KEYSTORE_BASE64:
+        required: true
+      FDROID_INDEX_KEYSTORE_PASSWORD:
+        required: true
   pull_request:
     paths:
       - 'scripts/release/Build-FDroidRepository.py'
@@ -40,6 +45,14 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
+
+      - name: Require the dedicated repository signing identity
+        env:
+          INDEX_KEYSTORE: ${{ secrets.FDROID_INDEX_KEYSTORE_BASE64 }}
+          INDEX_PASSWORD: ${{ secrets.FDROID_INDEX_KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$INDEX_KEYSTORE"
+          test -n "$INDEX_PASSWORD"
 
       - name: Install repository tools
         run: |

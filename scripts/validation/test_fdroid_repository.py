@@ -3,6 +3,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -119,6 +120,18 @@ class RepositoryTests(unittest.TestCase):
         self.assertIn('separate from the official F-Droid catalog', rendered)
         with self.assertRaises(ValueError):
             repository.render_page(template.replace('{{FDROID_REPOSITORY_FINGERPRINT}}', ''), self.settings)
+
+    def test_website_forwards_only_index_secrets_to_the_reusable_workflow(self):
+        caller = (ROOT / '.github/workflows/pages.yml').read_text(encoding='utf-8')
+        call = re.search(r'^  fdroid-repository:\n(.*?)^  build:', caller, re.MULTILINE | re.DOTALL).group(1)
+        forwarded = re.findall(r'^      (\w+): \$\{\{ secrets\.(\w+) \}\}', call, re.MULTILINE)
+        self.assertEqual({('FDROID_INDEX_KEYSTORE_BASE64', 'FDROID_INDEX_KEYSTORE_BASE64'),
+                          ('FDROID_INDEX_KEYSTORE_PASSWORD', 'FDROID_INDEX_KEYSTORE_PASSWORD')}, set(forwarded))
+        self.assertNotIn('secrets: inherit', call)
+        callee = (ROOT / '.github/workflows/fdroid-repository.yml').read_text(encoding='utf-8')
+        for name, _ in forwarded:
+            self.assertIn(name + ':\n        required: true', callee)
+        self.assertIn('environment: fdroid-repository', callee)
 
 
 if __name__ == "__main__":
