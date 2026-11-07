@@ -56,8 +56,10 @@ each release or commit any private signing file.
 `Set-FDroidRepositorySecrets.ps1` uploads the index keystore/password through standard input to
 the dedicated `fdroid-repository` GitHub environment, restricted to `master`. Neither secret is
 passed in command arguments. The production APK key is never accessed or uploaded by these tools.
-The workflow receives the index identity only in its signing step, after installing tools and
-testing the safety boundaries. Its public certificate fingerprint is committed for verification.
+An initial presence check verifies that the named environment secrets were forwarded to the
+reusable workflow. Private key files are materialized only in the signing step, after installing
+tools and testing the safety boundaries. The public certificate fingerprint is committed for
+verification; no repository-wide secret inheritance is used.
 
 ## Compatibility and future stores
 
@@ -84,6 +86,12 @@ identity, vault format, backup format, app permissions, or runtime code.
 - Verification: unit tests cover selection, version ordering, checksums, untrusted URLs, identity,
   certificates, debug APK rejection, public-file isolation and guide fingerprint rendering.
   Linux generation and deployed signed-index verification must pass before availability is claimed.
+
+Verified on 2026-11-07: [website workflow 42352046443](https://github.com/Legends/otp-harbor/actions/runs/42352046443)
+generated and published two production versions. Independent public-endpoint checks verified the
+signed index/certificate, both APK sizes, and a complete v3.0.2 download against the index SHA-256
+and production APK certificate. Adding the repository and installing through a physical F-Droid
+client remains a manual check.
 
 References: [F-Droid repository setup](https://f-droid.org/docs/Setup_an_F-Droid_App_Repo/),
 [signing process](https://f-droid.org/docs/Signing_Process/), and
