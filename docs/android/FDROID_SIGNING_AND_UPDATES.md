@@ -15,11 +15,14 @@ until OTP Harbor has independent reproducibility evidence.
 | --- | --- | --- | --- |
 | GitHub Releases | OTP Harbor CI | OTP Harbor production app-signing key | User downloads a verified APK manually. |
 | Google Play, if enabled | OTP Harbor/Play build pipeline | The enrolled OTP Harbor app-signing identity | Google Play. |
+| OTP Harbor repository for F-Droid | Verified copies of published GitHub APKs | Existing OTP Harbor production APK key; a separate key signs the index | The user's F-Droid client. |
 | Official F-Droid, if accepted | F-Droid build infrastructure from tagged source | F-Droid-managed key | The user's F-Droid client. |
 
 Every production channel uses application ID `io.github.legends.otpharbor` and the same monotonically
 increasing version-code formula. Matching package names do not make different signatures compatible:
-Android will reject an in-place install from a differently signed channel.
+Android will reject an in-place install from a differently signed channel. The maintainer-operated
+[binary repository](FDROID_REPOSITORY.md) preserves the GitHub APK signature, so compatible
+GitHub/repository updates can keep app data in place. It is separate from the official F-Droid catalog.
 
 ## Switching channels safely
 
@@ -53,7 +56,8 @@ An upstream-signed APK may be considered only after two clean independent enviro
 proposed F-Droid recipe reproduce the full non-signature payload. F-Droid must then verify the
 upstream artifact using its reproducible-build flow and restrict the accepted signing certificate.
 No private signing material is transferred in that process. Until all of those controls are proven,
-F-Droid-managed signing remains the policy and cross-channel in-place updates remain unsupported.
+F-Droid-managed signing remains the policy for the future official-catalog package, and
+cross-channel in-place updates remain unsupported between that package and GitHub/Play.
 
 ## Security and compatibility review
 

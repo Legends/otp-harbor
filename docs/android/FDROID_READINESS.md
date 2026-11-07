@@ -8,7 +8,8 @@ The authoritative external requirements are F-Droid's
 [build metadata reference](https://f-droid.org/docs/Build_Metadata_Reference/),
 [reproducible-build guidance](https://f-droid.org/docs/Reproducible_Builds/), and
 [metadata and screenshot guidance](https://f-droid.org/docs/All_About_Descriptions_Graphics_and_Screenshots/).
-They were last reviewed for this repository on 2026-09-27.
+They were last reviewed for this repository on 2026-11-06. The maintainer-operated binary
+repository is a separate distribution route; see [repository operation](FDROID_REPOSITORY.md).
 
 ## Current gate status
 
@@ -18,9 +19,9 @@ They were last reviewed for this repository on 2026-09-27.
 | Deterministic .NET SDK input | Implemented | `global.json` pins SDK `10.0.402` with roll-forward disabled. |
 | Deterministic NuGet graph | Implemented baseline | Every project in `OtpHarbor.Android.sln` has a committed `packages.lock.json`; Android CI and release jobs restore with `--locked-mode`. |
 | Proprietary runtime dependency exclusion | Implemented baseline | `Test-AndroidFossBuild.ps1` rejects known proprietary service, analytics, advertising, and billing package families. This supplements, but does not replace, F-Droid's scanner and human review. |
-| Locked NuGet license declarations | Implemented baseline | All 108 locked package ID/version pairs declare reviewed FLOSS licenses and cached package hashes must match the lock graph. Publisher metadata does not prove source correspondence or F-Droid acceptance. |
+| Locked NuGet license declarations | Implemented baseline | All 137 locked package ID/version pairs declare reviewed FLOSS licenses and cached package hashes must match the lock graph. Publisher metadata does not prove source correspondence or F-Droid acceptance. |
 | F-Droid build-server-compatible toolchain | **Blocked** | The .NET Android workload and every prebuilt NuGet dependency must be accepted under F-Droid's FLOSS toolchain and binary-origin rules. A successful GitHub build does not establish this. |
-| Reproducible APK evidence | **Blocked** | A tested comparator now checks non-signature APK entries by SHA-256. Same-machine clean-build evidence is only a baseline; two clean, independently provisioned environments and the proposed F-Droid build recipe must still match. |
+| Reproducible APK evidence | **Unproven; optional for initial F-Droid signing** | Exact reproducibility is recommended, not mandatory for an ordinary F-Droid-signed package. It remains required for the future upstream-signature route. The historical same-machine payload comparison does not establish independent reproducibility. |
 | F-Droid metadata and screenshots | Implemented baseline | Localized listing text for all four supported languages and authentic synthetic-data screenshots are committed under `fastlane/metadata/android`. Final submission review remains required. |
 | Signing and update-channel decision | Implemented policy | Initial acceptance uses F-Droid-managed signing. GitHub/Play signing material is never shared; switching signatures requires encrypted-backup migration. Activation remains blocked on the other gates. |
 | Maintainer and F-Droid review | **Blocked** | Submission and acceptance must occur before public availability is claimed. |
@@ -81,8 +82,9 @@ diagnostic results, not independent reproducibility evidence:
 documents that Mono AOT defaults to enabled for Release and disabled for Debug. Disabling
 `AndroidUseDesignerAssembly` is not a viable workaround: the supported build fails with XA1034
 because Avalonia.Android, HarfBuzzSharp, and SkiaSharp require the designer assembly. The comparator
-therefore continues to treat these runtime entries as payload and the reproducibility gate remains
-blocked. Do not add exclusions merely to turn this baseline green.
+therefore continues to treat these runtime entries as payload and the upstream-signature
+reproducibility gate remains blocked. This does not make exact reproducibility a prerequisite for
+ordinary F-Droid-managed signing. Do not add exclusions merely to turn this baseline green.
 
 ## Security and compatibility impact
 

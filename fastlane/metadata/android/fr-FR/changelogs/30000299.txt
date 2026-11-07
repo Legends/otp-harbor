@@ -1,0 +1,1 @@
+Diagnostics de fonctionnement améliorés sur Android, avec une journalisation sûre à tous les niveaux pris en charge. Les brouillons d’e-mails de diagnostic incluent désormais des informations vérifiées sur l’application, le système et l’appareil. Les rapports restent sous votre contrôle et ne sont jamais envoyés automatiquement.

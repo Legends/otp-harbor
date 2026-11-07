@@ -1,0 +1,10 @@
+{
+  "name": "OTP Harbor",
+  "url": "https://legends.github.io/otp-harbor/fdroid/repo",
+  "sourceRepository": "Legends/otp-harbor",
+  "applicationId": "io.github.legends.otpharbor",
+  "apkCertificateSha256": "8A0DE3250B16BE758DFA14C9AB05043F016FE0538DA331F9C74E441421559512",
+  "indexCertificateSha256": "B561E7A6FC31ABCB22DD4B8521D5C78BFF27680D8043049A50ABA036F73B1AA7",
+  "keyAlias": "otp-harbor-repository",
+  "retainedVersions": 2
+}

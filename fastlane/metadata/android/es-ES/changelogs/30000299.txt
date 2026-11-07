@@ -1,0 +1,1 @@
+Diagnósticos de funcionamiento mejorados en Android, con registros seguros en todos los niveles compatibles. Los borradores de correo de diagnóstico incluyen ahora información revisada sobre la aplicación, el sistema y el dispositivo. Tú mantienes el control; los informes nunca se envían automáticamente.

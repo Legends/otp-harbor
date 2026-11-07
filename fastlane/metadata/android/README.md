@@ -13,3 +13,8 @@ or device identifiers. Synthetic test accounts and codes must be visually review
 
 The presence of this metadata does not mean OTP Harbor is available from F-Droid. Publication status
 and remaining source-build gates are documented in `docs/android/FDROID_READINESS.md`.
+
+For every Android release, add localized release notes under each locale's
+`changelogs/<versionCode>.txt` (1-500 characters). Use the numeric version code from
+`Get-AndroidReleaseVersion.ps1`, not the display version. These notes are shared by the
+maintainer's binary repository and future store submissions.

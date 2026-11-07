@@ -106,6 +106,8 @@ if ($icon.Width -ne 512 -or $icon.Height -ne 512 -or $icon.BitDepth -ne 8 -or $i
 }
 Assert-CanonicalMirror 'artifacts/marketing/store/android/icon.png' 'fastlane/metadata/android/en-US/images/icon.png'
 
+$englishChangelogs = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'fastlane/metadata/android/en-US/changelogs') -File -Filter '*.txt')
+if ($englishChangelogs.Count -eq 0) { throw 'Android store versioned changelogs are missing.' }
 foreach ($locale in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
     $metadataRoot = "fastlane/metadata/android/$locale"
     $title = (Read-RequiredText "$metadataRoot/title.txt").Trim()
@@ -116,6 +118,15 @@ foreach ($locale in @('en-US', 'de-DE', 'fr-FR', 'es-ES')) {
     }
     if ($summary.Length -eq 0 -or $summary.Length -gt 80) {
         throw "Android store short description must contain 1-80 characters for locale '$locale'."
+    }
+    foreach ($changelog in $englishChangelogs) {
+        if ($changelog.Name -notmatch '^[1-9][0-9]*\.txt$') {
+            throw 'Android store changelogs must use the literal numeric versionCode as their filename.'
+        }
+        $notes = (Read-RequiredText "$metadataRoot/changelogs/$($changelog.Name)").Trim()
+        if ($notes.Length -eq 0 -or $notes.Length -gt 500) {
+            throw "Android release notes for '$locale' must contain 1-500 characters."
+        }
     }
     foreach ($claim in @('TOTP', 'otpauth', '2FAS', 'Android Keystore')) {
         if (-not $description.Contains($claim, [StringComparison]::OrdinalIgnoreCase)) {

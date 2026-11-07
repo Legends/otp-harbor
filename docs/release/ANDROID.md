@@ -9,7 +9,12 @@ is enabled; an AAB is not directly installable and is therefore not a GitHub dow
 Official F-Droid distribution is not available yet. Its source-build, reproducibility, metadata, and
 review gates are tracked separately in the [F-Droid readiness guide](../android/FDROID_READINESS.md).
 Do not share production signing credentials with third-party build infrastructure or describe the app
-as F-Droid-available before those gates and the F-Droid review are complete.
+as available in the official F-Droid catalog before those gates and the F-Droid review are complete.
+
+The separate [OTP Harbor repository for F-Droid](../android/FDROID_REPOSITORY.md) distributes
+verified copies of published production APKs. Users explicitly add this maintainer-operated
+repository to their F-Droid client; it retains the GitHub APK signature and does not claim
+official-catalog acceptance.
 
 If official F-Droid acceptance becomes possible, its initial package will use a separate
 F-Droid-managed signature. Android cannot install it over a GitHub/Play-signed package with the same

@@ -1,0 +1,82 @@
+name: Build OTP Harbor F-Droid repository
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    paths:
+      - 'scripts/release/Build-FDroidRepository.py'
+      - 'scripts/validation/test_fdroid_repository.py'
+      - 'packaging/fdroid/**'
+      - 'site/fdroid/**'
+      - '.github/workflows/fdroid-repository.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Test repository safety boundaries without signing secrets
+        run: python -m unittest discover -s scripts/validation -p test_fdroid_repository.py -v
+
+  build:
+    if: github.ref == 'refs/heads/master'
+    needs: validate
+    runs-on: ubuntu-24.04
+    environment: fdroid-repository
+    steps:
+      - name: Checkout trusted default branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+
+      - name: Install repository tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends apksigner aapt openjdk-17-jdk-headless
+          python -m pip install 'fdroidserver==2.4.5'
+
+      - name: Resolve published Android releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api 'repos/Legends/otp-harbor/releases?per_page=100' > "$RUNNER_TEMP/otp-fdroid-releases.json"
+
+      - name: Build and verify signed binary repository
+        env:
+          FDROID_INDEX_KEYSTORE_BASE64: ${{ secrets.FDROID_INDEX_KEYSTORE_BASE64 }}
+          FDROID_INDEX_KEYSTORE_PASSWORD: ${{ secrets.FDROID_INDEX_KEYSTORE_PASSWORD }}
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          python scripts/release/Build-FDroidRepository.py \
+            --releases-json "$RUNNER_TEMP/otp-fdroid-releases.json" \
+            --workspace "$RUNNER_TEMP/otp-fdroid-private"
+
+      - name: Upload verified public repository files only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fdroid-repository
+          path: ${{ runner.temp }}/otp-fdroid-private/repo
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove temporary signing material
+        if: always()
+        shell: python
+        run: |
+          import os, pathlib, shutil
+          temporary = pathlib.Path(os.environ['RUNNER_TEMP']).resolve()
+          target = temporary / 'otp-fdroid-private'
+          if target.is_dir() and not target.is_symlink() and target.resolve().parent == temporary:
+              shutil.rmtree(target)

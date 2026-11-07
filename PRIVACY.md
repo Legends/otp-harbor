@@ -8,6 +8,11 @@ GitHub direct-download packages contact the configured GitHub or GitHub Pages en
 
 Packages managed by an operating-system package manager or app store use that distributor's update mechanism and privacy terms instead of the application's direct-update service.
 
+If users add the OTP Harbor repository to F-Droid, their F-Droid client downloads the signed index
+and production APKs from the project's GitHub Pages hosting. Those requests disclose ordinary
+connection metadata to GitHub; the OTP Harbor app does not make these requests or upload vault
+data. This additional repository is operated by OTP Harbor, separately from the official F-Droid catalog.
+
 The application accesses the camera only during a user-initiated QR scan. Camera frames are processed on the device and are not transmitted. Platform quick-unlock services, the clipboard, application-data storage, and log files are also used locally through operating-system interfaces.
 
 If a user explicitly follows a link, downloads a release, reports an issue, or contacts a maintainer, the selected external service processes the information the user chooses to provide under that service's privacy policy. Never include OTP seeds, passwords, recovery data, vault files, or other secrets in a support request.

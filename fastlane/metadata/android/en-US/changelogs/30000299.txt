@@ -1,0 +1,1 @@
+Improved operational diagnostics across Android, with safe logging at every supported level. Diagnostic email drafts now include reviewed app, OS and device information. Reports remain under your control and are never sent automatically.

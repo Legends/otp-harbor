@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OTP Harbor Repository for F-Droid</title>
+  <meta name="description" content="Add the OTP Harbor repository to F-Droid to install verified, production-signed Android releases and receive updates.">
+  <link rel="canonical" href="https://legends.github.io/otp-harbor/fdroid/">
+  <link rel="icon" href="../assets/app-icon.png" type="image/png">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="OTP Harbor home"><img src="../assets/app-icon.png" alt="" width="40" height="40"><span>OTP Harbor</span></a>
+    <nav aria-label="Primary navigation"><a href="../android/">Android</a><a href="../android/guide/">Android guide</a><a href="https://github.com/Legends/otp-harbor">Source</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Android 9+ · Maintainer repository</p>
+        <h1>Get OTP Harbor with F-Droid</h1>
+        <p class="lede">Add the OTP Harbor repository to your F-Droid client, then install the app and receive updates there. This additional repository is maintained by OTP Harbor and is separate from the official F-Droid catalog.</p>
+        <div class="actions"><a class="button primary" href="{{FDROID_REPOSITORY_URL}}/?fingerprint={{FDROID_REPOSITORY_FINGERPRINT}}">Add repository to F-Droid</a><a class="button secondary" href="https://f-droid.org/">Get the F-Droid client</a></div>
+        <p class="release-note">Already installed from GitHub? These are the same production-signed APKs. Compatible updates keep your local vault in place.</p>
+      </div>
+      <article class="repository-card">
+        <h2>Add it manually</h2>
+        <ol>
+          <li>Open F-Droid, go to Settings, then Repositories, and choose to add a repository.</li>
+          <li>Paste the repository address below and confirm the certificate fingerprint.</li>
+          <li>Refresh repositories, search for OTP Harbor, and install it.</li>
+        </ol>
+        <p>Repository address</p><code class="repository-code">{{FDROID_REPOSITORY_URL}}</code>
+        <p>Repository certificate SHA-256</p><code class="repository-code">{{FDROID_REPOSITORY_FINGERPRINT}}</code>
+      </article>
+    </section>
+    <section class="features">
+      <article><h2>Your data stays local</h2><p>F-Droid downloads and updates the app. Your accounts, passwords and encrypted vault are not uploaded to this repository.</p></article>
+      <article><h2>Keep an encrypted backup</h2><p>Before changing an app’s installation source, export an encrypted backup and keep its password safe. If Android reports a conflicting signature, keep the existing installation and your data until you have verified the backup. Development builds and a future official F-Droid package may use different signatures.</p></article>
+    </section>
+  </main>
+  <footer><a href="../android/">OTP Harbor for Android</a> · <a href="https://github.com/Legends/otp-harbor/blob/master/PRIVACY.md">Privacy</a></footer>
+</body>
+</html>

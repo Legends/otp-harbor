@@ -1,0 +1,1 @@
+Verbesserte Betriebsdiagnose unter Android mit sicherer Protokollierung auf allen unterstützten Stufen. Diagnose-E-Mail-Entwürfe enthalten jetzt geprüfte Angaben zu App, Betriebssystem und Gerät. Du behältst die Kontrolle; Berichte werden niemals automatisch versendet.
