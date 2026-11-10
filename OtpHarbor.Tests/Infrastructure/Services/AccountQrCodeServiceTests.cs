@@ -8,18 +8,19 @@ namespace TOTP.Tests.Infrastructure.Services;
 
 public sealed class AccountQrCodeServiceTests
 {
-    [Fact]
-    public async Task GenerateAsync_ConfinesSeedAndReturnsOwnedPngBuffer()
+    [Theory]
+    [MemberData(nameof(TotpConfigurationTests.Configurations), MemberType = typeof(TotpConfigurationTests))]
+    public async Task GenerateAsync_ConfinesSeedAndReturnsOwnedPngBuffer(string algorithm, int digits)
     {
         var id = Guid.NewGuid();
         const string seed = "JBSWY3DPEHPK3PXP";
         var manager = new Mock<IAccountManager>();
         manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
-                [new Account(id, "Issuer", seed, "account", 60)]));
+                [new Account(id, "Issuer", seed, "account", 60, algorithm: algorithm, digits: digits)]));
         var sourcePng = new byte[] { 137, 80, 78, 71 };
         var qr = new Mock<IQrCodeService>();
-        qr.Setup(value => value.BuildOtpAuthUri("Issuer", seed, "account", 60))
+        qr.Setup(value => value.BuildOtpAuthUri("Issuer", seed, "account", 60, algorithm, digits))
             .Returns("synthetic-uri");
         qr.Setup(value => value.GenerateQr("synthetic-uri")).Returns(sourcePng);
         var sut = new AccountQrCodeService(manager.Object, qr.Object);

@@ -240,7 +240,7 @@
   <data name="Cancel" xml:space="preserve"><value>Annuler</value></data>
   <data name="IssuerRequired" xml:space="preserve"><value>Saisissez un émetteur.</value></data>
   <data name="SecretRequired" xml:space="preserve"><value>Saisissez le secret du compte.</value></data>
-  <data name="SecretInvalid" xml:space="preserve"><value>Saisissez un secret Base32 valide. Les secrets des nouveaux comptes doivent contenir au moins 26 caractères.</value></data>
+  <data name="SecretInvalid" xml:space="preserve"><value>Saisissez un secret Base32 valide et non vide.</value></data>
   <data name="DuplicateAccount" xml:space="preserve"><value>Un compte avec cet émetteur et ce nom existe déjà.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Compte enregistré.</value></data>
   <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Le compte a été enregistré, mais pas sa préférence d’icône locale.</value></data>
@@ -402,4 +402,10 @@
   <data name="GitHubReportNotice" xml:space="preserve"><value>Les tickets GitHub sont publics. La version de l’application et le système sont préremplis. Vérifiez le formulaire avant de l’envoyer. N’incluez aucune donnée de compte, aucun secret, code QR, fichier de sauvegarde ou journal non vérifié. Signalez les failles de sécurité en privé.</value></data>
   <data name="GitHubReportOpened" xml:space="preserve"><value>Vérifiez le formulaire prérempli dans votre navigateur, puis envoyez-le sur GitHub.</value></data>
   <data name="GitHubReportFailed" xml:space="preserve"><value>Le formulaire GitHub n’a pas pu être ouvert. Veuillez réessayer.</value></data>
+  <data name="TotpAlgorithm" xml:space="preserve"><value>Algorithme</value></data>
+  <data name="TotpDigits" xml:space="preserve"><value>Chiffres</value></data>
+  <data name="TotpSha1" xml:space="preserve"><value>SHA-1 (par défaut)</value></data>
+  <data name="TotpSha256" xml:space="preserve"><value>SHA-256</value></data>
+  <data name="TotpSha512" xml:space="preserve"><value>SHA-512</value></data>
+  <data name="TotpConfigurationInvalid" xml:space="preserve"><value>Sélectionnez SHA-1, SHA-256 ou SHA-512 et un code à 6 ou 8 chiffres.</value></data>
 </root>

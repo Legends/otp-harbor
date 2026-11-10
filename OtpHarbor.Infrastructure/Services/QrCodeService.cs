@@ -10,10 +10,16 @@ public class QrCodeService : IQrCodeService
         string issuer,
         string secret,
         string? account = "",
-        int periodSeconds = TotpPeriodPolicy.DefaultSeconds)
+        int periodSeconds = TotpPeriodPolicy.DefaultSeconds,
+        string algorithm = TotpConfigurationPolicy.DefaultAlgorithm,
+        int digits = TotpConfigurationPolicy.DefaultDigits)
     {
         if (!TotpPeriodPolicy.IsSupported(periodSeconds))
             throw new ArgumentOutOfRangeException(nameof(periodSeconds));
+        if (!TotpConfigurationPolicy.TryNormalizeAlgorithm(algorithm, out var normalizedAlgorithm))
+            throw new ArgumentOutOfRangeException(nameof(algorithm));
+        if (digits is not (6 or 8))
+            throw new ArgumentOutOfRangeException(nameof(digits));
 
         string label = !string.IsNullOrWhiteSpace(account)
             ? $"{Uri.EscapeDataString(issuer)}:{Uri.EscapeDataString(account)}"
@@ -21,7 +27,7 @@ public class QrCodeService : IQrCodeService
 
         string query = $"secret={Uri.EscapeDataString(secret)}" +
                        $"&issuer={Uri.EscapeDataString(issuer)}" +
-                       $"&algorithm=SHA1&digits=6&period={periodSeconds}";
+                       $"&algorithm={normalizedAlgorithm}&digits={digits}&period={periodSeconds}";
 
         return $"otpauth://totp/{label}?{query}";
     }

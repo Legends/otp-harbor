@@ -240,7 +240,7 @@
   <data name="Cancel" xml:space="preserve"><value>Abbrechen</value></data>
   <data name="IssuerRequired" xml:space="preserve"><value>Geben Sie einen Anbieter ein.</value></data>
   <data name="SecretRequired" xml:space="preserve"><value>Geben Sie das Kontogeheimnis ein.</value></data>
-  <data name="SecretInvalid" xml:space="preserve"><value>Gib ein gültiges Base32-Geheimnis ein. Geheimnisse für neue Konten müssen mindestens 26 Zeichen enthalten.</value></data>
+  <data name="SecretInvalid" xml:space="preserve"><value>Gib ein gültiges, nicht leeres Base32-Geheimnis ein.</value></data>
   <data name="DuplicateAccount" xml:space="preserve"><value>Ein Konto mit diesem Anbieter und Kontonamen ist bereits vorhanden.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Konto gespeichert.</value></data>
   <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Das Konto wurde gespeichert, seine lokale Symboleinstellung jedoch nicht.</value></data>
@@ -402,4 +402,10 @@
   <data name="GitHubReportNotice" xml:space="preserve"><value>GitHub-Issues sind öffentlich. App-Version und Betriebssystem sind vorausgefüllt. Prüfen Sie das Formular vor dem Absenden. Geben Sie keine Kontodaten, Geheimnisse, QR-Codes, Sicherungen oder ungeprüften Protokolle an. Melden Sie Sicherheitslücken vertraulich.</value></data>
   <data name="GitHubReportOpened" xml:space="preserve"><value>Prüfen Sie das vorausgefüllte Formular im Browser und senden Sie es auf GitHub ab.</value></data>
   <data name="GitHubReportFailed" xml:space="preserve"><value>Das GitHub-Meldeformular konnte nicht geöffnet werden. Versuchen Sie es erneut.</value></data>
+  <data name="TotpAlgorithm" xml:space="preserve"><value>Algorithmus</value></data>
+  <data name="TotpDigits" xml:space="preserve"><value>Ziffern</value></data>
+  <data name="TotpSha1" xml:space="preserve"><value>SHA-1 (Standard)</value></data>
+  <data name="TotpSha256" xml:space="preserve"><value>SHA-256</value></data>
+  <data name="TotpSha512" xml:space="preserve"><value>SHA-512</value></data>
+  <data name="TotpConfigurationInvalid" xml:space="preserve"><value>Wählen Sie SHA-1, SHA-256 oder SHA-512 und einen Code mit 6 oder 8 Ziffern.</value></data>
 </root>

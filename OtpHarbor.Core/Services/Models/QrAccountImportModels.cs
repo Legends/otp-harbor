@@ -24,7 +24,9 @@ public sealed record QrAccountConflict(
     string Issuer,
     string AccountName,
     bool SecretChanged,
-    bool PeriodChanged)
+    bool PeriodChanged,
+    bool AlgorithmChanged = false,
+    bool DigitsChanged = false)
 {
     public QrAccountConflict(string issuer, string accountName)
         : this(0, issuer, accountName, SecretChanged: true, PeriodChanged: false)

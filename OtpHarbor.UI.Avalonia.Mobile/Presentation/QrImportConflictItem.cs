@@ -15,7 +15,9 @@ public sealed class QrImportConflictItem : INotifyPropertyChanged
         string periodField,
         string skipAutomationFormat,
         string replaceAutomationFormat,
-        string keepBothAutomationFormat)
+        string keepBothAutomationFormat,
+        string algorithmField = "",
+        string digitsField = "")
     {
         ArgumentNullException.ThrowIfNull(conflict);
         ImportIndex = conflict.ImportIndex;
@@ -25,6 +27,8 @@ public sealed class QrImportConflictItem : INotifyPropertyChanged
         var changedFields = new List<string>(2);
         if (conflict.SecretChanged) changedFields.Add(secretField);
         if (conflict.PeriodChanged) changedFields.Add(periodField);
+        if (conflict.AlgorithmChanged) changedFields.Add(algorithmField);
+        if (conflict.DigitsChanged) changedFields.Add(digitsField);
         ChangedFieldsText = string.Format(
             changedFieldsFormat,
             string.Join(", ", changedFields));

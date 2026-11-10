@@ -4,6 +4,20 @@ namespace TOTP.Tests.Avalonia.Mobile;
 
 public sealed class NativeTextSizingTests
 {
+    [Theory]
+    [InlineData(320)]
+    [InlineData(360)]
+    [InlineData(390)]
+    [InlineData(430)]
+    public void EightDigitColumn_FitsGroupedCodeAtReadableMinimumAndLargeFontScale(float viewport)
+    {
+        var width = NativeTextSizing.CodeColumnWidthDp(viewport, 8);
+        var minimumPixels = NativeTextSizing.ResolvePixels(18, 1, 1.5f, viewport, 344);
+        // Nine monospace glyphs including the grouping space, allowing 0.65 em per glyph.
+        Assert.True(minimumPixels * 9 * 0.65f <= width);
+        Assert.True(width > NativeTextSizing.CodeColumnWidthDp(viewport, 6));
+    }
+
     [Fact]
     public void ResolvePixels_DefaultFontAndReferenceWidth_PreservesRequestedSize()
     {

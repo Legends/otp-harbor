@@ -238,6 +238,8 @@ public sealed class MobileShellViewModel :
     private bool _isEditorSecretRevealed;
     private bool _isEditorSecretPasswordPromptVisible;
     private string _editorSecretAuthorizationPassword = string.Empty;
+    private int _editorAlgorithmIndex;
+    private int _editorDigits = TotpConfigurationPolicy.DefaultDigits;
     private int? _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
     private bool _editorIsFavorite;
     private bool _isAdvancedOptionsExpanded;
@@ -1719,6 +1721,28 @@ public sealed class MobileShellViewModel :
         set => SetField(ref _isEditorSecretRevealed, value);
     }
 
+    public int EditorAlgorithmIndex
+    {
+        get => _editorAlgorithmIndex;
+        set => SetField(ref _editorAlgorithmIndex, value);
+    }
+
+    public string EditorAlgorithm => EditorAlgorithmIndex switch
+    {
+        0 => "SHA1",
+        1 => "SHA256",
+        2 => "SHA512",
+        _ => string.Empty
+    };
+
+    public IReadOnlyList<int> DigitOptions { get; } = [6, 8];
+
+    public int EditorDigits
+    {
+        get => _editorDigits;
+        set => SetField(ref _editorDigits, value);
+    }
+
     public int? EditorPeriodSeconds
     {
         get => _editorPeriodSeconds;
@@ -1987,6 +2011,11 @@ public sealed class MobileShellViewModel :
     public string IssuerPlaceholderText => Get(MobileStringKeys.IssuerPlaceholder);
     public string AccountNameText => Get(MobileStringKeys.AccountName);
     public string AdvancedOptionsText => Get(MobileStringKeys.AdvancedOptions);
+    public string TotpAlgorithmText => Get(MobileStringKeys.TotpAlgorithm);
+    public string TotpDigitsText => Get(MobileStringKeys.TotpDigits);
+    public string TotpSha1Text => Get(MobileStringKeys.TotpSha1);
+    public string TotpSha256Text => Get(MobileStringKeys.TotpSha256);
+    public string TotpSha512Text => Get(MobileStringKeys.TotpSha512);
     public string TotpPeriodText => Get(MobileStringKeys.TotpPeriod);
     public string ClearPeriodText => Get(MobileStringKeys.ClearPeriod);
     public string TotpPeriodHelpText => Get(MobileStringKeys.TotpPeriodHelp);
@@ -4343,6 +4372,8 @@ public sealed class MobileShellViewModel :
             EditorAccountName = account.AccountName ?? string.Empty;
             EditorSecret = account.Secret;
             EditorPeriodSeconds = account.PeriodSeconds;
+            EditorAlgorithmIndex = account.Algorithm?.ToUpperInvariant() switch { "SHA1" => 0, "SHA256" => 1, "SHA512" => 2, _ => -1 };
+            EditorDigits = account.Digits;
             EditorIsFavorite = account.IsFavorite;
             RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
             IsDeleteConfirmationVisible = false;
@@ -4505,23 +4536,30 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            secret = enteredSecret.Length > 0
-                ? SecretValidation.NormalizeBase32Secret(enteredSecret)
-                : existing?.Secret;
+            secret = existing is not null && (enteredSecret.Length == 0 || enteredSecret == existing.Secret)
+                ? existing.Secret
+                : SecretValidation.NormalizeBase32Secret(enteredSecret);
             if (string.IsNullOrWhiteSpace(secret))
             {
                 EditorSecretMessage = Get(MobileStringKeys.SecretRequired);
                 return;
             }
 
-            var isSecretValid = existing is null
-                ? SecretValidation.IsValidNewAccountBase32Secret(secret)
-                : SecretValidation.IsValidBase32Secret(secret);
+            var isSecretValid = existing is not null && string.Equals(secret, existing.Secret, StringComparison.Ordinal)
+                ? SecretValidation.IsValidStoredBase32Secret(secret)
+                : SecretValidation.IsValidNewAccountBase32Secret(secret);
             if (!isSecretValid)
             {
                 EditorSecretMessage = Get(MobileStringKeys.SecretInvalid);
                 return;
             }
+            if (!TotpConfigurationPolicy.IsSupported(EditorAlgorithm, EditorDigits))
+            {
+                IsAdvancedOptionsExpanded = true;
+                EditorPeriodMessage = Get(MobileStringKeys.TotpConfigurationInvalid);
+                return;
+            }
+
             if (EditorPeriodSeconds is not int periodSeconds
                 || !TotpPeriodPolicy.IsSupported(periodSeconds))
             {
@@ -4549,7 +4587,8 @@ public sealed class MobileShellViewModel :
                 accountName.Length == 0 ? null : accountName,
                 periodSeconds,
                 isFavorite: EditorIsFavorite,
-                groups: existing?.Groups);
+                groups: existing?.Groups,
+                algorithm: EditorAlgorithm, digits: EditorDigits);
             var saved = existing is null
                 ? await _accountManager.AddNewAsync(updated)
                 : await _accountManager.UpdateAsync(existing, updated);
@@ -4591,7 +4630,9 @@ public sealed class MobileShellViewModel :
             var savedId = updated.ID;
             var refreshCode = existing is null
                 || !string.Equals(existing.Secret, updated.Secret, StringComparison.Ordinal)
-                || existing.PeriodSeconds != updated.PeriodSeconds;
+                || existing.PeriodSeconds != updated.PeriodSeconds
+                || existing.Algorithm != updated.Algorithm
+                || existing.Digits != updated.Digits;
             ApplySavedAccount(updated);
             if (refreshCode)
                 await RefreshSavedAccountCodeAsync(savedId);
@@ -5721,6 +5762,8 @@ public sealed class MobileShellViewModel :
         EditorAccountName = string.Empty;
         EditorSecret = string.Empty;
         EditorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+        EditorAlgorithmIndex = 0;
+        EditorDigits = TotpConfigurationPolicy.DefaultDigits;
         EditorIsFavorite = false;
         IsAdvancedOptionsExpanded = false;
         EditorBrandIconOptions = [];
@@ -5758,6 +5801,8 @@ public sealed class MobileShellViewModel :
         EditorAccountName,
         EditorSecret,
         EditorPeriodSeconds,
+        EditorAlgorithmIndex,
+        EditorDigits,
         EditorIsFavorite,
         SelectedEditorBrandIconOption?.Id);
 
@@ -6066,7 +6111,9 @@ public sealed class MobileShellViewModel :
                 PeriodFieldText,
                 Get(MobileStringKeys.QrSkipAccountAutomationFormat),
                 Get(MobileStringKeys.QrReplaceAccountAutomationFormat),
-                Get(MobileStringKeys.QrKeepBothAccountAutomationFormat));
+                Get(MobileStringKeys.QrKeepBothAccountAutomationFormat),
+                TotpAlgorithmText,
+                TotpDigitsText);
             item.PropertyChanged += OnQrImportConflictSelectionChanged;
             QrImportConflicts.Add(item);
         }
@@ -6182,7 +6229,9 @@ public sealed class MobileShellViewModel :
                 FavoriteFieldText,
                 GroupMembershipFieldText,
                 KeepAccountAutomationFormat,
-                RestoreAccountAutomationFormat);
+                RestoreAccountAutomationFormat,
+                TotpAlgorithmText,
+                TotpDigitsText);
             item.PropertyChanged += OnBackupConflictSelectionChanged;
             BackupImportConflicts.Add(item);
         }
@@ -6903,6 +6952,11 @@ public sealed class MobileShellViewModel :
         nameof(IssuerPlaceholderText),
         nameof(AccountNameText),
         nameof(AdvancedOptionsText),
+        nameof(TotpAlgorithmText),
+        nameof(TotpDigitsText),
+        nameof(TotpSha1Text),
+        nameof(TotpSha256Text),
+        nameof(TotpSha512Text),
         nameof(TotpPeriodText),
         nameof(ClearPeriodText),
         nameof(TotpPeriodHelpText),
@@ -7109,6 +7163,8 @@ public sealed class MobileShellViewModel :
         string AccountName,
         string Secret,
         int? PeriodSeconds,
+        int AlgorithmIndex,
+        int Digits,
         bool IsFavorite,
         string? BrandIconId);
 

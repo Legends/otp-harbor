@@ -8,6 +8,8 @@ public interface IQrCodeService
         string issuer,
         string secret,
         string? account = "",
-        int periodSeconds = TotpPeriodPolicy.DefaultSeconds);
+        int periodSeconds = TotpPeriodPolicy.DefaultSeconds,
+        string algorithm = TotpConfigurationPolicy.DefaultAlgorithm,
+        int digits = TotpConfigurationPolicy.DefaultDigits);
     byte[] GenerateQr(string uri);
 }

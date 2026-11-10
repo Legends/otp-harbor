@@ -42,8 +42,8 @@ public sealed class QrPayloadValidatorTests
     }
 
     [Theory]
-    [InlineData("SHA256", 6, 30)]
-    [InlineData("SHA1", 8, 30)]
+    [InlineData("SHA384", 6, 30)]
+    [InlineData("SHA1", 7, 30)]
     [InlineData("SHA1", 6, 4)]
     [InlineData("SHA1", 6, 3601)]
     public void Validate_WhenTotpParametersCannotBePersisted_FailsClosed(

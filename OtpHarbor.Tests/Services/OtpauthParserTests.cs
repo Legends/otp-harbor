@@ -78,7 +78,7 @@ public sealed class OtpauthParserTests
         Assert.Equal("Example", parsed.Issuer);
         Assert.Equal("alice+admin", parsed.Label);
         Assert.Equal("JBSWY3DPEHPK3PXP", parsed.SecretBase32);
-        Assert.Equal("sha1", parsed.Algorithm);
+        Assert.Equal("SHA1", parsed.Algorithm);
         Assert.Equal(6, parsed.Digits);
         Assert.Equal(30, parsed.Period);
     }

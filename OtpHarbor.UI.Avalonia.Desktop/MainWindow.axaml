@@ -1026,6 +1026,19 @@
                                                             Height="1"
                                                             Margin="0,4"
                                                             Background="{DynamicResource BrushBorder}" />
+                                                        <TextBlock Classes="field-label" Text="{DynamicResource TotpAlgorithm}" />
+                                                        <ComboBox x:Name="AccountAlgorithmSelector" automation:AutomationProperties.Name="{DynamicResource TotpAlgorithm}"
+                                                                  HorizontalAlignment="Stretch"
+                                                                  SelectedIndex="{Binding EditorAlgorithmIndex, Mode=TwoWay}">
+                                                            <ComboBoxItem Content="{DynamicResource TotpSha1}" />
+                                                            <ComboBoxItem Content="{DynamicResource TotpSha256}" />
+                                                            <ComboBoxItem Content="{DynamicResource TotpSha512}" />
+                                                        </ComboBox>
+                                                        <TextBlock Classes="field-label" Text="{DynamicResource TotpDigits}" />
+                                                        <ComboBox x:Name="AccountDigitsSelector" automation:AutomationProperties.Name="{DynamicResource TotpDigits}"
+                                                                  HorizontalAlignment="Stretch"
+                                                                  ItemsSource="{Binding DigitOptions}"
+                                                                  SelectedItem="{Binding EditorDigits, Mode=TwoWay}" />
                                                         <TextBlock
                                                             Classes="field-label"
                                                             Text="{DynamicResource TotpPeriod}" />

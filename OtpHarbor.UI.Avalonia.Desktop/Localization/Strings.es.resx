@@ -115,7 +115,7 @@
   <data name="SaveAccount" xml:space="preserve"><value>Guardar cuenta</value></data>
   <data name="CancelEdit" xml:space="preserve"><value>Cancelar edición</value></data>
   <data name="AccountIssuerRequired" xml:space="preserve"><value>El emisor es obligatorio.</value></data>
-  <data name="AccountSecretInvalid" xml:space="preserve"><value>Introduce un secreto Base32 válido. Los secretos de cuentas nuevas deben contener al menos 26 caracteres.</value></data>
+  <data name="AccountSecretInvalid" xml:space="preserve"><value>Introduce un secreto Base32 válido y no vacío.</value></data>
   <data name="AuthorizeAccountSecretEdit" xml:space="preserve"><value>Autenticarse para editar el secreto</value></data>
   <data name="AccountSecretAuthorizationPrompt" xml:space="preserve"><value>Autentícate una vez para ver o cambiar el secreto Base32 de esta cuenta.</value></data>
   <data name="AccountSecretAuthorizationRequired" xml:space="preserve"><value>Autentícate antes de cambiar el secreto Base32 de esta cuenta.</value></data>
@@ -556,4 +556,10 @@
   <data name="GitHubReportNotice" xml:space="preserve"><value>Las incidencias de GitHub son públicas. La versión de la aplicación y el sistema operativo se rellenan automáticamente. Revise el formulario antes de enviarlo. No incluya datos de cuentas, secretos, códigos QR, copias de seguridad ni registros sin revisar. Informe de vulnerabilidades de seguridad en privado.</value></data>
   <data name="GitHubReportOpened" xml:space="preserve"><value>Revise el formulario en su navegador y envíelo en GitHub.</value></data>
   <data name="GitHubReportFailed" xml:space="preserve"><value>No se pudo abrir el formulario de GitHub. Vuelva a intentarlo.</value></data>
+  <data name="TotpAlgorithm" xml:space="preserve"><value>Algoritmo</value></data>
+  <data name="TotpDigits" xml:space="preserve"><value>Dígitos</value></data>
+  <data name="TotpSha1" xml:space="preserve"><value>SHA-1 (predeterminado)</value></data>
+  <data name="TotpSha256" xml:space="preserve"><value>SHA-256</value></data>
+  <data name="TotpSha512" xml:space="preserve"><value>SHA-512</value></data>
+  <data name="TotpConfigurationInvalid" xml:space="preserve"><value>Selecciona SHA-1, SHA-256 o SHA-512 y un código de 6 u 8 dígitos.</value></data>
 </root>

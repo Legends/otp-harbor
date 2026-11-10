@@ -332,7 +332,7 @@ public sealed class ExportServiceTests
         using var temp = new TempDir();
         var encrypted = Path.Combine(temp.Path, "accounts.otphbp");
         var export = await _sut.ExportToEncryptedFileAsync(
-            [new Account(Guid.NewGuid(), "GitHub", "SECRET")],
+            [new Account(Guid.NewGuid(), "GitHub", "MZXW6")],
             "correct-password",
             encrypted,
             ExportFileFormat.Json);
@@ -352,7 +352,7 @@ public sealed class ExportServiceTests
     {
         using var temp = new TempDir();
         var path = Path.Combine(temp.Path, "accounts.otphbp");
-        List<Account> input = [new(Guid.NewGuid(), "Azure", "ABCD1234", "tenant-user", 60)];
+        List<Account> input = [new(Guid.NewGuid(), "Azure", "JBSWY3DPEHPK3PXP", "tenant-user", 60)];
 
         var export = await _sut.ExportToEncryptedFileAsync(input, "pw-123", path, format);
         var import = await _sut.ImportFromEncryptedFileAsync("pw-123", path);
@@ -361,7 +361,7 @@ public sealed class ExportServiceTests
         Assert.True(import.IsSuccess);
         var token = Assert.Single(import.Value);
         Assert.Equal("Azure", token.Issuer);
-        Assert.Equal("ABCD1234", token.Secret);
+        Assert.Equal("JBSWY3DPEHPK3PXP", token.Secret);
         Assert.Equal("tenant-user", token.AccountName);
         Assert.Equal(60, token.PeriodSeconds);
     }
@@ -611,8 +611,8 @@ public sealed class ExportServiceTests
 
     [Theory]
     [InlineData("HOTP", "SHA1", 6, 30)]
-    [InlineData("TOTP", "SHA256", 6, 30)]
-    [InlineData("TOTP", "SHA1", 8, 30)]
+    [InlineData("TOTP", "SHA384", 6, 30)]
+    [InlineData("TOTP", "SHA1", 7, 30)]
     [InlineData("TOTP", "SHA1", 6, 3601)]
     public async Task ImportFromStreamAsync_WithUnsupportedTwoFasService_FailsWholeImport(
         string tokenType,
@@ -654,8 +654,8 @@ public sealed class ExportServiceTests
 
     [Theory]
     [InlineData("hotp", "SHA1", 6, 30)]
-    [InlineData("totp", "SHA256", 6, 30)]
-    [InlineData("totp", "SHA1", 8, 30)]
+    [InlineData("totp", "SHA384", 6, 30)]
+    [InlineData("totp", "SHA1", 7, 30)]
     [InlineData("totp", "SHA1", 6, 4)]
     public async Task ImportFromStreamAsync_WithUnsupportedAegisEntry_FailsWholeImport(
         string type,
@@ -701,8 +701,8 @@ public sealed class ExportServiceTests
     [Theory]
     [InlineData("otpauth://hotp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&counter=1")]
     [InlineData("otpauth://totp/Example%3Aalice?secret=INVALID1&issuer=Example")]
-    [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&algorithm=SHA256")]
-    [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&digits=8")]
+    [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&algorithm=SHA384")]
+    [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&digits=7")]
     [InlineData("otpauth://totp/Example%3Aalice?secret=JBSWY3DPEHPK3PXP&issuer=Example&period=invalid")]
     public async Task ImportFromStreamAsync_WithInvalidOrUnsupportedOtpAuthUri_FailsClosed(
         string content)
@@ -742,7 +742,7 @@ public sealed class ExportServiceTests
         var cancellationToken = TestContext.Current.CancellationToken;
         using var temp = new TempDir();
         var path = Path.Combine(temp.Path, "stream-generated.otphbp");
-        var input = new Account(Guid.NewGuid(), "GitHub", "ABCD1234", "stream-user");
+        var input = new Account(Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "stream-user");
 
         await using (var destination = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, true))
         {
@@ -769,7 +769,7 @@ public sealed class ExportServiceTests
         var cancellationToken = TestContext.Current.CancellationToken;
         using var temp = new TempDir();
         var path = Path.Combine(temp.Path, "path-generated.otphbp");
-        var input = new Account(Guid.NewGuid(), "GitLab", "EFGH5678", "path-user");
+        var input = new Account(Guid.NewGuid(), "GitLab", "ORSXG5A", "path-user");
         Assert.True((await _sut.ExportToEncryptedFileAsync(
             [input], "pw-456", path, ExportFileFormat.Json)).IsSuccess);
 
@@ -813,7 +813,7 @@ public sealed class ExportServiceTests
         };
         await using var stream = new MemoryStream();
         Assert.True((await _sut.ExportToStreamAsync(
-            [new Account(Guid.NewGuid(), "Issuer", "SECRET", "user")], stream, format, cancellationToken)).IsSuccess);
+            [new Account(Guid.NewGuid(), "Issuer", "MZXW6", "user")], stream, format, cancellationToken)).IsSuccess);
         stream.Position = 0;
 
         var result = await _sut.ImportFromStreamAsync(stream, fileName, cancellationToken: cancellationToken);
@@ -913,7 +913,7 @@ public sealed class ExportServiceTests
         var path = Path.Combine(temp.Path, "missing", "accounts.otphbp");
 
         var result = await _sut.ExportToEncryptedFileAsync(
-            [new Account(Guid.NewGuid(), "GitHub", "SECRET")],
+            [new Account(Guid.NewGuid(), "GitHub", "MZXW6")],
             "pw",
             path,
             ExportFileFormat.Json);

@@ -49,6 +49,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-UnsignedPreviewReleasePolicy.ps1
 
+      - name: Validate README release automation
+        shell: pwsh
+        run: python -m unittest discover -s scripts/validation -p test_readme_releases.py
+
       - name: Validate code-signing status disclosure
         shell: pwsh
         run: ./scripts/validation/Test-SignPathFoundationReadiness.ps1
@@ -1512,6 +1516,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run pages.yml --repo "${{ github.repository }}"
+
+  refresh-release-readme:
+    name: Refresh README after publishing a release
+    needs: [publish-avalonia-release, publish-android-release]
+    if: always() && (needs.publish-avalonia-release.result == 'success' || needs.publish-android-release.result == 'success')
+    permissions:
+      contents: write
+    uses: ./.github/workflows/readme-releases.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   publish-android-release:
     name: Publish OTP Harbor Android release

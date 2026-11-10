@@ -229,7 +229,7 @@ public sealed class QrAccountImportServiceTests
         var sut = new QrAccountImportService(accounts.Object);
 
         var result = await sut.ImportAsync(
-            Payload + "&digits=8",
+            Payload + "&digits=7",
             (_, _) => Task.FromResult(QrAccountConflictDecision.Cancel),
             TestContext.Current.CancellationToken);
 

@@ -20,12 +20,17 @@ public class AccountManager(
     private readonly ILogger<AccountManager> _logger = logger ?? NullLogger<AccountManager>.Instance;
     public async Task<Result> AddNewAsync(Account newItem)
     {
+        if (!TOTP.Core.Validation.SecretValidation.IsValidBase32Secret(newItem.Secret))
+            return Result.Fail("The account secret is invalid.");
+        if (!IsSupported(newItem)) return Result.Fail("The TOTP configuration is unsupported.");
         return TrackMutation(await otpDal.AddNewAsync(newItem));
     }
 
     public async Task<Result> CommitImportAsync(IReadOnlyCollection<Account> accounts)
     {
         ArgumentNullException.ThrowIfNull(accounts);
+        if (accounts.Any(account => !IsSupported(account)))
+            return Result.Fail("The TOTP configuration is unsupported.");
         return TrackMutation(await otpDal.CommitImportAsync(accounts));
     }
 
@@ -33,6 +38,12 @@ public class AccountManager(
     {
         ArgumentNullException.ThrowIfNull(previous);
         ArgumentNullException.ThrowIfNull(updated);
+        var isUnchangedSecret = string.Equals(previous.Secret, updated.Secret, StringComparison.Ordinal);
+        var isValidSecret = isUnchangedSecret
+            ? TOTP.Core.Validation.SecretValidation.IsValidStoredBase32Secret(updated.Secret)
+            : TOTP.Core.Validation.SecretValidation.IsValidBase32Secret(updated.Secret);
+        if (!isValidSecret) return Result.Fail("The account secret is invalid.");
+        if (!IsSupported(updated)) return Result.Fail("The TOTP configuration is unsupported.");
         return TrackMutation(await otpDal.UpdateAsync(
             updated.WithGroups(updated.Groups.Count > 0 ? updated.Groups : previous.Groups)));
     }
@@ -92,6 +103,10 @@ public class AccountManager(
             "Recovery checkpoint completed. Success: {Success}.", result.IsSuccess);
         return result;
     }
+
+    private static bool IsSupported(Account account) =>
+        TOTP.Core.Validation.TotpConfigurationPolicy.IsSupported(account.Algorithm, account.Digits)
+        && TOTP.Core.Validation.TotpPeriodPolicy.IsSupported(account.PeriodSeconds);
 
     private Result TrackMutation(Result result, [CallerMemberName] string operation = "")
     {

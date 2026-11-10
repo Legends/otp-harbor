@@ -663,9 +663,15 @@ internal sealed class NativeAccountRowView : View
             or nameof(MobileAccountItem.DisplayNextCode)
             or nameof(MobileAccountItem.HasVisibleNextCode))
         {
+            var previousDigits = _rawCode.Length;
             _rawCode = _row?.Account.Code ?? string.Empty;
             _displayCode = _row?.Account.DisplayCode ?? string.Empty;
             _displayNextCode = _row?.Account.DisplayNextCode ?? string.Empty;
+            if (previousDigits != _rawCode.Length)
+            {
+                UpdateTextLayout();
+                UpdateStarPath();
+            }
         }
         if (args.PropertyName is nameof(MobileAccountItem.Brand)
             or nameof(MobileAccountItem.ShowIssuerLogo))
@@ -896,7 +902,7 @@ internal sealed class NativeAccountRowView : View
 
     private float GetStarLeft()
     {
-        var codeWidth = Math.Min(Dp(126), Math.Max(Dp(92), Width * 0.31f));
+        var codeWidth = Dp(NativeTextSizing.CodeColumnWidthDp(Width / _density, _rawCode.Length));
         return _cardBounds.Right - Dp(10) - codeWidth - Dp(46);
     }
 

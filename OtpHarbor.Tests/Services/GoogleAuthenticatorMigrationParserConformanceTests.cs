@@ -122,10 +122,26 @@ public sealed class GoogleAuthenticatorMigrationParserConformanceTests
     }
 
     [Theory]
+    [InlineData(1, 1, "SHA1", 6)]
+    [InlineData(1, 2, "SHA1", 8)]
+    [InlineData(2, 1, "SHA256", 6)]
+    [InlineData(2, 2, "SHA256", 8)]
+    [InlineData(3, 1, "SHA512", 6)]
+    [InlineData(3, 2, "SHA512", 8)]
+    public void Parse_PreservesSupportedConfiguration(int algorithm, int digits, string expectedAlgorithm, int expectedDigits)
+    {
+        var batch = GoogleAuthenticatorMigrationParser.Parse(CreatePayload([CreateAccount(algorithm: algorithm, digits: digits)]));
+        var account = Assert.Single(batch.Accounts);
+        Assert.Equal(expectedAlgorithm, account.Algorithm);
+        Assert.Equal(expectedDigits, account.Digits);
+        Assert.Equal("AEAQ", account.SecretBase32);
+    }
+
+    [Theory]
     [InlineData(0, 1, 2)]
-    [InlineData(2, 1, 2)]
+    [InlineData(4, 1, 2)]
     [InlineData(1, 0, 2)]
-    [InlineData(1, 2, 2)]
+    [InlineData(1, 3, 2)]
     [InlineData(1, 1, 0)]
     [InlineData(1, 1, 1)]
     [InlineData(1, 1, 3)]

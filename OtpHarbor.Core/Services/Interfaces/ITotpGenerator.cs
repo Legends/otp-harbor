@@ -7,5 +7,7 @@ public interface ITotpGenerator
 {
     TotpGenerationResult Generate(
         string base32Secret,
-        int periodSeconds = TotpPeriodPolicy.DefaultSeconds);
+        int periodSeconds = TotpPeriodPolicy.DefaultSeconds,
+        string algorithm = TotpConfigurationPolicy.DefaultAlgorithm,
+        int digits = TotpConfigurationPolicy.DefaultDigits);
 }

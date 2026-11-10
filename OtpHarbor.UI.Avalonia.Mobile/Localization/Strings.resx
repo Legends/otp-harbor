@@ -240,7 +240,7 @@
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="IssuerRequired" xml:space="preserve"><value>Enter an issuer.</value></data>
   <data name="SecretRequired" xml:space="preserve"><value>Enter the account secret.</value></data>
-  <data name="SecretInvalid" xml:space="preserve"><value>Enter a valid Base32 secret. New account secrets must contain at least 26 characters.</value></data>
+  <data name="SecretInvalid" xml:space="preserve"><value>Enter a valid, non-empty Base32 secret.</value></data>
   <data name="DuplicateAccount" xml:space="preserve"><value>An account with this issuer and account name already exists.</value></data>
   <data name="AccountSaved" xml:space="preserve"><value>Account saved.</value></data>
   <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Account saved, but its local icon preference could not be saved.</value></data>
@@ -402,4 +402,10 @@
   <data name="GitHubReportNotice" xml:space="preserve"><value>GitHub issues are public. The app version and OS are prefilled. Review the form before submitting. Never include account data, secrets, QR codes, backups or unreviewed logs. Report security vulnerabilities privately.</value></data>
   <data name="GitHubReportOpened" xml:space="preserve"><value>Review the prefilled form in your browser, then submit it on GitHub.</value></data>
   <data name="GitHubReportFailed" xml:space="preserve"><value>The GitHub report form could not be opened. Please try again.</value></data>
+  <data name="TotpAlgorithm" xml:space="preserve"><value>Algorithm</value></data>
+  <data name="TotpDigits" xml:space="preserve"><value>Digits</value></data>
+  <data name="TotpSha1" xml:space="preserve"><value>SHA-1 (default)</value></data>
+  <data name="TotpSha256" xml:space="preserve"><value>SHA-256</value></data>
+  <data name="TotpSha512" xml:space="preserve"><value>SHA-512</value></data>
+  <data name="TotpConfigurationInvalid" xml:space="preserve"><value>Select SHA-1, SHA-256 or SHA-512 and a 6- or 8-digit code.</value></data>
 </root>

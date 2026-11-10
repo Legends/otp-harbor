@@ -67,7 +67,7 @@ public sealed class AccountManagerTests
             "AAAA",
             "alice",
             groups: groups);
-        var updated = new Account(previous.ID, "New", "BBBB", "alice");
+        var updated = new Account(previous.ID, "New", "MZXW6", "alice");
         var dal = new Mock<IAccountDAL>();
         dal.Setup(value => value.UpdateAsync(It.IsAny<Account>()))
             .ReturnsAsync(FluentResults.Result.Ok());

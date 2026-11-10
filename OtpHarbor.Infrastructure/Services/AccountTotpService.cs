@@ -23,7 +23,7 @@ public sealed class AccountTotpService(
 
         try
         {
-            return Result.Ok(totpGenerator.Generate(account.Secret, account.PeriodSeconds));
+            return Result.Ok(totpGenerator.Generate(account.Secret, account.PeriodSeconds, account.Algorithm, account.Digits));
         }
         catch (Exception exception) when (
             exception is FormatException or ArgumentOutOfRangeException)
@@ -61,7 +61,7 @@ public sealed class AccountTotpService(
             {
                 codes[account.ID] = totpGenerator.Generate(
                     account.Secret,
-                    account.PeriodSeconds);
+                    account.PeriodSeconds, account.Algorithm, account.Digits);
                 failedAccountIds.Remove(account.ID);
             }
             catch (Exception exception) when (

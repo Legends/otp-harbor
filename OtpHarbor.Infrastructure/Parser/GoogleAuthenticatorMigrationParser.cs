@@ -146,7 +146,7 @@ internal static class GoogleAuthenticatorMigrationParser
             }
         }
 
-        if (secret is null || algorithm != 1 || digits != 1 || type != 2)
+        if (secret is null || algorithm is not (1 or 2 or 3) || digits is not (1 or 2) || type != 2)
             throw new FormatException("The migration account uses unsupported OTP parameters.");
 
         (issuer, name) = NormalizeIdentity(issuer, name);
@@ -158,8 +158,8 @@ internal static class GoogleAuthenticatorMigrationParser
             Issuer = issuer,
             Label = name,
             SecretBase32 = secret,
-            Algorithm = "SHA1",
-            Digits = 6,
+            Algorithm = algorithm switch { 1 => "SHA1", 2 => "SHA256", 3 => "SHA512", _ => throw new FormatException("Unsupported algorithm.") },
+            Digits = digits == 1 ? 6 : 8,
             Period = 30
         };
     }

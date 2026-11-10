@@ -131,7 +131,7 @@ public sealed class QrAccountImportService(IAccountManager accounts,
             issuer,
             parsed.SecretBase32,
             EmptyToNull(accountName),
-            parsed.Period);
+            parsed.Period, algorithm: parsed.Algorithm, digits: parsed.Digits);
         if (existing is null)
         {
             var added = await accounts.AddNewAsync(incoming);
@@ -148,6 +148,8 @@ public sealed class QrAccountImportService(IAccountManager accounts,
             NormalizeSecret(existing.Secret),
             NormalizeSecret(incoming.Secret),
             StringComparison.Ordinal)
+            && existing.Algorithm == incoming.Algorithm
+            && existing.Digits == incoming.Digits
             && existing.PeriodSeconds == incoming.PeriodSeconds)
         {
             return Result.Ok(new QrAccountImportOutcome(
@@ -197,7 +199,8 @@ public sealed class QrAccountImportService(IAccountManager accounts,
                 EmptyToNull(accountName),
                 incoming.PeriodSeconds,
                 isFavorite: existing.IsFavorite,
-                groups: existing.Groups);
+                groups: existing.Groups,
+                algorithm: incoming.Algorithm, digits: incoming.Digits);
             var existingIndex = snapshot.FindIndex(account => account.ID == existing.ID);
             if (existingIndex < 0)
                 return Result.Fail<QrAccountImportOutcome>("The QR import plan is inconsistent.");
@@ -260,7 +263,7 @@ public sealed class QrAccountImportService(IAccountManager accounts,
                 issuer,
                 parsed.SecretBase32,
                 EmptyToNull(accountName),
-                TotpPeriodPolicy.DefaultSeconds);
+                parsed.Period, algorithm: parsed.Algorithm, digits: parsed.Digits);
             var identityMatches = working.Where(account => IdentityMatches(incoming, account)).ToArray();
             if (identityMatches.Length == 0)
             {
@@ -273,6 +276,8 @@ public sealed class QrAccountImportService(IAccountManager accounts,
                 NormalizeSecret(existing.Secret),
                 NormalizeSecret(incoming.Secret),
                 StringComparison.Ordinal)
+                && existing.Algorithm == incoming.Algorithm
+                && existing.Digits == incoming.Digits
                 && existing.PeriodSeconds == incoming.PeriodSeconds))
             {
                 duplicateCount++;
@@ -339,7 +344,8 @@ public sealed class QrAccountImportService(IAccountManager accounts,
                 write.Incoming.AccountName,
                 write.Incoming.PeriodSeconds,
                 isFavorite: existing.IsFavorite,
-                groups: existing.Groups);
+                groups: existing.Groups,
+                algorithm: write.Incoming.Algorithm, digits: write.Incoming.Digits);
             var existingIndex = working.FindIndex(account => account.ID == existing.ID);
             if (existingIndex < 0)
                 return Result.Fail<QrAccountImportOutcome>("The QR import plan is inconsistent.");
@@ -388,7 +394,9 @@ public sealed class QrAccountImportService(IAccountManager accounts,
                 NormalizeSecret(existing.Secret),
                 NormalizeSecret(incoming.Secret),
                 StringComparison.Ordinal),
-            existing.PeriodSeconds != incoming.PeriodSeconds);
+            existing.PeriodSeconds != incoming.PeriodSeconds,
+            existing.Algorithm != incoming.Algorithm,
+            existing.Digits != incoming.Digits);
 
     private static bool TryResolveDecisions(
         IReadOnlyCollection<QrAccountConflict> conflicts,

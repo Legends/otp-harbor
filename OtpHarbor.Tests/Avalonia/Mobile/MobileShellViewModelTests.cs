@@ -5268,7 +5268,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task SaveAccountAsync_WithPlainTextLikeSecret_DoesNotPersistNewAccount()
+    public async Task SaveAccountAsync_WithMalformedBase32Secret_DoesNotPersistNewAccount()
     {
         var context = CreateContext(isConfigured: false);
         context.Authorization
@@ -5281,7 +5281,7 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(Result.Ok());
         await ConfigureAndBeginAddAsync(context);
         context.Sut.EditorIssuer = "Example";
-        context.Sut.EditorSecret = "anything";
+        context.Sut.EditorSecret = "not*base32";
 
         await context.Sut.SaveAccountAsync();
 
@@ -5313,6 +5313,161 @@ public sealed class MobileShellViewModelTests
             context.Sut.NotificationText);
         Assert.True(context.Sut.ReportOnGitHubCommand.CanExecute(null));
         reporter.Verify(value => value.OpenAsync(), Times.Once);
+    }
+
+    [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.Configurations), MemberType = typeof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests))]
+    public async Task Editor_SavesConfigurationWithoutChangingSecretAndRefreshesCode(string algorithm, int digits)
+    {
+        var original = new Account(Guid.NewGuid(), "Example", ValidSecret.ToLowerInvariant(), "alice", algorithm: algorithm, digits: digits);
+        var stored = new List<Account> { original };
+        var context = CreateContext(isConfigured: true, stored);
+        var generator = new TOTP.Infrastructure.Services.OtpNetTotpGenerator(
+            new TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.FixedClock(1111111109));
+        var codes = new TOTP.Infrastructure.Services.AccountTotpService(context.AccountManager.Object, generator);
+        context.AccountTotp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Returns<IReadOnlyCollection<Guid>>(ids => codes.GenerateManyAsync(ids));
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.AccountManager.Setup(value => value.UpdateAsync(original, It.IsAny<Account>()))
+            .Callback<Account, Account>((_, updated) => stored[0] = updated).ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        context.Sut.SelectedAccount = Assert.Single(context.Sut.Accounts);
+        await WaitUntilAsync(() => context.Sut.SelectedAccount.Code.Length == digits);
+        Assert.Equal(generator.Generate(ValidSecret, 30, algorithm, digits).Code, context.Sut.SelectedAccount.Code);
+        await context.Sut.BeginEditAsync();
+        Assert.Equal(algorithm, context.Sut.EditorAlgorithm);
+        Assert.Equal(digits, context.Sut.EditorDigits);
+        context.AccountTotp.Invocations.Clear();
+        context.Sut.EditorAlgorithmIndex = algorithm == "SHA512" ? 0 : 2;
+        context.Sut.EditorDigits = digits == 8 ? 6 : 8;
+        await context.Sut.SaveAccountAsync();
+        Assert.Equal(algorithm == "SHA512" ? "SHA1" : "SHA512", stored[0].Algorithm);
+        Assert.Equal(digits == 8 ? 6 : 8, stored[0].Digits);
+        Assert.Equal(original.Secret, stored[0].Secret);
+        var item = Assert.Single(context.Sut.Accounts);
+        Assert.Equal(generator.Generate(ValidSecret, 30, stored[0].Algorithm, stored[0].Digits).Code, item.Code);
+        Assert.Equal(item.Code.Insert(item.Code.Length / 2, " "), item.DisplayCode);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(
+            It.Is<IReadOnlyCollection<Guid>>(ids => ids.Count == 1 && ids.Contains(original.ID))), Times.AtLeastOnce);
+        await context.Sut.BeginAddAsync();
+        Assert.Equal("SHA1", context.Sut.EditorAlgorithm);
+        Assert.Equal(6, context.Sut.EditorDigits);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("es")]
+    [InlineData("fr")]
+    public async Task Editor_InvalidConfigurationUsesActiveLocaleAndDoesNotPersist(string culture)
+    {
+        var context = CreateContext(isConfigured: true, cultureName: culture);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginAddAsync();
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = ValidSecret;
+        context.Sut.EditorAlgorithmIndex = -1;
+        context.Sut.EditorDigits = 7;
+        await context.Sut.SaveAccountAsync();
+        Assert.Equal(context.Strings.Get(MobileStringKeys.TotpConfigurationInvalid), context.Sut.EditorPeriodMessage);
+        context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CopyAccountCodeAsync_PreservesAllEightDigitsAndLeadingZeros()
+    {
+        var source = new Account(Guid.NewGuid(), "Example", ValidSecret, algorithm: "SHA512", digits: 8);
+        var context = CreateContext(isConfigured: true, [source]);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult> { [source.ID] = new("00123456", 20, 30) },
+                new HashSet<Guid>())));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var item = Assert.Single(context.Sut.Accounts);
+        await WaitUntilAsync(() => item.Code == "00123456");
+        await context.Sut.CopyAccountCodeAsync(item);
+        context.Clipboard.Verify(value => value.CopyAndScheduleClearAsync("00123456", It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("0012 3456", item.DisplayCode);
+    }
+
+    [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.Configurations), MemberType = typeof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests))]
+    public async Task Editor_CreatesEveryConfiguration(string algorithm, int digits)
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        Account? saved = null;
+        context.AccountManager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => saved = account).ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginAddAsync();
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = "JBSWY3DPEHPK3PXP";
+        context.Sut.EditorAlgorithmIndex = Array.IndexOf(new[] { "SHA1", "SHA256", "SHA512" }, algorithm);
+        context.Sut.EditorDigits = digits;
+        await context.Sut.SaveAccountAsync();
+        Assert.NotNull(saved);
+        Assert.Equal(algorithm, saved.Algorithm);
+        Assert.Equal(digits, saved.Digits);
+        Assert.Equal("JBSWY3DPEHPK3PXP", saved.Secret);
+    }
+
+    [Theory]
+    [InlineData("AA")]
+    [InlineData("ORSXG5A")]
+    [InlineData("ANYTHING")]
+    public async Task Editor_AcceptsValidBase32BelowEightyBits(string secret)
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        Account? saved = null;
+        context.AccountManager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => saved = account).ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginAddAsync();
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = secret;
+        await context.Sut.SaveAccountAsync();
+        Assert.NotNull(saved);
+        Assert.Equal(secret, saved.Secret);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("es")]
+    [InlineData("fr")]
+    public async Task Editor_MalformedBase32ErrorUsesActiveLocale(string culture)
+    {
+        var context = CreateContext(isConfigured: true, cultureName: culture);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginAddAsync();
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = "not*base32";
+        await context.Sut.SaveAccountAsync();
+        Assert.Equal(context.Strings.Get(MobileStringKeys.SecretInvalid), context.Sut.EditorSecretMessage);
+        context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate)

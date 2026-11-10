@@ -102,8 +102,8 @@ public sealed class ExternalBackupParserConformanceTests
     }
 
     [Theory]
-    [InlineData("totp", "SHA256", 6, 30)]
-    [InlineData("totp", "SHA1", 8, 30)]
+    [InlineData("totp", "SHA384", 6, 30)]
+    [InlineData("totp", "SHA1", 7, 30)]
     [InlineData("totp", "SHA1", 6, 4)]
     [InlineData("totp", "SHA1", 6, 3601)]
     public void Aegis_Parse_RejectsEveryUnsupportedTotpParameterClass(
@@ -199,8 +199,8 @@ public sealed class ExternalBackupParserConformanceTests
 
     [Theory]
     [InlineData("HOTP", "SHA1", 6, 30)]
-    [InlineData("TOTP", "SHA256", 6, 30)]
-    [InlineData("TOTP", "SHA1", 8, 30)]
+    [InlineData("TOTP", "SHA384", 6, 30)]
+    [InlineData("TOTP", "SHA1", 7, 30)]
     [InlineData("TOTP", "SHA1", 6, 4)]
     [InlineData("TOTP", "SHA1", 6, 3601)]
     public void TwoFas_Parse_RejectsEveryUnsupportedTotpParameterClass(
@@ -245,6 +245,49 @@ public sealed class ExternalBackupParserConformanceTests
 
         Assert.Equal("Service fallback", account.Issuer);
         Assert.Equal("label fallback", account.AccountName);
+    }
+
+    [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.Configurations), MemberType = typeof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests))]
+    public void ExternalFormats_PreserveEverySupportedConfiguration(string algorithm, int digits)
+    {
+        var aegis = ParseNode(AegisJson());
+        aegis["db"]!["entries"]![0]!["info"]!["algo"] = algorithm;
+        aegis["db"]!["entries"]![0]!["info"]!["digits"] = digits;
+        var twofas = ParseNode(TwoFasJson());
+        twofas["services"]![0]!["otp"]!["algorithm"] = algorithm;
+        twofas["services"]![0]!["otp"]!["digits"] = digits;
+        foreach (var account in new[] { Assert.Single(ParseAegis(aegis)), Assert.Single(ParseTwoFas(twofas)) })
+        {
+            Assert.Equal(algorithm, account.Algorithm);
+            Assert.Equal(digits, account.Digits);
+            Assert.Equal("JBSWY3DPEHPK3PXP", account.Secret);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.IncomingSecretValidationTests.ValidSecrets), MemberType = typeof(TOTP.Tests.Infrastructure.Services.IncomingSecretValidationTests))]
+    public void AegisAndTwoFas_AcceptValidBase32WithoutMinimumBitLength(string secret)
+    {
+        var aegis = ParseNode(AegisJson());
+        aegis["db"]!["entries"]![0]!["info"]!["secret"] = secret;
+        var twofas = ParseNode(TwoFasJson());
+        twofas["services"]![0]!["secret"] = secret;
+        var expected = TOTP.Core.Validation.SecretValidation.NormalizeBase32Secret(secret);
+        Assert.Equal(expected, Assert.Single(ParseAegis(aegis)).Secret);
+        Assert.Equal(expected, Assert.Single(ParseTwoFas(twofas)).Secret);
+    }
+
+    [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.IncomingSecretValidationTests.InvalidSecrets), MemberType = typeof(TOTP.Tests.Infrastructure.Services.IncomingSecretValidationTests))]
+    public void AegisAndTwoFas_RejectMalformedBase32(string secret)
+    {
+        var aegis = ParseNode(AegisJson());
+        aegis["db"]!["entries"]![0]!["info"]!["secret"] = secret;
+        var twofas = ParseNode(TwoFasJson());
+        twofas["services"]![0]!["secret"] = secret;
+        Assert.Throws<FormatException>(() => ParseAegis(aegis));
+        Assert.Throws<FormatException>(() => ParseTwoFas(twofas));
     }
 
     private static JsonObject ParseNode(string json) =>

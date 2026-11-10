@@ -20,7 +20,9 @@ public sealed class BackupImportConflictItem : INotifyPropertyChanged
         string favoriteField,
         string groupMembershipField,
         string keepAccountAutomationFormat,
-        string restoreAccountAutomationFormat)
+        string restoreAccountAutomationFormat,
+        string algorithmField = "",
+        string digitsField = "")
     {
         ArgumentNullException.ThrowIfNull(conflict);
         ArgumentException.ThrowIfNullOrWhiteSpace(currentAccountFormat);
@@ -38,6 +40,8 @@ public sealed class BackupImportConflictItem : INotifyPropertyChanged
         if (conflict.AccountNameChanged) changedFields.Add(accountNameField);
         if (conflict.SecretChanged) changedFields.Add(secretField);
         if (conflict.PeriodChanged) changedFields.Add(periodField);
+        if (conflict.AlgorithmChanged) changedFields.Add(algorithmField);
+        if (conflict.DigitsChanged) changedFields.Add(digitsField);
         if (conflict.FavoriteChanged) changedFields.Add(favoriteField);
         if (conflict.GroupMembershipChanged) changedFields.Add(groupMembershipField);
         ChangedFieldsText = string.Format(

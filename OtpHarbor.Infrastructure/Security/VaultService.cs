@@ -327,7 +327,9 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
         string Secret,
         string? AccountName,
         int PeriodSeconds,
-        bool IsFavorite)
+        bool IsFavorite,
+        string Algorithm = TOTP.Core.Validation.TotpConfigurationPolicy.DefaultAlgorithm,
+        int Digits = TOTP.Core.Validation.TotpConfigurationPolicy.DefaultDigits)
     {
         public static VaultAccountPayload FromAccount(Account account) => new(
             account.ID,
@@ -335,7 +337,9 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
             account.Secret,
             account.AccountName,
             account.PeriodSeconds,
-            account.IsFavorite);
+            account.IsFavorite,
+            account.Algorithm,
+            account.Digits);
 
         public Account ToAccount(IReadOnlyList<AccountGroup> groups) => new(
             Id,
@@ -344,7 +348,9 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
             AccountName,
             PeriodSeconds,
             isFavorite: IsFavorite,
-            groups: groups);
+            groups: groups,
+            algorithm: Algorithm,
+            digits: Digits);
     }
 
     private sealed record VaultAccountsPayload(

@@ -164,7 +164,9 @@ public sealed class AccountImportService(IAccountManager accountManager,
                     !SameSecret(value.Existing, value.Incoming),
                     value.Existing.PeriodSeconds != value.Incoming.PeriodSeconds,
                     value.Incoming.IsFavorite && !value.Existing.IsFavorite,
-                    GroupsChanged(value.Existing, value.Incoming, profileAuthoritative)))
+                    GroupsChanged(value.Existing, value.Incoming, profileAuthoritative),
+                    value.Existing.Algorithm != value.Incoming.Algorithm,
+                    value.Existing.Digits != value.Incoming.Digits))
                 .ToList();
             var newCount = validated.Count - unchanged - changedConflicts.Count;
             var conflicts = unchanged + changedConflicts.Count;
@@ -318,7 +320,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
                     incoming.AccountName,
                     incoming.PeriodSeconds,
                     isFavorite: incoming.IsFavorite || match.IsFavorite,
-                    groups: ResolveGroups(match, incoming, profileAuthoritative));
+                    groups: ResolveGroups(match, incoming, profileAuthoritative),
+                    algorithm: incoming.Algorithm, digits: incoming.Digits);
                 working.Remove(match);
                 working.Add(replacement);
                 replacedCount++;
@@ -333,7 +336,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
                         incoming.AccountName,
                         incoming.PeriodSeconds,
                         isFavorite: incoming.IsFavorite,
-                        groups: incoming.Groups)
+                        groups: incoming.Groups,
+                        algorithm: incoming.Algorithm, digits: incoming.Digits)
                     : CreateKeepBoth(incoming, working);
                 working.Add(added);
                 addedCount++;
@@ -362,6 +366,7 @@ public sealed class AccountImportService(IAccountManager accountManager,
                 || (accountName?.Length ?? 0) > 256
                 || !SecretValidation.IsValidBase32Secret(account.Secret)
                 || !TotpPeriodPolicy.IsSupported(account.PeriodSeconds)
+                || !TotpConfigurationPolicy.IsSupported(account.Algorithm, account.Digits)
                 || !validGroups)
             {
                 validated.Clear();
@@ -375,7 +380,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
                 string.IsNullOrWhiteSpace(accountName) ? null : accountName,
                 account.PeriodSeconds,
                 isFavorite: account.IsFavorite,
-                groups: groups));
+                groups: groups,
+                algorithm: account.Algorithm.ToUpperInvariant(), digits: account.Digits));
         }
 
         return true;
@@ -397,6 +403,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
         SameIssuer(left, right)
         && SameAccountName(left, right)
         && SameSecret(left, right)
+        && left.Algorithm == right.Algorithm
+        && left.Digits == right.Digits
         && left.PeriodSeconds == right.PeriodSeconds
         && (!right.IsFavorite || left.IsFavorite)
         && !GroupsChanged(left, right, profileAuthoritative);
@@ -492,7 +500,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
             incoming.AccountName,
             incoming.PeriodSeconds,
             isFavorite: incoming.IsFavorite,
-            groups: incoming.Groups);
+            groups: incoming.Groups,
+            algorithm: incoming.Algorithm, digits: incoming.Digits);
     }
 
     private sealed record ImportPlan(

@@ -369,6 +369,12 @@ public static class AvaloniaStringKeys
     public const string OtherFormatOtpAuth = nameof(OtherFormatOtpAuth);
     public const string OtherFormatLegacyOtpHarbor = nameof(OtherFormatLegacyOtpHarbor);
     public const string AdvancedOptions = nameof(AdvancedOptions);
+    public const string TotpAlgorithm = nameof(TotpAlgorithm);
+    public const string TotpDigits = nameof(TotpDigits);
+    public const string TotpSha1 = nameof(TotpSha1);
+    public const string TotpSha256 = nameof(TotpSha256);
+    public const string TotpSha512 = nameof(TotpSha512);
+    public const string TotpConfigurationInvalid = nameof(TotpConfigurationInvalid);
     public const string TotpPeriod = nameof(TotpPeriod);
     public const string ClearPeriod = nameof(ClearPeriod);
     public const string TotpPeriodHelp = nameof(TotpPeriodHelp);
@@ -667,7 +673,7 @@ public static class AvaloniaStringKeys
         CustomIconImportUnreadable, CustomIconImportInvalidPng, CustomIconImportUnsupportedFormat,
         OtherFormatAegis, OtherFormatTwoFas, OtherFormatOtpAuth,
         OtherFormatLegacyOtpHarbor,
-        AdvancedOptions, TotpPeriod, ClearPeriod, TotpPeriodHelp,
+        AdvancedOptions, TotpAlgorithm, TotpDigits, TotpSha1, TotpSha256, TotpSha512, TotpConfigurationInvalid, TotpPeriod, ClearPeriod, TotpPeriodHelp,
         TotpPeriodInvalid, CustomPeriodFormat, SaveAccount, CancelEdit, AccountIssuerRequired,
         AccountSecretInvalid, AuthorizeAccountSecretEdit, AccountSecretAuthorizationPrompt,
         AccountSecretAuthorizationRequired, AccountSecretAuthorizationFailed,

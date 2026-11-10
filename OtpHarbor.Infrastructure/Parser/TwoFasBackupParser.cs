@@ -40,8 +40,7 @@ internal static class TwoFasBackupParser
             var digits = GetOptionalInt32(otp, "digits") ?? 6;
             var period = GetOptionalInt32(otp, "period") ?? TotpPeriodPolicy.DefaultSeconds;
             if (!tokenType.Equals("TOTP", StringComparison.OrdinalIgnoreCase)
-                || !algorithm.Equals("SHA1", StringComparison.OrdinalIgnoreCase)
-                || digits != 6
+                || !TotpConfigurationPolicy.IsSupported(algorithm, digits)
                 || !TotpPeriodPolicy.IsSupported(period))
             {
                 throw new FormatException("The 2FAS backup contains unsupported OTP parameters.");
@@ -62,7 +61,7 @@ internal static class TwoFasBackupParser
                 string.IsNullOrEmpty(issuer) ? serviceName : issuer,
                 secret,
                 string.IsNullOrEmpty(accountName) ? null : accountName,
-                period));
+                period, algorithm: algorithm.ToUpperInvariant(), digits: digits));
         }
 
         return accounts;

@@ -66,13 +66,17 @@ namespace TOTP.Infrastructure.Parser
             var period = TotpPeriodPolicy.DefaultSeconds;
             if (periodStr is not null && !int.TryParse(periodStr, out period))
                 throw new ArgumentException("Invalid 'period' parameter.");
+            if (!TotpConfigurationPolicy.TryNormalizeAlgorithm(alg ?? "SHA1", out var algorithm)
+                || !TotpConfigurationPolicy.IsSupported(algorithm, digits)
+                || !TotpPeriodPolicy.IsSupported(period))
+                throw new ArgumentException("Unsupported TOTP parameters.");
 
             return new TOTPData
             {
                 Label = label,
                 Issuer = issuer,
                 SecretBase32 = normalizedSecret,
-                Algorithm = string.IsNullOrWhiteSpace(alg) ? "SHA1" : alg!,
+                Algorithm = algorithm,
                 Digits = digits,
                 Period = period
             };

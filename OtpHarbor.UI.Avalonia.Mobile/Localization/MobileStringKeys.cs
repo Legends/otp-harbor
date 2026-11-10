@@ -346,6 +346,12 @@ public static class MobileStringKeys
     public const string AccountSecretAuthorizationRequired = nameof(AccountSecretAuthorizationRequired);
     public const string AccountSecretAuthorizationFailed = nameof(AccountSecretAuthorizationFailed);
     public const string AdvancedOptions = nameof(AdvancedOptions);
+    public const string TotpAlgorithm = nameof(TotpAlgorithm);
+    public const string TotpDigits = nameof(TotpDigits);
+    public const string TotpSha1 = nameof(TotpSha1);
+    public const string TotpSha256 = nameof(TotpSha256);
+    public const string TotpSha512 = nameof(TotpSha512);
+    public const string TotpConfigurationInvalid = nameof(TotpConfigurationInvalid);
     public const string TotpPeriod = nameof(TotpPeriod);
     public const string ClearPeriod = nameof(ClearPeriod);
     public const string TotpPeriodHelp = nameof(TotpPeriodHelp);
@@ -722,7 +728,7 @@ public static class MobileStringKeys
         AccountSecretAuthorizationRequired,
         AccountSecretAuthorizationFailed,
         AdvancedOptions,
-        TotpPeriod,
+        TotpAlgorithm, TotpDigits, TotpSha1, TotpSha256, TotpSha512, TotpConfigurationInvalid, TotpPeriod,
         ClearPeriod,
         TotpPeriodHelp,
         TotpPeriodInvalid,

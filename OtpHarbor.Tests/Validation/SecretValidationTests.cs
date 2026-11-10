@@ -22,30 +22,39 @@ public sealed class SecretValidationTests
     [Theory]
     [InlineData("TEST")]
     [InlineData("ASDF")]
-    public void IsValidBase32Secret_PreservesLegacyDecoderCompatibility(string secret)
+    public void IsValidStoredBase32Secret_PreservesLegacyDecoderCompatibility(string secret)
     {
-        Assert.True(SecretValidation.IsValidBase32Secret(secret));
+        Assert.True(SecretValidation.IsValidStoredBase32Secret(secret));
+        Assert.False(SecretValidation.IsValidBase32Secret(secret));
     }
 
     [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("A")]
+    [InlineData("====")]
     [InlineData("not-valid-*")]
     [InlineData("TEST")]
     [InlineData("ASDF")]
     [InlineData("FOO")]
-    [InlineData("ANYTHING")]
-    [InlineData("ORSXG5A")]
-    [InlineData("JBSWY3DPEHPK3PXP")]
-    public void IsValidNewAccountBase32Secret_RejectsInvalidNonCanonicalOrShortSecrets(
-        string secret)
+    public void IsValidNewAccountBase32Secret_RejectsInvalidOrNonCanonicalSecrets(
+        string? secret)
     {
         Assert.False(SecretValidation.IsValidNewAccountBase32Secret(secret));
     }
 
     [Theory]
+    [InlineData("AA")]
+    [InlineData("ANYTHING")]
+    [InlineData("ORSXG5A")]
+    [InlineData("JBSWY3DPEHPK3PXP")]
+    [InlineData("jbsw y3dp-ehpk 3pxp====")]
     [InlineData("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ")]
     [InlineData("GEZD GNBV GY3T-QOJQ GEZD GNBV GY3T QOJQ====")]
-    public void IsValidNewAccountBase32Secret_AcceptsCanonical128BitOrLongerSecrets(string secret)
+    public void IsValidNewAccountBase32Secret_AcceptsCanonicalSecretsRegardlessOfBitLength(string secret)
     {
         Assert.True(SecretValidation.IsValidNewAccountBase32Secret(secret));
+        Assert.True(SecretValidation.IsValidBase32Secret(secret));
     }
 }

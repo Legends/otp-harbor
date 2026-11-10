@@ -2184,6 +2184,19 @@
                                     Height="1"
                                     Margin="0,4"
                                     Background="{DynamicResource BrushBorder}" />
+                                <TextBlock Classes="field-label" Text="{Binding TotpAlgorithmText}" />
+                                <ComboBox x:Name="AccountAlgorithmSelector" automation:AutomationProperties.Name="{Binding TotpAlgorithmText}"
+                                          HorizontalAlignment="Stretch"
+                                          SelectedIndex="{Binding EditorAlgorithmIndex, Mode=TwoWay}">
+                                    <ComboBoxItem Content="{Binding TotpSha1Text}" />
+                                    <ComboBoxItem Content="{Binding TotpSha256Text}" />
+                                    <ComboBoxItem Content="{Binding TotpSha512Text}" />
+                                </ComboBox>
+                                <TextBlock Classes="field-label" Text="{Binding TotpDigitsText}" />
+                                <ComboBox x:Name="AccountDigitsSelector" automation:AutomationProperties.Name="{Binding TotpDigitsText}"
+                                          HorizontalAlignment="Stretch"
+                                          ItemsSource="{Binding DigitOptions}"
+                                          SelectedItem="{Binding EditorDigits, Mode=TwoWay}" />
                                 <TextBlock
                                     Classes="field-label"
                                     Text="{Binding TotpPeriodText}" />

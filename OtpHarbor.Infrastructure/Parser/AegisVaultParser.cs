@@ -44,8 +44,7 @@ internal static class AegisVaultParser
             var algorithm = GetRequiredString(info, "algo");
             var digits = GetRequiredInt32(info, "digits");
             var period = GetRequiredInt32(info, "period");
-            if (!algorithm.Equals("SHA1", StringComparison.OrdinalIgnoreCase)
-                || digits != 6
+            if (!TotpConfigurationPolicy.IsSupported(algorithm, digits)
                 || !TotpPeriodPolicy.IsSupported(period))
             {
                 throw new FormatException("The Aegis vault contains unsupported TOTP parameters.");
@@ -62,7 +61,7 @@ internal static class AegisVaultParser
                 issuer,
                 secret,
                 accountName.Length == 0 ? null : accountName,
-                period));
+                period, algorithm: algorithm.ToUpperInvariant(), digits: digits));
         }
 
         return accounts;

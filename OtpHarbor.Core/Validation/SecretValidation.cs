@@ -8,7 +8,6 @@ namespace TOTP.Core.Validation;
 public static class SecretValidation
 {
     private const int MinimumSecretBytes = 1;
-    private const int MinimumNewAccountSecretBytes = 16;
 
     public static string NormalizeBase32Secret(string secret)
     {
@@ -24,12 +23,15 @@ public static class SecretValidation
     }
 
     public static bool IsValidBase32Secret(string? secret)
-        => TryGetDecodedLength(secret, requireCanonicalEncoding: false, out var byteLength)
+        => TryGetDecodedLength(secret, requireCanonicalEncoding: true, out var byteLength)
            && byteLength >= MinimumSecretBytes;
 
     public static bool IsValidNewAccountBase32Secret(string? secret)
-        => TryGetDecodedLength(secret, requireCanonicalEncoding: true, out var byteLength)
-           && byteLength >= MinimumNewAccountSecretBytes;
+        => IsValidBase32Secret(secret);
+
+    public static bool IsValidStoredBase32Secret(string? secret)
+        => TryGetDecodedLength(secret, requireCanonicalEncoding: false, out var byteLength)
+           && byteLength >= MinimumSecretBytes;
 
     private static bool TryGetDecodedLength(
         string? secret,

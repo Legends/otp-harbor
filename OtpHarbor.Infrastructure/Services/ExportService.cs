@@ -429,13 +429,19 @@ public sealed class ExportService : IExportService
     private static List<Account> DeserializeTokens(string content, ExportFileFormat format)
     {
         content = content.TrimStart('\uFEFF');
-        return format switch
+        var parsed = format switch
         {
             ExportFileFormat.Json => ParseJson(content),
             ExportFileFormat.Txt => ParseTxt(content),
             ExportFileFormat.Csv => ParseCsv(content),
             _ => JsonSerializer.Deserialize<List<Account>>(content) ?? []
         };
+        if (parsed.Any(account => account is null
+                || !SecretValidation.IsValidBase32Secret(account.Secret)
+                || !TotpConfigurationPolicy.IsSupported(account.Algorithm, account.Digits)
+                || !TotpPeriodPolicy.IsSupported(account.PeriodSeconds)))
+            throw new FormatException("The import contains unsupported TOTP parameters.");
+        return parsed;
     }
 
     private static List<Account> ParseJson(string content)
@@ -465,17 +471,17 @@ public sealed class ExportService : IExportService
             return v;
         }
 
-        var lines = new List<string> { "id,issuer,account_name,secret,period_seconds" };
+        var lines = new List<string> { "id,issuer,account_name,secret,period_seconds,algorithm,digits" };
         lines.AddRange(accounts.Select(a =>
-            $"{a.ID},{Escape(a.Issuer)},{Escape(a.AccountName)},{Escape(a.Secret)},{a.PeriodSeconds}"));
+            $"{a.ID},{Escape(a.Issuer)},{Escape(a.AccountName)},{Escape(a.Secret)},{a.PeriodSeconds},{a.Algorithm},{a.Digits}"));
         return string.Join(Environment.NewLine, lines);
     }
 
     private static string BuildTxt(IEnumerable<Account> accounts)
     {
-        var lines = new List<string> { "issuer|account_name|secret|id|period_seconds" };
+        var lines = new List<string> { "issuer|account_name|secret|id|period_seconds|algorithm|digits" };
         lines.AddRange(accounts.Select(a =>
-            $"{a.Issuer}|{a.AccountName}|{a.Secret}|{a.ID}|{a.PeriodSeconds}"));
+            $"{a.Issuer}|{a.AccountName}|{a.Secret}|{a.ID}|{a.PeriodSeconds}|{a.Algorithm}|{a.Digits}"));
         return string.Join(Environment.NewLine, lines);
     }
 
@@ -502,13 +508,14 @@ public sealed class ExportService : IExportService
                         StringComparison.OrdinalIgnoreCase)
                     || line.Equals(
                         "issuer|account_name|secret|id|period_seconds",
-                        StringComparison.OrdinalIgnoreCase)))
+                        StringComparison.OrdinalIgnoreCase)
+                    || line.Equals("issuer|account_name|secret|id|period_seconds|algorithm|digits", StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
 
             var parts = line.Split('|');
-            if (parts.Length is < 3 or > 5)
+            if (parts.Length is not (3 or 4 or 5 or 7))
                 throw new FormatException("The text import contains a malformed account row.");
 
             var issuer = parts[0];
@@ -516,7 +523,9 @@ public sealed class ExportService : IExportService
             var secret = parts[2];
             var id = parts.Length >= 4 && Guid.TryParse(parts[3], out var parsedId) ? parsedId : Guid.NewGuid();
             var periodSeconds = ParsePeriod(parts.Length >= 5 ? parts[4] : null);
-            result.Add(new Account(id, issuer, secret, accountName, periodSeconds));
+            result.Add(new Account(id, issuer, secret, accountName, periodSeconds,
+                algorithm: parts.Length == 7 ? parts[5] : TotpConfigurationPolicy.DefaultAlgorithm,
+                digits: parts.Length == 7 ? ParseDigits(parts[6]) : TotpConfigurationPolicy.DefaultDigits));
         }
 
         return result;
@@ -544,7 +553,7 @@ public sealed class ExportService : IExportService
                 issuer,
                 parsed.SecretBase32,
                 EmptyToNull(accountName),
-                parsed.Period));
+                parsed.Period, algorithm: parsed.Algorithm, digits: parsed.Digits));
         }
 
         return result;
@@ -559,13 +568,15 @@ public sealed class ExportService : IExportService
         if (rows.Count == 0) return result;
 
         var header = rows[0];
-        if (header.Count is not (4 or 5)
+        if (header.Count is not (4 or 5 or 7)
             || !header[0].Equals("id", StringComparison.OrdinalIgnoreCase)
             || !header[1].Equals("issuer", StringComparison.OrdinalIgnoreCase)
             || !header[2].Equals("account_name", StringComparison.OrdinalIgnoreCase)
             || !header[3].Equals("secret", StringComparison.OrdinalIgnoreCase)
-            || header.Count == 5
-            && !header[4].Equals("period_seconds", StringComparison.OrdinalIgnoreCase))
+            || header.Count >= 5
+            && !header[4].Equals("period_seconds", StringComparison.OrdinalIgnoreCase)
+            || header.Count == 7 && (!header[5].Equals("algorithm", StringComparison.OrdinalIgnoreCase)
+                || !header[6].Equals("digits", StringComparison.OrdinalIgnoreCase)))
         {
             throw new FormatException("The CSV import header is invalid.");
         }
@@ -581,11 +592,17 @@ public sealed class ExportService : IExportService
             var accountName = string.IsNullOrWhiteSpace(row[2]) ? null : row[2];
             var secret = row[3];
             var periodSeconds = ParsePeriod(row.Count >= 5 ? row[4] : null);
-            result.Add(new Account(id, issuer, secret, accountName, periodSeconds));
+            result.Add(new Account(id, issuer, secret, accountName, periodSeconds,
+                algorithm: row.Count == 7 ? row[5] : TotpConfigurationPolicy.DefaultAlgorithm,
+                digits: row.Count == 7 ? ParseDigits(row[6]) : TotpConfigurationPolicy.DefaultDigits));
         }
 
         return result;
     }
+
+    private static int ParseDigits(string value) =>
+        int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var digits)
+            ? digits : 0;
 
     private static int ParsePeriod(string? value) =>
         string.IsNullOrWhiteSpace(value)

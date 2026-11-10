@@ -2778,6 +2778,15 @@ public sealed class MainWindowSmokeTests
                 border => border.Name == "SelectedEditorCustomIconFileNameHost");
             var periodInput = Assert.Single(
                 advancedOptions.GetLogicalDescendants().OfType<NumericUpDown>());
+            var algorithmInput = Assert.Single(
+                advancedOptions.GetLogicalDescendants().OfType<ComboBox>(),
+                control => control.Name == "AccountAlgorithmSelector");
+            var digitsInput = Assert.Single(
+                advancedOptions.GetLogicalDescendants().OfType<ComboBox>(),
+                control => control.Name == "AccountDigitsSelector");
+            Assert.Equal(3, algorithmInput.Items.Count);
+            Assert.Equal(HorizontalAlignment.Stretch, algorithmInput.HorizontalAlignment);
+            Assert.Equal(HorizontalAlignment.Stretch, digitsInput.HorizontalAlignment);
             var scrollViewer = Assert.Single(
                 templateHost.GetVisualDescendants().OfType<ScrollViewer>(),
                 viewer => viewer.Name == "AccountEditorScrollViewer");
@@ -2864,11 +2873,15 @@ public sealed class MainWindowSmokeTests
         }
     }
 
-    [AvaloniaFact]
-    public void AccountRow_ReservesSecondaryCodeLineWithoutChangingHeight()
+    [AvaloniaTheory]
+    [InlineData(360, "123456")]
+    [InlineData(360, "00123456")]
+    [InlineData(430, "00123456")]
+    [InlineData(640, "00123456")]
+    public void AccountRow_ReservesSecondaryCodeLineWithoutChangingHeight(int width, string code)
     {
         var mainWindow = new MainWindow();
-        var templateHost = new Window { Width = 380, Height = 160 };
+        var templateHost = new Window { Width = width, Height = 160 };
 
         try
         {
@@ -2890,7 +2903,7 @@ public sealed class MainWindowSmokeTests
                 "account");
             account.UpdateCustomPeriodLabel("60 s");
             account.UpdateNextTokenPreference(true);
-            account.UpdateCode("123456", 6, 60, "654321");
+            account.UpdateCode(code, 6, 60, code);
             var row = accountRowTemplate.Build(account)
                 ?? throw new InvalidOperationException("The account row could not be built.");
             row.DataContext = account;
@@ -2912,6 +2925,7 @@ public sealed class MainWindowSmokeTests
                 button => button.Classes.Contains("row-code"));
             var codeStack = Assert.IsType<StackPanel>(codeButton.Content);
             Assert.Equal(Orientation.Vertical, codeStack.Orientation);
+            Assert.InRange(codeButton.Bounds.Right, 0, row.Bounds.Width);
             Assert.Equal(2, codeStack.Children.Count);
             Assert.Equal(
                 Orientation.Horizontal,

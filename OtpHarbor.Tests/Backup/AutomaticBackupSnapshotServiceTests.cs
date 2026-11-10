@@ -15,8 +15,9 @@ namespace TOTP.Tests.Backup;
 
 public sealed class AutomaticBackupSnapshotServiceTests
 {
-    [Fact]
-    public async Task CreateThenRead_V2Container_PreservesLinkedMultiGroupProfile()
+    [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.Configurations), MemberType = typeof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests))]
+    public async Task CreateThenRead_V2Container_PreservesLinkedMultiGroupProfile(string algorithm, int digits)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var directory = CreateTemporaryDirectory();
@@ -31,8 +32,8 @@ public sealed class AutomaticBackupSnapshotServiceTests
             var account = new Account(
                 Guid.NewGuid(),
                 "Issuer",
-                "JBSWY3DPEHPK3PXP",
-                groups: [firstGroup, secondGroup]);
+                "AA",
+                groups: [firstGroup, secondGroup], algorithm: algorithm, digits: digits);
             var vaultPath = Path.Combine(directory, "vault.dat");
             await File.WriteAllBytesAsync(
                 vaultPath,
@@ -64,6 +65,9 @@ public sealed class AutomaticBackupSnapshotServiceTests
             Assert.Null(package.Value.AuthorizationEnvelope.QuickUnlockWrapper);
             Assert.True(restored.IsSuccess);
             var restoredAccount = Assert.Single(restored.Value);
+            Assert.Equal(algorithm, restoredAccount.Algorithm);
+            Assert.Equal(digits, restoredAccount.Digits);
+            Assert.Equal(account.Secret, restoredAccount.Secret);
             Assert.Equal(
                 new[] { firstGroup.Id, secondGroup.Id },
                 restoredAccount.Groups.Select(group => group.Id));

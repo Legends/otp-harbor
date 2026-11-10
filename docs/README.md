@@ -20,6 +20,7 @@ This index lists maintained documentation. Git history preserves completed migra
 - [F-Droid signing and update channels](android/FDROID_SIGNING_AND_UPDATES.md)
 - [Microsoft Store release](release/MICROSOFT_STORE.md)
 - [Android release and signing](release/ANDROID.md)
+- [Automatic README release updates](release/README_RELEASES.md)
 - [Website indexing](release/WEBSITE_INDEXING.md)
 - [Community platform testing](testing/COMMUNITY_PLATFORM_TESTING.md)
 

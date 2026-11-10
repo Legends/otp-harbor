@@ -5,6 +5,10 @@ internal static class NativeTextSizing
     internal const float MaximumDenseFontScale = 1.15f;
     internal const float MinimumViewportScale = 0.85f;
 
+    internal static float CodeColumnWidthDp(float viewportWidthDp, int digits) => digits == 8
+        ? Math.Clamp(viewportWidthDp * 0.38f, 124, 160)
+        : Math.Clamp(viewportWidthDp * 0.31f, 92, 126);
+
     internal static float ResolvePixels(
         float textSp,
         float density,

@@ -22,8 +22,7 @@ internal static class OtpAuthSupportPolicy
             accountName = string.Empty;
         }
 
-        return string.Equals(parsed.Algorithm, "SHA1", StringComparison.OrdinalIgnoreCase)
-            && parsed.Digits == 6
+        return TotpConfigurationPolicy.IsSupported(parsed.Algorithm, parsed.Digits)
             && TotpPeriodPolicy.IsSupported(parsed.Period)
             && issuer.Length is > 0 and <= 256
             && accountName.Length <= 256;

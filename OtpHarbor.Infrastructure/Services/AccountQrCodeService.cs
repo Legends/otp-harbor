@@ -28,7 +28,7 @@ public sealed class AccountQrCodeService(
                 account.Issuer,
                 account.Secret,
                 account.AccountName,
-                account.PeriodSeconds);
+                account.PeriodSeconds, account.Algorithm, account.Digits);
             png = qrCodeService.GenerateQr(uri);
             return Result.Ok(SensitiveBuffer.CopyFrom(png));
         }

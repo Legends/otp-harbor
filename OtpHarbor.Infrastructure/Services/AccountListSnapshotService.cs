@@ -28,7 +28,7 @@ public sealed class AccountListSnapshotService(
             TotpGenerationResult? totp = null;
             try
             {
-                totp = totpGenerator.Generate(account.Secret, account.PeriodSeconds);
+                totp = totpGenerator.Generate(account.Secret, account.PeriodSeconds, account.Algorithm, account.Digits);
             }
             catch (Exception exception) when (
                 exception is FormatException or ArgumentOutOfRangeException)

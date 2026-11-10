@@ -2248,7 +2248,7 @@ public sealed class AccountListViewModelTests
         await sut.SaveAccountAsync();
         Assert.Equal(string.Empty, sut.EditorIssuerMessage);
         Assert.Equal(
-            "Enter a valid Base32 secret. New account secrets must contain at least 26 characters.",
+            "Enter a valid, non-empty Base32 secret.",
             sut.EditorSecretMessage);
 
         sut.EditorPeriodSeconds = null;
@@ -2946,7 +2946,7 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
-    public async Task SaveAccountAsync_WithPlainTextLikeSecret_DoesNotPersistNewAccount()
+    public async Task SaveAccountAsync_WithMalformedBase32Secret_DoesNotPersistNewAccount()
     {
         var manager = new Mock<IAccountManager>();
         Account? created = null;
@@ -2963,14 +2963,132 @@ public sealed class AccountListViewModelTests
         var sut = CreateSut(manager.Object);
         await sut.BeginAddAsync();
         sut.EditorIssuer = "Example";
-        sut.EditorSecret = "anything";
+        sut.EditorSecret = "not*base32";
 
         await sut.SaveAccountAsync();
 
         Assert.Null(created);
         Assert.Equal(
-            "Enter a valid Base32 secret. New account secrets must contain at least 26 characters.",
+            "Enter a valid, non-empty Base32 secret.",
             sut.EditorSecretMessage);
+    }
+
+    [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.Configurations), MemberType = typeof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests))]
+    public async Task Editor_CreatesAndEditsEveryConfigurationWithoutChangingSecret(string algorithm, int digits)
+    {
+        Account? saved = null;
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(saved is null ? [] : [saved]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => saved = account).ReturnsAsync(Result.Ok());
+        manager.Setup(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()))
+            .Callback<Account, Account>((_, account) => saved = account).ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.BeginAddAsync();
+        Assert.Equal("SHA1", sut.EditorAlgorithm);
+        Assert.Equal(6, sut.EditorDigits);
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = "JBSWY3DPEHPK3PXP";
+        sut.EditorAlgorithmIndex = Array.IndexOf(new[] { "SHA1", "SHA256", "SHA512" }, algorithm);
+        sut.EditorDigits = digits;
+        await sut.SaveAccountAsync();
+        Assert.NotNull(saved);
+        Assert.Equal(algorithm, saved.Algorithm);
+        Assert.Equal(digits, saved.Digits);
+        Assert.Equal("JBSWY3DPEHPK3PXP", saved.Secret);
+        var legacySecret = saved.Secret.ToLowerInvariant();
+        saved = new Account(saved.ID, saved.Issuer, legacySecret, algorithm: saved.Algorithm, digits: saved.Digits);
+        await sut.LoadAsync();
+        sut.SelectForKeyboardNavigation(Assert.Single(sut.Accounts));
+        await sut.BeginEditAsync();
+        Assert.Equal(algorithm, sut.EditorAlgorithm);
+        Assert.Equal(digits, sut.EditorDigits);
+        sut.EditorAlgorithmIndex = algorithm == "SHA512" ? 0 : 2;
+        sut.EditorDigits = digits == 8 ? 6 : 8;
+        await sut.SaveAccountAsync();
+        Assert.Equal(algorithm == "SHA512" ? "SHA1" : "SHA512", saved.Algorithm);
+        Assert.Equal(digits == 8 ? 6 : 8, saved.Digits);
+        Assert.Equal(legacySecret, saved.Secret);
+        await sut.BeginAddAsync();
+        Assert.Equal("SHA1", sut.EditorAlgorithm);
+        Assert.Equal(6, sut.EditorDigits);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("es")]
+    [InlineData("fr")]
+    public async Task Editor_InvalidConfigurationUsesActiveLocaleAndDoesNotPersist(string culture)
+    {
+        var manager = new Mock<IAccountManager>();
+        var localization = Localization(culture);
+        using var sut = CreateSut(manager.Object, localization: localization);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = ValidSecret;
+        sut.EditorAlgorithmIndex = -1;
+        sut.EditorDigits = 7;
+        await sut.SaveAccountAsync();
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.TotpConfigurationInvalid), sut.EditorPeriodMessage);
+        manager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CopyAccountCodeAsync_PreservesAllEightDigitsAndLeadingZeros()
+    {
+        var source = new Account(Guid.NewGuid(), "Example", ValidSecret, algorithm: "SHA512", digits: 8);
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([source]));
+        var clipboard = SuccessfulClipboard();
+        using var sut = CreateSut(manager.Object, clipboardService: clipboard.Object);
+        await sut.LoadAsync();
+        var item = Assert.Single(sut.Accounts);
+        item.UpdateCode("00123456", 20, 30);
+        await sut.CopyAccountCodeAsync(item);
+        clipboard.Verify(value => value.CopyAndScheduleClearAsync("00123456", It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("0012 3456", item.DisplayCode);
+    }
+
+    [Theory]
+    [InlineData("AA")]
+    [InlineData("ORSXG5A")]
+    [InlineData("ANYTHING")]
+    public async Task Editor_AcceptsValidBase32BelowEightyBits(string secret)
+    {
+        Account? saved = null;
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(saved is null ? [] : [saved]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => saved = account).ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = secret;
+        await sut.SaveAccountAsync();
+        Assert.NotNull(saved);
+        Assert.Equal(secret, saved.Secret);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("es")]
+    [InlineData("fr")]
+    public async Task Editor_MalformedBase32ErrorUsesActiveLocale(string culture)
+    {
+        var manager = new Mock<IAccountManager>();
+        var localization = Localization(culture);
+        using var sut = CreateSut(manager.Object, localization: localization);
+        await sut.BeginAddAsync();
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = "not*base32";
+        await sut.SaveAccountAsync();
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.AccountSecretInvalid), sut.EditorSecretMessage);
+        manager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
     }
 
     private static AccountListViewModel CreateSut(

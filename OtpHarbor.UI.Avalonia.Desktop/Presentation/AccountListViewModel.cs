@@ -104,6 +104,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private string _editorIssuer = string.Empty;
     private string _editorAccountName = string.Empty;
     private string _editorSecret = string.Empty;
+    private int _editorAlgorithmIndex;
+    private int _editorDigits = TotpConfigurationPolicy.DefaultDigits;
     private int? _editorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
     private bool _editorIsFavorite;
     private bool _isAdvancedOptionsExpanded;
@@ -1156,6 +1158,28 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         await CopyAccountCodeAsync(account);
     }
 
+    public int EditorAlgorithmIndex
+    {
+        get => _editorAlgorithmIndex;
+        set => SetField(ref _editorAlgorithmIndex, value);
+    }
+
+    public string EditorAlgorithm => EditorAlgorithmIndex switch
+    {
+        0 => "SHA1",
+        1 => "SHA256",
+        2 => "SHA512",
+        _ => string.Empty
+    };
+
+    public IReadOnlyList<int> DigitOptions { get; } = [6, 8];
+
+    public int EditorDigits
+    {
+        get => _editorDigits;
+        set => SetField(ref _editorDigits, value);
+    }
+
     public int? EditorPeriodSeconds
     {
         get => _editorPeriodSeconds;
@@ -1387,6 +1411,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             EditorAccountName = account.AccountName ?? string.Empty;
             EditorSecret = account.Secret;
             EditorPeriodSeconds = account.PeriodSeconds;
+            EditorAlgorithmIndex = account.Algorithm?.ToUpperInvariant() switch { "SHA1" => 0, "SHA256" => 1, "SHA512" => 2, _ => -1 };
+            EditorDigits = account.Digits;
             EditorIsFavorite = account.IsFavorite;
             RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
             IsEditorVisible = true;
@@ -1495,6 +1521,13 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             enteredSecret = string.Empty;
             return;
         }
+        if (!TotpConfigurationPolicy.IsSupported(EditorAlgorithm, EditorDigits))
+        {
+            IsAdvancedOptionsExpanded = true;
+            EditorPeriodMessage = _localization.GetString(AvaloniaStringKeys.TotpConfigurationInvalid);
+            return;
+        }
+
         if (EditorPeriodSeconds is not int periodSeconds
             || !TotpPeriodPolicy.IsSupported(periodSeconds))
         {
@@ -1534,9 +1567,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             secret = enteredSecret.Length > 0
                 ? enteredSecret
                 : existing?.Secret ?? string.Empty;
-            var isSecretValid = isNewAccount
-                ? SecretValidation.IsValidNewAccountBase32Secret(secret)
-                : SecretValidation.IsValidBase32Secret(secret);
+            var isSecretValid = existing is not null && string.Equals(secret, existing.Secret, StringComparison.Ordinal)
+                ? SecretValidation.IsValidStoredBase32Secret(secret)
+                : SecretValidation.IsValidNewAccountBase32Secret(secret);
             if (!isSecretValid)
             {
                 EditorSecretMessage = _localization.GetString(
@@ -1554,7 +1587,9 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             var selectedGroup = isNewAccount
                 ? _allGroups.FirstOrDefault(group => group.Id == _selectedGroupId)?.Group
                 : null;
-            var normalizedSecret = SecretValidation.NormalizeBase32Secret(secret);
+            var normalizedSecret = existing is not null && (enteredSecret.Length == 0 || enteredSecret == existing.Secret)
+                ? existing.Secret
+                : SecretValidation.NormalizeBase32Secret(secret);
             var updated = new Account(
                 _editingAccountId ?? Guid.NewGuid(),
                 issuer,
@@ -1562,7 +1597,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
                 accountName.Length == 0 ? null : accountName,
                 periodSeconds,
                 selectedGroup,
-                EditorIsFavorite);
+                EditorIsFavorite,
+                algorithm: EditorAlgorithm, digits: EditorDigits);
             var saved = _editingAccountId.HasValue
                 ? await UpdateExistingAsync(loaded.Value, updated)
                 : await _accountManager.AddNewAsync(updated);
@@ -2568,6 +2604,8 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         EditorAccountName = string.Empty;
         EditorSecret = string.Empty;
         EditorPeriodSeconds = TotpPeriodPolicy.DefaultSeconds;
+        EditorAlgorithmIndex = 0;
+        EditorDigits = TotpConfigurationPolicy.DefaultDigits;
         EditorIsFavorite = false;
         IsAdvancedOptionsExpanded = false;
         EditorIssuerMessage = string.Empty;

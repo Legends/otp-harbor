@@ -21,6 +21,12 @@ namespace TOTP.Core.Models
         [JsonPropertyName("period")]
         public int PeriodSeconds { get; }
 
+        [JsonPropertyName("algorithm")]
+        public string Algorithm { get; }
+
+        [JsonPropertyName("digits")]
+        public int Digits { get; }
+
         [JsonPropertyName("group")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public AccountGroup? Group { get; }
@@ -42,13 +48,17 @@ namespace TOTP.Core.Models
             int periodSeconds = TotpPeriodPolicy.DefaultSeconds,
             AccountGroup? group = null,
             bool isFavorite = false,
-            IReadOnlyList<AccountGroup>? groups = null)
+            IReadOnlyList<AccountGroup>? groups = null,
+            string algorithm = TotpConfigurationPolicy.DefaultAlgorithm,
+            int digits = TotpConfigurationPolicy.DefaultDigits)
         {
             ID = id;
             Issuer = issuer;
             Secret = secret;
             AccountName = accountName;
             PeriodSeconds = periodSeconds;
+            Algorithm = algorithm;
+            Digits = digits;
             var resolvedGroups = new List<AccountGroup>();
             if (group is not null) resolvedGroups.Add(group);
             if (groups is not null)
@@ -78,7 +88,9 @@ namespace TOTP.Core.Models
                 AccountName,
                 PeriodSeconds,
                 isFavorite: IsFavorite,
-                groups: groups.ToArray());
+                groups: groups.ToArray(),
+                algorithm: Algorithm,
+                digits: Digits);
 
         public Account WithGroupMembership(AccountGroup group, bool isMember)
         {
@@ -100,7 +112,9 @@ namespace TOTP.Core.Models
                 AccountName,
                 PeriodSeconds,
                 isFavorite: isFavorite,
-                groups: Groups);
+                groups: Groups,
+                algorithm: Algorithm,
+                digits: Digits);
 
         public bool Equals(Account? other) => other is not null && ID == other.ID;
         public override bool Equals(object? obj) => Equals(obj as Account);
