@@ -17,7 +17,7 @@ if (Test-Path -LiteralPath $resolvedPreview) {
 }
 New-Item -ItemType Directory -Path (Join-Path $resolvedPreview 'assets/android'), (Join-Path $resolvedPreview 'assets/marketing'), (Join-Path $resolvedPreview 'android/guide') -Force | Out-Null
 
-foreach ($name in @('index.html','styles.css','gallery.js','robots.txt','sitemap.xml','1b6f7ab9795743588fa8e24157ad1541.txt')) {
+foreach ($name in @('index.html','styles.css','gallery.js','gallery-runtime.js','robots.txt','sitemap.xml','1b6f7ab9795743588fa8e24157ad1541.txt')) {
     Copy-Item -LiteralPath (Join-Path $repo "site/$name") -Destination (Join-Path $resolvedPreview $name)
 }
 Copy-Item -LiteralPath (Join-Path $repo 'site/android/index.html') -Destination (Join-Path $resolvedPreview 'android/index.html')
@@ -30,6 +30,8 @@ Copy-Item -LiteralPath (Join-Path $repo 'OtpHarbor.UI.Avalonia.Desktop/Assets/Ic
 # The local preview deliberately includes reviewed candidates before the public Pages gate is opened.
 Copy-Item -LiteralPath (Join-Path $marketing 'website/gallery.json') -Destination (Join-Path $resolvedPreview 'assets/marketing/gallery.json')
 Copy-Item -Path (Join-Path $marketing 'website/optimized/*') -Destination (Join-Path $resolvedPreview 'assets/marketing') -Recurse
+python (Join-Path $PSScriptRoot 'Prepare-PublicGallery.py') --output $resolvedPreview --local-review
+if ($LASTEXITCODE -ne 0) { throw 'Unable to prepare candidate gallery heroes.' }
 
 if ($NoServe) {
     Write-Host "Local preview refreshed: $resolvedPreview"

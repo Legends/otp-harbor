@@ -27,11 +27,13 @@ Windows is delivered through the [Microsoft Store](https://apps.microsoft.com/de
 
 <h3>Desktop app: Light and Dark themes</h3>
 
-<p align="center">
-  <img src="artifacts/marketing/website/optimized/desktop/light/account-list.png" alt="OTP Harbor desktop account list in Light theme with fictional demo accounts and original icons" width="420" />
-  &emsp;&emsp;
-  <img src="artifacts/marketing/website/optimized/desktop/dark/account-list.png" alt="OTP Harbor desktop account list in Dark theme with the same fictional demo accounts and icons" width="420" />
-</p>
+<table>
+  <tr><th width="50%">Light theme</th><th width="50%">Dark theme</th></tr>
+  <tr>
+    <td><img src="artifacts/marketing/website/optimized/readme/desktop-light.png" alt="OTP Harbor desktop account list in Light theme with fictional demo accounts and original icons" width="420" /></td>
+    <td><img src="artifacts/marketing/website/optimized/readme/desktop-dark.png" alt="OTP Harbor desktop account list in Dark theme with the same fictional demo accounts and icons" width="420" /></td>
+  </tr>
+</table>
 
 <h3>Android app: Light and Dark themes</h3>
 

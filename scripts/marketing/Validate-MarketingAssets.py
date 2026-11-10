@@ -93,6 +93,28 @@ for item in manifest['generated']:
     assert path.is_file(),f'Missing generated image: {path}'
     assert file_sha256(path)==item['sha256'],f'Stale generated image: {path}'
     assert item.get('sourceSha256') and set(item['sourceSha256'])<=source_hashes,f'Unknown source for {path}'
+    if item['kind']=='website-preview':
+        full=ROOT/item['fullPath']
+        assert item['sourceSha256']==[file_sha256(full)]
+        assert item['width']==1200 and item['height']==675 and item['quality']==95
+        assert path.suffix=='.webp' and item['path'].startswith('website/optimized/previews/')
+        with Image.open(path) as image, Image.open(full) as original:
+            assert image.format=='WEBP' and image.size==(1200,675) and not image.getexif()
+            assert original.size==(1920,1080) and path.stat().st_size<full.stat().st_size
+            expected=original.convert('RGB').resize(image.size,Image.Resampling.LANCZOS)
+            # Catch accidental palette/resize/quality regressions, not just metadata drift.
+            difference=ImageChops.difference(image.convert('RGB'),expected)
+            assert sum(ImageStat.Stat(difference).mean)/3<6,f'Preview quality degraded: {path}'
+            if path.stem=='qr-scanning':
+                result=zxingcpp.read_barcode(image)
+                assert result and result.text=='https://github.com/Legends/otp-harbor',f'Preview QR cannot be scanned: {path}'
+    if item['kind']=='readme-theme-frame':
+        source=ROOT/item['sourcePath']
+        assert item['sourceSha256']==[file_sha256(source)] and item['padding']==32
+        with Image.open(source) as original, Image.open(path) as actual:
+            expected=Image.new('RGBA',(original.width+64,original.height+64),'#dce3ed')
+            expected.alpha_composite(original.convert('RGBA'),(32,32))
+            assert actual.size==expected.size and actual.convert('RGB').tobytes()==expected.convert('RGB').tobytes()
     if item['kind']=='cleaned-website-capture':
         capture=ROOT/item['sourcePath']
         left,top,right,bottom=item['sourceCrop']
@@ -314,6 +336,7 @@ assert all(item['path'].startswith('store/android/phone-screenshots/') for item 
 gallery_path=ROOT/'website/gallery.json'
 if gallery_path.exists():
     gallery=json.loads(gallery_path.read_text(encoding='utf-8'))
+    assert gallery.get('schemaVersion')==2,'Gallery requires separate preview/full assets'
     expected_gallery={
         ('desktop','dark'):['account-list','account-context-menu','settings','import-formats','qr-scanning','backup-restore'],
         ('desktop','light'):['account-list','settings','import-formats','qr-scanning','backup-restore'],
@@ -333,14 +356,21 @@ if gallery_path.exists():
         assert actual==screens,f'Unexpected {platform} {theme} gallery order: {actual}'
     for item in gallery['items']:
         assert item['alt'] and item['caption'] and item['platform'] in ('desktop','android')
-        assert item['theme'] in ('light','dark') and item['src'].startswith('assets/marketing/framed/')
+        assert item['theme'] in ('light','dark')
+        assert 'src' not in item,'Ambiguous legacy gallery source'
         assert item['caption']==expected_titles[item['screen']],f'Unexpected gallery title: {item}'
-        image_path=ROOT/'website/optimized'/item['src'].removeprefix('assets/marketing/')
-        assert image_path.is_file(),f'Gallery image is missing: {image_path}'
-        with Image.open(image_path) as image:
-            assert (image.width,image.height)==(item['width'],item['height'])
+        for kind,folder,suffix,dimensions in (('preview','previews','.webp',(1200,675)),('full','framed','.png',(1920,1080))):
+            asset=item[kind]
+            expected=f'assets/marketing/{folder}/{item["platform"]}/{item["theme"]}/{item["screen"]}{suffix}'
+            assert asset['src']==expected
+            image_path=ROOT/'website/optimized'/asset['src'].removeprefix('assets/marketing/')
+            assert image_path.is_file(),f'Gallery image is missing: {image_path}'
+            with Image.open(image_path) as image:
+                assert image.size==dimensions==(asset['width'],asset['height'])
 tracked_generated={item['path'] for item in manifest['generated']}
 for folder in ('composites','store/windows/screenshots','store/windows/icons','store/windows/promotional','store/android','website/optimized'):
-    for path in (ROOT/folder).rglob('*.png') if (ROOT/folder).exists() else ():
+    for path in (ROOT/folder).rglob('*') if (ROOT/folder).exists() else ():
+        if path.suffix.lower() not in ('.png','.webp'):
+            continue
         assert path.relative_to(ROOT).as_posix() in tracked_generated,f'Untracked generated image: {path}'
 print(f'Validated {len(accounts)} fictional accounts, {len(icons)} unique icons, {len(files)} source captures. Manual legal and visual review remains required.')

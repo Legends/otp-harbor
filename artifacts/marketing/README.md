@@ -33,4 +33,76 @@ Microsoft's [MSIX screenshot requirements](https://learn.microsoft.com/en-us/win
 
 ## Pre-publication gate
 
+### Website preview delivery
+
+`python scripts/marketing/Generate-WebsiteShowcase.py --previews-only` derives 1200 × 675
+quality-95 WebP previews from the existing reviewed 1920 × 1080 campaign PNGs and
+adds neutral README frames. It never rewrites canonical captures or full-resolution
+frames. A normal generator run also creates these delivery assets. Both modes record
+hashes/provenance in the manifest and reset publication approval for human review.
+
+Gallery schema version 2 separates `preview` and `full` assets. Cards and the
+build-selected hero use previews; enlargement alone requests the original PNG.
+Pages runs marketing validation before copying approved assets, selects the hero
+in the generated HTML (without a second JavaScript source swap), and removes the
+Android fallback campaign from approved HTML before browsers discover its PNGs.
+Social-preview PNG URLs and the unapproved fallback remain available.
+
+The shared static loader waits for page load, two animation frames and an idle
+callback (300 ms fallback), then uses two download slots with interleaved Desktop
+Light / Android Dark / Android Light work. On normal desktop connections it also
+finishes initially lazy cards through the queue, so returning to Desktop Dark is
+prepared without loading all six cards during critical rendering. It pauses queued speculative work in
+hidden pages and preempts background requests for user selections. Save-Data,
+2G and devices reporting at most 2 GB memory get no speculative work; 3G gets two
+previews, and mobile viewports get four. Desktop caches all four groups; mobile
+keeps two, with one on the most constrained devices. These limits bound retained
+image nodes, while the browser controls its own decoded-image memory. A complete
+decoded group replaces the previous gallery atomically. Full-size dialogs show a
+loading/error state until decoding completes and retain at most one full-size image
+(released on close on constrained devices).
+
+Compression comparison for all 19 images, using Pillow/Lanczos/method 6:
+
+| Asset | Total bytes | Reduction from PNG |
+| --- | ---: | ---: |
+| Original PNGs | 19,370,245 | — |
+| WebP quality 85 | 890,660 | 95.4% |
+| WebP quality 90 | 1,124,234 | 94.2% |
+| **WebP quality 95 (selected)** | **1,583,976** | **91.8%** |
+| WebP quality 100 | 2,120,780 | 89.1% |
+
+Quality 95 preserves small interface detail in visual comparisons without the
+extra 34% payload of quality 100. All four scanner preview QR codes decode to the
+same project demonstration URL. Validation checks dimensions, hashes, provenance,
+visual error against the resized full image, QR decoding, and unchanged README
+capture pixels inside the neutral frame.
+
+Install test-only dependencies from
+`scripts/validation/gallery-browser-requirements.txt`, install Playwright Chromium,
+then run `python scripts/validation/test_gallery_browser.py --report gallery-performance.json`.
+Pages runs this test before deployment. It checks all four groups, cached node reuse,
+no extra downloads/decoding on repeated switches, the decode barrier, rapid selection,
+retry after failures, hidden-page scheduling, two-worker concurrency, constrained
+budgets, fallbacks, responsive widths, and keyboard/full-resolution dialog behavior.
+
+Local Chromium measurements (Windows, 1440 × 1000 viewport; three cold runs at
+10 Mbit/s with 40 ms latency, medians) compared the previous site with these assets:
+
+| Measurement | Previous | Optimized |
+| --- | ---: | ---: |
+| Window load | 6.47 s | 1.56 s |
+| LCP | 1.13 s | 1.15 s |
+| Images requested before window load, transfer | 5.43 MiB | 0.54 MiB |
+| Image transfer by 7 s after load | 9.55 MiB | 1.92 MiB |
+| Full-resolution gallery requests by that point | 11 | 0 |
+
+LCP is effectively unchanged in this local sample; the measurements are not field
+data or a guarantee on other browsers/devices. Unthrottled prepared switching took
+3–18 ms through the next rendered frame (under the 100 ms target), with no new
+requests or decode calls across twelve switches. Local preview decode calls took
+0.2–11 ms. Real Android hardware and Safari/Firefox still require manual checks.
+
+### Human approval
+
 Run the local validation script, then manually inspect *every* image at full resolution for real brands, personal details, status-bar notifications, QR payloads, clip/truncation, correct theme, and icon assignment. Review fictional names/icons for trademark conflicts. Check ownership or permission for every graphical element. Compare the Windows and Android issuer lists and icon IDs. Inspect links and supported-platform claims. Do not call any image approved solely because the automated checks pass.

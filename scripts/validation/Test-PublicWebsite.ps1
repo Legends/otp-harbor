@@ -28,6 +28,7 @@ $androidGuide = Read-RequiredFile 'site/android/guide/index.html'
 $compactAndroidGuide = [Text.RegularExpressions.Regex]::Replace($androidGuide, '\s+', ' ')
 $styles = Read-RequiredFile 'site/styles.css'
 $galleryScript = Read-RequiredFile 'site/gallery.js'
+$galleryRuntime = Read-RequiredFile 'site/gallery-runtime.js'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
 $pagesWorkflow = Read-RequiredFile '.github/workflows/pages.yml'
@@ -56,36 +57,31 @@ if (-not $pagesWorkflow.Contains('cp packaging/android/marketing/en-US/*.png _si
 }
 if (-not $compactIndex.Contains('id="showcase"', [StringComparison]::Ordinal) -or
     -not $compactIndex.Contains('id="showcase-dialog"', [StringComparison]::Ordinal) -or
-    -not $compactIndex.Contains('src="gallery.js?v=3-progressive-gallery-1"', [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains("fetch('assets/marketing/gallery.json', { cache: 'no-store' })", [StringComparison]::Ordinal) -or
+    -not $compactIndex.Contains('src="gallery-runtime.js?v=4"', [StringComparison]::Ordinal) -or
+    -not $compactAndroidIndex.Contains('src="../gallery-runtime.js?v=4"', [StringComparison]::Ordinal) -or
+    -not $galleryScript.Contains("platform: 'desktop'", [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains('cp -R artifacts/marketing/website/optimized/. _site/assets/marketing/', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('Prepare-PublicGallery.py --output _site', [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains('approved for website publication', [StringComparison]::Ordinal)) {
-    throw 'The canonical v3 screenshot gallery is not wired into the website.'
+    throw 'The shared preview gallery and publication gate must be wired into both product pages.'
 }
 if (-not $compactIndex.Contains('id="showcase-platform-label">Platform</span>', [StringComparison]::Ordinal) -or
     -not $compactIndex.Contains('id="showcase-theme-label">Theme</span>', [StringComparison]::Ordinal) -or
     -not $compactIndex.Contains('data-gallery-platform="desktop" aria-pressed="true"', [StringComparison]::Ordinal) -or
-    -not $compactIndex.Contains('data-gallery-theme="dark" aria-pressed="true"', [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains("const state = { platform: 'desktop', theme: 'dark' }", [StringComparison]::Ordinal)) {
-    throw 'The v3 gallery must label its controls and open on Desktop in Dark mode.'
+    -not $compactIndex.Contains('data-gallery-theme="dark" aria-pressed="true"', [StringComparison]::Ordinal)) {
+    throw 'Gallery controls must be labeled and default to Desktop Dark.'
 }
-if (-not $galleryScript.Contains("let pageLoaded = document.readyState === 'complete'", [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains("window.addEventListener('load'", [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains('window.setTimeout(() => void startDeferredLoading(), 0);', [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains('if (!pageLoaded || !galleryItems || deferredLoadingStarted) return;', [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains('await initialGalleryRequest;', [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains("{ platform: 'desktop', theme: 'light' }", [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains("{ platform: 'android', theme: 'dark' }", [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains("{ platform: 'android', theme: 'light' }", [StringComparison]::Ordinal) -or
-    -not $galleryScript.Contains('const existingRequest = imageRequests.get(src);', [StringComparison]::Ordinal)) {
-    throw 'The gallery must reuse image requests and defer alternate galleries until the page has fully loaded.'
+foreach ($feature in @('requestIdleCallback', "window.addEventListener('load'", 'image.decode()',
+    "image.loading = 'lazy'", "record.status === 'ready'", "connection?.saveData", 'document.hidden',
+    'grid.replaceChildren(...group.cards)', 'item.preview', 'item.full', 'token !== revision')) {
+    if (-not $galleryRuntime.Contains($feature, [StringComparison]::Ordinal)) {
+        throw "The shared gallery is missing required loading behavior: $feature"
+    }
 }
-$desktopLightIndex = $galleryScript.IndexOf("{ platform: 'desktop', theme: 'light' }", [StringComparison]::Ordinal)
-$androidDarkIndex = $galleryScript.IndexOf("{ platform: 'android', theme: 'dark' }", [StringComparison]::Ordinal)
-$androidLightIndex = $galleryScript.IndexOf("{ platform: 'android', theme: 'light' }", [StringComparison]::Ordinal)
-if ($desktopLightIndex -ge $androidDarkIndex -or $androidDarkIndex -ge $androidLightIndex) {
-    throw 'The alternate gallery preload order must be Desktop Light, Android Dark, then Android Light.'
+if ($galleryRuntime -match 'hero\.src\s*=') {
+    throw 'Hero selection must happen before navigation, rather than triggering a second download.'
 }
+Read-RequiredFile 'scripts/validation/test_gallery_browser.py' | Out-Null
 
 $preferredImageRelativePath = 'packaging/windows-store/screenshots/en-US/marketing/02-dark-account-list.png'
 $preferredImageUrl = 'https://legends.github.io/otp-harbor/assets/otp-harbor-totp-authenticator-windows.png'

@@ -4,191 +4,325 @@
       "platform": "desktop",
       "theme": "dark",
       "screen": "account-list",
-      "src": "assets/marketing/framed/desktop/dark/account-list.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop account list in dark theme, with a genuine app capture",
-      "caption": "Account List"
+      "caption": "Account List",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/dark/account-list.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/dark/account-list.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "dark",
       "screen": "account-context-menu",
-      "src": "assets/marketing/framed/desktop/dark/account-context-menu.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop account context menu in dark theme, with a genuine app capture",
-      "caption": "Account Context Menu"
+      "caption": "Account Context Menu",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/dark/account-context-menu.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/dark/account-context-menu.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "dark",
       "screen": "settings",
-      "src": "assets/marketing/framed/desktop/dark/settings.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop settings in dark theme, with a genuine app capture",
-      "caption": "Settings"
+      "caption": "Settings",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/dark/settings.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/dark/settings.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "dark",
       "screen": "import-formats",
-      "src": "assets/marketing/framed/desktop/dark/import-formats.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop import formats in dark theme, with a genuine app capture",
-      "caption": "Import Formats"
+      "caption": "Import Formats",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/dark/import-formats.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/dark/import-formats.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "dark",
       "screen": "qr-scanning",
-      "src": "assets/marketing/framed/desktop/dark/qr-scanning.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop qr scanning in dark theme, with a labeled GitHub demonstration QR in a genuine scanner capture",
-      "caption": "QR Scanning"
+      "caption": "QR Scanning",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/dark/qr-scanning.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/dark/qr-scanning.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "dark",
       "screen": "backup-restore",
-      "src": "assets/marketing/framed/desktop/dark/backup-restore.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop backup and restore in dark theme, with a genuine app capture",
-      "caption": "Backup and Restore"
+      "caption": "Backup and Restore",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/dark/backup-restore.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/dark/backup-restore.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "light",
       "screen": "account-list",
-      "src": "assets/marketing/framed/desktop/light/account-list.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop account list in light theme, with a genuine app capture",
-      "caption": "Account List"
+      "caption": "Account List",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/light/account-list.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/light/account-list.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "light",
       "screen": "settings",
-      "src": "assets/marketing/framed/desktop/light/settings.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop settings in light theme, with a genuine app capture",
-      "caption": "Settings"
+      "caption": "Settings",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/light/settings.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/light/settings.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "light",
       "screen": "import-formats",
-      "src": "assets/marketing/framed/desktop/light/import-formats.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop import formats in light theme, with a genuine app capture",
-      "caption": "Import Formats"
+      "caption": "Import Formats",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/light/import-formats.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/light/import-formats.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "light",
       "screen": "qr-scanning",
-      "src": "assets/marketing/framed/desktop/light/qr-scanning.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop qr scanning in light theme, with a labeled GitHub demonstration QR in a genuine scanner capture",
-      "caption": "QR Scanning"
+      "caption": "QR Scanning",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/light/qr-scanning.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/light/qr-scanning.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "desktop",
       "theme": "light",
       "screen": "backup-restore",
-      "src": "assets/marketing/framed/desktop/light/backup-restore.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor desktop backup and restore in light theme, with a genuine app capture",
-      "caption": "Backup and Restore"
+      "caption": "Backup and Restore",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/light/backup-restore.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/light/backup-restore.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "dark",
       "screen": "account-list",
-      "src": "assets/marketing/framed/android/dark/account-list.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android account list in dark theme, with a genuine app capture",
-      "caption": "Account List"
+      "caption": "Account List",
+      "preview": {
+        "src": "assets/marketing/previews/android/dark/account-list.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/dark/account-list.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "dark",
       "screen": "settings",
-      "src": "assets/marketing/framed/android/dark/settings.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android settings in dark theme, with a genuine app capture",
-      "caption": "Settings"
+      "caption": "Settings",
+      "preview": {
+        "src": "assets/marketing/previews/android/dark/settings.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/dark/settings.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "dark",
       "screen": "qr-scanning",
-      "src": "assets/marketing/framed/android/dark/qr-scanning.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android qr scanning in dark theme, with a labeled GitHub demonstration QR in a genuine scanner capture",
-      "caption": "QR Scanning"
+      "caption": "QR Scanning",
+      "preview": {
+        "src": "assets/marketing/previews/android/dark/qr-scanning.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/dark/qr-scanning.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "dark",
       "screen": "backup-restore",
-      "src": "assets/marketing/framed/android/dark/backup-restore.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android backup and restore in dark theme, with a concept illustration and genuine app capture",
-      "caption": "Backup and Restore"
+      "caption": "Backup and Restore",
+      "preview": {
+        "src": "assets/marketing/previews/android/dark/backup-restore.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/dark/backup-restore.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "light",
       "screen": "account-list",
-      "src": "assets/marketing/framed/android/light/account-list.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android account list in light theme, with a genuine app capture",
-      "caption": "Account List"
+      "caption": "Account List",
+      "preview": {
+        "src": "assets/marketing/previews/android/light/account-list.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/light/account-list.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "light",
       "screen": "settings",
-      "src": "assets/marketing/framed/android/light/settings.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android settings in light theme, with a genuine app capture",
-      "caption": "Settings"
+      "caption": "Settings",
+      "preview": {
+        "src": "assets/marketing/previews/android/light/settings.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/light/settings.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "light",
       "screen": "qr-scanning",
-      "src": "assets/marketing/framed/android/light/qr-scanning.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android qr scanning in light theme, with a labeled GitHub demonstration QR in a genuine scanner capture",
-      "caption": "QR Scanning"
+      "caption": "QR Scanning",
+      "preview": {
+        "src": "assets/marketing/previews/android/light/qr-scanning.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/light/qr-scanning.png",
+        "width": 1920,
+        "height": 1080
+      }
     },
     {
       "platform": "android",
       "theme": "light",
       "screen": "backup-restore",
-      "src": "assets/marketing/framed/android/light/backup-restore.png",
-      "width": 1920,
-      "height": 1080,
       "alt": "OTP Harbor android backup and restore in light theme, with a concept illustration and genuine app capture",
-      "caption": "Backup and Restore"
+      "caption": "Backup and Restore",
+      "preview": {
+        "src": "assets/marketing/previews/android/light/backup-restore.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/android/light/backup-restore.png",
+        "width": 1920,
+        "height": 1080
+      }
     }
-  ]
+  ],
+  "schemaVersion": 2
 }

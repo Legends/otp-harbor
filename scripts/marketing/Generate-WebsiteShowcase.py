@@ -1,5 +1,6 @@
 """Build website campaign frames from the reviewed, cleaned app captures."""
 
+import argparse
 import hashlib
 import io
 import json
@@ -228,8 +229,57 @@ def add_github_demo_qr(cleaned, platform, theme):
     return composite, bounds, art_bounds
 
 
+def add_previews(manifest, gallery):
+    """Derive delivery assets without changing reviewed captures or full-size frames."""
+    generated = [entry for entry in manifest['generated']
+                 if entry['kind'] not in ('website-preview', 'readme-theme-frame', 'website-gallery-data')]
+    for item in gallery['items']:
+        full = item['full'] if 'full' in item else {key: item[key] for key in ('src', 'width', 'height')}
+        source = OPTIMIZED / full['src'].removeprefix('assets/marketing/')
+        relative = Path('previews') / item['platform'] / item['theme'] / (item['screen'] + '.webp')
+        target = OPTIMIZED / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with Image.open(source) as original:
+            preview = original.convert('RGB').resize((1200, 675), Image.Resampling.LANCZOS)
+        preview.save(target, format='WEBP', quality=95, method=6)
+        generated.append(record(target, 'website-preview', [source],
+                                fullPath=source.relative_to(ROOT).as_posix(),
+                                width=1200, height=675, quality=95))
+        for key in ('src', 'width', 'height'):
+            item.pop(key, None)
+        item['preview'] = {'src': 'assets/marketing/' + relative.as_posix(),
+                           'width': 1200, 'height': 675}
+        item['full'] = full
+    for theme in ('light', 'dark'):
+        source = OPTIMIZED / 'desktop' / theme / 'account-list.png'
+        target = OPTIMIZED / 'readme' / f'desktop-{theme}.png'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with Image.open(source) as original:
+            framed = Image.new('RGBA', (original.width + 64, original.height + 64), '#dce3ed')
+            framed.alpha_composite(original.convert('RGBA'), (32, 32))
+        framed.convert('RGB').save(target, optimize=True)
+        generated.append(record(target, 'readme-theme-frame', [source],
+                                sourcePath=source.relative_to(ROOT).as_posix(), padding=32))
+    gallery['schemaVersion'] = 2
+    GALLERY.write_text(json.dumps(gallery, indent=2) + '\n', encoding='utf-8')
+    generated.append(record(GALLERY, 'website-gallery-data',
+                            [OPTIMIZED / item['full']['src'].removeprefix('assets/marketing/')
+                             for item in gallery['items']]))
+    manifest['generated'] = sorted(generated, key=lambda entry: entry['path'])
+    manifest['publicationStatus'] = 'review required: inspect every image, legal names and app state before publication'
+    MANIFEST.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--previews-only', action='store_true',
+                        help='Keep existing reviewed full-size frames and canonical captures byte-for-byte.')
+    args = parser.parse_args()
     manifest = json.loads(MANIFEST.read_text(encoding='utf-8'))
+    if args.previews_only:
+        add_previews(manifest, json.loads(GALLERY.read_text(encoding='utf-8')))
+        print('Generated quality-95 WebP previews and neutral README frames; publication review required.')
+        return
     previous = manifest['generated']
     generated = [entry for entry in previous if not entry['path'].startswith('website/optimized/')
                  and entry['path'] != 'website/gallery.json']
@@ -323,7 +373,8 @@ def main():
         stale = ROOT / relative
         if stale.is_file():
             stale.unlink()
-    print(f'Generated {len(gallery)} framed website captures and their cleaned sources.')
+    add_previews(manifest, {'items': gallery})
+    print(f'Generated {len(gallery)} framed website captures, cleaned sources and WebP previews.')
 
 
 if __name__ == '__main__':
