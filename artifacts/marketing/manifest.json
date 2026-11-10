@@ -258,6 +258,17 @@
       "originalSha256": "176e4459bb9207b8fd461aee9e2a30a1fe87003c41cd84015b4989fdb6eab130"
     },
     {
+      "path": "source/desktop/light/account-context-menu.png",
+      "platform": "desktop",
+      "theme": "light",
+      "purpose": "account-context-menu",
+      "method": "Automated off-screen capture of the desktop app with synthetic demo accounts and codes",
+      "width": 950,
+      "height": 1188,
+      "sha256": "309db9d37224f3939163d012f2e079c6cbd6f9ede337a14ab6cee6b84b15c8f9",
+      "originalSha256": "dde4c8e8465e00572e53060199ad5499e96c0e74949c9a4bd1c090c6e8d5c9a6"
+    },
+    {
       "path": "source/desktop/light/account-editor.png",
       "platform": "desktop",
       "theme": "light",
@@ -2229,7 +2240,7 @@
     },
     {
       "path": "website/gallery.json",
-      "sha256": "a407b82b8da861cbc1922c7810da302d3364abf4779a0a8f939f920cfee7a5ee",
+      "sha256": "002bee5c34c6bb63b7aa49553a62561bdb0297a5f68fa7bcbdd10a15415e9436",
       "kind": "website-gallery-data",
       "sourceSha256": [
         "e5ea88cf3eaccf55d7688519171221ab2011d84203de954b69ab1adf1cf61f07",
@@ -2239,6 +2250,7 @@
         "34069fef1fac14b6f7cc8651f6557453f625d137fc7b894d900fbbfc1b43c6b0",
         "19d46855bfbd548bc3779797c6b033ab633b1d595b3d2beb38fff6b9b0802c8b",
         "8f60ac2db6ae2e23eebc2a582afc18fa88b13f2ff7696e39d457b2f3fcd954f3",
+        "c492d4a68170ddfae8191c64835414d86805e96ac44eed092ad59a9ae5dc1895",
         "487cadeb0ca1912e98b2aa31a15f1d99841f5351c693f28192f9fe59bca8fda9",
         "47409abcf56caa7ed3715c766edd6061b40579614ab983d32d433f65ee0edbcf",
         "f02fa96bf6733dad262fa3c2fe725e6cf0013183fe2a41283334469c2a7146a7",
@@ -2580,6 +2592,24 @@
         3,
         1297,
         1547
+      ],
+      "cornerMaskRadius": 20
+    },
+    {
+      "path": "website/optimized/desktop/light/account-context-menu.png",
+      "sha256": "2f0df174213b208132b637d342b9b3d29de8d63999bdbf4cb80fa480b2fd7c70",
+      "kind": "cleaned-website-capture",
+      "sourceSha256": [
+        "309db9d37224f3939163d012f2e079c6cbd6f9ede337a14ab6cee6b84b15c8f9"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/account-context-menu.png",
+      "sourceCrop": [
+        3,
+        3,
+        947,
+        1185
       ],
       "cornerMaskRadius": 20
     },
@@ -3137,6 +3167,37 @@
       }
     },
     {
+      "path": "website/optimized/framed/desktop/light/account-context-menu.png",
+      "sha256": "c492d4a68170ddfae8191c64835414d86805e96ac44eed092ad59a9ae5dc1895",
+      "kind": "designed-website-campaign",
+      "sourceSha256": [
+        "309db9d37224f3939163d012f2e079c6cbd6f9ede337a14ab6cee6b84b15c8f9",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/account-context-menu.png",
+      "cleanedPath": "website/optimized/desktop/light/account-context-menu.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        947,
+        1185
+      ],
+      "appPlacement": {
+        "bounds": [
+          1045,
+          85,
+          719,
+          900
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      }
+    },
+    {
       "path": "website/optimized/framed/desktop/light/account-list.png",
       "sha256": "8f60ac2db6ae2e23eebc2a582afc18fa88b13f2ff7696e39d457b2f3fcd954f3",
       "kind": "designed-website-campaign",
@@ -3460,6 +3521,18 @@
         "e5599c7d72560972d864aad0a8b779d74648035c4c56106187d0797b9727a117"
       ],
       "fullPath": "website/optimized/framed/desktop/dark/settings.png",
+      "width": 1200,
+      "height": 675,
+      "quality": 95
+    },
+    {
+      "path": "website/optimized/previews/desktop/light/account-context-menu.webp",
+      "sha256": "38fd17bf7934ce8af036f268e58de090284cca5a6ecf9fc3b900b25a65a2095e",
+      "kind": "website-preview",
+      "sourceSha256": [
+        "c492d4a68170ddfae8191c64835414d86805e96ac44eed092ad59a9ae5dc1895"
+      ],
+      "fullPath": "website/optimized/framed/desktop/light/account-context-menu.png",
       "width": 1200,
       "height": 675,
       "quality": 95

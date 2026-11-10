@@ -341,7 +341,7 @@ if gallery_path.exists():
     assert gallery.get('schemaVersion')==2,'Gallery requires separate preview/full assets'
     expected_gallery={
         ('desktop','dark'):['account-list','account-context-menu','settings','import-formats','qr-scanning','backup-restore'],
-        ('desktop','light'):['account-list','settings','import-formats','qr-scanning','backup-restore'],
+        ('desktop','light'):['account-list','account-context-menu','settings','import-formats','qr-scanning','backup-restore'],
         ('android','dark'):['account-list','settings','qr-scanning','backup-restore'],
         ('android','light'):['account-list','settings','qr-scanning','backup-restore'],
     }

@@ -93,8 +93,8 @@ def desktop(page, url, report):
     requests = []
     page.on('request', lambda req: requests.append(req.url))
     loaded(page, url)
-    # All 19 previews, including initially lazy bottom cards, prepare after critical load.
-    page.wait_for_function('galleryTest.decode.filter(e=>e.src.includes("/previews/")).length>=19')
+    # All 20 previews, including initially lazy bottom cards, prepare after critical load.
+    page.wait_for_function('galleryTest.decode.filter(e=>e.src.includes("/previews/")).length>=20')
     page.locator('#showcase').scroll_into_view_if_needed()
     ready(page, '#showcase-grid', 'desktop/dark')
     page.wait_for_function('document.querySelectorAll("#showcase-grid .preview-loading").length===0')
@@ -110,6 +110,7 @@ def desktop(page, url, report):
                 return performance.now()-started;
             }'''))
             ready(page, '#showcase-grid', key)
+            assert page.locator('#showcase-grid button').count() == (6 if key.startswith('desktop/') else 4), key
     assert len(requests) == before, 'Prepared switches caused new network requests'
     assert page.evaluate('galleryTest.decode.length') == before_decode, 'Prepared switches decoded again'
     assert page.evaluate('originalCards.every((c,i)=>c===document.querySelectorAll("#showcase-grid button")[i])'), 'Cards were recreated'
@@ -142,6 +143,18 @@ def desktop(page, url, report):
     page.keyboard.press('Escape')
     assert not page.locator('dialog').evaluate('(d)=>d.open')
     assert first.evaluate('(e)=>e===document.activeElement'), 'Dialog did not restore focus'
+    click(page, '[data-gallery-theme="light"]')
+    ready(page, '#showcase-grid', 'desktop/light')
+    light_menu = page.locator('#showcase-grid button').filter(has_text='Account Context Menu')
+    assert light_menu.count() == 1
+    assert light_menu.locator('img').get_attribute('src').endswith('/previews/desktop/light/account-context-menu.webp')
+    light_menu.click()
+    page.wait_for_function('''() => {
+        const image = document.querySelector('dialog img');
+        return !image.hidden && image.naturalWidth === 1920
+            && image.src.endsWith('/framed/desktop/light/account-context-menu.png');
+    }''')
+    page.keyboard.press('Escape')
     assert not page.evaluate('galleryTest.errors'), page.evaluate('galleryTest.errors')
     report['desktop']['checks'] = '4 groups, 12 cached switches, no requests/redecode, reused DOM, keyboard/full-size dialog, no duplicate hero'
 

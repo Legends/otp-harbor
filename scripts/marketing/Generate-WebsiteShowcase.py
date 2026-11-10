@@ -29,7 +29,7 @@ BACKGROUNDS = {
 ORDER = {
     'desktop': {
         'dark': ('account-list', 'account-context-menu', 'settings'),
-        'light': ('account-list', 'settings'),
+        'light': ('account-list', 'account-context-menu', 'settings'),
     },
     'android': {
         'dark': ('account-list', 'settings'),

@@ -122,6 +122,23 @@
     {
       "platform": "desktop",
       "theme": "light",
+      "screen": "account-context-menu",
+      "alt": "OTP Harbor desktop account context menu in light theme, with a genuine app capture",
+      "caption": "Account Context Menu",
+      "preview": {
+        "src": "assets/marketing/previews/desktop/light/account-context-menu.webp",
+        "width": 1200,
+        "height": 675
+      },
+      "full": {
+        "src": "assets/marketing/framed/desktop/light/account-context-menu.png",
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "platform": "desktop",
+      "theme": "light",
       "screen": "settings",
       "alt": "OTP Harbor desktop settings in light theme, with a genuine app capture",
       "caption": "Settings",
