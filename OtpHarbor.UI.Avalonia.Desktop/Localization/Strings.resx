@@ -562,4 +562,5 @@
   <data name="TotpSha256" xml:space="preserve"><value>SHA-256</value></data>
   <data name="TotpSha512" xml:space="preserve"><value>SHA-512</value></data>
   <data name="TotpConfigurationInvalid" xml:space="preserve"><value>Select SHA-1, SHA-256 or SHA-512 and a 6- or 8-digit code.</value></data>
+  <data name="QrScannerHelp" xml:space="preserve"><value>QR scanning tips</value></data>
 </root>

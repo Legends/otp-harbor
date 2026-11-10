@@ -1745,23 +1745,18 @@ public sealed class MainWindowSmokeTests
         {
             window.Show();
 
-            Assert.Equal(2, window.GetVisualDescendants().OfType<Image>().Count());
+            Assert.Single(window.GetVisualDescendants().OfType<Image>());
             var progress = Assert.Single(window.GetVisualDescendants().OfType<ProgressBar>());
             Assert.False(progress.IsIndeterminate);
             Assert.Equal(
                 4,
                 window.GetVisualDescendants().OfType<Button>().Count(button => button.IsVisible));
-            var titleBar = Assert.Single(window.GetVisualDescendants().OfType<ProductTitleBar>());
-            Assert.False(titleBar.ShowMinimizeButton);
+            Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             Assert.Equal(560, window.Width);
             Assert.Equal(420, window.Height);
-            var instructionIcon = Assert.Single(
-                window.GetVisualDescendants().OfType<SymbolIcon>(),
-                icon => icon.Kind == SymbolIconKind.Information);
-            Assert.Equal(16, instructionIcon.IconSize);
-            var instructionLayout = Assert.IsType<Grid>(instructionIcon.Parent);
-            Assert.Equal(2, instructionLayout.ColumnDefinitions.Count);
+            Assert.NotNull(window.FindControl<CameraScanOverlay>("ScanTargetOverlay"));
+            Assert.False(ToolTip.GetIsOpen(window.FindControl<Button>("ScannerHelpButton")!));
         }
         finally
         {
@@ -1793,21 +1788,19 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void CameraScannerDialog_CancelButtonSizesToLocalizedContent()
+    public void CameraScannerDialog_ImageButtonSizesToLocalizedContent()
     {
         var window = new CameraScannerDialogWindow();
 
         try
         {
             window.Show();
-            var cancel = Assert.Single(
-                window.GetVisualDescendants().OfType<Button>(),
-                button => button.IsCancel);
-            cancel.Content = "Scan abbrechen";
+            var button = window.FindControl<Button>("OpenQrImageButton")!;
+            button.Content = "QR-Bild importieren";
             window.UpdateLayout();
 
-            Assert.True(double.IsNaN(cancel.Width));
-            Assert.True(cancel.Bounds.Width > 100);
+            Assert.True(double.IsNaN(button.Width));
+            Assert.True(button.Bounds.Width > 100);
         }
         finally
         {
@@ -2029,7 +2022,7 @@ public sealed class MainWindowSmokeTests
             var messageText = Assert.IsType<TextBlock>(messageCard.Child);
             Assert.Equal(TextAlignment.Left, messageText.TextAlignment);
             Assert.Equal(TextWrapping.Wrap, messageText.TextWrapping);
-            Assert.True(messageText.Bounds.Height >= 63);
+            Assert.True(messageText.TextLayout.TextLines.Count >= 3);
             Assert.True(window.Bounds.Width <= 520);
             Assert.All(
                 window.GetVisualDescendants().OfType<Button>(),

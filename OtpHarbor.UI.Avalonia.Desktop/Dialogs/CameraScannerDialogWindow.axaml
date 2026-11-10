@@ -11,92 +11,121 @@
     Height="420"
     MinWidth="420"
     MinHeight="320"
+    Background="Transparent"
+    BorderThickness="0"
+    CornerRadius="5"
+    TransparencyLevelHint="Transparent"
+    Win32Properties.WindowCornerPreference="DoNotRound"
     CanResize="True"
     ShowInTaskbar="False"
     WindowDecorations="None"
     WindowStartupLocation="CenterOwner"
     Title="{DynamicResource ImportQrCode}">
-    <Grid RowDefinitions="Auto,*">
-        <controls:ProductTitleBar Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
-        <Grid Grid.Row="1" Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto">
-            <TextBlock
-                Classes="page-title"
-                Text="{DynamicResource ImportQrCode}" />
-            <Grid
-                Grid.Row="1"
-                Margin="0,4,0,0"
-                ColumnDefinitions="Auto,*"
-                ColumnSpacing="8">
-                <shared:SymbolIcon
-                    Foreground="{DynamicResource BrushQrInstruction}"
-                    IconSize="16"
-                    Kind="Information"
-                    VerticalAlignment="Top" />
-                <TextBlock
-                    Grid.Column="1"
-                    Foreground="{DynamicResource BrushQrInstruction}"
-                    Text="{DynamicResource QrScannerSupportedFormats}"
-                    TextWrapping="Wrap" />
+    <Window.Styles>
+        <Style Selector="Button.scanner-control">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="Padding" Value="14,10" />
+        </Style>
+        <Style Selector="Button.scanner-control:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" />
+        </Style>
+        <Style Selector="Button.scanner-control:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+        </Style>
+        <Style Selector="Button.scanner-header-control">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinWidth" Value="32" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+        <Style Selector="ToolTip">
+            <Setter Property="CornerRadius" Value="5" />
+        </Style>
+    </Window.Styles>
+    <Border x:Name="ScannerSurface" Background="{DynamicResource BrushWindowBackground}" BorderBrush="{DynamicResource BrushBorder}"
+            BorderThickness="1" CornerRadius="5" ClipToBounds="True">
+        <Border.Clip>
+            <!-- One outline clips the camera and both bars; native Windows rounding is disabled above. -->
+            <RectangleGeometry Rect="{Binding Bounds, ElementName=ScannerSurface}"
+                               RadiusX="{Binding CornerRadius.TopLeft, ElementName=ScannerSurface}"
+                               RadiusY="{Binding CornerRadius.TopLeft, ElementName=ScannerSurface}" />
+        </Border.Clip>
+        <Grid>
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Grid x:Name="ScannerHeader" Height="48" ColumnDefinitions="Auto,*,Auto"
+                      Background="{DynamicResource BrushTitleBarBackground}">
+                    <Button x:Name="ScannerHelpButton"
+                            automation:AutomationProperties.Name="{DynamicResource QrScannerHelp}"
+                            automation:AutomationProperties.HelpText="{DynamicResource QrScannerSupportedFormats}"
+                            Classes="scanner-control scanner-header-control scanner-help" Width="32" Height="32" Padding="6"
+                            Margin="12,0,0,0" VerticalAlignment="Center"
+                            GotFocus="ShowKeyboardHelp" LostFocus="HideKeyboardHelp"
+                            ToolTip.ShowDelay="400" ToolTip.Placement="Bottom">
+                        <ToolTip.Tip>
+                            <ScrollViewer MaxWidth="320" MaxHeight="220" HorizontalScrollBarVisibility="Disabled">
+                                <TextBlock x:Name="ScannerHelpText" MaxWidth="300"
+                                           Text="{Binding (automation:AutomationProperties.HelpText), ElementName=ScannerHelpButton}" TextWrapping="Wrap" />
+                            </ScrollViewer>
+                        </ToolTip.Tip>
+                        <Viewbox Width="20" Height="20">
+                            <!-- Original native vector artwork; no stock image is bundled. -->
+                            <Canvas Width="32" Height="30">
+                                <Path x:Name="ScannerWarningTriangle"
+                                      Data="M14.6,4 Q16,1.8 17.4,4 L28.7,23.8 Q30,26 27.5,26 L4.5,26 Q2,26 3.3,23.8 Z"
+                                      Fill="Transparent" StrokeThickness="1.8" Stroke="#F9D43B" />
+                                <Path Data="M14.1,10 Q16,8.3 17.9,10 L16.9,19 L15.1,19 Z M16,21 A1.5,1.5 0 1 1 16,24 A1.5,1.5 0 1 1 16,21 Z"
+                                      Fill="#F9D43B" />
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+                    <Border Grid.Column="1" Background="Transparent" PointerPressed="MoveWindow" />
+                    <Button x:Name="CloseScannerButton" Grid.Column="2"
+                            automation:AutomationProperties.Name="{DynamicResource Close}"
+                            Classes="scanner-control scanner-header-control" Width="32" Height="32" Padding="8"
+                            Margin="0,0,12,0" VerticalAlignment="Center"
+                            Command="{Binding CancelCommand}" IsCancel="True" ToolTip.Tip="{DynamicResource Close}">
+                        <shared:SymbolIcon Kind="Close" IconSize="14" />
+                    </Button>
+                </Grid>
+                <Grid x:Name="CameraViewport" Grid.Row="1" Background="Black" ClipToBounds="True">
+                    <Image x:Name="CameraPreviewImage"
+                           automation:AutomationProperties.Name="{DynamicResource CameraPreview}"
+                           IsVisible="{Binding HasPreview}" Source="{Binding PreviewImage}" Stretch="Uniform" />
+                    <controls:CameraScanOverlay x:Name="ScanTargetOverlay"
+                                              FrameBrush="{DynamicResource BrushAccent}" IsHitTestVisible="False" />
+                    <ProgressBar Width="160" Height="6" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 IsIndeterminate="{Binding IsWaitingForPreview}" IsVisible="{Binding IsWaitingForPreview}" />
+                </Grid>
+                <Border x:Name="ScannerFooter" Grid.Row="2" Margin="12,0,12,12" Padding="12"
+                        Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorder}"
+                        BorderThickness="1" CornerRadius="5">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                        <ScrollViewer MaxHeight="80" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Spacing="4">
+                                <TextBlock x:Name="ScannerStatusText" FontWeight="SemiBold" Foreground="{DynamicResource BrushTextPrimary}"
+                                           Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+                                <TextBlock x:Name="ScannerMessageText" Foreground="{DynamicResource BrushTextSecondary}"
+                                           Text="{Binding Message}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ScrollViewer>
+                        <WrapPanel Grid.Row="1" HorizontalAlignment="Center" Orientation="Horizontal">
+                            <Button x:Name="RetryScannerButton" Classes="scanner-control" Margin="4,0"
+                                    Command="{Binding StartCommand}" IsVisible="{Binding CanRetryCameraScan}">
+                                <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource Retry}" />
+                            </Button>
+                            <Button x:Name="OpenQrImageButton" Classes="scanner-control" Margin="4,0"
+                                    Command="{Binding OpenImageCommand}">
+                                <shared:SymbolIconLabel Kind="ImageStack" Text="{DynamicResource OpenQrImage}" />
+                            </Button>
+                        </WrapPanel>
+                    </Grid>
+                </Border>
             </Grid>
-            <Border
-                Grid.Row="2"
-                Margin="0,8,0,0"
-            Background="{DynamicResource BrushSurface}"
-            BorderBrush="{DynamicResource BrushBorder}"
-            BorderThickness="1"
-            CornerRadius="6">
-            <Grid>
-                <Image
-                    automation:AutomationProperties.Name="{DynamicResource CameraPreview}"
-                    IsVisible="{Binding HasPreview}"
-                    Source="{Binding PreviewImage}"
-                    Stretch="Uniform" />
-                <ProgressBar
-                    Width="180"
-                    Height="8"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    IsIndeterminate="{Binding IsWaitingForPreview}"
-                    IsVisible="{Binding IsWaitingForPreview}" />
-            </Grid>
-        </Border>
-            <StackPanel
-                Grid.Row="3"
-                Margin="0,8,0,0"
-                Spacing="4">
-                <TextBlock
-                    FontWeight="SemiBold"
-                    Text="{Binding StatusMessage}"
-                    TextWrapping="Wrap" />
-                <TextBlock
-                    Classes="secondary"
-                    Text="{Binding Message}"
-                    TextWrapping="Wrap" />
-            </StackPanel>
-            <StackPanel
-                Grid.Row="4"
-                Margin="0,8,0,0"
-                HorizontalAlignment="Right"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Button
-                    MinWidth="100"
-                    Command="{Binding StartCommand}"
-                    IsVisible="{Binding CanRetryCameraScan}">
-                    <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource Retry}" />
-                </Button>
-                <Button
-                    MinWidth="120"
-                    Command="{Binding OpenImageCommand}">
-                    <shared:SymbolIconLabel Kind="ImageStack" Text="{DynamicResource OpenQrImage}" />
-                </Button>
-                <Button
-                    MinWidth="100"
-                    Command="{Binding CancelCommand}"
-                    IsCancel="True">
-                    <shared:SymbolIconLabel Kind="Close" Text="{DynamicResource CancelScan}" />
-                </Button>
-            </StackPanel>
         </Grid>
-    </Grid>
+    </Border>
 </Window>
