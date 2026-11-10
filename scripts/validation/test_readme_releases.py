@@ -2,6 +2,8 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import re
+from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("readme_releases", ROOT / "scripts/release/Update-ReadmeReleases.py")
@@ -66,6 +68,27 @@ class ReadmeReleaseTests(unittest.TestCase):
         self.assertIn("--paginate --slurp", updater)
         self.assertIn("token: ${{ secrets.GH_PAT || github.token }}", updater)
         self.assertNotIn("gh pr create", updater)
+
+    def test_version_badges_keep_three_distribution_channels_independent(self):
+        readme = (ROOT / "readme.md").read_text(encoding="utf-8")
+        badges = {alt: (image, target) for alt, image, target in re.findall(
+            r"\[!\[([^\]]+)\]\(([^)]+)\)\]\(([^)]+)\)", readme)}
+        store_image, store_link = badges["Microsoft Store version"]
+        self.assertEqual("https://apps.microsoft.com/detail/9P31KH5L924P", store_link)
+        self.assertIn("/badge/Microsoft%20Store-", store_image)
+        self.assertIn("-0078D4?logo=microsoft", store_image)
+        self.assertNotIn("/github/", store_image)
+        for label, pattern, color in (("Desktop", "v*", "blue"), ("Android", "android-v*", "green")):
+            image, link = badges[label + " Release"]
+            parsed = urlsplit(image)
+            self.assertEqual("/github/v/release/Legends/otp-harbor", parsed.path)
+            query = parse_qs(parsed.query)
+            self.assertEqual([pattern], query["filter"])
+            self.assertEqual(["date"], query["sort"])
+            self.assertEqual([label], query["label"])
+            self.assertEqual([color], query["color"])
+            self.assertNotIn("include_prereleases", query)
+            self.assertEqual("https://github.com/Legends/otp-harbor/releases", link)
 
 
 if __name__ == "__main__":

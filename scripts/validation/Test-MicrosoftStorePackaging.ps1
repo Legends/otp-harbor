@@ -234,14 +234,16 @@ try {
     }
     & $publicVersionUpdater `
         -RepositoryRoot $versionUpdateFixture `
-        -PackageVersion '2.2.65535.0'
+        -PackageVersion "$(([version]$publicVersion.packageVersion).Major + 1).2.65535.0"
     $updatedVersion = Get-Content `
         -LiteralPath (Join-Path $versionUpdateFixture 'packaging/windows-store/public-version.json') `
         -Raw | ConvertFrom-Json
     $updatedReadme = [IO.File]::ReadAllText((Join-Path $versionUpdateFixture 'readme.md'))
-    if ($updatedVersion.displayVersion -cne '2.0.2' -or
-        $updatedVersion.packageVersion -cne '2.2.65535.0' -or
-        -not $updatedReadme.Contains('Microsoft%20Store-2.0.2-', [StringComparison]::Ordinal)) {
+    $expectedDisplay = "$(([version]$publicVersion.packageVersion).Major + 1).0.2"
+    $expectedPackage = "$(([version]$publicVersion.packageVersion).Major + 1).2.65535.0"
+    if ($updatedVersion.displayVersion -cne $expectedDisplay -or
+        $updatedVersion.packageVersion -cne $expectedPackage -or
+        -not $updatedReadme.Contains("Microsoft%20Store-$expectedDisplay-", [StringComparison]::Ordinal)) {
         throw 'The Store publication updater did not infer the stable display version.'
     }
 }
@@ -251,10 +253,13 @@ finally {
     }
 }
 
-if (-not $listing.Contains("## Version $($publicVersion.displayVersion) release notes", [StringComparison]::Ordinal) -or
+$storeBadge = @($readme -split '\r?\n' | Where-Object { $_.StartsWith('[![Microsoft Store version]', [StringComparison]::Ordinal) })
+if ($storeBadge.Count -ne 1 -or
+    -not $storeBadge[0].Contains('https://apps.microsoft.com/detail/9P31KH5L924P', [StringComparison]::Ordinal) -or
+    $storeBadge[0].Contains('img.shields.io/github/v/release/', [StringComparison]::Ordinal) -or
+    -not $listing.Contains("## Version $($publicVersion.displayVersion) release notes", [StringComparison]::Ordinal) -or
     -not $readme.Contains("Microsoft%20Store-$($publicVersion.displayVersion)-", [StringComparison]::Ordinal) -or
-    -not $readme.Contains("OTP Harbor ``$($publicVersion.displayVersion)`` is publicly available", [StringComparison]::Ordinal) -or
-    $readme.Contains('img.shields.io/github/v/release/Legends/otp-harbor', [StringComparison]::Ordinal)) {
+    -not $readme.Contains("OTP Harbor ``$($publicVersion.displayVersion)`` is publicly available", [StringComparison]::Ordinal)) {
     throw "The public Microsoft Store version is not reported consistently as $($publicVersion.displayVersion)."
 }
 foreach ($control in @(

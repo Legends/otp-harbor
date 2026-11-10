@@ -101,6 +101,12 @@ files. Store-managed updates are the only update mechanism for this package.
 
 ## Record the published Store version
 
+The daily/manual [README release refresh](README_RELEASES.md) also verifies the public
+Store catalog and synchronizes the confirmed badge/metadata automatically. It never
+uses a GitHub release as evidence of Store availability and preserves the last confirmed
+version if the catalog cannot be verified. The explicit publication confirmation below
+remains available as a fallback.
+
 Building or submitting an MSIX does not make that version public. After Partner Center confirms
 that the exact package is publicly available, run **Build Microsoft Store MSIX** manually with its
 four-part package version and enable **mark_as_published**. Stable package versions ending in

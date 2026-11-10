@@ -37,7 +37,9 @@ jobs:
           python-version: '3.13'
 
       - name: Test release metadata generator
-        run: python -m unittest discover -s scripts/validation -p test_readme_releases.py
+        run: |
+          python -m unittest discover -s scripts/validation -p test_readme_releases.py
+          python -m unittest discover -s scripts/validation -p test_public_store_version.py
 
       - name: Refresh published release information and commit README
         shell: bash
@@ -51,19 +53,20 @@ jobs:
           for attempt in 1 2 3; do
             echo "README refresh push attempt $attempt of 3."
             git pull --rebase origin "$DEFAULT_BRANCH"
+            python scripts/release/Sync-PublicMicrosoftStoreVersion.py --keep-current-on-error
             gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > "$RUNNER_TEMP/releases.json"
             python scripts/release/Update-ReadmeReleases.py --repository "$GITHUB_REPOSITORY" --releases-json "$RUNNER_TEMP/releases.json"
-            if git diff --quiet -- readme.md; then
+            if git diff --quiet -- readme.md packaging/windows-store/public-version.json packaging/windows-store/STORE_LISTING.md; then
               exit 0
             fi
-            git add -- readme.md
+            git add -- readme.md packaging/windows-store/public-version.json packaging/windows-store/STORE_LISTING.md
             git commit -m 'docs: refresh published release information'
             if git push origin "HEAD:$DEFAULT_BRANCH"; then
               exit 0
             fi
             # Drop only this job's unpublished generated commit before retrying against the current branch.
             git reset --soft HEAD~1
-            git restore --staged --worktree -- readme.md
+            git restore --staged --worktree -- readme.md packaging/windows-store/public-version.json packaging/windows-store/STORE_LISTING.md
           done
           echo 'README update failed; check GH_PAT default-branch write permissions and rerun this workflow.' >&2
           exit 1
