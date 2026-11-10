@@ -4664,6 +4664,9 @@ public sealed class MobileShellViewModel :
         ClearEditor();
         IsEditorVisible = false;
         ClearNotification();
+        // Returning from an external picker may have left refresh stopped while the editor was visible.
+        if (_codeLifetime is null && _backgroundedAtTimestamp is null && !_disposed && _authorization.State.IsUnlocked)
+            StartCodeRefresh();
         return Task.CompletedTask;
     }
 
@@ -4785,7 +4788,7 @@ public sealed class MobileShellViewModel :
 
     public async Task CopyAccountCodeAsync(MobileAccountItem? account)
     {
-        if (account is null || !CanEditAccounts() || !TrySelectAccount(account)) return;
+        if (account is null || HasQrImage || !CanEditAccounts() || !TrySelectAccount(account)) return;
 
         IsBusy = true;
         ClearNotification();

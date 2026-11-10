@@ -15,6 +15,8 @@ Clipboard policy is separated from desktop-framework access. `AsyncClipboardServ
 - A later unscheduled copy cancels the previous clear schedule.
 - Logs record operation type, timing, and error code only. Clipboard contents and change tokens are not logged.
 - UI success state is shown only after a successful copy; failures use localized, recoverable messages.
+- Android account rows do not copy an OTP while an account QR code is visible. Dismissing the QR restores normal copying. The QR payload remains in the QR display workflow and is not written to the clipboard by an account tap.
+- Android clears displayed codes when the app backgrounds for the file picker. Canceling the editor after returning regenerates current and next codes only when the account list is visible, foregrounded, and unlocked. It does not keep the prior code alive across that transition.
 
 ## Platform capability policy
 
@@ -27,6 +29,7 @@ Platform adapters are boundary components and must translate native clipboard/di
 - This reduces the lifetime of OTP material in application-managed memory and avoids deleting unrelated clipboard content.
 - The operating-system clipboard is shared state. Other applications running as the same user may read an OTP while it is present.
 - Timed clearing is best effort and cannot revoke content already observed or synchronized by clipboard-history/cloud features.
+- On Android 13 and later the clipboard adapter flags OTP text as sensitive to hide its system preview. This flag does not block clipboard reads by a permitted system or cross-device clipboard service.
 - When auto-clear is disabled or unsupported, the copied OTP may remain in clipboard history after it expires; the UI reports the unsupported case explicitly.
 - The Windows sequence number detects replacement but is not a confidentiality control.
 

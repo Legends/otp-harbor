@@ -4568,6 +4568,55 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task EditAccount_CancelAfterCustomIconPickerRestoresCurrentAndNextCodes()
+    {
+        var source = new Account(Guid.NewGuid(), "Example", ValidSecret,
+            periodSeconds: 60, algorithm: "SHA512", digits: 8);
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.AvailableBrands).Returns(Array.Empty<BrandDefinition>());
+        var context = CreateContext(isConfigured: true, accounts: [source], brandIconPackService: brandIcons.Object);
+        context.SettingsValue.ShowNextToken = true;
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult>
+                {
+                    [source.ID] = new("00123456", 5, 60, "00789012")
+                }, new HashSet<Guid>())));
+        context.Documents.Setup(value => value.OpenCustomIconAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                context.Sut.OnEnteredBackground(lockImmediately: false);
+                context.Sut.OnReturnedToForeground();
+                return (MobileReadableDocument?)null;
+            });
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var row = Assert.Single(context.Sut.Accounts);
+        await WaitUntilAsync(() => row.HasVisibleNextCode);
+        await context.Sut.BeginEditForAccountAsync(row);
+        context.AccountTotp.Invocations.Clear();
+
+        await context.Sut.ImportCustomIconAsync();
+
+        Assert.True(context.Sut.IsEditorVisible);
+        Assert.Empty(row.Code);
+        Assert.False(row.HasVisibleNextCode);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
+
+        await context.Sut.CancelEditAsync();
+        await WaitUntilAsync(() => row.Code == "00123456" && row.HasVisibleNextCode);
+
+        Assert.True(context.Sut.IsAccountListVisible);
+        Assert.Equal("0012 3456", row.DisplayCode);
+        Assert.Equal("0078 9012", row.DisplayNextCode);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Once);
+        context.Sut.Dispose();
+    }
+
+    [Fact]
     public async Task EditAccount_LoadsAllAdvancedSettingsFromCurrentStoredAccount()
     {
         var accountId = Guid.NewGuid();
@@ -5378,6 +5427,45 @@ public sealed class MobileShellViewModelTests
         await context.Sut.SaveAccountAsync();
         Assert.Equal(context.Strings.Get(MobileStringKeys.TotpConfigurationInvalid), context.Sut.EditorPeriodMessage);
         context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CopyAccountCodeAsync_BlocksClipboardWhileAccountQrIsVisible()
+    {
+        var source = new Account(Guid.NewGuid(), "Example", ValidSecret,
+            periodSeconds: 60, algorithm: "SHA512", digits: 8);
+        var context = CreateContext(isConfigured: true, [source]);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.AccountTotp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .ReturnsAsync(Result.Ok(new AccountTotpGenerationBatch(
+                new Dictionary<Guid, TotpGenerationResult> { [source.ID] = new("00123456", 40, 60) },
+                new HashSet<Guid>())));
+        context.AccountQrCode.Setup(value => value.GenerateAsync(source.ID))
+            .ReturnsAsync(() => Result.Ok(SensitiveBuffer.CopyFrom([1, 2, 3])));
+        context.QrImageFactory.Setup(value => value.Create(It.IsAny<ReadOnlyMemory<byte>>()))
+            .Returns(new MobileQrImageHandle(Mock.Of<IImage>(), Mock.Of<IDisposable>()));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        var item = Assert.Single(context.Sut.Accounts);
+        await WaitUntilAsync(() => item.Code == "00123456");
+
+        await context.Sut.ShowQrForAccountAsync(item);
+        Assert.True(context.Sut.HasQrImage);
+        await context.Sut.CopyAccountCodeAsync(item);
+
+        Assert.True(context.Sut.HasQrImage);
+        Assert.Empty(item.CopyConfirmation);
+        context.Clipboard.Verify(value => value.CopyAndScheduleClearAsync(
+            It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        await context.Sut.DismissQrAsync();
+        await context.Sut.CopyAccountCodeAsync(item);
+
+        context.Clipboard.Verify(value => value.CopyAndScheduleClearAsync(
+            "00123456", It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.CodeCopied), item.CopyConfirmation);
     }
 
     [Fact]

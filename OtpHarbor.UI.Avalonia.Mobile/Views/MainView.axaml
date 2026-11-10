@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:automation="using:Avalonia.Automation"
     xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:converters="using:Avalonia.Data.Converters"
     xmlns:input="using:Avalonia.Input.GestureRecognizers"
     xmlns:vm="using:TOTP.Avalonia.Mobile.Presentation"
     x:Name="Root"
@@ -735,7 +736,6 @@
                             Background="Transparent"
                             BorderThickness="0"
                             Classes="accounts mobile-accounts"
-                            IsHitTestVisible="{Binding !IsDeleteConfirmationVisible}"
                             IsVisible="{Binding HasAccounts}"
                             ItemsSource="{Binding Accounts}"
                             Margin="-14,0"
@@ -743,6 +743,12 @@
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                             ScrollViewer.IsScrollChainingEnabled="False"
                             ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                            <ListBox.IsHitTestVisible>
+                                <MultiBinding Converter="{x:Static converters:BoolConverters.And}">
+                                    <Binding Path="!IsDeleteConfirmationVisible" />
+                                    <Binding Path="!HasQrImage" />
+                                </MultiBinding>
+                            </ListBox.IsHitTestVisible>
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <VirtualizingStackPanel CacheLength="1" />
