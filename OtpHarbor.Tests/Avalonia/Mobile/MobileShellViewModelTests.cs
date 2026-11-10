@@ -5427,9 +5427,37 @@ public sealed class MobileShellViewModelTests
     }
 
     [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.Configurations), MemberType = typeof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests))]
+    public async Task Editor_CreatesEveryConfiguration_WithDecoderCompatibleSecret(string algorithm, int digits)
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        Account? saved = null;
+        context.AccountManager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => saved = account).ReturnsAsync(Result.Ok());
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.BeginAddAsync();
+        context.Sut.EditorIssuer = "Example";
+        context.Sut.EditorSecret = "ASDF";
+        context.Sut.EditorAlgorithmIndex = Array.IndexOf(new[] { "SHA1", "SHA256", "SHA512" }, algorithm);
+        context.Sut.EditorDigits = digits;
+        await context.Sut.SaveAccountAsync();
+        Assert.NotNull(saved);
+        Assert.Equal(algorithm, saved.Algorithm);
+        Assert.Equal(digits, saved.Digits);
+        Assert.Equal("ASDF", saved.Secret);
+    }
+
+    [Theory]
     [InlineData("AA")]
     [InlineData("ORSXG5A")]
     [InlineData("ANYTHING")]
+    [InlineData("TEST")]
+    [InlineData("ASDF")]
+    [InlineData("FOO")]
     public async Task Editor_AcceptsValidBase32BelowEightyBits(string secret)
     {
         var context = CreateContext(isConfigured: true);

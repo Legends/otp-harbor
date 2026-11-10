@@ -37,22 +37,30 @@ version supporting their configuration.
 
 ## Format coverage
 
-Incoming secrets use one shared Base32 rule on Desktop and Android: after normalizing
-case, spaces, hyphens and optional trailing padding, the input must decode to at least
-one byte and round-trip to the same unpadded Base32 representation. No minimum bit
+Secrets use one shared decoder-compatible Base32 rule on Desktop and Android: after
+normalizing case, spaces, hyphens and optional trailing padding, the input must contain
+only Base32 alphabet characters and decode to at least one byte. No minimum bit
 length or entropy claim is imposed on provider-issued secrets. This applies to manual
 creation or secret changes, QR/URI scans, third-party imports, native account files,
 and manual/automatic backup restoration through the validated import workflow.
-Malformed or incomplete encodings fail even if a permissive decoder could produce
-bytes. Existing file, archive and migration-payload size bounds are unchanged.
+There is no decode/re-encode equality requirement: unused trailing bits are handled
+by the established decoder. Inputs such as `TEST` and `ASDF` therefore retain their
+existing decoded key bytes instead of becoming unrestorable. Empty decoded keys and
+invalid alphabet characters still fail. Existing file, archive and migration-payload
+size bounds are unchanged.
+
+This interoperability behavior follows the lenient decoding used by
+[2FAS Android 6.0.3](https://github.com/twofas/2fas-android/blob/6.0.3/core/otp/src/main/java/com/twofasapp/otp/OtpAuthenticator.kt)
+and [Google's published Android decoder](https://github.com/google/google-authenticator-android/blob/master/java/com/google/android/apps/authenticator/util/Base32String.java).
+Google's public implementation is archived; this is not a claim about every current
+store version or every input quirk of those applications.
 
 This is an interoperability policy, not a statement that every accepted secret has
 adequate entropy or meets RFC 4226's minimum key-strength requirement. OTP Harbor
 does not issue these seeds and cannot strengthen one without breaking its match to
-the provider. Existing stored accounts retain their prior decoder compatibility for
-generation and edits that leave the seed unchanged; they are not rewritten. New or
-replaced secrets use the shared incoming validation, including during restoration.
-Decoded validation buffers continue to be cleared, and no seed/OTP logging is added.
+the provider. Stored accounts are not rewritten or rotated. All validation entry
+points now use the same decoder-compatible rule; validation buffers continue to be
+cleared, and no seed/OTP logging is added.
 
 | Format | Configuration behavior |
 | --- | --- |

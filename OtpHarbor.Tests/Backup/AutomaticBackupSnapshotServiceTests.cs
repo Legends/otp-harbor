@@ -32,7 +32,7 @@ public sealed class AutomaticBackupSnapshotServiceTests
             var account = new Account(
                 Guid.NewGuid(),
                 "Issuer",
-                "AA",
+                "TEST",
                 groups: [firstGroup, secondGroup], algorithm: algorithm, digits: digits);
             var vaultPath = Path.Combine(directory, "vault.dat");
             await File.WriteAllBytesAsync(

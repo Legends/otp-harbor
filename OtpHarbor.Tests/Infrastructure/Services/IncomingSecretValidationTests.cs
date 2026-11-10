@@ -13,12 +13,13 @@ public sealed class IncomingSecretValidationTests
 {
     public static TheoryData<string> ValidSecrets => new()
     {
-        "AA", "ORSXG5A", "ANYTHING", "JBSWY3DPEHPK3PXP", "jbsw y3dp-ehpk 3pxp===="
+        "AA", "ORSXG5A", "ANYTHING", "JBSWY3DPEHPK3PXP", "jbsw y3dp-ehpk 3pxp====",
+        "TEST", "ASDF", "FOO", "JBSWY3DPEHPK3PXPZ", " te-st== "
     };
 
     public static TheoryData<string> InvalidSecrets => new()
     {
-        "", " ", "A", "====", "TEST", "ASDF", "not*base32", "JBSWY3DPEHPK3PXPZ"
+        "", " ", "A", "====", "not*base32", "ABC0189", "AB=CD"
     };
 
     [Theory]
@@ -47,6 +48,10 @@ public sealed class IncomingSecretValidationTests
         var restored = await service.ImportFromStreamAsync(backup, "backup.otphbp", "synthetic password", TestContext.Current.CancellationToken);
         Assert.True(restored.IsSuccess);
         Assert.Equal(secret, Assert.Single(restored.Value).Secret);
+        backup.Position = 0;
+        var legacyRestored = await service.ImportFromStreamAsync(backup, "backup.totp", "synthetic password", TestContext.Current.CancellationToken);
+        Assert.True(legacyRestored.IsSuccess);
+        Assert.Equal(secret, Assert.Single(legacyRestored.Value).Secret);
     }
 
     [Theory]
@@ -128,5 +133,37 @@ public sealed class IncomingSecretValidationTests
         Assert.True((await new AccountManager(dal.Object).UpdateAsync(previous, updated)).IsSuccess);
         dal.Verify(value => value.UpdateAsync(It.Is<Account>(account => account.Secret == previous.Secret)), Times.Once);
         Assert.Equal(8, new OtpNetTotpGenerator().Generate(updated.Secret, 30, updated.Algorithm, updated.Digits).Code.Length);
+    }
+
+    [Theory]
+    [MemberData(nameof(TotpConfigurationTests.Configurations), MemberType = typeof(TotpConfigurationTests))]
+    public async Task DecoderCompatibleLegacyBackup_RestoresSameSeedAndCode(string algorithm, int digits)
+    {
+        const string secret = "TEST";
+        var source = new Account(Guid.NewGuid(), "Example", secret, algorithm: algorithm, digits: digits);
+        var generator = new OtpNetTotpGenerator(new TotpConfigurationTests.FixedClock(1111111109));
+        var before = generator.Generate(secret, 30, algorithm, digits);
+        var exporter = new ExportService(NullLogger<ExportService>.Instance);
+        await using var backup = new MemoryStream();
+        Assert.True((await exporter.ExportToEncryptedStreamAsync([source], "synthetic password", backup,
+            ExportFileFormat.Json, TestContext.Current.CancellationToken)).IsSuccess);
+        backup.Position = 0;
+        var decoded = await exporter.ImportFromStreamAsync(backup, "old-backup.totp", "synthetic password", TestContext.Current.CancellationToken);
+        Assert.True(decoded.IsSuccess);
+
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        manager.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        Account? committed = null;
+        manager.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(accounts => committed = Assert.Single(accounts)).ReturnsAsync(Result.Ok());
+        var result = await new AccountImportService(manager.Object).RestoreBackupAsync(decoded.Value,
+            ImportConflictStrategy.ReplaceExisting, (_, _) => Task.FromResult(true), TestContext.Current.CancellationToken);
+        Assert.Equal(AccountImportStatus.Completed, result.Value.Status);
+        Assert.NotNull(committed);
+        Assert.Equal(secret, committed.Secret);
+        Assert.Equal(algorithm, committed.Algorithm);
+        Assert.Equal(digits, committed.Digits);
+        Assert.Equal(before, generator.Generate(committed.Secret, committed.PeriodSeconds, committed.Algorithm, committed.Digits));
     }
 }

@@ -23,19 +23,17 @@ public static class SecretValidation
     }
 
     public static bool IsValidBase32Secret(string? secret)
-        => TryGetDecodedLength(secret, requireCanonicalEncoding: true, out var byteLength)
+        => TryGetDecodedLength(secret, out var byteLength)
            && byteLength >= MinimumSecretBytes;
 
     public static bool IsValidNewAccountBase32Secret(string? secret)
         => IsValidBase32Secret(secret);
 
     public static bool IsValidStoredBase32Secret(string? secret)
-        => TryGetDecodedLength(secret, requireCanonicalEncoding: false, out var byteLength)
-           && byteLength >= MinimumSecretBytes;
+        => IsValidBase32Secret(secret);
 
     private static bool TryGetDecodedLength(
         string? secret,
-        bool requireCanonicalEncoding,
         out int byteLength)
     {
         byteLength = 0;
@@ -51,13 +49,6 @@ public static class SecretValidation
         try
         {
             bytes = Base32Encoding.ToBytes(normalized);
-            if (requireCanonicalEncoding
-                && !string.Equals(
-                    normalized,
-                    Base32Encoding.ToString(bytes).TrimEnd('='),
-                    StringComparison.Ordinal))
-                return false;
-
             byteLength = bytes.Length;
             return true;
         }

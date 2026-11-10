@@ -22,10 +22,11 @@ public sealed class SecretValidationTests
     [Theory]
     [InlineData("TEST")]
     [InlineData("ASDF")]
-    public void IsValidStoredBase32Secret_PreservesLegacyDecoderCompatibility(string secret)
+    public void AllSecretValidationPaths_PreserveDecoderCompatibility(string secret)
     {
         Assert.True(SecretValidation.IsValidStoredBase32Secret(secret));
-        Assert.False(SecretValidation.IsValidBase32Secret(secret));
+        Assert.True(SecretValidation.IsValidBase32Secret(secret));
+        Assert.True(SecretValidation.IsValidNewAccountBase32Secret(secret));
     }
 
     [Theory]
@@ -35,10 +36,9 @@ public sealed class SecretValidationTests
     [InlineData("A")]
     [InlineData("====")]
     [InlineData("not-valid-*")]
-    [InlineData("TEST")]
-    [InlineData("ASDF")]
-    [InlineData("FOO")]
-    public void IsValidNewAccountBase32Secret_RejectsInvalidOrNonCanonicalSecrets(
+    [InlineData("ABC0189")]
+    [InlineData("AB=CD")]
+    public void IsValidNewAccountBase32Secret_RejectsEmptyOrUndecodableSecrets(
         string? secret)
     {
         Assert.False(SecretValidation.IsValidNewAccountBase32Secret(secret));

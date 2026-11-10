@@ -3017,6 +3017,49 @@ public sealed class AccountListViewModelTests
     }
 
     [Theory]
+    [MemberData(nameof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests.Configurations), MemberType = typeof(TOTP.Tests.Infrastructure.Services.TotpConfigurationTests))]
+    public async Task Editor_CreatesAndEditsEveryConfigurationWithoutChangingSecret_WithDecoderCompatibleSecret(string algorithm, int digits)
+    {
+        Account? saved = null;
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(() => Result.Ok<IReadOnlyList<Account>>(saved is null ? [] : [saved]));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>()))
+            .Callback<Account>(account => saved = account).ReturnsAsync(Result.Ok());
+        manager.Setup(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()))
+            .Callback<Account, Account>((_, account) => saved = account).ReturnsAsync(Result.Ok());
+        using var sut = CreateSut(manager.Object);
+        await sut.BeginAddAsync();
+        Assert.Equal("SHA1", sut.EditorAlgorithm);
+        Assert.Equal(6, sut.EditorDigits);
+        sut.EditorIssuer = "Example";
+        sut.EditorSecret = "ASDF";
+        sut.EditorAlgorithmIndex = Array.IndexOf(new[] { "SHA1", "SHA256", "SHA512" }, algorithm);
+        sut.EditorDigits = digits;
+        await sut.SaveAccountAsync();
+        Assert.NotNull(saved);
+        Assert.Equal(algorithm, saved.Algorithm);
+        Assert.Equal(digits, saved.Digits);
+        Assert.Equal("ASDF", saved.Secret);
+        var legacySecret = saved.Secret.ToLowerInvariant();
+        saved = new Account(saved.ID, saved.Issuer, legacySecret, algorithm: saved.Algorithm, digits: saved.Digits);
+        await sut.LoadAsync();
+        sut.SelectForKeyboardNavigation(Assert.Single(sut.Accounts));
+        await sut.BeginEditAsync();
+        Assert.Equal(algorithm, sut.EditorAlgorithm);
+        Assert.Equal(digits, sut.EditorDigits);
+        sut.EditorAlgorithmIndex = algorithm == "SHA512" ? 0 : 2;
+        sut.EditorDigits = digits == 8 ? 6 : 8;
+        await sut.SaveAccountAsync();
+        Assert.Equal(algorithm == "SHA512" ? "SHA1" : "SHA512", saved.Algorithm);
+        Assert.Equal(digits == 8 ? 6 : 8, saved.Digits);
+        Assert.Equal(legacySecret, saved.Secret);
+        await sut.BeginAddAsync();
+        Assert.Equal("SHA1", sut.EditorAlgorithm);
+        Assert.Equal(6, sut.EditorDigits);
+    }
+
+    [Theory]
     [InlineData("en")]
     [InlineData("de")]
     [InlineData("es")]
@@ -3056,6 +3099,9 @@ public sealed class AccountListViewModelTests
     [InlineData("AA")]
     [InlineData("ORSXG5A")]
     [InlineData("ANYTHING")]
+    [InlineData("TEST")]
+    [InlineData("ASDF")]
+    [InlineData("FOO")]
     public async Task Editor_AcceptsValidBase32BelowEightyBits(string secret)
     {
         Account? saved = null;
