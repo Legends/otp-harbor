@@ -8,9 +8,9 @@ reconciles changes or missed runs, and **Actions → Refresh README releases →
 allows an immediate refresh.
 
 The workflow checks out the default branch, checks Microsoft's public Store catalog,
-fetches every page of GitHub release metadata, and updates both independent sources.
-`scripts/release/Update-ReadmeReleases.py` changes only the block between
-`<!-- BEGIN GENERATED RELEASES -->` and `<!-- END GENERATED RELEASES -->`.
+fetches every page of GitHub release metadata, and updates the README and website.
+`scripts/release/Update-ReadmeReleases.py` updates the README's generated release block
+and, with `--website`, the three version fields in the homepage.
 It records the greatest published stable version of each independent channel, publication
 date, actual package/integrity assets, and release-note links. Drafts, prereleases, RCs,
 and unrelated tags are excluded. Generated commits are idempotent and serialized; a
@@ -35,7 +35,13 @@ agree with the package name and use this repository's stable version encoding; t
 preorders, expired/future availability and RC packages are ignored. The existing
 `Set-PublicMicrosoftStoreVersion.ps1` maps confirmed package versions back to display
 versions (for example, `3.2.65535.0` becomes `3.0.2`) and synchronizes the README badge,
-public Store status, `public-version.json`, and Store listing release heading.
+public Store status, `public-version.json`, and Store listing release heading. The README
+and website show the four-part package version. The Store listing notes use the display
+version.
+
+After a successful release refresh, the workflow dispatches Pages so the website and
+legacy RC upgrade feed use the newly published metadata. Manual refreshes also dispatch
+Pages, and scheduled refreshes dispatch it when the metadata changes.
 
 The public catalog is not a guaranteed stable API. A timeout, changed schema, missing
 package or older catalog response produces a workflow warning and preserves the last

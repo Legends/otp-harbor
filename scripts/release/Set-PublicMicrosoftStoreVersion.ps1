@@ -52,13 +52,18 @@ if (Test-Path -LiteralPath $versionPath -PathType Leaf) {
 $updates = @(
     @{
         Path = 'readme.md'
-        Pattern = '(Microsoft%20Store-)\d+\.\d+\.\d+(-0078D4\?logo=microsoft)'
-        Replacement = "`${1}$displayVersion`${2}"
+        Pattern = '(Microsoft%20Store-)\d+(?:\.\d+){2,3}(-0078D4\?logo=microsoft)'
+        Replacement = "`${1}$PackageVersion`${2}"
     },
     @{
         Path = 'readme.md'
-        Pattern = 'OTP Harbor `\d+\.\d+\.\d+` is publicly available'
-        Replacement = "OTP Harbor ``$displayVersion`` is publicly available"
+        Pattern = 'OTP Harbor (?:package )?`\d+(?:\.\d+){2,3}` is publicly available'
+        Replacement = "OTP Harbor package ``$PackageVersion`` is publicly available"
+    },
+    @{
+        Path = 'site/index.html'
+        Pattern = '(<span data-release-channel="store">)\d+(?:\.\d+){2,3}(</span>)'
+        Replacement = "`${1}$PackageVersion`${2}"
     },
     @{
         Path = 'packaging/windows-store/STORE_LISTING.md'

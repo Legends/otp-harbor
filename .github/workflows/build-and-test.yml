@@ -1513,18 +1513,13 @@ jobs:
             -F prerelease=${{ steps.versioning.outputs.prerelease }} `
             -f make_latest=${{ steps.latest_release.outputs.make_latest }} | Out-Null
 
-      - name: Refresh the website and legacy RC upgrade feed
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --repo "${{ github.repository }}"
-
   refresh-release-readme:
     name: Refresh README after publishing a release
     needs: [publish-avalonia-release, publish-android-release]
     if: always() && (needs.publish-avalonia-release.result == 'success' || needs.publish-android-release.result == 'success')
     permissions:
       contents: write
+      actions: write
     uses: ./.github/workflows/readme-releases.yml
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -1685,9 +1680,3 @@ jobs:
             -F draft=false `
             -F prerelease=false `
             -f make_latest=false | Out-Null
-
-      - name: Refresh public website release versions
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --repo "${{ github.repository }}"

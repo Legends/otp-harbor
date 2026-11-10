@@ -98,7 +98,7 @@ class PublicStoreVersionTests(unittest.TestCase):
 
     def fixture(self, directory):
         root = Path(directory)
-        for path in ("packaging/windows-store", "scripts/release"):
+        for path in ("packaging/windows-store", "scripts/release", "site"):
             (root / path).mkdir(parents=True)
         shutil.copyfile(ROOT / "scripts/release/Set-PublicMicrosoftStoreVersion.ps1",
                         root / "scripts/release/Set-PublicMicrosoftStoreVersion.ps1")
@@ -111,6 +111,10 @@ class PublicStoreVersionTests(unittest.TestCase):
             "[Desktop](https://img.shields.io/github/v/release/Legends/otp-harbor?filter=v%2A)\n",
             encoding="utf-8")
         (root / "packaging/windows-store/STORE_LISTING.md").write_text("## Version 2.0.1 release notes\n", encoding="utf-8")
+        (root / "site/index.html").write_text(
+            '<span data-release-channel="store">2.0.1</span>\n'
+            '<span data-release-channel="desktop">9.1.0</span>\n'
+            '<span data-release-channel="android">8.2.0</span>\n', encoding="utf-8")
         return root
 
     def snapshot(self, root):
@@ -123,9 +127,17 @@ class PublicStoreVersionTests(unittest.TestCase):
             data = json.loads((root / "packaging/windows-store/public-version.json").read_text(encoding="utf-8"))
             self.assertEqual({"displayVersion": "3.0.2", "packageVersion": "3.2.65535.0"}, data)
             readme = (root / "readme.md").read_text(encoding="utf-8")
-            self.assertIn("Microsoft%20Store-3.0.2-0078D4?logo=microsoft", readme)
+            self.assertIn("Microsoft%20Store-3.2.65535.0-0078D4?logo=microsoft", readme)
+            self.assertIn("OTP Harbor package `3.2.65535.0` is publicly available", readme)
             self.assertIn("](https://apps.microsoft.com/detail/9P31KH5L924P)", readme)
             self.assertIn("github/v/release/Legends/otp-harbor?filter=v%2A", readme)
+            self.assertEqual(
+                '<span data-release-channel="store">3.2.65535.0</span>\n'
+                '<span data-release-channel="desktop">9.1.0</span>\n'
+                '<span data-release-channel="android">8.2.0</span>\n',
+                (root / "site/index.html").read_text(encoding="utf-8"))
+            self.assertIn("## Version 3.0.2 release notes",
+                          (root / "packaging/windows-store/STORE_LISTING.md").read_text(encoding="utf-8"))
             before = self.snapshot(root)
             SYNC.sync(catalog(), root)
             SYNC.sync(catalog(), root, check=True)
@@ -164,7 +176,7 @@ class PublicStoreVersionTests(unittest.TestCase):
     def test_workflow_checks_store_and_stages_all_synchronized_files(self):
         workflow = (ROOT / ".github/workflows/readme-releases.yml").read_text(encoding="utf-8")
         self.assertIn("Sync-PublicMicrosoftStoreVersion.py --keep-current-on-error", workflow)
-        self.assertIn("git add -- readme.md packaging/windows-store/public-version.json packaging/windows-store/STORE_LISTING.md", workflow)
+        self.assertIn("git add -- readme.md site/index.html packaging/windows-store/public-version.json packaging/windows-store/STORE_LISTING.md", workflow)
         self.assertNotIn("github", SYNC.CATALOG_URL.lower())
 
 

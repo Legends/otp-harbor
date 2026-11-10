@@ -8,6 +8,7 @@ from pathlib import Path
 import segno
 import zxingcpp
 from PIL import Image, ImageDraw
+from scanner_marketing import desktop_demo_qr_bounds
 from screenshot_cleanup import clean_desktop
 
 
@@ -49,19 +50,12 @@ def scanner(platform: str, theme: str) -> dict:
     if (image.size != ((1394, 1044) if platform == "desktop" else expected)
         or (platform == "desktop" and crop != (3, 3, 1397, 1047))):
         raise ValueError(f"Unexpected {platform} scanner dimensions: {image.size}; update the QR position deliberately")
-    qr = qr_image(12 if platform == "android" else 6)
+    qr = qr_image(12 if platform == "android" else 8)
     if platform == "desktop":
-        draw = ImageDraw.Draw(image)
-        art_bounds = (372, 444, 1023, 810)
-        draw.rectangle((372, 444, 1022, 809),
-                       fill=("#EAF4FC" if theme == "light" else "#0D223D"))
-        draw.rounded_rectangle((528, 453, 870, 806), radius=28,
-                               fill=("#D2E6F8" if theme == "light" else "#061122"))
-        draw.rounded_rectangle((522, 448, 873, 807), radius=28,
-                               fill=("#F8FCFF" if theme == "light" else "#101F38"),
-                               outline=("#5AA8D4" if theme == "light" else "#64C7F5"), width=3)
-        draw.rounded_rectangle((541, 460, 854, 795), radius=13, fill="#FFFFFF")
-        origin = (563, 493)
+        art_bounds = desktop_demo_qr_bounds(image.size)
+        origin = art_bounds[:2]
+        if qr.size != (art_bounds[2] - origin[0], art_bounds[3] - origin[1]):
+            raise ValueError('The demo QR no longer fits the Desktop scanner target.')
     else:
         center = (610, 1359)
         origin = (center[0] - qr.width // 2, center[1] - qr.height // 2)

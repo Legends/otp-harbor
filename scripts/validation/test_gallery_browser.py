@@ -249,7 +249,15 @@ def android_page(browser, url, report):
 def queue_and_fallback(browser, url, report):
     page = new_page(browser)
     held = []
-    page.route('**/previews/**/*.webp', lambda route: route.continue_() if '/desktop/dark/' in route.request.url else held.append(route))
+    draining = False
+
+    def hold_alternate_preview(route):
+        if draining or '/desktop/dark/' in route.request.url:
+            route.continue_()
+        else:
+            held.append(route)
+
+    page.route('**/previews/**/*.webp', hold_alternate_preview)
     loaded(page, url)
     wait_for_routes(page, held, 2)
     assert len(held) == 2, 'Background concurrency exceeded two'
@@ -257,10 +265,12 @@ def queue_and_fallback(browser, url, report):
     held.pop(1).continue_()
     wait_for_routes(page, held, 2)
     assert len(held) == 2 and '/android/light/' in held[1].request.url, 'One group blocked the other groups'
-    page.unroute('**/previews/**/*.webp')
+    # Drain pending routes before closing or removing interception. New requests
+    # must proceed during cleanup instead of being added to the held list.
+    draining = True
     for route in held:
-        route.abort()
-    page.wait_for_timeout(50)
+        route.continue_()
+    page.wait_for_load_state('networkidle')
     page.close()
     # Browsers without decode() must still wait for a successful load.
     page = new_page(browser, policy={'saveData': True}, idle=False)

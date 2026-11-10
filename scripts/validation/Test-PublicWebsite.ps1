@@ -32,6 +32,8 @@ $galleryRuntime = Read-RequiredFile 'site/gallery-runtime.js'
 $robots = Read-RequiredFile 'site/robots.txt'
 $sitemap = Read-RequiredFile 'site/sitemap.xml'
 $pagesWorkflow = Read-RequiredFile '.github/workflows/pages.yml'
+$releaseRefreshWorkflow = Read-RequiredFile '.github/workflows/readme-releases.yml'
+$storeVersion = (Read-RequiredFile 'packaging/windows-store/public-version.json' | ConvertFrom-Json).packageVersion
 $indexNowVerificationValue = '1b6f7ab9795743588fa8e24157ad1541'
 $indexNowVerificationFile = Read-RequiredFile "site/$indexNowVerificationValue.txt"
 Read-RequiredFile 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png' | Out-Null
@@ -122,9 +124,9 @@ foreach ($requiredText in @(
     'https://apps.microsoft.com/detail/9P31KH5L924P',
     'Get it from Microsoft Store',
     'class="store-symbol"',
-    'OTP Harbor 2.0.1 is now publicly available from Microsoft Store, the primary Windows channel.',
-    'OTP Harbor 2.0.1 is the stable desktop GitHub release for Linux and source archives.',
-    'OTP Harbor Android 2.0.1 is the current APK version; Android updates use dedicated GitHub releases.',
+    "OTP Harbor package <span data-release-channel=`"store`">$storeVersion</span> is publicly available from Microsoft Store, the primary Windows channel.",
+    'is the stable desktop GitHub release for Linux and source archives.',
+    'is the current APK version; Android updates use dedicated GitHub releases.',
     'Help test OTP Harbor v3 on Windows, Linux and Android',
     'Test only with synthetic accounts',
     'Right-click an existing desktop account to edit it, show its QR code or delete it after confirmation.',
@@ -137,15 +139,24 @@ foreach ($requiredText in @(
 
 foreach ($releaseStampControl in @(
     'Stamp independent public release versions',
-    'releases/latest',
-    "`$releaseTag -notmatch '^v(?<version>\d+\.\d+\.\d+)`$'",
+    'Update-ReadmeReleases.py --website _site/index.html',
     'packaging/windows-store/public-version.json',
-    "'^android-v\d+\.\d+\.\d+`$'",
-    'Stamped Store $storeVersion, desktop $desktopVersion, and Android $androidVersion.'
+    '--paginate --slurp'
 )) {
     if (-not $pagesWorkflow.Contains($releaseStampControl, [StringComparison]::Ordinal)) {
         throw "The Pages workflow is missing automatic release-version stamping: $releaseStampControl"
     }
+}
+
+foreach ($channel in @('store', 'desktop', 'android')) {
+    $versionPattern = if ($channel -eq 'store') { '\d+(?:\.\d+){3}' } else { '\d+(?:\.\d+){2}' }
+    if ([regex]::Matches($index, "<span data-release-channel=`"$channel`">$versionPattern</span>").Count -ne 1) {
+        throw "Expected one valid public website version for the $channel channel."
+    }
+}
+if (-not $releaseRefreshWorkflow.Contains('Update-ReadmeReleases.py --website site/index.html') -or
+    -not $releaseRefreshWorkflow.Contains('gh workflow run pages.yml')) {
+    throw 'The release metadata refresh must update and deploy the public website.'
 }
 
 $structuredDataMatch = [Text.RegularExpressions.Regex]::Match(

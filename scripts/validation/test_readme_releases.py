@@ -17,6 +17,33 @@ def release(tag, **overrides):
 
 
 class ReadmeReleaseTests(unittest.TestCase):
+    website = '\n'.join(f'<span data-release-channel="{channel}">2.0.1</span>'
+                        for channel in ('store', 'desktop', 'android'))
+
+    def test_website_stamps_store_package_and_stable_github_versions_independently(self):
+        releases = [[release("v4.9.9"), release("android-v6.0.1")],
+                    [release("v4.10.0"), release("v5.0.0", draft=True),
+                     release("android-v7.0.0", prerelease=True)]]
+        result = GENERATOR.update_website(self.website, releases, "3.2.65535.0")
+        self.assertIn('data-release-channel="store">3.2.65535.0', result)
+        self.assertIn('data-release-channel="desktop">4.10.0', result)
+        self.assertIn('data-release-channel="android">6.0.1', result)
+        self.assertEqual(result, GENERATOR.update_website(result, releases, "3.2.65535.0"))
+
+    def test_website_preserves_legacy_android_apk_fallback(self):
+        releases = [release("v3.0.2"), release("v2.0.1", assets=[
+            {"name": "OTP-Harbor-android-universal-2.0.1.apk"}])]
+        result = GENERATOR.update_website(self.website, releases, "3.2.65535.0")
+        self.assertIn('data-release-channel="android">2.0.1', result)
+
+    def test_website_rejects_invalid_store_version_or_duplicate_marker(self):
+        releases = [release("v3.0.2"), release("android-v3.0.2")]
+        for invalid in ("3.0.2", "3.2.65536.0", '<img src="invalid">'):
+            with self.subTest(version=invalid), self.assertRaises(ValueError):
+                GENERATOR.update_website(self.website, releases, invalid)
+        with self.assertRaises(ValueError):
+            GENERATOR.update_website(self.website + self.website, releases, "3.2.65535.0")
+
     def test_independent_channels_use_numeric_versions_and_ignore_drafts_and_prereleases(self):
         releases = [release("v3.9.9"), release("v3.10.0"), release("android-v2.0.2"),
                     {**release("v4.0.0"), "draft": True},
@@ -67,6 +94,13 @@ class ReadmeReleaseTests(unittest.TestCase):
             self.assertIn(trigger, updater)
         self.assertIn("--paginate --slurp", updater)
         self.assertIn("token: ${{ secrets.GH_PAT || github.token }}", updater)
+        self.assertIn("Update-ReadmeReleases.py --website site/index.html", updater)
+        self.assertIn('git add -- readme.md site/index.html packaging/windows-store/public-version.json', updater)
+        self.assertIn("actions: write", updater)
+        self.assertIn('gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$DEFAULT_BRANCH"', updater)
+        pages = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
+        self.assertIn("'packaging/windows-store/public-version.json'", pages)
+        self.assertIn("Update-ReadmeReleases.py --website _site/index.html", pages)
         self.assertNotIn("gh pr create", updater)
 
     def test_version_badges_keep_three_distribution_channels_independent(self):

@@ -33,13 +33,26 @@ Microsoft's [MSIX screenshot requirements](https://learn.microsoft.com/en-us/win
 
 ## Pre-publication gate
 
+The refreshed Desktop scanner slide (`07-qr-import.png`) shows the supplied
+1400 × 1050 live-app captures side by side in Light and Dark. All four campaign
+locales label both themes and identify the QR as a website example. The generated
+code fits inside the captured scan target; the composite preserves the original
+window pixels outside that rectangle. The two website cards use the same capture
+pair with the separately labeled repository QR. Neither demo QR holds an account
+or an OTP seed.
+
 ### Website preview delivery
 
 `python scripts/marketing/Generate-WebsiteShowcase.py --previews-only` derives 1200 × 675
-quality-95 WebP previews from the existing reviewed 1920 × 1080 campaign PNGs and
-adds neutral README frames. It never rewrites canonical captures or full-resolution
+quality-95 WebP previews from the existing reviewed 1920 × 1080 campaign PNGs.
+It never rewrites canonical captures or full-resolution
 frames. A normal generator run also creates these delivery assets. Both modes record
 hashes/provenance in the manifest and reset publication approval for human review.
+
+The README reuses the four existing Desktop and Android account-list captures.
+Its HTML tables supply padding and a `#F3F4F5` CSS background where inline styles
+are supported. GitHub sanitizes those styles and uses its own themed table
+background and spacing. No separate bordered screenshot files are generated.
 
 Gallery schema version 2 separates `preview` and `full` assets. Cards and the
 build-selected hero use previews; enlargement alone requests the original PNG.

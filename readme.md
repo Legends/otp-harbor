@@ -3,7 +3,7 @@
 **The local-first authenticator for desktop and Android.**
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Android-5C6BC0)](https://github.com/Legends/otp-harbor)
-[![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-3.0.2-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
+[![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-3.2.65535.0-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
 [![Desktop Release](https://img.shields.io/github/v/release/Legends/otp-harbor?filter=v%2A&sort=date&label=Desktop&color=blue)](https://github.com/Legends/otp-harbor/releases)
 [![Android Release](https://img.shields.io/github/v/release/Legends/otp-harbor?filter=android-v%2A&sort=date&label=Android&color=green)](https://github.com/Legends/otp-harbor/releases)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE.txt)
@@ -23,25 +23,28 @@
 Desktop and Android versions ship independently. This table tracks published stable GitHub releases; Windows availability and updates are managed separately by the Microsoft Store.
 <!-- END GENERATED RELEASES -->
 
-Windows is delivered through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor `3.0.2` is publicly available and Microsoft signs accepted MSIX packages. GitHub release versions and Store approval advance independently.
+Windows is delivered through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor package `3.2.65535.0` is publicly available and Microsoft signs accepted MSIX packages. GitHub release versions and Store approval advance independently.
 
 <h3>Desktop app: Light and Dark themes</h3>
 
-<table>
+<!-- GitHub removes inline CSS; cellpadding keeps a padded table fallback. -->
+<table cellpadding="12" cellspacing="0" style="background-color: #F3F4F5; width: 100%; table-layout: fixed;">
   <tr><th width="50%">Light theme</th><th width="50%">Dark theme</th></tr>
   <tr>
-    <td><img src="artifacts/marketing/website/optimized/readme/desktop-light.png" alt="OTP Harbor desktop account list in Light theme with fictional demo accounts and original icons" width="420" /></td>
-    <td><img src="artifacts/marketing/website/optimized/readme/desktop-dark.png" alt="OTP Harbor desktop account list in Dark theme with the same fictional demo accounts and icons" width="420" /></td>
+    <td align="center" style="padding: 12px;"><img src="artifacts/marketing/website/optimized/desktop/light/account-list.png" alt="OTP Harbor desktop account list in Light theme with fictional demo accounts and original icons" width="420" style="max-width: 100%; height: auto;" /></td>
+    <td align="center" style="padding: 12px;"><img src="artifacts/marketing/website/optimized/desktop/dark/account-list.png" alt="OTP Harbor desktop account list in Dark theme with the same fictional demo accounts and icons" width="420" style="max-width: 100%; height: auto;" /></td>
   </tr>
 </table>
 
 <h3>Android app: Light and Dark themes</h3>
 
-<p align="center">
-  <img src="artifacts/marketing/website/optimized/android/light/account-list.png" alt="OTP Harbor Android account list in Light theme with fictional demo accounts and original icons" width="280" />
-  &emsp;&emsp;
-  <img src="artifacts/marketing/website/optimized/android/dark/account-list.png" alt="OTP Harbor Android account list in Dark theme with the same fictional demo accounts and icons" width="280" />
-</p>
+<table cellpadding="12" cellspacing="0" style="background-color: #F3F4F5; width: 100%; table-layout: fixed;">
+  <tr><th width="50%">Light theme</th><th width="50%">Dark theme</th></tr>
+  <tr>
+    <td align="center" style="padding: 12px;"><img src="artifacts/marketing/website/optimized/android/light/account-list.png" alt="OTP Harbor Android account list in Light theme with fictional demo accounts and original icons" width="280" style="max-width: 100%; height: auto;" /></td>
+    <td align="center" style="padding: 12px;"><img src="artifacts/marketing/website/optimized/android/dark/account-list.png" alt="OTP Harbor Android account list in Dark theme with the same fictional demo accounts and icons" width="280" style="max-width: 100%; height: auto;" /></td>
+  </tr>
+</table>
 
 These are optimized captures from live apps using disposable demo vaults. Each pair shows the same account list in Light and Dark themes. [Browse the full screenshot gallery](https://legends.github.io/otp-harbor/#showcase) when the v3 marketing review is complete.
 

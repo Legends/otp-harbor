@@ -9,6 +9,7 @@ from pathlib import Path
 import segno
 import zxingcpp
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+from scanner_marketing import desktop_demo_qr_bounds
 
 from screenshot_cleanup import DESKTOP_CORNER_RADIUS, clean_android, clean_desktop
 
@@ -192,29 +193,10 @@ def github_demo_qr(size):
         return qr_source.convert('RGB').resize((size, size), Image.Resampling.NEAREST)
 
 
-def add_github_demo_qr(cleaned, platform, theme):
+def add_github_demo_qr(cleaned, platform):
     if platform == 'desktop':
-        if cleaned.size != (1394, 1044):
-            raise ValueError('Desktop scanner dimensions changed; review the camera preview.')
         composite = cleaned.copy()
-        draw = ImageDraw.Draw(composite)
-        if theme == 'light':
-            art_bounds = (372, 443, 1023, 811)
-            draw.rectangle((372, 443, 1022, 810), fill='#EAF4FB')
-            draw.rounded_rectangle((527, 453, 870, 806), radius=28,
-                                   fill='#C8DFEF')
-            draw.rounded_rectangle((522, 448, 873, 807), radius=28,
-                                   fill='#F8FBFF', outline='#47AFD8', width=3)
-            draw.rounded_rectangle((541, 460, 854, 795), radius=13,
-                                   fill='#FFFFFF')
-        else:
-            art_bounds = (522, 448, 874, 808)
-            draw.rounded_rectangle((528, 453, 870, 806), radius=28, fill='#061122')
-            draw.rounded_rectangle((art_bounds[0], art_bounds[1],
-                                    art_bounds[2] - 1, art_bounds[3] - 1),
-                                   radius=28, fill='#101F38', outline='#64C7F5', width=3)
-            draw.rounded_rectangle((541, 460, 854, 795), radius=13, fill='#FFFFFF')
-        bounds = (563, 493, 833, 763)
+        bounds = art_bounds = desktop_demo_qr_bounds(cleaned.size)
     else:
         if cleaned.size != (1220, 2532):
             raise ValueError('Android scanner dimensions changed; review the QR placement.')
@@ -232,7 +214,7 @@ def add_github_demo_qr(cleaned, platform, theme):
 def add_previews(manifest, gallery):
     """Derive delivery assets without changing reviewed captures or full-size frames."""
     generated = [entry for entry in manifest['generated']
-                 if entry['kind'] not in ('website-preview', 'readme-theme-frame', 'website-gallery-data')]
+                 if entry['kind'] not in ('website-preview', 'website-gallery-data')]
     for item in gallery['items']:
         full = item['full'] if 'full' in item else {key: item[key] for key in ('src', 'width', 'height')}
         source = OPTIMIZED / full['src'].removeprefix('assets/marketing/')
@@ -250,16 +232,6 @@ def add_previews(manifest, gallery):
         item['preview'] = {'src': 'assets/marketing/' + relative.as_posix(),
                            'width': 1200, 'height': 675}
         item['full'] = full
-    for theme in ('light', 'dark'):
-        source = OPTIMIZED / 'desktop' / theme / 'account-list.png'
-        target = OPTIMIZED / 'readme' / f'desktop-{theme}.png'
-        target.parent.mkdir(parents=True, exist_ok=True)
-        with Image.open(source) as original:
-            framed = Image.new('RGBA', (original.width + 64, original.height + 64), '#dce3ed')
-            framed.alpha_composite(original.convert('RGBA'), (32, 32))
-        framed.convert('RGB').save(target, optimize=True)
-        generated.append(record(target, 'readme-theme-frame', [source],
-                                sourcePath=source.relative_to(ROOT).as_posix(), padding=32))
     gallery['schemaVersion'] = 2
     GALLERY.write_text(json.dumps(gallery, indent=2) + '\n', encoding='utf-8')
     generated.append(record(GALLERY, 'website-gallery-data',
@@ -278,7 +250,7 @@ def main():
     manifest = json.loads(MANIFEST.read_text(encoding='utf-8'))
     if args.previews_only:
         add_previews(manifest, json.loads(GALLERY.read_text(encoding='utf-8')))
-        print('Generated quality-95 WebP previews and neutral README frames; publication review required.')
+        print('Generated quality-95 WebP previews; publication review required.')
         return
     previous = manifest['generated']
     generated = [entry for entry in previous if not entry['path'].startswith('website/optimized/')
@@ -316,7 +288,7 @@ def main():
                 visual = cleaned
                 qr_composite = None
                 if slug == 'qr-scanning':
-                    visual, qr_bounds, art_bounds = add_github_demo_qr(cleaned, platform, theme)
+                    visual, qr_bounds, art_bounds = add_github_demo_qr(cleaned, platform)
                     qr_composite = OPTIMIZED / 'composites' / platform / theme / 'scanner-project-repo-qr.png'
                     qr_composite.parent.mkdir(parents=True, exist_ok=True)
                     visual.save(qr_composite, optimize=True)

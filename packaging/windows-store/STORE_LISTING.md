@@ -12,6 +12,14 @@ Privacy URL: `https://github.com/Legends/otp-harbor/blob/master/PRIVACY.md`
 
 Website URL: `https://legends.github.io/otp-harbor/`
 
+The website and README report the confirmed four-part Store package version
+from `public-version.json`. The release notes below use the app's display
+version. Every published Desktop or Android release refreshes the three
+channels independently and dispatches Pages. The daily refresh also checks for
+later Store approval and keeps the last confirmed version if the public catalog
+is unavailable. Use the Store workflow's publication confirmation after
+Partner Center approval if a manual update is needed.
+
 ## Partner Center visual assets
 
 ### Upcoming v3 artwork

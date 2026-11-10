@@ -176,12 +176,18 @@ if 'desktop' in selected:
         ('04-appearance-settings.png',['source/desktop/dark/settings.png'],'standard'),
         ('05-account-actions.png',['source/desktop/dark/account-context-menu.png'],'standard'),
         ('06-quick-unlock.png',['composites/desktop/biometric-prompt-dark-transparent.png'],'prompt'),
-        ('07-qr-import.png',['composites/desktop/scanner-website-qr-dark.png'],'scanner'),
+        ('07-qr-import.png',['composites/desktop/scanner-website-qr-light.png','composites/desktop/scanner-website-qr-dark.png'],'scanner'),
         ('08-groups-favourites.png',[],'organize-illustration'),
         ('09-icon-pack.png',[],'icon-pack-illustration'),
         ('10-backup-restore.png',[],'backup-illustration'),
         ('11-import-formats.png',[],'formats-illustration'),
     ]
+    scanner_theme_labels={
+        'en-US':('LIGHT THEME','DARK THEME'),
+        'de-DE':('HELLES DESIGN','DUNKLES DESIGN'),
+        'fr-FR':('THÈME CLAIR','THÈME SOMBRE'),
+        'es-ES':('TEMA CLARO','TEMA OSCURO'),
+    }
     section_labels={
         'en-US':('GROUPS + FAVOURITES','ACCOUNT ICON PACKS','PORTABLE BACKUP + RESTORE','SUPPORTED IMPORT FORMATS'),
         'de-DE':('GRUPPEN + FAVORITEN','KONTO-ICON-PACKS','PORTABLES BACKUP + WIEDERHERSTELLEN','UNTERSTÜTZTE IMPORTFORMATE'),
@@ -292,6 +298,15 @@ if 'desktop' in selected:
                 draw.multiline_text((105,410),'\n'.join(textwrap.wrap(body,24)),font=font_regular,fill='#BCD7F5',spacing=10)
                 for index,screen in enumerate(screen_paths):
                     placements.append(paste_app(canvas,screen,(610+index*620,95,570,900)))
+            elif layout=='scanner':
+                import textwrap
+                draw.multiline_text((100,185),headline,font=font_bold,fill='#FFFFFF',spacing=10)
+                wrapped='\n'.join(textwrap.wrap(body,43))
+                draw.multiline_text((1005,205),wrapped,font=font_regular,fill='#BCD7F5',spacing=10)
+                for index,(screen,label) in enumerate(zip(screen_paths,scanner_theme_labels[culture],strict=True)):
+                    placement=paste_app(canvas,screen,(100+index*900,500,820,530))
+                    placements.append(placement)
+                    draw.text((placement['appBounds'][0],464),label,font=font_small,fill='#EAF3FF')
             else:
                 draw.multiline_text((100,205),headline,font=font_bold,fill='#FFFFFF',spacing=10)
                 import textwrap
@@ -302,8 +317,6 @@ if 'desktop' in selected:
                 draw.multiline_text((105,body_y),wrapped,font=font_regular,fill='#BDD5EF',spacing=10)
                 if layout=='prompt':
                     cutouts.append(paste_cutout(canvas,screen_paths[0],(1000,115,820,850)))
-                elif layout=='scanner':
-                    placements.append(paste_app(canvas,screen_paths[0],(785,170,1070,805)))
                 elif layout in ('organize-illustration','icon-pack-illustration'):
                     draw.text((1000,185),section_labels[culture][0 if layout=='organize-illustration' else 1],font=font_small,fill='#FFFFFF')
                     illustrations.append(paste_illustration(canvas,art_paths[0],(900,255,950,605)))
@@ -329,8 +342,9 @@ if 'desktop' in selected:
             draw=ImageDraw.Draw(canvas)
             chip_box=draw.textbbox((0,0),chip,font=font_small)
             chip_width=chip_box[2]-chip_box[0]+48
-            draw.rounded_rectangle((100,865,100+chip_width,921),radius=17,fill='#132E57',outline='#36BDF4',width=2)
-            draw.text((124,881),chip,font=font_small,fill='#FFFFFF')
+            chip_y=382 if layout=='scanner' else 865
+            draw.rounded_rectangle((100,chip_y,100+chip_width,chip_y+56),radius=17,fill='#132E57',outline='#36BDF4',width=2)
+            draw.text((124,chip_y+16),chip,font=font_small,fill='#FFFFFF')
             destination=campaign_dir/culture/filename
             destination.parent.mkdir(parents=True,exist_ok=True)
             # Windows image preview and indexing can briefly hold the existing PNG open.

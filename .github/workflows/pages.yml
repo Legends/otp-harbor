@@ -12,10 +12,12 @@ on:
       - 'scripts/validation/test_gallery_browser.py'
       - 'scripts/validation/gallery-browser-requirements.txt'
       - 'packaging/windows-store/screenshots/**'
+      - 'packaging/windows-store/public-version.json'
       - 'packaging/android/marketing/en-US/**'
       - 'OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'
       - 'OtpHarbor.UI.Avalonia.Desktop/appsettings.json'
       - 'scripts/release/Select-PublishedUpdateFeed.ps1'
+      - 'scripts/release/Update-ReadmeReleases.py'
       - 'scripts/release/Build-FDroidRepository.py'
       - 'scripts/validation/test_fdroid_repository.py'
       - 'packaging/fdroid/**'
@@ -116,66 +118,14 @@ jobs:
           (root / '_site/fdroid/index.html').write_text(render(template, settings), encoding='utf-8')
 
       - name: Stamp independent public release versions
-        shell: pwsh
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $release = gh api "repos/${{ github.repository }}/releases/latest" | ConvertFrom-Json
-          $releaseTag = [string]$release.tag_name
-          if ($release.draft -or $release.prerelease -or
-              $releaseTag -notmatch '^v(?<version>\d+\.\d+\.\d+)$') {
-            throw 'The latest published GitHub release is not a stable OTP Harbor version.'
-          }
-
-          $desktopVersion = $Matches.version
-          $storeMetadata = Get-Content packaging/windows-store/public-version.json -Raw | ConvertFrom-Json
-          $storeVersion = [string]$storeMetadata.displayVersion
-          if ($storeVersion -notmatch '^\d+\.\d+\.\d+$') {
-            throw 'The public Microsoft Store display version is invalid.'
-          }
-
-          $publishedReleases = gh api "repos/${{ github.repository }}/releases?per_page=100" | ConvertFrom-Json
-          $androidRelease = $publishedReleases |
-            Where-Object { -not $_.draft -and -not $_.prerelease -and $_.tag_name -match '^android-v\d+\.\d+\.\d+$' } |
-            Sort-Object published_at -Descending |
-            Select-Object -First 1
-          $androidVersion = if ($null -eq $androidRelease) {
-            $legacyAndroidRelease = $publishedReleases |
-              Where-Object {
-                -not $_.draft -and -not $_.prerelease -and
-                $_.tag_name -match '^v\d+\.\d+\.\d+$' -and
-                @($_.assets | Where-Object { $_.name -match '^OTP-Harbor-android-universal-.+\.apk$' }).Count -eq 1
-              } |
-              Sort-Object published_at -Descending |
-              Select-Object -First 1
-            if ($null -eq $legacyAndroidRelease -or
-                ([string]$legacyAndroidRelease.tag_name) -notmatch '^v(?<version>\d+\.\d+\.\d+)$') {
-              throw 'No published OTP Harbor Android release could be resolved.'
-            }
-            $Matches.version
-          }
-          elseif (([string]$androidRelease.tag_name) -match '^android-v(?<version>\d+\.\d+\.\d+)$') {
-            $Matches.version
-          }
-          else {
-            throw 'The latest Android release tag is invalid.'
-          }
-
-          $indexPath = Join-Path $PWD '_site/index.html'
-          $index = [IO.File]::ReadAllText($indexPath)
-          $pattern = 'OTP Harbor \d+\.\d+\.\d+ is now publicly available from Microsoft Store, the primary Windows channel\.\s+' +
-            'OTP Harbor \d+\.\d+\.\d+ is the stable desktop GitHub release for Linux and source archives\.\s+' +
-            'OTP Harbor Android \d+\.\d+\.\d+ is the current APK version; Android updates use dedicated GitHub releases\.'
-          $replacement = "OTP Harbor $storeVersion is now publicly available from Microsoft Store, the primary Windows channel.`n" +
-            "          OTP Harbor $desktopVersion is the stable desktop GitHub release for Linux and source archives.`n" +
-            "          OTP Harbor Android $androidVersion is the current APK version; Android updates use dedicated GitHub releases."
-          $releaseNoteMatches = [Text.RegularExpressions.Regex]::Matches($index, $pattern)
-          if ($releaseNoteMatches.Count -ne 1) {
-            throw "Expected exactly one website release note, found $($releaseNoteMatches.Count)."
-          }
-          $index = [Text.RegularExpressions.Regex]::Replace($index, $pattern, $replacement)
-          [IO.File]::WriteAllText($indexPath, $index, [Text.UTF8Encoding]::new($false))
-          Write-Host "Stamped Store $storeVersion, desktop $desktopVersion, and Android $androidVersion."
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > "$RUNNER_TEMP/website-releases.json"
+          python3 scripts/release/Update-ReadmeReleases.py --website _site/index.html \
+            --releases-json "$RUNNER_TEMP/website-releases.json" \
+            --store-metadata packaging/windows-store/public-version.json
 
       - name: Publish the newest signed GitHub feed for RC subscribers
         shell: pwsh

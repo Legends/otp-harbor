@@ -243,8 +243,8 @@
       "method": "manual capture of the live app",
       "width": 1400,
       "height": 1050,
-      "sha256": "9293685d783de7725e31a1874facd70d7b6e0f147b796bb8597f977b0b75f318",
-      "originalSha256": "3ffed46352d83628bea9b6af044a6550272c2f2dd076b342b8e7c6c9813aa4c6"
+      "sha256": "c1052620f10499610b3375b9f942471d52eca8f1641dfeded5c8c6cb7d2bba2e",
+      "originalSha256": "57c4546f67752ef6ebfd0084a6dfda413d26ef9552b0735b1a32c40b3755d8cd"
     },
     {
       "path": "source/desktop/dark/settings.png",
@@ -331,8 +331,8 @@
       "method": "manual capture of the live app",
       "width": 1400,
       "height": 1050,
-      "sha256": "8ea1ddf197544e74bbfe62486c0b9040a1e54f8ec2658a85da4a8c581be0c57f",
-      "originalSha256": "694760105de03cee7e94620d48d04dc1d6166947e765d26baa31100c2526d305"
+      "sha256": "21e28132e71e7b3b504a9e4f1ab572e252c54465f35c851941324ee987044403",
+      "originalSha256": "aae993ac617cef612bd24717c5f288f373f051e06e4d0a3fee0741e420c7dbd1"
     },
     {
       "path": "source/desktop/light/settings.png",
@@ -439,9 +439,9 @@
     },
     {
       "path": "composites/desktop/scanner-website-qr-dark.png",
-      "sha256": "c369b53bc52541a8767b95ec339974fd192ae34b3abe7dd9a1c8e4f287817cd5",
+      "sha256": "abd466ee5a5e5d683958ab86c60f115ee1156e57918e6aded745a27066620172",
       "sourceSha256": [
-        "9293685d783de7725e31a1874facd70d7b6e0f147b796bb8597f977b0b75f318"
+        "c1052620f10499610b3375b9f942471d52eca8f1641dfeded5c8c6cb7d2bba2e"
       ],
       "kind": "designed-scanner-qr",
       "publicationUse": "review only: source UI names a third-party authenticator",
@@ -449,10 +449,10 @@
       "theme": "dark",
       "qrPayload": "https://legends.github.io/otp-harbor/",
       "qrBounds": [
-        563,
-        493,
-        270,
-        270
+        517,
+        243,
+        360,
+        360
       ],
       "sourceCrop": [
         3,
@@ -461,17 +461,17 @@
         1047
       ],
       "artBounds": [
-        372,
-        444,
-        1023,
-        810
+        517,
+        243,
+        877,
+        603
       ]
     },
     {
       "path": "composites/desktop/scanner-website-qr-light.png",
-      "sha256": "b1d9ba11b9d682545d9734e2a97789ef454f4a8df88287d5edb2b26278c9a8d0",
+      "sha256": "961b04f8d364a7aed5978ca61a7c8d6cce902b6a9b688f00b46acfbd662636e6",
       "sourceSha256": [
-        "8ea1ddf197544e74bbfe62486c0b9040a1e54f8ec2658a85da4a8c581be0c57f"
+        "21e28132e71e7b3b504a9e4f1ab572e252c54465f35c851941324ee987044403"
       ],
       "kind": "designed-scanner-qr",
       "publicationUse": "review only: source UI names a third-party authenticator",
@@ -479,10 +479,10 @@
       "theme": "light",
       "qrPayload": "https://legends.github.io/otp-harbor/",
       "qrBounds": [
-        563,
-        493,
-        270,
-        270
+        517,
+        243,
+        360,
+        360
       ],
       "sourceCrop": [
         3,
@@ -491,10 +491,10 @@
         1047
       ],
       "artBounds": [
-        372,
-        444,
-        1023,
-        810
+        517,
+        243,
+        877,
+        603
       ]
     },
     {
@@ -927,16 +927,33 @@
     },
     {
       "path": "store/windows/promotional/de-DE/07-qr-import.png",
-      "sha256": "d7544aa1d6d03c1dbdb21adbf88987ebf5ba5653e3ac940b154514c7de5adc2b",
+      "sha256": "9b05c9c3e1d73a9038f5242c27f24f36312a1fd107db165c776fad5f56d78b0b",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "c369b53bc52541a8767b95ec339974fd192ae34b3abe7dd9a1c8e4f287817cd5"
+        "961b04f8d364a7aed5978ca61a7c8d6cce902b6a9b688f00b46acfbd662636e6",
+        "abd466ee5a5e5d683958ab86c60f115ee1156e57918e6aded745a27066620172"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
+        {
+          "sourcePath": "composites/desktop/scanner-website-qr-light.png",
+          "sourceCrop": [
+            0,
+            0,
+            1394,
+            1044
+          ],
+          "appBounds": [
+            156,
+            500,
+            708,
+            530
+          ],
+          "cornerMaskRadius": 22
+        },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
           "sourceCrop": [
@@ -946,10 +963,10 @@
             1044
           ],
           "appBounds": [
-            785,
-            172,
-            1070,
-            801
+            1056,
+            500,
+            708,
+            530
           ],
           "cornerMaskRadius": 22
         }
@@ -1238,16 +1255,33 @@
     },
     {
       "path": "store/windows/promotional/en-US/07-qr-import.png",
-      "sha256": "56fa36a77d24240b15cdabeb848cd99675cf1f77a06620742ee201624c48178b",
+      "sha256": "4c565f1e6bdb29e6105572c155f889406409ec3eeef0f85a86149171827f4487",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "c369b53bc52541a8767b95ec339974fd192ae34b3abe7dd9a1c8e4f287817cd5"
+        "961b04f8d364a7aed5978ca61a7c8d6cce902b6a9b688f00b46acfbd662636e6",
+        "abd466ee5a5e5d683958ab86c60f115ee1156e57918e6aded745a27066620172"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
+        {
+          "sourcePath": "composites/desktop/scanner-website-qr-light.png",
+          "sourceCrop": [
+            0,
+            0,
+            1394,
+            1044
+          ],
+          "appBounds": [
+            156,
+            500,
+            708,
+            530
+          ],
+          "cornerMaskRadius": 22
+        },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
           "sourceCrop": [
@@ -1257,10 +1291,10 @@
             1044
           ],
           "appBounds": [
-            785,
-            172,
-            1070,
-            801
+            1056,
+            500,
+            708,
+            530
           ],
           "cornerMaskRadius": 22
         }
@@ -1549,16 +1583,33 @@
     },
     {
       "path": "store/windows/promotional/es-ES/07-qr-import.png",
-      "sha256": "c829a2de73d52729d0a6bac780f173f9a2d5f5e4a215c54855fc095b7b01d09f",
+      "sha256": "e12673ad2afd3f05b0b09d10ae918cff4b78c27b33826fa6012f4bb6ac22d7b8",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "c369b53bc52541a8767b95ec339974fd192ae34b3abe7dd9a1c8e4f287817cd5"
+        "961b04f8d364a7aed5978ca61a7c8d6cce902b6a9b688f00b46acfbd662636e6",
+        "abd466ee5a5e5d683958ab86c60f115ee1156e57918e6aded745a27066620172"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
+        {
+          "sourcePath": "composites/desktop/scanner-website-qr-light.png",
+          "sourceCrop": [
+            0,
+            0,
+            1394,
+            1044
+          ],
+          "appBounds": [
+            156,
+            500,
+            708,
+            530
+          ],
+          "cornerMaskRadius": 22
+        },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
           "sourceCrop": [
@@ -1568,10 +1619,10 @@
             1044
           ],
           "appBounds": [
-            785,
-            172,
-            1070,
-            801
+            1056,
+            500,
+            708,
+            530
           ],
           "cornerMaskRadius": 22
         }
@@ -1860,16 +1911,33 @@
     },
     {
       "path": "store/windows/promotional/fr-FR/07-qr-import.png",
-      "sha256": "39fbd5be2fce8364f21aa16c386ab41f2b1defc771240135e106c03a75b248d2",
+      "sha256": "97ea78c81fa604b964b76c251915305a4baf9f03cb4c3122e3b5399145fb74ae",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "c369b53bc52541a8767b95ec339974fd192ae34b3abe7dd9a1c8e4f287817cd5"
+        "961b04f8d364a7aed5978ca61a7c8d6cce902b6a9b688f00b46acfbd662636e6",
+        "abd466ee5a5e5d683958ab86c60f115ee1156e57918e6aded745a27066620172"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
+        {
+          "sourcePath": "composites/desktop/scanner-website-qr-light.png",
+          "sourceCrop": [
+            0,
+            0,
+            1394,
+            1044
+          ],
+          "appBounds": [
+            156,
+            500,
+            708,
+            530
+          ],
+          "cornerMaskRadius": 22
+        },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
           "sourceCrop": [
@@ -1879,10 +1947,10 @@
             1044
           ],
           "appBounds": [
-            785,
-            172,
-            1070,
-            801
+            1056,
+            500,
+            708,
+            530
           ],
           "cornerMaskRadius": 22
         }
@@ -2168,12 +2236,12 @@
         "0c29c2f00c60f5dbaf1069db7688038a3d39d43ac490e57a9a02afbebe1d44c4",
         "e5599c7d72560972d864aad0a8b779d74648035c4c56106187d0797b9727a117",
         "bc96353abbd24e775afd605ef5ccf0e8a206efa546ff41a219385a0d809dad6e",
-        "d4ec2ac60836af6d488afc2c8becb9862837fbba92ff67af7f2faa498034fb4b",
+        "34069fef1fac14b6f7cc8651f6557453f625d137fc7b894d900fbbfc1b43c6b0",
         "19d46855bfbd548bc3779797c6b033ab633b1d595b3d2beb38fff6b9b0802c8b",
         "8f60ac2db6ae2e23eebc2a582afc18fa88b13f2ff7696e39d457b2f3fcd954f3",
         "487cadeb0ca1912e98b2aa31a15f1d99841f5351c693f28192f9fe59bca8fda9",
         "47409abcf56caa7ed3715c766edd6061b40579614ab983d32d433f65ee0edbcf",
-        "1fec02877d1745ba8478d67d30c26046e3d67f891de1da436136f8e77317359b",
+        "f02fa96bf6733dad262fa3c2fe725e6cf0013183fe2a41283334469c2a7146a7",
         "9d458a3e571312b95e96fa6733248312a2fd997e6675098c72249b63fce3b595",
         "35d0aef0a55ae9d1168038118a86fc2c20836b8cd05597ed1a2a74f6b6ad5916",
         "619d21e727922b0c58a584ec3c6ed3c9d024471e6c8fefd5a7651564877c86e1",
@@ -2349,10 +2417,10 @@
     },
     {
       "path": "website/optimized/composites/desktop/dark/scanner-project-repo-qr.png",
-      "sha256": "985cc7f781668c1d235feebeae90f85726b1992d3d3a138af58eb2b90b1a5a59",
+      "sha256": "84e46493181050eda0e68f48d3b1bd006c57acb627b15bc9e3e9c62e4a6ed742",
       "kind": "designed-scanner-repo-qr",
       "sourceSha256": [
-        "9293685d783de7725e31a1874facd70d7b6e0f147b796bb8597f977b0b75f318"
+        "c1052620f10499610b3375b9f942471d52eca8f1641dfeded5c8c6cb7d2bba2e"
       ],
       "platform": "desktop",
       "theme": "dark",
@@ -2364,25 +2432,25 @@
         1047
       ],
       "qrBounds": [
-        563,
-        493,
-        833,
-        763
+        517,
+        243,
+        877,
+        603
       ],
       "artBounds": [
-        522,
-        448,
-        874,
-        808
+        517,
+        243,
+        877,
+        603
       ],
       "qrPayload": "https://github.com/Legends/otp-harbor"
     },
     {
       "path": "website/optimized/composites/desktop/light/scanner-project-repo-qr.png",
-      "sha256": "804866c1f655aa05f27ee6c9c337de7f5bd715d08a93c38f96b722286acf9a2e",
+      "sha256": "407da8c5dddeabef2e15bef63f5b113fc036082316aef7c400686611cb55c95f",
       "kind": "designed-scanner-repo-qr",
       "sourceSha256": [
-        "8ea1ddf197544e74bbfe62486c0b9040a1e54f8ec2658a85da4a8c581be0c57f"
+        "21e28132e71e7b3b504a9e4f1ab572e252c54465f35c851941324ee987044403"
       ],
       "platform": "desktop",
       "theme": "light",
@@ -2394,16 +2462,16 @@
         1047
       ],
       "qrBounds": [
-        563,
-        493,
-        833,
-        763
+        517,
+        243,
+        877,
+        603
       ],
       "artBounds": [
-        372,
-        443,
-        1023,
-        811
+        517,
+        243,
+        877,
+        603
       ],
       "qrPayload": "https://github.com/Legends/otp-harbor"
     },
@@ -2481,10 +2549,10 @@
     },
     {
       "path": "website/optimized/desktop/dark/scanner.png",
-      "sha256": "ca34b2a0bdc40526cdce68cd27b9074966075671d6e848559931d77c007a6555",
+      "sha256": "41ccab6202b68963cb480c088cc79418ba9cd17b91a7ea57ad2aac15d8f31f7a",
       "kind": "cleaned-website-capture",
       "sourceSha256": [
-        "9293685d783de7725e31a1874facd70d7b6e0f147b796bb8597f977b0b75f318"
+        "c1052620f10499610b3375b9f942471d52eca8f1641dfeded5c8c6cb7d2bba2e"
       ],
       "platform": "desktop",
       "theme": "dark",
@@ -2571,10 +2639,10 @@
     },
     {
       "path": "website/optimized/desktop/light/scanner.png",
-      "sha256": "91580de14d34822ee62242d910f1beab55be4a239ee3c9901538df12a768ee71",
+      "sha256": "6847c1ad250b1c5198edd7de2806b3ac9191a7f0b9459ef4f65749c16f2f90aa",
       "kind": "cleaned-website-capture",
       "sourceSha256": [
-        "8ea1ddf197544e74bbfe62486c0b9040a1e54f8ec2658a85da4a8c581be0c57f"
+        "21e28132e71e7b3b504a9e4f1ab572e252c54465f35c851941324ee987044403"
       ],
       "platform": "desktop",
       "theme": "light",
@@ -3005,10 +3073,10 @@
     },
     {
       "path": "website/optimized/framed/desktop/dark/qr-scanning.png",
-      "sha256": "d4ec2ac60836af6d488afc2c8becb9862837fbba92ff67af7f2faa498034fb4b",
+      "sha256": "34069fef1fac14b6f7cc8651f6557453f625d137fc7b894d900fbbfc1b43c6b0",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "9293685d783de7725e31a1874facd70d7b6e0f147b796bb8597f977b0b75f318",
+        "c1052620f10499610b3375b9f942471d52eca8f1641dfeded5c8c6cb7d2bba2e",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
@@ -3165,10 +3233,10 @@
     },
     {
       "path": "website/optimized/framed/desktop/light/qr-scanning.png",
-      "sha256": "1fec02877d1745ba8478d67d30c26046e3d67f891de1da436136f8e77317359b",
+      "sha256": "f02fa96bf6733dad262fa3c2fe725e6cf0013183fe2a41283334469c2a7146a7",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "8ea1ddf197544e74bbfe62486c0b9040a1e54f8ec2658a85da4a8c581be0c57f",
+        "21e28132e71e7b3b504a9e4f1ab572e252c54465f35c851941324ee987044403",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
@@ -3374,10 +3442,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/dark/qr-scanning.webp",
-      "sha256": "18cb32f4af0a92fbce294d7ebaa380bf8dd7b6be02f23a51cb15aa051f5b1c06",
+      "sha256": "585360a03e353447e2a1ba868a074803be717cf7058ea5a4c64fd622bcf56702",
       "kind": "website-preview",
       "sourceSha256": [
-        "d4ec2ac60836af6d488afc2c8becb9862837fbba92ff67af7f2faa498034fb4b"
+        "34069fef1fac14b6f7cc8651f6557453f625d137fc7b894d900fbbfc1b43c6b0"
       ],
       "fullPath": "website/optimized/framed/desktop/dark/qr-scanning.png",
       "width": 1200,
@@ -3434,10 +3502,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/light/qr-scanning.webp",
-      "sha256": "1686fd1b08b216958da5aa46637fde5d89f784339e27ffdf366b655b6ce36c6a",
+      "sha256": "d0b7511f816fd1f3ef113900d381a5412c55f426a2ea3b2697455513da44f3da",
       "kind": "website-preview",
       "sourceSha256": [
-        "1fec02877d1745ba8478d67d30c26046e3d67f891de1da436136f8e77317359b"
+        "f02fa96bf6733dad262fa3c2fe725e6cf0013183fe2a41283334469c2a7146a7"
       ],
       "fullPath": "website/optimized/framed/desktop/light/qr-scanning.png",
       "width": 1200,
@@ -3455,26 +3523,6 @@
       "width": 1200,
       "height": 675,
       "quality": 95
-    },
-    {
-      "path": "website/optimized/readme/desktop-dark.png",
-      "sha256": "e35c88b93e73e810ec66ed9ca54b5ef239e3330f166205635b7c5f7054a3596c",
-      "kind": "readme-theme-frame",
-      "sourceSha256": [
-        "c020c073258f2166c873d01dd6a73b617a99b623b02fd254043e94589975f165"
-      ],
-      "sourcePath": "website/optimized/desktop/dark/account-list.png",
-      "padding": 32
-    },
-    {
-      "path": "website/optimized/readme/desktop-light.png",
-      "sha256": "0a742cf149913b08082a29e45db944a9c8f667913b4fcf026a4a1f6c2b452498",
-      "kind": "readme-theme-frame",
-      "sourceSha256": [
-        "580585a82de360a93af4887e7e0baa16ddc0300f14f6ea6fa43fc48bc3bad59e"
-      ],
-      "sourcePath": "website/optimized/desktop/light/account-list.png",
-      "padding": 32
     }
   ],
   "storeUploadOrder": [

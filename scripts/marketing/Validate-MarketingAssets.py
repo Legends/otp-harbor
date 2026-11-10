@@ -3,6 +3,7 @@ import argparse, hashlib, json, re, sys, zipfile
 from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw, ImageOps, ImageStat
 import zxingcpp
+from scanner_marketing import desktop_demo_qr_bounds
 from screenshot_cleanup import rounded_alpha
 ROOT=Path(__file__).resolve().parents[2]/'artifacts/marketing'
 def normalized_text_sha256(path):
@@ -108,13 +109,6 @@ for item in manifest['generated']:
             if path.stem=='qr-scanning':
                 result=zxingcpp.read_barcode(image)
                 assert result and result.text=='https://github.com/Legends/otp-harbor',f'Preview QR cannot be scanned: {path}'
-    if item['kind']=='readme-theme-frame':
-        source=ROOT/item['sourcePath']
-        assert item['sourceSha256']==[file_sha256(source)] and item['padding']==32
-        with Image.open(source) as original, Image.open(path) as actual:
-            expected=Image.new('RGBA',(original.width+64,original.height+64),'#dce3ed')
-            expected.alpha_composite(original.convert('RGBA'),(32,32))
-            assert actual.size==expected.size and actual.convert('RGB').tobytes()==expected.convert('RGB').tobytes()
     if item['kind']=='cleaned-website-capture':
         capture=ROOT/item['sourcePath']
         left,top,right,bottom=item['sourceCrop']
@@ -136,9 +130,7 @@ for item in manifest['generated']:
             if item['platform']=='android':
                 assert (x1,y1,x2,y2)==(305,950,915,1560) and art_bounds==(x1,y1,x2,y2)
             else:
-                expected_art_bounds=((372,443,1023,811) if item['theme']=='light'
-                                     else (522,448,874,808))
-                assert (x1,y1,x2,y2)==(563,493,833,763) and art_bounds==expected_art_bounds
+                assert (x1,y1,x2,y2)==art_bounds==desktop_demo_qr_bounds(expected.size)
             difference=ImageChops.difference(composite.convert('RGB'),expected)
             difference.paste((0,0,0),art_bounds)
             assert difference.getbbox() is None,f'QR composite changed pixels outside scanner artwork: {path}'
@@ -201,6 +193,15 @@ for item in manifest['generated']:
         assert item['backgroundPath']=='packaging/windows-store/assets/source/store-marketing-screenshot-background.png'
         with Image.open(path) as output:
             assert output.size==(1920,1080)
+            if path.name=='07-qr-import.png':
+                placements=item['appCapturePlacements']
+                assert [placement['sourcePath'] for placement in placements]==[
+                    f'composites/desktop/scanner-website-qr-{theme}.png' for theme in ('light','dark')]
+                assert placements[0]['appBounds'][0]+placements[0]['appBounds'][2]<=placements[1]['appBounds'][0]
+                for placement in placements:
+                    x,y,width,height=placement['appBounds']
+                    qr=zxingcpp.read_barcode(output.crop((x,y,x+width,y+height)))
+                    assert qr and qr.text=='https://legends.github.io/otp-harbor/',f'Store demo QR cannot be scanned: {path}'
             for placement in item['appCapturePlacements']:
                 capture=ROOT/placement['sourcePath']
                 assert capture.is_file() and capture.parent.name in ('dark','light','desktop')
@@ -286,7 +287,8 @@ for item in manifest['generated']:
             assert result and result.text==item['qrPayload']=='https://legends.github.io/otp-harbor/',f'QR decode failed: {path}'
             if item['platform']=='desktop':
                 assert image.size==(1394,1044) and item['sourceCrop']==[3,3,1397,1047]
-                assert item['artBounds']==[372,444,1023,810]
+                x,y,width,height=item['qrBounds']
+                assert (x,y,x+width,y+height)==tuple(item['artBounds'])==desktop_demo_qr_bounds(image.size)
                 with Image.open(ROOT/'source'/'desktop'/item['theme']/'scanner.png') as original:
                     expected=original.crop(tuple(item['sourceCrop'])).convert('RGB')
                 difference=ImageChops.difference(image.convert('RGB'),expected)
