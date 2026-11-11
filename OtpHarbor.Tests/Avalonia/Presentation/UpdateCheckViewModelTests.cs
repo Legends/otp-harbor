@@ -26,7 +26,7 @@ public sealed class UpdateCheckViewModelTests
         Assert.Equal(
             "Prüfen Sie den konfigurierten signierten Update-Feed, wenn Sie bereit sind.",
             sut.Message);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await WaitUntilMessageClearsAsync(sut);
         Assert.Empty(sut.Message);
     }
 
@@ -59,7 +59,7 @@ public sealed class UpdateCheckViewModelTests
             It.IsAny<PortableUpdateOffer>(),
             It.IsAny<IProgress<PortableUpdateDownloadProgress>>(),
             It.IsAny<CancellationToken>()), Times.Never);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await WaitUntilMessageClearsAsync(sut);
         Assert.Empty(sut.Message);
     }
 
@@ -95,7 +95,7 @@ public sealed class UpdateCheckViewModelTests
         Assert.True(sut.ShowInstallAction);
         Assert.Equal(100, sut.ProgressPercentage);
         Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await WaitUntilMessageClearsAsync(sut);
         Assert.Empty(sut.Message);
     }
 
@@ -126,12 +126,18 @@ public sealed class UpdateCheckViewModelTests
             TimeSpan.FromMilliseconds(20));
         await sut.CheckAsync();
         await sut.DownloadAsync();
+        string? failureMessage = null;
+        sut.Notification.Shown += (_, shown) => failureMessage = shown.Text;
 
         await sut.InstallAsync();
 
         Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
-        Assert.DoesNotContain("sensitive", sut.Message, StringComparison.OrdinalIgnoreCase);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Equal(AvaloniaStringKeys.UpdateInstallerStartFailed, failureMessage);
+        Assert.True(sut.IsInstallReady);
+        Assert.True(sut.ShowInstallAction);
+        Assert.False(sut.IsBusy);
+        Assert.DoesNotContain("sensitive", failureMessage, StringComparison.OrdinalIgnoreCase);
+        await WaitUntilMessageClearsAsync(sut);
         Assert.Empty(sut.Message);
     }
 
@@ -174,6 +180,14 @@ public sealed class UpdateCheckViewModelTests
         Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
         Assert.Equal(AvaloniaStringKeys.UpdateCheckFailed, sut.Message);
         Assert.DoesNotContain("transport detail", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task WaitUntilMessageClearsAsync(UpdateCheckViewModel viewModel)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(5));
+        while (viewModel.Message.Length > 0)
+            await Task.Delay(10, timeout.Token);
     }
 
     private static PortableUpdateOffer CreateOffer() => new(

@@ -2621,6 +2621,7 @@ public sealed class MobileShellViewModelTests
     {
         var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user");
         var context = CreateContext(isConfigured: true, [account]);
+        using var sut = context.Sut;
         context.Authorization
             .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
             .Callback(context.State.Unlock)
@@ -2628,33 +2629,33 @@ public sealed class MobileShellViewModelTests
         context.AccountTotp
             .Setup(value => value.GenerateAsync(account.ID))
             .ReturnsAsync(Result.Ok(new TotpGenerationResult("123456", 20, 30)));
-        await context.Sut.InitializeAsync();
-        context.Sut.UnlockPassword = "synthetic password";
-        await context.Sut.UnlockAsync();
-        var row = Assert.Single(context.Sut.Accounts);
-        var changedProperties = new List<string?>();
-        row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+        await sut.InitializeAsync();
+        sut.UnlockPassword = "synthetic password";
+        await sut.UnlockAsync();
+        var row = Assert.Single(sut.Accounts);
+        var changedProperties = new System.Collections.Concurrent.ConcurrentQueue<string?>();
+        row.PropertyChanged += (_, args) => changedProperties.Enqueue(args.PropertyName);
 
-        context.Sut.SetAccountListScrolling(true);
-        await Task.Delay(
-            TimeSpan.FromMilliseconds(1100),
-            global::Xunit.TestContext.Current.CancellationToken);
-
-        Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
-        Assert.DoesNotContain(nameof(MobileAccountItem.IsExpiring), changedProperties);
-
-        context.Sut.SetAccountListScrolling(false);
+        sut.SetAccountListScrolling(true);
+        var remainingWhileScrolling = row.RemainingSeconds;
+        await WaitUntilAsync(
+            () => row.RemainingSeconds < remainingWhileScrolling,
+            TimeSpan.FromSeconds(10));
 
         Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
         Assert.DoesNotContain(nameof(MobileAccountItem.IsExpiring), changedProperties);
 
-        await Task.Delay(
-            TimeSpan.FromMilliseconds(1100),
-            global::Xunit.TestContext.Current.CancellationToken);
+        sut.SetAccountListScrolling(false);
+
+        Assert.DoesNotContain(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
+        Assert.DoesNotContain(nameof(MobileAccountItem.IsExpiring), changedProperties);
+
+        await WaitUntilAsync(
+            () => changedProperties.Contains(nameof(MobileAccountItem.IsExpiring)),
+            TimeSpan.FromSeconds(10));
 
         Assert.Contains(nameof(MobileAccountItem.RemainingSeconds), changedProperties);
         Assert.Contains(nameof(MobileAccountItem.IsExpiring), changedProperties);
-        context.Sut.Dispose();
     }
 
     [Fact]
@@ -5586,9 +5587,9 @@ public sealed class MobileShellViewModelTests
         context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
     }
 
-    private static async Task WaitUntilAsync(Func<bool> predicate)
+    private static async Task WaitUntilAsync(Func<bool> predicate, TimeSpan? timeoutDuration = null)
     {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        using var timeout = new CancellationTokenSource(timeoutDuration ?? TimeSpan.FromSeconds(2));
         while (!predicate())
             await Task.Delay(10, timeout.Token);
     }
