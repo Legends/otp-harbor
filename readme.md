@@ -3,7 +3,7 @@
 **The local-first authenticator for desktop and Android.**
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Android-5C6BC0)](https://github.com/Legends/otp-harbor)
-[![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-3.2.65535.0-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
+[![Microsoft Store version](https://img.shields.io/badge/Microsoft%20Store-3.3.65535.0-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9P31KH5L924P)
 [![Desktop Release](https://img.shields.io/github/v/release/Legends/otp-harbor?filter=v%2A&sort=date&label=Desktop&color=blue)](https://github.com/Legends/otp-harbor/releases)
 [![Android Release](https://img.shields.io/github/v/release/Legends/otp-harbor?filter=android-v%2A&sort=date&label=Android&color=green)](https://github.com/Legends/otp-harbor/releases)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE.txt)
@@ -23,7 +23,7 @@
 Desktop and Android versions ship independently. This table tracks published stable GitHub releases; Windows availability and updates are managed separately by the Microsoft Store.
 <!-- END GENERATED RELEASES -->
 
-Windows is delivered through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor package `3.2.65535.0` is publicly available and Microsoft signs accepted MSIX packages. GitHub release versions and Store approval advance independently.
+Windows is delivered through the [Microsoft Store](https://apps.microsoft.com/detail/9P31KH5L924P), where OTP Harbor package `3.3.65535.0` is publicly available and Microsoft signs accepted MSIX packages. GitHub release versions and Store approval advance independently.
 
 <h3>Desktop app: Light and Dark themes</h3>
 

@@ -188,7 +188,7 @@ Key features:
 
 Search terms: `TOTP,2FA,autenticador,OTP,sin conexión,seguridad`
 
-## Version 3.0.2 release notes
+## Version 3.0.3 release notes
 
 English: `Keeps your position in long account lists after copying a code instead of returning to the top when the confirmation disappears.`
 
