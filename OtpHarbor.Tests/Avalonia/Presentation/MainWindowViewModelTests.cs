@@ -155,9 +155,9 @@ public sealed class MainWindowViewModelTests
                 It.IsAny<Stream>(), "backup.json", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new List<Account> { imported }));
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.ConfirmAsync(
-                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ReviewImportAsync(
+                It.IsAny<TOTP.Avalonia.Shared.Import.ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TOTP.Avalonia.Shared.Import.ImportReviewViewModel review, CancellationToken _) => review.CreateResolution());
         var validation = new Mock<IPasswordValidationService>();
         validation.SetupGet(value => value.MinimumLength).Returns(8);
         var settings = new Mock<ISettingsService>();
@@ -173,6 +173,9 @@ public sealed class MainWindowViewModelTests
             settings.Object,
             Mock.Of<IPlatformFolderLauncher>(),
             CreateLocalization());
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(export.Object);
+        TestUtilities.ImportReviewTestActions.BridgeFileSummaryDialog(dialogs.Object);
+        TestUtilities.ImportReviewTestActions.ReviewFirstSelectedFile(filePicker.MigrationImport);
         var coordinator = new Mock<IAvaloniaStartupCoordinator>();
         coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
@@ -399,6 +402,27 @@ public sealed class MainWindowViewModelTests
             "Das signierte Update 2.1.0 ist verfügbar. Öffnen Sie Einstellungen → Über, um es zu prüfen.",
             sut.StatusText);
         Assert.Equal(NotificationSeverity.Success, sut.StatusSeverity);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_StoreDistributionDoesNotRunHiddenUpdateChecks()
+    {
+        var coordinator = new Mock<IAvaloniaStartupCoordinator>();
+        coordinator.Setup(value => value.InitializeAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AvaloniaStartupOutcome.ReadyUnlocked);
+        var updates = new Mock<IPortableUpdateService>(MockBehavior.Strict);
+        var localization = new AvaloniaLocalizationService(new ResourceDictionary(), new AvaloniaStringCatalog());
+        using var updateCheck = new UpdateCheckViewModel(updates.Object,
+            Mock.Of<IUpdateInstallerLauncher>(), localization, isStoreDistribution: true);
+        using var sut = CreateSut(coordinator.Object, Mock.Of<IAuthorizationService>(),
+            localization: localization, updateCheck: updateCheck);
+
+        await sut.InitializeAsync();
+        await sut.ShowSettingsAsync();
+
+        Assert.False(sut.UpdateCheck.IsSoftwareUpdatesVisible);
+        Assert.Empty(sut.UpdateCheck.Message);
+        updates.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -1023,9 +1047,9 @@ public sealed class MainWindowViewModelTests
         validator.Setup(value => value.Validate(payload))
             .Returns(new QrPayloadValidationResult(true, "Example", "alice"));
         var import = new Mock<IQrAccountImportService>();
-        import.Setup(value => value.ImportAsync(
+        import.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.DuplicateUnchanged,

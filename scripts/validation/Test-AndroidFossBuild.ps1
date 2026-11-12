@@ -82,7 +82,7 @@ foreach ($lockFile in $lockFiles) {
 }
 
 foreach ($localRidBuildScript in @(
-    'scripts\testing\Install-AndroidDevelopmentBuild.ps1',
+    'scripts\testing\Android\Install-AndroidDevelopmentBuild.ps1',
     'scripts\dev\Publish-And-Run-AvaloniaWindows.ps1')) {
     $localRidBuild = Read-RequiredFile $localRidBuildScript
     foreach ($requiredLockIsolationControl in @(

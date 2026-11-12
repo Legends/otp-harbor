@@ -79,6 +79,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                         accountGroupStripHost.CompleteStartupTransition();
                     };
                     view.UseNativeAccountList(accountListHost);
+                    view.UseNativeImportReviewList(new AndroidImportReviewHost(viewModel));
                     view.UseNativeAccountGroupStrip(accountGroupStripHost);
                     view.UseNativeGroupAccountPicker(new AndroidGroupAccountPickerHost(
                         viewModel,

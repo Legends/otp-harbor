@@ -1,0 +1,7 @@
+<Window x:Class="TOTP.Avalonia.Desktop.Dialogs.ImportReviewWindow"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:review="using:TOTP.Avalonia.Shared.Import" xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    x:DataType="review:ImportReviewViewModel" Width="1240" Height="800" MinWidth="360" MinHeight="540"
+    Background="{DynamicResource BrushBackground}" Title="{Binding Title}" WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <controls:ImportReviewPanel />
+</Window>

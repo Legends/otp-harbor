@@ -409,6 +409,10 @@ public static class MobileStringKeys
 
     public static IReadOnlyList<string> All { get; } =
     [
+        .. TOTP.Avalonia.Shared.Storage.StorageLocationStringKeys.All,
+        .. TOTP.Avalonia.Shared.Import.MigrationStringKeys.All,
+        .. TOTP.Avalonia.Shared.Import.ReviewStringKeys.AllKeys,
+        .. TOTP.Avalonia.Shared.Import.FileImportStringKeys.All,
         AppTitle,
         Starting,
         StartupFailed,

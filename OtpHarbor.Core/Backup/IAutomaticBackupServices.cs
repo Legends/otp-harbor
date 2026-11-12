@@ -47,6 +47,7 @@ public interface IAutomaticBackupCoordinator : IDisposable
     event EventHandler? StatusChanged;
 
     AutomaticBackupStatus Status { get; }
+    AutomaticBackupDestination? Destination => null;
 
     Task<Result> InitializeAsync(CancellationToken cancellationToken = default);
     Task<Result<AutomaticBackupRunResult>> ConfigureAsync(CancellationToken cancellationToken = default);

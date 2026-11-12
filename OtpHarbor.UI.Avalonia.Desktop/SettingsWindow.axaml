@@ -6,6 +6,7 @@
     xmlns:localization="using:TOTP.Avalonia.Desktop.Localization"
     xmlns:presentation="using:TOTP.Avalonia.Desktop.Presentation"
     xmlns:shared="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:storage="using:TOTP.Avalonia.Shared.Storage"
     x:Name="SettingsRoot"
     x:DataType="presentation:MainWindowViewModel"
     Title="{DynamicResource Settings}"
@@ -365,7 +366,7 @@
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="BackupRestore" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Backups}" />
+                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource MigrationDataAndBackup}" />
                         </StackPanel>
                     </TabItem.Header>
                     <ContentControl
@@ -379,6 +380,9 @@
                                         HorizontalScrollBarVisibility="Disabled"
                                         VerticalScrollBarVisibility="Hidden">
                                         <StackPanel Margin="4,8,4,4" VerticalAlignment="Top" Spacing="12">
+                                            <Border Classes="panel">
+                                                <shared:AuthenticatorImportPanel DataContext="{Binding MigrationImport}" />
+                                            </Border>
                                             <Border Classes="panel">
                                                 <StackPanel Spacing="10">
                                                     <TextBlock Classes="section-title" Text="{DynamicResource BackupAndRecovery}" />
@@ -526,53 +530,6 @@
                                         </StackPanel>
                                     </ScrollViewer>
                                 </Grid>
-                            </DataTemplate>
-                        </ContentControl.ContentTemplate>
-                    </ContentControl>
-                </TabItem>
-                <TabItem>
-                    <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <shared:SymbolIcon IconSize="16" Kind="Import" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource ImportExport}" />
-                        </StackPanel>
-                    </TabItem.Header>
-                    <ContentControl x:Name="AccountImportSettingsHost" Content="{Binding NativeFilePicker}">
-                        <ContentControl.ContentTemplate>
-                            <DataTemplate x:DataType="presentation:NativeFilePickerViewModel">
-                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
-                                    <StackPanel Margin="4,8,4,4" VerticalAlignment="Top" Spacing="12">
-                                        <Border Classes="panel">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="section-title" Text="{DynamicResource ImportOtherFormats}" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatsImportHelp}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatAegis}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatTwoFas}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource OtherFormatOtpAuth}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
-                                                <ComboBox x:Name="OtherFormatsConflictStrategyComboBox" ItemsSource="{Binding ConflictStrategies}" SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
-                                                            <TextBlock Text="{Binding Label}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                                <Button x:Name="OtherFormatsImportButton" Classes="wide settings-action" Command="{Binding ImportCommand}">
-                                                    <shared:SymbolIconLabel Kind="Import" Text="{DynamicResource ChooseImportFile}" />
-                                                </Button>
-                                            </StackPanel>
-                                        </Border>
-                                        <Border Classes="panel">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="section-title" Text="{DynamicResource ImportGoogleAuthenticator}" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource GoogleAuthenticatorImportHelp}" TextWrapping="Wrap" />
-                                                <Button x:Name="GoogleAuthenticatorImportButton" Classes="wide settings-action" Command="{Binding ImportGoogleQrCommand}">
-                                                    <shared:SymbolIconLabel Kind="QrCode" Text="{DynamicResource ChooseGoogleAuthenticatorQrImage}" />
-                                                </Button>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-                                </ScrollViewer>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
@@ -816,7 +773,8 @@
                     </TabItem.Header>
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Margin="4,8" Spacing="12">
-                            <ContentControl Content="{Binding UpdateCheck}">
+                            <ContentControl Content="{Binding UpdateCheck}"
+                                            IsVisible="{Binding UpdateCheck.IsSoftwareUpdatesVisible}">
                                 <ContentControl.ContentTemplate>
                                     <DataTemplate x:DataType="presentation:UpdateCheckViewModel">
                                         <Border Classes="panel">
@@ -868,6 +826,15 @@
                                                 </Button>
                                                 <TextBox AcceptsReturn="True" IsReadOnly="True" MinHeight="100" Text="{Binding SupportInformation}" TextWrapping="Wrap" />
                                             </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ContentControl.ContentTemplate>
+                            </ContentControl>
+                            <ContentControl x:Name="StorageLocationsHost" Content="{Binding SettingsPage.StorageLocations}">
+                                <ContentControl.ContentTemplate>
+                                    <DataTemplate x:DataType="storage:StorageLocationsViewModel">
+                                        <Border Classes="panel">
+                                            <shared:StorageLocationsPanel />
                                         </Border>
                                     </DataTemplate>
                                 </ContentControl.ContentTemplate>

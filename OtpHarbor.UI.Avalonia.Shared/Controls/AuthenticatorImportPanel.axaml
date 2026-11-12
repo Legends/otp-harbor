@@ -1,0 +1,52 @@
+<UserControl x:Class="TOTP.Avalonia.Shared.Controls.AuthenticatorImportPanel"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation" xmlns:import="using:TOTP.Avalonia.Shared.Import"
+    xmlns:controls="using:TOTP.Avalonia.Shared.Controls" x:DataType="import:AuthenticatorImportViewModel">
+    <StackPanel Spacing="16">
+        <TextBlock Classes="section-title" Text="{Binding Title}" TextWrapping="Wrap" />
+        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding Description}" TextWrapping="Wrap" />
+        <Border Padding="16" CornerRadius="5" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1" Background="{DynamicResource BrushSurfaceAlternate}">
+            <StackPanel Spacing="12">
+                <controls:SymbolIcon Kind="Import" IconSize="28" HorizontalAlignment="Center" />
+                <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding FileTitle}" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding AutoDetectionText}" TextAlignment="Center" TextWrapping="Wrap" />
+                <Button Classes="primary" MinHeight="44" HorizontalAlignment="Stretch" Command="{Binding FileCommand}">
+                    <controls:SymbolIconLabel Kind="Folder" Text="{Binding FileText}" />
+                </Button>
+                <TextBlock FontSize="12" Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding SupportedFormatsText}" TextAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+        <Button MinHeight="44" HorizontalAlignment="Stretch" Command="{Binding QrCommand}">
+            <controls:SymbolIconLabel Kind="QrCode" Text="{Binding QrText}" />
+        </Button>
+        <Border IsVisible="{Binding HasFormatChoice}" Padding="16" CornerRadius="5" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1">
+            <StackPanel Spacing="12">
+                <TextBlock FontWeight="SemiBold" Text="{Binding SelectedFileName}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding AmbiguousFormatText}" TextWrapping="Wrap" />
+                <ComboBox MinHeight="44" HorizontalAlignment="Stretch" ItemsSource="{Binding FormatOptions}" SelectedItem="{Binding SelectedFormat, Mode=TwoWay}" PlaceholderText="{Binding ChooseFormatText}" automation:AutomationProperties.Name="{Binding ChooseFormatText}">
+                    <ComboBox.ItemTemplate><DataTemplate x:DataType="import:AuthenticatorImportViewModel+FormatOption"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button MinHeight="44" Command="{Binding UseFormatCommand}" Content="{Binding UseFormatText}" HorizontalAlignment="Stretch" Classes="primary" />
+                <Button MinHeight="44" Command="{Binding ClearFileCommand}" Content="{Binding ClearFileText}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Border>
+        <Border BorderBrush="{DynamicResource BrushBorder}" BorderThickness="0,1,0,0" Padding="0,16,0,0">
+            <StackPanel Spacing="12">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8"><controls:SymbolIcon Kind="Help" IconSize="20" VerticalAlignment="Center" /><TextBlock Grid.Column="1" FontSize="16" FontWeight="SemiBold" Text="{Binding HelpTitle}" TextWrapping="Wrap" /></Grid>
+                <TextBlock Text="{Binding HelpDescription}" Foreground="{DynamicResource BrushTextSecondary}" TextWrapping="Wrap" />
+                <ComboBox x:Name="ExportHelpSource" HorizontalAlignment="Stretch" MinHeight="44" ItemsSource="{Binding Sources}" PlaceholderText="{Binding OptionalSourceText}"
+                          SelectedItem="{Binding SelectedSource, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding OptionalSourceText}">
+                    <ComboBox.ItemTemplate><DataTemplate x:DataType="import:AuthenticatorImportViewModel+SourceOption"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <Border IsVisible="{Binding HasGuidance}" Padding="12" CornerRadius="5" Background="{DynamicResource BrushSurfaceAlternate}">
+                    <StackPanel Spacing="8">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding InstructionsTitle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Instructions}" TextWrapping="Wrap" />
+                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding SupportNotice}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding LocalProcessingText}" TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

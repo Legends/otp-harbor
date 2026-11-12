@@ -24,6 +24,8 @@ using TOTP.Avalonia.Shared.Diagnostics;
 using TOTP.Core.Validation;
 using TOTP.Avalonia.Shared.Branding;
 using TOTP.Avalonia.Shared.Presentation;
+using TOTP.Avalonia.Shared.Storage;
+using TOTP.Avalonia.Shared.Import;
 
 namespace TOTP.Avalonia.Mobile.Presentation;
 
@@ -100,6 +102,7 @@ public sealed class MobileShellViewModel :
     private readonly MobileAsyncCommand _showImportExportSettingsCommand;
     private readonly MobileAsyncCommand _showMiscSettingsCommand;
     private readonly MobileAsyncCommand _showFaqSettingsCommand;
+    private readonly MobileAsyncCommand _showInfoSettingsCommand;
     private readonly MobileAsyncCommand _showImportFormatsFaqCommand;
     private readonly MobileAsyncCommand _clearSearchCommand;
     private readonly MobileAsyncCommand _clearGroupEditorSearchCommand;
@@ -317,9 +320,11 @@ public sealed class MobileShellViewModel :
         IDiagnosticLogEmailService? diagnosticLogEmail = null,
         IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
         ILogger<MobileShellViewModel>? logger = null,
-        IGitHubIssueReporter? gitHubIssueReporter = null)
+        IGitHubIssueReporter? gitHubIssueReporter = null,
+        StorageLocationsViewModel? storageLocations = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
+        StorageLocations = storageLocations;
         _passwordValidation = passwordValidation
             ?? throw new ArgumentNullException(nameof(passwordValidation));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
@@ -427,9 +432,10 @@ public sealed class MobileShellViewModel :
         _showBrandIconSettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.BrandIcons);
         _showSecuritySettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.Security);
         _showBackupSettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.Backups);
-        _showImportExportSettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.ImportExport);
+        _showImportExportSettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.Backups);
         _showMiscSettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.Miscellaneous);
         _showFaqSettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.Faq);
+        _showInfoSettingsCommand = SettingsCategoryCommand(MobileSettingsCategory.Info);
         _showImportFormatsFaqCommand = new MobileAsyncCommand(
             () => ShowSettingsCategoryAsync(MobileSettingsCategory.Faq),
             () => IsImportExportSettingsVisible && !IsBusy);
@@ -571,6 +577,8 @@ public sealed class MobileShellViewModel :
         _importAccountFileCommand = new MobileAsyncCommand(
             ImportAccountFileAsync,
             () => IsSettingsVisible && !IsBusy);
+        MigrationImport = new TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel(
+            _strings.Get, _importAccountFileCommand, _importGoogleQrCommand);
         _importBrandIconsCommand = new MobileAsyncCommand(
             ImportBrandIconsAsync,
             () => IsSettingsVisible && !IsBusy && _brandIconPackService is not null);
@@ -631,6 +639,23 @@ public sealed class MobileShellViewModel :
         _groupEditorAccounts;
 
     public ObservableCollection<BackupImportConflictItem> BackupImportConflicts { get; } = [];
+    private ImportReviewViewModel? _externalImportReview;
+    public ImportReviewViewModel? ExternalImportReview
+    {
+        get => _externalImportReview;
+        private set
+        {
+            if (ReferenceEquals(_externalImportReview, value)) return;
+            _externalImportReview = value;
+            if (value is not null) StopCodeRefresh();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsExternalImportReviewVisible));
+            OnPropertyChanged(nameof(IsAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(CanHandleSystemBack));
+        }
+    }
+    public bool IsExternalImportReviewVisible => ExternalImportReview is not null;
     public ObservableCollection<QrImportConflictItem> QrImportConflicts { get; } = [];
 
     public ICommand InitializeCommand => _initializeCommand;
@@ -663,6 +688,12 @@ public sealed class MobileShellViewModel :
     public ICommand ShowImportExportSettingsCommand => _showImportExportSettingsCommand;
     public ICommand ShowMiscSettingsCommand => _showMiscSettingsCommand;
     public ICommand ShowFaqSettingsCommand => _showFaqSettingsCommand;
+    public ICommand ShowInfoSettingsCommand => _showInfoSettingsCommand;
+    public StorageLocationsViewModel? StorageLocations { get; }
+    public TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel MigrationImport { get; }
+    public string InfoText => Get(StorageLocationStringKeys.Info);
+    public string InfoDescriptionText => Get(StorageLocationStringKeys.InfoDescription);
+    public bool IsInfoSettingsVisible => IsSettingsVisible && _settingsCategory == MobileSettingsCategory.Info;
     public ICommand ShowImportFormatsFaqCommand => _showImportFormatsFaqCommand;
     public ICommand ClearSearchCommand => _clearSearchCommand;
     public ICommand ClearGroupEditorSearchCommand => _clearGroupEditorSearchCommand;
@@ -811,7 +842,8 @@ public sealed class MobileShellViewModel :
     public bool IsAccountListVisible => IsAccountsVisible
         && !IsSettingsVisible
         && !IsEditorVisible
-        && !IsGroupEditorVisible;
+        && !IsGroupEditorVisible
+        && !IsExternalImportReviewVisible;
     public bool CanHandleSystemBack =>
         IsAccountBrandIconPickerVisible || IsSettingsVisible || IsEditorVisible;
     public bool IsNativeAccountListVisible => IsAccountListVisible
@@ -841,7 +873,7 @@ public sealed class MobileShellViewModel :
     public bool IsBackupSettingsVisible =>
         IsSettingsVisible && _settingsCategory == MobileSettingsCategory.Backups;
     public bool IsImportExportSettingsVisible =>
-        IsSettingsVisible && _settingsCategory == MobileSettingsCategory.ImportExport;
+        IsBackupSettingsVisible;
     public bool IsMiscSettingsVisible =>
         IsSettingsVisible && _settingsCategory == MobileSettingsCategory.Miscellaneous;
     public bool IsFaqSettingsVisible =>
@@ -855,6 +887,7 @@ public sealed class MobileShellViewModel :
         MobileSettingsCategory.ImportExport => ImportExportText,
         MobileSettingsCategory.Miscellaneous => MiscellaneousText,
         MobileSettingsCategory.Faq => FaqText,
+        MobileSettingsCategory.Info => InfoText,
         _ => SettingsText
     };
     public bool HasAccounts => Accounts.Count > 0;
@@ -2166,7 +2199,7 @@ public sealed class MobileShellViewModel :
     public string ShowQrText => Get(MobileStringKeys.ShowQr);
     public string DismissQrText => Get(MobileStringKeys.DismissQr);
     public string QrPrivacyNoticeText => Get(MobileStringKeys.QrPrivacyNotice);
-    public string BackupTitle => Get(MobileStringKeys.BackupTitle);
+    public string BackupTitle => Get(TOTP.Avalonia.Shared.Import.MigrationStringKeys.DataAndBackup);
     public bool IsAutomaticBackupConfigured => _automaticBackup?.Status.IsConfigured == true;
     public string AutomaticBackupsText => Get(MobileStringKeys.AutomaticBackups);
     public string AutomaticBackupDescriptionText => Get(MobileStringKeys.AutomaticBackupDescription);
@@ -3097,6 +3130,7 @@ public sealed class MobileShellViewModel :
             ClearMasterPasswordChangeInputs();
         }
         _settingsCategory = category;
+        if (category == MobileSettingsCategory.Info) StorageLocations?.Refresh();
         if (category == MobileSettingsCategory.Miscellaneous)
             OnPropertyChanged(nameof(MinimumLogLevel));
         ClearNotification();
@@ -3112,6 +3146,16 @@ public sealed class MobileShellViewModel :
 
     public async Task<bool> TryHandleBackNavigationAsync()
     {
+        if (ExternalImportReview is { } review)
+        {
+            review.Cancel();
+            return true;
+        }
+        if (MigrationImport.HasSelectedFile || MigrationImport.HasFormatChoice)
+        {
+            MigrationImport.CancelPendingFile();
+            return true;
+        }
         if (IsAccountBrandIconPickerVisible)
         {
             CloseAccountBrandIconPicker();
@@ -3722,7 +3766,7 @@ public sealed class MobileShellViewModel :
 
             var imported = await _accountImport.RestoreBackupWithConflictResolutionAsync(
                 decoded.Value,
-                ResolveBackupImportAsync,
+                (preview, token) => ResolveBackupImportAsync(preview, token),
                 operation.Token);
             if (imported.IsFailed)
             {
@@ -3923,20 +3967,40 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            var decoded = await _exportService.ImportFromStreamAsync(
+            var decoded = await _exportService.ImportFromStreamWithFormatSelectionAsync(
                 document.Stream,
                 document.Name,
-                cancellationToken: operation.Token);
+                (formats, token) =>
+                {
+                    EndImportProgress();
+                    return MigrationImport.ChooseDetectedFormatAsync(formats, document.Name, token);
+                }, operation.Token);
+            if (decoded.IsFailed && decoded.Errors.OfType<AccountImportReadCancelled>().Any()) return;
             if (decoded.IsFailed || decoded.Value.Count == 0)
             {
-                SetError(MobileStringKeys.AccountFileImportRejected);
+                var summary = decoded.IsFailed
+                    ? decoded.Errors.OfType<AccountImportReadError>().FirstOrDefault()?.Summary
+                    : decoded.Successes.OfType<AccountImportReadSummary>().FirstOrDefault();
+                if (summary is not null)
+                {
+                    EndImportProgress();
+                    while (await MigrationImport.WaitForFileReviewAsync(summary, document.Name, operation.Token))
+                        await ReviewExternalImportAsync(new AccountImportPreview(0, 0, ImportConflictStrategy.SkipExisting), summary, document.Name, operation.Token);
+                    SetNotification(TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Blocked(_strings.Get, summary), NotificationSeverity.Error);
+                }
+                else SetError(MobileStringKeys.AccountFileImportRejected);
                 return;
             }
 
-            var imported = await _accountImport.ImportWithConflictResolutionAsync(
-                decoded.Value,
-                ResolveBackupImportAsync,
-                operation.Token);
+            EndImportProgress();
+            var fileSummary = decoded.Successes.OfType<AccountImportReadSummary>().FirstOrDefault() ?? new AccountImportReadSummary(decoded.Value.Count);
+            var imported = Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
+            while (await MigrationImport.WaitForFileReviewAsync(fileSummary, document.Name, operation.Token))
+            {
+                imported = await _accountImport.ImportWithConflictResolutionAsync(decoded.Value,
+                    (preview, token) => ReviewExternalImportAsync(preview, fileSummary, document.Name, token), operation.Token);
+                if (imported.IsFailed || imported.Value.Status != AccountImportStatus.Cancelled) break;
+            }
             if (imported.IsFailed)
             {
                 SetError(MobileStringKeys.AccountFileImportFailed);
@@ -4036,6 +4100,7 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(IsImportExportSettingsVisible));
         OnPropertyChanged(nameof(IsMiscSettingsVisible));
         OnPropertyChanged(nameof(IsFaqSettingsVisible));
+        OnPropertyChanged(nameof(IsInfoSettingsVisible));
         OnPropertyChanged(nameof(SettingsCategoryTitle));
         NotifyCommands();
     }
@@ -4880,7 +4945,7 @@ public sealed class MobileShellViewModel :
     public void SetRealizedAccounts(IReadOnlyCollection<MobileAccountItem> realizedAccounts)
     {
         ArgumentNullException.ThrowIfNull(realizedAccounts);
-        if (_isAccountListScrolling || Accounts.Count <= FullListCodeRefreshLimit) return;
+        if (!IsAccountListVisible || _isAccountListScrolling || Accounts.Count <= FullListCodeRefreshLimit) return;
 
         var realizedIds = realizedAccounts
             .Where(Accounts.Contains)
@@ -4957,6 +5022,7 @@ public sealed class MobileShellViewModel :
     {
         if (_disposed) return;
         _disposed = true;
+        StorageLocations?.Dispose();
         _brandIconResolver.CatalogChanged -= BrandCatalogChanged;
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged -= AutomaticBackupStatusChanged;
@@ -5430,7 +5496,7 @@ public sealed class MobileShellViewModel :
     private void StartCodeRefresh(Guid? initialAccountId = null, bool refreshImmediately = true)
     {
         StopCodeRefresh();
-        if (_allAccounts.Count == 0 || !IsAccountListVisible) return;
+        if (_disposed || _allAccounts.Count == 0 || !IsAccountListVisible) return;
 
         var refreshAccounts = _allAccounts.ToArray();
         if (refreshAccounts.Length == 0) return;
@@ -5463,6 +5529,8 @@ public sealed class MobileShellViewModel :
             while (!lifetime.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), lifetime.Token);
+                lifetime.Token.ThrowIfCancellationRequested();
+                if (!IsAccountListVisible) return;
                 var refreshAccounts = _allAccounts.ToArray();
                 expiringAccounts.Clear();
                 foreach (var account in refreshAccounts)
@@ -5507,7 +5575,7 @@ public sealed class MobileShellViewModel :
         IReadOnlyList<MobileAccountItem> accounts,
         CancellationToken cancellationToken)
     {
-        if (accounts.Count == 0) return false;
+        if (cancellationToken.IsCancellationRequested || IsExternalImportReviewVisible || accounts.Count == 0) return false;
 #if DEBUG
         TraceCodeRefresh($"generate count={accounts.Count} editor={IsEditorVisible}");
 #endif
@@ -5520,6 +5588,7 @@ public sealed class MobileShellViewModel :
         }
         catch (Exception)
         {
+            if (cancellationToken.IsCancellationRequested || IsExternalImportReviewVisible) return false;
             foreach (var account in accounts)
                 account.ClearCode(notifyBindings: ShouldNotifyCodeBindings(account));
             SetError(MobileStringKeys.CodeUnavailable);
@@ -5713,8 +5782,9 @@ public sealed class MobileShellViewModel :
         foreach (var account in _allAccounts)
         {
             account.ClearCode(notifyBindings:
-                _realizedAccountIds.Contains(account.Id)
-                || Accounts.Count <= FullListCodeRefreshLimit);
+                IsAccountListVisible
+                && (_realizedAccountIds.Contains(account.Id)
+                    || Accounts.Count <= FullListCodeRefreshLimit));
         }
         _realizedAccountIds.Clear();
     }
@@ -5727,7 +5797,8 @@ public sealed class MobileShellViewModel :
     }
 
     private bool ShouldNotifyCodeBindings(MobileAccountItem account) =>
-        !_isAccountListScrolling
+        IsAccountListVisible
+        && !_isAccountListScrolling
         && (Accounts.Count <= FullListCodeRefreshLimit && Accounts.Contains(account)
             || _realizedAccountIds.Contains(account.Id));
 
@@ -6127,6 +6198,11 @@ public sealed class MobileShellViewModel :
             preview.NewCount,
             preview.UnchangedCount,
             preview.ChangedConflicts.Count);
+        if (preview.Entries.Count > 0)
+            QrImportResolutionText += Environment.NewLine + TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(
+                _strings.Get, new AccountImportPreview(preview.TotalCount,
+                    preview.UnchangedCount + preview.ChangedConflicts.Count, ImportConflictStrategy.SkipExisting)
+                { Entries = preview.Entries, NewCount = preview.NewCount });
         IsQrImportResolutionVisible = true;
 
         using var cancellation = cancellationToken.Register(() =>
@@ -6185,11 +6261,32 @@ public sealed class MobileShellViewModel :
         IsQrImportResultVisible = true;
     }
 
+    private async Task<AccountImportResolution?> ReviewExternalImportAsync(AccountImportPreview preview,
+        AccountImportReadSummary? summary, string fileName, CancellationToken cancellationToken)
+    {
+        EndImportProgress();
+        var review = new ImportReviewViewModel(preview, summary, MigrationImport.GetFormatName(summary?.Format ?? AccountImportFormat.Unknown), fileName, _strings.Get);
+        var completion = new TaskCompletionSource<AccountImportResolution?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        void Close(AccountImportResolution? result) => completion.TrySetResult(result);
+        review.CloseRequested += Close;
+        ExternalImportReview = review;
+        using var cancellation = cancellationToken.Register(() => completion.TrySetCanceled(cancellationToken));
+        try { return await completion.Task; }
+        finally
+        {
+            review.CloseRequested -= Close;
+            if (ReferenceEquals(ExternalImportReview, review)) ExternalImportReview = null;
+        }
+    }
+
     private Task<bool> ConfirmImportAsync(
         AccountImportPreview preview,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        AccountImportReadSummary? summary = null)
         => ShowImportConfirmationAsync(
-            string.Format(
+            preview.Entries.Count > 0 || summary is not null
+                ? TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(_strings.Get, preview, summary)
+                : string.Format(
                 Get(MobileStringKeys.ImportConfirmation),
                 preview.TotalCount,
                 preview.ConflictCount),
@@ -6197,20 +6294,24 @@ public sealed class MobileShellViewModel :
 
     private async Task<AccountImportResolution?> ResolveBackupImportAsync(
         AccountImportPreview preview,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        AccountImportReadSummary? summary = null)
     {
         if (preview.ChangedConflicts.Count == 0)
         {
             if (preview.NewCount == 0 && preview.UnchangedCount == preview.TotalCount)
             {
+                var message = Get(MobileStringKeys.NoImportIdentical);
+                if (summary is { NonOtpCount: > 0 })
+                    message += Environment.NewLine + TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(_strings.Get, preview, summary);
                 await ShowImportConfirmationAsync(
-                    Get(MobileStringKeys.NoImportIdentical),
+                    message,
                     cancellationToken,
                     acknowledgementOnly: true);
                 return new AccountImportResolution([]);
             }
 
-            var confirmed = await ConfirmImportAsync(preview, cancellationToken);
+            var confirmed = await ConfirmImportAsync(preview, cancellationToken, summary);
             return confirmed ? new AccountImportResolution([]) : null;
         }
 
@@ -6247,6 +6348,9 @@ public sealed class MobileShellViewModel :
             preview.NewCount,
             preview.UnchangedCount,
             preview.ChangedConflictCount);
+        if (preview.Entries.Count > 0 || summary is not null)
+            BackupConflictResolutionText += Environment.NewLine
+                + TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(_strings.Get, preview, summary);
         IsBackupConflictResolutionVisible = true;
 
         using var cancellation = cancellationToken.Register(() =>
@@ -6585,6 +6689,9 @@ public sealed class MobileShellViewModel :
 
     private void NotifyLocalizedTextChanged()
     {
+        MigrationImport?.RefreshLanguage();
+        ExternalImportReview?.RefreshLanguage();
+        StorageLocations?.RefreshLanguage();
         foreach (var propertyName in LocalizedTextProperties)
             OnPropertyChanged(propertyName);
 
@@ -6827,6 +6934,7 @@ public sealed class MobileShellViewModel :
         _showImportExportSettingsCommand.NotifyCanExecuteChanged();
         _showMiscSettingsCommand.NotifyCanExecuteChanged();
         _showFaqSettingsCommand.NotifyCanExecuteChanged();
+        _showInfoSettingsCommand.NotifyCanExecuteChanged();
         _showImportFormatsFaqCommand.NotifyCanExecuteChanged();
         _clearSearchCommand.NotifyCanExecuteChanged();
         _clearGroupEditorSearchCommand.NotifyCanExecuteChanged();
@@ -7009,6 +7117,8 @@ public sealed class MobileShellViewModel :
         nameof(DiagnosticLogSharingNoticeText),
         nameof(FaqText),
         nameof(FaqSettingsDescriptionText),
+        nameof(InfoText),
+        nameof(InfoDescriptionText),
         nameof(FaqImportIconPacksQuestionText),
         nameof(FaqImportIconPacksStepDownloadText),
         nameof(FaqImportIconPacksDownloadLinkText),
@@ -7189,7 +7299,8 @@ public sealed class MobileShellViewModel :
         Backups,
         ImportExport,
         Miscellaneous,
-        Faq
+        Faq,
+        Info
     }
 
     private enum MobileResumeTarget

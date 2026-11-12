@@ -103,6 +103,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-AndroidReleasePackaging.ps1
 
+      - name: Validate testing script paths
+        shell: pwsh
+        run: ./scripts/validation/Test-TestingScriptLayout.ps1
+
       - name: Validate localization resources
         shell: pwsh
         run: ./scripts/validation/Test-LocalizationResources.ps1

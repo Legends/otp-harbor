@@ -53,6 +53,9 @@ public sealed class DependencyInjectionPathTests : IDisposable
         Assert.Equal(paths.VaultFilePath, ReadPath(storedVaultVerifier, "_path"));
         Assert.Equal(paths.AuthorizationEnvelopeFilePath, ReadPath(envelopeStore, "_path"));
         Assert.Equal(paths.PreferencesFilePath, ReadPath(preferencesStore, "_path"));
+        Assert.Equal(paths.VaultFilePath,
+            provider.GetRequiredService<IApplicationStorageLocations>().GetLocations()
+                .Single(location => location.Kind == ApplicationStorageLocationKind.Vault).Path);
     }
 
     [Fact]
@@ -80,6 +83,9 @@ public sealed class DependencyInjectionPathTests : IDisposable
             configuredVaultPath,
             ReadPath(Assert.IsType<StoredVaultKeyVerifier>(
                 provider.GetRequiredService<IStoredVaultKeyVerifier>()), "_path"));
+        Assert.Equal(configuredVaultPath,
+            provider.GetRequiredService<IApplicationStorageLocations>().GetLocations()
+                .Single(location => location.Kind == ApplicationStorageLocationKind.Vault).Path);
     }
 
     [Fact]

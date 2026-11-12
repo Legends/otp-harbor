@@ -134,6 +134,15 @@ public sealed class QrAccountImportService(IAccountManager accounts,
             parsed.Period, algorithm: parsed.Algorithm, digits: parsed.Digits);
         if (existing is null)
         {
+            var confirmed = await resolveImport(new QrAccountImportPreview(1, 1, 0, [], 0, 1)
+            {
+                Entries = [new AccountImportEntryPreview(issuer, accountName, parsed.Algorithm, parsed.Digits, parsed.Period)]
+            }, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (confirmed is null)
+                return Result.Ok(new QrAccountImportOutcome(QrAccountImportStatus.Cancelled, Guid.Empty, issuer, accountName));
+            if (confirmed.Conflicts.Count != 0)
+                return Result.Fail<QrAccountImportOutcome>("The QR import resolution is invalid.");
             var added = await accounts.AddNewAsync(incoming);
             return added.IsSuccess
                 ? Result.Ok(new QrAccountImportOutcome(
@@ -161,7 +170,10 @@ public sealed class QrAccountImportService(IAccountManager accounts,
 
         var conflict = CreateConflict(0, incoming, existing);
         var resolution = await resolveImport(
-            new QrAccountImportPreview(1, 0, 0, [conflict], 0, 1),
+            new QrAccountImportPreview(1, 0, 0, [conflict], 0, 1)
+            {
+                Entries = [new AccountImportEntryPreview(issuer, accountName, parsed.Algorithm, parsed.Digits, parsed.Period)]
+            },
             cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         if (resolution is null)
@@ -296,7 +308,11 @@ public sealed class QrAccountImportService(IAccountManager accounts,
                 duplicateCount,
                 conflicts,
                 migration.BatchIndex,
-                migration.BatchSize),
+                migration.BatchSize)
+            {
+                Entries = migration.Accounts.Select(account => new AccountImportEntryPreview(account.Issuer ?? string.Empty,
+                    account.Label, account.Algorithm, account.Digits, account.Period)).ToArray()
+            },
             cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         if (resolution is null)

@@ -15,4 +15,5 @@ public interface IPlatformApplicationPaths
     string LogDirectory { get; }
     string LogFilePath { get; }
     string UpdateStateFilePath { get; }
+    string? CacheDirectory => null;
 }

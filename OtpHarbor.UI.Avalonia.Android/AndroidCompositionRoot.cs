@@ -117,6 +117,10 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IAsyncClipboardService>(provider =>
             provider.GetRequiredService<AsyncClipboardService>());
         services.AddSingleton<MobileStringCatalog>();
+        services.AddSingleton<TOTP.Avalonia.Shared.Storage.StorageLocationsViewModel>(provider => new(
+            provider.GetRequiredService<IApplicationStorageLocations>(),
+            provider.GetRequiredService<IAsyncClipboardService>(),
+            provider.GetRequiredService<MobileStringCatalog>().Get));
         services.AddSingleton<IBrandIconResolver, BrandIconResolver>();
         services.AddSingleton<MobileShellViewModel>();
         services.AddSingleton<IMobileLifecycleSink>(provider =>

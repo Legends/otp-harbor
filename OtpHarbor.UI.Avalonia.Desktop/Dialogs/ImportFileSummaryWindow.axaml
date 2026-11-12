@@ -1,0 +1,8 @@
+<Window x:Class="TOTP.Avalonia.Desktop.Dialogs.ImportFileSummaryWindow"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:import="using:TOTP.Avalonia.Shared.Import" xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    x:DataType="import:AuthenticatorImportViewModel" Classes="dialog" Title="{Binding Title}"
+    Width="520" MaxHeight="640" SizeToContent="Height" CanResize="False" ShowInTaskbar="False"
+    Background="{DynamicResource BrushDialogSurface}" WindowDecorations="None" WindowStartupLocation="CenterOwner">
+    <controls:ImportFileSummaryPanel x:Name="SummaryPanel" />
+</Window>

@@ -805,6 +805,7 @@ public partial class MainWindow : Window
     private SettingsWindow CreateSettingsWindow(MainWindowViewModel viewModel)
     {
         var window = new SettingsWindow { DataContext = viewModel };
+        window.FitToOwnerScreen(this);
         window.Closing += SettingsWindowClosing;
         return window;
     }

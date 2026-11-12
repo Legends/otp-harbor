@@ -20,6 +20,7 @@
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
                     <SolidColorBrush x:Key="BrushSurfaceAlternate" Color="#EAF2F9" />
+                    <SolidColorBrush x:Key="BrushStoragePathBackground" Color="#EFEFEF" />
                     <SolidColorBrush x:Key="BrushSurfaceHover" Color="#DDEAF5" />
                     <SolidColorBrush x:Key="BrushSurfacePressed" Color="#CFDFEC" />
                     <SolidColorBrush x:Key="BrushTextPrimary" Color="#172033" />
@@ -186,6 +187,7 @@
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
                     <SolidColorBrush x:Key="BrushSurfaceAlternate" Color="#EAF2F9" />
+                    <SolidColorBrush x:Key="BrushStoragePathBackground" Color="#EFEFEF" />
                     <SolidColorBrush x:Key="BrushSurfaceHover" Color="#DDEAF5" />
                     <SolidColorBrush x:Key="BrushSurfacePressed" Color="#CFDFEC" />
                     <SolidColorBrush x:Key="BrushTextPrimary" Color="#172033" />
@@ -389,6 +391,7 @@
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#45546A" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
                     <SolidColorBrush x:Key="BrushSurfaceAlternate" Color="#1A2E4E" />
+                    <SolidColorBrush x:Key="BrushStoragePathBackground" Color="#1A2E4E" />
                     <SolidColorBrush x:Key="BrushSurfaceHover" Color="#243C63" />
                     <SolidColorBrush x:Key="BrushSurfacePressed" Color="#152744" />
                     <SolidColorBrush x:Key="BrushTextPrimary" Color="#FFFFFF" />
@@ -519,6 +522,7 @@
                     <SolidColorBrush x:Key="BrushCountdownTrack" Color="#000000" />
                     <SolidColorBrush x:Key="BrushCountdownExpiring" Color="#F44336" />
                     <SolidColorBrush x:Key="BrushSurfaceAlternate" Color="#000000" />
+                    <SolidColorBrush x:Key="BrushStoragePathBackground" Color="#000000" />
                     <SolidColorBrush x:Key="BrushSurfaceHover" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="BrushSurfacePressed" Color="#000000" />
                     <SolidColorBrush x:Key="BrushTextPrimary" Color="#FFFFFF" />

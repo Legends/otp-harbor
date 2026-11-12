@@ -101,15 +101,6 @@ internal sealed class AndroidDocumentService(AndroidActivityProvider activityPro
         using var intent = new Intent(Intent.ActionOpenDocument);
         intent.AddCategory(Intent.CategoryOpenable);
         intent.SetType("*/*");
-        intent.PutExtra(Intent.ExtraMimeTypes, new[]
-        {
-            "application/json",
-            "application/octet-stream",
-            "text/plain",
-            "text/csv",
-            "text/comma-separated-values",
-            "application/csv"
-        });
         var selected = await StartAsync(intent, AccountImportRequestCode, cancellationToken);
         if (selected is null) return null;
 

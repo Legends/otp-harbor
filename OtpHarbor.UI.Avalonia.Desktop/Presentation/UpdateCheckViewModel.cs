@@ -33,15 +33,18 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
         IPortableUpdateService updates,
         IUpdateInstallerLauncher installer,
         IAvaloniaLocalizationService localization,
-        TimeSpan? transientMessageDuration = null)
+        TimeSpan? transientMessageDuration = null,
+        bool isStoreDistribution = false)
     {
         _updates = updates ?? throw new ArgumentNullException(nameof(updates));
         _installer = installer ?? throw new ArgumentNullException(nameof(installer));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+        IsSoftwareUpdatesVisible = !isStoreDistribution;
         Notification = new NotificationState(transientMessageDuration);
-        Notification.ShowForSeverity(LocalizeMessage(), NotificationSeverity.Information);
+        if (IsSoftwareUpdatesVisible)
+            Notification.ShowForSeverity(LocalizeMessage(), NotificationSeverity.Information);
         _localization.CultureChanged += LocalizationCultureChanged;
-        _checkCommand = new AsyncCommand(CheckAsync, () => !_disposed && !IsBusy);
+        _checkCommand = new AsyncCommand(CheckAsync, () => !_disposed && !IsBusy && IsSoftwareUpdatesVisible);
         _downloadCommand = new AsyncCommand(
             DownloadAsync,
             () => !_disposed && !IsBusy && _offer is not null);
@@ -61,6 +64,7 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
     public ICommand CancelCommand => _cancelCommand;
 
     public NotificationState Notification { get; }
+    public bool IsSoftwareUpdatesVisible { get; }
     public string Message => Notification.Text;
 
     public string Version
@@ -113,7 +117,7 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
     public bool HasReleaseNotes => ReleaseNotes.Length > 0;
     public bool IsInstallReady => _package is not null;
     public bool InstallerSupported => _installer.IsSupported;
-    public bool ShowCheckAction => !IsBusy && !HasOffer && !IsInstallReady;
+    public bool ShowCheckAction => IsSoftwareUpdatesVisible && !IsBusy && !HasOffer && !IsInstallReady;
     public bool ShowDownloadAction => !IsBusy && HasOffer && !IsInstallReady;
     public bool ShowInstallAction => !IsBusy && IsInstallReady;
     public bool ShowCancelAction => IsBusy;
@@ -121,7 +125,7 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task CheckAsync()
     {
-        if (_disposed || IsBusy) return;
+        if (_disposed || IsBusy || !IsSoftwareUpdatesVisible) return;
         ResetOffer();
         using var operation = BeginOperation();
         try

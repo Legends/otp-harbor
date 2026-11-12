@@ -10,6 +10,33 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class UpdateCheckViewModelTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DistributionPolicy_OnlyStoreHidesUpdatesAndSuppressesChecking(bool store)
+    {
+        var updates = new Mock<IPortableUpdateService>();
+        updates.Setup(value => value.CheckAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new PortableUpdateCheckResult(PortableUpdateCheckStatus.NoUpdate)));
+        using var sut = new UpdateCheckViewModel(updates.Object,
+            Mock.Of<IUpdateInstallerLauncher>(), Localization(), isStoreDistribution: store);
+
+        Assert.Equal(!store, sut.IsSoftwareUpdatesVisible);
+        Assert.Equal(!store, sut.ShowCheckAction);
+        Assert.Equal(!store, sut.CheckCommand.CanExecute(null));
+        Assert.Equal(!store, sut.Notification.HasMessage);
+        await sut.CheckAsync();
+
+        updates.Verify(value => value.CheckAsync(It.IsAny<CancellationToken>()), store ? Times.Never() : Times.Once());
+        if (store)
+        {
+            Assert.Empty(sut.Message);
+            Assert.False(sut.ShowDownloadAction);
+            Assert.False(sut.ShowInstallAction);
+            Assert.False(sut.ShowCancelAction);
+        }
+    }
+
     [Fact]
     public async Task Constructor_WhenGermanIsActive_UsesLocalizedTransientReadyMessage()
     {

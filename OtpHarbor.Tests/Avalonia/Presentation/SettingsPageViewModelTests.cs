@@ -13,6 +13,34 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class SettingsPageViewModelTests
 {
+    [Fact]
+    public async Task StorageLocations_LanguageChangeUpdatesLabelsAndActionFeedback()
+    {
+        var localization = new AvaloniaLocalizationService(new global::Avalonia.Controls.ResourceDictionary(), new AvaloniaStringCatalog());
+        localization.ApplyCulture("en");
+        var locations = new Mock<IApplicationStorageLocations>();
+        locations.Setup(value => value.GetLocations()).Returns(new[]
+        {
+            new ApplicationStorageLocation(ApplicationStorageLocationKind.DataDirectory, "demo", "demo")
+        });
+        var clipboard = new Mock<IAsyncClipboardService>();
+        clipboard.SetupGet(value => value.Capabilities).Returns(ClipboardCapabilities.WriteText);
+        clipboard.Setup(value => value.CopyAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok());
+        var storage = new TOTP.Avalonia.Shared.Storage.StorageLocationsViewModel(locations.Object, clipboard.Object, localization.GetString);
+        using var sut = new SettingsPageViewModel(CreateSettings(new AppSettings()).Object,
+            localization, storageLocations: storage);
+        var item = Assert.Single(sut.StorageLocations!.Locations);
+        await item.CopyPathAsync();
+
+        localization.ApplyCulture("de");
+
+        Assert.Equal("App-Datenverzeichnis", item.Label);
+        Assert.Equal("Der Pfad wurde kopiert.", item.StatusText);
+        sut.Reload();
+        Assert.False(Assert.Single(storage.Locations).HasStatus);
+        locations.Verify(value => value.GetLocations(), Times.Exactly(3));
+    }
+
     [Theory]
     [InlineData("en", true)]
     [InlineData("de", false)]

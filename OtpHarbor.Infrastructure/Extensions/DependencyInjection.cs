@@ -126,6 +126,10 @@ public static class DependencyInjection
                 sp.GetRequiredService<TimeProvider>(),
                 sp.GetRequiredService<ILogger<AutomaticBackupSnapshotService>>()));
         services.AddSingleton<IAutomaticBackupCoordinator, AutomaticBackupCoordinator>();
+        services.AddSingleton<IApplicationStorageLocations>(sp => new ApplicationStorageLocations(
+            applicationPaths,
+            resolvedVaultPath,
+            sp.GetRequiredService<IAutomaticBackupCoordinator>()));
 
         services.AddSingleton<IAccountDAL>(sp =>
         {

@@ -13,15 +13,20 @@ public partial class SettingsWindow : global::Avalonia.Controls.Window
         {
             Width = LinuxPreferredWidth;
             Height = LinuxPreferredHeight;
+            FitToScreen(Screens.Primary);
         }
     }
 
-    protected override void OnOpened(EventArgs e)
+    public void FitToOwnerScreen(global::Avalonia.Controls.Window owner)
     {
-        base.OnOpened(e);
+        ArgumentNullException.ThrowIfNull(owner);
         if (!OperatingSystem.IsLinux()) return;
 
-        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        FitToScreen(owner.Screens.ScreenFromWindow(owner) ?? owner.Screens.Primary);
+    }
+
+    private void FitToScreen(global::Avalonia.Platform.Screen? screen)
+    {
         if (screen is null) return;
 
         var scaling = screen.Scaling > 0 ? screen.Scaling : 1;
@@ -31,12 +36,15 @@ public partial class SettingsWindow : global::Avalonia.Controls.Window
         var availableHeight = Math.Max(
             1,
             (screen.WorkingArea.Height / scaling) - WorkingAreaMargin);
-        MaxWidth = availableWidth;
-        MaxHeight = availableHeight;
-        MinWidth = Math.Min(MinWidth, availableWidth);
-        MinHeight = Math.Min(MinHeight, availableHeight);
-        Width = Math.Min(LinuxPreferredWidth, availableWidth);
-        Height = Math.Min(LinuxPreferredHeight, availableHeight);
+        var width = Math.Floor(Math.Min(LinuxPreferredWidth, availableWidth));
+        var height = Math.Floor(Math.Min(LinuxPreferredHeight, availableHeight));
+        // Match the fixed X11 size hints to the requested size before mapping.
+        MaxWidth = width;
+        MaxHeight = height;
+        MinWidth = width;
+        MinHeight = height;
+        Width = width;
+        Height = height;
     }
 
     private void FaqSectionExpanded(

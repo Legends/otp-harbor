@@ -9,6 +9,7 @@ using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Avalonia.Shared.Diagnostics;
+using TOTP.Avalonia.Shared.Storage;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
@@ -62,9 +63,11 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         IDiagnosticLogEmailService? diagnosticLogEmail = null,
         IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
         ILogSwitchService? logSwitchService = null,
-        IGitHubIssueReporter? gitHubIssueReporter = null)
+        IGitHubIssueReporter? gitHubIssueReporter = null,
+        StorageLocationsViewModel? storageLocations = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        StorageLocations = storageLocations;
         _localization = localization;
         _applicationPaths = applicationPaths;
         _folderLauncher = folderLauncher;
@@ -99,6 +102,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler? SettingsSaved;
+    public StorageLocationsViewModel? StorageLocations { get; }
 
     public IReadOnlyList<LanguageOption> Languages { get; }
     public IReadOnlyList<AppLogLevel> LogLevels { get; }
@@ -243,6 +247,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public void Reload()
     {
         if (_saveRequested || _isBusy) return;
+        StorageLocations?.Refresh();
 
         _isReloading = true;
         try
@@ -382,11 +387,13 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         CancelAutoSaveDelay();
         SettingsNotification.Dispose();
         LogFolderNotification.Dispose();
+        StorageLocations?.Dispose();
     }
 
     private void LocalizationCultureChanged(object? sender, EventArgs args)
     {
         if (_disposed || _localization is null) return;
+        StorageLocations?.RefreshLanguage();
         SetField(
             ref _selectedLanguage,
             _localization.CurrentLanguage,

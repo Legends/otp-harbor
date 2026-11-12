@@ -53,7 +53,7 @@ switch is not bridged onto the physical LAN.
 Open PowerShell **as Administrator** in the repository root and run:
 
 ```powershell
-.\scripts\testing\Ensure-UbuntuHyperVNetwork.ps1
+.\scripts\testing\Linux\Ensure-UbuntuHyperVNetwork.ps1
 ```
 
 The script is idempotent. It creates missing expected components, corrects the named VM adapter,
@@ -79,7 +79,7 @@ Ubuntu Desktop uses NetworkManager. Run the guest helper once inside the VM:
 
 ```bash
 cd ~/source/otp-harbor
-sudo bash ./scripts/testing/configure-ubuntu-hyperv-network.sh
+sudo bash ./scripts/testing/Linux/configure-ubuntu-hyperv-network.sh
 ```
 
 The helper identifies both interfaces by their Hyper-V MAC addresses instead of their potentially

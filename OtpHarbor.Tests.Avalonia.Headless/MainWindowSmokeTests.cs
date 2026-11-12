@@ -147,7 +147,7 @@ public sealed class MainWindowSmokeTests
             window.Show();
             var tabs = Assert.Single(window.GetVisualDescendants().OfType<TabControl>(),
                 control => control.Classes.Contains("settings-tabs"));
-            tabs.SelectedIndex = 6;
+            tabs.SelectedIndex = 5;
             var section = Assert.IsType<Expander>(window.FindControl<Expander>("FaqIconPacksExpander"));
             section.IsExpanded = true;
             window.UpdateLayout();
@@ -3101,7 +3101,7 @@ public sealed class MainWindowSmokeTests
 
             Assert.Equal(OperatingSystem.IsLinux() ? 720 : 520, window.Width);
             Assert.Equal(OperatingSystem.IsLinux() ? 760 : 620, window.Height);
-            Assert.Equal(520, window.MinWidth);
+            Assert.Equal(OperatingSystem.IsLinux() ? 720 : 520, window.MinWidth);
             Assert.True(window.Topmost);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
@@ -3109,7 +3109,7 @@ public sealed class MainWindowSmokeTests
                 window.GetVisualDescendants().OfType<TabControl>(),
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
             var tabs = settingsTabs.GetVisualDescendants().OfType<TabItem>().ToArray();
-            Assert.Equal(8, tabs.Length);
+            Assert.Equal(7, tabs.Length);
             var tabHeaders = tabs
                 .Select(tab => Assert.IsType<StackPanel>(tab.Header))
                 .ToArray();
@@ -3118,8 +3118,7 @@ public sealed class MainWindowSmokeTests
                     Application.Current!.Resources[AvaloniaStringKeys.Appearance],
                     Application.Current.Resources[AvaloniaStringKeys.IconPacks],
                     Application.Current.Resources[AvaloniaStringKeys.Security],
-                    Application.Current.Resources[AvaloniaStringKeys.Backups],
-                    Application.Current.Resources[AvaloniaStringKeys.ImportExport],
+                    Application.Current.Resources[TOTP.Avalonia.Shared.Import.MigrationStringKeys.DataAndBackup],
                     Application.Current.Resources[AvaloniaStringKeys.Miscellaneous],
                     Application.Current.Resources[AvaloniaStringKeys.Faq],
                     Application.Current.Resources[AvaloniaStringKeys.About]
@@ -3131,7 +3130,6 @@ public sealed class MainWindowSmokeTests
                     SymbolIconKind.ImageStack,
                     SymbolIconKind.Vault,
                     SymbolIconKind.BackupRestore,
-                    SymbolIconKind.Import,
                     SymbolIconKind.Diagnostics,
                     SymbolIconKind.Help,
                     SymbolIconKind.Information
@@ -3174,6 +3172,62 @@ public sealed class MainWindowSmokeTests
         finally
         {
             window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_RepeatedOwnedDialogsKeepTheirPreparedSizeAndConstraints()
+    {
+        var owner = new Window { Width = 380, Height = 540 };
+        try
+        {
+            owner.Show();
+            Size? previousSize = null;
+            for (var iteration = 0; iteration < 8; iteration++)
+            {
+                var window = new SettingsWindow();
+                try
+                {
+                    window.FitToOwnerScreen(owner);
+                    var preparedSize = new Size(window.Width, window.Height);
+                    var preparedMinimum = new Size(window.MinWidth, window.MinHeight);
+                    var preparedMaximum = new Size(window.MaxWidth, window.MaxHeight);
+                    Assert.False(window.IsVisible);
+                    if (OperatingSystem.IsLinux())
+                    {
+                        var screen = owner.Screens.ScreenFromWindow(owner) ?? owner.Screens.Primary;
+                        Assert.NotNull(screen);
+                        var scaling = screen.Scaling > 0 ? screen.Scaling : 1;
+                        Assert.Equal(Math.Floor(Math.Min(720, Math.Max(1, screen.WorkingArea.Width / scaling - 24))), window.MaxWidth);
+                        Assert.Equal(Math.Floor(Math.Min(760, Math.Max(1, screen.WorkingArea.Height / scaling - 24))), window.MaxHeight);
+                        Assert.Equal(preparedSize, preparedMinimum);
+                        Assert.Equal(preparedSize, preparedMaximum);
+                    }
+
+                    var closed = window.ShowDialog(owner);
+                    window.UpdateLayout();
+                    Dispatcher.UIThread.RunJobs();
+
+                    Assert.Same(owner, window.Owner);
+                    Assert.False(window.CanResize);
+                    Assert.Equal(preparedSize, new Size(window.Width, window.Height));
+                    Assert.Equal(preparedSize, window.ClientSize);
+                    Assert.Equal(preparedMinimum, new Size(window.MinWidth, window.MinHeight));
+                    Assert.Equal(preparedMaximum, new Size(window.MaxWidth, window.MaxHeight));
+                    Assert.Equal(previousSize ?? preparedSize, preparedSize);
+                    previousSize = preparedSize;
+                    window.Close();
+                    Assert.True(closed.IsCompletedSuccessfully);
+                }
+                finally
+                {
+                    window.Close();
+                }
+            }
+        }
+        finally
+        {
+            owner.Close();
         }
     }
 
@@ -3302,7 +3356,7 @@ public sealed class MainWindowSmokeTests
             var settingsTabs = Assert.Single(
                 window.GetVisualDescendants().OfType<TabControl>(),
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
-            settingsTabs.SelectedIndex = 6;
+            settingsTabs.SelectedIndex = 5;
             window.UpdateLayout();
 
             var faqCards = window
@@ -3442,18 +3496,9 @@ public sealed class MainWindowSmokeTests
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
 
-            var importHost = window.FindControl<ContentControl>("AccountImportSettingsHost");
-            Assert.NotNull(importHost?.ContentTemplate);
-            var importContent = Assert.IsAssignableFrom<Control>(importHost.ContentTemplate!.Build(null));
-            var importButtons = new[]
-            {
-                Assert.Single(importContent.GetLogicalDescendants().OfType<Button>(), button => button.Name == "OtherFormatsImportButton"),
-                Assert.Single(importContent.GetLogicalDescendants().OfType<Button>(), button => button.Name == "GoogleAuthenticatorImportButton")
-            };
-            Assert.All(importButtons, button => Assert.Contains("wide", button.Classes));
-            Assert.Single(
-                importContent.GetLogicalDescendants().OfType<ComboBox>(),
-                comboBox => comboBox.Name == "OtherFormatsConflictStrategyComboBox");
+            var migrationPanel = Assert.Single(content.GetLogicalDescendants().OfType<AuthenticatorImportPanel>());
+            Assert.Single(migrationPanel.GetLogicalDescendants().OfType<ComboBox>(), combo => combo.Name == "ExportHelpSource");
+
         }
         finally
         {
@@ -3595,7 +3640,7 @@ public sealed class MainWindowSmokeTests
             var settingsTabs = Assert.Single(
                 window.GetVisualDescendants().OfType<TabControl>(),
                 tabControl => tabControl.Classes.Contains("settings-tabs"));
-            Assert.Equal(8, settingsTabs.ItemCount);
+            Assert.Equal(7, settingsTabs.ItemCount);
             NotificationBanner? overlay = null;
             for (var tabIndex = 0; tabIndex < settingsTabs.ItemCount; tabIndex++)
             {

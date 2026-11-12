@@ -50,6 +50,9 @@ public sealed class AutomaticBackupCoordinator : IAutomaticBackupCoordinator
 
     public event EventHandler? StatusChanged;
 
+    public AutomaticBackupDestination? Destination =>
+        _configuration is { } configuration ? ToDestination(configuration) : null;
+
     public AutomaticBackupStatus Status
     {
         get

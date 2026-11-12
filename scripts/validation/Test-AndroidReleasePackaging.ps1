@@ -15,7 +15,7 @@ function Read-RequiredFile([string]$RelativePath) {
 
 $project = Read-RequiredFile "OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj"
 $manifest = Read-RequiredFile "OtpHarbor.UI.Avalonia.Android\Properties\AndroidManifest.xml"
-$installer = Read-RequiredFile "scripts\testing\Install-AndroidDevelopmentBuild.ps1"
+$installer = Read-RequiredFile "scripts\testing\Android\Install-AndroidDevelopmentBuild.ps1"
 $workflow = Read-RequiredFile ".github\workflows\build-and-test.yml"
 $documentation = Read-RequiredFile "docs\release\ANDROID.md"
 $releasePackager = Read-RequiredFile "scripts\release\New-AndroidRelease.ps1"
@@ -98,7 +98,7 @@ foreach ($requiredInstallerControl in @(
 }
 
 $runtimeIdentifierResolver = Join-Path $repositoryRoot `
-    'scripts\testing\Get-AndroidRuntimeIdentifier.ps1'
+    'scripts\testing\Android\Get-AndroidRuntimeIdentifier.ps1'
 foreach ($case in @(
     @{ Abi = 'arm64-v8a'; RuntimeIdentifier = 'android-arm64' },
     @{ Abi = 'x86_64'; RuntimeIdentifier = 'android-x64' })) {

@@ -28,6 +28,117 @@ namespace TOTP.Tests.Avalonia.Mobile;
 
 public sealed class MobileShellViewModelTests
 {
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task ImportReview_SuspendsOtpGenerationAndBindingUpdates_AndRefreshesOnReturnToAccounts(int inFlightResult)
+    {
+        var source = new Account(Guid.NewGuid(), "Demo", ValidSecret, "alice", periodSeconds: 60, algorithm: "SHA512", digits: 8);
+        var context = CreateContext(isConfigured: true, accounts: [source], appLockEnabled: false);
+        using var sut = context.Sut;
+        context.SettingsValue.ShowNextToken = true;
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        var inFlight = new TaskCompletionSource<Result<AccountTotpGenerationBatch>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var refreshStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resumed = false;
+        var calls = 0;
+        Result<AccountTotpGenerationBatch> Codes(string code) => Result.Ok(new AccountTotpGenerationBatch(
+            new Dictionary<Guid, TotpGenerationResult> { [source.ID] = new(code, 1, 60, "00876543") }, new HashSet<Guid>()));
+        context.AccountTotp.Setup(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()))
+            .Returns(() =>
+            {
+                if (resumed) return Task.FromResult(Codes("00234567"));
+                if (Interlocked.Increment(ref calls) == 2 && inFlightResult != 0)
+                {
+                    refreshStarted.TrySetResult();
+                    return inFlight.Task;
+                }
+                return Task.FromResult(Codes("00123456"));
+            });
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1]), "export.json"));
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(It.IsAny<Stream>(), "export.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { source }).WithSuccess(new AccountImportReadSummary(1)));
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
+            .Returns(async (IReadOnlyList<Account> _, Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> review, CancellationToken token) =>
+            {
+                await review(new AccountImportPreview(1, 0, ImportConflictStrategy.SkipExisting)
+                    { NewCount = 1, Entries = [new("Demo", "alice", "SHA512", 8, 60)] }, token);
+                return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
+            });
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        TestUtilities.ImportReviewTestActions.ReviewFirstSelectedFile(sut.MigrationImport);
+        await sut.InitializeAsync();
+        var row = Assert.Single(sut.Accounts);
+        await WaitUntilAsync(() => row.Code == "00123456");
+        if (inFlightResult != 0) await refreshStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), global::Xunit.TestContext.Current.CancellationToken);
+        await sut.ShowSettingsAsync();
+        Assert.True(sut.IsSettingsVisible);
+        var importing = sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => sut.IsExternalImportReviewVisible || importing.IsCompleted);
+        Assert.True(sut.IsExternalImportReviewVisible, sut.NotificationText);
+        Assert.False(sut.IsAccountListVisible);
+        Assert.False(sut.IsNativeAccountListVisible);
+        var changes = new List<string?>();
+        row.PropertyChanged += (_, args) => changes.Add(args.PropertyName);
+        context.AccountTotp.Invocations.Clear();
+        var notification = sut.NotificationText;
+        if (inFlightResult == 1) inFlight.SetException(new InvalidOperationException("Synthetic generation failure"));
+        else if (inFlightResult == 2) inFlight.SetResult(Result.Fail<AccountTotpGenerationBatch>("Synthetic generation failure"));
+        else if (inFlightResult == 3) inFlight.SetResult(Codes("00999999"));
+        sut.OnEnteredBackground(lockImmediately: false);
+        sut.OnReturnedToForeground();
+        await Task.Delay(TimeSpan.FromMilliseconds(1250), global::Xunit.TestContext.Current.CancellationToken);
+
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
+        Assert.Empty(changes);
+        Assert.Empty(row.Code);
+        Assert.Equal(notification, sut.NotificationText);
+        Assert.True(await sut.TryHandleBackNavigationAsync());
+        await importing.WaitAsync(TimeSpan.FromSeconds(5), global::Xunit.TestContext.Current.CancellationToken);
+        Assert.True(sut.IsSettingsVisible);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Never);
+        resumed = true;
+        await sut.ShowAccountsAsync();
+        await WaitUntilAsync(() => row.Code == "00234567" && row.HasVisibleNextCode);
+        Assert.Equal("0087 6543", row.DisplayNextCode);
+        context.AccountTotp.Verify(value => value.GenerateManyAsync(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task FileFirstImport_RequiresNoProviderAndWaitsForReviewBeforeCallingTheImporter()
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1]), "renamed.csv"));
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(It.IsAny<Stream>(), "renamed.csv", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { new(Guid.NewGuid(), "Demo", ValidSecret, "alice") })
+                .WithSuccess(new AccountImportReadSummary(1) { Format = AccountImportFormat.AegisJson }));
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        var importing = context.Sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => context.Sut.MigrationImport.HasSelectedFile);
+        Assert.Null(context.Sut.MigrationImport.SelectedSource);
+        Assert.Contains("Aegis", context.Sut.MigrationImport.DetectedFormatText);
+        Assert.False(context.Sut.IsExternalImportReviewVisible);
+        context.AccountImport.Verify(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.True(await context.Sut.TryHandleBackNavigationAsync());
+        await importing;
+        Assert.False(context.Sut.MigrationImport.HasSelectedFile);
+        context.AccountImport.Verify(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"; // gitleaks:allow - synthetic Base32 fixture
 
     [Fact]
@@ -437,6 +548,46 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsUnlockVisible);
         Assert.Empty(context.Sut.NotificationText);
         context.Authorization.Verify(value => value.Lock(), Times.Once);
+    }
+
+    [Fact]
+    public async Task Settings_InfoShowsStorageLocationsAndRefreshesTheirLanguage()
+    {
+        var locations = new Mock<IApplicationStorageLocations>();
+        var directory = Path.Combine(Path.GetTempPath(), "otp-demo");
+        locations.Setup(value => value.GetLocations()).Returns(new[]
+        {
+            new ApplicationStorageLocation(ApplicationStorageLocationKind.DataDirectory, directory, directory)
+        });
+        var context = CreateContext(isConfigured: true, appLockEnabled: false, storageLocations: locations.Object);
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock)
+            .ReturnsAsync(AuthorizationResult.Success);
+        await sut.InitializeAsync();
+        await sut.ShowSettingsAsync();
+        sut.ShowInfoSettingsCommand.Execute(null);
+
+        Assert.True(sut.IsInfoSettingsVisible);
+        Assert.False(sut.IsSettingsCategoryListVisible);
+        var item = Assert.Single(sut.StorageLocations!.Locations);
+        Assert.Equal(directory, item.Path);
+        Assert.False(item.CanOpenFolder);
+        await item.CopyPathAsync();
+        context.Clipboard.Verify(value => value.CopyAsync(directory, It.IsAny<CancellationToken>()), Times.Once);
+
+        var changed = new List<string?>();
+        sut.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+        await sut.SelectLanguageAsync("de");
+
+        Assert.Contains(nameof(sut.InfoText), changed);
+        Assert.Contains(nameof(sut.InfoDescriptionText), changed);
+        Assert.Equal("Info", sut.SettingsCategoryTitle);
+        Assert.Equal("App-Datenverzeichnis", item.Label);
+        Assert.Equal("Der Pfad wurde kopiert.", item.StatusText);
+        await sut.NavigateBackAsync();
+        Assert.True(sut.IsSettingsCategoryListVisible);
+        Assert.False(sut.IsInfoSettingsVisible);
     }
 
     [Fact]
@@ -3675,6 +3826,56 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
+    public async Task ImportAccountFileAsync_WhenEveryTotpAlreadyExists_StillReportsExcludedNonOtpEntries()
+    {
+        var account = new Account(Guid.NewGuid(), "Demo", ValidSecret, "alice");
+        var context = CreateContext(isConfigured: true);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1]), "export.json"));
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(
+                It.IsAny<Stream>(), "export.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { account })
+                .WithSuccess(new AccountImportReadSummary(1, nonOtpCount: 3)));
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(
+                It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async (IReadOnlyList<Account> _,
+                Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve,
+                CancellationToken token) =>
+            {
+                await resolve(new AccountImportPreview(1, 1, ImportConflictStrategy.SkipExisting)
+                {
+                    UnchangedCount = 1,
+                    Entries = [new AccountImportEntryPreview("Demo", "alice", "SHA1", 6, 30) { Existing = new("Demo", "alice", "SHA1", 6, 30) }]
+                }, token);
+                return Result.Ok(new AccountImportOutcome(AccountImportStatus.Completed, Skipped: 1));
+            });
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+
+        var importing = context.Sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => context.Sut.MigrationImport.HasSelectedFile);
+        Assert.False(context.Sut.IsExternalImportReviewVisible);
+        context.Sut.MigrationImport.ReviewFileCommand.Execute(null);
+        await WaitUntilAsync(() => context.Sut.IsExternalImportReviewVisible);
+        Assert.False(context.Sut.MigrationImport.HasSelectedFile);
+        var review = Assert.IsType<TOTP.Avalonia.Shared.Import.ImportReviewViewModel>(context.Sut.ExternalImportReview);
+        Assert.False(context.Sut.IsImportConfirmationVisible);
+        Assert.Equal(3, review.UnsupportedCount);
+        Assert.Equal(1, review.DuplicateCount);
+        Assert.False(review.CanImport);
+        Assert.True(await context.Sut.TryHandleBackNavigationAsync());
+        await importing;
+        Assert.False(context.Sut.IsExternalImportReviewVisible);
+    }
+
+    [Fact]
     public async Task ImportAccountFileAsync_UsesPortableParserAndTransactionalImportWorkflow()
     {
         var importedAccount = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
@@ -3704,6 +3905,8 @@ public sealed class MobileShellViewModelTests
                 Added: 1,
                 Replaced: 0,
                 Skipped: 0)));
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        TestUtilities.ImportReviewTestActions.ReviewFirstSelectedFile(context.Sut.MigrationImport);
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
@@ -3766,21 +3969,25 @@ public sealed class MobileShellViewModelTests
                 Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve,
                 CancellationToken token) =>
                 sharedImport.ImportWithConflictResolutionAsync(imported, resolve, token));
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        TestUtilities.ImportReviewTestActions.ReviewFirstSelectedFile(context.Sut.MigrationImport);
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
         await context.Sut.ShowSettingsAsync();
 
         var importTask = context.Sut.ImportAccountFileAsync();
-        await WaitUntilAsync(() => context.Sut.IsBackupConflictResolutionVisible);
-
-        Assert.Contains("1 new, 1 unchanged, 1 need review", context.Sut.BackupConflictResolutionText);
-        var conflict = Assert.Single(context.Sut.BackupImportConflicts);
-        Assert.Equal("Current: Scenario Collision: collision@example.invalid", conflict.CurrentDisplayName);
-        Assert.Equal("Imported: Scenario Collision: collision@example.invalid", conflict.BackupDisplayName);
-        Assert.Contains(context.Sut.SecretFieldText, conflict.ChangedFieldsText, StringComparison.Ordinal);
-        await context.Sut.SelectAllBackupConflictsAsync(AccountImportConflictAction.Replace);
-        await context.Sut.ConfirmBackupConflictResolutionAsync();
+        await WaitUntilAsync(() => context.Sut.IsExternalImportReviewVisible);
+        var review = Assert.IsType<TOTP.Avalonia.Shared.Import.ImportReviewViewModel>(context.Sut.ExternalImportReview);
+        Assert.False(context.Sut.IsBackupConflictResolutionVisible);
+        Assert.False(context.Sut.IsImportConfirmationVisible);
+        Assert.Equal(1, review.ReadyCount);
+        Assert.Equal(1, review.DuplicateCount);
+        var conflict = Assert.Single(review.Rows, row => row.IsConflict);
+        Assert.Contains("Scenario Collision", conflict.Identity);
+        conflict.IsReplace = true;
+        Assert.Equal(2, review.ImportCount);
+        review.ImportCommand.Execute(null);
         await importTask;
 
         var currentCollisionId = currentAccounts.Single(
@@ -3820,6 +4027,8 @@ public sealed class MobileShellViewModelTests
                 null,
                 It.IsAny<CancellationToken>()))
             .Returns(parsing.Task);
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        TestUtilities.ImportReviewTestActions.ReviewFirstSelectedFile(context.Sut.MigrationImport);
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
@@ -5609,7 +5818,8 @@ public sealed class MobileShellViewModelTests
         IAccountListSnapshotService? accountListSnapshots = null,
         IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
         ILogger<MobileShellViewModel>? logger = null,
-        IGitHubIssueReporter? gitHubIssueReporter = null)
+        IGitHubIssueReporter? gitHubIssueReporter = null,
+        IApplicationStorageLocations? storageLocations = null)
     {
         accounts ??= [];
         var state = new AuthorizationState();
@@ -5734,7 +5944,9 @@ public sealed class MobileShellViewModelTests
             diagnosticLogEmail: diagnosticLogEmail.Object,
             diagnosticEnvironment: diagnosticEnvironment,
             logger: logger,
-            gitHubIssueReporter: gitHubIssueReporter);
+            gitHubIssueReporter: gitHubIssueReporter,
+            storageLocations: storageLocations is null ? null : new TOTP.Avalonia.Shared.Storage.StorageLocationsViewModel(
+                storageLocations, clipboard.Object, strings.Get));
         return new TestContext(
             sut,
             state,

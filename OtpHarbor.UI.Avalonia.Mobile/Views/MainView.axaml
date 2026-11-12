@@ -371,6 +371,7 @@
         <ScrollViewer
             x:Name="MainScrollViewer"
             Grid.Row="1"
+            IsVisible="{Binding !IsExternalImportReviewVisible}"
             ScrollChanged="MainScrollViewerChanged"
             Classes.account-list="{Binding IsAccountListVisible}">
             <ScrollViewer.Styles>
@@ -1088,18 +1089,7 @@
                                     </StackPanel>
                                 </Grid>
                             </Button>
-                            <Button
-                                Classes="wide secondary settings-category"
-                                Click="ScrollMainViewToTop"
-                                Command="{Binding ShowImportExportSettingsCommand}">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Import" />
-                                    <StackPanel Grid.Column="1" Spacing="2">
-                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding ImportExportText}" />
-                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding ImportExportSettingsDescriptionText}" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Grid>
-                            </Button>
+
                             <Button
                                 Classes="wide secondary settings-category"
                                 Click="ScrollMainViewToTop"
@@ -1124,7 +1114,22 @@
                                     </StackPanel>
                                 </Grid>
                             </Button>
+                            <Button
+                                Classes="wide secondary settings-category"
+                                Click="ScrollMainViewToTop"
+                                Command="{Binding ShowInfoSettingsCommand}">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <controls:SymbolIcon Grid.Column="0" VerticalAlignment="Center" IconSize="24" Kind="Information" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding InfoText}" />
+                                        <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding InfoDescriptionText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
                         </StackPanel>
+                        <Border Classes="card" IsVisible="{Binding IsInfoSettingsVisible}" Padding="16">
+                            <controls:StorageLocationsPanel DataContext="{Binding StorageLocations}" />
+                        </Border>
                         <Border
                             Classes="card"
                             IsVisible="{Binding IsAppearanceSettingsVisible}"
@@ -1511,7 +1516,10 @@
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
-                        <StackPanel IsVisible="{Binding IsBackupSettingsVisible}">
+                        <StackPanel IsVisible="{Binding IsBackupSettingsVisible}" Spacing="12">
+                            <Border Classes="card" Padding="16">
+                                <controls:AuthenticatorImportPanel DataContext="{Binding MigrationImport}" />
+                            </Border>
                             <Grid
                                 RowDefinitions="Auto,Auto,Auto"
                                 RowSpacing="12">
@@ -1659,68 +1667,6 @@
                                     </StackPanel>
                                 </Border>
                             </Grid>
-                        </StackPanel>
-                        <StackPanel
-                            IsVisible="{Binding IsImportExportSettingsVisible}"
-                            Spacing="12">
-                                <Border
-                                    x:Name="GoogleAuthenticatorImportPanel"
-                                    BorderBrush="{DynamicResource BrushBorder}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Padding="12">
-                                    <StackPanel Spacing="10">
-                                        <TextBlock
-                                            FontSize="17"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding ImportGoogleQrText}" />
-                                        <TextBlock
-                                            Foreground="{DynamicResource BrushTextSecondary}"
-                                            Text="{Binding ImportGoogleQrDescriptionText}"
-                                            TextWrapping="Wrap" />
-                                        <Button
-                                            x:Name="GoogleAuthenticatorImportButton"
-                                            Classes="wide secondary"
-                                            Command="{Binding ImportGoogleQrCommand}">
-                                            <controls:SymbolIconLabel Kind="QrCode" Text="{Binding ImportSectionText}" />
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
-                                <Border
-                                    x:Name="OtherFormatsImportPanel"
-                                    BorderBrush="{DynamicResource BrushBorder}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Padding="12">
-                                    <StackPanel Spacing="10">
-                                        <TextBlock
-                                            FontSize="17"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding ImportAccountFileText}" />
-                                        <TextBlock
-                                            Foreground="{DynamicResource BrushTextSecondary}"
-                                            Text="{Binding ImportAccountFileDescriptionText}"
-                                            TextWrapping="Wrap" />
-                                        <StackPanel Spacing="5">
-                                            <TextBlock Text="{Binding ImportFormatAegisText}" TextWrapping="Wrap" />
-                                            <TextBlock Text="{Binding ImportFormatTwoFasText}" TextWrapping="Wrap" />
-                                            <TextBlock Text="{Binding ImportFormatOtpAuthText}" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                        <Button
-                                            Classes="link"
-                                            Click="ScrollMainViewToTop"
-                                            Command="{Binding ShowImportFormatsFaqCommand}"
-                                            HorizontalAlignment="Left">
-                                            <controls:SymbolIconLabel Kind="Help" Text="{Binding ViewImportFormatsFaqText}" />
-                                        </Button>
-                                        <Button
-                                            x:Name="OtherFormatsImportButton"
-                                            Classes="wide secondary"
-                                            Command="{Binding ImportAccountFileCommand}">
-                                            <controls:SymbolIconLabel Kind="Import" Text="{Binding ImportSectionText}" />
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
                         </StackPanel>
                         <Border
                             IsVisible="{Binding IsFaqSettingsVisible}"
@@ -2559,6 +2505,11 @@
             </ScrollViewer>
         </Grid>
 
+        <Grid Grid.Row="1" Grid.RowSpan="2" Panel.ZIndex="75"
+                Background="{DynamicResource BrushBackground}" IsVisible="{Binding IsExternalImportReviewVisible}">
+            <controls:ImportReviewMobilePage x:Name="ExternalImportReviewPage" DataContext="{Binding ExternalImportReview}" />
+        </Grid>
+
         <Grid
             Grid.RowSpan="3"
             IsHitTestVisible="False"
@@ -2601,6 +2552,15 @@
             </Border>
         </Grid>
 
+        <Grid Grid.RowSpan="3" Panel.ZIndex="100" Background="{DynamicResource BrushOverlayStrong}"
+              IsVisible="{Binding MigrationImport.HasSelectedFile}">
+            <Border MaxWidth="600" MaxHeight="640" Margin="16" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                    Background="{DynamicResource BrushDialogSurface}" BorderBrush="{DynamicResource BrushBorder}"
+                    BorderThickness="1" CornerRadius="5">
+                <controls:ImportFileSummaryPanel DataContext="{Binding MigrationImport}" />
+            </Border>
+        </Grid>
+
         <Grid
             Grid.RowSpan="3"
             Panel.ZIndex="100"
@@ -2617,35 +2577,19 @@
                 BorderThickness="1"
                 CornerRadius="12"
                 Padding="22">
-                <StackPanel Spacing="16">
-                    <TextBlock
-                        FontSize="20"
-                        FontWeight="SemiBold"
-                        Text="{Binding ImportConfirmationTitle}" />
-                    <TextBlock
-                        Text="{Binding ImportConfirmationText}"
-                        TextWrapping="Wrap" />
-                    <Grid
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="10"
-                        IsVisible="{Binding IsImportConfirmationCancelVisible}">
-                        <Button
-                            Grid.Column="0"
-                            Classes="wide secondary"
-                            Command="{Binding CancelImportCommand}"
-                            Content="{Binding CancelText}" />
-                        <Button
-                            Grid.Column="1"
-                            Classes="wide primary"
-                            Command="{Binding ConfirmImportCommand}"
-                            Content="{Binding ConfirmImportText}" />
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16" MaxHeight="520">
+                    <TextBlock Grid.Row="0" FontSize="20" FontWeight="SemiBold"
+                               Text="{Binding ImportConfirmationTitle}" TextWrapping="Wrap" />
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock Text="{Binding ImportConfirmationText}" TextWrapping="Wrap" />
+                    </ScrollViewer>
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding IsImportConfirmationCancelVisible}">
+                        <Button Grid.Column="0" Classes="wide secondary" Command="{Binding CancelImportCommand}" Content="{Binding CancelText}" />
+                        <Button Grid.Column="1" Classes="wide primary" Command="{Binding ConfirmImportCommand}" Content="{Binding ConfirmImportText}" />
                     </Grid>
-                    <Button
-                        Classes="wide primary"
-                        Command="{Binding ConfirmImportCommand}"
-                        Content="{Binding ConfirmImportText}"
-                        IsVisible="{Binding IsImportConfirmationAcknowledgementOnly}" />
-                </StackPanel>
+                    <Button Grid.Row="2" Classes="wide primary" Command="{Binding ConfirmImportCommand}" Content="{Binding ConfirmImportText}"
+                            IsVisible="{Binding IsImportConfirmationAcknowledgementOnly}" />
+                </Grid>
             </Border>
         </Grid>
 
@@ -2672,12 +2616,10 @@
                         FontSize="20"
                         FontWeight="SemiBold"
                         Text="{Binding QrImportReviewTitle}" />
-                    <TextBlock
-                        Grid.Row="1"
-                        FontSize="13"
-                        Foreground="{DynamicResource BrushTextSecondary}"
-                        Text="{Binding QrImportResolutionText}"
-                        TextWrapping="Wrap" />
+                    <ScrollViewer Grid.Row="1" MaxHeight="140" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock FontSize="13" Foreground="{DynamicResource BrushTextSecondary}"
+                                   Text="{Binding QrImportResolutionText}" TextWrapping="Wrap" />
+                    </ScrollViewer>
                     <Border
                         Grid.Row="2"
                         Background="{DynamicResource BrushSurfaceAlternate}"
@@ -2823,12 +2765,10 @@
                         FontSize="20"
                         FontWeight="SemiBold"
                         Text="{Binding BackupConflictResolutionTitle}" />
-                    <TextBlock
-                        Grid.Row="1"
-                        FontSize="13"
-                        Foreground="{DynamicResource BrushTextSecondary}"
-                        Text="{Binding BackupConflictResolutionText}"
-                        TextWrapping="Wrap" />
+                    <ScrollViewer Grid.Row="1" MaxHeight="140" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock FontSize="13" Foreground="{DynamicResource BrushTextSecondary}"
+                                   Text="{Binding BackupConflictResolutionText}" TextWrapping="Wrap" />
+                    </ScrollViewer>
                     <Border
                         Grid.Row="2"
                         Background="{DynamicResource BrushSurfaceAlternate}"

@@ -11,6 +11,176 @@ namespace TOTP.Tests.Services;
 public sealed class AccountImportServiceTests
 {
     [Fact]
+    public async Task ExternalReview_ReadyEntryIsNotSilentlySkippedAfterKeepBothGeneratesItsLabel()
+    {
+        var existing = new Account(Guid.NewGuid(), "Original", "JBSWY3DPEHPK3PXP", "alice");
+        var first = new Account(Guid.NewGuid(), "Original", "KRSXG5DSNFXGOIDB", "alice");
+        var second = new Account(Guid.NewGuid(), "Original (imported)", "GEZDGNBVGY3TQOJQ", "alice");
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? written = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(value => written = value).ReturnsAsync(Result.Ok());
+        var result = await new AccountImportService(accounts.Object).ImportWithConflictResolutionAsync([first, second],
+            (preview, _) =>
+            {
+                Assert.Equal(1, preview.NewCount);
+                return Task.FromResult<AccountImportResolution?>(new([new(0, AccountImportConflictAction.KeepBoth)]));
+            }, TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.Added);
+        Assert.Equal(0, result.Value.Skipped);
+        Assert.NotNull(written);
+        Assert.Equal(3, written.Count);
+        Assert.Contains(written, account => account.Secret == second.Secret);
+        Assert.Equal(3, written.Select(account => account.Issuer).Distinct().Count());
+    }
+
+    [Fact]
+    public async Task ExternalReview_LaterReplacementKeepsTheReviewedTargetAfterAnEarlierSecretChange()
+    {
+        var existing = new Account(Guid.NewGuid(), "Old", "JBSWY3DPEHPK3PXP", "alice");
+        var first = new Account(Guid.NewGuid(), "Old", "KRSXG5DSNFXGOIDB", "alice");
+        var second = new Account(Guid.NewGuid(), "New label", existing.Secret, "alice");
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? written = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(value => written = value).ReturnsAsync(Result.Ok());
+        var result = await new AccountImportService(accounts.Object).ImportWithConflictResolutionAsync([first, second],
+            (preview, _) =>
+            {
+                Assert.Equal(2, preview.ChangedConflicts.Count);
+                return Task.FromResult<AccountImportResolution?>(new([new(0, AccountImportConflictAction.Replace), new(1, AccountImportConflictAction.Replace)]));
+            }, TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.Replaced);
+        Assert.NotNull(written);
+        var account = Assert.Single(written);
+        Assert.Equal(existing.ID, account.ID);
+        Assert.Equal(second.Issuer, account.Issuer);
+        Assert.Equal(second.Secret, account.Secret);
+    }
+
+    [Fact]
+    public async Task ExternalReview_ReplacementOfAnEarlierExportEntryTargetsItsKeptCopy()
+    {
+        var existing = new Account(Guid.NewGuid(), "Original", "JBSWY3DPEHPK3PXP", "alice");
+        var first = new Account(Guid.NewGuid(), "First", existing.Secret, "alice");
+        var second = new Account(Guid.NewGuid(), "First", "KRSXG5DSNFXGOIDB", "alice");
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? written = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(value => written = value).ReturnsAsync(Result.Ok());
+        var result = await new AccountImportService(accounts.Object).ImportWithConflictResolutionAsync([first, second],
+            (preview, _) =>
+            {
+                Assert.True(preview.Entries[1].ExistingIsFromExport);
+                return Task.FromResult<AccountImportResolution?>(new([new(0, AccountImportConflictAction.KeepBoth), new(1, AccountImportConflictAction.Replace)]));
+            }, TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(written);
+        Assert.Equal(2, written.Count);
+        Assert.Contains(existing, written);
+        Assert.Contains(written, account => account.ID != existing.ID && account.Secret == second.Secret && account.Issuer == second.Issuer);
+    }
+
+    [Theory]
+    [InlineData(AccountImportConflictAction.Skip, 0, 0)]
+    [InlineData(AccountImportConflictAction.Replace, 0, 1)]
+    [InlineData(AccountImportConflictAction.KeepBoth, 1, 0)]
+    public async Task ExternalReview_SameSecretWithDifferentLabelRequiresExplicitDecision(
+        AccountImportConflictAction action, int added, int replaced)
+    {
+        var current = new Account(Guid.NewGuid(), "Old label", "JBSWY3DPEHPK3PXP", "alice");
+        var incoming = new Account(Guid.NewGuid(), "New label", current.Secret, "alice", 60, algorithm: "SHA512", digits: 8);
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([current]));
+        accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? written = null;
+        accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(value => written = value).ReturnsAsync(Result.Ok());
+        var sut = new AccountImportService(accounts.Object);
+        var result = await sut.ImportWithConflictResolutionAsync([incoming], (preview, _) =>
+        {
+            Assert.Null(written);
+            var conflict = Assert.Single(preview.ChangedConflicts);
+            Assert.True(conflict.IssuerChanged);
+            Assert.False(conflict.SecretChanged);
+            Assert.Equal("Old label", Assert.Single(preview.Entries).Existing!.Issuer);
+            Assert.DoesNotContain(current.Secret, System.Text.Json.JsonSerializer.Serialize(preview));
+            return Task.FromResult<AccountImportResolution?>(new([new(0, action)]));
+        }, TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(added, result.Value.Added);
+        Assert.Equal(replaced, result.Value.Replaced);
+        if (action == AccountImportConflictAction.Skip)
+        {
+            Assert.Null(written);
+            accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        }
+        else
+        {
+            Assert.NotNull(written);
+            Assert.Equal(action == AccountImportConflictAction.KeepBoth ? 2 : 1, written.Count);
+            Assert.Contains(written, account => account.Algorithm == "SHA512" && account.Digits == 8 && account.PeriodSeconds == 60);
+            if (action == AccountImportConflictAction.KeepBoth) Assert.Contains(current, written);
+        }
+    }
+
+    [Fact]
+    public async Task ExternalReview_DuplicatesWithinExportAreComparedBeforeAnyWrite()
+    {
+        var first = new Account(Guid.NewGuid(), "Demo", "JBSWY3DPEHPK3PXP", "alice");
+        var second = new Account(Guid.NewGuid(), "Demo", "KRSXG5DSNFXGOIDB", "alice");
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        var result = await new AccountImportService(accounts.Object).ImportWithConflictResolutionAsync([first, second], (preview, _) =>
+        {
+            Assert.Equal(1, preview.NewCount);
+            Assert.Equal(1, Assert.Single(preview.ChangedConflicts).ImportIndex);
+            Assert.True(preview.ChangedConflicts[0].SecretChanged);
+            Assert.NotNull(preview.Entries[1].Existing);
+            return Task.FromResult<AccountImportResolution?>(null);
+        }, TestContext.Current.CancellationToken);
+        Assert.Equal(AccountImportStatus.Cancelled, result.Value.Status);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ImportAsync_DuplicatesWithinTheFileAreVisibleBeforeAnyWrite()
+    {
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
+            .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        var service = new AccountImportService(accounts.Object);
+        var reviewed = false;
+        var result = await service.ImportAsync(
+            [new Account(Guid.NewGuid(), "Demo", "JBSWY3DPEHPK3PXP", "user"),
+             new Account(Guid.NewGuid(), "demo", "JBSWY3DPEHPK3PXP", "USER")],
+            ImportConflictStrategy.SkipExisting,
+            (preview, _) =>
+            {
+                Assert.Equal(2, preview.TotalCount);
+                Assert.Equal(0, preview.ConflictCount);
+                Assert.Equal(1, preview.InputDuplicateCount);
+                Assert.Equal(1, preview.NewCount);
+                Assert.Equal(2, preview.Entries.Count);
+                reviewed = true;
+                return Task.FromResult(false);
+            }, TestContext.Current.CancellationToken);
+        Assert.True(reviewed);
+        Assert.Equal(AccountImportStatus.Cancelled, result.Value.Status);
+        accounts.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+    }
+
+    [Fact]
     public async Task ImportAsync_WhenAnyTargetIsInvalid_DoesNotReadOrMutateVault()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
@@ -462,7 +632,7 @@ public sealed class AccountImportServiceTests
         var unchangedTwo = new Account(
             Guid.NewGuid(), "Google", "JBSWY3DPEHPK3PXP", "user@example.invalid");
         var deletedAccount = new Account(
-            Guid.NewGuid(), "Cloudflare", "JBSWY3DPEHPK3PXP", "admin@example.invalid");
+            Guid.NewGuid(), "Cloudflare", "KRSXG5DSNFXGOIDB", "admin@example.invalid");
         var accounts = new Mock<IAccountManager>();
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(

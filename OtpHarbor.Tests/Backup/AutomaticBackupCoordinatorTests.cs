@@ -44,9 +44,11 @@ public sealed class AutomaticBackupCoordinatorTests
             .ReturnsAsync(Result.Ok());
 
         using var sut = CreateCoordinator(store, snapshots, destination);
+        Assert.Null(sut.Destination);
         var result = await sut.ConfigureAsync(TestContext.Current.CancellationToken);
 
         Assert.True(result.IsSuccess);
+        Assert.Equal(Destination, sut.Destination);
         Assert.Equal(AutomaticBackupRunStatus.Created, result.Value.Status);
         Assert.Equal(new byte[] { 1, 2, 3 }, published);
         Assert.Equal(new string('A', 64), finalConfiguration?.LastFingerprint);
@@ -191,6 +193,7 @@ public sealed class AutomaticBackupCoordinatorTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(AutomaticBackupStatusKind.DestinationUnavailable, sut.Status.Kind);
+        Assert.Equal(Destination, sut.Destination);
         Assert.Equal(AutomaticBackupDestinationAccess.Unavailable, sut.Status.DestinationAccess);
         Assert.Equal(AutomaticBackupFailureKind.DestinationUnavailable, sut.Status.LastFailureKind);
         Assert.Equal(AutomaticBackupFailureKind.DestinationUnavailable, persisted?.LastFailureKind);

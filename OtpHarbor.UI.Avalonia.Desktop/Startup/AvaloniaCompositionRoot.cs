@@ -216,11 +216,20 @@ public static class AvaloniaCompositionRoot
             accountImportService: provider.GetRequiredService<IAccountImportService>(),
             authorizationService: provider.GetRequiredService<IAuthorizationService>(),
             automaticBackup: provider.GetRequiredService<IAutomaticBackupCoordinator>()));
+        services.AddSingleton<TOTP.Avalonia.Shared.Storage.StorageLocationsViewModel>(provider => new(
+            provider.GetRequiredService<IApplicationStorageLocations>(),
+            provider.GetRequiredService<IAsyncClipboardService>(),
+            provider.GetRequiredService<IAvaloniaLocalizationService>().GetString,
+            provider.GetRequiredService<IPlatformFolderLauncher>()));
         services.AddSingleton<SettingsPageViewModel>();
         services.AddSingleton<AuthorizationSettingsViewModel>();
         services.AddSingleton<NativeFilePickerViewModel>();
         services.AddSingleton<CameraScannerViewModel>();
-        services.AddSingleton<UpdateCheckViewModel>();
+        services.AddSingleton(provider => new UpdateCheckViewModel(
+            provider.GetRequiredService<IPortableUpdateService>(),
+            provider.GetRequiredService<IUpdateInstallerLauncher>(),
+            provider.GetRequiredService<IAvaloniaLocalizationService>(),
+            isStoreDistribution: string.Equals(configuration["AutoUpdate:DistributionMode"], "store", StringComparison.Ordinal)));
         services.AddSingleton<DiagnosticsViewModel>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient(provider => new MainWindow

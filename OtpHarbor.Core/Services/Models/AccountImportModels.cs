@@ -14,7 +14,8 @@ public enum AccountImportStatus
 public enum AccountImportConflictAction
 {
     Skip,
-    Replace
+    Replace,
+    KeepBoth
 }
 
 public sealed record AccountImportConflict(
@@ -44,13 +45,22 @@ public sealed record AccountImportPreview(
     int ConflictCount,
     ImportConflictStrategy ConflictStrategy)
 {
+    public IReadOnlyList<AccountImportEntryPreview> Entries { get; init; } = [];
     public int NewCount { get; init; }
+    public int InputDuplicateCount { get; init; }
 
     public int UnchangedCount { get; init; }
 
     public IReadOnlyList<AccountImportConflict> ChangedConflicts { get; init; } = [];
 
     public int ChangedConflictCount => ChangedConflicts.Count;
+}
+
+public sealed record AccountImportEntryPreview(string Issuer, string? AccountName, string Algorithm, int Digits, int PeriodSeconds)
+{
+    public int ImportIndex { get; init; } = -1;
+    public AccountImportEntryPreview? Existing { get; init; }
+    public bool ExistingIsFromExport { get; init; }
 }
 
 public sealed record AccountImportOutcome(

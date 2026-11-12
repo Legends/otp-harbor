@@ -38,9 +38,9 @@ public sealed class CameraScannerViewModelTests
             .Returns(new QrPayloadValidationResult(true, "Example", "alice"));
         var import = new Mock<IQrAccountImportService>();
         var importedAccountId = Guid.NewGuid();
-        import.Setup(value => value.ImportAsync(
+        import.Setup(value => value.ImportWithConflictResolutionAsync(
                 It.IsAny<string>(),
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.Added,
@@ -92,9 +92,9 @@ public sealed class CameraScannerViewModelTests
                 4));
         var importedId = Guid.NewGuid();
         var import = new Mock<IQrAccountImportService>();
-        import.Setup(value => value.ImportAsync(
+        import.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.BulkImported,
@@ -161,9 +161,9 @@ public sealed class CameraScannerViewModelTests
 
         Assert.Contains("Import QR image", sut.Message, StringComparison.Ordinal);
         Assert.False(sut.IsScanning);
-        import.Verify(value => value.ImportAsync(
+        import.Verify(value => value.ImportWithConflictResolutionAsync(
             It.IsAny<string>(),
-            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -195,9 +195,9 @@ public sealed class CameraScannerViewModelTests
                 kind,
                 accountCount));
         var import = new Mock<IQrAccountImportService>();
-        import.Setup(value => value.ImportAsync(
+        import.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 kind == QrPayloadKind.GoogleAuthenticatorMigration
@@ -221,9 +221,9 @@ public sealed class CameraScannerViewModelTests
 
         Assert.Equal(NotificationSeverity.Success, sut.LastImageNotificationSeverity);
         Assert.False(sut.CanRetryCameraScan);
-        import.Verify(value => value.ImportAsync(
+        import.Verify(value => value.ImportWithConflictResolutionAsync(
             payload,
-            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Once);
         dialogs.Verify(value => value.ConfirmAsync(
                 It.IsAny<ConfirmationDialogRequest>(),
@@ -283,9 +283,9 @@ public sealed class CameraScannerViewModelTests
         Assert.Contains("No readable QR code", sut.Message, StringComparison.Ordinal);
         Assert.Equal(NotificationSeverity.Error, sut.LastImageNotificationSeverity);
         validator.Verify(value => value.Validate(It.IsAny<string>()), Times.Never);
-        import.Verify(value => value.ImportAsync(
+        import.Verify(value => value.ImportWithConflictResolutionAsync(
             It.IsAny<string>(),
-            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -361,9 +361,9 @@ public sealed class CameraScannerViewModelTests
         validator.Setup(value => value.Validate(It.IsAny<string>()))
             .Returns(new QrPayloadValidationResult(true, "Example", "alice"));
         var import = new Mock<IQrAccountImportService>();
-        import.Setup(value => value.ImportAsync(
+        import.Setup(value => value.ImportWithConflictResolutionAsync(
                 It.IsAny<string>(),
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.DuplicateUnchanged,
@@ -402,9 +402,9 @@ public sealed class CameraScannerViewModelTests
         Assert.True(closeRequested);
         Assert.Equal(QrAccountImportStatus.DuplicateUnchanged, completedImport?.Status);
         Assert.Equal(AvaloniaStringKeys.QrAccountDuplicate, completedImport?.Message);
-        import.Verify(value => value.ImportAsync(
+        import.Verify(value => value.ImportWithConflictResolutionAsync(
             It.IsAny<string>(),
-            It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+            It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

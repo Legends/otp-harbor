@@ -14,6 +14,34 @@ public sealed class QrAccountImportServiceTests
     private const string Payload =
         "otpauth://totp/Example:alice?secret=JBSWY3DPEHPK3PXP&issuer=Example";
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ImportWithConflictResolutionAsync_NewAccountIsReviewedBeforeAnyWrite(bool accept)
+    {
+        var accounts = Manager([]);
+        accounts.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        var service = new QrAccountImportService(accounts.Object);
+        var reviewed = false;
+        var result = await service.ImportWithConflictResolutionAsync(
+            Payload + "&algorithm=SHA512&digits=8&period=60",
+            (preview, _) =>
+            {
+                accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+                var entry = Assert.Single(preview.Entries);
+                Assert.Equal("SHA512", entry.Algorithm);
+                Assert.Equal(8, entry.Digits);
+                Assert.Equal(60, entry.PeriodSeconds);
+                Assert.DoesNotContain("JBSWY3DPEHPK3PXP", System.Text.Json.JsonSerializer.Serialize(preview));
+                reviewed = true;
+                return Task.FromResult<QrAccountImportResolution?>(accept ? new QrAccountImportResolution([]) : null);
+            }, TestContext.Current.CancellationToken);
+        Assert.True(reviewed);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(accept ? QrAccountImportStatus.Added : QrAccountImportStatus.Cancelled, result.Value.Status);
+        accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), accept ? Times.Once() : Times.Never());
+    }
+
     [Fact]
     public async Task ImportAsync_WhenIdentityIsNew_AddsNormalizedAccountWithoutConflictPrompt()
     {

@@ -28,7 +28,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private const int MaximumInstalledIndexBytes = 256 * 1024 * 1024;
     private const int MaximumInstalledPacks = 32;
     private const int PackFormatVersion = 7;
-    private const string StorageDirectoryName = "BrandIcons";
+    public const string StorageDirectoryName = "BrandIcons";
     private const string CurrentPackFileName = "current.json";
     private const string InstalledPacksFileName = "installed-packs.json";
     private const string DisplaySettingsFileName = "display-settings.json";

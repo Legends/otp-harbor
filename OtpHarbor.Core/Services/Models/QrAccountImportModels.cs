@@ -47,7 +47,10 @@ public sealed record QrAccountImportPreview(
     int UnchangedCount,
     IReadOnlyList<QrAccountConflict> ChangedConflicts,
     int BatchIndex,
-    int BatchSize);
+    int BatchSize)
+{
+    public IReadOnlyList<AccountImportEntryPreview> Entries { get; init; } = [];
+}
 
 public sealed record QrAccountImportOutcome(
     QrAccountImportStatus Status,

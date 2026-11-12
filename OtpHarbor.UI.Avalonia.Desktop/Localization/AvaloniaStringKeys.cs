@@ -564,6 +564,10 @@ public static class AvaloniaStringKeys
 
     public static IReadOnlyList<string> All { get; } =
     [
+        .. TOTP.Avalonia.Shared.Storage.StorageLocationStringKeys.All,
+        .. TOTP.Avalonia.Shared.Import.MigrationStringKeys.All,
+        .. TOTP.Avalonia.Shared.Import.ReviewStringKeys.AllKeys,
+        .. TOTP.Avalonia.Shared.Import.FileImportStringKeys.All,
         AppTitle, AppHeading, Loading, StartingSafely, StartupCreateMasterPassword,
         StartupEnterMasterPassword, StartupPreferencesUnavailable, StartupFailedSafely,
         OlderVaultRecoveryTitle, OlderVaultConflictMessage, OlderVaultContinueCurrent,

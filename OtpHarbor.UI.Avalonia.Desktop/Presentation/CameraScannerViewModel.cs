@@ -9,6 +9,7 @@ using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
+using TOTP.Core.Models;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
@@ -424,7 +425,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         string payload,
         CancellationToken cancellationToken)
     {
-        var imported = await _importService.ImportAsync(payload, ResolveConflictAsync, cancellationToken);
+        var imported = await _importService.ImportWithConflictResolutionAsync(payload, ResolveImportAsync, cancellationToken);
         if (imported.IsFailed)
         {
             Message = _localization.GetString(AvaloniaStringKeys.QrImportFailed);
@@ -461,6 +462,31 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
                 or QrAccountImportStatus.BulkImported => NotificationSeverity.Success,
             _ => NotificationSeverity.Information
         };
+
+        async Task<QrAccountImportResolution?> ResolveImportAsync(QrAccountImportPreview preview, CancellationToken token)
+        {
+            var accountPreview = new AccountImportPreview(preview.TotalCount,
+                preview.UnchangedCount + preview.ChangedConflicts.Count, ImportConflictStrategy.SkipExisting)
+            {
+                Entries = preview.Entries,
+                NewCount = preview.NewCount
+            };
+            var confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                _localization.GetString(AvaloniaStringKeys.ImportAccounts),
+                TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(_localization.GetString, accountPreview),
+                NotificationSeverity.Information,
+                _localization.GetString(AvaloniaStringKeys.ImportAccounts),
+                _localization.GetString(AvaloniaStringKeys.Cancel)), token);
+            if (!confirmed) return null;
+            var resolutions = new List<QrAccountImportConflictResolution>();
+            foreach (var conflict in preview.ChangedConflicts)
+            {
+                var decision = await ResolveConflictAsync(conflict, token);
+                if (decision == QrAccountConflictDecision.Cancel) return null;
+                resolutions.Add(new QrAccountImportConflictResolution(conflict.ImportIndex, decision));
+            }
+            return new QrAccountImportResolution(resolutions);
+        }
 
         async Task<QrAccountConflictDecision> ResolveConflictAsync(
             QrAccountConflict conflict,

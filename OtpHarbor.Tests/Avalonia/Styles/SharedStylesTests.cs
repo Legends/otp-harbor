@@ -687,7 +687,7 @@ public sealed class SharedStylesTests
             .Where(element => element.Attribute("VerticalScrollBarVisibility") is not null)
             .ToArray();
 
-        Assert.Equal(8, categoryScrollViewers.Length);
+        Assert.Equal(7, categoryScrollViewers.Length);
         Assert.All(
             categoryScrollViewers,
             scrollViewer => Assert.Equal(

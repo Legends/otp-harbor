@@ -18,7 +18,8 @@ public sealed class AndroidApplicationPaths : IPlatformApplicationPaths
             throw new InvalidOperationException("Android application storage is unavailable.");
         }
 
-        ExecutableDirectory = AppContext.BaseDirectory;
+        ExecutableDirectory = context.ApplicationInfo?.NativeLibraryDir ?? AppContext.BaseDirectory;
+        CacheDirectory = cacheDirectory;
         ApplicationDataDirectory = Path.Combine(
             filesDirectory,
             StringsConstants.AppDataDirectoryName);
@@ -52,4 +53,5 @@ public sealed class AndroidApplicationPaths : IPlatformApplicationPaths
     public string LogDirectory { get; }
     public string LogFilePath { get; }
     public string UpdateStateFilePath { get; }
+    public string? CacheDirectory { get; }
 }

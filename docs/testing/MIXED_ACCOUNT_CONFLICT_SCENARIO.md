@@ -29,7 +29,7 @@ Use a disposable Windows user or VM because v2 and v3 use the profile's roaming 
 Use the isolated Debug package or another disposable test installation. Copy the fixtures with:
 
 ```powershell
-.\scripts\testing\Copy-MixedAccountConflictScenarioToAndroid.ps1 -Device <adb-device-id>
+.\scripts\testing\Android\Copy-MixedAccountConflictScenarioToAndroid.ps1 -Device <adb-device-id>
 ```
 
 1. Unlock an empty v3 test vault and import `mixed-account-current-v3.json` from Downloads.

@@ -11,7 +11,7 @@ namespace TOTP.Infrastructure.Services;
 public sealed class AppearanceSettingsService : IAppearanceSettingsService
 {
     private const int FormatVersion = 1;
-    private const string FileName = "appearance-settings.json";
+    public const string FileName = "appearance-settings.json";
 
     private readonly string _settingsPath;
     private readonly IPlatformFileSecurity _fileSecurity;

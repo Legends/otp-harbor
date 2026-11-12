@@ -96,7 +96,7 @@ return to `--locked-mode` for validation and CI.
 To install on one authorized Android device and launch the app:
 
 ```powershell
-.\scripts\testing\Install-AndroidDevelopmentBuild.ps1 -Port 43101
+.\scripts\testing\Android\Install-AndroidDevelopmentBuild.ps1 -Port 43101
 ```
 
 By default, the script detects the connected device ABI, incrementally creates a signed Debug APK

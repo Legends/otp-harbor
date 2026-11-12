@@ -18,6 +18,7 @@ public sealed class PortableUpdateService(
     IPlatformFileSecurity fileSecurity,
     ILogger<PortableUpdateService> logger) : IPortableUpdateService
 {
+    public const string DownloadDirectoryName = "Updates";
     private const int MaximumAppcastBytes = 256 * 1024;
     private const int MaximumSignatureBytes = 1024;
     private const long MaximumPackageBytes = 128L * 1024 * 1024;
@@ -148,7 +149,7 @@ public sealed class PortableUpdateService(
             if (response.Content.Headers.ContentLength is > MaximumPackageBytes)
                 return Result.Fail("The update package exceeds the safety limit.");
 
-            var updateDirectory = Path.Combine(applicationPaths.ApplicationDataDirectory, "Updates");
+            var updateDirectory = Path.Combine(applicationPaths.ApplicationDataDirectory, DownloadDirectoryName);
             Directory.CreateDirectory(updateDirectory);
             fileSecurity.RestrictDirectoryToCurrentUser(updateDirectory);
             var packageExtension = SafePackageExtension(offer.ArtifactUri);

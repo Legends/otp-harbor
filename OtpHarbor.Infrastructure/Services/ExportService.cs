@@ -8,6 +8,7 @@ using NSec.Cryptography;
 using TOTP.Core.Common;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Services.Models;
 using TOTP.Core.Validation;
 using TOTP.Infrastructure.Common;
 using TOTP.Infrastructure.Parser;
@@ -219,17 +220,27 @@ public sealed class ExportService : IExportService
         }
     }
 
-    public async Task<Result<List<Account>>> ImportFromStreamAsync(
-        Stream source,
-        string fileName,
-        string? password = null,
+    public Task<Result<List<Account>>> ImportFromStreamAsync(Stream source, string fileName,
+        string? password = null, CancellationToken cancellationToken = default) =>
+        ImportFromStreamCoreAsync(source, fileName, password, null, cancellationToken);
+
+    public Task<Result<List<Account>>> ImportFromStreamWithFormatSelectionAsync(Stream source, string fileName,
+        Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> chooseFormat,
         CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(chooseFormat);
+        return ImportFromStreamCoreAsync(source, fileName, null, chooseFormat, cancellationToken);
+    }
+
+    private async Task<Result<List<Account>>> ImportFromStreamCoreAsync(Stream source, string fileName, string? password,
+        Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>>? chooseFormat,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         var extension = Path.GetExtension(Path.GetFileName(fileName));
 
-        if (BackupFileExtensions.IsEncryptedBackup(extension))
+        if (chooseFormat is null && BackupFileExtensions.IsEncryptedBackup(extension))
         {
             if (string.IsNullOrWhiteSpace(password))
             {
@@ -241,20 +252,35 @@ public sealed class ExportService : IExportService
             return await ImportFromEncryptedStreamAsync(password, source, cancellationToken);
         }
 
-        if (!TryGetUnencryptedFormat(extension, out var format))
-        {
-            return Result.Fail(new AppError(AppErrorCode.ImportInvalidFile, "Unsupported import file extension."));
-        }
-
         byte[]? fileBytes = null;
         try
         {
             (fileBytes, var length) = await ReadBoundedAsync(source, cancellationToken);
+            if (HasEncryptedBackupHeader(fileBytes.AsSpan(0, length)))
+                return Result.Fail<List<Account>>(new AccountImportReadError(new(0, unsupportedCount: 1) { Format = AccountImportFormat.EncryptedOtpHarborBackup }))
+                    .WithError(new AppError(AppErrorCode.ImportInvalidPayload, "Use the separate OTP Harbor backup restore workflow."));
             var content = StrictUtf8.GetString(fileBytes, 0, length);
-            var imported = DeserializeTokens(content, format);
+            using var dispatcher = new AccountImportDispatcher(content, DeserializeTokens, SplitCsvRows, ValidateImportedAccounts);
+            var formats = await Task.Run(dispatcher.Detect, cancellationToken);
+            if (formats.Count == 0)
+                return Result.Fail<List<Account>>(new AppError(TryGetUnencryptedFormat(extension, out _)
+                    ? AppErrorCode.ImportInvalidPayload : AppErrorCode.ImportInvalidFile, "Unrecognized authenticator export format."));
+            AccountImportFormat? selected = formats[0];
+            if (formats.Count > 1)
+            {
+                if (chooseFormat is null)
+                    return Result.Fail<List<Account>>(new AppError(AppErrorCode.ImportInvalidPayload, "Ambiguous export requires an explicit format selection."));
+                selected = await chooseFormat(formats, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (selected is null) return Result.Fail<List<Account>>(new AccountImportReadCancelled());
+                if (!formats.Contains(selected.Value))
+                    return Result.Fail<List<Account>>(new AppError(AppErrorCode.ImportInvalidPayload, "The selected format is not a recognized candidate."));
+            }
+            var imported = await Task.Run(() => dispatcher.Parse(selected.Value), cancellationToken);
+            if (imported.IsFailed) return imported;
             _logger.LogInformation("Account import file decoded. Format: {Format}; encrypted: {Encrypted}; account count: {AccountCount}.",
-                format, false, imported.Count);
-            return Result.Ok(imported);
+                "content-detected", false, imported.Value.Count);
+            return imported;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -413,6 +439,15 @@ public sealed class ExportService : IExportService
         }
     }
 
+    private static bool HasEncryptedBackupHeader(ReadOnlySpan<byte> data)
+    {
+        if (data.Length < MagicBytes.Length + SaltSize + VaultAesGcm.NonceSize + VaultAesGcm.TagSize
+            || !data.StartsWith(MagicBytes)) return false;
+        foreach (var value in data.Slice(MagicBytes.Length, Math.Min(32, data.Length - MagicBytes.Length)))
+            if (value < 32 && value is not 9 and not 10 and not 13) return true;
+        return false;
+    }
+
     private sealed class ImportSizeLimitExceededException : Exception;
 
     private static string SerializeTokens(IEnumerable<Account> accounts, ExportFileFormat format)
@@ -436,6 +471,11 @@ public sealed class ExportService : IExportService
             ExportFileFormat.Csv => ParseCsv(content),
             _ => JsonSerializer.Deserialize<List<Account>>(content) ?? []
         };
+        return ValidateImportedAccounts(parsed);
+    }
+
+    private static List<Account> ValidateImportedAccounts(List<Account> parsed)
+    {
         if (parsed.Any(account => account is null
                 || !SecretValidation.IsValidBase32Secret(account.Secret)
                 || !TotpConfigurationPolicy.IsSupported(account.Algorithm, account.Digits)

@@ -722,6 +722,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplyLockedUiState()
     {
+        NativeFilePicker.CancelPendingImports();
         var availabilityRevision = InvalidateQuickUnlockAvailability();
         CaptureResumeState();
         AccountList.Clear();
@@ -868,6 +869,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public async Task CloseSettingsAsync()
     {
         if (!IsShellVisible || !IsSettingsVisible) return;
+        NativeFilePicker.CancelPendingImports();
         AuthorizationSettings.ClearSensitiveInputs();
         if (_accountsChangedWhileSettingsOpen)
         {

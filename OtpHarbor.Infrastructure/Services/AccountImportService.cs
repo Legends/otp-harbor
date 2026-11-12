@@ -141,12 +141,22 @@ public sealed class AccountImportService(IAccountManager accountManager,
             if (currentResult.IsFailed)
                 return Result.Ok(new AccountImportOutcome(AccountImportStatus.ExistingAccountsUnavailable));
 
-            var matches = validated
-                .Select((account, index) => (
-                    ImportIndex: index,
-                    Incoming: account,
-                    Existing: FindMatch(account, currentResult.Value)))
-                .ToList();
+            var externalReview = requestedStrategy is null && !profileAuthoritative;
+            var matches = await Task.Run(() =>
+            {
+                var candidates = currentResult.Value.ToList();
+                var values = new List<(int ImportIndex, Account Incoming, Account? Existing)>();
+                for (var index = 0; index < validated.Count; index++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var incoming = validated[index];
+                    values.Add((index, incoming, FindMatch(incoming, candidates, externalReview)));
+                    if (externalReview) candidates.Add(incoming);
+                }
+                return values;
+            }, cancellationToken);
+            var incomingIndexes = new Dictionary<Account, int>(ReferenceEqualityComparer.Instance);
+            for (var index = 0; index < validated.Count; index++) incomingIndexes.Add(validated[index], index);
             var unchanged = matches.Count(value =>
                 value.Existing is not null
                 && SamePayload(value.Existing, value.Incoming, profileAuthoritative));
@@ -169,6 +179,23 @@ public sealed class AccountImportService(IAccountManager accountManager,
                     value.Existing.Digits != value.Incoming.Digits))
                 .ToList();
             var newCount = validated.Count - unchanged - changedConflicts.Count;
+            var inputIds = new HashSet<Guid>();
+            var inputIdentities = new HashSet<(string Issuer, string Account)>();
+            var inputDuplicateCount = 0;
+            foreach (var match in matches)
+            {
+                var identity = (match.Incoming.Issuer.ToUpperInvariant(), (match.Incoming.AccountName ?? string.Empty).ToUpperInvariant());
+                var duplicateId = !inputIds.Add(match.Incoming.ID);
+                var duplicateIdentity = !inputIdentities.Add(identity);
+                if (duplicateId || duplicateIdentity)
+                {
+                    inputDuplicateCount++;
+                }
+            }
+            if (inputDuplicateCount > 0 && !externalReview)
+                newCount = (await Task.Run(() => BuildImportPlan(validated, currentResult.Value,
+                    requestedStrategy ?? ImportConflictStrategy.SkipExisting, null, profileAuthoritative, cancellationToken),
+                    cancellationToken)).Added;
             var conflicts = unchanged + changedConflicts.Count;
             if (requestedStrategy == ImportConflictStrategy.SkipExisting
                 && conflicts == validated.Count)
@@ -184,6 +211,13 @@ public sealed class AccountImportService(IAccountManager accountManager,
                 requestedStrategy ?? ImportConflictStrategy.SkipExisting)
             {
                 NewCount = newCount,
+                InputDuplicateCount = inputDuplicateCount,
+                Entries = matches.Select(match => PreviewEntry(match.Incoming) with
+                {
+                    ImportIndex = match.ImportIndex,
+                    Existing = match.Existing is null ? null : PreviewEntry(match.Existing),
+                    ExistingIsFromExport = match.Existing is not null && incomingIndexes.ContainsKey(match.Existing)
+                }).ToArray(),
                 UnchangedCount = unchanged,
                 ChangedConflicts = changedConflicts
             };
@@ -205,7 +239,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
                 var resolution = await resolveAsync!(preview, cancellationToken);
                 if (resolution is null)
                     return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
-                if (!TryValidateResolution(changedConflicts, resolution, out perAccountResolution))
+                if (!TryValidateResolution(changedConflicts, resolution, out perAccountResolution)
+                    || profileAuthoritative && perAccountResolution.Values.Contains(AccountImportConflictAction.KeepBoth))
                     return Result.Fail<AccountImportOutcome>("The import conflict resolution is invalid.");
 
                 conflictStrategy = ImportConflictStrategy.SkipExisting;
@@ -222,17 +257,26 @@ public sealed class AccountImportService(IAccountManager accountManager,
                     Skipped: validated.Count));
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             var backup = await accountManager.BackupOtpEntriesStorageFileAsync();
             if (backup.IsFailed)
                 return Result.Ok(new AccountImportOutcome(AccountImportStatus.RecoveryBackupFailed));
 
+            IReadOnlyDictionary<int, ReviewedTarget>? reviewedTargets = null;
+            if (externalReview)
+            {
+                reviewedTargets = matches.ToDictionary(match => match.ImportIndex,
+                    match => new ReviewedTarget(match.Existing?.ID,
+                        match.Existing is not null && incomingIndexes.TryGetValue(match.Existing, out var index) ? index : null));
+            }
             return await ApplyAsync(
                 validated,
                 currentResult.Value,
                 conflictStrategy,
                 perAccountResolution,
                 profileAuthoritative,
-                cancellationToken);
+                cancellationToken,
+                reviewedTargets);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -250,7 +294,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
         ImportConflictStrategy strategy,
         IReadOnlyDictionary<int, AccountImportConflictAction>? perAccountResolution,
         bool profileAuthoritative,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<int, ReviewedTarget>? reviewedTargets = null)
     {
         var plan = await Task.Run(
             () => BuildImportPlan(
@@ -259,7 +304,8 @@ public sealed class AccountImportService(IAccountManager accountManager,
                 strategy,
                 perAccountResolution,
                 profileAuthoritative,
-                cancellationToken),
+                cancellationToken,
+                reviewedTargets),
             cancellationToken).ConfigureAwait(false);
 
         if (plan.Added == 0 && plan.Replaced == 0)
@@ -285,9 +331,11 @@ public sealed class AccountImportService(IAccountManager accountManager,
         ImportConflictStrategy strategy,
         IReadOnlyDictionary<int, AccountImportConflictAction>? perAccountResolution,
         bool profileAuthoritative,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<int, ReviewedTarget>? reviewedTargets = null)
     {
         var working = existing.ToList();
+        var resolvedTargets = new Dictionary<int, Account>();
         var addedCount = 0;
         var replacedCount = 0;
         var skippedCount = 0;
@@ -295,19 +343,31 @@ public sealed class AccountImportService(IAccountManager accountManager,
         {
             var incoming = imported[importIndex];
             cancellationToken.ThrowIfCancellationRequested();
-            var match = FindMatch(incoming, working);
+            Account? match;
+            if (reviewedTargets is not null && reviewedTargets.TryGetValue(importIndex, out var target))
+            {
+                var targetId = target.ImportIndex is { } priorIndex
+                    ? resolvedTargets.GetValueOrDefault(priorIndex)?.ID
+                    : target.AccountId;
+                match = targetId is { } id ? working.FirstOrDefault(account => account.ID == id) : null;
+            }
+            else match = FindMatch(incoming, working, !profileAuthoritative && perAccountResolution is not null);
             var resolvedAction = perAccountResolution is not null
                 && perAccountResolution.TryGetValue(importIndex, out var action)
                     ? action
                     : (AccountImportConflictAction?)null;
-            if (match is not null && (SamePayload(match, incoming, profileAuthoritative)
-                                      || resolvedAction == AccountImportConflictAction.Skip
+            if (resolvedAction == AccountImportConflictAction.Skip
+                || match is not null && (SamePayload(match, incoming, profileAuthoritative)
                                       || (resolvedAction is null
                                           && strategy == ImportConflictStrategy.SkipExisting)))
             {
+                if (match is not null) resolvedTargets[importIndex] = match;
                 skippedCount++;
                 continue;
             }
+
+            if (resolvedAction == AccountImportConflictAction.Replace && match is null)
+                throw new InvalidOperationException("The reviewed import target is unavailable.");
 
             if (match is not null
                 && (resolvedAction == AccountImportConflictAction.Replace
@@ -324,11 +384,13 @@ public sealed class AccountImportService(IAccountManager accountManager,
                     algorithm: incoming.Algorithm, digits: incoming.Digits);
                 working.Remove(match);
                 working.Add(replacement);
+                resolvedTargets[importIndex] = replacement;
                 replacedCount++;
             }
             else
             {
-                var added = match is null
+                var identityCollision = match ?? FindMatch(incoming, working);
+                var added = identityCollision is null
                     ? new Account(
                         working.Any(value => value.ID == incoming.ID) ? Guid.NewGuid() : incoming.ID,
                         incoming.Issuer,
@@ -340,6 +402,7 @@ public sealed class AccountImportService(IAccountManager accountManager,
                         algorithm: incoming.Algorithm, digits: incoming.Digits)
                     : CreateKeepBoth(incoming, working);
                 working.Add(added);
+                resolvedTargets[importIndex] = added;
                 addedCount++;
             }
         }
@@ -387,14 +450,18 @@ public sealed class AccountImportService(IAccountManager accountManager,
         return true;
     }
 
-    private static Account? FindMatch(Account incoming, IEnumerable<Account> accounts) =>
+    private static AccountImportEntryPreview PreviewEntry(Account account) =>
+        new(account.Issuer, account.AccountName, account.Algorithm, account.Digits, account.PeriodSeconds);
+
+    private static Account? FindMatch(Account incoming, IEnumerable<Account> accounts, bool includeSecret = false) =>
         accounts.FirstOrDefault(account => account.ID == incoming.ID)
         ?? accounts.FirstOrDefault(account =>
             string.Equals(account.Issuer.Trim(), incoming.Issuer.Trim(), StringComparison.OrdinalIgnoreCase)
             && string.Equals(
                 (account.AccountName ?? string.Empty).Trim(),
                 (incoming.AccountName ?? string.Empty).Trim(),
-                StringComparison.OrdinalIgnoreCase));
+                StringComparison.OrdinalIgnoreCase))
+        ?? (includeSecret ? accounts.FirstOrDefault(account => SameSecret(account, incoming)) : null);
 
     private static bool SamePayload(
         Account left,
@@ -509,4 +576,6 @@ public sealed class AccountImportService(IAccountManager accountManager,
         int Added,
         int Replaced,
         int Skipped);
+
+    private sealed record ReviewedTarget(Guid? AccountId, int? ImportIndex);
 }

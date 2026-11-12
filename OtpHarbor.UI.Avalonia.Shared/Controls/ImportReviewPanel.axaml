@@ -1,0 +1,169 @@
+<UserControl
+    x:Class="TOTP.Avalonia.Shared.Controls.ImportReviewPanel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:review="using:TOTP.Avalonia.Shared.Import"
+    xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:automation="using:Avalonia.Automation"
+    x:DataType="review:ImportReviewViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style>
+        <Style Selector="TextBlock.review-secondary"><Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}" /></Style>
+        <Style Selector="Border.review-card">
+            <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+        <Style Selector="TextBlock.review-count"><Setter Property="FontSize" Value="24" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
+        <Style Selector="TextBlock.review-metric"><Setter Property="FontSize" Value="12" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="TextAlignment" Value="Center" /></Style>
+        <Style Selector="Button"><Setter Property="MinHeight" Value="44" /><Setter Property="FontSize" Value="14" /><Setter Property="HorizontalContentAlignment" Value="Center" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+        <Style Selector="Button.review-category"><Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" /></Style>
+        <Style Selector="Button.review-category.selected"><Setter Property="Background" Value="{DynamicResource BrushAccent}" /><Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}" /></Style>
+        <Style Selector="ComboBox"><Setter Property="MinHeight" Value="44" /><Setter Property="HorizontalAlignment" Value="Stretch" /></Style>
+        <Style Selector="ListBox"><Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="0" /></Style>
+        <Style Selector="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="0,0,0,8" /></Style>
+
+
+        <Style Selector="UniformGrid.review-metrics"><Setter Property="Columns" Value="6" /></Style>
+        <Style Selector="ListBox.review-cards"><Setter Property="IsVisible" Value="False" /></Style>
+        <Style Selector="ComboBox.review-mobile-filter"><Setter Property="IsVisible" Value="False" /></Style>
+
+        <Style Selector="Button.review-import"><Setter Property="MinWidth" Value="180" /></Style>
+        <ContainerQuery Name="ImportReviewWidth" Query="max-width: 899">
+
+
+            <Style Selector="Border.review-sidebar"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="Grid.review-table-header"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="ListBox.review-table"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="ListBox.review-cards"><Setter Property="IsVisible" Value="True" /></Style>
+            <Style Selector="ComboBox.review-mobile-filter"><Setter Property="IsVisible" Value="True" /></Style>
+
+            <Style Selector="Button.review-cancel"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="Button.review-import"><Setter Property="MinWidth" Value="0" /></Style>
+            <Style Selector="TextBlock.review-description"><Setter Property="IsVisible" Value="False" /></Style>
+        </ContainerQuery>
+        <ContainerQuery Name="ImportReviewWidth" Query="max-width: 499">
+            <Style Selector="UniformGrid.review-metrics"><Setter Property="Columns" Value="3" /></Style>
+        </ContainerQuery>
+        <ContainerQuery Name="ImportReviewHeight" Query="max-height: 600">
+            <Style Selector="Grid.review-stepper"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="Grid.review-source"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="TextBlock.review-breadcrumb"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="TextBlock.review-description"><Setter Property="IsVisible" Value="False" /></Style>
+        </ContainerQuery>
+    </UserControl.Styles>
+    <Grid Container.Name="ImportReviewHeight" Container.Sizing="Height">
+    <Grid Container.Name="ImportReviewWidth" Container.Sizing="Width" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="12" Margin="16">
+        <StackPanel Spacing="6">
+            <TextBlock Classes="review-secondary review-breadcrumb" FontSize="12" Text="{Binding Breadcrumb}" />
+            <TextBlock FontSize="24" FontWeight="SemiBold" Text="{Binding Title}" />
+            <TextBlock Classes="review-secondary review-description" Text="{Binding Description}" />
+            <Grid Classes="review-stepper" ColumnDefinitions="*,*,*,*" RowDefinitions="28,Auto" RowSpacing="5" Margin="0,6,0,0">
+                <Border Grid.ColumnSpan="4" Height="2" Margin="24,0" VerticalAlignment="Center" Background="{DynamicResource BrushBorder}" />
+                <Border Width="28" Height="28" CornerRadius="14" Background="{DynamicResource BrushAccent}"><TextBlock Text="✓" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource BrushOnAccent}" /></Border>
+                <Border Grid.Column="1" Width="28" Height="28" CornerRadius="14" Background="{DynamicResource BrushAccent}"><TextBlock Text="✓" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource BrushOnAccent}" /></Border>
+                <Border Grid.Column="2" Width="28" Height="28" CornerRadius="14" Background="{DynamicResource BrushAccent}"><TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource BrushOnAccent}" /></Border>
+                <Border Grid.Column="3" Width="28" Height="28" CornerRadius="14" Background="{DynamicResource BrushSurfaceAlternate}"><TextBlock Text="4" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource BrushTextSecondary}" /></Border>
+                <TextBlock Grid.Row="1" FontSize="12" TextAlignment="Center" Text="{Binding StepSourceText}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" FontSize="12" TextAlignment="Center" Text="{Binding StepExportText}" />
+                <TextBlock Grid.Row="1" Grid.Column="2" FontSize="12" TextAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource BrushAccent}" Text="{Binding StepReviewText}" />
+                <TextBlock Grid.Row="1" Grid.Column="3" FontSize="12" TextAlignment="Center" Text="{Binding StepImportText}" />
+            </Grid>
+        </StackPanel>
+        <Border Grid.Row="1" Classes="review-card">
+            <StackPanel Spacing="10">
+                <Grid Classes="review-source" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <controls:SymbolIcon Kind="Import" IconSize="26" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1"><TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding SummaryTitle}" />
+                        <TextBlock Classes="review-secondary" FontSize="12" Text="{Binding SourceAndFile}" MaxLines="1" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FileName}" />
+                    </StackPanel>
+                </Grid>
+                <UniformGrid Classes="review-metrics">
+                    <StackPanel Margin="3"><TextBlock Classes="review-count" Text="{Binding TotalCount}" /><TextBlock Classes="review-metric" Text="{Binding TotalText}" /></StackPanel>
+                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushSuccess}" Text="{Binding ReadyCount}" /><TextBlock Classes="review-metric" Text="{Binding ReadyText}" /></StackPanel>
+                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushWarning}" Text="{Binding ConflictCount}" /><TextBlock Classes="review-metric" Text="{Binding ConflictsText}" /></StackPanel>
+                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushAccent}" Text="{Binding DuplicateCount}" /><TextBlock Classes="review-metric" Text="{Binding DuplicatesText}" /></StackPanel>
+                    <StackPanel Margin="3"><TextBlock Classes="review-count" Text="{Binding UnsupportedCount}" /><TextBlock Classes="review-metric" Text="{Binding UnsupportedText}" /></StackPanel>
+                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushDanger}" Text="{Binding InvalidCount}" /><TextBlock Classes="review-metric" Text="{Binding InvalidText}" /></StackPanel>
+                </UniformGrid>
+            </StackPanel>
+        </Border>
+        <StackPanel Grid.Row="2" Spacing="6">
+            <TextBlock Classes="review-secondary review-description" FontSize="12" Text="{Binding LocalText}" />
+            <TextBlock FontSize="12" Foreground="{DynamicResource BrushWarning}" IsVisible="{Binding HasExcluded}" Text="{Binding ExcludedText}" />
+        </StackPanel>
+        <Grid Grid.Row="3" Classes="review-body" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <Border Classes="review-card review-sidebar" Width="160" Padding="8">
+                <ItemsControl ItemsSource="{Binding Categories}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="review:ImportReviewViewModel+CategoryOption">
+                            <Button Classes="review-category" Classes.selected="{Binding IsSelected}" HorizontalAlignment="Stretch" Margin="0,0,0,6" Command="{Binding Command}" CommandParameter="{Binding}" automation:AutomationProperties.Name="{Binding Label}"><TextBlock Text="{Binding Label}" TextAlignment="Center" /></Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+            <Grid Grid.Column="1" Classes="review-content" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBox PlaceholderText="{Binding SearchText}" Text="{Binding Search, Mode=TwoWay}" MinHeight="44" automation:AutomationProperties.Name="{Binding SearchText}" />
+                    <ComboBox Grid.Column="1" Classes="review-mobile-filter" MaxWidth="150" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding FilterText}">
+                        <ComboBox.ItemTemplate><DataTemplate x:DataType="review:ImportReviewViewModel+CategoryOption"><TextBlock FontSize="12" Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+                <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <CheckBox IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" Content="{Binding SelectionText}" />
+                    <ComboBox Grid.Column="1" IsEnabled="{Binding HasSelection}" ItemsSource="{Binding Actions}" SelectedItem="{Binding BulkAction, Mode=TwoWay}" PlaceholderText="{Binding ApplyText}" automation:AutomationProperties.Name="{Binding ApplyText}">
+                        <ComboBox.ItemTemplate><DataTemplate x:DataType="review:ImportReviewViewModel+ActionOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+                <Grid Grid.Row="2" Classes="review-table-header" ColumnDefinitions="32,1.2*,1.2*,1.3*,1.3*,160" ColumnSpacing="10" Margin="12,0">
+                    <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="{Binding AccountText}" />
+                    <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="{Binding IssueText}" />
+                    <TextBlock Grid.Column="3" FontWeight="SemiBold" Text="{Binding ExistingText}" />
+                    <TextBlock Grid.Column="4" FontWeight="SemiBold" Text="{Binding IncomingText}" />
+                    <TextBlock Grid.Column="5" FontWeight="SemiBold" Text="{Binding ActionText}" />
+                </Grid>
+                <TextBlock Grid.Row="3" Classes="review-secondary" IsVisible="{Binding HasNoResults}" Text="{Binding NoResultsText}" Margin="12" />
+                <Border Grid.Row="3" Classes="review-card" VerticalAlignment="Top" IsVisible="{Binding ShowExcludedDetails}">
+                    <TextBlock Foreground="{DynamicResource BrushWarning}" Text="{Binding ExcludedText}" />
+                </Border>
+                <ListBox Grid.Row="3" Classes="review-table" ItemsSource="{Binding VisibleRows}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="review:ImportReviewViewModel+ReviewRow">
+                            <Border Classes="review-card">
+                                <Grid ColumnDefinitions="32,1.2*,1.2*,1.3*,1.3*,160" ColumnSpacing="10">
+                                    <CheckBox IsVisible="{Binding IsConflict}" IsChecked="{Binding IsSelected, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding Identity}" />
+                                    <StackPanel Grid.Column="1" Spacing="4"><TextBlock FontWeight="SemiBold" Text="{Binding Issuer}" /><TextBlock Classes="review-secondary" FontSize="12" Text="{Binding AccountName}" /></StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4"><TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushAccent}" Text="{Binding IssueText}" /><TextBlock Classes="review-secondary" FontSize="12" Text="{Binding ChangedFieldsText}" /></StackPanel>
+                                    <TextBlock Grid.Column="3" FontSize="12" Text="{Binding ExistingParameters}" />
+                                    <TextBlock Grid.Column="4" FontSize="12" Text="{Binding IncomingParameters}" />
+                                    <StackPanel Grid.Column="5" Spacing="4"><TextBlock Text="{Binding ActionSummary}" IsVisible="{Binding !IsConflict}" />
+                                        <ComboBox IsVisible="{Binding IsConflict}" ItemsSource="{Binding Actions}" SelectedItem="{Binding SelectedAction, Mode=TwoWay}" PlaceholderText="{Binding ActionText}" automation:AutomationProperties.Name="{Binding Identity}">
+                                            <ComboBox.ItemTemplate><DataTemplate x:DataType="review:ImportReviewViewModel+ActionOption"><TextBlock FontSize="12" Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <ListBox Grid.Row="3" Classes="review-cards" ItemsSource="{Binding VisibleRows}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="review:ImportReviewViewModel+ReviewRow">
+                            <controls:ImportReviewAccountCard />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Grid>
+        <Grid Grid.Row="4" Classes="review-footer" RowDefinitions="Auto,Auto" RowSpacing="8">
+            <TextBlock FontSize="12" Classes="review-secondary" Text="{Binding ReviewStatus}" />
+            <StackPanel Grid.Row="1" Classes="review-footer-actions" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Classes="review-cancel secondary" Command="{Binding CancelCommand}" Content="{Binding CancelText}" />
+                <Button Classes="secondary" Command="{Binding BackCommand}" Content="{Binding BackText}" />
+                <Button Classes="review-import primary" Command="{Binding ImportCommand}" Content="{Binding ImportText}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+    </Grid>
+</UserControl>

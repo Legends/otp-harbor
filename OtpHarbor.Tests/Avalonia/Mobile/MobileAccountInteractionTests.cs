@@ -937,20 +937,28 @@ public sealed class MobileAccountInteractionTests
         var categoryButtons = categories.Elements(avalonia + "Button").ToArray();
         Assert.Equal(7, categoryButtons.Length);
         Assert.Equal(
-            ["Palette", "ImageStack", "Vault", "BackupRestore", "Import", "Diagnostics", "Help"],
+            ["Palette", "ImageStack", "Vault", "BackupRestore", "Diagnostics", "Help", "Information"],
             categoryButtons.Select(button => button
                 .Descendants()
                 .Single(element => element.Name.LocalName == "SymbolIcon")
                 .Attribute("Kind")?.Value));
         Assert.Equal(
-            "{Binding ShowFaqSettingsCommand}",
+            "{Binding ShowInfoSettingsCommand}",
             categoryButtons[^1].Attribute("Command")?.Value);
         Assert.Equal(
-            "{Binding ShowMiscSettingsCommand}",
+            "{Binding ShowFaqSettingsCommand}",
             categoryButtons[^2].Attribute("Command")?.Value);
         Assert.Equal(
-            "{Binding ShowImportExportSettingsCommand}",
+            "{Binding ShowMiscSettingsCommand}",
             categoryButtons[^3].Attribute("Command")?.Value);
+        Assert.Equal(
+            "{Binding ShowBackupSettingsCommand}",
+            categoryButtons[^4].Attribute("Command")?.Value);
+
+        var info = document.Descendants(avalonia + "Border").Single(element =>
+            element.Attribute("IsVisible")?.Value == "{Binding IsInfoSettingsVisible}");
+        var storagePanel = Assert.Single(info.Descendants(), element => element.Name.LocalName == "StorageLocationsPanel");
+        Assert.Equal("{Binding StorageLocations}", storagePanel.Attribute("DataContext")?.Value);
 
         var appearance = document
             .Descendants(avalonia + "Border")
@@ -1134,40 +1142,13 @@ public sealed class MobileAccountInteractionTests
         var imports = document
             .Descendants(avalonia + "StackPanel")
             .Single(element => element.Attribute("IsVisible")?.Value
-                == "{Binding IsImportExportSettingsVisible}");
+                == "{Binding IsBackupSettingsVisible}");
         Assert.Null(imports.Attribute("Classes"));
         Assert.DoesNotContain(
             imports.Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value == "{Binding ImportSectionText}");
-        var googleImportPanel = imports
-            .Descendants(avalonia + "Border")
-            .Single(element => element.Attribute(xaml + "Name")?.Value
-                == "GoogleAuthenticatorImportPanel");
-        var otherFormatsPanel = imports
-            .Descendants(avalonia + "Border")
-            .Single(element => element.Attribute(xaml + "Name")?.Value
-                == "OtherFormatsImportPanel");
-        Assert.All(
-            new[] { googleImportPanel, otherFormatsPanel },
-            panel => Assert.Equal("1", panel.Attribute("BorderThickness")?.Value));
-        var importButtons = new[]
-        {
-            googleImportPanel.Descendants(avalonia + "Button").Single(button =>
-                button.Attribute(xaml + "Name")?.Value == "GoogleAuthenticatorImportButton"),
-            otherFormatsPanel.Descendants(avalonia + "Button").Single(button =>
-                button.Attribute(xaml + "Name")?.Value == "OtherFormatsImportButton")
-        };
-        Assert.All(importButtons, button =>
-        {
-            Assert.Equal("wide secondary", button.Attribute("Classes")?.Value);
-            var label = Assert.Single(
-                button.Elements(),
-                element => element.Name.LocalName == "SymbolIconLabel");
-            Assert.Equal("{Binding ImportSectionText}", label.Attribute("Text")?.Value);
-        });
-        Assert.Equal(
-            ["QrCode", "Import"],
-            importButtons.Select(button => button.Elements().Single().Attribute("Kind")?.Value));
+        var migrationPanel = Assert.Single(imports.Descendants(), element => element.Name.LocalName == "AuthenticatorImportPanel");
+        Assert.Equal("{Binding MigrationImport}", migrationPanel.Attribute("DataContext")?.Value);
         var diagnosticExport = Assert.Single(
             misc.Descendants(avalonia + "Button"),
             button => button.Attribute("Command")?.Value == "{Binding ExportDiagnosticLogCommand}");
@@ -1194,19 +1175,7 @@ public sealed class MobileAccountInteractionTests
         Assert.Contains(
             misc.Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value == "{Binding DiagnosticLogSharingNoticeText}");
-        Assert.Equal(
-            [
-                "{Binding ImportFormatAegisText}",
-                "{Binding ImportFormatTwoFasText}",
-                "{Binding ImportFormatOtpAuthText}"
-            ],
-            otherFormatsPanel
-                .Descendants(avalonia + "TextBlock")
-                .Select(text => text.Attribute("Text")?.Value)
-                .Where(value => value?.StartsWith("{Binding ImportFormat", StringComparison.Ordinal) == true));
-        var faqLink = otherFormatsPanel.Descendants(avalonia + "Button").Single(button =>
-            button.Attribute("Command")?.Value == "{Binding ShowImportFormatsFaqCommand}");
-        Assert.Equal("link", faqLink.Attribute("Classes")?.Value);
+
 
         var backup = document
             .Descendants(avalonia + "StackPanel")

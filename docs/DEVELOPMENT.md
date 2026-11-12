@@ -131,7 +131,7 @@ It validates Git and the pinned .NET SDK, checks `origin/master`, permits only a
 
 ### Android device testing
 
-Use [`scripts/testing/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/Install-AndroidDevelopmentBuild.ps1) to build only when inputs changed, select the connected device ABI, install the isolated `.debug` application with `adb install -r`, preserve app data, and relaunch it. See [Android foundation](android/FOUNDATION.md) for platform architecture and [Android release and signing](release/ANDROID.md) for production packaging.
+Use [`scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1) to build only when inputs changed, select the connected device ABI, install the isolated `.debug` application with `adb install -r`, preserve app data, and relaunch it. See [Android foundation](android/FOUNDATION.md) for platform architecture and [Android release and signing](release/ANDROID.md) for production packaging.
 
 ### Linux testing
 
@@ -211,18 +211,25 @@ This catalog covers all 59 version-controlled PowerShell scripts currently maint
 
 ### Test and preview tooling
 
+Testing scripts are grouped under `scripts/testing/Windows`, `Android`, and `Linux`.
+Repository-relative paths are resolved from the script location by the shared
+`Testing.Common.ps1` helper, so callers do not need to change their working directory.
+Shared fixtures remain in `scripts/testing/fixtures`. Run
+`pwsh -File scripts/validation/Test-TestingScriptLayout.ps1` to check syntax and
+references after moving scripts; this check also runs in CI.
+
 | Script | Purpose |
 | --- | --- |
-| [`scripts/testing/Ensure-UbuntuHyperVNetwork.ps1`](../scripts/testing/Ensure-UbuntuHyperVNetwork.ps1) | Creates or repairs the guarded internal Hyper-V switch, host address, static VM adapter, and NAT used by the Ubuntu test VM. Requires elevation. |
-| [`scripts/testing/Generate-BrandAccountFixture.ps1`](../scripts/testing/Generate-BrandAccountFixture.ps1) | Creates deterministic synthetic account fixtures from the display names in a user-supplied `.otphicons` pack, ensuring every generated issuer is resolvable by that same imported pack. |
-| [`scripts/testing/Generate-ProminentPlatformAccountFixture.ps1`](../scripts/testing/Generate-ProminentPlatformAccountFixture.ps1) | Downloads a pinned Tranco ranking and creates deterministic synthetic TOTP account fixtures for large-list and performance testing. |
-| [`scripts/testing/Get-AndroidRuntimeIdentifier.ps1`](../scripts/testing/Get-AndroidRuntimeIdentifier.ps1) | Maps supported device ABIs (`arm64-v8a`, `x86_64`) to the corresponding .NET Android runtime identifier and rejects unsupported ABIs. |
-| [`scripts/testing/Get-LatestIconPackCompatibilityAssets.ps1`](../scripts/testing/Get-LatestIconPackCompatibilityAssets.ps1) | Downloads bounded latest-release Aegis Icons and Simple Icons archives, records versions and SHA-256 values, and exposes paths to CI compatibility tests. |
-| [`scripts/testing/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/Install-AndroidDevelopmentBuild.ps1) | Discovers or connects to a selected Android device, fingerprints build inputs, performs an ABI-specific incremental build or requested clean/fast deploy without rewriting canonical NuGet locks, preserves app data, installs, and relaunches the debug package. |
-| [`scripts/testing/Start-OnboardingPreview.ps1`](../scripts/testing/Start-OnboardingPreview.ps1) | Starts desktop or Android Debug with onboarding forced visible; desktop also supports a Light or Dark preview theme. |
-| [`scripts/testing/Sync-Restore-Run-AvaloniaLinuxVm.ps1`](../scripts/testing/Sync-Restore-Run-AvaloniaLinuxVm.ps1) | Archives the working tree without build/Git data, transfers it by SSH, synchronizes a guarded Ubuntu VM directory, restores, imports the desktop session environment, and runs the app. |
+| [`scripts/testing/Linux/Ensure-UbuntuHyperVNetwork.ps1`](../scripts/testing/Linux/Ensure-UbuntuHyperVNetwork.ps1) | Creates or repairs the guarded internal Hyper-V switch, host address, static VM adapter, and NAT used by the Ubuntu test VM. Requires elevation. |
+| [`scripts/testing/Windows/Generate-BrandAccountFixture.ps1`](../scripts/testing/Windows/Generate-BrandAccountFixture.ps1) | Creates deterministic synthetic account fixtures from the display names in a user-supplied `.otphicons` pack, ensuring every generated issuer is resolvable by that same imported pack. |
+| [`scripts/testing/Windows/Generate-ProminentPlatformAccountFixture.ps1`](../scripts/testing/Windows/Generate-ProminentPlatformAccountFixture.ps1) | Downloads a pinned Tranco ranking and creates deterministic synthetic TOTP account fixtures for large-list and performance testing. |
+| [`scripts/testing/Android/Get-AndroidRuntimeIdentifier.ps1`](../scripts/testing/Android/Get-AndroidRuntimeIdentifier.ps1) | Maps supported device ABIs (`arm64-v8a`, `x86_64`) to the corresponding .NET Android runtime identifier and rejects unsupported ABIs. |
+| [`scripts/testing/Windows/Get-LatestIconPackCompatibilityAssets.ps1`](../scripts/testing/Windows/Get-LatestIconPackCompatibilityAssets.ps1) | Downloads bounded latest-release Aegis Icons and Simple Icons archives, records versions and SHA-256 values, and exposes paths to CI compatibility tests. |
+| [`scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1) | Discovers or connects to a selected Android device, fingerprints build inputs, performs an ABI-specific incremental build or requested clean/fast deploy without rewriting canonical NuGet locks, preserves app data, installs, and relaunches the debug package. |
+| [`scripts/testing/Windows/Start-OnboardingPreview.ps1`](../scripts/testing/Windows/Start-OnboardingPreview.ps1) | Starts desktop or Android Debug with onboarding forced visible; desktop also supports a Light or Dark preview theme. |
+| [`scripts/testing/Linux/Sync-Restore-Run-AvaloniaLinuxVm.ps1`](../scripts/testing/Linux/Sync-Restore-Run-AvaloniaLinuxVm.ps1) | Archives the working tree without build/Git data, transfers it by SSH, synchronizes a guarded Ubuntu VM directory, restores, imports the desktop session environment, and runs the app. |
 
-The testing directory also contains two shell helpers: `configure-ubuntu-hyperv-network.sh` configures the Ubuntu guest's stable network profile, and `run-avalonia-wsl.sh` runs the desktop project under WSL/WSLg.
+The `scripts/testing/Linux` directory also contains two shell helpers: `configure-ubuntu-hyperv-network.sh` configures the Ubuntu guest's stable network profile, and `run-avalonia-wsl.sh` runs the desktop project under WSL/WSLg.
 
 ### Validation tooling
 

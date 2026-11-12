@@ -380,6 +380,9 @@ public partial class MainView : UserControl
         UpdateAccountListConfirmationBackdrop();
     }
 
+    public void UseNativeImportReviewList(Control nativeReviewList) =>
+        ExternalImportReviewPage.UseNativeList(nativeReviewList);
+
     private void NativeAccountListStateChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MobileShellViewModel.IsDeleteConfirmationVisible)

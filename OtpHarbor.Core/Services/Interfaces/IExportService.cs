@@ -4,11 +4,17 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using TOTP.Core.Models;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Core.Services.Interfaces;
 
 public interface IExportService
 {
+    Task<Result<List<Account>>> ImportFromStreamWithFormatSelectionAsync(
+        Stream source, string fileName,
+        Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> chooseFormat,
+        CancellationToken cancellationToken = default);
+
     Task<Result> ExportToEncryptedStreamAsync(
         IEnumerable<Account> accounts,
         string password,

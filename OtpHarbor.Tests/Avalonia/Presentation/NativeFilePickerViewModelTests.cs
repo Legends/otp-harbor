@@ -12,11 +12,117 @@ using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Infrastructure.Services;
+using TOTP.Avalonia.Shared.Import;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class NativeFilePickerViewModelTests
 {
+    [Theory]
+    [InlineData(false, 0)]
+    [InlineData(false, 1)]
+    [InlineData(false, 2)]
+    [InlineData(true, 0)]
+    [InlineData(true, 1)]
+    [InlineData(true, 2)]
+    public async Task ImportAsync_OnlyBackReopensSummary_WhileCancelAndWindowCloseEndImport(bool blocked, int closeAction)
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickImportFileAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TestStorageFile("export.json"));
+        var summary = new AccountImportReadSummary(blocked ? 0 : 1, invalidCount: blocked ? 1 : 0);
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(It.IsAny<Stream>(), "export.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(blocked ? Result.Fail<List<Account>>(new AccountImportReadError(summary))
+                : Result.Ok(new List<Account> { new(Guid.NewGuid(), "Demo", "JBSWY3DPEHPK3PXP", "alice") }).WithSuccess(summary));
+        var accounts = new Mock<IAccountManager>();
+        accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([]));
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ReviewImportAsync(It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .Callback<ImportReviewViewModel, CancellationToken>((review, _) =>
+            {
+                if (closeAction == 0) review.BackCommand.Execute(null);
+                else if (closeAction == 1) review.CancelCommand.Execute(null);
+                // Closing the native window returns no decision and requests no Back navigation.
+            }).ReturnsAsync((AccountImportResolution?)null);
+        using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
+
+        await sut.ImportAsync().WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+
+        dialogs.Verify(value => value.ConfirmImportFileAsync(sut.MigrationImport, It.IsAny<AccountImportReadSummary>(),
+            "export.json", It.IsAny<CancellationToken>()), Times.Exactly(closeAction == 0 ? 2 : 1));
+        dialogs.Verify(value => value.ReviewImportAsync(It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.False(sut.MigrationImport.HasSelectedFile);
+        accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        accounts.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+        if (blocked) accounts.Verify(value => value.GetAllOtpEntriesSortedAsync(), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ImportAsync_WaitsAtFileSummaryWithoutReadingVault_AndClearsOnCancellation(bool cancelDuringParsing)
+    {
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickImportFileAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new TestStorageFile("renamed.csv"));
+        var decoded = Result.Ok(new List<Account> { new(Guid.NewGuid(), "Demo", "JBSWY3DPEHPK3PXP") })
+            .WithSuccess(new AccountImportReadSummary(1) { Format = AccountImportFormat.AegisJson });
+        var parsing = new TaskCompletionSource<Result<List<Account>>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(It.IsAny<Stream>(), "renamed.csv", null, It.IsAny<CancellationToken>()))
+            .Callback(() => reading.TrySetResult()).Returns(cancelDuringParsing ? parsing.Task : Task.FromResult(decoded));
+        var accounts = new Mock<IAccountManager>(MockBehavior.Strict);
+        var dialogs = new Mock<IAvaloniaDialogService>(MockBehavior.Strict);
+        using var model = Create(picker.Object, export.Object, accounts.Object, dialogs.Object, autoReviewFile: false);
+        var importing = model.ImportAsync();
+        await reading.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        if (!cancelDuringParsing)
+        {
+            for (var attempt = 0; attempt < 100 && !model.MigrationImport.HasSelectedFile; attempt++)
+                await Task.Delay(5, TestContext.Current.CancellationToken);
+            Assert.True(model.MigrationImport.HasSelectedFile);
+            Assert.Null(model.MigrationImport.SelectedSource);
+            Assert.Contains("Aegis", model.MigrationImport.DetectedFormatText);
+            dialogs.Verify(value => value.ConfirmImportFileAsync(model.MigrationImport, It.IsAny<AccountImportReadSummary>(), "renamed.csv", It.IsAny<CancellationToken>()), Times.Once);
+        }
+        accounts.VerifyNoOtherCalls();
+        dialogs.VerifyNoOtherCalls();
+        model.CancelPendingImports();
+        parsing.TrySetResult(decoded);
+        await importing;
+        Assert.False(model.MigrationImport.HasSelectedFile);
+        accounts.VerifyNoOtherCalls();
+        dialogs.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ImportAsync_ExcludedOrInvalidExport_OpensBlockedReviewWithoutReadingVault(bool invalid)
+    {
+        var summary = new AccountImportReadSummary(0, invalidCount: invalid ? 1 : 0, nonOtpCount: invalid ? 0 : 1);
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickImportFileAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new TestStorageFile("external.json"));
+        var export = new Mock<IExportService>();
+        export.Setup(value => value.ImportFromStreamAsync(It.IsAny<Stream>(), "external.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invalid ? Result.Fail<List<Account>>(new AccountImportReadError(summary))
+                : Result.Ok(new List<Account>()).WithSuccess(summary));
+        ImportReviewViewModel? reviewed = null;
+        var dialogs = new Mock<IAvaloniaDialogService>();
+        dialogs.Setup(value => value.ReviewImportAsync(It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .Callback<ImportReviewViewModel, CancellationToken>((review, _) => reviewed = review)
+            .ReturnsAsync((AccountImportResolution?)null);
+        var accounts = new Mock<IAccountManager>(MockBehavior.Strict);
+        using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object, localization: Localization("de"));
+        await sut.ImportAsync();
+        Assert.NotNull(reviewed);
+        Assert.Equal("Konflikte prüfen", reviewed.Title);
+        Assert.False(reviewed.CanImport);
+        Assert.Equal(1, reviewed.TotalCount);
+        accounts.VerifyNoOtherCalls();
+    }
+
     [Fact]
     public async Task RecoverOlderVaultAsync_UsesLocalizedPasswordPromptAndConfirmedRecoveryImport()
     {
@@ -520,9 +626,9 @@ public sealed class NativeFilePickerViewModelTests
                 QrPayloadKind.GoogleAuthenticatorMigration,
                 2));
         var qrImport = new Mock<IQrAccountImportService>();
-        qrImport.Setup(value => value.ImportAsync(
+        qrImport.Setup(value => value.ImportWithConflictResolutionAsync(
                 payload,
-                It.IsAny<Func<QrAccountConflict, CancellationToken, Task<QrAccountConflictDecision>>>(),
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.BulkImported,
@@ -850,9 +956,9 @@ public sealed class NativeFilePickerViewModelTests
         accounts.InSequence(sequence).Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
             .ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.ConfirmAsync(
-                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ReviewImportAsync(
+                It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ImportReviewViewModel review, CancellationToken _) => review.CreateResolution());
         var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
         var changed = 0;
         sut.AccountsChanged += (_, _) => changed++;
@@ -865,8 +971,10 @@ public sealed class NativeFilePickerViewModelTests
             batch.Count == 1 && batch.Single().Secret == "JBSWY3DPEHPK3PXP")), Times.Once);
     }
 
-    [Fact]
-    public async Task ImportAsync_WhenEveryAccountExists_ShowsInformationOnlyWithoutImportConfirmation()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    public async Task ImportAsync_WhenEveryAccountExists_OpensDedicatedReviewWithDisabledImport(int nonOtpCount)
     {
         var existing = Enumerable.Range(1, 22)
             .Select(index => new Account(
@@ -881,30 +989,26 @@ public sealed class NativeFilePickerViewModelTests
         var export = new Mock<IExportService>();
         export.Setup(value => value.ImportFromStreamAsync(
                 It.IsAny<Stream>(), "backup.json", null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Ok(existing));
+            .ReturnsAsync(Result.Ok(existing).WithSuccess(new AccountImportReadSummary(existing.Count, nonOtpCount: nonOtpCount)));
         var accounts = new Mock<IAccountManager>();
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(existing));
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.ShowMessageAsync(
-                It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        dialogs.Setup(value => value.ReviewImportAsync(
+                It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountImportResolution?)null);
         using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
 
         await sut.ImportAsync();
 
-        dialogs.Verify(value => value.ShowMessageAsync(
-            It.Is<MessageDialogRequest>(request =>
-                request.Severity == NotificationSeverity.Information
-                && request.CloseText == "OK"
-                && request.Message.Contains("Accounts received: 22", StringComparison.Ordinal)
-                && request.Message.Contains("Existing accounts skipped: 22", StringComparison.Ordinal)
-                && request.Message.Contains("nothing to import", StringComparison.OrdinalIgnoreCase)),
+        dialogs.Verify(value => value.ReviewImportAsync(
+            It.Is<ImportReviewViewModel>(review => review.DuplicateCount == 22
+                && review.UnsupportedCount == nonOtpCount && !review.CanImport),
             It.IsAny<CancellationToken>()), Times.Once);
         dialogs.Verify(value => value.ConfirmAsync(
             It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
-        Assert.Empty(sut.Message);
+        Assert.Contains("cancelled", sut.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -921,7 +1025,7 @@ public sealed class NativeFilePickerViewModelTests
             .Select(index => new Account(
                 Guid.NewGuid(),
                 "Issuer",
-                "JBSWY3DPEHPK3PXP",
+                "JBSWY3DPEHPK3PX" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"[index],
                 $"new-{index}"))
             .ToList();
         var picker = new Mock<IAvaloniaFilePicker>();
@@ -938,18 +1042,15 @@ public sealed class NativeFilePickerViewModelTests
         accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
             .ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.ConfirmAsync(
-                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ReviewImportAsync(
+                It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ImportReviewViewModel review, CancellationToken _) => review.CreateResolution());
         using var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
 
         await sut.ImportAsync();
 
-        dialogs.Verify(value => value.ConfirmAsync(
-            It.Is<ConfirmationDialogRequest>(request =>
-                request.Message.Contains("Existing accounts skipped: 5", StringComparison.Ordinal)
-                && request.Message.Contains("New accounts to import: 12", StringComparison.Ordinal)
-                && !request.Message.Contains("?", StringComparison.Ordinal)),
+        dialogs.Verify(value => value.ReviewImportAsync(
+            It.Is<ImportReviewViewModel>(review => review.ReadyCount == 12 && review.DuplicateCount == 5),
             It.IsAny<CancellationToken>()), Times.Once);
         accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Once);
         accounts.Verify(value => value.CommitImportAsync(It.Is<IReadOnlyCollection<Account>>(batch =>
@@ -980,9 +1081,9 @@ public sealed class NativeFilePickerViewModelTests
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync())
             .ReturnsAsync(Result.Fail("backup unavailable"));
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.ConfirmAsync(
-                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ReviewImportAsync(
+                It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ImportReviewViewModel review, CancellationToken _) => review.CreateResolution());
         var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
 
         await sut.ImportAsync();
@@ -994,7 +1095,7 @@ public sealed class NativeFilePickerViewModelTests
     }
 
     [Fact]
-    public async Task ImportAsync_WithReplaceStrategy_PreservesExistingIdentifier()
+    public async Task ImportAsync_WithPerAccountReplace_PreservesExistingIdentifier()
     {
         var id = Guid.NewGuid();
         var existing = new Account(id, "GitHub", "JBSWY3DPEHPK3PXP", "user");
@@ -1013,11 +1114,15 @@ public sealed class NativeFilePickerViewModelTests
         accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
             .ReturnsAsync(Result.Ok());
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.ConfirmAsync(
-                It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        dialogs.Setup(value => value.ReviewImportAsync(
+                It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ImportReviewViewModel review, CancellationToken _) =>
+            {
+                Assert.False(review.CanImport);
+                Assert.Single(review.Rows, row => row.IsConflict).IsReplace = true;
+                return review.CreateResolution();
+            });
         var sut = Create(picker.Object, export.Object, accounts.Object, dialogs.Object);
-        sut.ConflictStrategy = ImportConflictStrategy.ReplaceExisting;
 
         await sut.ImportAsync();
 
@@ -1196,7 +1301,8 @@ public sealed class NativeFilePickerViewModelTests
         IBrandIconPackService? brandIconPackService = null,
         IAvaloniaLocalizationService? localization = null,
         IAutomaticBackupSnapshotService? automaticBackupSnapshots = null,
-        IAutomaticBackupCoordinator? automaticBackup = null)
+        IAutomaticBackupCoordinator? automaticBackup = null,
+        bool autoReviewFile = true)
     {
         var passwordValidation = new Mock<IPasswordValidationService>();
         passwordValidation.SetupGet(value => value.MinimumLength).Returns(8);
@@ -1210,7 +1316,9 @@ public sealed class NativeFilePickerViewModelTests
             });
             settings = settingsMock.Object;
         }
-        return new NativeFilePickerViewModel(
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(export);
+        TestUtilities.ImportReviewTestActions.BridgeFileSummaryDialog(dialogs);
+        var viewModel = new NativeFilePickerViewModel(
             picker,
             export,
             accounts,
@@ -1226,6 +1334,8 @@ public sealed class NativeFilePickerViewModelTests
             brandIconPackService,
             automaticBackup: automaticBackup,
             automaticBackupSnapshots: automaticBackupSnapshots);
+        if (autoReviewFile) TestUtilities.ImportReviewTestActions.ReviewFirstSelectedFile(viewModel.MigrationImport);
+        return viewModel;
     }
 
     private static IAvaloniaLocalizationService Localization(string culture = "en")

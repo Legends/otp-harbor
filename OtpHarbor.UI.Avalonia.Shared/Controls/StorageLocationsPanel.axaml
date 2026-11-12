@@ -1,0 +1,50 @@
+<UserControl
+    x:Class="TOTP.Avalonia.Shared.Controls.StorageLocationsPanel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation"
+    xmlns:storage="using:TOTP.Avalonia.Shared.Storage"
+    xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    x:DataType="storage:StorageLocationsViewModel">
+        <ItemsControl ItemsSource="{Binding Locations}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="storage:StorageLocationsViewModel+StorageLocationViewModel">
+                    <Border>
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                <controls:SymbolIcon VerticalAlignment="Center" IconSize="16" Kind="Folder" />
+                                <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="{Binding Label}" TextWrapping="Wrap" />
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Border Height="32" Padding="10,4" VerticalAlignment="Center" CornerRadius="5"
+                                        Background="{DynamicResource BrushStoragePathBackground}">
+                                    <SelectableTextBlock VerticalAlignment="Center" FontSize="13"
+                                                         Foreground="{DynamicResource BrushTextSecondary}"
+                                                         Text="{Binding Path}" TextWrapping="NoWrap"
+                                                         TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                         ToolTip.Tip="{Binding Path}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="4">
+                                    <Button Classes="icon" Width="44" Height="44" Padding="0"
+                                            CornerRadius="5" BorderBrush="{DynamicResource BrushBorder}"
+                                            Command="{Binding CopyCommand}"
+                                            ToolTip.Tip="{Binding CopyText}"
+                                            automation:AutomationProperties.Name="{Binding CopyAccessibleName}">
+                                        <controls:SymbolIcon IconSize="18" Kind="Copy" />
+                                    </Button>
+                                    <Button Classes="icon" Width="44" Height="44" Padding="0"
+                                            CornerRadius="5" BorderBrush="{DynamicResource BrushBorder}"
+                                            Command="{Binding OpenFolderCommand}" IsVisible="{Binding CanOpenFolder}"
+                                            ToolTip.Tip="{Binding OpenText}"
+                                            automation:AutomationProperties.Name="{Binding OpenAccessibleName}">
+                                        <controls:SymbolIcon IconSize="18" Kind="Folder" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                            <controls:NotificationBanner IsVisible="{Binding HasStatus}" Text="{Binding StatusText}" Severity="{Binding StatusSeverity}" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+</UserControl>

@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: ./scripts/testing/Get-LatestIconPackCompatibilityAssets.ps1 -OutputDirectory '${{ runner.temp }}/icon-pack-compatibility'
+        run: ./scripts/testing/Windows/Get-LatestIconPackCompatibilityAssets.ps1 -OutputDirectory '${{ runner.temp }}/icon-pack-compatibility'
 
       - name: Run production importer contract tests
         id: compatibility

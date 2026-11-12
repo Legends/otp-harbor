@@ -45,6 +45,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private bool _isImportProgressVisible;
     private string _importProgressText = string.Empty;
     private bool _disposed;
+    private CancellationTokenSource? _fileImportLifetime;
     private string? _lastBackupPath;
     private string? _lastBackupFolder;
     private bool _lastBackupUsesProviderLocation;
@@ -114,6 +115,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _resetBrandIconsCommand = new AsyncCommand(
             ResetBrandIconsAsync,
             () => !_isBusy && _brandIconPackService?.Status.IsInstalled == true);
+        MigrationImport = new TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel(
+            _localization.GetString, _importCommand, _importGoogleQrCommand);
         if (_brandIconPackService is not null)
             _brandIconPackService.CatalogChanged += BrandCatalogChanged;
         if (_automaticBackup is not null)
@@ -122,6 +125,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler? AccountsChanged;
+    public TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel MigrationImport { get; }
 
     public IReadOnlyList<ImportStrategyOption> ConflictStrategies { get; private set; }
 
@@ -524,9 +528,11 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         bool isBackupRestore)
     {
         if (!BeginOperation()) return;
+        using var lifetime = new CancellationTokenSource();
+        _fileImportLifetime = lifetime;
         try
         {
-            await using var file = await pickFile(CancellationToken.None);
+            await using var file = await pickFile(lifetime.Token);
             if (file is null)
             {
                 ShowTransientMessage(
@@ -546,17 +552,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
             BeginImportProgress(AvaloniaStringKeys.ImportingAccounts);
             await Task.Yield();
-            var imported = await ReadImportAsync(file);
+            var imported = await ReadImportAsync(file, isBackupRestore, lifetime.Token);
+            lifetime.Token.ThrowIfCancellationRequested();
             if (imported is null) return;
             var importResult = isBackupRestore
                 ? await _accountImportService.RestoreBackupAsync(
-                    imported,
+                    imported.Value.Accounts,
                     ConflictStrategy,
                     ConfirmImportAsync)
-                : await _accountImportService.ImportAsync(
-                    imported,
-                    ConflictStrategy,
-                    ConfirmImportAsync);
+                : await ReviewExternalFileAsync(imported.Value.Accounts, imported.Value.Summary, file.Name, lifetime.Token);
             if (importResult.IsFailed)
             {
                 SetMessage(
@@ -568,11 +572,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             var outcome = importResult.Value;
             if (IsNothingToImport(outcome))
             {
+                var message = Localized(AvaloniaStringKeys.ImportNothingToImport, outcome.Skipped);
+                if (imported.Value.Summary is { NonOtpCount: > 0 } summary)
+                    message += Environment.NewLine + TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(
+                        _localization.GetString, new AccountImportPreview(imported.Value.Accounts.Count, outcome.Skipped, ConflictStrategy), summary);
                 await _dialogs.ShowMessageAsync(new MessageDialogRequest(
                     Localized(isBackupRestore
                         ? AvaloniaStringKeys.RestoreBackup
                         : AvaloniaStringKeys.ImportAccounts),
-                    Localized(AvaloniaStringKeys.ImportNothingToImport, outcome.Skipped),
+                    message,
                     NotificationSeverity.Information,
                     Localized(AvaloniaStringKeys.Ok)));
             }
@@ -597,13 +605,14 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                     Localized(isBackupRestore
                         ? AvaloniaStringKeys.RestoreBackup
                         : AvaloniaStringKeys.ImportAccounts),
-                    ImportConfirmationMessage(preview),
+                    ImportConfirmationMessage(preview, imported.Value.Summary),
                     NotificationSeverity.Warning,
                     Localized(isBackupRestore
                         ? AvaloniaStringKeys.RestoreBackup
                         : AvaloniaStringKeys.ImportAccounts),
                     Localized(AvaloniaStringKeys.Cancel)), token);
         }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
         catch (Exception)
         {
             SetMessage(
@@ -612,8 +621,37 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         }
         finally
         {
+            if (ReferenceEquals(_fileImportLifetime, lifetime)) _fileImportLifetime = null;
             EndOperation();
         }
+    }
+
+    private async Task<Result<AccountImportOutcome>> ReviewExternalFileAsync(List<Account> accounts,
+        AccountImportReadSummary? summary, string fileName, CancellationToken cancellationToken)
+    {
+        summary ??= new AccountImportReadSummary(accounts.Count);
+        EndImportProgress();
+        while (await _dialogs.ConfirmImportFileAsync(MigrationImport, summary, fileName, cancellationToken))
+        {
+            var backRequested = false;
+            var result = await _accountImportService.ImportWithConflictResolutionAsync(accounts,
+                async (preview, token) =>
+                {
+                    var review = new TOTP.Avalonia.Shared.Import.ImportReviewViewModel(
+                        preview, summary, MigrationImport.GetFormatName(summary.Format), fileName, _localization.GetString);
+                    var resolution = await _dialogs.ReviewImportAsync(review, token);
+                    backRequested = review.BackRequested;
+                    return resolution;
+                }, cancellationToken);
+            if (!backRequested || result.IsFailed || result.Value.Status != AccountImportStatus.Cancelled) return result;
+        }
+        return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
+    }
+
+    public void CancelPendingImports()
+    {
+        _fileImportLifetime?.Cancel();
+        MigrationImport.CancelPendingFile();
     }
 
     public async Task ExportEncryptedAsync()
@@ -848,11 +886,11 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 : Localized(AvaloniaStringKeys.BackupDestinationBeforeExport);
     }
 
-    private async Task<List<Account>?> ReadImportAsync(INativeStorageFile file)
+    private async Task<(List<Account> Accounts, AccountImportReadSummary? Summary)?> ReadImportAsync(INativeStorageFile file, bool isBackupRestore, CancellationToken cancellationToken)
     {
         Result<List<Account>> result;
         var extension = Path.GetExtension(file.Name);
-        if (BackupFileExtensions.IsSupportedBackup(extension))
+        if (isBackupRestore && BackupFileExtensions.IsSupportedBackup(extension))
         {
             Result<List<Account>>? validatedResult = null;
             var password = await _dialogs.PromptForPasswordAsync(new PasswordDialogRequest(
@@ -913,27 +951,55 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         }
         else
         {
-            await using var stream = await file.OpenReadAsync();
-            result = await _exportService.ImportFromStreamAsync(stream, file.Name);
+            await using var stream = await file.OpenReadAsync(cancellationToken);
+            result = await _exportService.ImportFromStreamWithFormatSelectionAsync(stream, file.Name,
+                (formats, token) =>
+                {
+                    EndImportProgress();
+                    return MigrationImport.ChooseDetectedFormatAsync(formats, file.Name, token);
+                }, cancellationToken);
         }
 
         if (result.IsFailed)
         {
+            if (result.Errors.OfType<AccountImportReadCancelled>().Any()) return null;
+            var report = result.Errors.OfType<AccountImportReadError>().FirstOrDefault();
+            if (report is not null)
+                await ReviewBlockedFileAsync(report.Summary, file.Name, cancellationToken);
             SetMessage(
-                Localized(AvaloniaStringKeys.ImportFileInvalid),
+                report is null ? Localized(AvaloniaStringKeys.ImportFileInvalid)
+                    : TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Blocked(_localization.GetString, report.Summary),
                 NotificationSeverity.Error);
             return null;
         }
 
         if (result.Value.Count == 0)
         {
+            var report = result.Successes.OfType<AccountImportReadSummary>().FirstOrDefault();
+            if (report is not null)
+                await ReviewBlockedFileAsync(report, file.Name, cancellationToken);
             SetMessage(
-                Localized(AvaloniaStringKeys.ImportFileEmpty),
+                report?.NonOtpCount > 0
+                    ? TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Blocked(_localization.GetString, report)
+                    : Localized(AvaloniaStringKeys.ImportFileEmpty),
                 NotificationSeverity.Warning);
             return null;
         }
 
-        return result.Value;
+        return (result.Value, result.Successes.OfType<AccountImportReadSummary>().FirstOrDefault());
+    }
+
+    private async Task ReviewBlockedFileAsync(AccountImportReadSummary summary, string fileName, CancellationToken cancellationToken)
+    {
+        EndImportProgress();
+        while (await _dialogs.ConfirmImportFileAsync(MigrationImport, summary, fileName, cancellationToken))
+        {
+            var review = new TOTP.Avalonia.Shared.Import.ImportReviewViewModel(
+                new AccountImportPreview(0, 0, ImportConflictStrategy.SkipExisting), summary,
+                MigrationImport.GetFormatName(summary.Format), fileName, _localization.GetString);
+            await _dialogs.ReviewImportAsync(review, cancellationToken);
+            if (!review.BackRequested) return;
+        }
     }
 
     private string OutcomeMessage(AccountImportOutcome outcome) => outcome.Status switch
@@ -1001,26 +1067,30 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         string.Concat((value ?? string.Empty).Select(character =>
             char.IsControl(character) ? ' ' : character)).Trim();
 
-    private string ImportConfirmationMessage(AccountImportPreview preview)
+    private string ImportConfirmationMessage(AccountImportPreview preview, AccountImportReadSummary? summary = null)
     {
+        var review = preview.Entries.Count > 0 || summary is not null
+            ? Environment.NewLine + Environment.NewLine
+                + TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(_localization.GetString, preview, summary)
+            : string.Empty;
         if (preview.ConflictStrategy != ImportConflictStrategy.SkipExisting)
         {
             return Localized(
                 AvaloniaStringKeys.ImportConfirmationMessage,
                 preview.TotalCount,
                 preview.ConflictCount,
-                StrategyLabel(preview.ConflictStrategy));
+                StrategyLabel(preview.ConflictStrategy)) + review;
         }
 
-        var newAccountCount = preview.TotalCount - preview.ConflictCount;
-        return preview.ConflictCount == 0
+        var newAccountCount = preview.InputDuplicateCount > 0 ? preview.NewCount : preview.TotalCount - preview.ConflictCount;
+        return (preview.ConflictCount == 0
             ? Localized(
                 AvaloniaStringKeys.ImportNewAccountsConfirmation,
                 newAccountCount)
             : Localized(
                 AvaloniaStringKeys.ImportSkipExistingConfirmation,
                 preview.ConflictCount,
-                newAccountCount);
+                newAccountCount)) + review;
     }
 
     private static bool IsNothingToImport(AccountImportOutcome outcome) =>
@@ -1039,6 +1109,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
+        MigrationImport.RefreshLanguage();
         var selectedStrategy = ConflictStrategy;
         ConflictStrategies = CreateConflictStrategies();
         OnPropertyChanged(nameof(ConflictStrategies));
@@ -1055,6 +1126,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         if (_automaticBackup is not null)
             _automaticBackup.StatusChanged -= AutomaticBackupStatusChanged;
         if (_disposed) return;
+        CancelPendingImports();
         _disposed = true;
         EndImportProgress();
         _localization.CultureChanged -= LocalizationCultureChanged;

@@ -10,6 +10,87 @@ public sealed class AvaloniaDialogService(
 {
     private readonly SemaphoreSlim _dialogGate = new(1, 1);
 
+    public async Task<bool> ConfirmImportFileAsync(TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel model,
+        TOTP.Core.Services.Models.AccountImportReadSummary summary, string fileName,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        await _dialogGate.WaitAsync(cancellationToken);
+        try
+        {
+            var owner = windows.GetRequiredDialogOwner();
+            var decision = model.WaitForFileReviewAsync(summary, fileName, cancellationToken);
+            var dialog = new ImportFileSummaryWindow { DataContext = model };
+            dialog.ConfigureForOwner(owner);
+            model.PropertyChanged += StateChanged;
+            dialog.Opened += Opened;
+            using var ownership = windows.RegisterOwnedDialog(dialog);
+            using var activity = activityMonitor.Attach(dialog);
+            using var cancellation = cancellationToken.Register(() => Dispatcher.UIThread.Post(() => dialog.Close()));
+            try
+            {
+                if (!decision.IsCompleted) await dialog.ShowDialog(owner);
+                model.CancelPendingFile();
+                return await decision;
+            }
+            finally
+            {
+                model.CancelPendingFile();
+                model.PropertyChanged -= StateChanged;
+                dialog.Opened -= Opened;
+                dialog.DataContext = null;
+                try { await decision; }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+            }
+            void StateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
+            {
+                if (!model.HasSelectedFile && dialog.IsVisible) dialog.Close();
+            }
+            void Opened(object? sender, EventArgs args)
+            {
+                if (decision.IsCompleted) dialog.Close();
+            }
+        }
+        finally { _dialogGate.Release(); }
+    }
+
+    public async Task<TOTP.Core.Services.Models.AccountImportResolution?> ReviewImportAsync(
+        TOTP.Avalonia.Shared.Import.ImportReviewViewModel review,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(review);
+        await _dialogGate.WaitAsync(cancellationToken);
+        try
+        {
+            var owner = windows.GetRequiredDialogOwner();
+            var dialog = new ImportReviewWindow { DataContext = review };
+            dialog.FitToScreen(owner);
+            TOTP.Core.Services.Models.AccountImportResolution? resolution = null;
+            review.CloseRequested += Close;
+            using var ownership = windows.RegisterOwnedDialog(dialog);
+            using var activity = activityMonitor.Attach(dialog);
+            using var cancellation = cancellationToken.Register(
+                () => Dispatcher.UIThread.Post(() => dialog.Close()));
+            try
+            {
+                await dialog.ShowDialog(owner);
+                cancellationToken.ThrowIfCancellationRequested();
+                return resolution;
+            }
+            finally
+            {
+                review.CloseRequested -= Close;
+                dialog.DataContext = null;
+            }
+            void Close(TOTP.Core.Services.Models.AccountImportResolution? result)
+            {
+                resolution = result;
+                dialog.Close();
+            }
+        }
+        finally { _dialogGate.Release(); }
+    }
+
     public async Task<bool> ConfirmAsync(
         ConfirmationDialogRequest request,
         CancellationToken cancellationToken = default)

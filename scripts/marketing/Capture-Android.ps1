@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if (-not $ConfirmedSyntheticData) { throw 'Inspect visible accounts, notifications and status bar; pass -ConfirmedSyntheticData.' }
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-. (Join-Path $root 'scripts/testing/DevelopmentAccountSnapshot.Common.ps1')
+. (Join-Path $root 'scripts/testing/Windows/DevelopmentAccountSnapshot.Common.ps1')
 $connection = Resolve-AndroidDevice -Device $Device
 Assert-AndroidDebugPackage -Connection $connection
 $foreground = & $connection.Adb -s $connection.Device shell dumpsys activity activities | Select-String 'topResumedActivity' | Select-Object -First 1
