@@ -187,7 +187,7 @@ public sealed class AccountImportService(IAccountManager accountManager,
                 var identity = (match.Incoming.Issuer.ToUpperInvariant(), (match.Incoming.AccountName ?? string.Empty).ToUpperInvariant());
                 var duplicateId = !inputIds.Add(match.Incoming.ID);
                 var duplicateIdentity = !inputIdentities.Add(identity);
-                if (duplicateId || duplicateIdentity)
+                if ((!externalReview && duplicateId) || duplicateIdentity)
                 {
                     inputDuplicateCount++;
                 }
@@ -389,7 +389,7 @@ public sealed class AccountImportService(IAccountManager accountManager,
             }
             else
             {
-                var identityCollision = match ?? FindMatch(incoming, working);
+                var identityCollision = match ?? FindMatch(incoming, working, !profileAuthoritative && perAccountResolution is not null);
                 var added = identityCollision is null
                     ? new Account(
                         working.Any(value => value.ID == incoming.ID) ? Guid.NewGuid() : incoming.ID,
@@ -453,15 +453,14 @@ public sealed class AccountImportService(IAccountManager accountManager,
     private static AccountImportEntryPreview PreviewEntry(Account account) =>
         new(account.Issuer, account.AccountName, account.Algorithm, account.Digits, account.PeriodSeconds);
 
-    private static Account? FindMatch(Account incoming, IEnumerable<Account> accounts, bool includeSecret = false) =>
-        accounts.FirstOrDefault(account => account.ID == incoming.ID)
+    private static Account? FindMatch(Account incoming, IEnumerable<Account> accounts, bool identityOnly = false) =>
+        (identityOnly ? null : accounts.FirstOrDefault(account => account.ID == incoming.ID))
         ?? accounts.FirstOrDefault(account =>
             string.Equals(account.Issuer.Trim(), incoming.Issuer.Trim(), StringComparison.OrdinalIgnoreCase)
             && string.Equals(
                 (account.AccountName ?? string.Empty).Trim(),
                 (incoming.AccountName ?? string.Empty).Trim(),
-                StringComparison.OrdinalIgnoreCase))
-        ?? (includeSecret ? accounts.FirstOrDefault(account => SameSecret(account, incoming)) : null);
+                StringComparison.OrdinalIgnoreCase));
 
     private static bool SamePayload(
         Account left,

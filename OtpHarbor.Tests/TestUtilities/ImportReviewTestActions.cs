@@ -20,6 +20,12 @@ internal static class ImportReviewTestActions
     {
         if (service is not IMocked<IExportService> mocked) return;
         mocked.Mock.Setup(value => value.ImportFromStreamWithFormatSelectionAsync(It.IsAny<Stream>(), It.IsAny<string>(),
+                It.IsAny<Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>>>(),
+                It.IsAny<Func<AccountImportPasswordRequest, CancellationToken, Task<FluentResults.Result<List<TOTP.Core.Models.Account>>>>>(), It.IsAny<CancellationToken>()))
+            .Returns((Stream stream, string name, Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> choose,
+                Func<AccountImportPasswordRequest, CancellationToken, Task<FluentResults.Result<List<TOTP.Core.Models.Account>>>> _, CancellationToken token) =>
+                service.ImportFromStreamWithFormatSelectionAsync(stream, name, choose, token));
+        mocked.Mock.Setup(value => value.ImportFromStreamWithFormatSelectionAsync(It.IsAny<Stream>(), It.IsAny<string>(),
                 It.IsAny<Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>>>(), It.IsAny<CancellationToken>()))
             .Returns((Stream stream, string name, Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> _, CancellationToken token) =>
                 service.ImportFromStreamAsync(stream, name, cancellationToken: token));

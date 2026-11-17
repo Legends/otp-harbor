@@ -42,7 +42,7 @@ public sealed class AvaloniaLocalizationServiceTests
         Assert.Equal("Erneut versuchen", resources[AvaloniaStringKeys.Retry]);
         Assert.Equal("Master-Passwort", resources[AvaloniaStringKeys.MasterPassword]);
         Assert.Equal("Anzeigen", resources[AvaloniaStringKeys.RevealSecret]);
-        Assert.Equal("Sonstiges", resources[AvaloniaStringKeys.Miscellaneous]);
+        Assert.Equal("Support & Diagnose", resources[AvaloniaStringKeys.Miscellaneous]);
         Assert.Equal(
             "Microsoft, Outlook, GitHub usw.",
             resources[AvaloniaStringKeys.IssuerPlaceholder]);
@@ -266,19 +266,19 @@ public sealed class AvaloniaLocalizationServiceTests
     [InlineData(
         "en",
         "This password encrypts your local vault. OTP Harbor cannot reset it if you forget it, so choose one you can remember and keep it private.",
-        "No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.")]
+        "No accounts yet. Add one manually, scan a QR code, or use Settings → Data & backup → Import accounts.")]
     [InlineData(
         "de",
         "Dieses Passwort verschlüsselt Ihren lokalen Tresor. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Wählen Sie daher eines, an das Sie sich erinnern können, und halten Sie es geheim.",
-        "Noch keine Konten vorhanden. Fügen Sie eines manuell hinzu, scannen Sie den QR-Code eines Kontos oder eines Google-Authenticator-Exports oder stellen Sie in den Einstellungen eine verschlüsselte Sicherung wieder her.")]
+        "Noch keine Konten. Fügen Sie eines manuell hinzu, scannen Sie einen QR-Code oder verwenden Sie Einstellungen → Daten & Backup → Konten importieren.")]
     [InlineData(
         "fr",
         "Ce mot de passe chiffre votre coffre-fort local. OTP Harbor ne peut pas le réinitialiser si vous l’oubliez ; choisissez-en donc un dont vous vous souviendrez et gardez-le confidentiel.",
-        "Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.")]
+        "Aucun compte. Ajoutez-en un manuellement, scannez un code QR ou utilisez Paramètres → Données et sauvegarde → Importer des comptes.")]
     [InlineData(
         "es",
         "Esta contraseña cifra tu caja fuerte local. OTP Harbor no puede restablecerla si la olvidas, así que elige una que puedas recordar y mantenla en privado.",
-        "Todavía no hay cuentas. Añade una manualmente, escanea el QR de una cuenta o exportación de Google Authenticator, o restaura una copia de seguridad cifrada desde Ajustes.")]
+        "Aún no hay cuentas. Añada una manualmente, escanee un código QR o use Ajustes → Datos y copias de seguridad → Importar cuentas.")]
     public void Catalog_OnboardingExplainsPasswordSafetyAndFirstAccountOptions(
         string cultureName,
         string expectedSetupHelp,

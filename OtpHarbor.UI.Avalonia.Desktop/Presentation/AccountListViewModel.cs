@@ -1379,6 +1379,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     {
         if (IsBusy || IsEditorVisible || IsGroupEditorVisible) return Task.CompletedTask;
         ClearEditor();
+        IsAdvancedOptionsExpanded = true;
         IsEditorVisible = true;
         return Task.CompletedTask;
     }
@@ -1415,6 +1416,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             EditorDigits = account.Digits;
             EditorIsFavorite = account.IsFavorite;
             RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
+            IsAdvancedOptionsExpanded = true;
             IsEditorVisible = true;
         }
         catch (Exception)

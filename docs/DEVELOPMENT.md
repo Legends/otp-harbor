@@ -220,6 +220,10 @@ references after moving scripts; this check also runs in CI.
 
 | Script | Purpose |
 | --- | --- |
+| [`scripts/testing/Windows/Prepare-StoreUpgradeTestKit.ps1`](../scripts/testing/Windows/Prepare-StoreUpgradeTestKit.ps1) | Publishes a portable Windows x64 Store v2-to-v3 test kit with synthetic accounts and a read-only vault verifier. |
+| [`scripts/testing/Windows/Invoke-StoreUpgradeTest.ps1`](../scripts/testing/Windows/Invoke-StoreUpgradeTest.ps1) | Runs the prepared kit's clean-profile initialization, encrypted v2 baseline capture, or v3 account/rollback verification. |
+| [`scripts/testing/Windows/Invoke-SyntheticV2UpgradeTest.ps1`](../scripts/testing/Windows/Invoke-SyntheticV2UpgradeTest.ps1) | Preserves current app data and seeds a synthetic encrypted v2 vault for migration by the real v3 app, then verifies every account and rollback file. No v2 installer required. |
+| [`scripts/testing/Windows/Test-StoreUpgradeTestKit.ps1`](../scripts/testing/Windows/Test-StoreUpgradeTestKit.ps1) | Runs synthetic verifier/migration regressions and script safety checks without accessing installed app data. |
 | [`scripts/testing/Linux/Ensure-UbuntuHyperVNetwork.ps1`](../scripts/testing/Linux/Ensure-UbuntuHyperVNetwork.ps1) | Creates or repairs the guarded internal Hyper-V switch, host address, static VM adapter, and NAT used by the Ubuntu test VM. Requires elevation. |
 | [`scripts/testing/Windows/Generate-BrandAccountFixture.ps1`](../scripts/testing/Windows/Generate-BrandAccountFixture.ps1) | Creates deterministic synthetic account fixtures from the display names in a user-supplied `.otphicons` pack, ensuring every generated issuer is resolvable by that same imported pack. |
 | [`scripts/testing/Windows/Generate-ProminentPlatformAccountFixture.ps1`](../scripts/testing/Windows/Generate-ProminentPlatformAccountFixture.ps1) | Downloads a pinned Tranco ranking and creates deterministic synthetic TOTP account fixtures for large-list and performance testing. |

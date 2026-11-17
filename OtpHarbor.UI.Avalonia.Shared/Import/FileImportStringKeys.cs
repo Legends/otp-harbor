@@ -4,6 +4,12 @@ namespace TOTP.Avalonia.Shared.Import;
 
 public static class FileImportStringKeys
 {
+    public const string NoActiveAccounts = "FileImportNoActiveAccounts";
+    public const string BackupPasswordTitle = "FileImportBackupPasswordTitle";
+    public const string BackupPasswordHelp = "FileImportBackupPasswordHelp";
+    public const string SnapshotPasswordHelp = "FileImportSnapshotPasswordHelp";
+    public const string UnlockBackup = "FileImportUnlockBackup";
+    public const string BackupUnlockFailed = "FileImportBackupUnlockFailed";
     public const string FileTitle = "FileImportFileTitle";
     public const string AutoDetection = "FileImportAutoDetection";
     public const string SupportedFormats = "FileImportSupportedFormats";
@@ -21,5 +27,5 @@ public static class FileImportStringKeys
     public const string UseFormat = "FileImportUseFormat";
     public const string AllFiles = "FileImportAllFiles";
     public static string Format(AccountImportFormat format) => "FileImportFormat" + format;
-    public static IReadOnlyList<string> All { get; } = [ AllFiles, AmbiguousFormat, ChooseFormat, UseFormat, FileTitle, AutoDetection, SupportedFormats, HelpTitle, HelpDescription, OptionalSource, DetectedFormat, TotalEntries, ValidEntries, AttentionEntries, ReviewEntries, ClearFile, .. Enum.GetValues<AccountImportFormat>().Select(Format) ];
+    public static IReadOnlyList<string> All { get; } = [ NoActiveAccounts, BackupPasswordTitle, BackupPasswordHelp, SnapshotPasswordHelp, UnlockBackup, BackupUnlockFailed, AllFiles, AmbiguousFormat, ChooseFormat, UseFormat, FileTitle, AutoDetection, SupportedFormats, HelpTitle, HelpDescription, OptionalSource, DetectedFormat, TotalEntries, ValidEntries, AttentionEntries, ReviewEntries, ClearFile, .. Enum.GetValues<AccountImportFormat>().Select(Format) ];
 }

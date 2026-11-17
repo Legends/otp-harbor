@@ -54,6 +54,7 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IMobileDocumentService, AndroidDocumentService>();
         services.AddSingleton<IDiagnosticLogEmailService, AndroidDiagnosticLogEmailService>();
         services.AddSingleton<AndroidBrowserLauncher>();
+        services.AddSingleton<AndroidAppShareService>();
         global::Avalonia.Controls.TopLevel? CurrentTopLevel() =>
             global::Avalonia.Application.Current?.ApplicationLifetime is
                 global::Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime { MainView: { } view }
@@ -117,6 +118,11 @@ internal static class AndroidCompositionRoot
         services.AddSingleton<IAsyncClipboardService>(provider =>
             provider.GetRequiredService<AsyncClipboardService>());
         services.AddSingleton<MobileStringCatalog>();
+        services.AddSingleton<TOTP.Avalonia.Shared.About.AboutViewModel>(provider => new(
+            provider.GetRequiredService<MobileStringCatalog>().Get,
+            () => provider.GetRequiredService<IDiagnosticEnvironmentProvider>().Capture().AppVersion,
+            provider.GetRequiredService<AndroidBrowserLauncher>().OpenAsync,
+            isMobile: true, share: provider.GetRequiredService<AndroidAppShareService>().ShareAsync));
         services.AddSingleton<TOTP.Avalonia.Shared.Storage.StorageLocationsViewModel>(provider => new(
             provider.GetRequiredService<IApplicationStorageLocations>(),
             provider.GetRequiredService<IAsyncClipboardService>(),

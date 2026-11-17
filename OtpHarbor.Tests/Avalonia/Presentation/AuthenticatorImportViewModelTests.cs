@@ -78,7 +78,7 @@ public sealed class AuthenticatorImportViewModelTests
                 Assert.DoesNotContain("Migration", source.Name);
                 Assert.DoesNotContain("Migration", model.Instructions);
                 Assert.False(string.IsNullOrWhiteSpace(model.Instructions));
-                var guideOnly = source.Source is AuthenticatorImportSource.Microsoft or AuthenticatorImportSource.KeePassXC;
+                var guideOnly = source.Source is AuthenticatorImportSource.Microsoft or AuthenticatorImportSource.KeePassXC or AuthenticatorImportSource.Authy;
                 Assert.True(model.HasImportMethod);
                 Assert.True(model.CanImportFile);
                 Assert.True(model.CanImportQr);

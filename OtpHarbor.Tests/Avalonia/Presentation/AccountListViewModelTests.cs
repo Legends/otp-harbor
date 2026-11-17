@@ -23,6 +23,30 @@ namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class AccountListViewModelTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AccountEditor_AdvancedOptionsStartExpandedOnEveryAddOrEdit(bool edit)
+    {
+        var account = new Account(Guid.NewGuid(), "Demo", ValidSecret, "alice");
+        var manager = new Mock<IAccountManager>();
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([account]));
+        using var sut = CreateSut(manager.Object);
+        await sut.LoadAsync();
+        for (var opening = 0; opening < 2; opening++)
+        {
+            sut.SelectedAccount = Assert.Single(sut.Accounts);
+            if (edit) await sut.BeginEditAsync(); else await sut.BeginAddAsync();
+            Assert.True(sut.IsEditorVisible);
+            Assert.True(sut.IsAdvancedOptionsExpanded);
+            sut.IsAdvancedOptionsExpanded = false;
+            await sut.CancelEditAsync();
+            Assert.False(sut.IsEditorVisible);
+        }
+        manager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        manager.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+    }
+
     private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"; // gitleaks:allow - synthetic Base32 fixture
 
     [Fact]
@@ -2292,7 +2316,7 @@ public sealed class AccountListViewModelTests
     }
 
     [Fact]
-    public async Task AdvancedOptions_AfterClosingEditor_StartsCollapsedForNextAction()
+    public async Task AdvancedOptions_AfterClosingEditor_StartsExpandedForNextAction()
     {
         var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "alice");
         var manager = new Mock<IAccountManager>();
@@ -2301,15 +2325,15 @@ public sealed class AccountListViewModelTests
         var sut = CreateSut(manager.Object);
 
         await sut.BeginAddAsync();
-        Assert.False(sut.IsAdvancedOptionsExpanded);
-        sut.IsAdvancedOptionsExpanded = true;
+        Assert.True(sut.IsAdvancedOptionsExpanded);
+        sut.IsAdvancedOptionsExpanded = false;
         await sut.CancelEditAsync();
 
         await sut.LoadAsync();
         sut.SelectedAccount = Assert.Single(sut.Accounts);
         await sut.BeginEditAsync();
 
-        Assert.False(sut.IsAdvancedOptionsExpanded);
+        Assert.True(sut.IsAdvancedOptionsExpanded);
     }
 
     [Fact]

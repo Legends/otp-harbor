@@ -1,0 +1,34 @@
+<UserControl x:Class="TOTP.Avalonia.Shared.Controls.AboutPanel"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:about="using:TOTP.Avalonia.Shared.About" xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:automation="using:Avalonia.Automation" x:DataType="about:AboutViewModel">
+    <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,4">
+            <Image Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png" Width="40" Height="40" Stretch="Uniform" />
+            <TextBlock Grid.Column="1" Text="{Binding AppName}" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Entries}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="about:AboutViewModel+Entry">
+                    <Grid Margin="0,0,0,8">
+                        <Button IsVisible="{Binding IsAction}" MinHeight="44" Padding="10,4" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Command="{Binding Command}" automation:AutomationProperties.Name="{Binding Title}">
+                            <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" VerticalAlignment="Center">
+                                <controls:SymbolIcon Kind="{Binding Icon}" IconSize="20" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="16" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" IsVisible="{Binding HasValue}" Foreground="{DynamicResource BrushTextSecondary}"
+                                    Text="{Binding Value}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </Button>
+                        <Grid IsVisible="{Binding !IsAction}" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Margin="10,4" MinHeight="32">
+                            <controls:SymbolIcon Kind="{Binding Icon}" IconSize="20" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" Foreground="{DynamicResource BrushTextSecondary}" FontSize="12" VerticalAlignment="Center" />
+                            <SelectableTextBlock Grid.Column="2" Text="{Binding Value}" FontSize="16" Foreground="{DynamicResource BrushTextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="{Binding Status}" IsVisible="{Binding HasStatus}" Foreground="{DynamicResource BrushDanger}" TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

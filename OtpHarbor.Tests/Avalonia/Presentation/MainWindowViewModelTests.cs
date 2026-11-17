@@ -155,9 +155,8 @@ public sealed class MainWindowViewModelTests
                 It.IsAny<Stream>(), "backup.json", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(new List<Account> { imported }));
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.ReviewImportAsync(
-                It.IsAny<TOTP.Avalonia.Shared.Import.ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TOTP.Avalonia.Shared.Import.ImportReviewViewModel review, CancellationToken _) => review.CreateResolution());
+        dialogs.Setup(value => value.ConfirmAsync(It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         var validation = new Mock<IPasswordValidationService>();
         validation.SetupGet(value => value.MinimumLength).Returns(8);
         var settings = new Mock<ISettingsService>();

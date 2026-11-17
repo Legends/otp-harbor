@@ -261,7 +261,6 @@ public sealed class MobileShellViewModel :
     private string _editorPeriodMessage = string.Empty;
     private bool _isQrImportResolutionVisible;
     private string _qrImportResolutionText = string.Empty;
-    private TaskCompletionSource<QrAccountImportResolution?>? _qrImportResolutionCompletion;
     private bool _isQrImportResultVisible;
     private string _qrImportResultText = string.Empty;
     private MobileQrImageHandle? _qrImage;
@@ -321,10 +320,12 @@ public sealed class MobileShellViewModel :
         IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
         ILogger<MobileShellViewModel>? logger = null,
         IGitHubIssueReporter? gitHubIssueReporter = null,
-        StorageLocationsViewModel? storageLocations = null)
+        StorageLocationsViewModel? storageLocations = null,
+        TOTP.Avalonia.Shared.About.AboutViewModel? about = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         StorageLocations = storageLocations;
+        About = about;
         _passwordValidation = passwordValidation
             ?? throw new ArgumentNullException(nameof(passwordValidation));
         _accountManager = accountManager ?? throw new ArgumentNullException(nameof(accountManager));
@@ -594,6 +595,13 @@ public sealed class MobileShellViewModel :
         _cancelImportCommand = new MobileAsyncCommand(
             () => ResolveImportConfirmationAsync(false),
             () => IsImportConfirmationVisible);
+        UnlockImportBackupCommand = new MobileAsyncCommand(UnlockImportBackupAsync,
+            () => IsImportBackupPasswordVisible && !_isImportBackupUnlockBusy);
+        CancelImportBackupUnlockCommand = new MobileAsyncCommand(() =>
+        {
+            _importBackupPasswordCompletion?.TrySetResult(Result.Fail<List<Account>>(new AccountImportReadCancelled()));
+            return Task.CompletedTask;
+        }, () => IsImportBackupPasswordVisible);
         _skipAllBackupConflictsCommand = new MobileAsyncCommand(
             () => SelectAllBackupConflictsAsync(AccountImportConflictAction.Skip),
             () => IsBackupConflictResolutionVisible);
@@ -692,6 +700,7 @@ public sealed class MobileShellViewModel :
     public StorageLocationsViewModel? StorageLocations { get; }
     public TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel MigrationImport { get; }
     public string InfoText => Get(StorageLocationStringKeys.Info);
+    public TOTP.Avalonia.Shared.About.AboutViewModel? About { get; }
     public string InfoDescriptionText => Get(StorageLocationStringKeys.InfoDescription);
     public bool IsInfoSettingsVisible => IsSettingsVisible && _settingsCategory == MobileSettingsCategory.Info;
     public ICommand ShowImportFormatsFaqCommand => _showImportFormatsFaqCommand;
@@ -3146,6 +3155,11 @@ public sealed class MobileShellViewModel :
 
     public async Task<bool> TryHandleBackNavigationAsync()
     {
+        if (IsImportBackupPasswordVisible)
+        {
+            _importBackupPasswordCompletion?.TrySetResult(Result.Fail<List<Account>>(new AccountImportReadCancelled()));
+            return true;
+        }
         if (ExternalImportReview is { } review)
         {
             review.Cancel();
@@ -3431,7 +3445,7 @@ public sealed class MobileShellViewModel :
         {
             EndSensitiveOperation(operation);
             payload = null;
-            CompleteQrImportResolution(null);
+            CancelQrImportReview();
             CompleteImportConfirmation(false);
             IsBusy = false;
             TryStartAutomaticBiometricUnlock();
@@ -3974,8 +3988,15 @@ public sealed class MobileShellViewModel :
                 {
                     EndImportProgress();
                     return MigrationImport.ChooseDetectedFormatAsync(formats, document.Name, token);
-                }, operation.Token);
+                }, ShowImportBackupPasswordAsync, operation.Token);
             if (decoded.IsFailed && decoded.Errors.OfType<AccountImportReadCancelled>().Any()) return;
+            if (decoded.IsSuccess && decoded.Value.Count == 0
+                && decoded.Successes.OfType<AccountImportReadSummary>().FirstOrDefault() is { TrashedCount: > 0 })
+            {
+                EndImportProgress();
+                await ShowImportConfirmationAsync(Get(FileImportStringKeys.NoActiveAccounts), operation.Token, acknowledgementOnly: true);
+                return;
+            }
             if (decoded.IsFailed || decoded.Value.Count == 0)
             {
                 var summary = decoded.IsFailed
@@ -3994,13 +4015,12 @@ public sealed class MobileShellViewModel :
 
             EndImportProgress();
             var fileSummary = decoded.Successes.OfType<AccountImportReadSummary>().FirstOrDefault() ?? new AccountImportReadSummary(decoded.Value.Count);
-            var imported = Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
-            while (await MigrationImport.WaitForFileReviewAsync(fileSummary, document.Name, operation.Token))
-            {
-                imported = await _accountImport.ImportWithConflictResolutionAsync(decoded.Value,
-                    (preview, token) => ReviewExternalImportAsync(preview, fileSummary, document.Name, token), operation.Token);
-                if (imported.IsFailed || imported.Value.Status != AccountImportStatus.Cancelled) break;
-            }
+            var duplicatesOnly = false;
+            Task<AccountImportResolution?> ResolveAsync(AccountImportPreview preview, CancellationToken token) =>
+                ResolveExternalImportAsync(preview, fileSummary, document.Name, token, () => duplicatesOnly = true);
+            var imported = fileSummary.Format == AccountImportFormat.EncryptedOtpHarborBackup
+                ? await _accountImport.RestoreBackupWithConflictResolutionAsync(decoded.Value, ResolveAsync, operation.Token)
+                : await _accountImport.ImportWithConflictResolutionAsync(decoded.Value, ResolveAsync, operation.Token);
             if (imported.IsFailed)
             {
                 SetError(MobileStringKeys.AccountFileImportFailed);
@@ -4010,6 +4030,7 @@ public sealed class MobileShellViewModel :
             var outcome = imported.Value;
             if (outcome.Status == AccountImportStatus.Cancelled)
             {
+                if (duplicatesOnly) return;
                 SetNotification(
                     Get(MobileStringKeys.AccountFileImportCancelled),
                     NotificationSeverity.Information);
@@ -4220,15 +4241,13 @@ public sealed class MobileShellViewModel :
 
     public Task ConfirmQrImportResolutionAsync()
     {
-        if (!IsQrImportResolutionVisible) return Task.CompletedTask;
-        CompleteQrImportResolution(new QrAccountImportResolution(
-            QrImportConflicts.Select(value => value.ToResolution()).ToList()));
+        ExternalImportReview?.ImportCommand.Execute(null);
         return Task.CompletedTask;
     }
 
     public Task CancelQrImportResolutionAsync()
     {
-        CompleteQrImportResolution(null);
+        CancelQrImportReview();
         return Task.CompletedTask;
     }
 
@@ -4404,6 +4423,7 @@ public sealed class MobileShellViewModel :
     {
         if (!CanEditAccounts()) return Task.CompletedTask;
         ClearEditor();
+        IsAdvancedOptionsExpanded = true;
         RefreshBrandIconOptions(null);
         IsDeleteConfirmationVisible = false;
         IsEditorVisible = true;
@@ -4442,6 +4462,7 @@ public sealed class MobileShellViewModel :
             EditorIsFavorite = account.IsFavorite;
             RefreshBrandIconOptions(_brandIconPackService?.GetAccountBrandId(account.ID));
             IsDeleteConfirmationVisible = false;
+            IsAdvancedOptionsExpanded = true;
             IsEditorVisible = true;
             CaptureAccountEditorBaseline();
             ClearNotification();
@@ -5040,7 +5061,7 @@ public sealed class MobileShellViewModel :
         Accounts.Clear();
         Groups.Clear();
         _authorization.Lock();
-        CompleteQrImportResolution(null);
+        CancelQrImportReview();
         QrImportResultText = string.Empty;
         IsQrImportResultVisible = false;
         CompleteImportConfirmation(false);
@@ -6172,59 +6193,18 @@ public sealed class MobileShellViewModel :
         QrAccountImportPreview preview,
         CancellationToken cancellationToken)
     {
-        var completion = new TaskCompletionSource<QrAccountImportResolution?>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        _qrImportResolutionCompletion = completion;
-        ClearQrImportConflicts();
-        foreach (var conflict in preview.ChangedConflicts)
-        {
-            var item = new QrImportConflictItem(
-                conflict,
-                ChangedFieldsFormat,
-                SecretFieldText,
-                PeriodFieldText,
-                Get(MobileStringKeys.QrSkipAccountAutomationFormat),
-                Get(MobileStringKeys.QrReplaceAccountAutomationFormat),
-                Get(MobileStringKeys.QrKeepBothAccountAutomationFormat),
-                TotpAlgorithmText,
-                TotpDigitsText);
-            item.PropertyChanged += OnQrImportConflictSelectionChanged;
-            QrImportConflicts.Add(item);
-        }
-        NotifyQrImportSelectionChanged();
-        QrImportResolutionText = string.Format(
-            Get(MobileStringKeys.QrImportReviewSummary),
-            preview.TotalCount,
-            preview.NewCount,
-            preview.UnchangedCount,
-            preview.ChangedConflicts.Count);
-        if (preview.Entries.Count > 0)
-            QrImportResolutionText += Environment.NewLine + TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(
-                _strings.Get, new AccountImportPreview(preview.TotalCount,
-                    preview.UnchangedCount + preview.ChangedConflicts.Count, ImportConflictStrategy.SkipExisting)
-                { Entries = preview.Entries, NewCount = preview.NewCount });
-        IsQrImportResolutionVisible = true;
-
-        using var cancellation = cancellationToken.Register(() =>
-            completion.TrySetCanceled(cancellationToken));
-        try
-        {
-            return await completion.Task;
-        }
-        finally
-        {
-            if (ReferenceEquals(_qrImportResolutionCompletion, completion))
-            {
-                _qrImportResolutionCompletion = null;
-                ClearQrImportConflicts();
-                QrImportResolutionText = string.Empty;
-                IsQrImportResolutionVisible = false;
-            }
-        }
+        var accountPreview = QrImportReviewAdapter.ToAccountPreview(preview);
+        var summary = new AccountImportReadSummary(preview.TotalCount) { Format = AccountImportFormat.QrCode };
+        var sourceName = MigrationImport.GetFormatName(AccountImportFormat.QrCode);
+        return QrImportReviewAdapter.ToQrResolution(
+            await ResolveExternalImportAsync(accountPreview, summary, sourceName, cancellationToken));
     }
 
-    private void CompleteQrImportResolution(QrAccountImportResolution? resolution) =>
-        _qrImportResolutionCompletion?.TrySetResult(resolution);
+    private void CancelQrImportReview()
+    {
+        MigrationImport.CancelPendingFile();
+        ExternalImportReview?.Cancel();
+    }
 
     private void OnQrImportConflictSelectionChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -6261,11 +6241,123 @@ public sealed class MobileShellViewModel :
         IsQrImportResultVisible = true;
     }
 
-    private async Task<AccountImportResolution?> ReviewExternalImportAsync(AccountImportPreview preview,
-        AccountImportReadSummary? summary, string fileName, CancellationToken cancellationToken)
+    private TaskCompletionSource<Result<List<Account>>>? _importBackupPasswordCompletion;
+    private AccountImportPasswordRequest? _pendingImportBackupPassword;
+    private CancellationToken _importBackupPasswordToken;
+    private bool _isImportBackupUnlockBusy;
+    private string _importBackupPasswordError = string.Empty;
+    public ICommand UnlockImportBackupCommand { get; }
+    public ICommand CancelImportBackupUnlockCommand { get; }
+    public bool IsImportBackupPasswordVisible => _importBackupPasswordCompletion is not null;
+    public string ImportBackupPasswordTitle => Get(FileImportStringKeys.BackupPasswordTitle);
+    public string ImportBackupPasswordHelp => Get(_pendingImportBackupPassword?.UsesMasterPassword == true
+        ? FileImportStringKeys.SnapshotPasswordHelp : FileImportStringKeys.BackupPasswordHelp);
+    public string ImportBackupUnlockText => Get(FileImportStringKeys.UnlockBackup);
+    public string ImportBackupPasswordError => _importBackupPasswordError.Length == 0 ? string.Empty : Get(_importBackupPasswordError);
+
+    private void NotifyImportBackupPassword()
+    {
+        OnPropertyChanged(nameof(IsImportBackupPasswordVisible));
+        OnPropertyChanged(nameof(ImportBackupPasswordHelp));
+        OnPropertyChanged(nameof(ImportBackupPasswordTitle));
+        OnPropertyChanged(nameof(ImportBackupUnlockText));
+        OnPropertyChanged(nameof(ImportBackupPasswordError));
+        ((MobileAsyncCommand)UnlockImportBackupCommand).NotifyCanExecuteChanged();
+        ((MobileAsyncCommand)CancelImportBackupUnlockCommand).NotifyCanExecuteChanged();
+    }
+
+    private async Task<Result<List<Account>>> ShowImportBackupPasswordAsync(AccountImportPasswordRequest request, CancellationToken token)
     {
         EndImportProgress();
+        var completion = new TaskCompletionSource<Result<List<Account>>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pendingImportBackupPassword = request;
+        _importBackupPasswordToken = token;
+        _importBackupPasswordCompletion = completion;
+        _importBackupPasswordError = string.Empty;
+        ImportPassword = string.Empty;
+        NotifyImportBackupPassword();
+        using var cancellation = token.Register(() => completion.TrySetCanceled(token));
+        try { return await completion.Task; }
+        finally
+        {
+            _importBackupPasswordCompletion = null;
+            _pendingImportBackupPassword = null;
+            _importBackupPasswordToken = default;
+            _importBackupPasswordError = string.Empty;
+            ImportPassword = string.Empty;
+            NotifyImportBackupPassword();
+        }
+    }
+
+    public async Task UnlockImportBackupAsync()
+    {
+        if (_pendingImportBackupPassword is not { } request || _importBackupPasswordCompletion is not { } completion || _isImportBackupUnlockBusy) return;
+        var token = _importBackupPasswordToken;
+        var password = ImportPassword;
+        ImportPassword = string.Empty;
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            _importBackupPasswordError = MobileStringKeys.BackupPasswordRequired;
+            NotifyImportBackupPassword();
+            return;
+        }
+        _isImportBackupUnlockBusy = true;
+        NotifyImportBackupPassword();
+        try
+        {
+            var result = await request.TryReadAsync(password, token);
+            if (!ReferenceEquals(completion, _importBackupPasswordCompletion)) return;
+            if (result.IsSuccess) completion.TrySetResult(result);
+            else _importBackupPasswordError = FileImportStringKeys.BackupUnlockFailed;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (Exception) { _importBackupPasswordError = FileImportStringKeys.BackupUnlockFailed; }
+        finally
+        {
+            password = string.Empty;
+            _isImportBackupUnlockBusy = false;
+            NotifyImportBackupPassword();
+        }
+    }
+
+    private async Task<AccountImportResolution?> ResolveExternalImportAsync(AccountImportPreview preview,
+        AccountImportReadSummary summary, string fileName, CancellationToken cancellationToken, Action? onlyDuplicates = null)
+    {
+        EndImportProgress();
+        if (ImportReviewPolicy.IsOnlyExactDuplicates(preview, summary))
+        {
+            await ShowImportConfirmationAsync(Get(ReviewStringKeys.OnlyDuplicates), cancellationToken, acknowledgementOnly: true);
+            onlyDuplicates?.Invoke();
+            return null;
+        }
+        if (ImportReviewPolicy.IsClean(preview, summary))
+        {
+            var confirmed = await ShowImportConfirmationAsync(
+                ImportReviewPolicy.ConfirmText(_strings.Get, preview.TotalCount), cancellationToken);
+            return confirmed ? new AccountImportResolution([]) : null;
+        }
+        while (await MigrationImport.WaitForFileReviewAsync(summary, fileName, cancellationToken))
+        {
+            var review = new ImportReviewViewModel(preview, summary, MigrationImport.GetFormatName(summary.Format), fileName, _strings.Get,
+                allowKeepBoth: summary.Format != AccountImportFormat.EncryptedOtpHarborBackup);
+            var resolution = await ShowExternalImportReviewAsync(review, cancellationToken);
+            if (resolution is null && review.BackRequested) continue;
+            return resolution;
+        }
+        return null;
+    }
+
+    private Task<AccountImportResolution?> ReviewExternalImportAsync(AccountImportPreview preview,
+        AccountImportReadSummary? summary, string fileName, CancellationToken cancellationToken)
+    {
         var review = new ImportReviewViewModel(preview, summary, MigrationImport.GetFormatName(summary?.Format ?? AccountImportFormat.Unknown), fileName, _strings.Get);
+        return ShowExternalImportReviewAsync(review, cancellationToken);
+    }
+
+    private async Task<AccountImportResolution?> ShowExternalImportReviewAsync(ImportReviewViewModel review,
+        CancellationToken cancellationToken)
+    {
+        EndImportProgress();
         var completion = new TaskCompletionSource<AccountImportResolution?>(TaskCreationOptions.RunContinuationsAsynchronously);
         void Close(AccountImportResolution? result) => completion.TrySetResult(result);
         review.CloseRequested += Close;
@@ -6692,6 +6784,7 @@ public sealed class MobileShellViewModel :
         MigrationImport?.RefreshLanguage();
         ExternalImportReview?.RefreshLanguage();
         StorageLocations?.RefreshLanguage();
+        About?.RefreshLanguage();
         foreach (var propertyName in LocalizedTextProperties)
             OnPropertyChanged(propertyName);
 
@@ -7245,6 +7338,7 @@ public sealed class MobileShellViewModel :
         nameof(ResetBrandIconsText),
         nameof(ShowIssuerLogoText),
         nameof(ShowIssuerLogoDescriptionText),
+        nameof(ImportBackupPasswordTitle), nameof(ImportBackupPasswordHelp), nameof(ImportBackupUnlockText), nameof(ImportBackupPasswordError),
         nameof(ImportConfirmationTitle),
         nameof(ConfirmImportText),
         nameof(BackupConflictResolutionTitle),

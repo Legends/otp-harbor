@@ -42,7 +42,7 @@ public sealed class AccountImportServiceTests
     {
         var existing = new Account(Guid.NewGuid(), "Old", "JBSWY3DPEHPK3PXP", "alice");
         var first = new Account(Guid.NewGuid(), "Old", "KRSXG5DSNFXGOIDB", "alice");
-        var second = new Account(Guid.NewGuid(), "New label", existing.Secret, "alice");
+        var second = new Account(Guid.NewGuid(), "Old", "GEZDGNBVGY3TQOJQ", "alice");
         var accounts = new Mock<IAccountManager>();
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
@@ -65,7 +65,7 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
-    public async Task ExternalReview_ReplacementOfAnEarlierExportEntryTargetsItsKeptCopy()
+    public async Task ExternalReview_ReplacementOfAnEarlierNewExportEntryTargetsItsAddedCopy()
     {
         var existing = new Account(Guid.NewGuid(), "Original", "JBSWY3DPEHPK3PXP", "alice");
         var first = new Account(Guid.NewGuid(), "First", existing.Secret, "alice");
@@ -80,7 +80,7 @@ public sealed class AccountImportServiceTests
             (preview, _) =>
             {
                 Assert.True(preview.Entries[1].ExistingIsFromExport);
-                return Task.FromResult<AccountImportResolution?>(new([new(0, AccountImportConflictAction.KeepBoth), new(1, AccountImportConflictAction.Replace)]));
+                return Task.FromResult<AccountImportResolution?>(new([new(1, AccountImportConflictAction.Replace)]));
             }, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(written);
@@ -90,46 +90,44 @@ public sealed class AccountImportServiceTests
     }
 
     [Theory]
-    [InlineData(AccountImportConflictAction.Skip, 0, 0)]
-    [InlineData(AccountImportConflictAction.Replace, 0, 1)]
-    [InlineData(AccountImportConflictAction.KeepBoth, 1, 0)]
-    public async Task ExternalReview_SameSecretWithDifferentLabelRequiresExplicitDecision(
-        AccountImportConflictAction action, int added, int replaced)
+    [InlineData("Microsoft", "jack@outlook.com", false)]
+    [InlineData("Google", "jack@work.com", false)]
+    [InlineData("Microsoft", "jack@work.com", false)]
+    [InlineData("Microsoft", "jack@outlook.com", true)]
+    [InlineData("Google", "jack@work.com", true)]
+    [InlineData("Microsoft", "jack@work.com", true)]
+    public async Task ExternalReview_DifferentIdentityIsNewEvenWithSameSecretOrId(string issuer, string accountName, bool sameId)
     {
-        var current = new Account(Guid.NewGuid(), "Old label", "JBSWY3DPEHPK3PXP", "alice");
-        var incoming = new Account(Guid.NewGuid(), "New label", current.Secret, "alice", 60, algorithm: "SHA512", digits: 8);
+        var current = new Account(Guid.NewGuid(), "Google", "JBSWY3DPEHPK3PXP", "jack@outlook.com");
+        var incoming = new Account(sameId ? current.ID : Guid.NewGuid(), issuer, current.Secret, accountName, 60, algorithm: "SHA512", digits: 8);
         var accounts = new Mock<IAccountManager>();
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([current]));
         accounts.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
         IReadOnlyCollection<Account>? written = null;
         accounts.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
             .Callback<IReadOnlyCollection<Account>>(value => written = value).ReturnsAsync(Result.Ok());
-        var sut = new AccountImportService(accounts.Object);
-        var result = await sut.ImportWithConflictResolutionAsync([incoming], (preview, _) =>
+        var result = await new AccountImportService(accounts.Object).ImportWithConflictResolutionAsync([incoming], (preview, _) =>
         {
             Assert.Null(written);
-            var conflict = Assert.Single(preview.ChangedConflicts);
-            Assert.True(conflict.IssuerChanged);
-            Assert.False(conflict.SecretChanged);
-            Assert.Equal("Old label", Assert.Single(preview.Entries).Existing!.Issuer);
+            Assert.Empty(preview.ChangedConflicts);
+            Assert.Equal(1, preview.NewCount);
+            Assert.Null(Assert.Single(preview.Entries).Existing);
             Assert.DoesNotContain(current.Secret, System.Text.Json.JsonSerializer.Serialize(preview));
-            return Task.FromResult<AccountImportResolution?>(new([new(0, action)]));
+            return Task.FromResult<AccountImportResolution?>(new([]));
         }, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
-        Assert.Equal(added, result.Value.Added);
-        Assert.Equal(replaced, result.Value.Replaced);
-        if (action == AccountImportConflictAction.Skip)
-        {
-            Assert.Null(written);
-            accounts.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
-        }
-        else
-        {
-            Assert.NotNull(written);
-            Assert.Equal(action == AccountImportConflictAction.KeepBoth ? 2 : 1, written.Count);
-            Assert.Contains(written, account => account.Algorithm == "SHA512" && account.Digits == 8 && account.PeriodSeconds == 60);
-            if (action == AccountImportConflictAction.KeepBoth) Assert.Contains(current, written);
-        }
+        Assert.Equal(1, result.Value.Added);
+        Assert.Equal(0, result.Value.Replaced);
+        Assert.NotNull(written);
+        Assert.Equal(2, written.Count);
+        Assert.Contains(current, written);
+        var added = Assert.Single(written, account => account.ID != current.ID);
+        Assert.Equal(issuer, added.Issuer);
+        Assert.Equal(accountName, added.AccountName);
+        Assert.Equal(incoming.Secret, added.Secret);
+        Assert.Equal("SHA512", added.Algorithm);
+        Assert.Equal(8, added.Digits);
+        Assert.Equal(60, added.PeriodSeconds);
     }
 
     [Fact]
@@ -621,7 +619,7 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
-    public async Task ImportWithConflictResolutionAsync_WhenAccountWasRenamed_CanRestoreBackupVersion()
+    public async Task RestoreBackupWithConflictResolutionAsync_WhenAccountWasRenamed_CanRestoreBackupVersion()
     {
         var unchangedOne = new Account(
             Guid.NewGuid(), "GitHub", "JBSWY3DPEHPK3PXP", "octocat@example.invalid");
@@ -642,7 +640,7 @@ public sealed class AccountImportServiceTests
             .ReturnsAsync(Result.Ok());
         var sut = new AccountImportService(accounts.Object);
 
-        var result = await sut.ImportWithConflictResolutionAsync(
+        var result = await sut.RestoreBackupWithConflictResolutionAsync(
             [unchangedOne, backupRenamed, unchangedTwo, deletedAccount],
             (preview, _) =>
             {
@@ -744,7 +742,7 @@ public sealed class AccountImportServiceTests
     public async Task ImportWithConflictResolutionAsync_WhenResolutionIsIncomplete_FailsBeforeBackupOrWrites()
     {
         var existing = new Account(Guid.NewGuid(), "Issuer", "JBSWY3DPEHPK3PXP", "current");
-        var incoming = new Account(existing.ID, "Issuer", existing.Secret, "backup");
+        var incoming = new Account(existing.ID, "Issuer", "KRSXG5DSNFXGOIDB", "current");
         var accounts = new Mock<IAccountManager>();
         accounts.Setup(value => value.GetAllOtpEntriesSortedAsync())
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
@@ -763,7 +761,7 @@ public sealed class AccountImportServiceTests
     }
 
     [Fact]
-    public async Task ImportWithConflictResolutionAsync_DetectsEverySupportedAccountFieldChange()
+    public async Task RestoreBackupWithConflictResolutionAsync_DetectsEverySupportedAccountFieldChange()
     {
         var id = Guid.NewGuid();
         var existing = new Account(id, "Current issuer", "JBSWY3DPEHPK3PXP", "current", 30);
@@ -773,7 +771,7 @@ public sealed class AccountImportServiceTests
             .ReturnsAsync(Result.Ok<IReadOnlyList<Account>>([existing]));
         var sut = new AccountImportService(accounts.Object);
 
-        var result = await sut.ImportWithConflictResolutionAsync(
+        var result = await sut.RestoreBackupWithConflictResolutionAsync(
             [incoming],
             (preview, _) =>
             {

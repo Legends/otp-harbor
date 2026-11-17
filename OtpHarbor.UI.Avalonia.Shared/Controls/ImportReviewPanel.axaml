@@ -111,14 +111,14 @@
                     </ComboBox>
                 </Grid>
                 <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <CheckBox IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" Content="{Binding SelectionText}" />
-                    <ComboBox Grid.Column="1" IsEnabled="{Binding HasSelection}" ItemsSource="{Binding Actions}" SelectedItem="{Binding BulkAction, Mode=TwoWay}" PlaceholderText="{Binding ApplyText}" automation:AutomationProperties.Name="{Binding ApplyText}">
+                    <CheckBox IsEnabled="{Binding HasSelectableConflicts}" IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" Content="{Binding SelectionText}" />
+                    <ComboBox Grid.Column="1" Classes="review-bulk-action" MaxWidth="240" HorizontalAlignment="Right" IsEnabled="{Binding HasSelection}" ItemsSource="{Binding Actions}" SelectedItem="{Binding BulkAction, Mode=TwoWay}" PlaceholderText="{Binding ApplyText}" automation:AutomationProperties.Name="{Binding ApplyText}">
                         <ComboBox.ItemTemplate><DataTemplate x:DataType="review:ImportReviewViewModel+ActionOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
                 </Grid>
                 <Grid Grid.Row="2" Classes="review-table-header" ColumnDefinitions="32,1.2*,1.2*,1.3*,1.3*,160" ColumnSpacing="10" Margin="12,0">
                     <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="{Binding AccountText}" />
-                    <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="{Binding IssueText}" />
+                    <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="{Binding IssueText}" TextWrapping="Wrap" />
                     <TextBlock Grid.Column="3" FontWeight="SemiBold" Text="{Binding ExistingText}" />
                     <TextBlock Grid.Column="4" FontWeight="SemiBold" Text="{Binding IncomingText}" />
                     <TextBlock Grid.Column="5" FontWeight="SemiBold" Text="{Binding ActionText}" />
@@ -134,7 +134,7 @@
                                 <Grid ColumnDefinitions="32,1.2*,1.2*,1.3*,1.3*,160" ColumnSpacing="10">
                                     <CheckBox IsVisible="{Binding IsConflict}" IsChecked="{Binding IsSelected, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding Identity}" />
                                     <StackPanel Grid.Column="1" Spacing="4"><TextBlock FontWeight="SemiBold" Text="{Binding Issuer}" /><TextBlock Classes="review-secondary" FontSize="12" Text="{Binding AccountName}" /></StackPanel>
-                                    <StackPanel Grid.Column="2" Spacing="4"><TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushAccent}" Text="{Binding IssueText}" /><TextBlock Classes="review-secondary" FontSize="12" Text="{Binding ChangedFieldsText}" /></StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4"><TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushAccent}" Text="{Binding IssueText}" TextWrapping="Wrap" /><TextBlock Classes="review-secondary" FontSize="12" Text="{Binding ChangedFieldsText}" /></StackPanel>
                                     <TextBlock Grid.Column="3" FontSize="12" Text="{Binding ExistingParameters}" />
                                     <TextBlock Grid.Column="4" FontSize="12" Text="{Binding IncomingParameters}" />
                                     <StackPanel Grid.Column="5" Spacing="4"><TextBlock Text="{Binding ActionSummary}" IsVisible="{Binding !IsConflict}" />

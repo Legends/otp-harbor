@@ -5,6 +5,9 @@ namespace TOTP.Avalonia.Shared.Import;
 public static class ReviewStringKeys
 {
     public const string Breadcrumb = "ImportReviewBreadcrumb";
+    public const string ImportNewOne = "ImportReviewImportNewOne";
+    public const string ImportNewMany = "ImportReviewImportNewMany";
+    public const string OnlyDuplicates = "ImportReviewOnlyDuplicates";
     public const string Title = "ImportReviewTitle";
     public const string Description = "ImportReviewDescription";
     public const string Summary = "ImportReviewSummary";
@@ -39,6 +42,8 @@ public static class ReviewStringKeys
     public const string NewAccount = "ImportReviewNewAccount";
     public const string SecretDiffers = "ImportReviewSecretDiffers";
     public const string LabelDiffers = "ImportReviewLabelDiffers";
+    public const string IssuerDiffers = "ImportReviewIssuerDiffers";
+    public const string AccountNameDiffers = "ImportReviewAccountNameDiffers";
     public const string ParametersDiffer = "ImportReviewParametersDiffer";
     public const string SecretDescription = "ImportReviewSecretDescription";
     public const string ChangeDescription = "ImportReviewChangeDescription";
@@ -50,8 +55,10 @@ public static class ReviewStringKeys
     public const string Skip = "ImportReviewSkip";
     public const string Add = "ImportReviewAdd";
     public const string Steps = "ImportReviewSteps";
+    public const string BackupChoicesHelp = "ImportReviewBackupChoicesHelp";
     public const string ChoicesHelp = "ImportReviewChoicesHelp";
     public const string ExcludedNonOtp = "ImportReviewExcludedNonOtp";
+    public const string ExcludedTrashed = "ImportReviewExcludedTrashed";
     public const string Changes = "ImportReviewChanges";
     public const string FieldIssuer = "ImportReviewFieldIssuer";
     public const string FieldAccount = "ImportReviewFieldAccount";
@@ -76,5 +83,5 @@ public static class ReviewStringKeys
     {
         AccountImportConflictAction.Replace => Replace, AccountImportConflictAction.KeepBoth => KeepBoth, _ => Skip
     };
-    public static IReadOnlyList<string> AllKeys { get; } = [ EarlierExport, EarlierDescription, StepSource, StepExport, StepReview, StepImport, ExcludedNonOtp, Changes, FieldIssuer, FieldAccount, FieldSecret, FieldAlgorithm, FieldDigits, FieldPeriod, FieldFavorite, FieldGroups, Breadcrumb, Title, Description, Summary, Total, Ready, Conflicts, Duplicates, Unsupported, Invalid, All, ImportCount, Unresolved, Excluded, SelectedCount, Search, Filter, Apply, Back, Cancel, Account, Issue, Existing, Incoming, Action, NoResults, CategoryCount, Identity, Parameters, ExistingParameters, NoExisting, ExactDuplicate, NewAccount, SecretDiffers, LabelDiffers, ParametersDiffer, SecretDescription, ChangeDescription, DuplicateDescription, ReadyDescription, ChooseAction, Replace, KeepBoth, Skip, Add, Steps, ChoicesHelp ];
+    public static IReadOnlyList<string> AllKeys { get; } = [ ExcludedTrashed, BackupChoicesHelp, ImportNewOne, ImportNewMany, OnlyDuplicates, EarlierExport, EarlierDescription, StepSource, StepExport, StepReview, StepImport, ExcludedNonOtp, Changes, FieldIssuer, FieldAccount, FieldSecret, FieldAlgorithm, FieldDigits, FieldPeriod, FieldFavorite, FieldGroups, Breadcrumb, Title, Description, Summary, Total, Ready, Conflicts, Duplicates, Unsupported, Invalid, All, ImportCount, Unresolved, Excluded, SelectedCount, Search, Filter, Apply, Back, Cancel, Account, Issue, Existing, Incoming, Action, NoResults, CategoryCount, Identity, Parameters, ExistingParameters, NoExisting, ExactDuplicate, NewAccount, SecretDiffers, LabelDiffers, IssuerDiffers, AccountNameDiffers, ParametersDiffer, SecretDescription, ChangeDescription, DuplicateDescription, ReadyDescription, ChooseAction, Replace, KeepBoth, Skip, Add, Steps, ChoicesHelp ];
 }

@@ -222,6 +222,10 @@ public static class AvaloniaCompositionRoot
             provider.GetRequiredService<IAvaloniaLocalizationService>().GetString,
             provider.GetRequiredService<IPlatformFolderLauncher>()));
         services.AddSingleton<SettingsPageViewModel>();
+        services.AddSingleton<TOTP.Avalonia.Shared.About.AboutViewModel>(provider => new(
+            provider.GetRequiredService<IAvaloniaLocalizationService>().GetString,
+            () => AboutApplicationVersion.Read(provider.GetRequiredService<IApplicationVersionProvider>()),
+            uri => desktopLifetime.MainWindow?.Launcher.LaunchUriAsync(uri) ?? Task.FromResult(false)));
         services.AddSingleton<AuthorizationSettingsViewModel>();
         services.AddSingleton<NativeFilePickerViewModel>();
         services.AddSingleton<CameraScannerViewModel>();

@@ -63,7 +63,7 @@ public sealed class ExportServiceTests
         Assert.Contains(
             BackupFileExtensions.LegacyEncryptedBackup,
             ExportService.SupportedImportFileExtensions);
-        Assert.DoesNotContain(
+        Assert.Contains(
             BackupFileExtensions.AutomaticBackup,
             ExportService.SupportedImportFileExtensions);
     }

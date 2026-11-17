@@ -73,7 +73,7 @@
                     </ComboBox>
                 </Grid>
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <CheckBox IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" Content="{Binding SelectionText}" />
+                    <CheckBox IsEnabled="{Binding HasSelectableConflicts}" IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" Content="{Binding SelectionText}" />
                     <ComboBox Grid.Column="1" IsEnabled="{Binding HasSelection}" ItemsSource="{Binding Actions}" SelectedItem="{Binding BulkAction, Mode=TwoWay}" PlaceholderText="{Binding ApplyText}" automation:AutomationProperties.Name="{Binding ApplyText}">
                         <ComboBox.ItemTemplate><DataTemplate x:DataType="review:ImportReviewViewModel+ActionOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>

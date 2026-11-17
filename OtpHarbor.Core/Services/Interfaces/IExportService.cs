@@ -13,6 +13,12 @@ public interface IExportService
     Task<Result<List<Account>>> ImportFromStreamWithFormatSelectionAsync(
         Stream source, string fileName,
         Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> chooseFormat,
+        Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>> unlockBackup,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<List<Account>>> ImportFromStreamWithFormatSelectionAsync(
+        Stream source, string fileName,
+        Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> chooseFormat,
         CancellationToken cancellationToken = default);
 
     Task<Result> ExportToEncryptedStreamAsync(

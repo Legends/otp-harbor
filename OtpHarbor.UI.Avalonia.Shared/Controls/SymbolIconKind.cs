@@ -32,7 +32,9 @@ public enum SymbolIconKind
     Refresh,
     Reveal,
     Search,
+    Share,
     Settings,
     Sort,
-    Vault
+    Vault,
+    License
 }

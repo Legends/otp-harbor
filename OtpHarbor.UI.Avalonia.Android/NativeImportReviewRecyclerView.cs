@@ -221,6 +221,7 @@ internal sealed class NativeReviewCard : NativeReviewLayout
     private readonly LinearLayout _details;
     private readonly TextView _description, _changes, _existingTitle, _existing, _incomingTitle, _incoming, _help;
     private readonly LinearLayout _comparison;
+    private readonly View _comparisonDivider;
     private readonly RadioGroup _choices;
     private readonly RadioButton[] _options;
     private ImportReviewViewModel.ReviewRow? _model;
@@ -251,7 +252,12 @@ internal sealed class NativeReviewCard : NativeReviewLayout
         _comparison = new LinearLayout(context) { Orientation = Orientation.Vertical };
         _comparison.SetPadding(Dp(10), Dp(10), Dp(10), Dp(10));
         _existingTitle = Label(14, true); _existing = Label(13); _incomingTitle = Label(14, true); _incoming = Label(13);
-        foreach (var label in new[] { _existingTitle, _existing, _incomingTitle, _incoming }) _comparison.AddView(label, Row(6));
+        _comparison.AddView(_existingTitle, Row(6));
+        _comparison.AddView(_existing, Row(6));
+        _comparisonDivider = new View(context);
+        _comparison.AddView(_comparisonDivider, new LayoutParams(ViewGroup.LayoutParams.MatchParent, Dp(1)) { TopMargin = Dp(6), BottomMargin = Dp(12) });
+        _comparison.AddView(_incomingTitle, Row(6));
+        _comparison.AddView(_incoming, Row(6));
         _details.AddView(_comparison, Row(10));
         _choices = new RadioGroup(context) { Orientation = Orientation.Vertical };
         _options = Enumerable.Range(0, 3).Select(_ => new RadioButton(context) { Id = GenerateViewId(), Gravity = GravityFlags.CenterVertical }).ToArray();
@@ -310,14 +316,18 @@ internal sealed class NativeReviewCard : NativeReviewLayout
             Text(_description, row.IssueDescription); Text(_changes, row.ChangedFieldsText);
             _description.SetTextColor(palette.Secondary); _changes.SetTextColor(palette.Accent);
             _changes.Visibility = row.IsConflict ? ViewStates.Visible : ViewStates.Gone;
-            Text(_existingTitle, row.ExistingText); Text(_existing, row.ExistingParameters);
+            Text(_existingTitle, row.ExistingText); Text(_existing, row.ExistingDetails);
             Text(_incomingTitle, row.IncomingText); Text(_incoming, row.IncomingParameters);
+            _existingTitle.SetTextColor(palette.Secondary); _existing.SetTextColor(palette.Secondary);
+            _incomingTitle.SetTextColor(palette.Accent);
+            _comparisonDivider.SetBackgroundColor(palette.Border);
             _choices.Visibility = row.IsConflict ? ViewStates.Visible : ViewStates.Gone;
             var captions = new[] { row.ReplaceText, row.KeepBothText, row.SkipText };
             var selected = new[] { row.IsReplace, row.IsKeepBoth, row.IsSkip };
             for (var index = 0; index < _options.Length; index++)
             {
                 var option = _options[index];
+                option.Visibility = index == 1 && !row.CanKeepBoth ? ViewStates.Gone : ViewStates.Visible;
                 Text(option, captions[index]);
                 option.Checked = selected[index];
                 option.Background = Surface(selected[index] ? alternate : surface, selected[index] ? palette.Accent : palette.Border);
@@ -459,6 +469,7 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
             _filter.ContentDescription = model.FilterText;
             _filter.SetSelection(model.Categories.ToList().IndexOf(model.SelectedCategory));
             Text(_select, model.SelectionText); _select.Checked = model.AllVisibleSelected;
+            _select.Enabled = model.HasSelectableConflicts;
             _select.ButtonTintList = global::Android.Content.Res.ColorStateList.ValueOf(palette.Accent);
             UpdateOptions(_bulk, ref _bulkLabels, new[] { model.ApplyText }.Concat(model.Actions.Select(action => action.Name)).ToArray());
             _bulk.ContentDescription = model.ApplyText; _bulk.Enabled = model.HasSelection;

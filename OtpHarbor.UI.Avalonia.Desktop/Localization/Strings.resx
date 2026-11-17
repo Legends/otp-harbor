@@ -191,7 +191,7 @@
   <data name="OtherFormatOtpAuth" xml:space="preserve"><value>3. Standard otpauth:// TOTP URI list (.txt, one URI per line)</value></data>
   <data name="OtherFormatLegacyOtpHarbor" xml:space="preserve"><value>4. Legacy OTP Harbor JSON, CSV, or pipe-delimited text (.json, .csv, .txt; compatibility import only—current OTP Harbor exports encrypted backups)</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Export accounts</value></data>
-  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Create a portable password-protected backup of all accounts and choose where to save it. Keep the backup and its password separately; restore it with Restore encrypted backup below.</value></data>
+  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Create a portable password-protected backup of all accounts. Keep the backup and password separately. To bring accounts back, use Import accounts.</value></data>
   <data name="BackupAndRecovery" xml:space="preserve"><value>Backup and recovery</value></data>
   <data name="BackupSecuritySummary" xml:space="preserve"><value>Encryption: every exported backup is protected by the password you create. OTP Harbor cannot recover that password.</value></data>
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Location: choose the destination in the system save dialog. OTP Harbor does not upload or automatically copy the backup.</value></data>
@@ -257,7 +257,7 @@
   <data name="SecuritySettings" xml:space="preserve"><value>Security settings</value></data>
   <data name="Security" xml:space="preserve"><value>Security</value></data>
   <data name="ImportExport" xml:space="preserve"><value>Imports</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>Misc</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Support &amp; diagnostics</value></data>
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>English</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>German</value></data>
@@ -316,7 +316,7 @@
   <data name="SortByIssuerDescending" xml:space="preserve"><value>Issuer ↓</value></data>
   <data name="SortByAccountName" xml:space="preserve"><value>Account ↑</value></data>
   <data name="SortByAccountNameDescending" xml:space="preserve"><value>Account ↓</value></data>
-  <data name="NoEntriesYet" xml:space="preserve"><value>No accounts yet. Add one manually, scan an account or Google Authenticator export QR code, or restore an encrypted backup from Settings.</value></data>
+  <data name="NoEntriesYet" xml:space="preserve"><value>No accounts yet. Add one manually, scan a QR code, or use Settings → Data &amp; backup → Import accounts.</value></data>
   <data name="SetUpFirstAccount" xml:space="preserve"><value>Set up your first account</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>No matching entries.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Close settings</value></data>
@@ -403,7 +403,7 @@
   <data name="BackupValidationFailed" xml:space="preserve"><value>The backup could not be validated safely.</value></data>
   <data name="BackupWrongPasswordOrModified" xml:space="preserve"><value>The password is incorrect or the backup was modified.</value></data>
   <data name="BackupInvalidOrUnavailable" xml:space="preserve"><value>The backup is invalid or unavailable.</value></data>
-  <data name="ImportFileInvalid" xml:space="preserve"><value>This file is not a valid supported export. Choose an unencrypted JSON, CSV, TXT or 2FAS export, or see the export help below. Restore encrypted OTP Harbor backups separately.</value></data>
+  <data name="ImportFileInvalid" xml:space="preserve"><value>This file is not a supported account export or OTP Harbor backup. See the export help below.</value></data>
   <data name="ImportFileEmpty" xml:space="preserve"><value>The selected file contains no accounts.</value></data>
   <data name="ImportOutcomeComplete" xml:space="preserve"><value>Import complete: {0} added, {1} replaced, {2} skipped, {3} failed.</value></data>
   <data name="ImportCancelledNoChanges" xml:space="preserve"><value>Import cancelled. No data was changed.</value></data>
@@ -656,7 +656,7 @@
   <data name="MigrationReviewSummary" xml:space="preserve"><value>Compatible: {0} · Existing accounts: {1} · Unsupported: {2} · Invalid: {3} · Entries without TOTP: {4} · New accounts: {5}</value></data>
   <data name="MigrationReviewEntry" xml:space="preserve"><value>{0} · {1} — {2}, {3} digits, {4} seconds</value></data>
   <data name="MigrationReviewBlocked" xml:space="preserve"><value>Import blocked. Compatible: {0}; invalid: {1}; unsupported: {2}; entries without TOTP: {3}. No accounts were imported.</value></data>
-  <data name="MigrationRestoreSeparate" xml:space="preserve"><value>Use Restore OTP Harbor backup for this file. Account imports and backup restores are separate workflows.</value></data>
+  <data name="MigrationRestoreSeparate" xml:space="preserve"><value>Choose this OTP Harbor backup in Import accounts, then enter its password.</value></data>
   <data name="MigrationCurrentVault" xml:space="preserve"><value>Destination: the current OTP Harbor vault. Existing accounts are merged according to your review.</value></data>
   <data name="MigrationGuideTwoFas" xml:space="preserve"><value>Open 2FAS → Settings → 2FAS Backup → Export. Save an unencrypted .2fas file.</value></data>
   <data name="MigrationGuideAegis" xml:space="preserve"><value>Open Aegis settings and export the vault as unencrypted JSON. Select the resulting JSON file.</value></data>
@@ -667,7 +667,7 @@
   <data name="MigrationGuideProton" xml:space="preserve"><value>Export your Proton Authenticator codes without a password and select the JSON file. Only standard TOTP entries are supported.</value></data>
   <data name="MigrationGuideKeePassXC" xml:space="preserve"><value>A dedicated KeePassXC CSV importer is not available. If your app provides standard TOTP QR codes or an otpauth text list, choose Other authenticator to import those.</value></data>
   <data name="MigrationGuideMicrosoft" xml:space="preserve"><value>Microsoft Authenticator backups cannot be imported here. For each service, use its security settings to register OTP Harbor with a new standard TOTP QR code. Verify a code before removing the old method. Push approvals and passkeys are not TOTP exports.</value></data>
-  <data name="MigrationGuideOther" xml:space="preserve"><value>Import standard TOTP QR codes, a text file with one otpauth link per line, or OTP Harbor JSON/CSV/text account exports. Use Restore OTP Harbor backup for encrypted OTP Harbor backups.</value></data>
+  <data name="MigrationGuideOther" xml:space="preserve"><value>Import standard TOTP QR codes, one otpauth URI per text line, OTP Harbor JSON/CSV/text exports, or encrypted OTP Harbor backups.</value></data>
   <data name="MigrationSourceTwoFas" xml:space="preserve"><value>2FAS Authenticator</value></data>
   <data name="MigrationSourceAegis" xml:space="preserve"><value>Aegis Authenticator</value></data>
   <data name="MigrationSourceGoogle" xml:space="preserve"><value>Google Authenticator</value></data>
@@ -714,8 +714,8 @@
   <data name="ImportReviewNoExisting" xml:space="preserve"><value>New account</value></data>
   <data name="ImportReviewExactDuplicate" xml:space="preserve"><value>Exact duplicate</value></data>
   <data name="ImportReviewNewAccount" xml:space="preserve"><value>Ready to import</value></data>
-  <data name="ImportReviewSecretDiffers" xml:space="preserve"><value>Same account, different secret</value></data>
-  <data name="ImportReviewLabelDiffers" xml:space="preserve"><value>Same secret, different label</value></data>
+  <data name="ImportReviewSecretDiffers" xml:space="preserve"><value>Different secrets</value></data>
+  <data name="ImportReviewLabelDiffers" xml:space="preserve"><value>Different issuer and account names</value></data>
   <data name="ImportReviewParametersDiffer" xml:space="preserve"><value>Account parameters differ</value></data>
   <data name="ImportReviewSecretDescription" xml:space="preserve"><value>The issuer and account match an existing account, but the secret differs. Choose how to handle this conflict. Secrets are never displayed.</value></data>
   <data name="ImportReviewChangeDescription" xml:space="preserve"><value>An existing account differs from the imported account. Compare the supported values and choose an action.</value></data>
@@ -746,7 +746,7 @@
   <data name="ImportReviewEarlierDescription" xml:space="preserve"><value>This entry conflicts with an earlier entry in this export. Decisions are applied in export order; a later replacement can update the same account.</value></data>
   <data name="FileImportFileTitle" xml:space="preserve"><value>Import from file</value></data>
   <data name="FileImportAutoDetection" xml:space="preserve"><value>OTP Harbor automatically recognizes supported export formats.</value></data>
-  <data name="FileImportSupportedFormats" xml:space="preserve"><value>JSON · CSV · TXT · 2FAS</value></data>
+  <data name="FileImportSupportedFormats" xml:space="preserve"><value>JSON · CSV · TXT · 2FAS · OTP Harbor backups</value></data>
   <data name="FileImportHelpTitle" xml:space="preserve"><value>Need help exporting your accounts?</value></data>
   <data name="FileImportHelpDescription" xml:space="preserve"><value>Select your authenticator to see export instructions. This is optional.</value></data>
   <data name="FileImportOptionalSource" xml:space="preserve"><value>Choose authenticator (optional)</value></data>
@@ -770,6 +770,43 @@
   <data name="FileImportChooseFormat" xml:space="preserve"><value>Choose detected format</value></data>
   <data name="FileImportUseFormat" xml:space="preserve"><value>Use selected format</value></data>
   <data name="FileImportFormatEncryptedExternalExport" xml:space="preserve"><value>Encrypted external export (unsupported)</value></data>
-  <data name="FileImportFormatEncryptedOtpHarborBackup" xml:space="preserve"><value>Encrypted OTP Harbor backup — use Restore backup</value></data>
+  <data name="FileImportFormatEncryptedOtpHarborBackup" xml:space="preserve"><value>OTP Harbor · Encrypted backup</value></data>
   <data name="FileImportAllFiles" xml:space="preserve"><value>All files</value></data>
+  <data name="AboutAppName" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="AboutAppVersion" xml:space="preserve"><value>App version</value></data>
+  <data name="AboutRepository" xml:space="preserve"><value>GitHub</value></data>
+  <data name="AboutLicense" xml:space="preserve"><value>License</value></data>
+  <data name="AboutLicenseName" xml:space="preserve"><value>GPL-3.0-only</value></data>
+  <data name="AboutWebsite" xml:space="preserve"><value>Website</value></data>
+  <data name="AboutShare" xml:space="preserve"><value>Share app with friends</value></data>
+  <data name="AboutShareTitle" xml:space="preserve"><value>Share OTP Harbor</value></data>
+  <data name="AboutShareMessage" xml:space="preserve"><value>Try OTP Harbor: {0}</value></data>
+  <data name="AboutActionFailed" xml:space="preserve"><value>Couldn’t open this action. Try again.</value></data>
+  <data name="FileImportFormatQrCode" xml:space="preserve">
+    <value>QR code</value>
+  </data>
+  <data name="ImportReviewImportNewOne" xml:space="preserve">
+    <value>Import this new account now?</value>
+  </data>
+  <data name="ImportReviewImportNewMany" xml:space="preserve">
+    <value>Import {0} new accounts now?</value>
+  </data>
+  <data name="ImportReviewOnlyDuplicates" xml:space="preserve">
+    <value>Import contains only duplicates. Nothing to import!</value>
+  </data>
+  <data name="ImportReviewIssuerDiffers" xml:space="preserve"><value>Different issuer names</value></data>
+  <data name="ImportReviewAccountNameDiffers" xml:space="preserve"><value>Different account names</value></data>
+  <data name="FileImportBackupPasswordTitle" xml:space="preserve"><value>Unlock OTP Harbor backup</value></data>
+  <data name="FileImportBackupPasswordHelp" xml:space="preserve"><value>Enter the password used to encrypt this backup. It may differ from your current vault password.</value></data>
+  <data name="FileImportSnapshotPasswordHelp" xml:space="preserve"><value>Enter the master password that was active when this automatic backup was created.</value></data>
+  <data name="FileImportUnlockBackup" xml:space="preserve"><value>Unlock backup</value></data>
+  <data name="FileImportBackupUnlockFailed" xml:space="preserve"><value>The password is incorrect, or the backup is invalid or modified.</value></data>
+  <data name="ImportReviewBackupChoicesHelp" xml:space="preserve"><value>Replace uses the backup values. Skip keeps the current account unchanged.</value></data>
+  <data name="FileImportFormatLastPassJson" xml:space="preserve"><value>LastPass-compatible · Unencrypted JSON</value></data>
+  <data name="MigrationSourceLastPass" xml:space="preserve"><value>LastPass Authenticator</value></data>
+  <data name="MigrationSourceAuthy" xml:space="preserve"><value>Authy</value></data>
+  <data name="MigrationGuideLastPass" xml:space="preserve"><value>In LastPass Authenticator, export accounts to a JSON file. Choose the unencrypted export in OTP Harbor; only supported TOTP account fields are imported.</value></data>
+  <data name="MigrationGuideAuthy" xml:space="preserve"><value>Authy does not provide token export. For each service, add or reconfigure a standard authenticator method and scan its new QR code in OTP Harbor. Keep access to your existing codes and recovery methods until the new codes work. Authy-specific approvals are not portable TOTP accounts.</value></data>
+  <data name="FileImportNoActiveAccounts" xml:space="preserve"><value>The export contains no active TOTP accounts. Deleted and non-TOTP entries are excluded.</value></data>
+  <data name="ImportReviewExcludedTrashed" xml:space="preserve"><value>{0} entries marked as deleted are excluded.</value></data>
 </root>

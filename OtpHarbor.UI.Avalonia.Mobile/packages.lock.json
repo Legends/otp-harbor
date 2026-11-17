@@ -68,7 +68,7 @@
         "resolved": "4.4.0",
         "contentHash": "ZC6Le3rr4TVJJjS4KsQAesxeF1EhW9qcZmmG7eP5Y2G3+gTGkJEUXkq4+tZNPtyp05I0wWOxnIjwtxFweJsObw=="
       },
-      "totp.core": {
+      "TOTP.Core": {
         "type": "Project",
         "dependencies": {
           "FluentResults": "[4.0.0, )",
@@ -77,7 +77,7 @@
           "Serilog": "[4.4.0, )"
         }
       },
-      "totp.ui.avalonia.shared": {
+      "TOTP.UI.Avalonia.Shared": {
         "type": "Project",
         "dependencies": {
           "Avalonia": "[12.1.1, )",

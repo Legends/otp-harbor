@@ -1128,7 +1128,11 @@
                             </Button>
                         </StackPanel>
                         <Border Classes="card" IsVisible="{Binding IsInfoSettingsVisible}" Padding="16">
-                            <controls:StorageLocationsPanel DataContext="{Binding StorageLocations}" />
+                            <StackPanel Spacing="16">
+                                <controls:AboutPanel DataContext="{Binding About}" />
+                                <Border Height="1" Background="{DynamicResource BrushBorder}" />
+                                <controls:StorageLocationsPanel DataContext="{Binding StorageLocations}" />
+                            </StackPanel>
                         </Border>
                         <Border
                             Classes="card"
@@ -1521,11 +1525,11 @@
                                 <controls:AuthenticatorImportPanel DataContext="{Binding MigrationImport}" />
                             </Border>
                             <Grid
-                                RowDefinitions="Auto,Auto,Auto"
+                                RowDefinitions="Auto,Auto"
                                 RowSpacing="12">
                                 <Border
                                     x:Name="AutomaticBackupPanel"
-                                    Grid.Row="2"
+                                    Grid.Row="1"
                                     BorderBrush="{DynamicResource BrushBorder}"
                                     BorderThickness="1"
                                     CornerRadius="8"
@@ -1640,32 +1644,7 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
-                                <Border
-                                    x:Name="BackupRestorePanel"
-                                    Grid.Row="1"
-                                    BorderBrush="{DynamicResource BrushBorder}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Padding="12">
-                                    <StackPanel Spacing="10">
-                                        <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding RestoreSectionText}" />
-                                        <TextBlock
-                                            Foreground="{DynamicResource BrushTextSecondary}"
-                                            Text="{Binding ImportBackupDescriptionText}"
-                                            TextWrapping="Wrap" />
-                                        <controls:RevealableSecretInput
-                                            AccessibleName="{Binding BackupPasswordText}"
-                                            PlaceholderText="{Binding BackupPasswordText}"
-                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                            Text="{Binding ImportPassword, Mode=TwoWay}" />
-                                        <Button
-                                            Classes="wide secondary"
-                                            Command="{Binding ImportBackupCommand}">
-                                            <controls:SymbolIconLabel Kind="BackupRestore" Text="{Binding ImportBackupText}" />
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
+
                             </Grid>
                         </StackPanel>
                         <Border
@@ -2558,6 +2537,27 @@
                     Background="{DynamicResource BrushDialogSurface}" BorderBrush="{DynamicResource BrushBorder}"
                     BorderThickness="1" CornerRadius="5">
                 <controls:ImportFileSummaryPanel DataContext="{Binding MigrationImport}" />
+            </Border>
+        </Grid>
+
+        <Grid x:Name="EncryptedAccountImportPasswordDialog" Grid.RowSpan="3" Panel.ZIndex="100"
+              Background="{DynamicResource BrushOverlayStrong}" IsVisible="{Binding IsImportBackupPasswordVisible}">
+            <Border MaxWidth="440" Margin="24" Padding="20" CornerRadius="12" VerticalAlignment="Center"
+                    Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                    <StackPanel Spacing="12">
+                        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{Binding ImportBackupPasswordTitle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding ImportBackupPasswordHelp}" TextWrapping="Wrap" />
+                        <controls:RevealableSecretInput Text="{Binding ImportPassword, Mode=TwoWay}"
+                            AccessibleName="{Binding BackupPasswordText}" PlaceholderText="{Binding BackupPasswordText}"
+                            RevealButtonAccessibleName="{Binding RevealPasswordText}" RevealButtonHelpText="{Binding RevealPasswordHelpText}" />
+                        <controls:ValidationMessage Severity="Error" Text="{Binding ImportBackupPasswordError}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Classes="wide secondary" Command="{Binding CancelImportBackupUnlockCommand}" Content="{Binding CancelText}" />
+                            <Button Grid.Column="1" Classes="wide primary" Command="{Binding UnlockImportBackupCommand}" Content="{Binding ImportBackupUnlockText}" />
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
 

@@ -59,8 +59,13 @@ The following desktop concerns are intentionally excluded rather than ported:
 - Windows-specific authorization and platform guidance
 
 Android owns lifecycle locking and display scaling. Updates will be delivered by the selected app
-distribution channel. Developer diagnostics remain available through Android tooling rather than
-as end-user settings.
+distribution channel. Settings → Support & diagnostics contains issue reporting and diagnostic
+log controls; Android tooling remains available for developer diagnostics.
+
+Settings → About shows the app identity and installed package version, GitHub repository,
+GPL-3.0-only license, and the Android website. Share app with friends opens Android's native
+Sharesheet with localized text and the public Android website link. It includes no account,
+vault, diagnostic or device data. Desktop About uses the desktop website and omits sharing.
 
 The following maintained mobile capability remains deliberately deferred until its platform adapter
 is complete:

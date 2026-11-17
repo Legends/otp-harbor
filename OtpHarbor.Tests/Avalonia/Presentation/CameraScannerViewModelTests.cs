@@ -9,11 +9,113 @@ using TOTP.Avalonia.Desktop.Presentation.Dialogs;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
 using TOTP.Avalonia.Desktop.Localization;
+using TOTP.Avalonia.Shared.Import;
+using TOTP.Core.Models;
+using TOTP.Infrastructure.Services;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class CameraScannerViewModelTests
 {
+    [Fact]
+    public async Task QrImage_OnlyExactDuplicates_ShowsOneAcknowledgementWithoutReviewOrWrites()
+    {
+        const string payload = "otpauth://totp/Demo:alice?secret=JBSWY3DPEHPK3PXP&issuer=Demo";
+        var selected = new Mock<INativeStorageFile>();
+        selected.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickQrImageAsync(It.IsAny<CancellationToken>())).ReturnsAsync(selected.Object);
+        var decoder = new Mock<IQrImageDecoder>();
+        decoder.Setup(value => value.DecodeAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(QrImageDecodeResult.Decoded(payload));
+        var validator = new Mock<IQrPayloadValidator>();
+        validator.Setup(value => value.Validate(payload)).Returns(new QrPayloadValidationResult(true, "Demo", "alice", QrPayloadKind.StandardAccount, 1));
+        var manager = new Mock<IAccountManager>(MockBehavior.Strict);
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(
+            [new Account(Guid.NewGuid(), "Demo", "JBSWY3DPEHPK3PXP", "alice")]));
+        var dialogs = new Mock<IAvaloniaDialogService>(MockBehavior.Strict);
+        dialogs.Setup(value => value.ShowMessageAsync(It.Is<MessageDialogRequest>(request =>
+                request.Message == "Import contains only duplicates. Nothing to import!"), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var catalog = new AvaloniaStringCatalog();
+        var localization = new Mock<IAvaloniaLocalizationService>();
+        localization.Setup(value => value.GetString(It.IsAny<string>())).Returns((string key) => catalog.Get(key, System.Globalization.CultureInfo.GetCultureInfo("en")));
+        using var sut = CreateSut(Mock.Of<IQrScannerRunner>(), validator.Object,
+            importService: new QrAccountImportService(manager.Object), dialogs: dialogs.Object,
+            imageDecoder: decoder.Object, filePicker: picker.Object, localization: localization.Object);
+        var changed = false;
+        sut.AccountImported += (_, _) => changed = true;
+
+        await sut.OpenImageAsync();
+
+        Assert.False(changed);
+        Assert.Empty(sut.Message);
+        dialogs.Verify(value => value.ShowMessageAsync(It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+        dialogs.VerifyNoOtherCalls();
+        manager.Verify(value => value.GetAllOtpEntriesSortedAsync(), Times.Once);
+        manager.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, true)]
+    public async Task QrImage_UsesOneCleanConfirmationOrSharedConflictReview_AndCancellationNeverWrites(bool conflict, bool accept, bool back)
+    {
+        const string payload = "otpauth://totp/Demo:alice?secret=JBSWY3DPEHPK3PXP&issuer=Demo";
+        var selected = new Mock<INativeStorageFile>();
+        selected.Setup(value => value.OpenReadAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream([1]));
+        var picker = new Mock<IAvaloniaFilePicker>();
+        picker.Setup(value => value.PickQrImageAsync(It.IsAny<CancellationToken>())).ReturnsAsync(selected.Object);
+        var decoder = new Mock<IQrImageDecoder>();
+        decoder.Setup(value => value.DecodeAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(QrImageDecodeResult.Decoded(payload));
+        var validator = new Mock<IQrPayloadValidator>();
+        validator.Setup(value => value.Validate(payload)).Returns(new QrPayloadValidationResult(true, "Demo", "alice", QrPayloadKind.StandardAccount, 1));
+        var existing = new Account(Guid.NewGuid(), "Demo", "KRSXG5DSNFXGOIDB", "alice", 60, algorithm: "SHA512", digits: 8);
+        var manager = new Mock<IAccountManager>(MockBehavior.Strict);
+        manager.Setup(value => value.GetAllOtpEntriesSortedAsync()).ReturnsAsync(Result.Ok<IReadOnlyList<Account>>(conflict ? [existing] : []));
+        manager.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        manager.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        manager.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>())).ReturnsAsync(Result.Ok());
+        var dialogs = new Mock<IAvaloniaDialogService>(MockBehavior.Strict);
+        dialogs.Setup(value => value.ConfirmAsync(It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ConfirmationDialogRequest request, CancellationToken _) =>
+            {
+                Assert.Equal("Import this new account now?", request.Message);
+                return accept;
+            });
+        var summaries = 0;
+        dialogs.Setup(value => value.ConfirmImportFileAsync(It.IsAny<AuthenticatorImportViewModel>(), It.IsAny<AccountImportReadSummary>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => ++summaries == 1);
+        dialogs.Setup(value => value.ReviewImportAsync(It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ImportReviewViewModel review, CancellationToken _) =>
+            {
+                var row = Assert.Single(review.Rows);
+                Assert.True(row.IsConflict);
+                Assert.Contains("SHA512", row.ExistingDetails);
+                Assert.Contains("SHA1", row.IncomingParameters);
+                Assert.DoesNotContain(existing.Secret, row.ExistingDetails);
+                if (back) review.BackCommand.Execute(null);
+                if (accept) row.IsReplace = true;
+                return accept ? review.CreateResolution() : null;
+            });
+        var catalog = new AvaloniaStringCatalog();
+        var localization = new Mock<IAvaloniaLocalizationService>();
+        localization.Setup(value => value.GetString(It.IsAny<string>())).Returns((string key) => catalog.Get(key, System.Globalization.CultureInfo.GetCultureInfo("en")));
+        using var sut = CreateSut(Mock.Of<IQrScannerRunner>(), validator.Object,
+            importService: new QrAccountImportService(manager.Object), dialogs: dialogs.Object,
+            imageDecoder: decoder.Object, filePicker: picker.Object, localization: localization.Object);
+        await sut.OpenImageAsync();
+        dialogs.Verify(value => value.ConfirmAsync(It.IsAny<ConfirmationDialogRequest>(), It.IsAny<CancellationToken>()), conflict ? Times.Never() : Times.Once());
+        dialogs.Verify(value => value.ConfirmImportFileAsync(It.IsAny<AuthenticatorImportViewModel>(), It.IsAny<AccountImportReadSummary>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), conflict ? Times.Exactly(back ? 2 : 1) : Times.Never());
+        dialogs.Verify(value => value.ReviewImportAsync(It.IsAny<ImportReviewViewModel>(), It.IsAny<CancellationToken>()), conflict ? Times.Once() : Times.Never());
+        manager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), accept && !conflict ? Times.Once() : Times.Never());
+        manager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), accept && conflict ? Times.Once() : Times.Never());
+        manager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), accept && conflict ? Times.Once() : Times.Never());
+        dialogs.VerifyNoOtherCalls();
+    }
+
     [Fact]
     public async Task StartAsync_WhenValidQrIsDecoded_ShowsOnlySafeAccountMetadataAndClearsFrame()
     {

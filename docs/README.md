@@ -14,6 +14,7 @@ This index lists maintained documentation. Git history preserves completed migra
 - [Developer guide and complete PowerShell script catalog](DEVELOPMENT.md)
 - [Contribution guide](../CONTRIBUTING.md)
 - [Desktop test commands](testing/DESKTOP_APP_TEST_COMMANDS.md)
+- [Executable Store v2-to-v3 upgrade test kit](testing/STORE_V2_V3_UPGRADE.md)
 - [Android development preview](android/FOUNDATION.md)
 - [F-Droid readiness](android/FDROID_READINESS.md)
 - [F-Droid dependency audit](android/FDROID_DEPENDENCY_AUDIT.md)

@@ -7,7 +7,7 @@ namespace TOTP.Avalonia.Shared.Import;
 
 public enum AuthenticatorImportSource
 {
-    TwoFas, Aegis, Google, BitwardenAuthenticator, BitwardenVault, Ente, Proton, KeePassXC, Microsoft, Other
+    TwoFas, Aegis, Google, BitwardenAuthenticator, BitwardenVault, Ente, Proton, KeePassXC, Microsoft, Other, LastPass, Authy
 }
 
 public sealed class AuthenticatorImportViewModel : INotifyPropertyChanged
@@ -65,7 +65,7 @@ public sealed class AuthenticatorImportViewModel : INotifyPropertyChanged
     public string InstructionsTitle => Get(MigrationStringKeys.InstructionsTitle);
     public bool HasGuidance => SelectedSource is not null;
     public string Instructions => SelectedSource is null ? string.Empty : Get(MigrationStringKeys.Guide(SelectedSource.Source));
-    public string SupportNotice => Get(SelectedSource?.Source is AuthenticatorImportSource.Microsoft or AuthenticatorImportSource.KeePassXC ? MigrationStringKeys.GuideOnly
+    public string SupportNotice => Get(SelectedSource?.Source is AuthenticatorImportSource.Microsoft or AuthenticatorImportSource.KeePassXC or AuthenticatorImportSource.Authy ? MigrationStringKeys.GuideOnly
         : SelectedSource?.Source == AuthenticatorImportSource.Google ? MigrationStringKeys.QrOnly : MigrationStringKeys.PlaintextOnly);
     public string SelectExportText => Get(MigrationStringKeys.SelectExport);
     public string FileText => Get(MigrationStringKeys.ChooseFile);
@@ -87,7 +87,7 @@ public sealed class AuthenticatorImportViewModel : INotifyPropertyChanged
     public string GetFormatName(AccountImportFormat format) => Get(FileImportStringKeys.Format(format));
     public int TotalEntries => (_fileSummary?.SupportedCount ?? 0) + AttentionEntries;
     public int ValidEntries => _fileSummary?.SupportedCount ?? 0;
-    public int AttentionEntries => (_fileSummary?.InvalidCount ?? 0) + (_fileSummary?.UnsupportedCount ?? 0) + (_fileSummary?.NonOtpCount ?? 0);
+    public int AttentionEntries => (_fileSummary?.InvalidCount ?? 0) + (_fileSummary?.UnsupportedCount ?? 0) + (_fileSummary?.NonOtpCount ?? 0) + (_fileSummary?.TrashedCount ?? 0);
     public string TotalEntriesText => Get(FileImportStringKeys.TotalEntries);
     public string ValidEntriesText => Get(FileImportStringKeys.ValidEntries);
     public string AttentionEntriesText => Get(FileImportStringKeys.AttentionEntries);

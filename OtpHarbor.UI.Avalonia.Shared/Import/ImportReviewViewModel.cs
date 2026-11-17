@@ -19,13 +19,14 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
     private IReadOnlyList<ReviewRow> _visibleRows = [];
 
     public ImportReviewViewModel(AccountImportPreview preview, AccountImportReadSummary? summary,
-        string sourceName, string fileName, Func<string, string> localize)
+        string sourceName, string fileName, Func<string, string> localize, bool allowKeepBoth = true)
     {
         _localize = localize;
         _summary = summary;
         SourceName = Safe(sourceName);
         FileName = Safe(fileName);
-        Actions = Enum.GetValues<AccountImportConflictAction>().Select(action => new ActionOption(this, action)).ToArray();
+        Actions = Enum.GetValues<AccountImportConflictAction>().Where(action => allowKeepBoth || action != AccountImportConflictAction.KeepBoth)
+            .Select(action => new ActionOption(this, action)).ToArray();
         Rows = preview.Entries.Select((entry, index) => new ReviewRow(this, entry,
             entry.ImportIndex < 0 ? index : entry.ImportIndex,
             preview.ChangedConflicts.FirstOrDefault(conflict => conflict.ImportIndex == (entry.ImportIndex < 0 ? index : entry.ImportIndex)))).ToArray();
@@ -63,7 +64,7 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
     public int ReadyCount => Rows.Count(row => row.Category == ImportReviewCategory.Ready);
     public int ConflictCount => Rows.Count(row => row.IsConflict);
     public int DuplicateCount => Rows.Count(row => row.Category == ImportReviewCategory.Duplicates);
-    public int UnsupportedCount => (_summary?.UnsupportedCount ?? 0) + (_summary?.NonOtpCount ?? 0);
+    public int UnsupportedCount => (_summary?.UnsupportedCount ?? 0) + (_summary?.NonOtpCount ?? 0) + (_summary?.TrashedCount ?? 0);
     public int InvalidCount => _summary?.InvalidCount ?? 0;
     public int UnresolvedCount => Rows.Count(row => row.IsConflict && row.SelectedAction is null);
     public int ImportCount => ReadyCount + Rows.Count(row => row.IsConflict && row.SelectedAction?.Action is AccountImportConflictAction.Replace or AccountImportConflictAction.KeepBoth);
@@ -72,11 +73,13 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
     public string ReviewStatus => UnresolvedCount > 0 ? Format(ReviewStringKeys.Unresolved, UnresolvedCount)
         : CanImport ? ReadyText : HasExcluded ? ExcludedText : Rows.Count == 0 ? NoResultsText : Text(ReviewStringKeys.DuplicateDescription);
     public bool HasExcluded => UnsupportedCount + InvalidCount > 0;
-    public string ExcludedText => InvalidCount + (_summary?.UnsupportedCount ?? 0) == 0
-        ? Format(ReviewStringKeys.ExcludedNonOtp, _summary?.NonOtpCount ?? 0)
-        : Format(ReviewStringKeys.Excluded, _summary?.NonOtpCount ?? 0, _summary?.UnsupportedCount ?? 0, InvalidCount);
+    public string ExcludedText => ImportReviewFormatter.WithTrashedEntries(_localize,
+        InvalidCount + (_summary?.UnsupportedCount ?? 0) + (_summary?.NonOtpCount ?? 0) == 0 ? string.Empty
+        : InvalidCount + (_summary?.UnsupportedCount ?? 0) == 0 ? Format(ReviewStringKeys.ExcludedNonOtp, _summary?.NonOtpCount ?? 0)
+        : Format(ReviewStringKeys.Excluded, _summary?.NonOtpCount ?? 0, _summary?.UnsupportedCount ?? 0, InvalidCount), _summary);
     public string SelectionText => Format(ReviewStringKeys.SelectedCount, Rows.Count(row => row.IsSelected));
     public bool HasSelection => Rows.Any(row => row.IsSelected && row.IsConflict);
+    public bool HasSelectableConflicts => !_completed && VisibleRows.Any(row => row.IsConflict);
     public string Breadcrumb => Text(ReviewStringKeys.Breadcrumb);
     public string Title => Text(ReviewStringKeys.Title);
     public string Description => Text(ReviewStringKeys.Description);
@@ -220,14 +223,17 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
         public string AccountName => Safe(_entry.AccountName);
         public string Identity => _owner.Format(ReviewStringKeys.Identity, Issuer, AccountName);
         public string Parameters => _owner.Format(ReviewStringKeys.Parameters, _entry.Algorithm, _entry.Digits, _entry.PeriodSeconds);
-        public string ExistingParameters => _entry.Existing is { } existing
-            ? (_entry.ExistingIsFromExport ? _owner.Text(ReviewStringKeys.EarlierExport) + Environment.NewLine : string.Empty)
-                + _owner.Format(ReviewStringKeys.ExistingParameters, Safe(existing.Issuer), Safe(existing.AccountName), existing.Algorithm, existing.Digits, existing.PeriodSeconds)
+        public string ExistingDetails => _entry.Existing is { } existing
+            ? _owner.Format(ReviewStringKeys.ExistingParameters, Safe(existing.Issuer), Safe(existing.AccountName), existing.Algorithm, existing.Digits, existing.PeriodSeconds)
             : _owner.Text(ReviewStringKeys.NoExisting);
+        public string ExistingParameters => _entry.ExistingIsFromExport && _entry.Existing is not null
+            ? ExistingText + Environment.NewLine + ExistingDetails : ExistingDetails;
         public string IncomingParameters => _owner.Format(ReviewStringKeys.ExistingParameters, Issuer, AccountName, _entry.Algorithm, _entry.Digits, _entry.PeriodSeconds);
         public string IssueText => _owner.Text(!IsConflict ? Category == ImportReviewCategory.Duplicates ? ReviewStringKeys.ExactDuplicate : ReviewStringKeys.NewAccount
             : _conflict!.SecretChanged ? ReviewStringKeys.SecretDiffers
-            : _conflict.IssuerChanged || _conflict.AccountNameChanged ? ReviewStringKeys.LabelDiffers : ReviewStringKeys.ParametersDiffer);
+            : _conflict.IssuerChanged && _conflict.AccountNameChanged ? ReviewStringKeys.LabelDiffers
+            : _conflict.IssuerChanged ? ReviewStringKeys.IssuerDiffers
+            : _conflict.AccountNameChanged ? ReviewStringKeys.AccountNameDiffers : ReviewStringKeys.ParametersDiffer);
         public string IssueDescription => _owner.Text(_entry.ExistingIsFromExport ? ReviewStringKeys.EarlierDescription : IsConflict ? _conflict!.SecretChanged ? ReviewStringKeys.SecretDescription : ReviewStringKeys.ChangeDescription
             : Category == ImportReviewCategory.Duplicates ? ReviewStringKeys.DuplicateDescription : ReviewStringKeys.ReadyDescription);
         public string ChangedFieldsText
@@ -246,7 +252,7 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
                     string.Join(CultureInfo.CurrentCulture.TextInfo.ListSeparator + " ", fields.Where(change => change.Changed).Select(change => _owner.Text(change.Key))));
             }
         }
-        public string ChoicesHelp => _owner.Text(ReviewStringKeys.ChoicesHelp);
+        public string ChoicesHelp => _owner.Text(CanKeepBoth ? ReviewStringKeys.ChoicesHelp : ReviewStringKeys.BackupChoicesHelp);
         public string ActionSummary => IsConflict ? SelectedAction?.Name ?? _owner.Text(ReviewStringKeys.ChooseAction) : _owner.Text(Category == ImportReviewCategory.Duplicates ? ReviewStringKeys.Skip : ReviewStringKeys.Add);
         public string ExistingText => _entry.ExistingIsFromExport ? _owner.Text(ReviewStringKeys.EarlierExport) : _owner.ExistingText;
         public string IncomingText => _owner.IncomingText;
@@ -255,10 +261,21 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
         public string KeepBothText => _owner.Text(ReviewStringKeys.KeepBoth);
         public string SkipText => _owner.Text(ReviewStringKeys.Skip);
         public IReadOnlyList<ActionOption> Actions => _owner.Actions;
+        public bool CanKeepBoth => Actions.Any(option => option.Action == AccountImportConflictAction.KeepBoth);
         public ActionOption? SelectedAction { get => _action; set { if (_action == value) return; _action = value; Refresh(); _owner.Notify(); } }
-        public bool IsSelected { get => _selected; set { _selected = value; Refresh(); _owner.Notify(); } }
+        public bool IsSelected
+        {
+            get => _selected;
+            set
+            {
+                if (!IsConflict || _selected == value) return;
+                _selected = value;
+                Refresh();
+                _owner.Notify();
+            }
+        }
         public bool IsReplace { get => SelectedAction?.Action == AccountImportConflictAction.Replace; set { if (value) SelectedAction = Actions.Single(option => option.Action == AccountImportConflictAction.Replace); } }
-        public bool IsKeepBoth { get => SelectedAction?.Action == AccountImportConflictAction.KeepBoth; set { if (value) SelectedAction = Actions.Single(option => option.Action == AccountImportConflictAction.KeepBoth); } }
+        public bool IsKeepBoth { get => SelectedAction?.Action == AccountImportConflictAction.KeepBoth; set { if (value && CanKeepBoth) SelectedAction = Actions.Single(option => option.Action == AccountImportConflictAction.KeepBoth); } }
         public bool IsSkip { get => SelectedAction?.Action == AccountImportConflictAction.Skip; set { if (value) SelectedAction = Actions.Single(option => option.Action == AccountImportConflictAction.Skip); } }
         internal void Refresh() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
     }

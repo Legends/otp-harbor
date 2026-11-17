@@ -555,12 +555,14 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             var imported = await ReadImportAsync(file, isBackupRestore, lifetime.Token);
             lifetime.Token.ThrowIfCancellationRequested();
             if (imported is null) return;
+            var duplicatesOnly = false;
             var importResult = isBackupRestore
-                ? await _accountImportService.RestoreBackupAsync(
-                    imported.Value.Accounts,
-                    ConflictStrategy,
-                    ConfirmImportAsync)
-                : await ReviewExternalFileAsync(imported.Value.Accounts, imported.Value.Summary, file.Name, lifetime.Token);
+                ? await _accountImportService.RestoreBackupAsync(imported.Value.Accounts, ConflictStrategy,
+                    (preview, token) => _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                        Localized(AvaloniaStringKeys.RestoreBackup), ImportConfirmationMessage(preview, imported.Value.Summary),
+                        NotificationSeverity.Warning, Localized(AvaloniaStringKeys.RestoreBackup), Localized(AvaloniaStringKeys.Cancel)), token), lifetime.Token)
+                : await ReviewExternalFileAsync(imported.Value.Accounts, imported.Value.Summary,
+                    file.Name, lifetime.Token, () => duplicatesOnly = true);
             if (importResult.IsFailed)
             {
                 SetMessage(
@@ -586,7 +588,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             }
             else if (outcome.Status == AccountImportStatus.Cancelled)
             {
-                ShowTransientMessage(OutcomeMessage(outcome), NotificationSeverity.Information);
+                if (!duplicatesOnly) ShowTransientMessage(OutcomeMessage(outcome), NotificationSeverity.Information);
             }
             else
             {
@@ -600,17 +602,6 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 && outcome.Added + outcome.Replaced > 0)
                 AccountsChanged?.Invoke(this, EventArgs.Empty);
 
-            Task<bool> ConfirmImportAsync(AccountImportPreview preview, CancellationToken token) =>
-                _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
-                    Localized(isBackupRestore
-                        ? AvaloniaStringKeys.RestoreBackup
-                        : AvaloniaStringKeys.ImportAccounts),
-                    ImportConfirmationMessage(preview, imported.Value.Summary),
-                    NotificationSeverity.Warning,
-                    Localized(isBackupRestore
-                        ? AvaloniaStringKeys.RestoreBackup
-                        : AvaloniaStringKeys.ImportAccounts),
-                    Localized(AvaloniaStringKeys.Cancel)), token);
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
         catch (Exception)
@@ -627,25 +618,41 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     }
 
     private async Task<Result<AccountImportOutcome>> ReviewExternalFileAsync(List<Account> accounts,
-        AccountImportReadSummary? summary, string fileName, CancellationToken cancellationToken)
+        AccountImportReadSummary? summary, string fileName, CancellationToken cancellationToken, Action onlyDuplicates)
     {
         summary ??= new AccountImportReadSummary(accounts.Count);
         EndImportProgress();
-        while (await _dialogs.ConfirmImportFileAsync(MigrationImport, summary, fileName, cancellationToken))
+        var backup = summary.Format == AccountImportFormat.EncryptedOtpHarborBackup;
+        return await (backup ? _accountImportService.RestoreBackupWithConflictResolutionAsync(accounts, ResolveAsync, cancellationToken)
+            : _accountImportService.ImportWithConflictResolutionAsync(accounts, ResolveAsync, cancellationToken));
+
+        async Task<AccountImportResolution?> ResolveAsync(AccountImportPreview preview, CancellationToken token)
         {
-            var backRequested = false;
-            var result = await _accountImportService.ImportWithConflictResolutionAsync(accounts,
-                async (preview, token) =>
-                {
-                    var review = new TOTP.Avalonia.Shared.Import.ImportReviewViewModel(
-                        preview, summary, MigrationImport.GetFormatName(summary.Format), fileName, _localization.GetString);
-                    var resolution = await _dialogs.ReviewImportAsync(review, token);
-                    backRequested = review.BackRequested;
-                    return resolution;
-                }, cancellationToken);
-            if (!backRequested || result.IsFailed || result.Value.Status != AccountImportStatus.Cancelled) return result;
+            if (TOTP.Avalonia.Shared.Import.ImportReviewPolicy.IsOnlyExactDuplicates(preview, summary))
+            {
+                await _dialogs.ShowMessageAsync(new MessageDialogRequest(Localized(AvaloniaStringKeys.ImportAccounts),
+                    Localized(TOTP.Avalonia.Shared.Import.ReviewStringKeys.OnlyDuplicates), NotificationSeverity.Information, Localized(AvaloniaStringKeys.Ok)), token);
+                onlyDuplicates();
+                return null;
+            }
+            if (TOTP.Avalonia.Shared.Import.ImportReviewPolicy.IsClean(preview, summary))
+            {
+                var confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                    Localized(AvaloniaStringKeys.ImportAccounts),
+                    TOTP.Avalonia.Shared.Import.ImportReviewPolicy.ConfirmText(_localization.GetString, preview.TotalCount),
+                    NotificationSeverity.Information, Localized(AvaloniaStringKeys.ImportAccounts), Localized(AvaloniaStringKeys.Cancel)), token);
+                return confirmed ? new AccountImportResolution([]) : null;
+            }
+            while (await _dialogs.ConfirmImportFileAsync(MigrationImport, summary, fileName, token))
+            {
+                var review = new TOTP.Avalonia.Shared.Import.ImportReviewViewModel(
+                    preview, summary, MigrationImport.GetFormatName(summary.Format), fileName, _localization.GetString, allowKeepBoth: !backup);
+                var resolution = await _dialogs.ReviewImportAsync(review, token);
+                if (resolution is null && review.BackRequested) continue;
+                return resolution;
+            }
+            return null;
         }
-        return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
     }
 
     public void CancelPendingImports()
@@ -889,65 +896,17 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private async Task<(List<Account> Accounts, AccountImportReadSummary? Summary)?> ReadImportAsync(INativeStorageFile file, bool isBackupRestore, CancellationToken cancellationToken)
     {
         Result<List<Account>> result;
-        var extension = Path.GetExtension(file.Name);
-        if (isBackupRestore && BackupFileExtensions.IsSupportedBackup(extension))
+        if (isBackupRestore)
         {
-            Result<List<Account>>? validatedResult = null;
-            var password = await _dialogs.PromptForPasswordAsync(new PasswordDialogRequest(
-                Localized(AvaloniaStringKeys.ImportEncryptedBackupTitle),
-                Localized(AvaloniaStringKeys.ImportPasswordPrompt),
-                Localized(AvaloniaStringKeys.UnlockBackup),
-                Localized(AvaloniaStringKeys.Cancel),
-                Localized(AvaloniaStringKeys.ImportPasswordRequired),
-                Localized(AvaloniaStringKeys.BackupValidationFailed),
-                async (candidate, token) =>
-                {
-                    await using var stream = await file.OpenReadAsync(token);
-                    if (extension.Equals(
-                            BackupFileExtensions.AutomaticBackup,
-                            StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (_automaticBackupSnapshots is null)
-                        {
-                            validatedResult = Result.Fail<List<Account>>(
-                                "Automatic backup restore is unavailable.");
-                        }
-                        else
-                        {
-                            var restored = await _automaticBackupSnapshots.ReadAccountsAsync(
-                                stream,
-                                candidate,
-                                token);
-                            validatedResult = restored.IsSuccess
-                                ? Result.Ok(restored.Value.ToList())
-                                : Result.Fail<List<Account>>(restored.Errors);
-                        }
-                    }
-                    else
-                    {
-                        validatedResult = await _exportService.ImportFromStreamAsync(
-                            stream, file.Name, candidate, token);
-                    }
-                    var automaticBackupError = validatedResult.Errors
-                        .OfType<AutomaticBackupError>()
-                        .FirstOrDefault();
-                    return validatedResult.GetErrorCode() == AppErrorCode.ImportWrongPasswordOrTampered
-                        || automaticBackupError?.Code == AutomaticBackupErrorCode.InvalidPassword
-                        ? Localized(AvaloniaStringKeys.BackupWrongPasswordOrModified)
-                        : validatedResult.IsFailed
-                            ? Localized(AvaloniaStringKeys.BackupInvalidOrUnavailable)
-                            : null;
-                }));
-            password = null;
-            if (validatedResult is null)
+            var automatic = Path.GetExtension(file.Name).Equals(BackupFileExtensions.AutomaticBackup, StringComparison.OrdinalIgnoreCase);
+            result = await UnlockImportedBackupAsync(new AccountImportPasswordRequest(automatic, async (candidate, token) =>
             {
-                ShowTransientMessage(
-                    _localization.GetString(AvaloniaStringKeys.ImportCancelled),
-                    NotificationSeverity.Information);
-                return null;
-            }
-
-            result = validatedResult;
+                await using var input = await file.OpenReadAsync(token);
+                if (!automatic) return await _exportService.ImportFromStreamAsync(input, file.Name, candidate, token);
+                if (_automaticBackupSnapshots is null) return Result.Fail<List<Account>>("Automatic backup reader unavailable.");
+                var decoded = await _automaticBackupSnapshots.ReadAccountsAsync(input, candidate, token);
+                return decoded.IsSuccess ? Result.Ok(decoded.Value.ToList()) : Result.Fail<List<Account>>(decoded.Errors);
+            }), cancellationToken);
         }
         else
         {
@@ -957,7 +916,7 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
                 {
                     EndImportProgress();
                     return MigrationImport.ChooseDetectedFormatAsync(formats, file.Name, token);
-                }, cancellationToken);
+                }, UnlockImportedBackupAsync, cancellationToken);
         }
 
         if (result.IsFailed)
@@ -976,6 +935,14 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         if (result.Value.Count == 0)
         {
             var report = result.Successes.OfType<AccountImportReadSummary>().FirstOrDefault();
+            if (report is { TrashedCount: > 0 })
+            {
+                EndImportProgress();
+                await _dialogs.ShowMessageAsync(new MessageDialogRequest(Localized(AvaloniaStringKeys.ImportAccounts),
+                    Localized(TOTP.Avalonia.Shared.Import.FileImportStringKeys.NoActiveAccounts),
+                    NotificationSeverity.Information, Localized(AvaloniaStringKeys.Ok)), cancellationToken);
+                return null;
+            }
             if (report is not null)
                 await ReviewBlockedFileAsync(report, file.Name, cancellationToken);
             SetMessage(
@@ -987,6 +954,26 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         }
 
         return (result.Value, result.Successes.OfType<AccountImportReadSummary>().FirstOrDefault());
+    }
+
+    private async Task<Result<List<Account>>> UnlockImportedBackupAsync(AccountImportPasswordRequest request, CancellationToken token)
+    {
+        EndImportProgress();
+        Result<List<Account>>? validated = null;
+        var password = await _dialogs.PromptForPasswordAsync(new PasswordDialogRequest(
+            Localized(TOTP.Avalonia.Shared.Import.FileImportStringKeys.BackupPasswordTitle),
+            Localized(request.UsesMasterPassword ? TOTP.Avalonia.Shared.Import.FileImportStringKeys.SnapshotPasswordHelp
+                : TOTP.Avalonia.Shared.Import.FileImportStringKeys.BackupPasswordHelp),
+            Localized(AvaloniaStringKeys.UnlockBackup), Localized(AvaloniaStringKeys.Cancel),
+            Localized(AvaloniaStringKeys.ImportPasswordRequired), Localized(AvaloniaStringKeys.BackupValidationFailed),
+            async (candidate, validationToken) =>
+            {
+                validated = await request.TryReadAsync(candidate, validationToken);
+                return validated.IsSuccess ? null : Localized(AvaloniaStringKeys.BackupWrongPasswordOrModified);
+            }), token);
+        var accepted = password is not null && validated is { IsSuccess: true };
+        password = null;
+        return accepted ? validated! : Result.Fail<List<Account>>(new AccountImportReadCancelled());
     }
 
     private async Task ReviewBlockedFileAsync(AccountImportReadSummary summary, string fileName, CancellationToken cancellationToken)

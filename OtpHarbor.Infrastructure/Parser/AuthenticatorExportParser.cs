@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Globalization;
+using System.Net;
 using FluentResults;
 using TOTP.Core.Common;
 using TOTP.Core.Models;
@@ -9,9 +11,39 @@ namespace TOTP.Infrastructure.Parser;
 
 internal static class AuthenticatorExportParser
 {
+    public static Result<List<Account>> ParseLastPass(JsonElement root)
+    {
+        if (!HasUniqueProperties(root)) return Rejected(0, 1, 0, 0);
+        if (!root.TryGetProperty("version", out var version) || !version.TryGetInt32(out var number) || number != 1)
+            return Rejected(0, 0, 1, 0);
+        var accounts = root.GetProperty("accounts");
+        if (accounts.ValueKind != JsonValueKind.Array) return Rejected(0, 1, 0, 0);
+        return Read(accounts.EnumerateArray(), entry =>
+        {
+            RequireUniqueProperties(entry);
+            var algorithm = RequiredString(entry, "algorithm").ToUpperInvariant();
+            if (!entry.GetProperty("digits").TryGetInt32(out var digits)
+                || !entry.GetProperty("timeStep").TryGetInt32(out var period))
+                throw new FormatException("Invalid LastPass TOTP parameters.");
+            if (!TotpConfigurationPolicy.IsSupported(algorithm, digits) || !TotpPeriodPolicy.IsSupported(period))
+                throw new UnsupportedOtpException();
+            var issuer = OptionalString(entry, "issuerName")?.Trim();
+            var name = OptionalString(entry, "userName")?.Trim();
+            if (string.IsNullOrWhiteSpace(issuer)) { issuer = name; name = null; }
+            var secret = SecretValidation.NormalizeBase32Secret(RequiredString(entry, "secret"));
+            if (!SecretValidation.IsValidBase32Secret(secret) || string.IsNullOrWhiteSpace(issuer)
+                || issuer.Length > 256 || (name?.Length ?? 0) > 256)
+                throw new FormatException("Invalid LastPass TOTP identity or secret.");
+            return new Account(Guid.NewGuid(), issuer, secret, string.IsNullOrEmpty(name) ? null : name, period,
+                algorithm: algorithm, digits: digits);
+        });
+    }
+
     public static Result<List<Account>> ParseBitwarden(JsonElement root)
     {
         if (!HasUniqueProperties(root)) return Rejected(0, 1, 0, 0);
+        if (root.TryGetProperty("passwordProtected", out var passwordProtected) && passwordProtected.ValueKind != JsonValueKind.False)
+            return Rejected(0, 1, 0, 0);
         if (!root.TryGetProperty("encrypted", out var encrypted) || encrypted.ValueKind != JsonValueKind.False)
             return Rejected(0, 0, 1, 0);
         var items = root.GetProperty("items");
@@ -51,7 +83,29 @@ internal static class AuthenticatorExportParser
     }
 
     public static Result<List<Account>> ParseUris(IEnumerable<string> lines) =>
-        Read(lines, line => FromValue(line, null, null, false, requireUri: true));
+        Read(lines, line =>
+        {
+            RejectTrashedEnteEntry(line);
+            return FromValue(line, null, null, false, requireUri: true);
+        });
+
+    private static void RejectTrashedEnteEntry(string value)
+    {
+        var uri = new Uri(value);
+        if (!uri.Scheme.Equals("otpauth", StringComparison.OrdinalIgnoreCase)) return;
+        var displayParameters = uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => part.Split('=', 2))
+            .Where(pair => WebUtility.UrlDecode(pair[0]).Equals("codeDisplay", StringComparison.Ordinal)).ToArray();
+        if (displayParameters.Length == 0) return;
+        if (displayParameters.Length != 1 || displayParameters[0].Length != 2)
+            throw new FormatException("Invalid Ente display metadata.");
+        using var document = JsonDocument.Parse(WebUtility.UrlDecode(displayParameters[0][1]), new JsonDocumentOptions { MaxDepth = 16 });
+        var display = document.RootElement;
+        RequireUniqueProperties(display);
+        if (!display.TryGetProperty("trashed", out var trashed)) return;
+        if (trashed.ValueKind == JsonValueKind.True) throw new TrashedOtpException();
+        if (trashed.ValueKind != JsonValueKind.False) throw new FormatException("Invalid Ente deleted-entry marker.");
+    }
 
     public static Result<List<Account>> ParseBitwardenCsv(IReadOnlyList<List<string>> rows)
     {
@@ -62,12 +116,26 @@ internal static class AuthenticatorExportParser
             value => value.index, StringComparer.OrdinalIgnoreCase);
         if (!columns.ContainsKey("name") || !columns.ContainsKey("login_totp") || !columns.ContainsKey("type"))
             return Rejected(0, 1, 0, 0);
+        var authenticatorHeader = header.SequenceEqual(
+            new[] { "folder", "favorite", "type", "name", "login_uri", "login_totp" },
+            StringComparer.OrdinalIgnoreCase);
         return Read(rows.Skip(1), row =>
         {
-            if (row.Count != header.Count) throw new FormatException("Invalid authenticator CSV row.");
+            // Bitwarden Android Authenticator exports this six-column header with
+            // three unlabelled issuer/period/digits columns and a numeric login type.
+            var repeatedParameters = authenticatorHeader && row.Count == 9 && row[2] == "1";
+            if (row.Count != header.Count && !repeatedParameters)
+                throw new FormatException("Invalid authenticator CSV row.");
             string Value(string key) => columns.TryGetValue(key, out var index) ? row[index] : string.Empty;
-            if (Value("type") != "login" || string.IsNullOrWhiteSpace(Value("login_totp"))) return null;
-            return FromValue(Value("login_totp"), Value("name"), Value("login_username"), Value("favorite") == "1");
+            if (Value("type") is not ("login" or "1") || string.IsNullOrWhiteSpace(Value("login_totp"))) return null;
+            var account = FromValue(Value("login_totp"), Value("name"),
+                columns.ContainsKey("login_username") ? Value("login_username") : null, Value("favorite") == "1",
+                requireUri: repeatedParameters);
+            if (repeatedParameters && (row[6] != Value("name") || row[6].Trim() != account.Issuer
+                || !int.TryParse(row[7], NumberStyles.None, CultureInfo.InvariantCulture, out var period) || period != account.PeriodSeconds
+                || !int.TryParse(row[8], NumberStyles.None, CultureInfo.InvariantCulture, out var digits) || digits != account.Digits))
+                throw new FormatException("Inconsistent authenticator CSV parameters.");
+            return account;
         });
     }
 
@@ -77,6 +145,7 @@ internal static class AuthenticatorExportParser
         var invalid = 0;
         var unsupported = 0;
         var nonOtp = 0;
+        var trashed = 0;
         foreach (var entry in entries)
         {
             try
@@ -86,14 +155,15 @@ internal static class AuthenticatorExportParser
                 else accounts.Add(account);
             }
             catch (UnsupportedOtpException) { unsupported++; }
-            catch (Exception exception) when (exception is ArgumentException or FormatException or InvalidOperationException or KeyNotFoundException)
+            catch (TrashedOtpException) { trashed++; }
+            catch (Exception exception) when (exception is ArgumentException or FormatException or InvalidOperationException or KeyNotFoundException or JsonException)
             {
                 invalid++;
             }
         }
         return invalid + unsupported > 0
-            ? Rejected(accounts.Count, invalid, unsupported, nonOtp)
-            : Result.Ok(accounts).WithSuccess(new AccountImportReadSummary(accounts.Count, nonOtpCount: nonOtp));
+            ? Rejected(accounts.Count, invalid, unsupported, nonOtp, trashed)
+            : Result.Ok(accounts).WithSuccess(new AccountImportReadSummary(accounts.Count, nonOtpCount: nonOtp, trashedCount: trashed));
     }
 
     private static Account FromValue(string value, string? issuer, string? accountName, bool favorite, bool requireUri = false)
@@ -150,9 +220,10 @@ internal static class AuthenticatorExportParser
         if (!HasUniqueProperties(element)) throw new FormatException("Invalid or ambiguous authenticator object.");
     }
 
-    private static Result<List<Account>> Rejected(int supported, int invalid, int unsupported, int nonOtp) =>
-        Result.Fail<List<Account>>(new AccountImportReadError(new AccountImportReadSummary(supported, invalid, unsupported, nonOtp)))
+    private static Result<List<Account>> Rejected(int supported, int invalid, int unsupported, int nonOtp, int trashed = 0) =>
+        Result.Fail<List<Account>>(new AccountImportReadError(new AccountImportReadSummary(supported, invalid, unsupported, nonOtp, trashed)))
             .WithError(new AppError(AppErrorCode.ImportInvalidPayload, "Authenticator import validation failed."));
 
     private sealed class UnsupportedOtpException : Exception { }
+    private sealed class TrashedOtpException : Exception { }
 }

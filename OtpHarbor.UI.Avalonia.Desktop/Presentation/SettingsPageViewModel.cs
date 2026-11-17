@@ -64,10 +64,12 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         IDiagnosticEnvironmentProvider? diagnosticEnvironment = null,
         ILogSwitchService? logSwitchService = null,
         IGitHubIssueReporter? gitHubIssueReporter = null,
-        StorageLocationsViewModel? storageLocations = null)
+        StorageLocationsViewModel? storageLocations = null,
+        TOTP.Avalonia.Shared.About.AboutViewModel? about = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         StorageLocations = storageLocations;
+        About = about;
         _localization = localization;
         _applicationPaths = applicationPaths;
         _folderLauncher = folderLauncher;
@@ -103,6 +105,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler? SettingsSaved;
     public StorageLocationsViewModel? StorageLocations { get; }
+    public TOTP.Avalonia.Shared.About.AboutViewModel? About { get; }
 
     public IReadOnlyList<LanguageOption> Languages { get; }
     public IReadOnlyList<AppLogLevel> LogLevels { get; }
@@ -394,6 +397,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     {
         if (_disposed || _localization is null) return;
         StorageLocations?.RefreshLanguage();
+        About?.RefreshLanguage();
         SetField(
             ref _selectedLanguage,
             _localization.CurrentLanguage,

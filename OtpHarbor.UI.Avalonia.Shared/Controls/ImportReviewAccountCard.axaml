@@ -16,7 +16,7 @@
         <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
             <Expander.Header>
                 <StackPanel Spacing="4">
-                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding IssueText}" />
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding IssueText}" TextWrapping="Wrap" />
                     <TextBlock FontSize="13" Text="{Binding Identity}" />
                     <TextBlock Classes="secondary" FontSize="12" Text="{Binding Parameters}" />
                     <TextBlock FontSize="12" Foreground="{DynamicResource BrushAccent}" Text="{Binding ActionSummary}" />
@@ -27,13 +27,14 @@
                 <TextBlock FontSize="12" Foreground="{DynamicResource BrushAccent}" Text="{Binding ChangedFieldsText}" IsVisible="{Binding IsConflict}" />
                 <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="5" Padding="10">
                     <StackPanel Spacing="6">
-                        <TextBlock FontWeight="SemiBold" Text="{Binding ExistingText}" /><TextBlock FontSize="12" Text="{Binding ExistingParameters}" />
-                        <TextBlock FontWeight="SemiBold" Text="{Binding IncomingText}" /><TextBlock FontSize="12" Text="{Binding IncomingParameters}" />
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding ExistingText}" /><TextBlock FontSize="12" Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding ExistingDetails}" />
+                        <Border Height="1" Background="{DynamicResource BrushBorder}" Margin="0,4" />
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushAccent}" Text="{Binding IncomingText}" /><TextBlock FontSize="12" Text="{Binding IncomingParameters}" />
                     </StackPanel>
                 </Border>
                 <StackPanel IsVisible="{Binding IsConflict}" Spacing="6">
                     <Border Classes="choice" Classes.selected="{Binding IsReplace}"><RadioButton MinHeight="44" GroupName="{Binding GroupName}" Content="{Binding ReplaceText}" IsChecked="{Binding IsReplace, Mode=TwoWay}" /></Border>
-                    <Border Classes="choice" Classes.selected="{Binding IsKeepBoth}"><RadioButton MinHeight="44" GroupName="{Binding GroupName}" Content="{Binding KeepBothText}" IsChecked="{Binding IsKeepBoth, Mode=TwoWay}" /></Border>
+                    <Border IsVisible="{Binding CanKeepBoth}" Classes="choice" Classes.selected="{Binding IsKeepBoth}"><RadioButton MinHeight="44" GroupName="{Binding GroupName}" Content="{Binding KeepBothText}" IsChecked="{Binding IsKeepBoth, Mode=TwoWay}" /></Border>
                     <Border Classes="choice" Classes.selected="{Binding IsSkip}"><RadioButton MinHeight="44" GroupName="{Binding GroupName}" Content="{Binding SkipText}" IsChecked="{Binding IsSkip, Mode=TwoWay}" /></Border>
                 </StackPanel>
                 <TextBlock Classes="secondary" FontSize="12" Text="{Binding ChoicesHelp}" IsVisible="{Binding IsConflict}" />

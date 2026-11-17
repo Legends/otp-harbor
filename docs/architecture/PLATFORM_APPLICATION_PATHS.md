@@ -16,6 +16,23 @@
 | Logs | `%AppData%\OTP-Harbor\Logs` | `~/Library/Logs/TOTP-Manager` | `$XDG_STATE_HOME/totp-manager/logs` | Private app cache, `Logs` |
 | Update state | `%AppData%\OTP-Harbor\autoupdate-state.json` | `~/Library/Application Support/TOTP-Manager/autoupdate-state.json` | `$XDG_STATE_HOME/totp-manager/autoupdate-state.json` | Private app files, `TOTP-Manager/autoupdate-state.json` |
 
+### Windows Store: logical versus physical paths
+
+The Windows paths above are the logical paths requested by the application. In a
+virtualized MSIX process, Windows presents the package's private AppData through
+those same paths. For OTP Harbor's Store family the physical locations are:
+
+- v2: `%LocalAppData%\Packages\Legends77.OTPHarbor_bev6xjqt2jr8t\LocalCache\Roaming\TOTP-Manager\master.totp`
+- v3: `%LocalAppData%\Packages\Legends77.OTPHarbor_bev6xjqt2jr8t\LocalCache\Roaming\OTP-Harbor\master.vault`
+
+Both released v2 and v3 request their respective directories under logical
+`Environment.SpecialFolder.ApplicationData`. Startup migration inside the Store
+process therefore operates on its package view; external, unpackaged test tools
+must also consider the physical package paths explicitly. A portable v2 build has
+no MSIX redirection and normally writes to real `%AppData%\TOTP-Manager` instead.
+Do not treat a portable-to-Store test as an installed Store-v2-to-Store-v3 update.
+See [Microsoft's MSIX AppData behavior](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-behind-the-scenes#appdata-operations-on-windows-10-version-1903-and-later).
+
 Linux adapters must use these fallbacks when the corresponding absolute XDG variable is absent:
 
 - `XDG_CONFIG_HOME`: `~/.config`

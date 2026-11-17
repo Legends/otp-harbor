@@ -20,6 +20,69 @@ namespace TOTP.Tests.Avalonia.Headless;
 
 public sealed class ImportReviewPanelTests
 {
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LongLocalizedConflictHeading_RemainsReadableWithinItsColumnOrCard(bool mobile)
+    {
+        var catalog = new AvaloniaStringCatalog();
+        var model = new ImportReviewViewModel(new(1, 1, ImportConflictStrategy.SkipExisting)
+        {
+            Entries = [new("Incoming", "other", "SHA1", 6, 30) { Existing = new("Existing", "user", "SHA1", 6, 30) }],
+            ChangedConflicts = [new(0, "Existing", "user", "Incoming", "other", true, true, false, false)]
+        }, null, "CSV", "synthetic.csv", key => catalog.Get(key, CultureInfo.GetCultureInfo("de")));
+        UserControl panel = mobile ? new ImportReviewMobilePage() : new ImportReviewPanel();
+        panel.DataContext = model;
+        var window = new Window { Width = mobile ? 360 : 1000, Height = 800, Content = panel };
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var heading = Assert.Single(panel.GetVisualDescendants().OfType<TextBlock>(),
+                text => text.IsEffectivelyVisible && text.Text == "Unterschiedliche Aussteller- und Kontonamen");
+            Assert.True(heading.Bounds.Width > 0);
+            Assert.True(heading.TextLayout.Height > heading.FontSize * 1.5);
+            Assert.True(heading.TextLayout.WidthIncludingTrailingWhitespace <= heading.Bounds.Width + 1);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void BulkSelection_IsDisabledForDuplicatesAndEnabledForVisibleConflicts(bool mobile)
+    {
+        var entry = new AccountImportEntryPreview("Demo", "alice", "SHA1", 6, 30);
+        var model = new ImportReviewViewModel(new(2, 2, ImportConflictStrategy.SkipExisting)
+        {
+            UnchangedCount = 1,
+            Entries = [entry with { Existing = entry }, entry with { Existing = entry }],
+            ChangedConflicts = [new(1, "Demo", "alice", "Demo", "alice", false, false, true, false)]
+        }, null, "QR", "QR", key => new AvaloniaStringCatalog().Get(key, CultureInfo.GetCultureInfo("en")));
+        model.SelectedCategory = model.Categories.Single(category => category.Category == ImportReviewCategory.Duplicates);
+        UserControl panel = mobile ? new ImportReviewMobilePage() : new ImportReviewPanel();
+        panel.DataContext = model;
+        var window = new Window { Width = mobile ? 390 : 1240, Height = 800, Content = panel };
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            CheckBox SelectBox() => panel.GetVisualDescendants().OfType<CheckBox>().Single(box => ReferenceEquals(box.DataContext, model));
+            ComboBox BulkBox() => panel.GetVisualDescendants().OfType<ComboBox>().Single(box => ReferenceEquals(box.DataContext, model) && ReferenceEquals(box.ItemsSource, model.Actions));
+            Assert.False(SelectBox().IsEnabled);
+            Assert.False(SelectBox().IsChecked);
+            Assert.False(BulkBox().IsEnabled);
+            model.SelectedCategory = model.Categories.Single(category => category.Category == ImportReviewCategory.Conflicts);
+            window.UpdateLayout();
+            Assert.True(SelectBox().IsEnabled);
+            model.AllVisibleSelected = true;
+            window.UpdateLayout();
+            Assert.True(SelectBox().IsChecked);
+            Assert.True(BulkBox().IsEnabled);
+        }
+        finally { window.Close(); }
+    }
+
     [AvaloniaFact]
     public void NativeBody_ReplacesFallbackScrollerAndKeepsSharedFooterAndReviewState()
     {
@@ -85,8 +148,39 @@ public sealed class ImportReviewPanelTests
             }
             var actions = panel.GetVisualDescendants().OfType<StackPanel>().Single(stack => stack.Classes.Contains("review-footer-actions"));
             Assert.True(actions.Bounds.Width < 500);
+            var bulk = panel.GetVisualDescendants().OfType<ComboBox>().Single(combo => combo.Classes.Contains("review-bulk-action"));
+            Assert.InRange(bulk.Bounds.Width, 60, 240);
+            Assert.Equal(global::Avalonia.Layout.HorizontalAlignment.Right, bulk.HorizontalAlignment);
             var position = actions.TranslatePoint(default, panel)!.Value;
             Assert.InRange(Math.Abs(position.X + actions.Bounds.Width - (panel.Bounds.Width - 16)), 0, 1);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false, "en")]
+    [InlineData(true, "fr")]
+    public void ComparisonCard_SeparatesAccountsAndShowsEarlierHeadingOnlyOnce(bool dark, string language)
+    {
+        var catalog = new AvaloniaStringCatalog();
+        var model = new ImportReviewViewModel(new(1, 1, ImportConflictStrategy.SkipExisting)
+        {
+            Entries = [new("Incoming", "user", "SHA1", 6, 10) { ImportIndex = 0, Existing = new("Earlier", "user", "SHA1", 6, 30), ExistingIsFromExport = true }],
+            ChangedConflicts = [new(0, "Earlier", "user", "Incoming", "user", true, false, false, true)]
+        }, null, "Aegis", "synthetic.json", key => catalog.Get(key, CultureInfo.GetCultureInfo(language)));
+        var row = Assert.Single(model.Rows);
+        var card = new ImportReviewAccountCard { DataContext = row };
+        var window = new Window { Width = 360, Height = 800, Content = new ScrollViewer { Content = card }, RequestedThemeVariant = dark ? ThemeVariant.Dark : ThemeVariant.Light };
+        try
+        {
+            window.Show(); window.UpdateLayout();
+            var texts = card.GetVisualDescendants().OfType<TextBlock>().ToArray();
+            Assert.Single(texts, text => text.Text == row.ExistingText);
+            var existing = Assert.Single(texts, text => text.Text == row.ExistingDetails);
+            var incomingTitle = Assert.Single(texts, text => text.Text == row.IncomingText);
+            Assert.NotEqual(Assert.IsAssignableFrom<ISolidColorBrush>(existing.Foreground).Color,
+                Assert.IsAssignableFrom<ISolidColorBrush>(incomingTitle.Foreground).Color);
+            Assert.Contains(card.GetVisualDescendants().OfType<Border>(), border => border.Height == 1 && border.Bounds.Width > 200);
         }
         finally { window.Close(); }
     }

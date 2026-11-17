@@ -28,6 +28,299 @@ namespace TOTP.Tests.Avalonia.Mobile;
 
 public sealed class MobileShellViewModelTests
 {
+    [Fact]
+    public async Task EnteOnlyDeletedEntries_ShowsAcknowledgementWithoutPreviewBackupOrCommit()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        using var sut = context.Sut;
+        var uri = "otpauth://totp/Example:alice?issuer=Example&secret=JBSWY3DPEHPK3PXP&codeDisplay="
+            + Uri.EscapeDataString("{\"trashed\":true}");
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync()).Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(uri)), "renamed.bin"));
+        var reader = new ExportService(NullLogger<ExportService>.Instance);
+        context.ExportService.Setup(value => value.ImportFromStreamWithFormatSelectionAsync(It.IsAny<Stream>(), It.IsAny<string>(),
+                It.IsAny<Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>>>(),
+                It.IsAny<Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>>>(), It.IsAny<CancellationToken>()))
+            .Returns((Stream stream, string name, Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> choose,
+                Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>> unlock, CancellationToken token) =>
+                reader.ImportFromStreamWithFormatSelectionAsync(stream, name, choose, unlock, token));
+        await sut.InitializeAsync();
+        await sut.ShowSettingsAsync();
+        var importing = sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => sut.IsImportConfirmationVisible);
+        Assert.Equal("The export contains no active TOTP accounts. Deleted and non-TOTP entries are excluded.", sut.ImportConfirmationText);
+        Assert.False(sut.MigrationImport.HasSelectedFile);
+        Assert.Null(sut.ExternalImportReview);
+        await sut.ResolveImportConfirmationAsync(true);
+        await importing.WaitAsync(TimeSpan.FromSeconds(5), global::Xunit.TestContext.Current.CancellationToken);
+        context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+        context.AccountImport.Verify(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("back")]
+    [InlineData("lock")]
+    [InlineData("cancel")]
+    public async Task UnifiedImport_PasswordPromptCancellationClearsInputAndNeverStartsMerge(string action)
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: action == "lock");
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync()).Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1]), "backup.otphbp"));
+        var reads = 0;
+        context.ExportService.Setup(value => value.ImportFromStreamWithFormatSelectionAsync(It.IsAny<Stream>(), It.IsAny<string>(),
+                It.IsAny<Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>>>(),
+                It.IsAny<Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>>>(), It.IsAny<CancellationToken>()))
+            .Returns((Stream _, string _, Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> _,
+                Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>> unlock, CancellationToken token) =>
+                unlock(new(false, (_, _) => { reads++; return Task.FromResult(Result.Fail<List<Account>>("Synthetic wrong password")); }), token));
+        await sut.InitializeAsync();
+        if (action == "lock") { sut.UnlockPassword = "synthetic password"; await sut.UnlockAsync(); }
+        await sut.ShowSettingsAsync();
+        var importing = sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => sut.IsImportBackupPasswordVisible);
+        sut.ImportPassword = "synthetic pending password";
+        if (action == "lock") await sut.LockAsync();
+        else if (action == "back") Assert.True(await sut.TryHandleBackNavigationAsync());
+        else sut.CancelImportBackupUnlockCommand.Execute(null);
+        await importing.WaitAsync(TimeSpan.FromSeconds(5), global::Xunit.TestContext.Current.CancellationToken);
+        Assert.False(sut.IsImportBackupPasswordVisible);
+        Assert.Empty(sut.ImportPassword);
+        Assert.Equal(0, reads);
+        context.AccountImport.Verify(value => value.RestoreBackupWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Never);
+        context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task UnifiedImport_BackupPasswordRetryAndNativeReviewPreserveCurrentOnlyAccounts(bool conflict, bool accept)
+    {
+        const string password = "synthetic-backup-password";
+        var incoming = new Account(Guid.NewGuid(), "Backup issuer", ValidSecret, "backup-name", 60, algorithm: "SHA512", digits: 8);
+        var current = new Account(incoming.ID, "Current issuer", "JBSWY3DPEHPK3PXP", "current-name");
+        var retained = new Account(Guid.NewGuid(), "Retained", "KRSXG5DSNFXGOIDB", "user");
+        var context = CreateContext(isConfigured: true, accounts: conflict ? [current, retained] : [retained], appLockEnabled: false);
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync()).Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        var reader = new ExportService(Microsoft.Extensions.Logging.Abstractions.NullLogger<ExportService>.Instance);
+        using var encrypted = new MemoryStream();
+        Assert.True((await reader.ExportToEncryptedStreamAsync([incoming], password, encrypted, ExportFileFormat.Json, global::Xunit.TestContext.Current.CancellationToken)).IsSuccess);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream(encrypted.ToArray()), "renamed.bin"));
+        context.ExportService.Setup(value => value.ImportFromStreamWithFormatSelectionAsync(It.IsAny<Stream>(), It.IsAny<string>(),
+                It.IsAny<Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>>>(),
+                It.IsAny<Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>>>(), It.IsAny<CancellationToken>()))
+            .Returns((Stream stream, string name, Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> choose,
+                Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>> unlock, CancellationToken token) =>
+                reader.ImportFromStreamWithFormatSelectionAsync(stream, name, choose, unlock, token));
+        var service = new AccountImportService(context.AccountManager.Object);
+        context.AccountImport.Setup(value => value.RestoreBackupWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
+            .Returns((IReadOnlyList<Account> accounts, Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> review, CancellationToken token) =>
+                service.RestoreBackupWithConflictResolutionAsync(accounts, review, token));
+        context.AccountManager.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        IReadOnlyCollection<Account>? written = null;
+        context.AccountManager.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()))
+            .Callback<IReadOnlyCollection<Account>>(batch => written = batch).ReturnsAsync(Result.Ok());
+        await sut.InitializeAsync();
+        await sut.ShowSettingsAsync();
+        var importing = sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => sut.IsImportBackupPasswordVisible);
+        Assert.Contains("differ", sut.ImportBackupPasswordHelp);
+        sut.ImportPassword = "incorrect";
+        await sut.UnlockImportBackupAsync();
+        Assert.True(sut.IsImportBackupPasswordVisible);
+        Assert.Empty(sut.ImportPassword);
+        Assert.NotEmpty(sut.ImportBackupPasswordError);
+        Assert.Null(written);
+        sut.ImportPassword = password;
+        await sut.UnlockImportBackupAsync();
+        if (conflict)
+        {
+            await WaitUntilAsync(() => sut.MigrationImport.HasSelectedFile);
+            sut.MigrationImport.ReviewFileCommand.Execute(null);
+            await WaitUntilAsync(() => sut.ExternalImportReview is not null);
+            var review = sut.ExternalImportReview!;
+            var row = Assert.Single(review.Rows);
+            Assert.False(row.CanKeepBoth);
+            Assert.Contains("Current issuer", row.ExistingDetails);
+            if (accept) { row.IsReplace = true; review.ImportCommand.Execute(null); }
+            else review.Cancel();
+        }
+        else
+        {
+            await WaitUntilAsync(() => sut.IsImportConfirmationVisible);
+            await sut.ResolveImportConfirmationAsync(accept);
+        }
+        await importing.WaitAsync(TimeSpan.FromSeconds(5), global::Xunit.TestContext.Current.CancellationToken);
+        Assert.False(sut.IsImportBackupPasswordVisible);
+        Assert.Empty(sut.ImportPassword);
+        context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), accept ? Times.Once() : Times.Never());
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), accept ? Times.Once() : Times.Never());
+        if (accept)
+        {
+            Assert.NotNull(written);
+            Assert.Equal(2, written.Count);
+            Assert.Contains(retained, written);
+            Assert.Contains(written, account => account.ID == incoming.ID && account.Issuer == incoming.Issuer && account.Secret == incoming.Secret);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AccountEditor_AdvancedOptionsStartExpandedOnEveryAddOrEdit(bool edit)
+    {
+        var context = CreateContext(isConfigured: true, accounts: [new Account(Guid.NewGuid(), "Demo", ValidSecret, "alice")], appLockEnabled: false);
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        await sut.InitializeAsync();
+        for (var opening = 0; opening < 2; opening++)
+        {
+            sut.SelectedAccount = Assert.Single(sut.Accounts);
+            if (edit) await sut.BeginEditAsync(); else await sut.BeginAddAsync();
+            Assert.True(sut.IsEditorVisible);
+            Assert.True(sut.IsAdvancedOptionsExpanded);
+            sut.IsAdvancedOptionsExpanded = false;
+            await sut.CancelEditAsync();
+            Assert.False(sut.IsEditorVisible);
+        }
+        context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        context.AccountManager.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExactDuplicatesOnly_FileAndQr_ShowAcknowledgementWithoutReviewOrWrites(bool qr)
+    {
+        const string payload = "otpauth://totp/Demo:alice?secret=JBSWY3DPEHPK3PXP&issuer=Demo";
+        var account = new Account(Guid.NewGuid(), "Demo", "JBSWY3DPEHPK3PXP", "alice");
+        var context = CreateContext(isConfigured: true, accounts: [account]);
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>())).ReturnsAsync(MobileQrScanResult.Successful(payload));
+        var qrService = new QrAccountImportService(context.AccountManager.Object);
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(payload,
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
+            .Returns((string text, Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>> resolve, CancellationToken token) =>
+                qrService.ImportWithConflictResolutionAsync(text, resolve, token));
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1]), "export.json"));
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(It.IsAny<Stream>(), "export.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { account }).WithSuccess(new AccountImportReadSummary(1)));
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        var fileService = new AccountImportService(context.AccountManager.Object);
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
+            .Returns((IReadOnlyList<Account> accounts, Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve, CancellationToken token) =>
+                fileService.ImportWithConflictResolutionAsync(accounts, resolve, token));
+        await sut.InitializeAsync();
+        sut.UnlockPassword = "synthetic password";
+        await sut.UnlockAsync();
+        await sut.ShowSettingsAsync();
+        var importing = qr ? sut.ImportGoogleQrAsync() : sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => sut.IsImportConfirmationVisible);
+        Assert.True(sut.IsImportConfirmationAcknowledgementOnly);
+        Assert.False(sut.IsImportConfirmationCancelVisible);
+        Assert.Equal("Import contains only duplicates. Nothing to import!", sut.ImportConfirmationText);
+        Assert.False(sut.MigrationImport.HasSelectedFile);
+        Assert.False(sut.IsExternalImportReviewVisible);
+        var notification = sut.NotificationText;
+        await sut.ResolveImportConfirmationAsync(true);
+        await importing.WaitAsync(TimeSpan.FromSeconds(3), global::Xunit.TestContext.Current.CancellationToken);
+        Assert.Equal(notification, sut.NotificationText);
+        Assert.False(sut.IsQrImportResultVisible);
+        Assert.False(sut.IsImportConfirmationVisible);
+        context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task QrImport_OnlyNewAccounts_UsesOneCompactConfirmationBeforeAnyWrite(bool fromSettings, bool accept)
+    {
+        const string payload = "otpauth://totp/Demo:alice?secret=JBSWY3DPEHPK3PXP&issuer=Demo";
+        var context = CreateContext(isConfigured: true);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.QrScanner.Setup(value => value.ScanAsync(It.IsAny<CancellationToken>())).ReturnsAsync(MobileQrScanResult.Successful(payload));
+        context.AccountManager.Setup(value => value.AddNewAsync(It.IsAny<Account>())).ReturnsAsync(Result.Ok());
+        var shared = new QrAccountImportService(context.AccountManager.Object);
+        context.QrImport.Setup(value => value.ImportWithConflictResolutionAsync(payload,
+                It.IsAny<Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
+            .Returns((string text, Func<QrAccountImportPreview, CancellationToken, Task<QrAccountImportResolution?>> resolve, CancellationToken token) =>
+                shared.ImportWithConflictResolutionAsync(text, resolve, token));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        if (fromSettings) await context.Sut.ShowSettingsAsync();
+        var importing = fromSettings ? context.Sut.ImportGoogleQrAsync() : context.Sut.ScanQrAsync();
+        await WaitUntilAsync(() => context.Sut.IsImportConfirmationVisible);
+        Assert.Equal(context.Strings.Get(TOTP.Avalonia.Shared.Import.ReviewStringKeys.ImportNewOne), context.Sut.ImportConfirmationText);
+        Assert.False(context.Sut.MigrationImport.HasSelectedFile);
+        Assert.False(context.Sut.IsExternalImportReviewVisible);
+        Assert.False(context.Sut.IsQrImportResolutionVisible);
+        context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
+        await context.Sut.ResolveImportConfirmationAsync(accept);
+        await importing.WaitAsync(TimeSpan.FromSeconds(3), global::Xunit.TestContext.Current.CancellationToken);
+        context.AccountManager.Verify(value => value.AddNewAsync(It.IsAny<Account>()), accept ? Times.Once() : Times.Never());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FileImport_OnlyNewAccounts_UsesOneCompactConfirmationBeforeBackupAndCommit(bool accept)
+    {
+        var context = CreateContext(isConfigured: true);
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MobileReadableDocument(new MemoryStream([1]), "export.json"));
+        context.ExportService.Setup(value => value.ImportFromStreamAsync(It.IsAny<Stream>(), "export.json", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new List<Account> { new(Guid.NewGuid(), "Demo", ValidSecret, "alice") }).WithSuccess(new AccountImportReadSummary(1)));
+        TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        context.AccountManager.Setup(value => value.BackupOtpEntriesStorageFileAsync()).ReturnsAsync(Result.Ok());
+        context.AccountManager.Setup(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>())).ReturnsAsync(Result.Ok());
+        var shared = new AccountImportService(context.AccountManager.Object);
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
+            .Returns((IReadOnlyList<Account> values, Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve, CancellationToken token) =>
+                shared.ImportWithConflictResolutionAsync(values, resolve, token));
+        await context.Sut.InitializeAsync();
+        context.Sut.UnlockPassword = "synthetic password";
+        await context.Sut.UnlockAsync();
+        await context.Sut.ShowSettingsAsync();
+        var importing = context.Sut.ImportAccountFileAsync();
+        await WaitUntilAsync(() => context.Sut.IsImportConfirmationVisible);
+        Assert.Equal(context.Strings.Get(TOTP.Avalonia.Shared.Import.ReviewStringKeys.ImportNewOne), context.Sut.ImportConfirmationText);
+        Assert.False(context.Sut.MigrationImport.HasSelectedFile);
+        Assert.False(context.Sut.IsExternalImportReviewVisible);
+        context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+        await context.Sut.ResolveImportConfirmationAsync(accept);
+        await importing.WaitAsync(TimeSpan.FromSeconds(3), global::Xunit.TestContext.Current.CancellationToken);
+        context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), accept ? Times.Once() : Times.Never());
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), accept ? Times.Once() : Times.Never());
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -66,8 +359,8 @@ public sealed class MobileShellViewModelTests
                 It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
             .Returns(async (IReadOnlyList<Account> _, Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> review, CancellationToken token) =>
             {
-                await review(new AccountImportPreview(1, 0, ImportConflictStrategy.SkipExisting)
-                    { NewCount = 1, Entries = [new("Demo", "alice", "SHA512", 8, 60)] }, token);
+                await review(new AccountImportPreview(1, 1, ImportConflictStrategy.SkipExisting)
+                    { ChangedConflicts = [new(0, "Demo", "alice", "Demo", "alice", false, false, true, false)], Entries = [new("Demo", "alice", "SHA512", 8, 60) { Existing = new("Demo", "alice", "SHA512", 8, 60) }] }, token);
                 return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
             });
         TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
@@ -110,7 +403,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task FileFirstImport_RequiresNoProviderAndWaitsForReviewBeforeCallingTheImporter()
+    public async Task FileFirstImport_RequiresNoProviderAndWaitsForConflictReviewBeforeAnyCommit()
     {
         var context = CreateContext(isConfigured: true);
         context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
@@ -121,6 +414,15 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(Result.Ok(new List<Account> { new(Guid.NewGuid(), "Demo", ValidSecret, "alice") })
                 .WithSuccess(new AccountImportReadSummary(1) { Format = AccountImportFormat.AegisJson }));
         TestUtilities.ImportReviewTestActions.BridgeDetectedRead(context.ExportService.Object);
+        context.AccountImport.Setup(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
+                It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()))
+            .Returns(async (IReadOnlyList<Account> _, Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>> resolve, CancellationToken token) =>
+            {
+                var decision = await resolve(new AccountImportPreview(1, 1, ImportConflictStrategy.SkipExisting)
+                { ChangedConflicts = [new(0, "Demo", "alice", "Demo", "alice", false, false, true, false)], Entries = [new("Demo", "alice", "SHA1", 6, 30) { Existing = new("Demo", "alice", "SHA1", 6, 30) }] }, token);
+                Assert.Null(decision);
+                return Result.Ok(new AccountImportOutcome(AccountImportStatus.Cancelled));
+            });
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
@@ -131,12 +433,12 @@ public sealed class MobileShellViewModelTests
         Assert.Contains("Aegis", context.Sut.MigrationImport.DetectedFormatText);
         Assert.False(context.Sut.IsExternalImportReviewVisible);
         context.AccountImport.Verify(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
-            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Once);
         Assert.True(await context.Sut.TryHandleBackNavigationAsync());
         await importing;
         Assert.False(context.Sut.MigrationImport.HasSelectedFile);
         context.AccountImport.Verify(value => value.ImportWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),
-            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<Func<AccountImportPreview, CancellationToken, Task<AccountImportResolution?>>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private const string ValidSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"; // gitleaks:allow - synthetic Base32 fixture
@@ -3254,7 +3556,10 @@ public sealed class MobileShellViewModelTests
                         0,
                         [new QrAccountConflict(0, "Example", "user", true, false)],
                         0,
-                        1),
+                        1)
+                    {
+                        Entries = [new("Example", "user", "SHA1", 6, 30) { Existing = new("Example", "user", "SHA1", 6, 30) }]
+                    },
                     cancellationToken);
                 var decision = Assert.Single(resolution!.Conflicts);
                 Assert.Equal(QrAccountConflictDecision.UpdateExisting, decision.Decision);
@@ -3273,21 +3578,17 @@ public sealed class MobileShellViewModelTests
             TimeSpan.FromSeconds(2),
             global::Xunit.TestContext.Current.CancellationToken);
 
-        Assert.True(context.Sut.IsQrImportResolutionVisible);
-        Assert.Equal(
-            string.Format(
-                context.Strings.Get(MobileStringKeys.QrImportReviewSummary),
-                1,
-                0,
-                0,
-                1),
-            context.Sut.QrImportResolutionText);
-        var conflict = Assert.Single(context.Sut.QrImportConflicts);
-        Assert.Equal("Example: user", conflict.DisplayName);
+        await WaitUntilAsync(() => context.Sut.MigrationImport.HasSelectedFile);
+        Assert.False(context.Sut.IsQrImportResolutionVisible);
+        context.Sut.MigrationImport.ReviewFileCommand.Execute(null);
+        await WaitUntilAsync(() => context.Sut.IsExternalImportReviewVisible);
+        var review = context.Sut.ExternalImportReview!;
+        Assert.Equal(1, review.ConflictCount);
+        var conflict = Assert.Single(review.Rows);
+        Assert.Contains("Example", conflict.Identity);
         Assert.DoesNotContain(ValidSecret, conflict.ChangedFieldsText, StringComparison.Ordinal);
-
-        await context.Sut.SelectAllQrConflictsAsync(QrAccountConflictDecision.UpdateExisting);
-        await context.Sut.ConfirmQrImportResolutionAsync();
+        conflict.IsReplace = true;
+        review.ImportCommand.Execute(null);
         await scanTask.WaitAsync(
             TimeSpan.FromSeconds(2),
             global::Xunit.TestContext.Current.CancellationToken);
@@ -3330,7 +3631,10 @@ public sealed class MobileShellViewModelTests
                         0,
                         [new QrAccountConflict(0, "Example", "user", true, false)],
                         0,
-                        1),
+                        1)
+                    {
+                        Entries = [new("Example", "user", "SHA1", 6, 30) { Existing = new("Example", "user", "SHA1", 6, 30) }]
+                    },
                     cancellationToken);
                 Assert.Null(resolution);
                 return Result.Ok(new QrAccountImportOutcome(
@@ -3348,8 +3652,10 @@ public sealed class MobileShellViewModelTests
             TimeSpan.FromSeconds(2),
             global::Xunit.TestContext.Current.CancellationToken);
 
-        Assert.True(context.Sut.IsQrImportResolutionVisible);
-        await context.Sut.CancelQrImportResolutionAsync();
+        await WaitUntilAsync(() => context.Sut.MigrationImport.HasSelectedFile);
+        context.Sut.MigrationImport.ReviewFileCommand.Execute(null);
+        await WaitUntilAsync(() => context.Sut.IsExternalImportReviewVisible);
+        context.Sut.ExternalImportReview!.CancelCommand.Execute(null);
         await scanTask.WaitAsync(
             TimeSpan.FromSeconds(2),
             global::Xunit.TestContext.Current.CancellationToken);
@@ -5480,20 +5786,20 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task AdvancedOptions_AfterCancellingEditor_StartsCollapsedForNextAction()
+    public async Task AdvancedOptions_AfterCancellingEditor_StartsExpandedForNextAction()
     {
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
-        Assert.False(context.Sut.IsAdvancedOptionsExpanded);
-        context.Sut.IsAdvancedOptionsExpanded = true;
+        Assert.True(context.Sut.IsAdvancedOptionsExpanded);
+        context.Sut.IsAdvancedOptionsExpanded = false;
 
         await context.Sut.CancelEditAsync();
         await context.Sut.BeginAddAsync();
 
-        Assert.False(context.Sut.IsAdvancedOptionsExpanded);
+        Assert.True(context.Sut.IsAdvancedOptionsExpanded);
     }
 
     private static async Task ConfigureAndBeginAddAsync(TestContext context)

@@ -191,7 +191,7 @@
   <data name="OtherFormatOtpAuth" xml:space="preserve"><value>3. Liste d’URI TOTP otpauth:// standard (.txt, un URI par ligne)</value></data>
   <data name="OtherFormatLegacyOtpHarbor" xml:space="preserve"><value>4. Ancien JSON, CSV ou texte délimité par des barres verticales d’OTP Harbor (.json, .csv, .txt ; import de compatibilité uniquement—la version actuelle exporte des sauvegardes chiffrées)</value></data>
   <data name="EncryptedBackup" xml:space="preserve"><value>Exporter les comptes</value></data>
-  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Créez une sauvegarde portable de tous les comptes, protégée par mot de passe, et choisissez son emplacement. Conservez la sauvegarde et son mot de passe séparément ; restaurez-la avec « Restaurer une sauvegarde chiffrée » ci-dessous.</value></data>
+  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Créez une sauvegarde portable protégée par mot de passe. Conservez la sauvegarde et son mot de passe séparément. Pour récupérer des comptes, utilisez Importer des comptes.</value></data>
   <data name="BackupAndRecovery" xml:space="preserve"><value>Sauvegarde et récupération</value></data>
   <data name="BackupSecuritySummary" xml:space="preserve"><value>Chiffrement : chaque sauvegarde exportée est protégée par le mot de passe que vous créez. OTP Harbor ne peut pas récupérer ce mot de passe.</value></data>
   <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Emplacement : choisissez la destination dans la boîte de dialogue système. OTP Harbor ne téléverse ni ne copie automatiquement la sauvegarde.</value></data>
@@ -257,7 +257,7 @@
   <data name="SecuritySettings" xml:space="preserve"><value>Paramètres de sécurité</value></data>
   <data name="Security" xml:space="preserve"><value>Sécurité</value></data>
   <data name="ImportExport" xml:space="preserve"><value>Importations</value></data>
-  <data name="Miscellaneous" xml:space="preserve"><value>Divers</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Assistance et diagnostics</value></data>
   <data name="Language" xml:space="preserve"><value>Langue</value></data>
   <data name="EnglishLanguage" xml:space="preserve"><value>Anglais</value></data>
   <data name="GermanLanguage" xml:space="preserve"><value>Allemand</value></data>
@@ -316,7 +316,7 @@
   <data name="SortByIssuerDescending" xml:space="preserve"><value>Émetteur ↓</value></data>
   <data name="SortByAccountName" xml:space="preserve"><value>Compte ↑</value></data>
   <data name="SortByAccountNameDescending" xml:space="preserve"><value>Compte ↓</value></data>
-  <data name="NoEntriesYet" xml:space="preserve"><value>Aucun compte pour le moment. Ajoutez-en un manuellement, scannez le QR code d’un compte ou d’une exportation Google Authenticator, ou restaurez une sauvegarde chiffrée depuis les paramètres.</value></data>
+  <data name="NoEntriesYet" xml:space="preserve"><value>Aucun compte. Ajoutez-en un manuellement, scannez un code QR ou utilisez Paramètres → Données et sauvegarde → Importer des comptes.</value></data>
   <data name="SetUpFirstAccount" xml:space="preserve"><value>Configurez votre premier compte</value></data>
   <data name="NoMatchingEntries" xml:space="preserve"><value>Aucune entrée correspondante.</value></data>
   <data name="CloseSettings" xml:space="preserve"><value>Fermer les paramètres</value></data>
@@ -403,7 +403,7 @@
   <data name="BackupValidationFailed" xml:space="preserve"><value>La sauvegarde n’a pas pu être validée de manière sécurisée.</value></data>
   <data name="BackupWrongPasswordOrModified" xml:space="preserve"><value>Le mot de passe est incorrect ou la sauvegarde a été modifiée.</value></data>
   <data name="BackupInvalidOrUnavailable" xml:space="preserve"><value>La sauvegarde est invalide ou indisponible.</value></data>
-  <data name="ImportFileInvalid" xml:space="preserve"><value>Ce fichier n’est pas un export valide pris en charge. Choisissez un export JSON, CSV, TXT ou 2FAS non chiffré, ou consultez l’aide ci-dessous. Restaurez séparément les sauvegardes OTP Harbor chiffrées.</value></data>
+  <data name="ImportFileInvalid" xml:space="preserve"><value>Ce fichier n’est ni un export de comptes pris en charge ni une sauvegarde OTP Harbor. Consultez l’aide à l’exportation ci-dessous.</value></data>
   <data name="ImportFileEmpty" xml:space="preserve"><value>Le fichier sélectionné ne contient aucun compte.</value></data>
   <data name="ImportOutcomeComplete" xml:space="preserve"><value>Importation terminée : {0} ajouté(s), {1} remplacé(s), {2} ignoré(s), {3} échoué(s).</value></data>
   <data name="ImportCancelledNoChanges" xml:space="preserve"><value>Importation annulée. Aucune donnée n’a été modifiée.</value></data>
@@ -656,7 +656,7 @@
   <data name="MigrationReviewSummary" xml:space="preserve"><value>Compatibles : {0} · Comptes existants : {1} · Non pris en charge : {2} · Invalides : {3} · Entrées sans TOTP : {4} · Nouveaux comptes : {5}</value></data>
   <data name="MigrationReviewEntry" xml:space="preserve"><value>{0} · {1} — {2}, {3} chiffres, {4} secondes</value></data>
   <data name="MigrationReviewBlocked" xml:space="preserve"><value>Importation bloquée. Compatibles : {0} ; invalides : {1} ; non pris en charge : {2} ; entrées sans TOTP : {3}. Aucun compte n’a été importé.</value></data>
-  <data name="MigrationRestoreSeparate" xml:space="preserve"><value>Utilisez la restauration de sauvegarde OTP Harbor pour ce fichier. L’importation de comptes et la restauration sont distinctes.</value></data>
+  <data name="MigrationRestoreSeparate" xml:space="preserve"><value>Sélectionnez cette sauvegarde OTP Harbor dans Importer des comptes, puis saisissez son mot de passe.</value></data>
   <data name="MigrationCurrentVault" xml:space="preserve"><value>Destination : le coffre OTP Harbor actuel. Les comptes existants sont fusionnés selon votre vérification.</value></data>
   <data name="MigrationGuideTwoFas" xml:space="preserve"><value>Ouvrez 2FAS → Paramètres → 2FAS Backup → Exporter. Enregistrez un fichier .2fas non chiffré.</value></data>
   <data name="MigrationGuideAegis" xml:space="preserve"><value>Exportez le coffre au format JSON non chiffré dans les paramètres Aegis, puis sélectionnez ce fichier.</value></data>
@@ -667,7 +667,7 @@
   <data name="MigrationGuideProton" xml:space="preserve"><value>Exportez vos codes Proton Authenticator sans mot de passe, puis sélectionnez le fichier JSON. Seules les entrées TOTP standard sont prises en charge.</value></data>
   <data name="MigrationGuideKeePassXC" xml:space="preserve"><value>Il n’y a pas d’importateur CSV KeePassXC dédié. Si votre application fournit des QR codes TOTP standard ou une liste texte otpauth, choisissez Autre application pour les importer.</value></data>
   <data name="MigrationGuideMicrosoft" xml:space="preserve"><value>Les sauvegardes Microsoft Authenticator ne peuvent pas être importées ici. Dans les paramètres de sécurité de chaque service, enregistrez OTP Harbor avec un nouveau QR code TOTP standard. Vérifiez un code avant de supprimer l’ancienne méthode. Les approbations push et les clés d’accès ne sont pas des exports TOTP.</value></data>
-  <data name="MigrationGuideOther" xml:space="preserve"><value>Importez des QR codes TOTP standard, un fichier texte avec un lien otpauth par ligne ou des exports de comptes OTP Harbor JSON/CSV/texte. Utilisez la restauration pour les sauvegardes OTP Harbor chiffrées.</value></data>
+  <data name="MigrationGuideOther" xml:space="preserve"><value>Importez des codes QR TOTP standard, une URI otpauth par ligne, des exports OTP Harbor JSON/CSV/texte ou des sauvegardes OTP Harbor chiffrées.</value></data>
   <data name="MigrationSourceTwoFas" xml:space="preserve"><value>2FAS Authenticator</value></data>
   <data name="MigrationSourceAegis" xml:space="preserve"><value>Aegis Authenticator</value></data>
   <data name="MigrationSourceGoogle" xml:space="preserve"><value>Google Authenticator</value></data>
@@ -714,8 +714,8 @@
   <data name="ImportReviewNoExisting" xml:space="preserve"><value>Nouveau compte</value></data>
   <data name="ImportReviewExactDuplicate" xml:space="preserve"><value>Doublon exact</value></data>
   <data name="ImportReviewNewAccount" xml:space="preserve"><value>Prêt à importer</value></data>
-  <data name="ImportReviewSecretDiffers" xml:space="preserve"><value>Même compte, secret différent</value></data>
-  <data name="ImportReviewLabelDiffers" xml:space="preserve"><value>Même secret, libellé différent</value></data>
+  <data name="ImportReviewSecretDiffers" xml:space="preserve"><value>Secrets différents</value></data>
+  <data name="ImportReviewLabelDiffers" xml:space="preserve"><value>Noms d’émetteur et de compte différents</value></data>
   <data name="ImportReviewParametersDiffer" xml:space="preserve"><value>Paramètres du compte différents</value></data>
   <data name="ImportReviewSecretDescription" xml:space="preserve"><value>L’émetteur et le compte correspondent à un compte existant, mais le secret diffère. Choisissez une action. Les secrets ne sont jamais affichés.</value></data>
   <data name="ImportReviewChangeDescription" xml:space="preserve"><value>Un compte existant diffère du compte importé. Comparez les valeurs prises en charge et choisissez une action.</value></data>
@@ -746,7 +746,7 @@
   <data name="ImportReviewEarlierDescription" xml:space="preserve"><value>Cette entrée est en conflit avec une entrée précédente de cet export. Les décisions suivent l’ordre de l’export ; un remplacement ultérieur peut modifier le même compte.</value></data>
   <data name="FileImportFileTitle" xml:space="preserve"><value>Importer depuis un fichier</value></data>
   <data name="FileImportAutoDetection" xml:space="preserve"><value>OTP Harbor reconnaît automatiquement les formats d’export pris en charge.</value></data>
-  <data name="FileImportSupportedFormats" xml:space="preserve"><value>JSON · CSV · TXT · 2FAS</value></data>
+  <data name="FileImportSupportedFormats" xml:space="preserve"><value>JSON · CSV · TXT · 2FAS · Sauvegardes OTP Harbor</value></data>
   <data name="FileImportHelpTitle" xml:space="preserve"><value>Besoin d’aide pour exporter vos comptes ?</value></data>
   <data name="FileImportHelpDescription" xml:space="preserve"><value>Sélectionnez votre authentificateur pour voir les instructions d’export. Cette étape est facultative.</value></data>
   <data name="FileImportOptionalSource" xml:space="preserve"><value>Choisir un authentificateur (facultatif)</value></data>
@@ -770,6 +770,43 @@
   <data name="FileImportChooseFormat" xml:space="preserve"><value>Choisir un format détecté</value></data>
   <data name="FileImportUseFormat" xml:space="preserve"><value>Utiliser le format sélectionné</value></data>
   <data name="FileImportFormatEncryptedExternalExport" xml:space="preserve"><value>Export externe chiffré (non pris en charge)</value></data>
-  <data name="FileImportFormatEncryptedOtpHarborBackup" xml:space="preserve"><value>Sauvegarde OTP Harbor chiffrée — utilisez Restaurer une sauvegarde</value></data>
+  <data name="FileImportFormatEncryptedOtpHarborBackup" xml:space="preserve"><value>OTP Harbor · Sauvegarde chiffrée</value></data>
   <data name="FileImportAllFiles" xml:space="preserve"><value>Tous les fichiers</value></data>
+  <data name="AboutAppName" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="AboutAppVersion" xml:space="preserve"><value>Version de l’application</value></data>
+  <data name="AboutRepository" xml:space="preserve"><value>GitHub</value></data>
+  <data name="AboutLicense" xml:space="preserve"><value>Licence</value></data>
+  <data name="AboutLicenseName" xml:space="preserve"><value>GPL-3.0-only</value></data>
+  <data name="AboutWebsite" xml:space="preserve"><value>Site web</value></data>
+  <data name="AboutShare" xml:space="preserve"><value>Partager l’application</value></data>
+  <data name="AboutShareTitle" xml:space="preserve"><value>Partager OTP Harbor</value></data>
+  <data name="AboutShareMessage" xml:space="preserve"><value>Découvrez OTP Harbor : {0}</value></data>
+  <data name="AboutActionFailed" xml:space="preserve"><value>Impossible d’ouvrir cette action. Réessayez.</value></data>
+  <data name="FileImportFormatQrCode" xml:space="preserve">
+    <value>Code QR</value>
+  </data>
+  <data name="ImportReviewImportNewOne" xml:space="preserve">
+    <value>Importer ce nouveau compte maintenant ?</value>
+  </data>
+  <data name="ImportReviewImportNewMany" xml:space="preserve">
+    <value>Importer ces {0} nouveaux comptes maintenant ?</value>
+  </data>
+  <data name="ImportReviewOnlyDuplicates" xml:space="preserve">
+    <value>L’import ne contient que des doublons. Rien à importer !</value>
+  </data>
+  <data name="ImportReviewIssuerDiffers" xml:space="preserve"><value>Noms d’émetteur différents</value></data>
+  <data name="ImportReviewAccountNameDiffers" xml:space="preserve"><value>Noms de compte différents</value></data>
+  <data name="FileImportBackupPasswordTitle" xml:space="preserve"><value>Déverrouiller la sauvegarde OTP Harbor</value></data>
+  <data name="FileImportBackupPasswordHelp" xml:space="preserve"><value>Saisissez le mot de passe utilisé pour chiffrer cette sauvegarde. Il peut différer du mot de passe de votre coffre actuel.</value></data>
+  <data name="FileImportSnapshotPasswordHelp" xml:space="preserve"><value>Saisissez le mot de passe principal en vigueur lors de la création de cette sauvegarde automatique.</value></data>
+  <data name="FileImportUnlockBackup" xml:space="preserve"><value>Déverrouiller la sauvegarde</value></data>
+  <data name="FileImportBackupUnlockFailed" xml:space="preserve"><value>Le mot de passe est incorrect, ou la sauvegarde est invalide ou modifiée.</value></data>
+  <data name="ImportReviewBackupChoicesHelp" xml:space="preserve"><value>Remplacer utilise les valeurs de la sauvegarde. Ignorer conserve le compte actuel.</value></data>
+  <data name="FileImportFormatLastPassJson" xml:space="preserve"><value>Compatible LastPass · JSON non chiffré</value></data>
+  <data name="MigrationSourceLastPass" xml:space="preserve"><value>LastPass Authenticator</value></data>
+  <data name="MigrationSourceAuthy" xml:space="preserve"><value>Authy</value></data>
+  <data name="MigrationGuideLastPass" xml:space="preserve"><value>Exportez les comptes de LastPass Authenticator en JSON. Choisissez cet export non chiffré dans OTP Harbor ; seuls les champs TOTP pris en charge sont importés.</value></data>
+  <data name="MigrationGuideAuthy" xml:space="preserve"><value>Authy ne permet pas l’export des jetons. Pour chaque service, ajoutez ou reconfigurez une méthode d’authentification standard et scannez son nouveau code QR dans OTP Harbor. Conservez vos codes et moyens de récupération actuels jusqu’à validation des nouveaux codes. Les approbations propres à Authy ne sont pas des comptes TOTP portables.</value></data>
+  <data name="FileImportNoActiveAccounts" xml:space="preserve"><value>L’export ne contient aucun compte TOTP actif. Les entrées supprimées ou sans TOTP sont exclues.</value></data>
+  <data name="ImportReviewExcludedTrashed" xml:space="preserve"><value>{0} entrées marquées comme supprimées sont exclues.</value></data>
 </root>

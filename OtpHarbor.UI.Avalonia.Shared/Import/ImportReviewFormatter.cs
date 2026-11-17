@@ -18,12 +18,19 @@ public static class ImportReviewFormatter
         lines.AddRange(preview.Entries.Select(entry => string.Format(CultureInfo.CurrentCulture,
             localize(MigrationStringKeys.ReviewEntry), Safe(entry.Issuer), Safe(entry.AccountName),
             entry.Algorithm, entry.Digits, entry.PeriodSeconds)));
-        return string.Join(Environment.NewLine, lines);
+        return WithTrashedEntries(localize, string.Join(Environment.NewLine, lines), summary);
     }
 
     public static string Blocked(Func<string, string> localize, AccountImportReadSummary summary) =>
-        string.Format(CultureInfo.CurrentCulture, localize(MigrationStringKeys.ReviewBlocked),
-            summary.SupportedCount, summary.InvalidCount, summary.UnsupportedCount, summary.NonOtpCount);
+        WithTrashedEntries(localize, string.Format(CultureInfo.CurrentCulture, localize(MigrationStringKeys.ReviewBlocked),
+            summary.SupportedCount, summary.InvalidCount, summary.UnsupportedCount, summary.NonOtpCount), summary);
+
+    public static string WithTrashedEntries(Func<string, string> localize, string text, AccountImportReadSummary? summary)
+    {
+        if (summary is not { TrashedCount: > 0 }) return text;
+        var excluded = string.Format(CultureInfo.CurrentCulture, localize(ReviewStringKeys.ExcludedTrashed), summary.TrashedCount);
+        return text.Length == 0 ? excluded : text + Environment.NewLine + excluded;
+    }
 
     private static string Safe(string? text) => string.Concat((text ?? string.Empty).Select(character => char.IsControl(character) ? ' ' : character));
 }

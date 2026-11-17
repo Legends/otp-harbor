@@ -18,6 +18,7 @@ public partial class MainWindow : Window
 {
     private const double MaximumScreenWidthRatio = 0.92;
     private const double MaximumScreenHeightRatio = 0.60;
+    private const double MaximumEditorScreenHeightRatio = 0.80;
     private const double DefaultPageHeight = 540;
     private const double DefaultMinimumWidth = 360;
     private const double StandardMinimumHeight = 200;
@@ -45,6 +46,9 @@ public partial class MainWindow : Window
     private bool _allowOnboardingWindowClose;
     private Screen? _sizeLimitScreen;
     private PixelRect _sizeLimitWorkingArea;
+    private PixelRect _sizeLimitBounds;
+    private bool _sizeLimitEditorVisible;
+    private bool _startupPositionApplied;
     private double _sizeLimitScaling;
 
     public AvaloniaClipboardAccessor? ClipboardAccessor { get; init; }
@@ -100,6 +104,7 @@ public partial class MainWindow : Window
             ClipboardAccessor?.Set(Clipboard);
         Screens.Changed += ScreensChanged;
         ApplyScreenSizeLimits(force: true);
+        ApplyStartupPosition();
         if (DataContext is MainWindowViewModel viewModel)
         {
             ObserveViewModel(viewModel);
@@ -836,6 +841,17 @@ public partial class MainWindow : Window
 
     private void AccountListPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(AccountListViewModel.IsAdvancedOptionsExpanded)
+            && _observedAccountList?.IsEditorVisible == true)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_observedAccountList?.IsEditorVisible != true) return;
+                UpdateLayout();
+                FitAccountEditorHeight();
+            }, DispatcherPriority.Loaded);
+            return;
+        }
         if (e.PropertyName == nameof(AccountListViewModel.IsGroupEditorVisible))
         {
             if (_observedAccountList?.IsGroupEditorVisible == true)
@@ -978,6 +994,7 @@ public partial class MainWindow : Window
             flyout.Padding.Top + flyout.Padding.Bottom,
             MinHeight,
             MaxHeight);
+        KeepWindowOnScreen(targetHeight);
         StartHeightAnimation(targetHeight);
     }
 
@@ -1232,9 +1249,12 @@ public partial class MainWindow : Window
         var screen = Screens.ScreenFromWindow(this);
         if (screen is null) return;
         var scale = screen.Scaling > 0 ? screen.Scaling : 1;
+        var editorVisible = _observedAccountList?.IsEditorVisible == true;
         if (!force
             && ReferenceEquals(screen, _sizeLimitScreen)
             && screen.WorkingArea == _sizeLimitWorkingArea
+            && screen.Bounds == _sizeLimitBounds
+            && editorVisible == _sizeLimitEditorVisible
             && Math.Abs(scale - _sizeLimitScaling) < 0.0001)
         {
             return;
@@ -1242,11 +1262,13 @@ public partial class MainWindow : Window
 
         _sizeLimitScreen = screen;
         _sizeLimitWorkingArea = screen.WorkingArea;
+        _sizeLimitBounds = screen.Bounds;
+        _sizeLimitEditorVisible = editorVisible;
         _sizeLimitScaling = scale;
         var screenWidthLimit = Math.Max(
             1,
             (screen.WorkingArea.Width / scale) * MaximumScreenWidthRatio);
-        var screenHeightLimit = (screen.WorkingArea.Height / scale) * MaximumScreenHeightRatio;
+        var screenHeightLimit = CalculateScreenHeightLimit(screen.Bounds.Height, screen.WorkingArea.Height, scale, editorVisible);
         MaxWidth = screenWidthLimit;
         MaxHeight = screenHeightLimit;
         MinWidth = Math.Min(DefaultMinimumWidth, MaxWidth);
@@ -1254,6 +1276,37 @@ public partial class MainWindow : Window
             (_observedViewModel ?? DataContext as MainWindowViewModel)?.IsShellVisible), MaxHeight);
         Width = Math.Clamp(Width, MinWidth, MaxWidth);
         Height = Math.Clamp(Height, MinHeight, MaxHeight);
+    }
+
+    private static double CalculateScreenHeightLimit(double screenHeight, double workingHeight, double scale, bool editorVisible) =>
+        editorVisible ? Math.Min(screenHeight * MaximumEditorScreenHeightRatio, workingHeight) / scale
+            : workingHeight * MaximumScreenHeightRatio / scale;
+
+    private void ApplyStartupPosition()
+    {
+        if (_startupPositionApplied) return;
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        if (screen is null) return;
+        _startupPositionApplied = true;
+        var scale = screen.Scaling > 0 ? screen.Scaling : 1;
+        Position = CalculateStartupPosition(screen.Bounds, screen.WorkingArea,
+            new PixelSize((int)Math.Ceiling(Width * scale), (int)Math.Ceiling(Height * scale)));
+    }
+
+    private static PixelPoint CalculateStartupPosition(PixelRect bounds, PixelRect workingArea, PixelSize windowSize) =>
+        new(Math.Clamp(bounds.X + (bounds.Width - windowSize.Width) / 2,
+                workingArea.X, Math.Max(workingArea.X, workingArea.Right - windowSize.Width)),
+            Math.Clamp(bounds.Y + (int)Math.Round(bounds.Height * 0.20),
+                workingArea.Y, Math.Max(workingArea.Y, workingArea.Bottom - windowSize.Height)));
+
+    private void KeepWindowOnScreen(double targetHeight)
+    {
+        var screen = Screens.ScreenFromWindow(this);
+        if (screen is null) return;
+        var scale = screen.Scaling > 0 ? screen.Scaling : 1;
+        var area = screen.WorkingArea;
+        Position = new PixelPoint(Math.Clamp(Position.X, area.X, Math.Max(area.X, area.Right - (int)Math.Ceiling(Width * scale))),
+            Math.Clamp(Position.Y, area.Y, Math.Max(area.Y, area.Bottom - (int)Math.Ceiling(targetHeight * scale))));
     }
 
     private static double GetDesiredMinimumHeight(bool? isShellVisible) =>

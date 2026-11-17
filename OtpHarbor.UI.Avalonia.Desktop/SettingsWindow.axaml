@@ -117,15 +117,15 @@
                 SelectedIndex="{Binding SelectedSettingsTabIndex, Mode=TwoWay}">
                 <TabControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="4" />
+                        <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </TabControl.ItemsPanel>
                 <TabItem>
                     <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="Palette" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Appearance}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource Appearance}" TextWrapping="NoWrap" TextAlignment="Center" />
+                        </Grid>
                     </TabItem.Header>
                     <ContentControl x:Name="AppearanceSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
@@ -211,10 +211,10 @@
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="ImageStack" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource IconPacks}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource IconPacks}" TextWrapping="NoWrap" TextAlignment="Center" />
+                        </Grid>
                     </TabItem.Header>
                     <ContentControl x:Name="BrandIconSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
@@ -259,10 +259,10 @@
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="Vault" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Security}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource Security}" TextWrapping="NoWrap" TextAlignment="Center" />
+                        </Grid>
                     </TabItem.Header>
                     <Grid RowDefinitions="*,Auto">
                         <ScrollViewer
@@ -364,10 +364,10 @@
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="BackupRestore" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource MigrationDataAndBackup}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource MigrationDataAndBackup}" TextWrapping="NoWrap" TextAlignment="Center" />
+                        </Grid>
                     </TabItem.Header>
                     <ContentControl
                         x:Name="ImportExportSettingsHost"
@@ -390,10 +390,10 @@
                                                         Classes="secondary"
                                                         Text="{DynamicResource BackupSecuritySummary}"
                                                         TextWrapping="Wrap" />
-                                                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
                                                     <Border
                                                         x:Name="AutomaticBackupPanel"
-                                                        Grid.Row="2"
+                                                        Grid.Row="1"
                                                         Background="{DynamicResource BrushSurfaceAlternate}"
                                                         CornerRadius="{DynamicResource RadiusSmall}"
                                                         Padding="10">
@@ -493,37 +493,7 @@
                                                             </Button>
                                                         </StackPanel>
                                                     </Border>
-                                                    <Border
-                                                        x:Name="EncryptedBackupRestorePanel"
-                                                        Grid.Row="1"
-                                                        Background="{DynamicResource BrushSurfaceAlternate}"
-                                                        CornerRadius="{DynamicResource RadiusSmall}"
-                                                        Padding="10">
-                                                        <StackPanel Spacing="7">
-                                                            <TextBlock Classes="settings-label" Text="{DynamicResource RestoreSection}" />
-                                                            <TextBlock
-                                                                Classes="secondary"
-                                                                Text="{DynamicResource RestoreBackupHelp}"
-                                                                TextWrapping="Wrap" />
-                                                            <TextBlock Classes="settings-label" Text="{DynamicResource ImportConflictHandling}" />
-                                                            <ComboBox
-                                                                x:Name="RestoreConflictStrategyComboBox"
-                                                                ItemsSource="{Binding ConflictStrategies}"
-                                                                SelectedItem="{Binding SelectedConflictStrategyOption, Mode=TwoWay}">
-                                                                <ComboBox.ItemTemplate>
-                                                                    <DataTemplate x:DataType="presentation:NativeFilePickerViewModel+ImportStrategyOption">
-                                                                        <TextBlock Text="{Binding Label}" />
-                                                                    </DataTemplate>
-                                                                </ComboBox.ItemTemplate>
-                                                            </ComboBox>
-                                                            <Button
-                                                                x:Name="EncryptedBackupRestoreButton"
-                                                                Classes="wide settings-action"
-                                                                Command="{Binding RestoreBackupCommand}">
-                                                                <shared:SymbolIconLabel Kind="BackupRestore" Text="{DynamicResource RestoreBackupAction}" />
-                                                            </Button>
-                                                        </StackPanel>
-                                                    </Border>
+
                                                     </Grid>
                                                 </StackPanel>
                                             </Border>
@@ -536,10 +506,10 @@
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="Diagnostics" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Miscellaneous}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource Miscellaneous}" TextWrapping="NoWrap" TextAlignment="Center" />
+                        </Grid>
                     </TabItem.Header>
                     <ContentControl x:Name="MiscSettingsHost" Content="{Binding SettingsPage}">
                         <ContentControl.ContentTemplate>
@@ -582,10 +552,10 @@
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="Help" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource Faq}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource Faq}" TextWrapping="NoWrap" TextAlignment="Center" />
+                        </Grid>
                     </TabItem.Header>
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Margin="4,8,4,4" Spacing="10">
@@ -766,13 +736,14 @@
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                             <shared:SymbolIcon IconSize="16" Kind="Information" />
-                            <TextBlock VerticalAlignment="Center" Text="{DynamicResource About}" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource About}" TextWrapping="NoWrap" TextAlignment="Center" />
+                        </Grid>
                     </TabItem.Header>
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Margin="4,8" Spacing="12">
+                            <Border Classes="panel"><shared:AboutPanel DataContext="{Binding SettingsPage.About}" /></Border>
                             <ContentControl Content="{Binding UpdateCheck}"
                                             IsVisible="{Binding UpdateCheck.IsSoftwareUpdatesVisible}">
                                 <ContentControl.ContentTemplate>

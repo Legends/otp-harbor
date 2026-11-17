@@ -136,7 +136,7 @@ public sealed class QrAccountImportService(IAccountManager accounts,
         {
             var confirmed = await resolveImport(new QrAccountImportPreview(1, 1, 0, [], 0, 1)
             {
-                Entries = [new AccountImportEntryPreview(issuer, accountName, parsed.Algorithm, parsed.Digits, parsed.Period)]
+                Entries = [ToPreview(incoming)]
             }, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             if (confirmed is null)
@@ -161,6 +161,15 @@ public sealed class QrAccountImportService(IAccountManager accounts,
             && existing.Digits == incoming.Digits
             && existing.PeriodSeconds == incoming.PeriodSeconds)
         {
+            var reviewed = await resolveImport(new QrAccountImportPreview(1, 0, 1, [], 0, 1)
+            {
+                Entries = [ToPreview(incoming) with { Existing = ToPreview(existing) }]
+            }, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (reviewed is null)
+                return Result.Ok(new QrAccountImportOutcome(QrAccountImportStatus.Cancelled, existing.ID, issuer, accountName));
+            if (reviewed.Conflicts.Count != 0)
+                return Result.Fail<QrAccountImportOutcome>("The QR import resolution is invalid.");
             return Result.Ok(new QrAccountImportOutcome(
                 QrAccountImportStatus.DuplicateUnchanged,
                 existing.ID,
@@ -172,7 +181,7 @@ public sealed class QrAccountImportService(IAccountManager accounts,
         var resolution = await resolveImport(
             new QrAccountImportPreview(1, 0, 0, [conflict], 0, 1)
             {
-                Entries = [new AccountImportEntryPreview(issuer, accountName, parsed.Algorithm, parsed.Digits, parsed.Period)]
+                Entries = [ToPreview(incoming) with { Existing = ToPreview(existing) }]
             },
             cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
@@ -263,6 +272,8 @@ public sealed class QrAccountImportService(IAccountManager accounts,
         var working = loaded.Value.ToList();
         var writes = new List<PlannedWrite>(migration.Accounts.Count);
         var conflicts = new List<QrAccountConflict>();
+        var entries = new List<AccountImportEntryPreview>(migration.Accounts.Count);
+        var existingIds = loaded.Value.Select(account => account.ID).ToHashSet();
         var duplicateCount = 0;
         for (var importIndex = 0; importIndex < migration.Accounts.Count; importIndex++)
         {
@@ -279,24 +290,30 @@ public sealed class QrAccountImportService(IAccountManager accounts,
             var identityMatches = working.Where(account => IdentityMatches(incoming, account)).ToArray();
             if (identityMatches.Length == 0)
             {
+                entries.Add(ToPreview(incoming) with { ImportIndex = importIndex });
                 writes.Add(new PlannedWrite(importIndex, PlannedWriteKind.Add, incoming));
                 working.Add(incoming);
                 continue;
             }
 
-            if (identityMatches.Any(existing => string.Equals(
+            var unchanged = identityMatches.FirstOrDefault(existing => string.Equals(
                 NormalizeSecret(existing.Secret),
                 NormalizeSecret(incoming.Secret),
                 StringComparison.Ordinal)
                 && existing.Algorithm == incoming.Algorithm
                 && existing.Digits == incoming.Digits
-                && existing.PeriodSeconds == incoming.PeriodSeconds))
+                && existing.PeriodSeconds == incoming.PeriodSeconds);
+            if (unchanged is not null)
             {
+                entries.Add(ToPreview(incoming) with { ImportIndex = importIndex,
+                    Existing = ToPreview(unchanged), ExistingIsFromExport = !existingIds.Contains(unchanged.ID) });
                 duplicateCount++;
                 continue;
             }
 
             var existing = identityMatches[0];
+            entries.Add(ToPreview(incoming) with { ImportIndex = importIndex,
+                Existing = ToPreview(existing), ExistingIsFromExport = !existingIds.Contains(existing.ID) });
             conflicts.Add(CreateConflict(importIndex, incoming, existing));
             writes.Add(new PlannedWrite(importIndex, PlannedWriteKind.Conflict, incoming, existing));
         }
@@ -310,8 +327,7 @@ public sealed class QrAccountImportService(IAccountManager accounts,
                 migration.BatchIndex,
                 migration.BatchSize)
             {
-                Entries = migration.Accounts.Select(account => new AccountImportEntryPreview(account.Issuer ?? string.Empty,
-                    account.Label, account.Algorithm, account.Digits, account.Period)).ToArray()
+                Entries = entries
             },
             cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
@@ -397,6 +413,9 @@ public sealed class QrAccountImportService(IAccountManager accounts,
             migration.BatchIndex,
             migration.BatchSize));
     }
+
+    private static AccountImportEntryPreview ToPreview(Account account) =>
+        new(account.Issuer, account.AccountName, account.Algorithm, account.Digits, account.PeriodSeconds);
 
     private static QrAccountConflict CreateConflict(
         int importIndex,

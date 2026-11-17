@@ -6,6 +6,8 @@ using FluentResults;
 using Microsoft.Extensions.Logging;
 using NSec.Cryptography;
 using TOTP.Core.Common;
+using TOTP.Core.Backup;
+using System.IO.Compression;
 using TOTP.Core.Models;
 using TOTP.Core.Services.Interfaces;
 using TOTP.Core.Services.Models;
@@ -35,6 +37,7 @@ public sealed class ExportService : IExportService
         Array.AsReadOnly(
             UnencryptedImportFormats.Keys
                 .Prepend(BackupFileExtensions.LegacyEncryptedBackup)
+                .Prepend(BackupFileExtensions.AutomaticBackup)
                 .Prepend(BackupFileExtensions.EncryptedBackup)
                 .ToArray());
 
@@ -47,10 +50,12 @@ public sealed class ExportService : IExportService
 
     private static readonly Argon2id _kdf = PasswordBasedKeyDerivationAlgorithm.Argon2id(in _argonParameters);
     private readonly ILogger<ExportService> _logger;
+    private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
 
-    public ExportService(ILogger<ExportService> logger)
+    public ExportService(ILogger<ExportService> logger, IAutomaticBackupSnapshotService? automaticBackupSnapshots = null)
     {
         _logger = logger;
+        _automaticBackupSnapshots = automaticBackupSnapshots;
     }
 
     public async Task<Result<List<Account>>> ImportFromFileAsync(string filePath, string? password = null)
@@ -232,9 +237,20 @@ public sealed class ExportService : IExportService
         return ImportFromStreamCoreAsync(source, fileName, null, chooseFormat, cancellationToken);
     }
 
+    public Task<Result<List<Account>>> ImportFromStreamWithFormatSelectionAsync(Stream source, string fileName,
+        Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>> chooseFormat,
+        Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>> unlockBackup,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(chooseFormat);
+        ArgumentNullException.ThrowIfNull(unlockBackup);
+        return ImportFromStreamCoreAsync(source, fileName, null, chooseFormat, cancellationToken, unlockBackup);
+    }
+
     private async Task<Result<List<Account>>> ImportFromStreamCoreAsync(Stream source, string fileName, string? password,
         Func<IReadOnlyList<AccountImportFormat>, CancellationToken, Task<AccountImportFormat?>>? chooseFormat,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<AccountImportPasswordRequest, CancellationToken, Task<Result<List<Account>>>>? unlockBackup = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
@@ -255,7 +271,36 @@ public sealed class ExportService : IExportService
         byte[]? fileBytes = null;
         try
         {
-            (fileBytes, var length) = await ReadBoundedAsync(source, cancellationToken);
+            (fileBytes, var length) = await ReadBoundedAsync(source, cancellationToken,
+                unlockBackup is null ? MaxImportFileBytes : AutomaticBackupPackageV1Codec.MaximumPayloadSize);
+            var automatic = unlockBackup is not null && await Task.Run(() => IsAutomaticBackup(fileBytes, length), cancellationToken);
+            if (unlockBackup is not null && (automatic || HasEncryptedBackupHeader(fileBytes.AsSpan(0, length))))
+            {
+                if (!automatic && length > MaxImportFileBytes) return ImportSizeFailure<List<Account>>();
+                var encryptedBuffer = fileBytes;
+                var active = true;
+                try
+                {
+                    var unlocked = await unlockBackup(new AccountImportPasswordRequest(automatic, async (candidate, token) =>
+                    {
+                        if (!active) return Result.Fail<List<Account>>("The encrypted import is no longer active.");
+                        token.ThrowIfCancellationRequested();
+                        return await Task.Run(async () =>
+                        {
+                            using var encrypted = new MemoryStream(encryptedBuffer, 0, length, writable: false);
+                            if (!automatic) return await ImportFromEncryptedStreamAsync(candidate, encrypted, token);
+                            if (_automaticBackupSnapshots is null) return Result.Fail<List<Account>>("Automatic backup reader unavailable.");
+                            var restored = await _automaticBackupSnapshots.ReadAccountsAsync(encrypted, candidate, token);
+                            return restored.IsSuccess ? Result.Ok(restored.Value.ToList()) : Result.Fail<List<Account>>(restored.Errors);
+                        }, token);
+                    }), cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return unlocked.IsSuccess ? unlocked.WithSuccess(new AccountImportReadSummary(unlocked.Value.Count)
+                        { Format = AccountImportFormat.EncryptedOtpHarborBackup }) : unlocked;
+                }
+                finally { active = false; }
+            }
+            if (length > MaxImportFileBytes) return ImportSizeFailure<List<Account>>();
             if (HasEncryptedBackupHeader(fileBytes.AsSpan(0, length)))
                 return Result.Fail<List<Account>>(new AccountImportReadError(new(0, unsupportedCount: 1) { Format = AccountImportFormat.EncryptedOtpHarborBackup }))
                     .WithError(new AppError(AppErrorCode.ImportInvalidPayload, "Use the separate OTP Harbor backup restore workflow."));
@@ -395,14 +440,21 @@ public sealed class ExportService : IExportService
 
     private async Task<(byte[] Buffer, int Length)> ReadBoundedAsync(
         Stream source,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, long maximumBytes = MaxImportFileBytes)
     {
-        var buffer = new byte[MaxImportFileBytes + 1];
+        var buffer = new byte[Math.Min(maximumBytes + 1, 64 * 1024)];
         var totalRead = 0;
         try
         {
-            while (totalRead < buffer.Length)
+            while (totalRead <= maximumBytes)
             {
+                if (totalRead == buffer.Length)
+                {
+                    var expanded = new byte[Math.Min(maximumBytes + 1, buffer.Length * 2L)];
+                    buffer.CopyTo(expanded, 0);
+                    Clear(buffer);
+                    buffer = expanded;
+                }
                 var read = await source.ReadAsync(buffer.AsMemory(totalRead), cancellationToken);
                 if (read == 0)
                 {
@@ -441,11 +493,49 @@ public sealed class ExportService : IExportService
 
     private static bool HasEncryptedBackupHeader(ReadOnlySpan<byte> data)
     {
-        if (data.Length < MagicBytes.Length + SaltSize + VaultAesGcm.NonceSize + VaultAesGcm.TagSize
-            || !data.StartsWith(MagicBytes)) return false;
-        foreach (var value in data.Slice(MagicBytes.Length, Math.Min(32, data.Length - MagicBytes.Length)))
-            if (value < 32 && value is not 9 and not 10 and not 13) return true;
-        return false;
+        if (!data.StartsWith(MagicBytes)) return false;
+        try
+        {
+            var text = StrictUtf8.GetString(data);
+            return !text.Contains('|') || text.Any(value => value < 32 && value is not '\t' and not '\n' and not '\r');
+        }
+        catch (DecoderFallbackException) { return true; }
+    }
+
+    private static bool IsAutomaticBackup(byte[] fileBuffer, int fileLength)
+    {
+        var data = fileBuffer.AsMemory(0, fileLength);
+        try
+        {
+            if (AutomaticBackupPackageV2Codec.IsContainer(data.Span))
+            {
+                using var stream = new MemoryStream(fileBuffer, 0, fileLength, writable: false);
+                using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+                var manifest = zip.GetEntry("manifest.json");
+                if (manifest is null || manifest.Length > 64 * 1024) return false;
+                using var input = manifest.Open();
+                var buffer = new byte[64 * 1024 + 1];
+                try
+                {
+                    var length = 0;
+                    while (length < buffer.Length)
+                    {
+                        var read = input.Read(buffer, length, buffer.Length - length);
+                        if (read == 0) break;
+                        length += read;
+                    }
+                    if (length > 64 * 1024) return false;
+                    using var document = JsonDocument.Parse(buffer.AsMemory(0, length), new JsonDocumentOptions { MaxDepth = 24 });
+                    return document.RootElement.TryGetProperty("format", out var format) && format.ValueKind == JsonValueKind.String
+                        && format.GetString() == AutomaticBackupPackageV2Codec.FormatIdentifier;
+                }
+                finally { Clear(buffer); }
+            }
+            using var json = JsonDocument.Parse(data, new JsonDocumentOptions { MaxDepth = 24 });
+            return json.RootElement.ValueKind == JsonValueKind.Object && json.RootElement.TryGetProperty("format", out var marker)
+                && marker.ValueKind == JsonValueKind.String && marker.GetString() == AutomaticBackupPackageV1.FormatIdentifier;
+        }
+        catch (Exception exception) when (exception is JsonException or InvalidDataException or IOException or ArgumentException) { return false; }
     }
 
     private sealed class ImportSizeLimitExceededException : Exception;

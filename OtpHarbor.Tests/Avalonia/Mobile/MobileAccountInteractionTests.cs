@@ -1187,10 +1187,9 @@ public sealed class MobileAccountInteractionTests
             text => text.Attribute("Text")?.Value == "{Binding BackupDescription}");
         var backupExportPanel = backup.Descendants(avalonia + "Border").Single(element =>
             element.Attribute(xaml + "Name")?.Value == "BackupExportPanel");
-        var backupRestorePanel = backup.Descendants(avalonia + "Border").Single(element =>
-            element.Attribute(xaml + "Name")?.Value == "BackupRestorePanel");
         Assert.Equal("{Binding BackupSectionText}", backupExportPanel.Descendants(avalonia + "TextBlock").First().Attribute("Text")?.Value);
-        Assert.Equal("{Binding RestoreSectionText}", backupRestorePanel.Descendants(avalonia + "TextBlock").First().Attribute("Text")?.Value);
+        Assert.DoesNotContain(backup.Descendants(), element => element.Attribute(xaml + "Name")?.Value == "BackupRestorePanel");
+        Assert.DoesNotContain(backup.Descendants(avalonia + "Button"), element => element.Attribute("Command")?.Value == "{Binding ImportBackupCommand}");
 
         var settingsRoot = document
             .Descendants(avalonia + "StackPanel")

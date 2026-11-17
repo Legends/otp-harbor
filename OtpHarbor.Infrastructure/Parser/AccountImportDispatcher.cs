@@ -16,7 +16,8 @@ internal sealed class AccountImportDispatcher : IDisposable
         new(AccountImportFormat.AegisJson, root => root.TryGetProperty("db", out _) && root.TryGetProperty("version", out _), root => Result.Ok(AegisVaultParser.Parse(root))),
         new(AccountImportFormat.TwoFasJson, root => root.TryGetProperty("services", out _) || root.TryGetProperty("schemaVersion", out _), root => Result.Ok(TwoFasBackupParser.Parse(root))),
         new(AccountImportFormat.BitwardenJson, root => root.TryGetProperty("items", out _) && root.TryGetProperty("encrypted", out _), AuthenticatorExportParser.ParseBitwarden),
-        new(AccountImportFormat.ProtonJson, root => root.TryGetProperty("entries", out _) && root.TryGetProperty("version", out _), AuthenticatorExportParser.ParseProton)
+        new(AccountImportFormat.ProtonJson, root => root.TryGetProperty("entries", out _) && root.TryGetProperty("version", out _), AuthenticatorExportParser.ParseProton),
+        new(AccountImportFormat.LastPassJson, root => root.TryGetProperty("accounts", out _) && root.TryGetProperty("version", out _), AuthenticatorExportParser.ParseLastPass)
     ];
 
     private readonly string _content;
@@ -43,9 +44,11 @@ internal sealed class AccountImportDispatcher : IDisposable
             if (names.Distinct(StringComparer.Ordinal).Count() != names.Length)
                 throw new FormatException("Duplicate export schema fields.");
             if (root.TryGetProperty("encrypted", out var encrypted) && encrypted.ValueKind == JsonValueKind.True
+                || root.TryGetProperty("passwordProtected", out var passwordProtected) && passwordProtected.ValueKind == JsonValueKind.True
                 || root.TryGetProperty("encryptedData", out _) || root.TryGetProperty("salt", out _) || root.TryGetProperty("kdfParams", out _)
                 || root.TryGetProperty("db", out var db) && db.ValueKind == JsonValueKind.String
-                || root.TryGetProperty("servicesEncrypted", out var services) && services.ValueKind is not JsonValueKind.Null)
+                || (root.TryGetProperty("schemaVersion", out _) || root.TryGetProperty("services", out _))
+                    && (HasEncryptionMarker(root, "servicesEncrypted") || HasEncryptionMarker(root, "reference")))
                 return [AccountImportFormat.EncryptedExternalExport];
             return JsonProviders.Where(parser => parser.Recognizes(root)).Select(parser => parser.Format).ToArray();
         }
@@ -71,6 +74,7 @@ internal sealed class AccountImportDispatcher : IDisposable
             return Result.Fail<List<Account>>(new AccountImportReadError(new(0, unsupportedCount: 1) { Format = format }))
                 .WithError(new AppError(AppErrorCode.ImportInvalidPayload, "Encrypted external exports are unsupported."));
         var provider = JsonProviders.FirstOrDefault(parser => parser.Format == format);
+        if (provider is not null) RequireUniqueProperties(_json!.RootElement);
         var result = provider is not null ? provider.Parse(_json!.RootElement) : format switch
         {
             AccountImportFormat.OtpHarborJson => Result.Ok(_native(_content, ExportFileFormat.Json)),
@@ -81,7 +85,7 @@ internal sealed class AccountImportDispatcher : IDisposable
             _ => Result.Fail<List<Account>>(new AppError(AppErrorCode.ImportInvalidPayload, "Unsupported selected export format."))
         };
         AccountImportReadSummary Describe(AccountImportReadSummary value) => new(value.SupportedCount,
-            value.InvalidCount, value.UnsupportedCount, value.NonOtpCount) { Format = format };
+            value.InvalidCount, value.UnsupportedCount, value.NonOtpCount, value.TrashedCount) { Format = format };
         if (result.IsFailed)
             return Result.Fail<List<Account>>(result.Errors.Select(error => error is AccountImportReadError read
                 ? new AccountImportReadError(Describe(read.Summary)) : error));
@@ -90,4 +94,23 @@ internal sealed class AccountImportDispatcher : IDisposable
     }
 
     public void Dispose() => _json?.Dispose();
+
+    private static bool HasEncryptionMarker(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var marker) && marker.ValueKind != JsonValueKind.Null
+            && (marker.ValueKind != JsonValueKind.String || !string.IsNullOrWhiteSpace(marker.GetString()));
+
+    private static void RequireUniqueProperties(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in element.EnumerateObject())
+            {
+                if (!names.Add(property.Name)) throw new FormatException("Duplicate authenticator schema field.");
+                RequireUniqueProperties(property.Value);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+            foreach (var item in element.EnumerateArray()) RequireUniqueProperties(item);
+    }
 }

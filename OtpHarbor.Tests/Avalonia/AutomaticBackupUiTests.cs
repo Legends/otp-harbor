@@ -14,9 +14,10 @@ public sealed class AutomaticBackupUiTests
 
         var panel = NamedBorder(document, "AutomaticBackupPanel");
 
-        Assert.Equal("2", panel.Attribute("Grid.Row")?.Value);
+        Assert.Equal("1", panel.Attribute("Grid.Row")?.Value);
         Assert.Equal("0", NamedBorder(document, "EncryptedBackupExportPanel").Attribute("Grid.Row")?.Value);
-        Assert.Equal("1", NamedBorder(document, "EncryptedBackupRestorePanel").Attribute("Grid.Row")?.Value);
+        Assert.DoesNotContain(document.Descendants(), element => element.Attribute(Xaml + "Name")?.Value == "EncryptedBackupRestorePanel");
+        Assert.DoesNotContain(document.Descendants(Avalonia + "Button"), element => element.Attribute("Command")?.Value == "{Binding RestoreEncryptedBackupCommand}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
             element.Attribute("Text")?.Value == "{DynamicResource AutomaticBackupDescription}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
@@ -38,9 +39,10 @@ public sealed class AutomaticBackupUiTests
 
         var panel = NamedBorder(document, "AutomaticBackupPanel");
 
-        Assert.Equal("2", panel.Attribute("Grid.Row")?.Value);
+        Assert.Equal("1", panel.Attribute("Grid.Row")?.Value);
         Assert.Equal("0", NamedBorder(document, "BackupExportPanel").Attribute("Grid.Row")?.Value);
-        Assert.Equal("1", NamedBorder(document, "BackupRestorePanel").Attribute("Grid.Row")?.Value);
+        Assert.DoesNotContain(document.Descendants(), element => element.Attribute(Xaml + "Name")?.Value == "BackupRestorePanel");
+        Assert.DoesNotContain(document.Descendants(Avalonia + "Button"), element => element.Attribute("Command")?.Value == "{Binding ImportBackupCommand}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
             element.Attribute("Text")?.Value == "{Binding AutomaticBackupDescriptionText}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>

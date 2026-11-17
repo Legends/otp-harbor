@@ -121,6 +121,45 @@ and cannot be upgraded to the production-signed package. Export any needed test 
 uninstall the old development package. New debug builds use the `.debug` suffix and can coexist with
 the production application.
 
+## Verify startup on a device
+
+After installing a candidate, verify that it survives startup. A successful
+`adb install` or `am start -W` result confirms installation or a launch request;
+it does not prove that the managed runtime initialized successfully.
+
+Keep the device unlocked and its screen on, then run:
+
+```powershell
+./scripts/testing/Android/Test-AndroidAppLaunch.ps1 `
+  -Device '<adb-device-serial>' `
+  -PackageName 'io.github.legends.otpharbor' `
+  -LaunchCount 3 -ObservationSeconds 20
+```
+
+Supply `-AdbPath` if platform-tools is not on `PATH`. The check force-stops only
+the named app between launches, verifies that its process does not exit or
+restart, and requires the launcher activity to remain resumed. It does not clear
+app data, read vault files, or capture account contents. Finish any pending app
+work before running it. Visual interaction, unlock, import and backup checks
+remain necessary after this startup check passes.
+
+Use a separate application ID and development signing key for local Release
+experiments so they do not replace a production or Debug installation. The
+separate installation also has a separate vault. Keep AOT and other Release
+settings representative of the intended release when comparing startup times.
+
+When upgrading the Android SDK/workload or changing packaging settings, use fresh
+Release intermediates. Preserve or move aside old build outputs before replacing
+them; never remove app data to repair a build. A local ARM64 candidate on
+2026-11-17 aborted inside native cryptography initialization with the Mono
+`only_unmanaged_callers_only` assertion. A fresh build using the same AOT and
+trimming settings resolved the crash; stale generated artifacts were implicated.
+The symptom is also tracked in [the upstream .NET Android issue](https://github.com/dotnet/maui/issues/33032),
+so do not assume the assertion identifies a vault or password failure.
+
+This verification changes no cryptographic parameters, authorization requirements,
+storage format, signing identity, or backup/restore semantics.
+
 ## Security review
 
 - **Threat impact:** compromise of the app-signing key would permit a malicious package to replace

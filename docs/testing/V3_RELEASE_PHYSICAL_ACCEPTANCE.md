@@ -23,6 +23,9 @@ leave exactly four scenario accounts; replacement preserves current ID
 
 ## Windows Store flight — required
 
+Use the executable [Store v2-to-v3 upgrade kit](STORE_V2_V3_UPGRADE.md) for the
+synthetic baseline and read-only migration/recovery checks in steps 2–4.
+
 1. Record the downloaded workflow artifact and MSIX SHA-256. Confirm `store-package.json` names the
    same source commit and package version `3.0.65535.0`.
 2. With Store v2.0.1 installed, create a synthetic vault, enable Windows Hello, create an encrypted

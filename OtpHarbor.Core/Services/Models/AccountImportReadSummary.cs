@@ -5,16 +5,17 @@ namespace TOTP.Core.Services.Models;
 public enum AccountImportFormat
 {
     Unknown, OtpHarborJson, OtpHarborCsv, OtpHarborText, AegisJson, TwoFasJson,
-    BitwardenJson, BitwardenCsv, ProtonJson, TotpUriList, EncryptedExternalExport, EncryptedOtpHarborBackup
+    BitwardenJson, BitwardenCsv, ProtonJson, TotpUriList, EncryptedExternalExport, EncryptedOtpHarborBackup, QrCode, LastPassJson
 }
 
-public sealed class AccountImportReadSummary(int supportedCount, int invalidCount = 0, int unsupportedCount = 0, int nonOtpCount = 0)
+public sealed class AccountImportReadSummary(int supportedCount, int invalidCount = 0, int unsupportedCount = 0, int nonOtpCount = 0, int trashedCount = 0)
     : Success("Authenticator import validation summary.")
 {
     public int SupportedCount { get; } = supportedCount;
     public int InvalidCount { get; } = invalidCount;
     public int UnsupportedCount { get; } = unsupportedCount;
     public int NonOtpCount { get; } = nonOtpCount;
+    public int TrashedCount { get; } = trashedCount;
     public AccountImportFormat Format { get; init; }
 }
 

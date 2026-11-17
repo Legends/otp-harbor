@@ -919,6 +919,59 @@ public sealed class MainWindowSmokeTests
     }
 
     [Theory]
+    [InlineData(1080, 1040, 1, true, 864)]
+    [InlineData(1080, 1040, 1.5, true, 576)]
+    [InlineData(2160, 2080, 2, true, 864)]
+    [InlineData(1080, 800, 1, true, 800)]
+    [InlineData(1080, 1040, 1, false, 624)]
+    [InlineData(1080, 1040, 1.5, false, 416)]
+    public void ScreenHeightCap_UsesEightyPercentOnlyForAccountEditor(double screen, double working, double scale, bool editor, double expected)
+    {
+        var policy = typeof(MainWindow).GetMethod("CalculateScreenHeightLimit", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(policy);
+        Assert.Equal(expected, Assert.IsType<double>(policy.Invoke(null, [screen, working, scale, editor])), precision: 2);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 1920, 1080, 0, 1040, 380, 540, 770, 216)]
+    [InlineData(-1920, 200, 1920, 1080, 240, 1040, 380, 540, -1150, 416)]
+    [InlineData(0, 0, 1920, 1080, 0, 1040, 570, 810, 675, 216)]
+    [InlineData(0, 0, 1280, 720, 0, 680, 380, 540, 450, 140)]
+    public void StartupPosition_CentersHorizontallyAndStartsTwentyPercentDownWithinWorkingArea(
+        int x, int y, int width, int height, int workingY, int workingHeight, int windowWidth, int windowHeight, int expectedX, int expectedY)
+    {
+        var policy = typeof(MainWindow).GetMethod("CalculateStartupPosition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(policy);
+        Assert.Equal(new PixelPoint(expectedX, expectedY), Assert.IsType<PixelPoint>(policy.Invoke(null,
+            [new PixelRect(x, y, width, height), new PixelRect(x, workingY, width, workingHeight), new PixelSize(windowWidth, windowHeight)])));
+    }
+
+    [AvaloniaFact]
+    public void StartupPosition_IsAppliedOnOpenAndDoesNotResetUserPlacement()
+    {
+        var window = new MainWindow();
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            var screen = window.Screens.ScreenFromWindow(window);
+            Assert.NotNull(screen);
+            var policy = typeof(MainWindow).GetMethod("CalculateStartupPosition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.NotNull(policy);
+            var expected = Assert.IsType<PixelPoint>(policy.Invoke(null, [screen.Bounds, screen.WorkingArea,
+                new PixelSize((int)Math.Ceiling(window.Width * screen.Scaling), (int)Math.Ceiling(window.Height * screen.Scaling))]));
+            Assert.Equal(expected, window.Position);
+            window.Position = new PixelPoint(screen.WorkingArea.X + 20, screen.WorkingArea.Y + 30);
+            var moved = window.Position;
+            var apply = typeof(MainWindow).GetMethod("ApplyStartupPosition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(apply);
+            apply.Invoke(window, null);
+            Assert.Equal(moved, window.Position);
+        }
+        finally { window.Close(); }
+    }
+
+    [Theory]
     [InlineData(0, 42, 0, 0)]
     [InlineData(2, 42, 0, 46)]
     [InlineData(2, 42, 60, 60)]
@@ -3090,7 +3143,7 @@ public sealed class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void SettingsWindow_UsesPlatformAppropriateResponsiveSizeWithTwoRowsOfTabs()
+    public void SettingsWindow_UsesPlatformAppropriateResponsiveSizeWithWholeCategoryTabs()
     {
         var window = new SettingsWindow();
 
@@ -3111,7 +3164,7 @@ public sealed class MainWindowSmokeTests
             var tabs = settingsTabs.GetVisualDescendants().OfType<TabItem>().ToArray();
             Assert.Equal(7, tabs.Length);
             var tabHeaders = tabs
-                .Select(tab => Assert.IsType<StackPanel>(tab.Header))
+                .Select(tab => Assert.IsType<Grid>(tab.Header))
                 .ToArray();
             Assert.Equal(
                 [
@@ -3135,27 +3188,13 @@ public sealed class MainWindowSmokeTests
                     SymbolIconKind.Information
                 ],
                 tabHeaders.Select(header => Assert.Single(header.Children.OfType<SymbolIcon>()).Kind));
-            Assert.True(tabs.Take(4).Sum(tab => tab.MinWidth) <= window.Width - 32);
-            Assert.All(
-                tabs,
-                tab => Assert.Equal(tabs[0].Bounds.Width, tab.Bounds.Width, precision: 2));
-            Assert.Equal(2, tabs.Select(tab => tab.Bounds.Top).Distinct().Count());
-            Assert.All(tabs.Take(4), tab => Assert.Equal(tabs[0].Bounds.Top, tab.Bounds.Top, precision: 2));
-            Assert.All(tabs.Skip(4), tab => Assert.Equal(tabs[4].Bounds.Top, tab.Bounds.Top, precision: 2));
-            Assert.True(tabs[4].Bounds.Top > tabs[0].Bounds.Top);
-            for (var index = 1; index < 4; index++)
+            Assert.Contains(settingsTabs.GetVisualDescendants(), control => control is WrapPanel);
+            foreach (var row in tabs.GroupBy(tab => Math.Round(tab.Bounds.Top, 2)))
             {
-                Assert.Equal(
-                    tabs[index - 1].Bounds.Right,
-                    tabs[index].Bounds.Left,
-                    precision: 2);
-            }
-            for (var index = 5; index < tabs.Length; index++)
-            {
-                Assert.Equal(
-                    tabs[index - 1].Bounds.Right,
-                    tabs[index].Bounds.Left,
-                    precision: 2);
+                var rowTabs = row.OrderBy(tab => tab.Bounds.Left).ToArray();
+                Assert.All(rowTabs, tab => Assert.True(tab.Bounds.Left >= 0 && tab.Bounds.Right <= settingsTabs.Bounds.Width));
+                for (var index = 1; index < rowTabs.Length; index++)
+                    Assert.True(rowTabs[index - 1].Bounds.Right <= rowTabs[index].Bounds.Left + 0.5);
             }
             Assert.All(
                 tabs,
@@ -3462,9 +3501,6 @@ public sealed class MainWindowSmokeTests
             var exportButton = Assert.Single(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "EncryptedBackupExportButton");
-            var restoreButton = Assert.Single(
-                content.GetLogicalDescendants().OfType<Button>(),
-                button => button.Name == "EncryptedBackupRestoreButton");
             var openFolderButton = Assert.Single(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "OpenLastBackupFolderButton");
@@ -3474,21 +3510,15 @@ public sealed class MainWindowSmokeTests
             var exportPanel = Assert.Single(
                 content.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "EncryptedBackupExportPanel");
-            var restorePanel = Assert.Single(
-                content.GetLogicalDescendants().OfType<Border>(),
-                border => border.Name == "EncryptedBackupRestorePanel");
-            var restoreConflictStrategy = Assert.Single(
-                content.GetLogicalDescendants().OfType<ComboBox>(),
-                comboBox => comboBox.Name == "RestoreConflictStrategyComboBox");
             Assert.Contains("primary", exportButton.Classes);
             Assert.Contains("wide", exportButton.Classes);
-            Assert.Contains("wide", restoreButton.Classes);
             Assert.Contains("secondary", openFolderButton.Classes);
             Assert.Contains("wide", openFolderButton.Classes);
             Assert.Contains(openFolderButton, exportPanel.GetLogicalDescendants());
             Assert.Contains(openExportAfterCheckBox, exportPanel.GetLogicalDescendants());
-            Assert.DoesNotContain(openFolderButton, restorePanel.GetLogicalDescendants());
-            Assert.NotNull(restoreConflictStrategy);
+            Assert.DoesNotContain(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "EncryptedBackupRestoreButton");
+            Assert.DoesNotContain(content.GetLogicalDescendants().OfType<Border>(), border => border.Name == "EncryptedBackupRestorePanel");
+            Assert.DoesNotContain(content.GetLogicalDescendants().OfType<ComboBox>(), combo => combo.Name == "RestoreConflictStrategyComboBox");
             Assert.DoesNotContain(
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name is "OtherFormatsImportButton" or "GoogleAuthenticatorImportButton");

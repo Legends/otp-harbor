@@ -6,7 +6,7 @@ namespace TOTP.Infrastructure.Parser;
 
 internal static class TwoFasBackupParser
 {
-    private const int MinimumSchemaVersion = 2;
+    private const int MinimumSchemaVersion = 1;
     private const int MaximumSchemaVersion = 4;
 
     public static List<Account> Parse(JsonElement root)
@@ -56,9 +56,13 @@ internal static class TwoFasBackupParser
             if (string.IsNullOrEmpty(accountName))
                 accountName = GetOptionalString(otp, "label")?.Trim();
 
+            issuer = string.IsNullOrEmpty(issuer) ? serviceName : issuer;
+            if (issuer.Length is 0 or > 256 || (accountName?.Length ?? 0) > 256)
+                throw new FormatException("A 2FAS service contains an invalid TOTP identity.");
+
             accounts.Add(new Account(
                 Guid.NewGuid(),
-                string.IsNullOrEmpty(issuer) ? serviceName : issuer,
+                issuer,
                 secret,
                 string.IsNullOrEmpty(accountName) ? null : accountName,
                 period, algorithm: algorithm.ToUpperInvariant(), digits: digits));

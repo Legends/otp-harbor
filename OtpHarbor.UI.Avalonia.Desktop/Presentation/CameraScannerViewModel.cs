@@ -425,6 +425,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
         string payload,
         CancellationToken cancellationToken)
     {
+        var duplicatesOnly = false;
         var imported = await _importService.ImportWithConflictResolutionAsync(payload, ResolveImportAsync, cancellationToken);
         if (imported.IsFailed)
         {
@@ -432,7 +433,7 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
             return NotificationSeverity.Error;
         }
 
-        Message = imported.Value.Status == QrAccountImportStatus.BulkImported
+        Message = duplicatesOnly ? string.Empty : imported.Value.Status == QrAccountImportStatus.BulkImported
             ? FormatBulkImportMessage(imported.Value)
             : _localization.GetString(imported.Value.Status switch
             {
@@ -465,50 +466,38 @@ public sealed class CameraScannerViewModel : INotifyPropertyChanged, IDisposable
 
         async Task<QrAccountImportResolution?> ResolveImportAsync(QrAccountImportPreview preview, CancellationToken token)
         {
-            var accountPreview = new AccountImportPreview(preview.TotalCount,
-                preview.UnchangedCount + preview.ChangedConflicts.Count, ImportConflictStrategy.SkipExisting)
+            var accountPreview = TOTP.Avalonia.Shared.Import.QrImportReviewAdapter.ToAccountPreview(preview);
+            var summary = new AccountImportReadSummary(preview.TotalCount) { Format = AccountImportFormat.QrCode };
+            if (TOTP.Avalonia.Shared.Import.ImportReviewPolicy.IsOnlyExactDuplicates(accountPreview, summary))
             {
-                Entries = preview.Entries,
-                NewCount = preview.NewCount
-            };
-            var confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
-                _localization.GetString(AvaloniaStringKeys.ImportAccounts),
-                TOTP.Avalonia.Shared.Import.ImportReviewFormatter.Format(_localization.GetString, accountPreview),
-                NotificationSeverity.Information,
-                _localization.GetString(AvaloniaStringKeys.ImportAccounts),
-                _localization.GetString(AvaloniaStringKeys.Cancel)), token);
-            if (!confirmed) return null;
-            var resolutions = new List<QrAccountImportConflictResolution>();
-            foreach (var conflict in preview.ChangedConflicts)
-            {
-                var decision = await ResolveConflictAsync(conflict, token);
-                if (decision == QrAccountConflictDecision.Cancel) return null;
-                resolutions.Add(new QrAccountImportConflictResolution(conflict.ImportIndex, decision));
+                await _dialogs.ShowMessageAsync(new MessageDialogRequest(
+                    _localization.GetString(AvaloniaStringKeys.ImportAccounts),
+                    _localization.GetString(TOTP.Avalonia.Shared.Import.ReviewStringKeys.OnlyDuplicates),
+                    NotificationSeverity.Information, _localization.GetString(AvaloniaStringKeys.Ok)), token);
+                duplicatesOnly = true;
+                return null;
             }
-            return new QrAccountImportResolution(resolutions);
-        }
-
-        async Task<QrAccountConflictDecision> ResolveConflictAsync(
-            QrAccountConflict conflict,
-            CancellationToken token)
-        {
-            var choice = await _dialogs.ChooseAsync(new ChoiceDialogRequest(
-                _localization.GetString(AvaloniaStringKeys.QrConflictTitle),
-                string.Format(
-                    _localization.GetString(AvaloniaStringKeys.QrConflictMessage),
-                    conflict.Issuer,
-                    conflict.AccountName),
-                NotificationSeverity.Warning,
-                _localization.GetString(AvaloniaStringKeys.UpdateExisting),
-                _localization.GetString(AvaloniaStringKeys.KeepBoth),
-                _localization.GetString(AvaloniaStringKeys.Cancel)),
-                token);
-            return choice switch
+            if (TOTP.Avalonia.Shared.Import.ImportReviewPolicy.IsClean(accountPreview, summary))
             {
-                ChoiceDialogResult.Primary => QrAccountConflictDecision.UpdateExisting,
-                ChoiceDialogResult.Secondary => QrAccountConflictDecision.KeepBoth,
-                _ => QrAccountConflictDecision.Cancel
-            };
+                var confirmed = await _dialogs.ConfirmAsync(new ConfirmationDialogRequest(
+                    _localization.GetString(AvaloniaStringKeys.ImportAccounts),
+                    TOTP.Avalonia.Shared.Import.ImportReviewPolicy.ConfirmText(_localization.GetString, preview.TotalCount),
+                    NotificationSeverity.Information, _localization.GetString(AvaloniaStringKeys.ImportAccounts),
+                    _localization.GetString(AvaloniaStringKeys.Cancel)), token);
+                return confirmed ? new QrAccountImportResolution([]) : null;
+            }
+            var model = new TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel(
+                _localization.GetString, _openImageCommand, _startCommand);
+            var sourceName = model.GetFormatName(AccountImportFormat.QrCode);
+            while (await _dialogs.ConfirmImportFileAsync(model, summary, sourceName, token))
+            {
+                var review = new TOTP.Avalonia.Shared.Import.ImportReviewViewModel(
+                    accountPreview, summary, sourceName, sourceName, _localization.GetString);
+                var resolution = await _dialogs.ReviewImportAsync(review, token);
+                if (resolution is null && review.BackRequested) continue;
+                return TOTP.Avalonia.Shared.Import.QrImportReviewAdapter.ToQrResolution(resolution);
+            }
+            return null;
         }
     }
 

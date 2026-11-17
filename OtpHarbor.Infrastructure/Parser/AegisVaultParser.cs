@@ -56,6 +56,13 @@ internal static class AegisVaultParser
 
             var issuer = GetRequiredString(entry, "issuer").Trim();
             var accountName = GetRequiredString(entry, "name").Trim();
+            if (issuer.Length == 0)
+            {
+                issuer = accountName;
+                accountName = string.Empty;
+            }
+            if (issuer.Length is 0 or > 256 || accountName.Length > 256)
+                throw new FormatException("An Aegis entry contains an invalid TOTP identity.");
             accounts.Add(new Account(
                 Guid.NewGuid(),
                 issuer,

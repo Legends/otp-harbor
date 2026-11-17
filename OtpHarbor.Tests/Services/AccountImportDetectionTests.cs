@@ -27,7 +27,8 @@ public sealed class AccountImportDetectionTests
         { UriValue, AccountImportFormat.TotpUriList },
         { JsonSerializer.Serialize(new { encrypted = false, items = new[] { new { type = 1, name = "Demo", login = new { totp = UriValue } } } }), AccountImportFormat.BitwardenJson },
         { "\"name\",\"type\",\"login_totp\"\nDemo,login," + Seed, AccountImportFormat.BitwardenCsv },
-        { JsonSerializer.Serialize(new { version = 1, entries = new[] { new { content = new { entry_type = "Totp", uri = UriValue } } } }), AccountImportFormat.ProtonJson }
+        { JsonSerializer.Serialize(new { version = 1, entries = new[] { new { content = new { entry_type = "Totp", uri = UriValue } } } }), AccountImportFormat.ProtonJson },
+        { JsonSerializer.Serialize(new { version = 1, accounts = new[] { new { issuerName = "Demo", userName = "user", secret = Seed, algorithm = "SHA1", digits = 6, timeStep = 30 } } }), AccountImportFormat.LastPassJson }
     };
 
     [Theory]

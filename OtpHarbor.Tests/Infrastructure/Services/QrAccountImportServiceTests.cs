@@ -371,6 +371,12 @@ public sealed class QrAccountImportServiceTests
                 Assert.Equal(3, preview.TotalCount);
                 Assert.Equal(1, preview.NewCount);
                 Assert.Equal(1, preview.UnchangedCount);
+                Assert.Equal(3, preview.Entries.Count);
+                Assert.NotNull(preview.Entries[0].Existing);
+                Assert.Null(preview.Entries[1].Existing);
+                Assert.Equal(changed.Issuer, preview.Entries[2].Existing!.Issuer);
+                Assert.Equal(changed.PeriodSeconds, preview.Entries[2].Existing!.PeriodSeconds);
+                Assert.False(preview.Entries[2].ExistingIsFromExport);
                 var conflict = Assert.Single(preview.ChangedConflicts);
                 Assert.Equal(2, conflict.ImportIndex);
                 Assert.True(conflict.SecretChanged);
@@ -971,6 +977,33 @@ public sealed class QrAccountImportServiceTests
             Times.Never);
         accounts.Verify(value => value.AddNewAsync(It.IsAny<Account>()), Times.Never);
         accounts.Verify(value => value.UpdateAsync(It.IsAny<Account>(), It.IsAny<Account>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GoogleMigration_OnlyExactDuplicates_CanEndAfterAcknowledgementWithoutAnyWrites()
+    {
+        var existing = Enumerable.Range(1, 10).Select(index =>
+            new Account(Guid.NewGuid(), "Example", "JBSWY3DPEHPK3PXP", $"user-{index}")).ToList();
+        var accounts = Manager(existing);
+        var sut = new QrAccountImportService(accounts.Object);
+        var payload = MigrationPayload(existing.Select(account => new MigrationAccount(
+            Convert.FromHexString("48656C6C6F21DEADBEEF"), $"Example:{account.AccountName}", "Example")).ToList());
+        var acknowledgements = 0;
+
+        var result = await sut.ImportWithConflictResolutionAsync(payload, (preview, _) =>
+        {
+            var accountPreview = TOTP.Avalonia.Shared.Import.QrImportReviewAdapter.ToAccountPreview(preview);
+            Assert.True(TOTP.Avalonia.Shared.Import.ImportReviewPolicy.IsOnlyExactDuplicates(accountPreview, new(10)));
+            Assert.Equal(10, accountPreview.UnchangedCount);
+            acknowledgements++;
+            return Task.FromResult<QrAccountImportResolution?>(null);
+        }, TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(QrAccountImportStatus.Cancelled, result.Value.Status);
+        Assert.Equal(1, acknowledgements);
+        accounts.Verify(value => value.GetAllOtpEntriesSortedAsync(), Times.Once);
+        accounts.VerifyNoOtherCalls();
     }
 
     private static Mock<IAccountManager> Manager(IReadOnlyList<Account> existing)
