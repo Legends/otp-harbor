@@ -55,6 +55,8 @@ public sealed class AvaloniaCompositionRootTests
             services.GetRequiredService<IPlatformQuickUnlockEnrollment>());
         Assert.IsType<WindowsPlatformQuickUnlock>(
             services.GetRequiredService<IPlatformQuickUnlock>());
+        Assert.IsType<WindowsCngUnattendedUnlock>(services.GetRequiredService<IPlatformUnattendedUnlock>());
+        Assert.Contains(services.GetRequiredService<IPlatformUnattendedUnlock>(), services.GetServices<IPlatformQuickUnlock>());
         Assert.IsType<AvaloniaHelloPromptWindowHandleProvider>(
             services.GetRequiredService<IHelloPromptWindowHandleProvider>());
         Assert.IsType<HelloGate>(services.GetRequiredService<IHelloGate>());

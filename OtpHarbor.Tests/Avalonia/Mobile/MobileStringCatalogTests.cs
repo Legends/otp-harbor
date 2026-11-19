@@ -7,6 +7,63 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileStringCatalogTests
 {
     [Theory]
+    [InlineData("en", "App version, license and links.", "Report issues, manage logs and view app storage.")]
+    [InlineData("de", "App-Version, Lizenz und Links.", "Probleme melden, Protokolle verwalten und App-Speicher anzeigen.")]
+    [InlineData("fr", "Version de l’application, licence et liens.", "Signaler un problème, gérer les journaux et afficher le stockage de l’application.")]
+    [InlineData("es", "Versión de la aplicación, licencia y enlaces.", "Informar de problemas, gestionar registros y ver el almacenamiento de la aplicación.")]
+    public void CategoryDescriptions_ReflectStorageUnderSupport(string locale, string info, string support)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(locale));
+        Assert.Equal(info, catalog.Get(MobileStringKeys.InfoDescription));
+        Assert.Equal(support, catalog.Get(MobileStringKeys.MiscSettingsDescription));
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("es")]
+    public void SharedRecoveryFaqs_MatchDesktopWithPlatformSpecificNavigation(string locale)
+    {
+        var culture = CultureInfo.GetCultureInfo(locale);
+        var mobile = new MobileStringCatalog(culture);
+        var desktop = new TOTP.Avalonia.Desktop.Localization.AvaloniaStringCatalog();
+        foreach (var key in new[] { MobileStringKeys.FaqMasterPasswordRecoveryQuestion,
+                     MobileStringKeys.FaqMasterPasswordRecoveryAnswer, MobileStringKeys.FaqOlderVaultsQuestion })
+            Assert.Equal(desktop.Get(key, culture), mobile.Get(key));
+        var answer = mobile.Get(MobileStringKeys.FaqOlderVaultsAnswer);
+        Assert.Equal(locale == "es" ? desktop.Get(MobileStringKeys.FaqOlderVaultsAnswer, culture)
+            .Replace("En Ajustes →", "En Configuración →", StringComparison.Ordinal)
+            : desktop.Get(MobileStringKeys.FaqOlderVaultsAnswer, culture), answer);
+        foreach (var key in new[] { MobileStringKeys.Settings, TOTP.Avalonia.Shared.Import.MigrationStringKeys.DataAndBackup, TOTP.Avalonia.Shared.Import.MigrationStringKeys.Title })
+            Assert.Contains(mobile.Get(key), answer, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("en", "Open GitHub issue")]
+    [InlineData("de", "GitHub-Issue öffnen")]
+    [InlineData("fr", "Ouvrir un ticket GitHub")]
+    [InlineData("es", "Abrir una incidencia en GitHub")]
+    public void ReportIssueAction_UsesMobileWordingFromActiveLocale(string locale, string expected)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(locale));
+        Assert.Equal(expected, catalog.Get(MobileStringKeys.ReportOnGitHub));
+        Assert.Equal(expected, new TOTP.Avalonia.Desktop.Localization.AvaloniaStringCatalog()
+            .Get(TOTP.Avalonia.Desktop.Localization.AvaloniaStringKeys.ReportOnGitHub, CultureInfo.GetCultureInfo(locale)));
+    }
+    [Theory]
+    [InlineData("en", "Set up quick unlock?", "Quick unlock was not enabled. You can continue using your master password.")]
+    [InlineData("de", "Schnellentsperrung einrichten?", "Die Schnellentsperrung wurde nicht aktiviert. Sie können Ihr Master-Passwort weiter verwenden.")]
+    [InlineData("fr", "Configurer le déverrouillage rapide ?", "Le déverrouillage rapide n’a pas été activé. Vous pouvez continuer à utiliser votre mot de passe maître.")]
+    [InlineData("es", "¿Configurar el desbloqueo rápido?", "El desbloqueo rápido no se ha activado. Puede seguir usando su contraseña maestra.")]
+    public void QuickUnlockOffer_UsesCompleteActiveLocaleMessages(string culture, string title, string failure)
+    {
+        var catalog = new MobileStringCatalog(CultureInfo.GetCultureInfo(culture));
+        Assert.Equal(title, catalog.Get(MobileStringKeys.InitialQuickUnlockTitle));
+        Assert.Equal(failure, catalog.Get(MobileStringKeys.QuickUnlockNotEnabled));
+    }
+
+    [Theory]
     [InlineData("en")]
     [InlineData("de")]
     [InlineData("fr")]

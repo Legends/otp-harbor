@@ -21,9 +21,11 @@ namespace TOTP.Tests.Avalonia.Headless;
 public sealed class ImportReviewPanelTests
 {
     [AvaloniaTheory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void LongLocalizedConflictHeading_RemainsReadableWithinItsColumnOrCard(bool mobile)
+    [InlineData(false, 1000)]
+    [InlineData(true, 320)]
+    [InlineData(true, 360)]
+    [InlineData(true, 430)]
+    public void LongLocalizedConflictHeading_RemainsReadableWithinItsColumnOrCard(bool mobile, int width)
     {
         var catalog = new AvaloniaStringCatalog();
         var model = new ImportReviewViewModel(new(1, 1, ImportConflictStrategy.SkipExisting)
@@ -33,7 +35,7 @@ public sealed class ImportReviewPanelTests
         }, null, "CSV", "synthetic.csv", key => catalog.Get(key, CultureInfo.GetCultureInfo("de")));
         UserControl panel = mobile ? new ImportReviewMobilePage() : new ImportReviewPanel();
         panel.DataContext = model;
-        var window = new Window { Width = mobile ? 360 : 1000, Height = 800, Content = panel };
+        var window = new Window { Width = width, Height = 800, Content = panel };
         try
         {
             window.Show();
@@ -41,7 +43,19 @@ public sealed class ImportReviewPanelTests
             var heading = Assert.Single(panel.GetVisualDescendants().OfType<TextBlock>(),
                 text => text.IsEffectivelyVisible && text.Text == "Unterschiedliche Aussteller- und Kontonamen");
             Assert.True(heading.Bounds.Width > 0);
-            Assert.True(heading.TextLayout.Height > heading.FontSize * 1.5);
+            Assert.Equal(TextWrapping.Wrap, heading.TextWrapping);
+            var unwrapped = new TextBlock
+            {
+                Text = heading.Text, FontFamily = heading.FontFamily, FontSize = heading.FontSize,
+                FontWeight = heading.FontWeight, FontStyle = heading.FontStyle, FontStretch = heading.FontStretch,
+                TextWrapping = TextWrapping.NoWrap
+            };
+            unwrapped.Measure(Size.Infinity);
+            // Native font metrics differ: require multiple lines only when the text cannot fit.
+            if (unwrapped.DesiredSize.Width > heading.Bounds.Width + 1)
+                Assert.True(heading.TextLayout.TextLines.Count > 1);
+            Assert.All(heading.TextLayout.TextLines, line => Assert.False(line.HasCollapsed));
+            Assert.True(heading.TextLayout.Height <= heading.Bounds.Height + 1);
             Assert.True(heading.TextLayout.WidthIncludingTrailingWhitespace <= heading.Bounds.Width + 1);
         }
         finally { window.Close(); }

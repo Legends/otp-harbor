@@ -11,7 +11,7 @@ using TOTP.Core.Services.Interfaces;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
-public sealed class AuthorizationSettingsViewModelTests
+public sealed partial class AuthorizationSettingsViewModelTests
 {
     [Fact]
     public async Task RefreshAsync_WhenQuickUnlockIsAvailable_ProjectsStateSilently()
@@ -79,6 +79,7 @@ public sealed class AuthorizationSettingsViewModelTests
         authorization.Setup(value => value.SetGateAsync(AuthorizationGateKind.Hello))
             .ReturnsAsync(AuthorizationResult.PasswordRequired);
         authorization.Setup(value => value.ConfigureHelloAsync("recovery-password"))
+            .Callback(() => state.SetConfiguration(true, PreferredUnlockMethod.PlatformQuickUnlock))
             .ReturnsAsync(AuthorizationResult.Success);
         var dialogs = new Mock<IAvaloniaDialogService>();
         dialogs.Setup(value => value.PromptForPasswordAsync(
@@ -123,31 +124,26 @@ public sealed class AuthorizationSettingsViewModelTests
     }
 
     [Fact]
-    public async Task UsePasswordAsync_VerifiesMasterPasswordBeforeChangingPreference()
+    public async Task UsePasswordAsync_VerifiesCurrentPlatformMethodBeforeChangingPreference()
     {
         var state = ConfiguredState(PreferredUnlockMethod.PlatformQuickUnlock);
         var authorization = Authorization(state);
         authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(true);
-        authorization.Setup(value => value.TryUnlockWithPasswordAsync("master-password"))
-            .ReturnsAsync(AuthorizationResult.Success);
-        authorization.Setup(value => value.SetGateAsync(AuthorizationGateKind.Password))
+        authorization.Setup(value => value.ConfigureUnlockMethodWithPlatformAsync(
+                PreferredUnlockMethod.Password, PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
+            .Callback(() => state.SetConfiguration(true, PreferredUnlockMethod.Password))
             .ReturnsAsync(AuthorizationResult.Success);
         var dialogs = new Mock<IAvaloniaDialogService>();
-        dialogs.Setup(value => value.PromptForPasswordAsync(
-                It.IsAny<PasswordDialogRequest>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(async (PasswordDialogRequest request, CancellationToken cancellationToken) =>
-            {
-                var error = await request.ValidateAsync!("master-password", cancellationToken);
-                return error is null ? "master-password" : null;
-            });
         var sut = CreateSut(authorization.Object, dialogs.Object);
         await sut.RefreshAsync();
 
         await sut.UsePasswordAsync();
 
-        authorization.Verify(value => value.TryUnlockWithPasswordAsync("master-password"), Times.Once);
-        authorization.Verify(value => value.SetGateAsync(AuthorizationGateKind.Password), Times.Once);
+        authorization.Verify(value => value.ConfigureUnlockMethodWithPlatformAsync(
+            PreferredUnlockMethod.Password, PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()), Times.Once);
+        authorization.Verify(value => value.SetGateAsync(It.IsAny<AuthorizationGateKind>()), Times.Never);
+        authorization.Verify(value => value.TryUnlockWithPasswordAsync(It.IsAny<string>()), Times.Never);
+        dialogs.Verify(value => value.PromptForPasswordAsync(It.IsAny<PasswordDialogRequest>(), It.IsAny<CancellationToken>()), Times.Never);
         Assert.False(sut.IsQuickUnlockEnabled);
     }
 
@@ -246,6 +242,9 @@ public sealed class AuthorizationSettingsViewModelTests
     {
         var authorization = new Mock<IAuthorizationService>();
         authorization.SetupGet(value => value.State).Returns(state);
+        authorization.Setup(value => value.ConfigureUnlockMethodWithPlatformAsync(
+                It.IsAny<PreferredUnlockMethod>(), It.IsAny<PreferredUnlockMethod>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AuthorizationResult.NotAvailable);
         return authorization;
     }
 
@@ -253,6 +252,7 @@ public sealed class AuthorizationSettingsViewModelTests
     {
         var state = new AuthorizationState();
         state.SetConfiguration(true, preference);
+        state.Unlock();
         return state;
     }
 

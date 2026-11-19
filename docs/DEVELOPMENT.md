@@ -10,7 +10,7 @@ OTP Harbor is security-sensitive. Never use real OTP seeds, passwords, vaults, b
 | --- | --- |
 | Git | Source control, safe source-launcher updates, version metadata, release-tag validation, and tracked-asset policy checks. |
 | PowerShell | Runs the repository's development, test, validation, asset, security, and release automation. PowerShell 7 is recommended for cross-platform work; some Windows-only scripts require Windows APIs or an elevated session. |
-| .NET SDK `10.0.402` | Builds and tests all projects. The exact SDK is pinned by [`global.json`](../global.json); roll-forward is disabled. |
+| .NET SDK `10.0.404` | Builds and tests all projects. The exact SDK is pinned by [`global.json`](../global.json); roll-forward is disabled. |
 | NuGet and [`NuGet.config`](../NuGet.config) | Restores the locked dependency graph through the `dotnet` CLI. Android and release validation expect locked restores. |
 | An editor or IDE | Visual Studio, JetBrains Rider, VS Code, or another C# editor may be used. The command-line workflows remain authoritative. |
 
@@ -63,6 +63,7 @@ Package versions are defined by the project files and lock files. Update them on
 | Project | Responsibility |
 | --- | --- |
 | `OtpHarbor.Core` | Domain models, enums, contracts, validation, and security abstractions. |
+| `OtpHarbor.Localization` | Platform-neutral translated resources, typed keys, culture resolution and resource lookup for all hosts. |
 | `OtpHarbor.Infrastructure` | Concrete security orchestration, settings, logging, account, import/export, and backup services. |
 | `OtpHarbor.DAL` | Persistence, filesystem access, and storage mapping. |
 | `OtpHarbor.Camera.OpenCv` | Desktop OpenCV camera capture and QR scanning. |
@@ -78,6 +79,20 @@ Package versions are defined by the project files and lock files. Update them on
 
 Keep MVVM boundaries strict, keep security and persistence policy out of code-behind, and register desktop composition in `OtpHarbor.UI.Avalonia.Desktop/Startup/AvaloniaCompositionRoot.cs`.
 
+All translated text is maintained in `OtpHarbor.Localization/Resources`; UI projects
+keep only presentation adapters. See [common localization](architecture/COMMON_LOCALIZATION.md)
+for adding keys/languages and [the duplication audit](architecture/DUPLICATION_AUDIT.md)
+for further shared-code opportunities.
+
+Desktop and Android settings share the same general FAQ items and translations;
+keep platform-specific navigation or instructions in the relevant resource scope.
+For example, the older-version import answer uses the Android Spanish menu label
+“Configuración” and the desktop Spanish label “Ajustes”. Android storage locations
+belong to Support & diagnostics; About contains app information and links.
+The desktop About panel uses the shared control's `compact` class for smaller
+title, logo and link typography suitable for a settings window. Android keeps the
+standard mobile sizes, and both presentations retain minimum 44-pixel link targets.
+
 ## Initial setup
 
 ```powershell
@@ -89,7 +104,7 @@ dotnet build OtpHarbor.sln -c Debug
 dotnet test OtpHarbor.sln -c Debug
 ```
 
-`dotnet --version` must report `10.0.402`. Restore Android independently when Android work is required:
+`dotnet --version` must report `10.0.404`. Restore Android independently when Android work is required:
 
 ```powershell
 dotnet workload install android --skip-manifest-update

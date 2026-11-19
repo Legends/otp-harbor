@@ -144,6 +144,11 @@ public partial class MainView : UserControl
 
     private void StartupViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MobileShellViewModel.IsMasterPasswordChangeExpanded))
+        {
+            foreach (var input in MasterPasswordFieldsReveal.GetVisualDescendants().OfType<RevealableSecretInput>())
+                input.Conceal();
+        }
         if (e.PropertyName is nameof(MobileShellViewModel.IsSettingsVisible)
             or nameof(MobileShellViewModel.IsSettingsCategoryListVisible)
             or nameof(MobileShellViewModel.IsSettingsCategoryDetailVisible))
@@ -156,6 +161,7 @@ public partial class MainView : UserControl
             or nameof(MobileShellViewModel.IsStartingVisible)
             or nameof(MobileShellViewModel.IsAccountListVisible)
             or nameof(MobileShellViewModel.IsInitialAccountLoadComplete)
+            or nameof(MobileShellViewModel.IsInitialQuickUnlockOfferVisible)
             or nameof(MobileShellViewModel.HasAccounts)
             or nameof(MobileShellViewModel.HasNoAccounts))
         {
@@ -191,6 +197,7 @@ public partial class MainView : UserControl
             {
                 IsBusy: true,
                 IsAccountListVisible: true,
+                IsInitialQuickUnlockOfferVisible: false,
                 IsInitialAccountLoadComplete: false
             })
         {
@@ -255,7 +262,7 @@ public partial class MainView : UserControl
             return false;
         }
 
-        if (!viewModel.IsAccountListVisible) return true;
+        if (viewModel.IsInitialQuickUnlockOfferVisible || !viewModel.IsAccountListVisible) return true;
         if (!viewModel.IsInitialAccountLoadComplete) return false;
         if (!viewModel.HasAccounts && !viewModel.HasNoAccounts) return false;
         return !_usesNativeAccountList || !viewModel.HasAccounts || _nativeAccountListRendered;
@@ -513,7 +520,8 @@ public partial class MainView : UserControl
     {
         if (sender is not Expander expanded) return;
 
-        foreach (var section in new[] { FaqIconPacksExpander, FaqImportFormatsExpander })
+        foreach (var section in new[] { FaqMasterPasswordRecoveryExpander, FaqOlderVaultsExpander,
+                     FaqIconPacksExpander, FaqImportFormatsExpander })
         {
             if (!ReferenceEquals(section, expanded)) section.IsExpanded = false;
         }

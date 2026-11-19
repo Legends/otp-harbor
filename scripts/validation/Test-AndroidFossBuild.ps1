@@ -19,10 +19,10 @@ function Read-RequiredFile([string]$RelativePath) {
 }
 
 $sdkConfiguration = Read-RequiredFile 'global.json' | ConvertFrom-Json
-if ($sdkConfiguration.sdk.version -cne '10.0.402' -or
+if ($sdkConfiguration.sdk.version -cne '10.0.404' -or
     $sdkConfiguration.sdk.rollForward -cne 'disable' -or
     $sdkConfiguration.sdk.allowPrerelease -ne $false) {
-    throw 'global.json must pin stable .NET SDK 10.0.402 with roll-forward disabled.'
+    throw 'global.json must pin stable .NET SDK 10.0.404 with roll-forward disabled.'
 }
 
 $nugetConfiguration = [xml](Read-RequiredFile 'NuGet.config')
@@ -36,6 +36,7 @@ if ($null -eq $nugetConfiguration.configuration.packageSources.clear -or
 
 $lockFiles = @(
     'OtpHarbor.Core\packages.lock.json',
+    'OtpHarbor.Localization\packages.lock.json',
     'OtpHarbor.DAL\packages.lock.json',
     'OtpHarbor.Infrastructure\packages.lock.json',
     'OtpHarbor.Platform.Android\packages.lock.json',
@@ -44,6 +45,7 @@ $lockFiles = @(
     'OtpHarbor.UI.Avalonia.Android\packages.lock.json')
 $expectedLockTargets = [ordered]@{
     'OtpHarbor.Core\packages.lock.json' = @('net10.0')
+    'OtpHarbor.Localization\packages.lock.json' = @('net10.0')
     'OtpHarbor.DAL\packages.lock.json' = @('net10.0')
     'OtpHarbor.Infrastructure\packages.lock.json' = @('net10.0')
     'OtpHarbor.Platform.Android\packages.lock.json' = @('net10.0-android36.0')
@@ -114,7 +116,7 @@ foreach ($packageId in $packageIds) {
 
 $workflow = Read-RequiredFile '.github\workflows\build-and-test.yml'
 foreach ($required in @(
-    'dotnet-version: "10.0.402"',
+    'dotnet-version: "10.0.404"',
     'dotnet restore OtpHarbor.Android.sln --locked-mode',
     'dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode',
     'dotnet workload install android --skip-manifest-update',

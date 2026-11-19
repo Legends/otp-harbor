@@ -55,7 +55,21 @@ public sealed class IdleMonitoringBackgroundServiceTests
         context.Authorization.Verify(value => value.Lock(), Times.Never);
     }
 
-    private static TestContext CreateContext(TimeSpan timeout)
+    [Fact]
+    public void EvaluateIdlePolicy_WhenAppLockDisabled_DoesNotLockOrNotify()
+    {
+        var context = CreateContext(TimeSpan.FromMinutes(1), appLockEnabled: false);
+        var notifications = 0;
+        context.Service.ApplicationLocked += (_, _) => notifications++;
+        context.Service.EvaluateIdlePolicy();
+        context.Time.Advance(TimeSpan.FromDays(1));
+        context.Service.EvaluateIdlePolicy();
+        context.Authorization.Verify(value => value.Lock(), Times.Never);
+        Assert.True(context.State.IsUnlocked);
+        Assert.Equal(0, notifications);
+    }
+
+    private static TestContext CreateContext(TimeSpan timeout, bool appLockEnabled = true)
     {
         var state = new AuthorizationState();
         state.Unlock();
@@ -65,7 +79,8 @@ public sealed class IdleMonitoringBackgroundServiceTests
         var settings = new Mock<ISettingsService>();
         settings.SetupGet(value => value.Current).Returns(new AppSettings
         {
-            IdleTimeout = timeout
+            IdleTimeout = timeout,
+            AppLockEnabled = appLockEnabled
         });
         var time = new ManualTimeProvider(
             new DateTimeOffset(2026, 9, 2, 12, 0, 0, TimeSpan.Zero));

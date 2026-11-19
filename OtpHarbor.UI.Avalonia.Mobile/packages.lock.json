@@ -77,11 +77,15 @@
           "Serilog": "[4.4.0, )"
         }
       },
+      "TOTP.Localization": {
+        "type": "Project"
+      },
       "TOTP.UI.Avalonia.Shared": {
         "type": "Project",
         "dependencies": {
           "Avalonia": "[12.1.1, )",
-          "TOTP.Core": "[1.0.0, )"
+          "TOTP.Core": "[1.0.0, )",
+          "TOTP.Localization": "[1.0.0, )"
         }
       }
     }

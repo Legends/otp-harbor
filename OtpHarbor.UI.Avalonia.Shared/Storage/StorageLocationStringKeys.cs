@@ -4,16 +4,16 @@ namespace TOTP.Avalonia.Shared.Storage;
 
 public static class StorageLocationStringKeys
 {
-    public const string CopyPath = "StorageLocationsCopyPath";
-    public const string OpenFolder = "StorageLocationsOpenFolder";
-    public const string CopySucceeded = "StorageLocationsCopySucceeded";
-    public const string CopyFailed = "StorageLocationsCopyFailed";
-    public const string FolderOpened = "StorageLocationsFolderOpened";
-    public const string FolderOpenFailed = "StorageLocationsFolderOpenFailed";
-    public const string CopyLabelFormat = "StorageLocationsCopyLabelFormat";
-    public const string OpenLabelFormat = "StorageLocationsOpenLabelFormat";
-    public const string Info = "StorageLocationsInfo";
-    public const string InfoDescription = "StorageLocationsInfoDescription";
+    public const string CopyPath = global::TOTP.Localization.CommonStringKeys.StorageLocationsCopyPath;
+    public const string OpenFolder = global::TOTP.Localization.CommonStringKeys.StorageLocationsOpenFolder;
+    public const string CopySucceeded = global::TOTP.Localization.CommonStringKeys.StorageLocationsCopySucceeded;
+    public const string CopyFailed = global::TOTP.Localization.CommonStringKeys.StorageLocationsCopyFailed;
+    public const string FolderOpened = global::TOTP.Localization.CommonStringKeys.StorageLocationsFolderOpened;
+    public const string FolderOpenFailed = global::TOTP.Localization.CommonStringKeys.StorageLocationsFolderOpenFailed;
+    public const string CopyLabelFormat = global::TOTP.Localization.CommonStringKeys.StorageLocationsCopyLabelFormat;
+    public const string OpenLabelFormat = global::TOTP.Localization.CommonStringKeys.StorageLocationsOpenLabelFormat;
+    public const string Info = global::TOTP.Localization.CommonStringKeys.StorageLocationsInfo;
+    public const string InfoDescription = global::TOTP.Localization.CommonStringKeys.StorageLocationsInfoDescription;
 
     public static string ForKind(ApplicationStorageLocationKind kind) => $"StorageLocation{kind}";
 

@@ -189,7 +189,7 @@ public sealed class PortableAuthorizationServiceTests
         var sut = dependencies.CreateSut();
         await sut.InitializeAsync();
 
-        var result = await sut.SetAppLockEnabledAsync(true, "recovery-password");
+        var result = await sut.SetAppLockEnabledAsync(true, "recovery-password", CancellationToken.None);
 
         Assert.Equal(AuthorizationResult.Success, result);
         Assert.Equal(["disable-wrapper", "save-preference", "save-preference"], operations);
@@ -218,7 +218,7 @@ public sealed class PortableAuthorizationServiceTests
         var sut = dependencies.CreateSut();
         await sut.InitializeAsync();
 
-        var result = await sut.SetAppLockEnabledAsync(true, string.Empty);
+        var result = await sut.SetAppLockEnabledAsync(true, string.Empty, CancellationToken.None);
 
         Assert.Equal(AuthorizationResult.Failed, result);
         Assert.False(dependencies.Settings.AppLockEnabled);
@@ -260,7 +260,7 @@ public sealed class PortableAuthorizationServiceTests
             .ReturnsAsync(Result.Ok(AuthorizationResult.Success));
         var sut = dependencies.CreateSut();
 
-        var result = await sut.TryUnlockWithPasswordAsync("recovery-password");
+        var result = await sut.TryUnlockWithPasswordAsync("recovery-password", CancellationToken.None);
 
         Assert.Equal(AuthorizationResult.Success, result);
         Assert.True(sut.State.IsUnlocked);
@@ -440,7 +440,7 @@ public sealed class PortableAuthorizationServiceTests
         var sut = dependencies.CreateSut();
         await sut.InitializeAsync();
 
-        var result = await sut.SetAppLockEnabledAsync(false, "recovery-password");
+        var result = await sut.SetAppLockEnabledAsync(false, "recovery-password", CancellationToken.None);
 
         Assert.Equal(AuthorizationResult.Success, result);
         Assert.False(dependencies.Settings.AppLockEnabled);
@@ -581,7 +581,7 @@ public sealed class PortableAuthorizationServiceTests
         var sut = dependencies.CreateSut();
         await sut.InitializeAsync();
 
-        var result = await sut.SetAppLockEnabledAsync(true, "recovery-password");
+        var result = await sut.SetAppLockEnabledAsync(true, "recovery-password", CancellationToken.None);
 
         Assert.Equal(AuthorizationResult.Success, result);
         Assert.Equal(AuthorizationGateKind.DeviceCredential, sut.State.ConfiguredGate);
@@ -663,7 +663,7 @@ public sealed class PortableAuthorizationServiceTests
                 CancellationToken.None))
             .ReturnsAsync(Result.Ok(AuthorizationResult.Success));
         var sut = dependencies.CreateSut();
-        Assert.Equal(AuthorizationResult.Success, await sut.TryUnlockWithPasswordAsync("password"));
+        Assert.Equal(AuthorizationResult.Success, await sut.TryUnlockWithPasswordAsync("password", CancellationToken.None));
 
         sut.Lock();
 

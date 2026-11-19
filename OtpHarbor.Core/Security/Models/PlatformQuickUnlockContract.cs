@@ -34,6 +34,11 @@ public static class PlatformQuickUnlockContract
     public const string AndroidKeystoreUnattendedProvider = "android-keystore-unattended";
     public const int AndroidKeystoreUnattendedProviderVersion = 1;
     public const string UserVerificationNotRequired = "user-verification-not-required";
+    public const string WindowsCngUnattendedProvider = "windows-cng-user-unattended";
+    public const string MacOSUnattendedProvider = "macos-keychain-unattended";
+    public const string LinuxUnattendedProvider = "linux-secret-service-unattended";
+    public const string DesktopUnattendedReferencePrefix = "OTP_HARBOR_UNATTENDED_";
+    public const string DesktopUnattendedAssociatedDataContext = "otp-harbor/authorization-envelope/v2/desktop-unattended";
     public const string AndroidUnattendedAssociatedDataContext =
         "totp-manager/authorization-envelope/v2/android-keystore-unattended";
 
@@ -48,13 +53,13 @@ public static class PlatformQuickUnlockContract
             || IsSupportedMacOSWrapper(wrapper)
             || IsSupportedAndroidWrapper(wrapper)
             || IsSupportedAndroidDeviceCredentialWrapper(wrapper)
-            || IsSupportedAndroidUnattendedWrapper(wrapper);
+            || IsSupportedUnattendedWrapper(wrapper);
     }
 
     public static PreferredUnlockMethod? GetUnlockMethod(
         PlatformQuickUnlockWrapperV2? wrapper)
     {
-        if (!IsSupported(wrapper) || IsSupportedAndroidUnattendedWrapper(wrapper))
+        if (!IsSupported(wrapper) || IsSupportedUnattendedWrapper(wrapper))
             return null;
 
         return string.Equals(
@@ -139,4 +144,31 @@ public static class PlatformQuickUnlockContract
             StringComparison.Ordinal)
         && wrapper.WrappedKey.Nonce is { Length: AndroidAesGcmNonceSize }
         && wrapper.WrappedKey.Ciphertext is { Length: AndroidAesGcmCiphertextSize };
+
+    public static bool IsSupportedUnattendedWrapper(PlatformQuickUnlockWrapperV2? wrapper) =>
+        wrapper?.WrappedKey is not null
+        && (IsSupportedAndroidUnattendedWrapper(wrapper) || IsSupportedDesktopUnattendedWrapper(wrapper));
+
+    public static bool IsSupportedDesktopUnattendedWrapper(PlatformQuickUnlockWrapperV2? wrapper)
+    {
+        if (wrapper?.WrappedKey is null || wrapper.ProviderVersion != 1
+            || wrapper.AuthenticationPolicy != UserVerificationNotRequired
+            || !IsDesktopUnattendedReference(wrapper.KeyReference)) return false;
+        return wrapper.Provider switch
+        {
+            WindowsCngUnattendedProvider => wrapper.WrappedKey.Algorithm == RsaOaepSha256Algorithm
+                && wrapper.WrappedKey.Nonce is null
+                && wrapper.WrappedKey.Ciphertext is { Length: WindowsRsa2048CiphertextSize },
+            MacOSUnattendedProvider or LinuxUnattendedProvider =>
+                wrapper.WrappedKey.Algorithm == AesGcmWrappedKeyV2.AlgorithmIdentifier
+                && wrapper.WrappedKey.Nonce is { Length: 12 }
+                && wrapper.WrappedKey.Ciphertext is { Length: 48 },
+            _ => false
+        };
+    }
+
+    public static bool IsDesktopUnattendedReference(string? reference) =>
+        reference is not null && reference.StartsWith(DesktopUnattendedReferencePrefix, StringComparison.Ordinal)
+        && reference.Length == DesktopUnattendedReferencePrefix.Length + 32
+        && Guid.TryParseExact(reference[DesktopUnattendedReferencePrefix.Length..], "N", out _);
 }

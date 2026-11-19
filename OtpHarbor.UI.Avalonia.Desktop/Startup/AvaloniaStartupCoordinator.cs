@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using TOTP.Core.Enums;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
@@ -54,12 +53,6 @@ public sealed class AvaloniaStartupCoordinator(
                 return AvaloniaStartupOutcome.ReadyForPasswordSetup;
             }
 
-            if (authorizationService.State.PreferredUnlockMethod != PreferredUnlockMethod.PlatformQuickUnlock)
-            {
-                RecordCompleted(true);
-                return AvaloniaStartupOutcome.ReadyForUnlock;
-            }
-
             stageStarted = Stopwatch.GetTimestamp();
             var quickUnlock = await authorizationService.TryUnlockOnStartupAsync(cancellationToken);
             startupDiagnostics?.Record(
@@ -72,7 +65,10 @@ public sealed class AvaloniaStartupCoordinator(
             {
                 AuthorizationResult.Success when authorizationService.State.IsUnlocked =>
                     AvaloniaStartupOutcome.ReadyUnlocked,
-                AuthorizationResult.Cancelled => AvaloniaStartupOutcome.ReadyForQuickUnlock,
+                AuthorizationResult.PasswordRequired when authorizationService.State.ConfiguredGate == AuthorizationGateKind.Password =>
+                    AvaloniaStartupOutcome.ReadyForUnlock,
+                AuthorizationResult.Cancelled when authorizationService.State.ConfiguredGate is AuthorizationGateKind.Hello or AuthorizationGateKind.DeviceCredential =>
+                    AvaloniaStartupOutcome.ReadyForQuickUnlock,
                 _ => AvaloniaStartupOutcome.ReadyForPasswordFallback
             };
             RecordCompleted(true);

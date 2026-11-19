@@ -64,6 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\OtpHarbor.Camera.OpenCv\OtpHarbor.Camera.OpenCv.csproj" />
     <ProjectReference Include="..\OtpHarbor.Core\OtpHarbor.Core.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Localization\OtpHarbor.Localization.csproj" />
     <ProjectReference Include="..\OtpHarbor.DAL\OtpHarbor.DAL.csproj" />
     <ProjectReference Include="..\OtpHarbor.Infrastructure\OtpHarbor.Infrastructure.csproj" />
     <ProjectReference Include="..\OtpHarbor.UI.Avalonia.Shared\OtpHarbor.UI.Avalonia.Shared.csproj" />

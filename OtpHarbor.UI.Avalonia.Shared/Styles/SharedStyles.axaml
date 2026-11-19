@@ -1244,7 +1244,6 @@
                         automation:AutomationProperties.HelpText="{TemplateBinding HelpText}"
                         automation:AutomationProperties.IsRequiredForForm="{TemplateBinding IsRequired}"
                         automation:AutomationProperties.Name="{TemplateBinding AccessibleName}"
-                        Padding="12,6,48,6"
                         PasswordChar="●"
                         PlaceholderText="{TemplateBinding PlaceholderText}"
                         Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
@@ -1294,6 +1293,12 @@
                 </Grid>
             </ControlTemplate>
         </Setter>
+    </Style>
+    <Style Selector="controls|RevealableSecretInput /template/ TextBox#PART_Input">
+        <Setter Property="Padding" Value="12,6,48,6" />
+    </Style>
+    <Style Selector="controls|RevealableSecretInput /template/ TextBox#PART_Input:focus-visible">
+        <Setter Property="Padding" Value="11,5,47,5" />
     </Style>
     <Style Selector="controls|RevealableSecretInput:revealed /template/ controls|SymbolIcon#PART_RevealIcon">
         <Setter Property="Kind" Value="Conceal" />

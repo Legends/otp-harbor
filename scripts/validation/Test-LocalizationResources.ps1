@@ -3,16 +3,17 @@
 Validates completeness and format safety of every localized resource set.
 
 .DESCRIPTION
-Compares German, French, and Spanish desktop, mobile, and updater resources with their invariant catalogs; rejects missing, extra, empty, or duplicate entries and mismatched composite-format placeholders.
+Compares German, French, and Spanish common, desktop, mobile, and updater resources with their invariant catalogs; rejects missing, extra, empty, or duplicate entries and mismatched composite-format placeholders.
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $groups = [ordered]@{
-    Desktop = 'OtpHarbor.UI.Avalonia.Desktop/Localization/Strings'
-    Mobile = 'OtpHarbor.UI.Avalonia.Mobile/Localization/Strings'
-    Updater = 'OtpHarbor.Updater/Localization/UpdaterStrings'
+    Common = 'OtpHarbor.Localization/Resources/Common'
+    Desktop = 'OtpHarbor.Localization/Resources/Desktop'
+    Mobile = 'OtpHarbor.Localization/Resources/Mobile'
+    Updater = 'OtpHarbor.Localization/Resources/Updater'
 }
 $cultures = @('de', 'fr', 'es')
 
@@ -66,4 +67,24 @@ foreach ($group in $groups.GetEnumerator()) {
         }
     }
     Write-Output "$($group.Key) localization is complete for English, German, French, and Spanish ($($base.Count) keys)."
+}
+
+$commonMaps = @{}
+foreach ($suffix in @('') + $cultures) {
+    $extension = if ($suffix) { ".$suffix.resx" } else { '.resx' }
+    $commonMaps[$suffix] = Read-ResourceMap (Join-Path $repositoryRoot ($groups.Common + $extension))
+}
+foreach ($groupName in @('Desktop', 'Mobile', 'Updater')) {
+    $specificMaps = @{}
+    foreach ($suffix in @('') + $cultures) {
+        $extension = if ($suffix) { ".$suffix.resx" } else { '.resx' }
+        $specificMaps[$suffix] = Read-ResourceMap (Join-Path $repositoryRoot ($groups[$groupName] + $extension))
+    }
+    foreach ($key in $commonMaps[''].Keys) {
+        if (-not $specificMaps[''].ContainsKey($key)) { continue }
+        $different = @(@('') + $cultures | Where-Object { $specificMaps[$_][$key] -cne $commonMaps[$_][$key] })
+        if ($different.Count -eq 0) {
+            throw "$groupName duplicates the common translation '$key' in every locale. Remove the redundant entries."
+        }
+    }
 }

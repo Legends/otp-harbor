@@ -1,0 +1,401 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="AboutActionFailed" xml:space="preserve"><value>No se pudo abrir esta acción. Inténtalo de nuevo.</value></data>
+  <data name="AboutAppName" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="AboutAppVersion" xml:space="preserve"><value>Versión de la aplicación</value></data>
+  <data name="AboutLicense" xml:space="preserve"><value>Licencia</value></data>
+  <data name="AboutLicenseName" xml:space="preserve"><value>GPL-3.0-only</value></data>
+  <data name="AboutRepository" xml:space="preserve"><value>GitHub</value></data>
+  <data name="AboutShare" xml:space="preserve"><value>Compartir la aplicación</value></data>
+  <data name="AboutShareMessage" xml:space="preserve"><value>Prueba OTP Harbor: {0}</value></data>
+  <data name="AboutShareTitle" xml:space="preserve"><value>Compartir OTP Harbor</value></data>
+  <data name="AboutWebsite" xml:space="preserve"><value>Sitio web</value></data>
+  <data name="AccountDeleted" xml:space="preserve"><value>Cuenta eliminada.</value></data>
+  <data name="AccountSaved" xml:space="preserve"><value>Cuenta guardada.</value></data>
+  <data name="AccountSecretAuthorizationFailed" xml:space="preserve"><value>La autenticación falló. El secreto Base32 sigue protegido.</value></data>
+  <data name="AccountSecretAuthorizationPrompt" xml:space="preserve"><value>Autentícate una vez para ver o cambiar el secreto Base32 de esta cuenta.</value></data>
+  <data name="AccountSecretAuthorizationRequired" xml:space="preserve"><value>Autentícate antes de cambiar el secreto Base32 de esta cuenta.</value></data>
+  <data name="AddAccount" xml:space="preserve"><value>Añadir cuenta</value></data>
+  <data name="AddToFavorites" xml:space="preserve"><value>Añadir a favoritos</value></data>
+  <data name="AdvancedOptions" xml:space="preserve"><value>Opciones avanzadas</value></data>
+  <data name="AppTitle" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="Appearance" xml:space="preserve"><value>Apariencia</value></data>
+  <data name="AuthorizeAccountSecretEdit" xml:space="preserve"><value>Autenticarse para editar el secreto</value></data>
+  <data name="AutomaticBackupConfigured" xml:space="preserve"><value>Las copias automáticas están activadas y se creó la primera copia de recuperación.</value></data>
+  <data name="AutomaticBackupCreated" xml:space="preserve"><value>Copia automática creada.</value></data>
+  <data name="AutomaticBackupDescription" xml:space="preserve"><value>Guarda copias de recuperación cifradas cuando cambia la bóveda. No contienen datos de desbloqueo rápido específicos del dispositivo y requieren la contraseña maestra usada al crearlas.</value></data>
+  <data name="AutomaticBackupDestinationAccessible" xml:space="preserve"><value>Acceso a la carpeta de copias: disponible</value></data>
+  <data name="AutomaticBackupDestinationFormat" xml:space="preserve"><value>Destino: {0}</value></data>
+  <data name="AutomaticBackupDestinationUnavailable" xml:space="preserve"><value>La carpeta de copia configurada no está disponible. Vuelva a seleccionarla.</value></data>
+  <data name="AutomaticBackupDestinationUnavailableHealth" xml:space="preserve"><value>Acceso a la carpeta de copias: no disponible</value></data>
+  <data name="AutomaticBackupDestinationUnknown" xml:space="preserve"><value>Acceso a la carpeta de copias: aún no comprobado</value></data>
+  <data name="AutomaticBackupDisabled" xml:space="preserve"><value>Las copias automáticas están desactivadas. Los archivos existentes no se eliminaron.</value></data>
+  <data name="AutomaticBackupFailed" xml:space="preserve"><value>No se pudo crear la copia automática. Se conservaron las copias anteriores.</value></data>
+  <data name="AutomaticBackupFailureConfigurationFailed" xml:space="preserve"><value>No se pudo guardar el estado de la copia automática.</value></data>
+  <data name="AutomaticBackupFailureDestinationUnavailable" xml:space="preserve"><value>Ya no se puede acceder a la carpeta de copias seleccionada.</value></data>
+  <data name="AutomaticBackupFailureRecoveryPointMissing" xml:space="preserve"><value>Falta el archivo de recuperación más reciente. Reinténtalo para crear un nuevo punto de control.</value></data>
+  <data name="AutomaticBackupFailureUnexpected" xml:space="preserve"><value>La copia de seguridad falló inesperadamente.</value></data>
+  <data name="AutomaticBackupFailureVaultUnavailable" xml:space="preserve"><value>La bóveda cifrada no estaba disponible al intentar crear la copia.</value></data>
+  <data name="AutomaticBackupFailureWriteFailed" xml:space="preserve"><value>No se pudo escribir o verificar la copia cifrada.</value></data>
+  <data name="AutomaticBackupLastFailureFormat" xml:space="preserve"><value>Último error ({0}): {1}</value></data>
+  <data name="AutomaticBackupLastSuccessFormat" xml:space="preserve"><value>Última copia correcta: {0}</value></data>
+  <data name="AutomaticBackupNever" xml:space="preserve"><value>Todavía no se ha creado ninguna copia automática.</value></data>
+  <data name="AutomaticBackupNotConfigured" xml:space="preserve"><value>Las copias automáticas no están configuradas.</value></data>
+  <data name="AutomaticBackupNow" xml:space="preserve"><value>Crear copia ahora</value></data>
+  <data name="AutomaticBackupReady" xml:space="preserve"><value>Las copias automáticas están preparadas.</value></data>
+  <data name="AutomaticBackupRunning" xml:space="preserve"><value>Creando una copia automática…</value></data>
+  <data name="AutomaticBackupSetupCancelled" xml:space="preserve"><value>Se canceló la configuración de la copia automática.</value></data>
+  <data name="AutomaticBackupUpToDate" xml:space="preserve"><value>La copia automática está actualizada.</value></data>
+  <data name="AutomaticBackups" xml:space="preserve"><value>Copias de seguridad automáticas</value></data>
+  <data name="AutomaticBrandIcon" xml:space="preserve"><value>Asignación automática</value></data>
+  <data name="BrandIcon" xml:space="preserve"><value>Icono de la cuenta (paquete de iconos)</value></data>
+  <data name="BrandIconHelp" xml:space="preserve"><value>Elige un icono del paquete local importado o mantén la coincidencia automática. Esta preferencia visual local no se incluye en las copias de seguridad de la caja fuerte.</value></data>
+  <data name="BrandIconPackImportFailed" xml:space="preserve"><value>El paquete de iconos no es válido o no pudo instalarse de forma segura.</value></data>
+  <data name="BrandIconPackImported" xml:space="preserve"><value>Se importaron {0} iconos locales de {1} {2}.</value></data>
+  <data name="BrandIconPackReset" xml:space="preserve"><value>Se quitaron los iconos de marca importados.</value></data>
+  <data name="BrandIconPackResetFailed" xml:space="preserve"><value>No se pudieron quitar los iconos de marca importados.</value></data>
+  <data name="BrandIconPackStatus" xml:space="preserve"><value>{0} iconos locales instalados ({1} v{2}).</value></data>
+  <data name="BrandIconPacksStatus" xml:space="preserve"><value>{0} iconos locales disponibles en {1} paquetes instalados ({2}).</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="ChangeAutomaticBackupFolder" xml:space="preserve"><value>Cambiar carpeta de copias</value></data>
+  <data name="ChangeMasterPassword" xml:space="preserve"><value>Cambiar contraseña maestra</value></data>
+  <data name="ChooseCustomIcon" xml:space="preserve"><value>Elegir SVG o PNG personalizado…</value></data>
+  <data name="ClearPeriod" xml:space="preserve"><value>Borrar el período del código</value></data>
+  <data name="ClearSearch" xml:space="preserve"><value>Borrar búsqueda</value></data>
+  <data name="Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="CodeCopied" xml:space="preserve"><value>Copiado</value></data>
+  <data name="ConfigureAutomaticBackup" xml:space="preserve"><value>Elegir carpeta de copias</value></data>
+  <data name="CreateGroup" xml:space="preserve"><value>Crear grupo</value></data>
+  <data name="CustomAccountIcon" xml:space="preserve"><value>Imagen personalizada</value></data>
+  <data name="CustomIconFileName" xml:space="preserve"><value>Imagen personalizada: {0}</value></data>
+  <data name="CustomIconImportEmpty" xml:space="preserve"><value>El archivo de icono seleccionado está vacío.</value></data>
+  <data name="CustomIconImportFailed" xml:space="preserve"><value>El SVG o PNG no es válido o no se pudo almacenar de forma segura.</value></data>
+  <data name="CustomIconImportInvalidPng" xml:space="preserve"><value>El PNG debe ser una imagen válida, no animada, de 128 × 128.</value></data>
+  <data name="CustomIconImportMalformed" xml:space="preserve"><value>El SVG no es XML bien formado.</value></data>
+  <data name="CustomIconImportMissingPath" xml:space="preserve"><value>El SVG debe contener una raíz &lt;svg&gt; y al menos un elemento &lt;path&gt; con datos de trazado.</value></data>
+  <data name="CustomIconImportTooLarge" xml:space="preserve"><value>El archivo de icono no puede superar 1 MB.</value></data>
+  <data name="CustomIconImportUnreadable" xml:space="preserve"><value>El archivo de icono no se pudo leer o almacenar de forma segura.</value></data>
+  <data name="CustomIconImportUnsafe" xml:space="preserve"><value>El SVG contiene un script o una referencia a un recurso externo, lo cual no está permitido.</value></data>
+  <data name="CustomIconImportUnsupportedFormat" xml:space="preserve"><value>Elige un archivo SVG o PNG.</value></data>
+  <data name="CustomIconImported" xml:space="preserve"><value>El icono personalizado se aplicó a esta cuenta.</value></data>
+  <data name="CustomPeriodFormat" xml:space="preserve"><value>{0} s</value></data>
+  <data name="Delete" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="DeleteAnyway" xml:space="preserve"><value>Eliminar de todos modos</value></data>
+  <data name="DeleteGroup" xml:space="preserve"><value>Eliminar grupo</value></data>
+  <data name="DeleteWithoutBackupPrompt" xml:space="preserve"><value>OTP Harbor no pudo crear o verificar un punto de recuperación actualizado. Puedes cancelar y reintentar, o confirmar la eliminación de la cuenta sin una copia actual.</value></data>
+  <data name="DeleteWithoutBackupTitle" xml:space="preserve"><value>Falló el punto de control de la copia</value></data>
+  <data name="DiagnosticDeviceSummary" xml:space="preserve"><value>Dispositivo: {0}</value></data>
+  <data name="DiagnosticLandscape" xml:space="preserve"><value>Horizontal</value></data>
+  <data name="DiagnosticLogEmailBody" xml:space="preserve"><value>Describa qué ocurrió y los pasos que llevaron al problema. Revise el resumen del sistema y el registro de diagnóstico antes de enviarlos; adjunte manualmente el registro más reciente si aún no está adjunto.</value></data>
+  <data name="DiagnosticLogEmailFailed" xml:space="preserve"><value>No se pudo abrir el borrador del correo de diagnóstico.</value></data>
+  <data name="DiagnosticLogEmailSubject" xml:space="preserve"><value>Registro de diagnóstico de OTP Harbor</value></data>
+  <data name="DiagnosticLogUnavailable" xml:space="preserve"><value>Todavía no hay ningún registro de diagnóstico disponible.</value></data>
+  <data name="DiagnosticPortrait" xml:space="preserve"><value>Vertical</value></data>
+  <data name="DiagnosticSystemSummary" xml:space="preserve"><value>Información del sistema (recopilada al compartir)&#xA;Fecha: {0}&#xA;Versión de la aplicación: {1}&#xA;Compilación: {2}&#xA;Configuración: {3}&#xA;Distribución: {4}&#xA;Sistema operativo: {5}&#xA;Arquitectura (aplicación / sistema): {6}&#xA;Entorno de ejecución: {7}&#xA;Ventana (píxeles lógicos); escala de pantalla: {8}&#xA;Tema: {9}&#xA;Idioma: {10}&#xA;Nivel de registro: {11}&#xA;{12}</value></data>
+  <data name="DisableAutomaticBackup" xml:space="preserve"><value>Desactivar</value></data>
+  <data name="EditGroup" xml:space="preserve"><value>Editar grupo</value></data>
+  <data name="EmailDiagnosticLog" xml:space="preserve"><value>Enviar registro de diagnóstico por correo…</value></data>
+  <data name="EnglishLanguage" xml:space="preserve"><value>Inglés</value></data>
+  <data name="FaqAegisIconPackDocsLink" xml:space="preserve"><value>Aegis Icons — licencia y aviso de marcas</value></data>
+  <data name="FaqDashboardIconsLegalLink" xml:space="preserve"><value>Dashboard Icons — licencia y aviso legal</value></data>
+  <data name="FaqImportFormatsAegisDescription" xml:space="preserve"><value>Exporta la bóveda desde Aegis sin cifrado y selecciona el archivo JSON resultante. OTP Harbor lee las entradas TOTP de db.entries. Se rechazan las bóvedas cifradas, las entradas HOTP y los parámetros TOTP no compatibles.</value></data>
+  <data name="FaqImportFormatsAegisExample" xml:space="preserve"><value>{&#xA;  "version": 1,&#xA;  "db": {&#xA;    "version": 3,&#xA;    "entries": [{&#xA;      "type": "totp",&#xA;      "name": "alice@example.com",&#xA;      "issuer": "Example",&#xA;      "info": {&#xA;        "secret": "JBSWY3DPEHPK3PXP",&#xA;        "algo": "SHA1",&#xA;        "digits": 6,&#xA;        "period": 30&#xA;      }&#xA;    }]&#xA;  }&#xA;}</value></data>
+  <data name="FaqImportFormatsAegisTitle" xml:space="preserve"><value>Aegis JSON (.json)</value></data>
+  <data name="FaqImportFormatsIntro" xml:space="preserve"><value>Usa una exportación original sin cifrar de la aplicación de origen. Se rechazan las exportaciones cifradas de Aegis y 2FAS. Las siguientes estructuras mínimas muestran los campos obligatorios:</value></data>
+  <data name="FaqImportFormatsOtpAuthDescription" xml:space="preserve"><value>Crea un archivo de texto UTF-8 con una URI otpauth://totp estándar por línea. Se ignoran las líneas vacías y las que comienzan por #. Cada URI debe contener una etiqueta no vacía y un secreto Base32 válido, y usar parámetros TOTP compatibles de seis dígitos con SHA-1. Se recomienda un emisor; si falta, OTP Harbor usa la etiqueta como emisor.</value></data>
+  <data name="FaqImportFormatsOtpAuthExample" xml:space="preserve"><value>otpauth://totp/Example:alice%40example.com?secret=JBSWY3DPEHPK3PXP&amp;issuer=Example&amp;period=30</value></data>
+  <data name="FaqImportFormatsOtpAuthTitle" xml:space="preserve"><value>Archivo de texto otpauth (.txt)</value></data>
+  <data name="FaqImportFormatsQuestion" xml:space="preserve"><value>¿Cómo importo cuentas desde distintos formatos?</value></data>
+  <data name="FaqImportFormatsTwoFasDescription" xml:space="preserve"><value>Crea una copia de seguridad de 2FAS sin cifrar y selecciona el archivo .2fas. OTP Harbor lee las cuentas TOTP de services. Se rechazan las copias protegidas con contraseña o cifradas y los parámetros OTP no compatibles.</value></data>
+  <data name="FaqImportFormatsTwoFasExample" xml:space="preserve"><value>{&#xA;  "schemaVersion": 4,&#xA;  "services": [{&#xA;    "name": "Example",&#xA;    "secret": "JBSWY3DPEHPK3PXP",&#xA;    "otp": {&#xA;      "tokenType": "TOTP",&#xA;      "issuer": "Example",&#xA;      "account": "alice@example.com",&#xA;      "algorithm": "SHA1",&#xA;      "digits": 6,&#xA;      "period": 30&#xA;    }&#xA;  }],&#xA;  "servicesEncrypted": null,&#xA;  "reference": null&#xA;}</value></data>
+  <data name="FaqImportFormatsTwoFasTitle" xml:space="preserve"><value>Copia de 2FAS (.2fas)</value></data>
+  <data name="FaqImportIconPacksCustomIconTip" xml:space="preserve"><value>Para usar un icono SVG o PNG individual, edita la cuenta, abre Opciones avanzadas y selecciona la acción Elegir SVG o PNG personalizado… en Icono de la cuenta (paquete de iconos).</value></data>
+  <data name="FaqImportIconPacksDisclaimer" xml:space="preserve"><value>OTP Harbor y el generador no incluyen ni alojan colecciones de iconos de terceros ni paquetes generados, y ninguno concede derechos sobre iconos, nombres o marcas de terceros. La compatibilidad del formato no implica afiliación, patrocinio ni respaldo. Los recursos de terceros siguen sujetos a las licencias, normas de marcas y directrices de marca de cada titular de derechos. Tú eres responsable de determinar si se permite tu uso o distribución.</value></data>
+  <data name="FaqImportIconPacksDownloadLink" xml:space="preserve"><value>Versiones de GitHub</value></data>
+  <data name="FaqImportIconPacksQuestion" xml:space="preserve"><value>¿Cómo importo paquetes de iconos?</value></data>
+  <data name="FaqImportIconPacksSources" xml:space="preserve"><value>Información legal sobre iconos de terceros:</value></data>
+  <data name="FaqImportIconPacksStepBuild" xml:space="preserve"><value>Ejecuta el generador. Descarga sus fuentes de iconos probadas y crea otp-harbor-icons.otphicons.</value></data>
+  <data name="FaqImportIconPacksStepDownload" xml:space="preserve"><value>Descarga OTP Harbor Icon Pack Builder (solo para escritorio) desde GitHub.</value></data>
+  <data name="FaqImportIconPacksStepImport" xml:space="preserve"><value>En OTP Harbor Authenticator, selecciona Ajustes → Paquetes de iconos → Importar paquete de iconos de OTP Harbor y, a continuación, elige el archivo generado.</value></data>
+  <data name="FaqSimpleIconsOfficialLink" xml:space="preserve"><value>Simple Icons — aviso legal</value></data>
+  <data name="FavoriteAccount" xml:space="preserve"><value>Cuenta favorita</value></data>
+  <data name="FileImportAllFiles" xml:space="preserve"><value>Todos los archivos</value></data>
+  <data name="FileImportAmbiguousFormat" xml:space="preserve"><value>Este archivo coincide con varios formatos compatibles. Elija el formato que desea usar; no se ha importado ninguna cuenta.</value></data>
+  <data name="FileImportAttentionEntries" xml:space="preserve"><value>Entradas que requieren atención</value></data>
+  <data name="FileImportAutoDetection" xml:space="preserve"><value>OTP Harbor reconoce automáticamente los formatos de exportación compatibles.</value></data>
+  <data name="FileImportBackupPasswordHelp" xml:space="preserve"><value>Introduzca la contraseña usada para cifrar esta copia. Puede ser distinta de la del almacén actual.</value></data>
+  <data name="FileImportBackupPasswordTitle" xml:space="preserve"><value>Desbloquear copia de OTP Harbor</value></data>
+  <data name="FileImportBackupUnlockFailed" xml:space="preserve"><value>La contraseña es incorrecta o la copia no es válida o ha sido modificada.</value></data>
+  <data name="FileImportChooseFormat" xml:space="preserve"><value>Elegir formato detectado</value></data>
+  <data name="FileImportClearFile" xml:space="preserve"><value>Quitar archivo seleccionado</value></data>
+  <data name="FileImportDetectedFormat" xml:space="preserve"><value>Formato detectado: {0}</value></data>
+  <data name="FileImportFileTitle" xml:space="preserve"><value>Importar desde archivo</value></data>
+  <data name="FileImportFormatAegisJson" xml:space="preserve"><value>Aegis Authenticator · JSON sin cifrar</value></data>
+  <data name="FileImportFormatBitwardenCsv" xml:space="preserve"><value>Compatible con Bitwarden · CSV</value></data>
+  <data name="FileImportFormatBitwardenJson" xml:space="preserve"><value>Compatible con Bitwarden · JSON sin cifrar</value></data>
+  <data name="FileImportFormatEncryptedExternalExport" xml:space="preserve"><value>Archivo externo cifrado (no compatible)</value></data>
+  <data name="FileImportFormatEncryptedOtpHarborBackup" xml:space="preserve"><value>OTP Harbor · Copia cifrada</value></data>
+  <data name="FileImportFormatLastPassJson" xml:space="preserve"><value>Compatible con LastPass · JSON sin cifrar</value></data>
+  <data name="FileImportFormatOtpHarborCsv" xml:space="preserve"><value>OTP Harbor · CSV</value></data>
+  <data name="FileImportFormatOtpHarborJson" xml:space="preserve"><value>OTP Harbor · JSON</value></data>
+  <data name="FileImportFormatOtpHarborText" xml:space="preserve"><value>OTP Harbor · Texto</value></data>
+  <data name="FileImportFormatProtonJson" xml:space="preserve"><value>Proton Authenticator · JSON sin cifrar</value></data>
+  <data name="FileImportFormatQrCode" xml:space="preserve"><value>Código QR</value></data>
+  <data name="FileImportFormatTotpUriList" xml:space="preserve"><value>Lista estándar de URI TOTP</value></data>
+  <data name="FileImportFormatTwoFasJson" xml:space="preserve"><value>2FAS · JSON sin cifrar</value></data>
+  <data name="FileImportFormatUnknown" xml:space="preserve"><value>Formato de exportación no reconocido</value></data>
+  <data name="FileImportHelpDescription" xml:space="preserve"><value>Seleccione su autenticador para ver las instrucciones de exportación. Es opcional.</value></data>
+  <data name="FileImportHelpTitle" xml:space="preserve"><value>¿Necesita ayuda para exportar sus cuentas?</value></data>
+  <data name="FileImportNoActiveAccounts" xml:space="preserve"><value>La exportación no contiene cuentas TOTP activas. Se excluyen las entradas eliminadas y las que no contienen TOTP.</value></data>
+  <data name="FileImportOptionalSource" xml:space="preserve"><value>Elegir autenticador (opcional)</value></data>
+  <data name="FileImportReviewEntries" xml:space="preserve"><value>Revisar {0} entradas</value></data>
+  <data name="FileImportSnapshotPasswordHelp" xml:space="preserve"><value>Introduzca la contraseña maestra que estaba activa al crear esta copia automática.</value></data>
+  <data name="FileImportSupportedFormats" xml:space="preserve"><value>JSON · CSV · TXT · 2FAS · Copias OTP Harbor</value></data>
+  <data name="FileImportTotalEntries" xml:space="preserve"><value>Cuentas detectadas</value></data>
+  <data name="FileImportUnlockBackup" xml:space="preserve"><value>Desbloquear copia</value></data>
+  <data name="FileImportUseFormat" xml:space="preserve"><value>Usar formato seleccionado</value></data>
+  <data name="FileImportValidEntries" xml:space="preserve"><value>Cuentas TOTP válidas</value></data>
+  <data name="FilenameIndexedBrandIconPackStatus" xml:space="preserve"><value>{0} iconos locales instalados ({1}).</value></data>
+  <data name="FrenchLanguage" xml:space="preserve"><value>Francés</value></data>
+  <data name="GermanLanguage" xml:space="preserve"><value>Alemán</value></data>
+  <data name="GitHubReportFailed" xml:space="preserve"><value>No se pudo abrir el formulario de GitHub. Vuelva a intentarlo.</value></data>
+  <data name="GitHubReportNotice" xml:space="preserve"><value>Las incidencias de GitHub son públicas. La versión de la aplicación y el sistema operativo se rellenan automáticamente. Revise el formulario antes de enviarlo. No incluya datos de cuentas, secretos, códigos QR, copias de seguridad ni registros sin revisar. Informe de vulnerabilidades de seguridad en privado.</value></data>
+  <data name="GitHubReportOpened" xml:space="preserve"><value>Revise el formulario en su navegador y envíelo en GitHub.</value></data>
+  <data name="GroupAccountRequired" xml:space="preserve"><value>Selecciona al menos una cuenta.</value></data>
+  <data name="GroupAccounts" xml:space="preserve"><value>Cuentas</value></data>
+  <data name="GroupColor" xml:space="preserve"><value>Color</value></data>
+  <data name="GroupColorBlue" xml:space="preserve"><value>Azul</value></data>
+  <data name="GroupColorGreen" xml:space="preserve"><value>Verde</value></data>
+  <data name="GroupColorOrange" xml:space="preserve"><value>Naranja</value></data>
+  <data name="GroupColorPurple" xml:space="preserve"><value>Morado</value></data>
+  <data name="GroupColorRed" xml:space="preserve"><value>Rojo</value></data>
+  <data name="GroupColorTurquoise" xml:space="preserve"><value>Turquesa</value></data>
+  <data name="GroupDeleteFailed" xml:space="preserve"><value>No se pudo eliminar el grupo.</value></data>
+  <data name="GroupNameDuplicate" xml:space="preserve"><value>Ya existe un grupo con este nombre.</value></data>
+  <data name="GroupSaveFailed" xml:space="preserve"><value>No se pudo guardar el grupo.</value></data>
+  <data name="IconPackBuilderLink" xml:space="preserve"><value>OTP Harbor Icon Pack Builder — proyecto e instrucciones</value></data>
+  <data name="ImportExport" xml:space="preserve"><value>Importaciones</value></data>
+  <data name="ImportReviewAccount" xml:space="preserve"><value>Cuenta</value></data>
+  <data name="ImportReviewAccountNameDiffers" xml:space="preserve"><value>Nombres de cuenta diferentes</value></data>
+  <data name="ImportReviewAction" xml:space="preserve"><value>Acción final</value></data>
+  <data name="ImportReviewAdd" xml:space="preserve"><value>Importar como cuenta nueva</value></data>
+  <data name="ImportReviewAll" xml:space="preserve"><value>Todas las entradas</value></data>
+  <data name="ImportReviewApply" xml:space="preserve"><value>Elegir acción…</value></data>
+  <data name="ImportReviewBack" xml:space="preserve"><value>Atrás</value></data>
+  <data name="ImportReviewBackupChoicesHelp" xml:space="preserve"><value>Reemplazar usa los valores de la copia. Omitir conserva la cuenta actual.</value></data>
+  <data name="ImportReviewBreadcrumb" xml:space="preserve"><value>Ajustes  ›  Datos y copias  ›  Importar cuentas</value></data>
+  <data name="ImportReviewCancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="ImportReviewCategoryCount" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="ImportReviewChangeDescription" xml:space="preserve"><value>Una cuenta existente difiere de la cuenta importada. Compare los valores compatibles y elija una acción.</value></data>
+  <data name="ImportReviewChanges" xml:space="preserve"><value>Cambios: {0}</value></data>
+  <data name="ImportReviewChoicesHelp" xml:space="preserve"><value>Reemplazar usa los valores importados. Conservar ambas crea otra cuenta. Omitir mantiene la cuenta existente.</value></data>
+  <data name="ImportReviewChooseAction" xml:space="preserve"><value>Elegir una acción</value></data>
+  <data name="ImportReviewConflicts" xml:space="preserve"><value>Necesitan revisión</value></data>
+  <data name="ImportReviewDescription" xml:space="preserve"><value>Revise las cuentas antes de importar. Las decisiones siguen el orden del archivo; las entradas posteriores pueden actualizar la misma cuenta.</value></data>
+  <data name="ImportReviewDuplicateDescription" xml:space="preserve"><value>Esta cuenta ya existe con los mismos valores compatibles. Se omitirá.</value></data>
+  <data name="ImportReviewDuplicates" xml:space="preserve"><value>Duplicados</value></data>
+  <data name="ImportReviewEarlierDescription" xml:space="preserve"><value>Esta entrada tiene un conflicto con una entrada anterior del archivo. Las decisiones se aplican en el orden del archivo; un reemplazo posterior puede actualizar la misma cuenta.</value></data>
+  <data name="ImportReviewEarlierExport" xml:space="preserve"><value>Entrada anterior (en este archivo)</value></data>
+  <data name="ImportReviewExactDuplicate" xml:space="preserve"><value>Duplicado exacto</value></data>
+  <data name="ImportReviewExcluded" xml:space="preserve"><value>Excluidas: {0} entradas sin TOTP, {1} entradas TOTP no compatibles y {2} entradas no válidas. Los archivos TOTP no válidos o no compatibles no se pueden importar.</value></data>
+  <data name="ImportReviewExcludedNonOtp" xml:space="preserve"><value>Se excluyen {0} entradas sin TOTP.</value></data>
+  <data name="ImportReviewExcludedTrashed" xml:space="preserve"><value>Se excluyen {0} entradas marcadas como eliminadas.</value></data>
+  <data name="ImportReviewExisting" xml:space="preserve"><value>Existente (en la bóveda)</value></data>
+  <data name="ImportReviewFieldAccount" xml:space="preserve"><value>nombre de cuenta</value></data>
+  <data name="ImportReviewFieldAlgorithm" xml:space="preserve"><value>algoritmo</value></data>
+  <data name="ImportReviewFieldDigits" xml:space="preserve"><value>dígitos</value></data>
+  <data name="ImportReviewFieldFavorite" xml:space="preserve"><value>favorito</value></data>
+  <data name="ImportReviewFieldGroups" xml:space="preserve"><value>grupos</value></data>
+  <data name="ImportReviewFieldIssuer" xml:space="preserve"><value>emisor</value></data>
+  <data name="ImportReviewFieldPeriod" xml:space="preserve"><value>período</value></data>
+  <data name="ImportReviewFieldSecret" xml:space="preserve"><value>secreto</value></data>
+  <data name="ImportReviewFilter" xml:space="preserve"><value>Filtrar entradas</value></data>
+  <data name="ImportReviewIdentity" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="ImportReviewImportCount" xml:space="preserve"><value>Importar {0} cuentas</value></data>
+  <data name="ImportReviewImportNewMany" xml:space="preserve"><value>¿Importar {0} cuentas nuevas ahora?</value></data>
+  <data name="ImportReviewImportNewOne" xml:space="preserve"><value>¿Importar esta cuenta nueva ahora?</value></data>
+  <data name="ImportReviewIncoming" xml:space="preserve"><value>Importada (del archivo)</value></data>
+  <data name="ImportReviewInvalid" xml:space="preserve"><value>Inválidas</value></data>
+  <data name="ImportReviewIssue" xml:space="preserve"><value>Problema</value></data>
+  <data name="ImportReviewIssuerDiffers" xml:space="preserve"><value>Nombres de emisor diferentes</value></data>
+  <data name="ImportReviewKeepBoth" xml:space="preserve"><value>Conservar ambas</value></data>
+  <data name="ImportReviewLabelDiffers" xml:space="preserve"><value>Nombres de emisor y de cuenta diferentes</value></data>
+  <data name="ImportReviewNewAccount" xml:space="preserve"><value>Lista para importar</value></data>
+  <data name="ImportReviewNoExisting" xml:space="preserve"><value>Cuenta nueva</value></data>
+  <data name="ImportReviewNoResults" xml:space="preserve"><value>No hay cuentas coincidentes en esta categoría.</value></data>
+  <data name="ImportReviewOnlyDuplicates" xml:space="preserve"><value>La importación solo contiene duplicados. ¡No hay nada que importar!</value></data>
+  <data name="ImportReviewParameters" xml:space="preserve"><value>{0} · {1} dígitos · {2} s</value></data>
+  <data name="ImportReviewParametersDiffer" xml:space="preserve"><value>Parámetros de cuenta diferentes</value></data>
+  <data name="ImportReviewReady" xml:space="preserve"><value>Listas para importar</value></data>
+  <data name="ImportReviewReadyDescription" xml:space="preserve"><value>Cuenta nueva con parámetros TOTP compatibles.</value></data>
+  <data name="ImportReviewReplace" xml:space="preserve"><value>Reemplazar existente</value></data>
+  <data name="ImportReviewSearch" xml:space="preserve"><value>Buscar cuentas, emisores o problemas…</value></data>
+  <data name="ImportReviewSecretDescription" xml:space="preserve"><value>El emisor y la cuenta coinciden con una cuenta existente, pero el secreto es diferente. Elija una acción. Los secretos nunca se muestran.</value></data>
+  <data name="ImportReviewSecretDiffers" xml:space="preserve"><value>Secretos diferentes</value></data>
+  <data name="ImportReviewSelectedCount" xml:space="preserve"><value>Aplicar a la selección ({0})</value></data>
+  <data name="ImportReviewSkip" xml:space="preserve"><value>Omitir</value></data>
+  <data name="ImportReviewStepExport" xml:space="preserve"><value>Formato</value></data>
+  <data name="ImportReviewStepImport" xml:space="preserve"><value>Importar</value></data>
+  <data name="ImportReviewStepReview" xml:space="preserve"><value>Revisar</value></data>
+  <data name="ImportReviewStepSource" xml:space="preserve"><value>Archivo</value></data>
+  <data name="ImportReviewSteps" xml:space="preserve"><value>✓ Origen    →    ✓ Archivo    →    3 Revisar    →    4 Importar</value></data>
+  <data name="ImportReviewSummary" xml:space="preserve"><value>Resumen de importación</value></data>
+  <data name="ImportReviewTitle" xml:space="preserve"><value>Revisar conflictos</value></data>
+  <data name="ImportReviewTotal" xml:space="preserve"><value>Total de entradas</value></data>
+  <data name="ImportReviewUnresolved" xml:space="preserve"><value>Elija una acción para {0} conflictos sin resolver.</value></data>
+  <data name="ImportReviewUnsupported" xml:space="preserve"><value>Excluidas</value></data>
+  <data name="ImportSimpleIconsPack" xml:space="preserve"><value>Importar paquete de iconos de OTP Harbor…</value></data>
+  <data name="ImportingAccounts" xml:space="preserve"><value>Importando cuentas…</value></data>
+  <data name="InitialQuickUnlockDescription" xml:space="preserve"><value>Su contraseña maestra está configurada. Elija un método de autenticación disponible en el dispositivo para acceder más rápido. Conserve su contraseña maestra para la recuperación.</value></data>
+  <data name="InitialQuickUnlockTitle" xml:space="preserve"><value>¿Configurar el desbloqueo rápido?</value></data>
+  <data name="Issuer" xml:space="preserve"><value>Emisor</value></data>
+  <data name="IssuerPlaceholder" xml:space="preserve"><value>Microsoft, Outlook, GitHub, etc.</value></data>
+  <data name="Language" xml:space="preserve"><value>Idioma</value></data>
+  <data name="Lock" xml:space="preserve"><value>Bloquear</value></data>
+  <data name="LoggingLevel" xml:space="preserve"><value>Nivel mínimo de registro</value></data>
+  <data name="MigrationChooseFile" xml:space="preserve"><value>Elegir archivo de exportación</value></data>
+  <data name="MigrationChooseQr" xml:space="preserve"><value>Importar código QR</value></data>
+  <data name="MigrationChooseSource" xml:space="preserve"><value>1. Elige tu autenticador</value></data>
+  <data name="MigrationCurrentVault" xml:space="preserve"><value>Destino: la bóveda actual de OTP Harbor. Las cuentas existentes se combinan según tu revisión.</value></data>
+  <data name="MigrationDataAndBackup" xml:space="preserve"><value>Datos y copias de seguridad</value></data>
+  <data name="MigrationGuideAegis" xml:space="preserve"><value>Exporta la bóveda como JSON sin cifrar desde los ajustes de Aegis y selecciona ese archivo.</value></data>
+  <data name="MigrationGuideAuthy" xml:space="preserve"><value>Authy no permite exportar tokens. Añada o vuelva a configurar un autenticador estándar en cada servicio y escanee su nuevo código QR en OTP Harbor. Conserve los códigos y métodos de recuperación actuales hasta verificar los nuevos. Las aprobaciones propias de Authy no son cuentas TOTP portátiles.</value></data>
+  <data name="MigrationGuideBitwardenAuthenticator" xml:space="preserve"><value>Abre Bitwarden Authenticator → Ajustes → Exportar. Elige JSON o CSV. Los códigos sincronizados pueden requerir una exportación separada del gestor de contraseñas.</value></data>
+  <data name="MigrationGuideBitwardenVault" xml:space="preserve"><value>Exporta la bóveda de Bitwarden como JSON o CSV sin cifrar. Solo se importan entradas con TOTP; se excluyen contraseñas, notas y claves de acceso.</value></data>
+  <data name="MigrationGuideEnte" xml:space="preserve"><value>En Ente Auth, abre Ajustes → Datos → Exportar y elige una exportación sin cifrar si está disponible. Importa el archivo de texto con enlaces otpauth. No se admiten exportaciones cifradas de Ente.</value></data>
+  <data name="MigrationGuideGoogle" xml:space="preserve"><value>Abre Google Authenticator → Transferir cuentas/códigos → Exportar. Selecciona las cuentas e importa todos los códigos QR de transferencia.</value></data>
+  <data name="MigrationGuideKeePassXC" xml:space="preserve"><value>No hay un importador CSV específico de KeePassXC. Si tu aplicación ofrece códigos QR TOTP estándar o una lista de texto otpauth, elige Otro autenticador para importarlos.</value></data>
+  <data name="MigrationGuideLastPass" xml:space="preserve"><value>Exporte las cuentas de LastPass Authenticator a JSON. Seleccione la exportación sin cifrar en OTP Harbor; solo se importan los campos TOTP compatibles.</value></data>
+  <data name="MigrationGuideMicrosoft" xml:space="preserve"><value>No se pueden importar copias de Microsoft Authenticator aquí. En los ajustes de seguridad de cada servicio, registra OTP Harbor con un nuevo código QR TOTP estándar. Verifica un código antes de eliminar el método anterior. Las aprobaciones push y las claves de acceso no son exportaciones TOTP.</value></data>
+  <data name="MigrationGuideOnly" xml:space="preserve"><value>Esta fuente no dispone de importación directa de archivos aquí. Sigue la guía sin seleccionar una copia incompatible.</value></data>
+  <data name="MigrationGuideOther" xml:space="preserve"><value>Importe códigos QR TOTP estándar, una URI otpauth por línea, exportaciones JSON/CSV/texto de OTP Harbor o copias cifradas de OTP Harbor.</value></data>
+  <data name="MigrationGuideProton" xml:space="preserve"><value>Exporta los códigos de Proton Authenticator sin contraseña y selecciona el archivo JSON. Solo se admiten entradas TOTP estándar.</value></data>
+  <data name="MigrationGuideTwoFas" xml:space="preserve"><value>Abre 2FAS → Ajustes → 2FAS Backup → Exportar. Guarda un archivo .2fas sin cifrar.</value></data>
+  <data name="MigrationImportDescription" xml:space="preserve"><value>Transfiere tus códigos de verificación a OTP Harbor.</value></data>
+  <data name="MigrationImportTitle" xml:space="preserve"><value>Importar cuentas</value></data>
+  <data name="MigrationInputDuplicates" xml:space="preserve"><value>Duplicados en esta exportación: {0}</value></data>
+  <data name="MigrationInstructionsTitle" xml:space="preserve"><value>Instrucciones de exportación</value></data>
+  <data name="MigrationLocalProcessing" xml:space="preserve"><value>Las importaciones se procesan localmente. Las cuentas existentes no se modifican hasta que confirme la importación.</value></data>
+  <data name="MigrationPlaintextOnly" xml:space="preserve"><value>Solo exportaciones sin cifrar. No se admiten copias de otros proveedores protegidas con contraseña. Mantén el archivo privado.</value></data>
+  <data name="MigrationQrOnly" xml:space="preserve"><value>Importa los códigos QR de transferencia en orden e incluye todas las partes de una exportación múltiple.</value></data>
+  <data name="MigrationRestoreSeparate" xml:space="preserve"><value>Seleccione esta copia de OTP Harbor en Importar cuentas e introduzca su contraseña.</value></data>
+  <data name="MigrationReviewBlocked" xml:space="preserve"><value>Importación bloqueada. Compatibles: {0}; no válidas: {1}; no admitidas: {2}; entradas sin TOTP: {3}. No se ha importado ninguna cuenta.</value></data>
+  <data name="MigrationReviewEntry" xml:space="preserve"><value>{0} · {1} — {2}, {3} dígitos, {4} segundos</value></data>
+  <data name="MigrationReviewNext" xml:space="preserve"><value>3. Revisa las cuentas y los duplicados antes de importar. No se cambia nada hasta que confirmes.</value></data>
+  <data name="MigrationReviewSummary" xml:space="preserve"><value>Compatibles: {0} · Cuentas existentes: {1} · No admitidas: {2} · No válidas: {3} · Entradas sin TOTP: {4} · Cuentas nuevas: {5}</value></data>
+  <data name="MigrationSelectExport" xml:space="preserve"><value>2. Selecciona tu exportación o código QR</value></data>
+  <data name="MigrationSourceAegis" xml:space="preserve"><value>Aegis Authenticator</value></data>
+  <data name="MigrationSourceAuthy" xml:space="preserve"><value>Authy</value></data>
+  <data name="MigrationSourceBitwardenAuthenticator" xml:space="preserve"><value>Bitwarden Authenticator</value></data>
+  <data name="MigrationSourceBitwardenVault" xml:space="preserve"><value>Bitwarden Password Manager</value></data>
+  <data name="MigrationSourceEnte" xml:space="preserve"><value>Ente Auth</value></data>
+  <data name="MigrationSourceGoogle" xml:space="preserve"><value>Google Authenticator</value></data>
+  <data name="MigrationSourceKeePassXC" xml:space="preserve"><value>KeePassXC</value></data>
+  <data name="MigrationSourceLastPass" xml:space="preserve"><value>LastPass Authenticator</value></data>
+  <data name="MigrationSourceMicrosoft" xml:space="preserve"><value>Microsoft Authenticator</value></data>
+  <data name="MigrationSourceOther" xml:space="preserve"><value>Otro autenticador / avanzado</value></data>
+  <data name="MigrationSourceProton" xml:space="preserve"><value>Proton Authenticator</value></data>
+  <data name="MigrationSourceTwoFas" xml:space="preserve"><value>2FAS Authenticator</value></data>
+  <data name="Miscellaneous" xml:space="preserve"><value>Soporte y diagnóstico</value></data>
+  <data name="NewPassword" xml:space="preserve"><value>Nueva contraseña maestra</value></data>
+  <data name="NoBrandIconPackInstalled" xml:space="preserve"><value>No hay ningún paquete de iconos instalado</value></data>
+  <data name="NoBrandIconPackSelected" xml:space="preserve"><value>No se seleccionó ningún paquete de iconos.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="OnboardingAddAccountsDescription" xml:space="preserve"><value>Escanea un código QR, importa una imagen QR guardada o introduce manualmente los datos de la cuenta.</value></data>
+  <data name="OnboardingAddAccountsTitle" xml:space="preserve"><value>Añadir cuentas</value></data>
+  <data name="OnboardingBack" xml:space="preserve"><value>Atrás</value></data>
+  <data name="OnboardingFinish" xml:space="preserve"><value>Configurar OTP Harbor</value></data>
+  <data name="OnboardingIconPackDescription" xml:space="preserve"><value>Añade iconos de cuenta importando un paquete local creado con OTP Harbor Icon Pack Builder (disponible en GitHub). Los recursos de terceros siguen sujetos a sus propias licencias, derechos de marca y condiciones de uso; eres responsable de utilizarlos correctamente.</value></data>
+  <data name="OnboardingIconPackTitle" xml:space="preserve"><value>Personalizar con iconos de cuenta</value></data>
+  <data name="OnboardingMoveAccountsDescription" xml:space="preserve"><value>Importa códigos de transferencia de Google Authenticator y otros formatos compatibles, o transfiere todas las cuentas con una copia de seguridad cifrada de OTP Harbor.</value></data>
+  <data name="OnboardingMoveAccountsTitle" xml:space="preserve"><value>Transferir cuentas de forma segura</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Siguiente</value></data>
+  <data name="OnboardingOrganizeAccountsDescription" xml:space="preserve"><value>Encuentra tus cuentas fácilmente agrupando las entradas relacionadas y marcando como favoritas las que más utilizas.</value></data>
+  <data name="OnboardingOrganizeAccountsTitle" xml:space="preserve"><value>Organizar con grupos y favoritos</value></data>
+  <data name="OnboardingQuickUnlockDescription" xml:space="preserve"><value>Usa el desbloqueo biométrico de la plataforma cuando esté disponible. Tu contraseña maestra seguirá siendo el método de recuperación.</value></data>
+  <data name="OnboardingQuickUnlockTitle" xml:space="preserve"><value>Configurar desbloqueo rápido</value></data>
+  <data name="OnboardingSkip" xml:space="preserve"><value>Omitir introducción</value></data>
+  <data name="QrConflictTitle" xml:space="preserve"><value>La cuenta ya existe</value></data>
+  <data name="RemoveFromFavorites" xml:space="preserve"><value>Quitar de favoritos</value></data>
+  <data name="RemovingBrandIcons" xml:space="preserve"><value>Eliminando iconos locales…</value></data>
+  <data name="ReportOnGitHub" xml:space="preserve"><value>Abrir una incidencia en GitHub</value></data>
+  <data name="ReportProblemTitle" xml:space="preserve"><value>Informar de un problema con OTP Harbor</value></data>
+  <data name="ResetBrandIcons" xml:space="preserve"><value>Quitar iconos importados</value></data>
+  <data name="RestoreSection" xml:space="preserve"><value>Restauración</value></data>
+  <data name="Retry" xml:space="preserve"><value>Reintentar</value></data>
+  <data name="RetryAutomaticBackup" xml:space="preserve"><value>Reintentar copia</value></data>
+  <data name="Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="SearchBrandIcons" xml:space="preserve"><value>Buscar en el paquete de iconos</value></data>
+  <data name="SearchResultsFormat" xml:space="preserve"><value>Mostrando {0} de {1} cuentas</value></data>
+  <data name="Secret" xml:space="preserve"><value>Secreto Base32</value></data>
+  <data name="Security" xml:space="preserve"><value>Seguridad</value></data>
+  <data name="ShowIssuerLogo" xml:space="preserve"><value>Mostrar el logotipo del emisor</value></data>
+  <data name="ShowNextToken" xml:space="preserve"><value>Mostrar el siguiente código</value></data>
+  <data name="ShowNextTokenHelp" xml:space="preserve"><value>Muestra el próximo código debajo del actual durante sus últimos cinco segundos.</value></data>
+  <data name="SpanishLanguage" xml:space="preserve"><value>Español</value></data>
+  <data name="StorageLocationAppearance" xml:space="preserve"><value>Preferencias de apariencia</value></data>
+  <data name="StorageLocationAutomaticBackupConfiguration" xml:space="preserve"><value>Configuración de copias de seguridad automáticas</value></data>
+  <data name="StorageLocationAutomaticBackupDestination" xml:space="preserve"><value>Destino de copias de seguridad automáticas</value></data>
+  <data name="StorageLocationBackupDirectory" xml:space="preserve"><value>Directorio de copias de seguridad locales</value></data>
+  <data name="StorageLocationCache" xml:space="preserve"><value>Caché de la aplicación</value></data>
+  <data name="StorageLocationConfiguration" xml:space="preserve"><value>Ruta de configuración de la aplicación</value></data>
+  <data name="StorageLocationDataDirectory" xml:space="preserve"><value>Directorio de datos de la aplicación</value></data>
+  <data name="StorageLocationIcons" xml:space="preserve"><value>Almacenamiento de iconos</value></data>
+  <data name="StorageLocationInstallation" xml:space="preserve"><value>Directorio del programa</value></data>
+  <data name="StorageLocationLogDirectory" xml:space="preserve"><value>Directorio de registros</value></data>
+  <data name="StorageLocationLogFile" xml:space="preserve"><value>Archivo de registro</value></data>
+  <data name="StorageLocationPreferences" xml:space="preserve"><value>Preferencias</value></data>
+  <data name="StorageLocationUnlockMetadata" xml:space="preserve"><value>Metadatos de desbloqueo</value></data>
+  <data name="StorageLocationUpdateDownloads" xml:space="preserve"><value>Descargas de actualizaciones</value></data>
+  <data name="StorageLocationUpdateState" xml:space="preserve"><value>Metadatos de actualizaciones</value></data>
+  <data name="StorageLocationVault" xml:space="preserve"><value>Bóveda (cuentas y perfil)</value></data>
+  <data name="StorageLocationsCopyFailed" xml:space="preserve"><value>No se pudo copiar la ruta al portapapeles.</value></data>
+  <data name="StorageLocationsCopyLabelFormat" xml:space="preserve"><value>Copiar la ruta de {0}</value></data>
+  <data name="StorageLocationsCopyPath" xml:space="preserve"><value>Copiar ruta</value></data>
+  <data name="StorageLocationsCopySucceeded" xml:space="preserve"><value>Se copió la ruta.</value></data>
+  <data name="StorageLocationsFolderOpenFailed" xml:space="preserve"><value>No se pudo abrir la carpeta. Compruebe que existe y que tiene acceso.</value></data>
+  <data name="StorageLocationsFolderOpened" xml:space="preserve"><value>Se abrió la carpeta.</value></data>
+  <data name="StorageLocationsInfo" xml:space="preserve"><value>Información</value></data>
+  <data name="StorageLocationsInfoDescription" xml:space="preserve"><value>Ver el directorio de datos de la aplicación.</value></data>
+  <data name="StorageLocationsOpenFolder" xml:space="preserve"><value>Abrir carpeta</value></data>
+  <data name="StorageLocationsOpenLabelFormat" xml:space="preserve"><value>Abrir la carpeta de {0}</value></data>
+  <data name="Theme" xml:space="preserve"><value>Tema</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Oscuro</value></data>
+  <data name="ThemeFollowSystem" xml:space="preserve"><value>Usar configuración del sistema</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Claro</value></data>
+  <data name="TotpAlgorithm" xml:space="preserve"><value>Algoritmo</value></data>
+  <data name="TotpConfigurationInvalid" xml:space="preserve"><value>Selecciona SHA-1, SHA-256 o SHA-512 y un código de 6 u 8 dígitos.</value></data>
+  <data name="TotpDigits" xml:space="preserve"><value>Dígitos</value></data>
+  <data name="TotpPeriod" xml:space="preserve"><value>Período del código en segundos</value></data>
+  <data name="TotpPeriodHelp" xml:space="preserve"><value>Mantén 30 segundos salvo que el proveedor requiera explícitamente otro período. Los períodos más largos mantienen cada código válido durante más tiempo.</value></data>
+  <data name="TotpPeriodInvalid" xml:space="preserve"><value>Introduce un período entre 5 y 3600 segundos.</value></data>
+  <data name="TotpSha1" xml:space="preserve"><value>SHA-1 (predeterminado)</value></data>
+  <data name="TotpSha256" xml:space="preserve"><value>SHA-256</value></data>
+  <data name="TotpSha512" xml:space="preserve"><value>SHA-512</value></data>
+  <data name="Unlock" xml:space="preserve"><value>Desbloquear</value></data>
+  <data name="FaqMasterPasswordRecoveryQuestion" xml:space="preserve"><value>¿Por qué debo conservar mi contraseña maestra?</value></data>
+  <data name="FaqMasterPasswordRecoveryAnswer" xml:space="preserve"><value>Tu contraseña maestra protege tu caja fuerte y sigue siendo tu método de recuperación en todos los sistemas compatibles, incluso cuando usas la autenticación del dispositivo. Guárdala en un lugar seguro; OTP Harbor no puede restablecerla.</value></data>
+  <data name="FaqOlderVaultsQuestion" xml:space="preserve"><value>¿Puedo importar una caja fuerte de una versión anterior de OTP Harbor?</value></data>
+  <data name="FaqOlderVaultsAnswer" xml:space="preserve"><value>Sí, si tienes una exportación o una copia de seguridad en un formato compatible. En Ajustes → Datos y copias de seguridad → Importar cuentas, selecciona el archivo de la versión anterior. OTP Harbor admite sus exportaciones de cuentas, las copias .totp y .otphbp protegidas con contraseña y las copias automáticas .otphbackup. Para una copia cifrada, introduce la contraseña usada al crearla. Conserva los archivos originales hasta comprobar las cuentas importadas. Si el archivo no es compatible, ábrelo primero en la aplicación anterior y exporta las cuentas en un formato compatible.</value></data>
+  <data name="AppLockTitle" xml:space="preserve"><value>Bloqueo de la aplicación</value></data>
+  <data name="AppLockDisabledDescription" xml:space="preserve"><value>La autenticación está desactivada. Cualquiera que use este dispositivo desbloqueado puede ver tus códigos.</value></data>
+  <data name="DisableAppLock" xml:space="preserve"><value>Desactivar bloqueo</value></data>
+  <data name="EnableAppLock" xml:space="preserve"><value>Activar bloqueo</value></data>
+  <data name="DisableAppLockWarning" xml:space="preserve"><value>Desactivar el bloqueo permite abrir OTP Harbor sin verificar al usuario. Su contraseña maestra sigue siendo el método de recuperación. Confirme su identidad para continuar.</value></data>
+  <data name="EnableAppLockPasswordPrompt" xml:space="preserve"><value>Confirme su identidad para activar el bloqueo de la aplicación.</value></data>
+  <data name="AppLockChangeFailed" xml:space="preserve"><value>No se pudo cambiar el bloqueo de forma segura.</value></data>
+  <data name="AppLockDisabled" xml:space="preserve"><value>Bloqueo desactivado. Cualquiera que use este dispositivo desbloqueado puede ver los códigos.</value></data>
+  <data name="AppLockEnabled" xml:space="preserve"><value>Bloqueo de la aplicación activado.</value></data>
+</root>

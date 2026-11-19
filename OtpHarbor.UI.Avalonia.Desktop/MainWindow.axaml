@@ -89,7 +89,7 @@
     <Grid RowDefinitions="Auto,*">
         <controls:ProductTitleBar
             LockCommand="{Binding LockCommand}"
-            ShowLockButton="{Binding IsShellVisible}"
+            ShowLockButton="{Binding IsManualLockVisible}"
             ShowMinimizeButton="True"
             Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
         <Grid Grid.Row="1">
@@ -775,6 +775,22 @@
                                                             Classes="primary wide"
                                                             Command="{Binding BeginAddCommand}"
                                                             Content="{DynamicResource AddAccount}" />
+                                                        <Button
+                                                            x:Name="ScanFirstAccountButton"
+                                                            automation:AutomationProperties.Name="{DynamicResource ImportQrCode}"
+                                                            Classes="secondary wide"
+                                                            HorizontalContentAlignment="Center"
+                                                            VerticalContentAlignment="Center"
+                                                            Command="{Binding $parent[Window].((presentation:MainWindowViewModel)DataContext).ScanQrCommand}"
+                                                            Content="{DynamicResource ImportQrCode}" />
+                                                        <Button
+                                                            x:Name="ImportFirstAccountButton"
+                                                            automation:AutomationProperties.Name="{DynamicResource ImportAccounts}"
+                                                            Classes="secondary wide"
+                                                            HorizontalContentAlignment="Center"
+                                                            VerticalContentAlignment="Center"
+                                                            Command="{Binding $parent[Window].((presentation:MainWindowViewModel)DataContext).NativeFilePicker.ImportCommand}"
+                                                            Content="{DynamicResource ImportAccounts}" />
                                                     </StackPanel>
                                                 </Border>
                                                 <TextBlock

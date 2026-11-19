@@ -4,13 +4,14 @@ using System.Windows.Input;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Platform;
 using TOTP.Avalonia.Desktop.Presentation.Dialogs;
+using TOTP.Core.Enums;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
-public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
+public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IAuthorizationService _authorization;
     private readonly IAvaloniaDialogService _dialogs;
@@ -27,13 +28,17 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
     private string? _messageKey;
     private string _newPassword = string.Empty;
     private string _confirmPassword = string.Empty;
+    private CancellationTokenSource? _unlockMethodChangeLifetime;
+    private bool _disposed;
 
     public AuthorizationSettingsViewModel(
         IAuthorizationService authorization,
         IAvaloniaDialogService dialogs,
         IAvaloniaLocalizationService localization,
         IPasswordValidationService passwordValidation,
-        TimeSpan? transientMessageDuration = null)
+        TimeSpan? transientMessageDuration = null,
+        ISettingsService? settingsService = null,
+        IPlatformUnattendedUnlock? unattendedUnlock = null)
     {
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
@@ -41,14 +46,18 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         Notification = new NotificationState(transientMessageDuration);
         _localization.CultureChanged += LocalizationCultureChanged;
         _passwordValidation = passwordValidation ?? throw new ArgumentNullException(nameof(passwordValidation));
-        _refreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
+        _refreshCommand = new AsyncCommand(RefreshAsync, () => !_disposed && !IsBusy);
         _enableQuickUnlockCommand = new AsyncCommand(
             EnableQuickUnlockAsync,
-            () => !IsBusy && IsQuickUnlockAvailable);
+            () => CanChangeUnlockMethod && IsQuickUnlockAvailable);
         _usePasswordCommand = new AsyncCommand(
             UsePasswordAsync,
-            () => !IsBusy);
-        _changePasswordCommand = new AsyncCommand(ChangePasswordAsync, () => !IsBusy);
+            () => CanChangeUnlockMethod);
+        _changePasswordCommand = new AsyncCommand(ChangePasswordAsync, () => !_disposed && !IsBusy);
+        _settingsService = settingsService;
+        _unattendedUnlock = unattendedUnlock;
+        _toggleAppLockCommand = new AsyncCommand(ToggleAppLockAsync, () =>
+            CanToggleAppLock && (!IsAppLockEnabled || IsUnattendedUnlockAvailable));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -121,13 +130,16 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
 
     public async Task RefreshAsync()
     {
-        if (IsBusy) return;
+        if (_disposed || IsBusy) return;
         IsBusy = true;
         ShowQuickUnlockRetry = false;
         try
         {
+            await RefreshAppLockAvailabilityAsync();
             IsQuickUnlockEnabled = IsQuickUnlockPreferred();
-            IsQuickUnlockAvailable = await _authorization.IsHelloAvailableAsync();
+            var available = await _authorization.IsHelloAvailableAsync();
+            if (_disposed) return;
+            IsQuickUnlockAvailable = available;
             _messageKey = null;
             Notification.Clear();
         }
@@ -140,32 +152,27 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         finally
         {
             IsBusy = false;
+            NotifyAppLockState();
         }
     }
 
     public async Task EnableQuickUnlockAsync()
     {
-        if (IsBusy || !IsQuickUnlockAvailable || IsQuickUnlockEnabled) return;
+        if (!CanChangeUnlockMethod || !IsQuickUnlockAvailable || IsQuickUnlockEnabled) return;
         IsBusy = true;
-        string? recoveryPassword = null;
         try
         {
-            var selected = await _authorization.SetGateAsync(AuthorizationGateKind.Hello);
-            if (selected == AuthorizationResult.PasswordRequired)
+            var selected = await ChangePreferredUnlockMethodAsync(PreferredUnlockMethod.PlatformQuickUnlock);
+            if (selected is null || _disposed || !_authorization.State.IsUnlocked) return;
+            if (selected == AuthorizationResult.Cancelled)
             {
-                recoveryPassword = await _dialogs.PromptForPasswordAsync(CreateRecoveryPasswordRequest());
-                if (recoveryPassword is null)
-                {
-                    SetMessage(AvaloniaStringKeys.QuickUnlockEnrollmentCancelled, NotificationSeverity.Information);
-                    return;
-                }
-
-                selected = await _authorization.ConfigureHelloAsync(recoveryPassword);
+                SetMessage(AvaloniaStringKeys.QuickUnlockEnrollmentCancelled, NotificationSeverity.Information);
+                return;
             }
 
             if (selected == AuthorizationResult.Success)
             {
-                IsQuickUnlockEnabled = true;
+                IsQuickUnlockEnabled = IsQuickUnlockPreferred();
                 SetMessage(AvaloniaStringKeys.QuickUnlockEnabled, NotificationSeverity.Success);
                 return;
             }
@@ -182,7 +189,6 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         }
         finally
         {
-            recoveryPassword = null;
             IsBusy = false;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsQuickUnlockEnabled)));
         }
@@ -190,22 +196,21 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
 
     public async Task UsePasswordAsync()
     {
-        if (IsBusy || !IsQuickUnlockEnabled) return;
+        if (!CanChangeUnlockMethod || !IsQuickUnlockEnabled) return;
         IsBusy = true;
-        string? verifiedPassword = null;
         try
         {
-            verifiedPassword = await _dialogs.PromptForPasswordAsync(CreateVerificationRequest());
-            if (verifiedPassword is null)
+            var selected = await ChangePreferredUnlockMethodAsync(PreferredUnlockMethod.Password);
+            if (selected is null || _disposed || !_authorization.State.IsUnlocked) return;
+            if (selected == AuthorizationResult.Cancelled)
             {
                 SetMessage(AvaloniaStringKeys.PasswordPreferenceUnchanged, NotificationSeverity.Information);
                 return;
             }
 
-            var selected = await _authorization.SetGateAsync(AuthorizationGateKind.Password);
             if (selected == AuthorizationResult.Success)
             {
-                IsQuickUnlockEnabled = false;
+                IsQuickUnlockEnabled = IsQuickUnlockPreferred();
                 SetMessage(AvaloniaStringKeys.PasswordPreferred, NotificationSeverity.Success);
                 return;
             }
@@ -218,7 +223,6 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         }
         finally
         {
-            verifiedPassword = null;
             IsBusy = false;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsQuickUnlockEnabled)));
         }
@@ -226,7 +230,7 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
 
     public async Task ChangePasswordAsync()
     {
-        if (IsBusy) return;
+        if (_disposed || IsBusy) return;
 
         var newPassword = NewPassword;
         var confirmation = ConfirmPassword;
@@ -290,8 +294,67 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
 
     public void ClearSensitiveInputs()
     {
+        _unlockMethodChangeLifetime?.Cancel();
         NewPassword = string.Empty;
         ConfirmPassword = string.Empty;
+    }
+
+    private bool CanChangeUnlockMethod => !_disposed && !IsBusy && _authorization.State.IsUnlocked && IsAppLockEnabled;
+
+    private async Task<AuthorizationResult?> ChangePreferredUnlockMethodAsync(PreferredUnlockMethod requested)
+    {
+        using var operation = new CancellationTokenSource();
+        _unlockMethodChangeLifetime = operation;
+        var state = _authorization.State;
+        state.Changed += AuthorizationStateChanged;
+        string? password = null;
+        try
+        {
+            var current = _authorization.State.PreferredUnlockMethod;
+            if (current is PreferredUnlockMethod.PlatformQuickUnlock or PreferredUnlockMethod.PlatformDeviceCredential)
+            {
+                var result = await _authorization.ConfigureUnlockMethodWithPlatformAsync(requested, current, operation.Token);
+                operation.Token.ThrowIfCancellationRequested();
+                if (_disposed || !_authorization.State.IsUnlocked) return AuthorizationResult.Cancelled;
+                if (result is not (AuthorizationResult.PasswordRequired or AuthorizationResult.NotAvailable
+                    or AuthorizationResult.DisabledByPolicy)) return result;
+            }
+
+            password = await _dialogs.PromptForPasswordAsync(requested == PreferredUnlockMethod.Password
+                ? CreateVerificationRequest() : CreateRecoveryPasswordRequest(), operation.Token);
+            operation.Token.ThrowIfCancellationRequested();
+            if (password is null || _disposed || !_authorization.State.IsUnlocked) return AuthorizationResult.Cancelled;
+            var changed = requested == PreferredUnlockMethod.PlatformQuickUnlock
+                ? await _authorization.ConfigureHelloAsync(password)
+                : await _authorization.ConfigureUnlockMethodAsync(requested, password);
+            operation.Token.ThrowIfCancellationRequested();
+            return changed;
+        }
+        catch (Exception) when (operation.IsCancellationRequested)
+        {
+            return null;
+        }
+        finally
+        {
+            password = null;
+            state.Changed -= AuthorizationStateChanged;
+            _unlockMethodChangeLifetime = null;
+        }
+    }
+
+    private void AuthorizationStateChanged(object? sender, EventArgs args)
+    {
+        if (!_authorization.State.IsUnlocked) _unlockMethodChangeLifetime?.Cancel();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _unlockMethodChangeLifetime?.Cancel();
+        _localization.CultureChanged -= LocalizationCultureChanged;
+        ClearSensitiveInputs();
+        Notification.Dispose();
     }
 
     private PasswordDialogRequest CreateRecoveryPasswordRequest() => new(
@@ -309,10 +372,14 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         _localization.GetString(AvaloniaStringKeys.Cancel),
         _localization.GetString(AvaloniaStringKeys.PasswordRequired),
         _localization.GetString(AvaloniaStringKeys.PasswordVerificationFailed),
-        async (candidate, _) =>
-            await _authorization.TryUnlockWithPasswordAsync(candidate) == AuthorizationResult.Success
-                ? null
-                : _localization.GetString(AvaloniaStringKeys.PasswordVerificationFailed));
+        async (candidate, cancellationToken) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await _authorization.TryUnlockWithPasswordAsync(candidate);
+            cancellationToken.ThrowIfCancellationRequested();
+            return result == AuthorizationResult.Success ? null
+                : _localization.GetString(AvaloniaStringKeys.PasswordVerificationFailed);
+        });
 
     private PasswordDialogRequest CreateCurrentPasswordRequest() => new(
         _localization.GetString(AvaloniaStringKeys.ChangeMasterPassword),
@@ -323,16 +390,20 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         _localization.GetString(AvaloniaStringKeys.PasswordVerificationFailed));
 
     private bool IsQuickUnlockPreferred() =>
-        _authorization.State.ConfiguredGate == AuthorizationGateKind.Hello;
+        (IsAppLockEnabled ? _authorization.State.PreferredUnlockMethod
+            : _settingsService?.Current.PreferredUnlockMethod) is PreferredUnlockMethod.PlatformQuickUnlock
+            or PreferredUnlockMethod.PlatformDeviceCredential;
 
     private void SetMessage(string key, NotificationSeverity severity)
     {
+        if (_disposed) return;
         _messageKey = key;
         Notification.ShowForSeverity(_localization.GetString(key), severity);
     }
 
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
+        NotifyAppLockState();
         if (_messageKey is not null && Notification.HasMessage)
             Notification.ShowForSeverity(_localization.GetString(_messageKey), Notification.Severity);
     }
@@ -343,6 +414,7 @@ public sealed class AuthorizationSettingsViewModel : INotifyPropertyChanged
         _enableQuickUnlockCommand.NotifyCanExecuteChanged();
         _usePasswordCommand.NotifyCanExecuteChanged();
         _changePasswordCommand.NotifyCanExecuteChanged();
+        _toggleAppLockCommand.NotifyCanExecuteChanged();
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

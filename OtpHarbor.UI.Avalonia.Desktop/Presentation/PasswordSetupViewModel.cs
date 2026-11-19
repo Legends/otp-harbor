@@ -30,7 +30,7 @@ public sealed class PasswordSetupViewModel : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    public event EventHandler? Configured;
+    public event Func<Task>? Configured;
 
     public string Password
     {
@@ -109,8 +109,12 @@ public sealed class PasswordSetupViewModel : INotifyPropertyChanged
             var result = await _authorization.ConfigurePasswordAsync(password, confirmation);
             if (result == AuthorizationResult.Success)
             {
+                password = string.Empty;
+                confirmation = string.Empty;
                 Message = string.Empty;
-                Configured?.Invoke(this, EventArgs.Empty);
+                if (Configured is { } configured)
+                    foreach (Func<Task> handler in configured.GetInvocationList())
+                        await handler();
                 return;
             }
 

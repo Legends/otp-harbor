@@ -42,6 +42,7 @@ public sealed class SessionLockPolicyBackgroundService(
     private void OnSessionChanged(object? sender, PlatformSessionChangedEventArgs args)
     {
         if (args.State != PlatformSessionState.Locked
+            || !settingsService.Current.AppLockEnabled
             || !settingsService.Current.LockOnSessionLock
             || !authorizationService.State.IsUnlocked)
         {

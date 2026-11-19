@@ -24,6 +24,7 @@ public sealed class ConfirmationDialogViewModel
         CancelText = request.CancelText;
         ShowCancel = request.ShowCancel;
         IsDestructive = request.IsDestructive;
+        StackActions = request.StackActions;
         ConfirmCommand = new AsyncCommand(ConfirmAsync, static () => true);
         CancelCommand = new AsyncCommand(CancelAsync, static () => true);
     }
@@ -37,6 +38,7 @@ public sealed class ConfirmationDialogViewModel
     public string CancelText { get; }
     public bool ShowCancel { get; }
     public bool IsDestructive { get; }
+    public bool StackActions { get; }
     public ICommand ConfirmCommand { get; }
     public ICommand CancelCommand { get; }
 

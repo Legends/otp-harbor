@@ -5,6 +5,76 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void PasswordChangeEditor_RevealsThreeFieldsAndUsesSeparateOpenChangeAndCancelActions()
+    {
+        var view = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia", "MobileMainView.axaml"));
+        XNamespace ui = "https://github.com/avaloniaui";
+        XNamespace controls = "using:TOTP.Avalonia.Shared.Controls";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var panel = Assert.Single(view.Descendants(ui + "Border"),
+            value => (string?)value.Attribute(xaml + "Name") == "MasterPasswordChangePanel");
+        var reveal = Assert.Single(panel.Descendants(controls + "VerticalReveal"));
+        Assert.Equal("{Binding IsMasterPasswordChangeExpanded}", (string?)reveal.Attribute("IsExpanded"));
+        Assert.Null(reveal.Attribute("Height"));
+        Assert.Null(reveal.Attribute("MaxHeight"));
+        Assert.Equal(3, reveal.Descendants(controls + "RevealableSecretInput").Count());
+        Assert.Equal("{Binding IsMasterPasswordChangeExpanded}", (string?)reveal.Elements(ui + "StackPanel").Single().Attribute("IsEnabled"));
+        var begin = Assert.Single(panel.Descendants(ui + "Button"),
+            value => (string?)value.Attribute("Command") == "{Binding BeginMasterPasswordChangeCommand}");
+        Assert.Equal("{Binding !IsMasterPasswordChangeExpanded}", (string?)begin.Attribute("IsVisible"));
+        var change = Assert.Single(panel.Descendants(ui + "Button"),
+            value => (string?)value.Attribute("Command") == "{Binding ChangeMasterPasswordCommand}");
+        var cancel = Assert.Single(panel.Descendants(ui + "Button"),
+            value => (string?)value.Attribute("Command") == "{Binding CancelMasterPasswordChangeCommand}");
+        Assert.Same(change.Parent, cancel.Parent);
+        Assert.Equal("*,*", (string?)change.Parent!.Attribute("ColumnDefinitions"));
+        Assert.Equal("0", (string?)change.Attribute("Grid.Column"));
+        Assert.Equal("1", (string?)cancel.Attribute("Grid.Column"));
+        Assert.Equal("{Binding ChangeText}", (string?)change.Elements(controls + "SymbolIconLabel").Single().Attribute("Text"));
+        Assert.Equal("{Binding CancelText}", (string?)cancel.Elements(controls + "SymbolIconLabel").Single().Attribute("Text"));
+        var code = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia", "MobileMainView.axaml.cs"));
+        Assert.Contains("nameof(MobileShellViewModel.IsMasterPasswordChangeExpanded)", code);
+        Assert.Contains("input.Conceal();", code);
+    }
+
+    [Fact]
+    public void ProtectedActions_UseSharedAvailableMethodChooserAndConditionalPasswordFields()
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
+        var view = XDocument.Load(Path.Combine(directory, "MobileMainView.axaml"));
+        var selector = XDocument.Load(Path.Combine(directory, "SensitiveAuthenticationSelector.axaml"));
+        XNamespace ui = "https://github.com/avaloniaui";
+        XNamespace views = "using:TOTP.Avalonia.Mobile.Views";
+        Assert.Equal(3, view.Descendants(views + "SensitiveAuthenticationSelector").Count());
+        foreach (var field in new[] { "AppLockRecoveryPassword", "BiometricRecoveryPassword", "EditorSecretAuthorizationPassword" })
+        {
+            var input = Assert.Single(view.Descendants().Where(value => value.Name.LocalName == "RevealableSecretInput"), value =>
+                (string?)value.Attribute("Text") == "{Binding " + field + ", Mode=TwoWay}");
+            Assert.Equal("{Binding IsPasswordAuthorizationSelected}", (string?)input.Attribute("IsVisible"));
+        }
+        var choices = Assert.Single(selector.Descendants(ui + "ComboBox"));
+        Assert.Equal("{Binding AuthenticationMethods}", (string?)choices.Attribute("ItemsSource"));
+        Assert.Equal("{Binding SelectedAuthenticationMethod, Mode=TwoWay}", (string?)choices.Attribute("SelectedItem"));
+        Assert.Equal("{Binding !IsBusy}", (string?)choices.Attribute("IsEnabled"));
+    }
+
+    [Fact]
+    public void InitialQuickUnlockOffer_IsOptionalAvailableOnlyAndScrollableInShortViewports()
+    {
+        var view = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia", "MobileMainView.axaml"));
+        XNamespace ui = "https://github.com/avaloniaui";
+        var offer = Assert.Single(view.Descendants(ui + "Grid"), value =>
+            (string?)value.Attribute("IsVisible") == "{Binding IsInitialQuickUnlockOfferVisible}");
+        var scroller = Assert.Single(offer.Descendants(ui + "ScrollViewer"));
+        Assert.Equal("Disabled", (string?)scroller.Attribute("HorizontalScrollBarVisibility"));
+        Assert.Equal("Hidden", (string?)scroller.Attribute("VerticalScrollBarVisibility"));
+        var actions = offer.Descendants(ui + "Button").ToArray();
+        Assert.Equal(new[] { "{Binding IsBiometricAvailable}", "{Binding IsDeviceCredentialAvailable}", null },
+            actions.Select(value => (string?)value.Attribute("IsVisible")));
+        Assert.Equal("{Binding SkipInitialQuickUnlockCommand}", (string?)actions[2].Attribute("Command"));
+    }
+
+    [Fact]
     public void EmptyAccountActions_RenderLocalizedLabelsInBothThemes()
     {
         var directory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
@@ -14,7 +84,8 @@ public sealed class MobileAccountInteractionTests
         foreach (var (name, binding, brush) in new[]
         {
             ("AddFirstAccountButton", "{Binding AddAccountText}", "{DynamicResource BrushOnAccent}"),
-            ("ScanFirstAccountButton", "{Binding ScanQrText}", "{DynamicResource BrushTextPrimary}")
+            ("ScanFirstAccountButton", "{Binding ScanQrText}", "{DynamicResource BrushTextPrimary}"),
+            ("ImportFirstAccountButton", "{Binding MigrationImport.Title}", "{DynamicResource BrushTextPrimary}")
         })
         {
             var button = Assert.Single(view.Descendants(ui + "Button"),
@@ -24,6 +95,24 @@ public sealed class MobileAccountInteractionTests
             Assert.Equal(brush, (string?)label.Attribute("Foreground"));
             Assert.Equal("Wrap", (string?)label.Attribute("TextWrapping"));
         }
+    }
+
+    [Fact]
+    public void EmptyAccountImportAction_ReusesFileImportAndRemainsReachableInShortViewports()
+    {
+        var view = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia", "MobileMainView.axaml"));
+        XNamespace ui = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var card = Assert.Single(view.Descendants(ui + "Border"),
+            value => (string?)value.Attribute(xaml + "Name") == "FirstAccountOnboardingCard");
+        var scroller = Assert.IsType<XElement>(card.Parent);
+        Assert.Equal(ui + "ScrollViewer", scroller.Name);
+        Assert.Equal("Disabled", (string?)scroller.Attribute("HorizontalScrollBarVisibility"));
+        Assert.Equal("Hidden", (string?)scroller.Attribute("VerticalScrollBarVisibility"));
+        var actions = card.Descendants(ui + "Button").ToArray();
+        Assert.Equal(new[] { "AddFirstAccountButton", "ScanFirstAccountButton", "ImportFirstAccountButton" },
+            actions.Select(value => (string?)value.Attribute(xaml + "Name")));
+        Assert.Equal("{Binding MigrationImport.FileCommand}", (string?)actions[2].Attribute("Command"));
     }
 
     [Fact]
@@ -339,6 +428,11 @@ public sealed class MobileAccountInteractionTests
         Assert.DoesNotContain("IsVisible=\"{Binding IsStartingVisible}\"", viewSource);
         Assert.Contains("viewModel.IsBusy", viewCodeSource);
         Assert.Contains("viewModel.IsInitialAccountLoadComplete", viewCodeSource);
+        Assert.Contains("nameof(MobileShellViewModel.IsInitialQuickUnlockOfferVisible)", viewCodeSource);
+        Assert.Contains("IsInitialQuickUnlockOfferVisible: false", viewCodeSource);
+        Assert.Contains("if (viewModel.IsInitialQuickUnlockOfferVisible || !viewModel.IsAccountListVisible) return true;", viewCodeSource);
+        Assert.True(viewCodeSource.IndexOf("if (viewModel.IsInitialQuickUnlockOfferVisible || !viewModel.IsAccountListVisible) return true;", StringComparison.Ordinal)
+            < viewCodeSource.IndexOf("if (!viewModel.IsInitialAccountLoadComplete) return false;", StringComparison.Ordinal));
         Assert.Contains(
             "return !_usesNativeAccountList || !viewModel.HasAccounts || _nativeAccountListRendered;",
             viewCodeSource);
@@ -957,7 +1051,12 @@ public sealed class MobileAccountInteractionTests
 
         var info = document.Descendants(avalonia + "Border").Single(element =>
             element.Attribute("IsVisible")?.Value == "{Binding IsInfoSettingsVisible}");
-        var storagePanel = Assert.Single(info.Descendants(), element => element.Name.LocalName == "StorageLocationsPanel");
+        Assert.DoesNotContain(info.Descendants(), element => element.Name.LocalName == "StorageLocationsPanel");
+        var supportStorage = document.Descendants(avalonia + "Border").Single(element =>
+            (string?)element.Attribute(xaml + "Name") == "SupportStorageLocationsPanel");
+        Assert.Equal("{Binding IsMiscSettingsVisible}", (string?)supportStorage.Attribute("IsVisible"));
+        Assert.Equal("card", (string?)supportStorage.Attribute("Classes"));
+        var storagePanel = Assert.Single(supportStorage.Descendants(), element => element.Name.LocalName == "StorageLocationsPanel");
         Assert.Equal("{Binding StorageLocations}", storagePanel.Attribute("DataContext")?.Value);
 
         var appearance = document
@@ -1131,8 +1230,22 @@ public sealed class MobileAccountInteractionTests
 
         var misc = document
             .Descendants(avalonia + "Border")
-            .Single(element => element.Attribute("IsVisible")?.Value
-                == "{Binding IsMiscSettingsVisible}");
+            .Single(element => element.Attributes().Any(attribute =>
+                attribute.Name.LocalName == "Name" && attribute.Value == "DiagnosticLogSettingsPanel"));
+        var report = document.Descendants(avalonia + "Border").Single(element =>
+            element.Attributes().Any(attribute => attribute.Name.LocalName == "Name" && attribute.Value == "ProblemReportSettingsPanel"));
+        Assert.Same(misc.Parent, report.Parent);
+        Assert.Equal("card", report.Attribute("Classes")?.Value);
+        Assert.Equal(misc.Attribute("Padding")?.Value, report.Attribute("Padding")?.Value);
+        Assert.Equal("{Binding IsMiscSettingsVisible}", misc.Attribute("IsVisible")?.Value);
+        Assert.Equal(misc.Attribute("IsVisible")?.Value, report.Attribute("IsVisible")?.Value);
+        Assert.Null(report.Attribute("Width"));
+        Assert.Null(report.Attribute("Height"));
+        Assert.DoesNotContain(misc.Descendants(avalonia + "TextBlock"), text =>
+            text.Attribute("Text")?.Value == "{Binding ReportProblemTitleText}");
+        Assert.Contains(report.Descendants(avalonia + "TextBlock"), text =>
+            text.Attribute("Text")?.Value == "{Binding ReportProblemTitleText}"
+            && text.Attribute("TextWrapping")?.Value == "Wrap");
         var loggingPicker = Assert.Single(misc.Descendants(avalonia + "ComboBox"));
         Assert.Equal("{Binding LogLevels}", loggingPicker.Attribute("ItemsSource")?.Value);
         Assert.Equal(
@@ -1166,10 +1279,11 @@ public sealed class MobileAccountInteractionTests
             diagnosticEmail.Elements(),
             element => element.Name.LocalName == "SymbolIconLabel");
         Assert.Equal("Diagnostics", diagnosticEmailLabel.Attribute("Kind")?.Value);
-        var githubReport = Assert.Single(misc.Descendants(avalonia + "Button"),
+        var githubReport = Assert.Single(report.Descendants(avalonia + "Button"),
             button => button.Attribute("Command")?.Value == "{Binding ReportOnGitHubCommand}");
         Assert.Equal("wide secondary", githubReport.Attribute("Classes")?.Value);
-        Assert.Contains(misc.Descendants(avalonia + "TextBlock"), text =>
+        Assert.Equal("{Binding ReportOnGitHubText}", Assert.Single(githubReport.Elements()).Attribute("Text")?.Value);
+        Assert.Contains(report.Descendants(avalonia + "TextBlock"), text =>
             text.Attribute("Text")?.Value == "{Binding GitHubReportNoticeText}"
             && text.Attribute("TextWrapping")?.Value == "Wrap");
         Assert.Contains(
@@ -1255,20 +1369,21 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "mobile-faq-section")
             .ToArray();
-        Assert.Equal(2, faqSections.Length);
+        Assert.Equal(4, faqSections.Length);
         Assert.All(
             faqSections,
             section => Assert.Equal(
                 "FaqSectionExpanded",
                 section.Attribute("Expanded")?.Value));
         Assert.Equal(
-            ["{Binding FaqImportIconPacksQuestionText}", "{Binding FaqImportFormatsQuestionText}"],
+            ["{Binding FaqMasterPasswordRecoveryQuestionText}", "{Binding FaqOlderVaultsQuestionText}",
+                "{Binding FaqImportIconPacksQuestionText}", "{Binding FaqImportFormatsQuestionText}"],
             faqSections.Select(section => section
                 .Descendants(avalonia + "TextBlock")
                 .First()
                 .Attribute("Text")?.Value));
         Assert.Equal(
-            ["Folder", "QrCode"],
+            ["Key", "BackupRestore", "Folder", "QrCode"],
             faqSections.Select(section => section
                 .Element(avalonia + "Expander.Header")!
                 .Descendants()
@@ -1281,10 +1396,10 @@ public sealed class MobileAccountInteractionTests
                 "https://github.com/aegis-icons/aegis-icons#disclaimer",
                 "https://github.com/homarr-labs/dashboard-icons#legal"
             ],
-            faqSections[0]
+            faqSections[2]
                 .Descendants(avalonia + "HyperlinkButton")
                 .Select(link => link.Attribute("NavigateUri")?.Value));
-        var iconPackSteps = faqSections[0]
+        var iconPackSteps = faqSections[2]
             .Descendants(avalonia + "Grid")
             .Where(grid => grid.Elements(avalonia + "TextBlock").Any(text =>
                 text.Attribute("Text")?.Value is "1." or "2." or "3."))
@@ -1303,18 +1418,18 @@ public sealed class MobileAccountInteractionTests
                     StringComparison.Ordinal) == true)
                 .Attribute("Text")?.Value));
         Assert.Contains(
-            faqSections[0].Descendants(avalonia + "TextBlock"),
+            faqSections[2].Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value
                 == "{Binding FaqImportIconPacksCustomIconTipText}");
         Assert.Contains(
-            faqSections[1].Descendants(avalonia + "TextBlock"),
+            faqSections[3].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{Binding FaqImportFormatsAegisDescriptionText}");
         Assert.Contains(
-            faqSections[1].Descendants(avalonia + "TextBlock"),
+            faqSections[3].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{Binding FaqImportFormatsSupportedText}");
-        var importFormatSections = faqSections[1]
+        var importFormatSections = faqSections[3]
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "mobile-faq-subsection")
             .ToArray();

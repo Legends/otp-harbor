@@ -2,10 +2,38 @@
     xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:about="using:TOTP.Avalonia.Shared.About" xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
     xmlns:automation="using:Avalonia.Automation" x:DataType="about:AboutViewModel">
+    <UserControl.Styles>
+        <Style Selector="Image.about-logo">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="40" />
+        </Style>
+        <Style Selector="TextBlock.about-title">
+            <Setter Property="FontSize" Value="24" />
+        </Style>
+        <Style Selector="TextBlock.about-link, SelectableTextBlock.about-version">
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+        <Style Selector="controls|SymbolIcon.about-entry-icon">
+            <Setter Property="IconSize" Value="20" />
+        </Style>
+        <Style Selector="controls|AboutPanel.compact Image.about-logo">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+        </Style>
+        <Style Selector="controls|AboutPanel.compact TextBlock.about-title">
+            <Setter Property="FontSize" Value="18" />
+        </Style>
+        <Style Selector="controls|AboutPanel.compact TextBlock.about-link, controls|AboutPanel.compact SelectableTextBlock.about-version">
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="controls|AboutPanel.compact controls|SymbolIcon.about-entry-icon">
+            <Setter Property="IconSize" Value="16" />
+        </Style>
+    </UserControl.Styles>
     <StackPanel Spacing="12">
         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,4">
-            <Image Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png" Width="40" Height="40" Stretch="Uniform" />
-            <TextBlock Grid.Column="1" Text="{Binding AppName}" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <Image Classes="about-logo" Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png" Stretch="Uniform" />
+            <TextBlock Classes="about-title" Grid.Column="1" Text="{Binding AppName}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
         </Grid>
         <ItemsControl ItemsSource="{Binding Entries}">
             <ItemsControl.ItemTemplate>
@@ -14,16 +42,16 @@
                         <Button IsVisible="{Binding IsAction}" MinHeight="44" Padding="10,4" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                                 Command="{Binding Command}" automation:AutomationProperties.Name="{Binding Title}">
                             <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" VerticalAlignment="Center">
-                                <controls:SymbolIcon Kind="{Binding Icon}" IconSize="20" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="16" VerticalAlignment="Center" />
+                                <controls:SymbolIcon Classes="about-entry-icon" Kind="{Binding Icon}" VerticalAlignment="Center" />
+                                <TextBlock Classes="about-link" Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="2" IsVisible="{Binding HasValue}" Foreground="{DynamicResource BrushTextSecondary}"
                                     Text="{Binding Value}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                             </Grid>
                         </Button>
                         <Grid IsVisible="{Binding !IsAction}" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Margin="10,4" MinHeight="32">
-                            <controls:SymbolIcon Kind="{Binding Icon}" IconSize="20" VerticalAlignment="Center" />
+                            <controls:SymbolIcon Classes="about-entry-icon" Kind="{Binding Icon}" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Text="{Binding Title}" Foreground="{DynamicResource BrushTextSecondary}" FontSize="12" VerticalAlignment="Center" />
-                            <SelectableTextBlock Grid.Column="2" Text="{Binding Value}" FontSize="16" Foreground="{DynamicResource BrushTextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <SelectableTextBlock Classes="about-version" Grid.Column="2" Text="{Binding Value}" Foreground="{DynamicResource BrushTextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         </Grid>
                     </Grid>
                 </DataTemplate>

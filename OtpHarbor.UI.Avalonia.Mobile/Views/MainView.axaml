@@ -7,6 +7,7 @@
     xmlns:converters="using:Avalonia.Data.Converters"
     xmlns:input="using:Avalonia.Input.GestureRecognizers"
     xmlns:vm="using:TOTP.Avalonia.Mobile.Presentation"
+    xmlns:views="using:TOTP.Avalonia.Mobile.Views"
     x:Name="Root"
     x:DataType="vm:MobileShellViewModel"
     Background="{DynamicResource BrushWindowBackground}"
@@ -669,56 +670,75 @@
                             IsHitTestVisible="False"
                             IsVisible="{Binding IsNativeAccountGroupsVisible}" />
 
-                        <Border
-                            x:Name="FirstAccountOnboardingCard"
+                        <ScrollViewer
+                            x:Name="FirstAccountOnboardingScroller"
                             Grid.Row="4"
-                            Padding="18"
-                            Background="{DynamicResource BrushSurfaceAlternate}"
-                            BorderBrush="{DynamicResource BrushBorder}"
-                            BorderThickness="1"
-                            CornerRadius="{DynamicResource RadiusMedium}"
-                            IsVisible="{Binding HasNoAccounts}"
-                            VerticalAlignment="Center">
-                            <StackPanel Spacing="12">
-                                <controls:SymbolIcon
-                                    HorizontalAlignment="Center"
-                                    Foreground="{DynamicResource BrushAccent}"
-                                    IconSize="32"
-                                    Kind="Add" />
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    FontSize="20"
-                                    FontWeight="SemiBold"
-                                    Text="{Binding SetUpFirstAccountText}"
-                                    TextAlignment="Center"
-                                    TextWrapping="Wrap" />
-                                <TextBlock
-                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                    Text="{Binding NoAccountsText}"
-                                    TextAlignment="Center"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    x:Name="AddFirstAccountButton"
-                                    Classes="wide primary"
-                                    Command="{Binding BeginAddCommand}">
+                            HorizontalContentAlignment="Stretch"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Hidden"
+                            VerticalContentAlignment="Center"
+                            IsVisible="{Binding HasNoAccounts}">
+                            <Border
+                                x:Name="FirstAccountOnboardingCard"
+                                Padding="18"
+                                Background="{DynamicResource BrushSurfaceAlternate}"
+                                BorderBrush="{DynamicResource BrushBorder}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RadiusMedium}"
+                                IsVisible="{Binding HasNoAccounts}"
+                                VerticalAlignment="Center">
+                                <StackPanel Spacing="12">
+                                    <controls:SymbolIcon
+                                        HorizontalAlignment="Center"
+                                        Foreground="{DynamicResource BrushAccent}"
+                                        IconSize="32"
+                                        Kind="Add" />
                                     <TextBlock
-                                        Foreground="{DynamicResource BrushOnAccent}"
-                                        Text="{Binding AddAccountText}"
+                                        HorizontalAlignment="Center"
+                                        FontSize="20"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding SetUpFirstAccountText}"
                                         TextAlignment="Center"
                                         TextWrapping="Wrap" />
-                                </Button>
-                                <Button
-                                    x:Name="ScanFirstAccountButton"
-                                    Classes="wide secondary"
-                                    Command="{Binding ScanQrCommand}">
                                     <TextBlock
-                                        Foreground="{DynamicResource BrushTextPrimary}"
-                                        Text="{Binding ScanQrText}"
+                                        Foreground="{DynamicResource BrushTextSecondary}"
+                                        Text="{Binding NoAccountsText}"
                                         TextAlignment="Center"
                                         TextWrapping="Wrap" />
-                                </Button>
-                            </StackPanel>
-                        </Border>
+                                    <Button
+                                        x:Name="AddFirstAccountButton"
+                                        Classes="wide primary"
+                                        Command="{Binding BeginAddCommand}">
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushOnAccent}"
+                                            Text="{Binding AddAccountText}"
+                                            TextAlignment="Center"
+                                            TextWrapping="Wrap" />
+                                    </Button>
+                                    <Button
+                                        x:Name="ScanFirstAccountButton"
+                                        Classes="wide secondary"
+                                        Command="{Binding ScanQrCommand}">
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextPrimary}"
+                                            Text="{Binding ScanQrText}"
+                                            TextAlignment="Center"
+                                            TextWrapping="Wrap" />
+                                    </Button>
+                                    <Button
+                                        x:Name="ImportFirstAccountButton"
+                                        Classes="wide secondary"
+                                        automation:AutomationProperties.Name="{Binding MigrationImport.Title}"
+                                        Command="{Binding MigrationImport.FileCommand}">
+                                        <TextBlock
+                                            Foreground="{DynamicResource BrushTextPrimary}"
+                                            Text="{Binding MigrationImport.Title}"
+                                            TextAlignment="Center"
+                                            TextWrapping="Wrap" />
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </ScrollViewer>
 
                         <TextBlock
                             Grid.Row="4"
@@ -1130,8 +1150,6 @@
                         <Border Classes="card" IsVisible="{Binding IsInfoSettingsVisible}" Padding="16">
                             <StackPanel Spacing="16">
                                 <controls:AboutPanel DataContext="{Binding About}" />
-                                <Border Height="1" Background="{DynamicResource BrushBorder}" />
-                                <controls:StorageLocationsPanel DataContext="{Binding StorageLocations}" />
                             </StackPanel>
                         </Border>
                         <Border
@@ -1230,6 +1248,7 @@
                             </StackPanel>
                         </Border>
                         <Border
+                            x:Name="DiagnosticLogSettingsPanel"
                             Classes="card"
                             IsVisible="{Binding IsMiscSettingsVisible}"
                             Padding="16">
@@ -1260,6 +1279,14 @@
                                         Kind="Export"
                                         Text="{Binding ExportDiagnosticLogText}" />
                                 </Button>
+                            </StackPanel>
+                        </Border>
+                        <Border
+                            x:Name="ProblemReportSettingsPanel"
+                            Classes="card"
+                            IsVisible="{Binding IsMiscSettingsVisible}"
+                            Padding="16">
+                            <StackPanel Spacing="10">
                                 <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding ReportProblemTitleText}" TextWrapping="Wrap" />
                                 <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding GitHubReportNoticeText}" TextWrapping="Wrap" />
                                 <Button x:Name="ReportOnGitHubButton" Classes="wide secondary" Command="{Binding ReportOnGitHubCommand}">
@@ -1267,10 +1294,15 @@
                                 </Button>
                             </StackPanel>
                         </Border>
+                        <Border x:Name="SupportStorageLocationsPanel" Classes="card"
+                                IsVisible="{Binding IsMiscSettingsVisible}" Padding="16">
+                            <controls:StorageLocationsPanel DataContext="{Binding StorageLocations}" />
+                        </Border>
                         <StackPanel
                             IsVisible="{Binding IsSecuritySettingsVisible}"
                             Spacing="12">
                                 <Border
+                                    x:Name="MasterPasswordChangePanel"
                                     BorderBrush="{DynamicResource BrushBorder}"
                                     BorderThickness="1"
                                     CornerRadius="8"
@@ -1284,29 +1316,54 @@
                                             Foreground="{DynamicResource BrushTextSecondary}"
                                             Text="{Binding ChangeMasterPasswordDescriptionText}"
                                             TextWrapping="Wrap" />
-                                        <controls:RevealableSecretInput
-                                            AccessibleName="{Binding CurrentPasswordText}"
-                                            PlaceholderText="{Binding CurrentPasswordText}"
-                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                            Text="{Binding CurrentMasterPassword, Mode=TwoWay}" />
-                                        <controls:RevealableSecretInput
-                                            AccessibleName="{Binding NewPasswordText}"
-                                            PlaceholderText="{Binding NewPasswordText}"
-                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                            Text="{Binding NewMasterPassword, Mode=TwoWay}" />
-                                        <controls:RevealableSecretInput
-                                            AccessibleName="{Binding ConfirmPasswordText}"
-                                            PlaceholderText="{Binding ConfirmPasswordText}"
-                                            RevealButtonAccessibleName="{Binding RevealPasswordText}"
-                                            RevealButtonHelpText="{Binding RevealPasswordHelpText}"
-                                            Text="{Binding NewMasterPasswordConfirmation, Mode=TwoWay}" />
-                                        <Button
-                                            Classes="wide primary"
-                                            Command="{Binding ChangeMasterPasswordCommand}">
-                                            <controls:SymbolIconLabel Kind="Key" Text="{Binding ChangeMasterPasswordText}" />
-                                        </Button>
+                                        <StackPanel Spacing="0">
+                                            <controls:VerticalReveal x:Name="MasterPasswordFieldsReveal"
+                                                                     IsExpanded="{Binding IsMasterPasswordChangeExpanded}"
+                                                                     IsEnabled="{Binding !IsBusy}">
+                                                <StackPanel Margin="0,10,0,0" Spacing="10"
+                                                            IsEnabled="{Binding IsMasterPasswordChangeExpanded}">
+                                                    <controls:RevealableSecretInput
+                                                        AccessibleName="{Binding CurrentPasswordText}"
+                                                        PlaceholderText="{Binding CurrentPasswordText}"
+                                                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                                        Text="{Binding CurrentMasterPassword, Mode=TwoWay}" />
+                                                    <controls:RevealableSecretInput
+                                                        AccessibleName="{Binding NewPasswordText}"
+                                                        PlaceholderText="{Binding NewPasswordText}"
+                                                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                                        Text="{Binding NewMasterPassword, Mode=TwoWay}" />
+                                                    <controls:RevealableSecretInput
+                                                        AccessibleName="{Binding ConfirmPasswordText}"
+                                                        PlaceholderText="{Binding ConfirmPasswordText}"
+                                                        RevealButtonAccessibleName="{Binding RevealPasswordText}"
+                                                        RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                                        Text="{Binding NewMasterPasswordConfirmation, Mode=TwoWay}" />
+                                                </StackPanel>
+                                            </controls:VerticalReveal>
+                                            <Grid Margin="0,10,0,0">
+                                                <Button x:Name="BeginMasterPasswordChangeButton" Classes="wide primary"
+                                                        IsVisible="{Binding !IsMasterPasswordChangeExpanded}"
+                                                        automation:AutomationProperties.Name="{Binding ChangeMasterPasswordText}"
+                                                        Command="{Binding BeginMasterPasswordChangeCommand}">
+                                                    <controls:SymbolIconLabel Kind="Key" Text="{Binding ChangeMasterPasswordText}" />
+                                                </Button>
+                                                <Grid IsVisible="{Binding IsMasterPasswordChangeExpanded}"
+                                                      ColumnDefinitions="*,*" ColumnSpacing="10">
+                                                    <Button x:Name="ApplyMasterPasswordChangeButton" Grid.Column="0" Classes="wide primary"
+                                                            automation:AutomationProperties.Name="{Binding ChangeText}"
+                                                            Command="{Binding ChangeMasterPasswordCommand}">
+                                                        <controls:SymbolIconLabel Kind="Key" Text="{Binding ChangeText}" />
+                                                    </Button>
+                                                    <Button x:Name="CancelMasterPasswordChangeButton" Grid.Column="1" Classes="wide secondary"
+                                                            automation:AutomationProperties.Name="{Binding CancelText}"
+                                                            Command="{Binding CancelMasterPasswordChangeCommand}">
+                                                        <controls:SymbolIconLabel Kind="Close" Text="{Binding CancelText}" />
+                                                    </Button>
+                                                </Grid>
+                                            </Grid>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                                 <Border
@@ -1353,11 +1410,13 @@
                                                     TextWrapping="Wrap" />
                                                 <controls:RevealableSecretInput
                                                     x:Name="DisableAppLockPasswordBox"
+                                                    IsVisible="{Binding IsPasswordAuthorizationSelected}"
                                                     AccessibleName="{Binding MasterPasswordText}"
                                                     PlaceholderText="{Binding MasterPasswordText}"
                                                     RevealButtonAccessibleName="{Binding RevealPasswordText}"
                                                     RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                                                     Text="{Binding AppLockRecoveryPassword, Mode=TwoWay}" />
+                                                <views:SensitiveAuthenticationSelector />
                                                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                                                     <Button
                                                         Grid.Column="0"
@@ -1438,11 +1497,13 @@
                                                 TextWrapping="Wrap" />
                                             <controls:RevealableSecretInput
                                                 x:Name="UnlockMethodPasswordBox"
+                                                IsVisible="{Binding IsPasswordAuthorizationSelected}"
                                                 AccessibleName="{Binding MasterPasswordText}"
                                                 PlaceholderText="{Binding MasterPasswordText}"
                                                 RevealButtonAccessibleName="{Binding RevealPasswordText}"
                                                 RevealButtonHelpText="{Binding RevealPasswordHelpText}"
                                                 Text="{Binding BiometricRecoveryPassword, Mode=TwoWay}" />
+                                            <views:SensitiveAuthenticationSelector />
                                             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                                                 <Button
                                                     Grid.Column="0"
@@ -1651,6 +1712,42 @@
                             IsVisible="{Binding IsFaqSettingsVisible}"
                             Padding="0">
                             <StackPanel Spacing="12">
+                                <Border HorizontalAlignment="Stretch" Background="{DynamicResource BrushFaqHeaderBackground}"
+                                        BoxShadow="{DynamicResource ElevationCard}" CornerRadius="8">
+                                    <Expander x:Name="FaqMasterPasswordRecoveryExpander" Classes="mobile-faq-section"
+                                              Expanded="FaqSectionExpanded" HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,11" MinHeight="44" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <controls:SymbolIcon Grid.Column="0" Kind="Key" IconSize="24"
+                                                                    VerticalAlignment="Center" Foreground="{DynamicResource BrushFaqHeaderIcon}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                           Text="{Binding FaqMasterPasswordRecoveryQuestionText}" TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border Background="{DynamicResource BrushFaqContentBackground}" CornerRadius="0,0,8,8" Padding="12">
+                                            <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqMasterPasswordRecoveryAnswerText}" TextWrapping="Wrap" />
+                                        </Border>
+                                    </Expander>
+                                </Border>
+                                <Border HorizontalAlignment="Stretch" Background="{DynamicResource BrushFaqHeaderBackground}"
+                                        BoxShadow="{DynamicResource ElevationCard}" CornerRadius="8">
+                                    <Expander x:Name="FaqOlderVaultsExpander" Classes="mobile-faq-section"
+                                              Expanded="FaqSectionExpanded" HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,11" MinHeight="44" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <controls:SymbolIcon Grid.Column="0" Kind="BackupRestore" IconSize="24"
+                                                                    VerticalAlignment="Center" Foreground="{DynamicResource BrushFaqHeaderIcon}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                           Text="{Binding FaqOlderVaultsQuestionText}" TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border Background="{DynamicResource BrushFaqContentBackground}" CornerRadius="0,0,8,8" Padding="12">
+                                            <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqOlderVaultsAnswerText}" TextWrapping="Wrap" />
+                                        </Border>
+                                    </Expander>
+                                </Border>
                                 <Border
                                     HorizontalAlignment="Stretch"
                                     Background="{DynamicResource BrushFaqHeaderBackground}"
@@ -2007,7 +2104,9 @@
                                     PlaceholderText="{Binding MasterPasswordText}"
                                     RevealButtonAccessibleName="{Binding RevealPasswordText}"
                                     RevealButtonHelpText="{Binding RevealPasswordHelpText}"
+                                    IsVisible="{Binding IsPasswordAuthorizationSelected}"
                                     Text="{Binding EditorSecretAuthorizationPassword, Mode=TwoWay}" />
+                                <views:SensitiveAuthenticationSelector />
                                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                                     <Button
                                         Grid.Column="0"
@@ -3147,6 +3246,33 @@
                     </Grid>
                 </StackPanel>
             </Border>
+        </Grid>
+
+        <Grid Grid.RowSpan="3" Panel.ZIndex="150"
+              Background="{DynamicResource BrushOverlayStrong}"
+              IsVisible="{Binding IsInitialQuickUnlockOfferVisible}">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden"
+                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                <Border Classes="panel" MaxWidth="440" Margin="20" Padding="20"
+                        Background="{DynamicResource BrushWindowBackground}">
+                    <StackPanel Spacing="14">
+                        <TextBlock Classes="section-title" Text="{Binding InitialQuickUnlockTitle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding InitialQuickUnlockDescription}" TextWrapping="Wrap" />
+                        <Button Classes="wide primary" IsVisible="{Binding IsBiometricAvailable}"
+                                automation:AutomationProperties.Name="{Binding UnlockWithBiometricsText}"
+                                Command="{Binding ChooseInitialBiometricCommand}">
+                            <controls:SymbolIconLabel Kind="Lock" Text="{Binding UnlockWithBiometricsText}" />
+                        </Button>
+                        <Button Classes="wide secondary" IsVisible="{Binding IsDeviceCredentialAvailable}"
+                                automation:AutomationProperties.Name="{Binding UnlockWithDevicePinText}"
+                                Command="{Binding ChooseInitialDeviceCredentialCommand}">
+                            <controls:SymbolIconLabel Kind="Lock" Text="{Binding UnlockWithDevicePinText}" />
+                        </Button>
+                        <Button Classes="wide secondary" Command="{Binding SkipInitialQuickUnlockCommand}"
+                                Content="{Binding NotNowText}" />
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
         </Grid>
 
         <Grid

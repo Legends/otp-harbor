@@ -1,0 +1,388 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="About" xml:space="preserve"><value>Acerca de</value></data>
+  <data name="AccountDeleteFailed" xml:space="preserve"><value>La cuenta no se pudo eliminar de forma segura.</value></data>
+  <data name="AccountDuplicate" xml:space="preserve"><value>Ya existe una cuenta con el mismo emisor y nombre.</value></data>
+  <data name="AccountEditLoadFailed" xml:space="preserve"><value>La cuenta seleccionada no se pudo abrir para editarla.</value></data>
+  <data name="AccountIssuerRequired" xml:space="preserve"><value>El emisor es obligatorio.</value></data>
+  <data name="AccountName" xml:space="preserve"><value>Nombre de la cuenta</value></data>
+  <data name="AccountSaveFailed" xml:space="preserve"><value>La cuenta no se pudo guardar de forma segura. Los datos cifrados existentes no se modificaron.</value></data>
+  <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>La cuenta se guardó, pero no se pudo guardar su preferencia de icono local.</value></data>
+  <data name="AccountSecretInvalid" xml:space="preserve"><value>Introduce un secreto Base32 válido y no vacío.</value></data>
+  <data name="Accounts" xml:space="preserve"><value>Cuentas</value></data>
+  <data name="AccountsList" xml:space="preserve"><value>Cuentas</value></data>
+  <data name="AccountsLoadFailed" xml:space="preserve"><value>No se pudieron cargar las cuentas. Tus datos cifrados no se modificaron.</value></data>
+  <data name="AccountsLoadFailedSafely" xml:space="preserve"><value>No se pudieron cargar las cuentas de forma segura. Reinténtalo.</value></data>
+  <data name="AddAccountShortcut" xml:space="preserve"><value>Añadir cuenta (Ctrl+A)</value></data>
+  <data name="AllAccounts" xml:space="preserve"><value>Todas las cuentas</value></data>
+  <data name="AppHeading" xml:space="preserve"><value>OTP Harbor</value></data>
+  <data name="AutoLockDisabled" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="AutoLockMinutesFormat" xml:space="preserve"><value>{0} min</value></data>
+  <data name="AutoLockSecondsFormat" xml:space="preserve"><value>{0} s</value></data>
+  <data name="BackupAndRecovery" xml:space="preserve"><value>Copia de seguridad y recuperación</value></data>
+  <data name="BackupDestinationBeforeExport" xml:space="preserve"><value>Ubicación: elige el destino en el diálogo del sistema. OTP Harbor no sube ni copia automáticamente la copia de seguridad.</value></data>
+  <data name="BackupFolderOpenFailed" xml:space="preserve"><value>No se pudo abrir la carpeta de la copia de seguridad.</value></data>
+  <data name="BackupInvalidOrUnavailable" xml:space="preserve"><value>La copia de seguridad no es válida o no está disponible.</value></data>
+  <data name="BackupPermissionsUnverified" xml:space="preserve"><value>La copia está cifrada, pero no se pudieron verificar sus permisos de archivo locales.</value></data>
+  <data name="BackupSection" xml:space="preserve"><value>Copia de seguridad manual</value></data>
+  <data name="BackupSecuritySummary" xml:space="preserve"><value>Cifrado: cada copia exportada está protegida por la contraseña que creas. OTP Harbor no puede recuperar esa contraseña.</value></data>
+  <data name="BackupValidationFailed" xml:space="preserve"><value>La copia de seguridad no se pudo validar de forma segura.</value></data>
+  <data name="BackupWrongPasswordOrModified" xml:space="preserve"><value>La contraseña es incorrecta o la copia de seguridad fue modificada.</value></data>
+  <data name="Backups" xml:space="preserve"><value>Copia y restauración</value></data>
+  <data name="BrandIconPackNotInstalled" xml:space="preserve"><value>No hay ningún paquete de iconos local instalado.</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Iconos de marca opcionales</value></data>
+  <data name="BrandIconsFormatHelp" xml:space="preserve"><value>¿Necesitas un paquete? Usa la utilidad independiente OTP Harbor Icon Pack Builder para crear un archivo .otphicons local a partir de fuentes de terceros compatibles. El generador descarga esas fuentes solo cuando lo ejecutas; OTP Harbor permanece sin conexión.</value></data>
+  <data name="BrandIconsHelp" xml:space="preserve"><value>Los paquetes de iconos de terceros y los iconos personalizados son importados y almacenados localmente por el usuario. OTP Harbor no proporciona ni distribuye estos recursos.&#xA;&#xA;Todas las marcas, logotipos, derechos de autor, licencias y directrices de uso siguen siendo responsabilidad de sus respectivos propietarios y se aplican independientemente de OTP Harbor.&#xA;&#xA;La compatibilidad con un paquete de iconos no implica afiliación, patrocinio ni respaldo por parte de su proveedor ni de ningún titular de marca.</value></data>
+  <data name="CameraActive" xml:space="preserve"><value>Cámara activa. Apunta al QR de una cuenta o exportación de Google Authenticator.</value></data>
+  <data name="CameraInitializing" xml:space="preserve"><value>Cámara encontrada. Inicializando el flujo de vídeo…</value></data>
+  <data name="CameraNotFound" xml:space="preserve"><value>No se encontró ninguna cámara disponible.</value></data>
+  <data name="CameraPreview" xml:space="preserve"><value>Vista previa de la cámara en directo</value></data>
+  <data name="CameraReadyToStart" xml:space="preserve"><value>El acceso a la cámara solo comienza cuando eliges Escanear QR.</value></data>
+  <data name="CameraReconnectHint" xml:space="preserve"><value>Si la cámara está desactivada mediante un interruptor de privacidad, una tecla o un ajuste del sistema, actívala. El escáner volverá a conectarse automáticamente. (Duración: &lt; 10 s).</value></data>
+  <data name="CameraRuntimeUnavailable" xml:space="preserve"><value>El entorno de ejecución de la cámara no está disponible para este paquete.</value></data>
+  <data name="CameraScanCancelled" xml:space="preserve"><value>Escaneo QR cancelado.</value></data>
+  <data name="CameraScanFailedSafely" xml:space="preserve"><value>El escáner de la cámara falló de forma segura. No se modificaron datos de cuentas.</value></data>
+  <data name="CameraSearching" xml:space="preserve"><value>Buscando una cámara disponible…</value></data>
+  <data name="CameraStartFailed" xml:space="preserve"><value>El escáner de la cámara no pudo iniciarse de forma segura.</value></data>
+  <data name="CancelEdit" xml:space="preserve"><value>Cancelar edición</value></data>
+  <data name="CancelScan" xml:space="preserve"><value>Cancelar escaneo</value></data>
+  <data name="CapabilityCamera" xml:space="preserve"><value>Cámara</value></data>
+  <data name="CapabilityClipboardWrite" xml:space="preserve"><value>Escritura en el portapapeles</value></data>
+  <data name="CapabilityConditionalClipboardClear" xml:space="preserve"><value>Borrado condicional del portapapeles</value></data>
+  <data name="CapabilityDeviceSecretStore" xml:space="preserve"><value>Almacén de secretos del dispositivo</value></data>
+  <data name="CapabilityFailed" xml:space="preserve"><value>fallo</value></data>
+  <data name="CapabilityMisconfigured" xml:space="preserve"><value>mal configurado</value></data>
+  <data name="CapabilityPermanentlyUnavailable" xml:space="preserve"><value>no disponible permanentemente</value></data>
+  <data name="CapabilityPermissionDenied" xml:space="preserve"><value>permiso denegado</value></data>
+  <data name="CapabilityQuickUnlock" xml:space="preserve"><value>Desbloqueo rápido de la plataforma</value></data>
+  <data name="CapabilitySessionLock" xml:space="preserve"><value>Detección del bloqueo de sesión</value></data>
+  <data name="CapabilitySupported" xml:space="preserve"><value>compatible</value></data>
+  <data name="CapabilityTemporarilyUnavailable" xml:space="preserve"><value>no disponible temporalmente</value></data>
+  <data name="CapabilityUpdateInstallation" xml:space="preserve"><value>Instalación de actualizaciones</value></data>
+  <data name="ChooseGoogleAuthenticatorQrImage" xml:space="preserve"><value>Elegir imagen QR de Google Authenticator…</value></data>
+  <data name="ChooseImportFile" xml:space="preserve"><value>Elegir archivo de importación…</value></data>
+  <data name="ChooseUnlockMethod" xml:space="preserve"><value>Elige cómo desbloquear</value></data>
+  <data name="ClearClipboard" xml:space="preserve"><value>Borrar automáticamente los códigos copiados</value></data>
+  <data name="ClipboardClearSeconds" xml:space="preserve"><value>Tiempo máximo en el portapapeles en segundos</value></data>
+  <data name="ClipboardCopyUnavailable" xml:space="preserve"><value>El código no se pudo copiar al portapapeles.</value></data>
+  <data name="CloseSettings" xml:space="preserve"><value>Cerrar ajustes</value></data>
+  <data name="ClosingSafely" xml:space="preserve"><value>OTP Harbor se está cerrando de forma segura.</value></data>
+  <data name="CodeCopiedWithClear" xml:space="preserve"><value>Copiado. El borrado condicional del portapapeles está programado dentro de {0} segundos.</value></data>
+  <data name="CodeCopiedWithoutClear" xml:space="preserve"><value>Copiado. El borrado automático del portapapeles no está disponible en esta plataforma.</value></data>
+  <data name="CodeGenerationFailed" xml:space="preserve"><value>No se pudo generar un código para esta cuenta.</value></data>
+  <data name="CodeGenerationFailedSafely" xml:space="preserve"><value>No se pudo generar un código de forma segura. Reinténtalo.</value></data>
+  <data name="CodeRefreshFailed" xml:space="preserve"><value>El código caducó y no se pudo actualizar de forma segura.</value></data>
+  <data name="CodeRemainingTime" xml:space="preserve"><value>Validez restante del código</value></data>
+  <data name="ConcealSecret" xml:space="preserve"><value>Ocultar</value></data>
+  <data name="Confirm" xml:space="preserve"><value>Confirmar</value></data>
+  <data name="ConfirmPassword" xml:space="preserve"><value>Confirmar contraseña maestra</value></data>
+  <data name="Continue" xml:space="preserve"><value>Continuar</value></data>
+  <data name="CopyTimedClear" xml:space="preserve"><value>Copiar con borrado programado</value></data>
+  <data name="CopyTimedClearShortcut" xml:space="preserve"><value>Copiar con borrado programado (Ctrl+C)</value></data>
+  <data name="CreatePasswordHeading" xml:space="preserve"><value>Crea tu contraseña maestra</value></data>
+  <data name="CreateVault" xml:space="preserve"><value>Crear caja fuerte protegida</value></data>
+  <data name="CurrentPasswordPrompt" xml:space="preserve"><value>Introduce tu contraseña maestra actual para autorizar el cambio.</value></data>
+  <data name="CustomIconFiles" xml:space="preserve"><value>Archivos de iconos SVG y PNG</value></data>
+  <data name="DeleteAccount" xml:space="preserve"><value>Eliminar cuenta</value></data>
+  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} ({1})&#xA;La entrada cifrada de la cuenta se eliminará permanentemente.&#xA;Esta acción no se puede deshacer.</value></data>
+  <data name="DeleteAccountShortcut" xml:space="preserve"><value>Eliminar cuenta (Ctrl+D o Supr)</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>¿Eliminar el grupo «{0}»? Sus cuentas permanecerán en la bóveda.</value></data>
+  <data name="DeviceScreenLock" xml:space="preserve"><value>Bloqueo del dispositivo (PIN, patrón o contraseña)</value></data>
+  <data name="DiagnosticArchitecture" xml:space="preserve"><value>Arquitectura: {0}</value></data>
+  <data name="DiagnosticCapabilityLine" xml:space="preserve"><value>- {0}: {1}</value></data>
+  <data name="DiagnosticFailed" xml:space="preserve"><value>fallo</value></data>
+  <data name="DiagnosticLogDirectoryConfigured" xml:space="preserve"><value>Carpeta de registros configurada: {0}</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Se abrió un borrador de correo con el registro de diagnóstico adjunto.</value></data>
+  <data name="DiagnosticLogEmailManualAttachment" xml:space="preserve"><value>Se abrieron el borrador de correo y la carpeta de registros. Adjunte manualmente el registro más reciente antes de enviarlo.</value></data>
+  <data name="DiagnosticLogEmailManualAttachmentFolderFailed" xml:space="preserve"><value>Se abrió el borrador de correo, pero no la carpeta de registros. Use «Abrir carpeta de registros» para adjuntar manualmente el registro más reciente.</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>El correo incluye información sobre la aplicación, el sistema, el entorno de ejecución, la pantalla, el idioma y el nivel de registro. No se añaden datos de cuentas ni identificadores de dispositivos al resumen. Los registros pueden contener detalles del sistema y rutas de archivos. Revise el borrador y el archivo adjunto antes de enviarlos.</value></data>
+  <data name="DiagnosticPlatform" xml:space="preserve"><value>Plataforma: {0}</value></data>
+  <data name="DiagnosticPlatformCapabilities" xml:space="preserve"><value>Capacidades de la plataforma:</value></data>
+  <data name="DiagnosticRefreshFailed" xml:space="preserve"><value>No se pudo recopilar la información de soporte de forma segura.</value></data>
+  <data name="DiagnosticRefreshSuccess" xml:space="preserve"><value>Información de soporte actualizada. No contiene datos de cuentas ni rutas del sistema de archivos.</value></data>
+  <data name="DiagnosticRuntime" xml:space="preserve"><value>Entorno de ejecución: {0}</value></data>
+  <data name="DiagnosticStageLine" xml:space="preserve"><value>- {0}: {1} ms ({2})</value></data>
+  <data name="DiagnosticStartupStages" xml:space="preserve"><value>Etapas de inicio:</value></data>
+  <data name="DiagnosticSucceeded" xml:space="preserve"><value>correcto</value></data>
+  <data name="DiagnosticUnavailableMessage" xml:space="preserve"><value>No se pudo recopilar la información de soporte. Puedes cerrar este mensaje y seguir usando la aplicación.</value></data>
+  <data name="DiagnosticUnavailableTitle" xml:space="preserve"><value>Diagnóstico de soporte no disponible</value></data>
+  <data name="DownloadUpdate" xml:space="preserve"><value>Descargar actualización</value></data>
+  <data name="EditAccount" xml:space="preserve"><value>Editar cuenta</value></data>
+  <data name="EditAccountShortcut" xml:space="preserve"><value>Editar cuenta (Ctrl+E)</value></data>
+  <data name="EditFavorites" xml:space="preserve"><value>Editar favoritos</value></data>
+  <data name="Enable" xml:space="preserve"><value>Activar</value></data>
+  <data name="EnableQuickUnlock" xml:space="preserve"><value>Activar desbloqueo rápido</value></data>
+  <data name="EncryptedBackup" xml:space="preserve"><value>Exportar cuentas</value></data>
+  <data name="EncryptedBackupCreated" xml:space="preserve"><value>Copia de seguridad cifrada «{0}» creada correctamente.</value></data>
+  <data name="EncryptedBackupHelp" xml:space="preserve"><value>Cree una copia portátil protegida por contraseña. Guarde la copia y la contraseña por separado. Para recuperar cuentas, use Importar cuentas.</value></data>
+  <data name="EncryptedBackupWriteFailed" xml:space="preserve"><value>La copia cifrada no se pudo escribir por completo. No uses el archivo seleccionado como copia de seguridad.</value></data>
+  <data name="EncryptedExportFailed" xml:space="preserve"><value>La exportación cifrada falló de forma segura. No uses un archivo de salida incompleto.</value></data>
+  <data name="EncryptedExportTitle" xml:space="preserve"><value>Exportación cifrada</value></data>
+  <data name="EncryptedTotpBackupFile" xml:space="preserve"><value>Copia de seguridad TOTP cifrada</value></data>
+  <data name="ExistingVaultConflict" xml:space="preserve"><value>Se encontraron datos existentes de la caja fuerte y no se sustituyeron. Usa la recuperación o la migración antes de crear una caja fuerte nueva.</value></data>
+  <data name="ExportAccountsLoadFailed" xml:space="preserve"><value>No se pudieron cargar las cuentas para exportarlas.</value></data>
+  <data name="ExportBackupAction" xml:space="preserve"><value>Exportar</value></data>
+  <data name="ExportCancelled" xml:space="preserve"><value>Exportación cancelada.</value></data>
+  <data name="ExportEncryptedBackup" xml:space="preserve"><value>Exportar copia de seguridad cifrada…</value></data>
+  <data name="ExportEncryptedTotpBackup" xml:space="preserve"><value>Exportar copia TOTP cifrada</value></data>
+  <data name="ExportPasswordConfirmationRequired" xml:space="preserve"><value>Confirma la contraseña de exportación.</value></data>
+  <data name="ExportPasswordHelp" xml:space="preserve"><value>Crea y confirma una contraseña para esta copia de seguridad cifrada portátil. Esta contraseña no se puede recuperar.</value></data>
+  <data name="ExportPasswordRequired" xml:space="preserve"><value>Se requiere una contraseña de exportación.</value></data>
+  <data name="ExportPasswordValidationFailed" xml:space="preserve"><value>No se pudo validar la contraseña de exportación.</value></data>
+  <data name="ExportPasswordsMismatch" xml:space="preserve"><value>Las contraseñas de exportación no coinciden.</value></data>
+  <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
+  <data name="FavoriteAccounts" xml:space="preserve"><value>Favoritos</value></data>
+  <data name="FavoriteColorSaveFailed" xml:space="preserve"><value>Las cuentas favoritas se guardaron, pero no se pudo guardar la preferencia de color.</value></data>
+  <data name="FavoriteUpdateFailed" xml:space="preserve"><value>No se pudo guardar la configuración de favoritos.</value></data>
+  <data name="FavoritesSaveFailed" xml:space="preserve"><value>No se pudieron guardar los favoritos.</value></data>
+  <data name="FavoritesSaved" xml:space="preserve"><value>Favoritos guardados.</value></data>
+  <data name="FilenameIndexedBrandIconPackImported" xml:space="preserve"><value>Se importaron {0} iconos de marca locales desde el ZIP indexado por nombre de archivo.</value></data>
+  <data name="GenerateCode" xml:space="preserve"><value>Generar código</value></data>
+  <data name="GeneratedCode" xml:space="preserve"><value>Código de un solo uso generado</value></data>
+  <data name="GeneratedQr" xml:space="preserve"><value>Código QR de cuenta generado</value></data>
+  <data name="GeneratedQrTitleFormat" xml:space="preserve"><value>{0} · {1} — código QR</value></data>
+  <data name="GoogleAuthenticatorImportHelp" xml:space="preserve"><value>Elige una captura nítida o una imagen guardada de un código QR de transferencia de Google Authenticator. Las exportaciones de varias cuentas o páginas se importan una imagen QR a la vez.</value></data>
+  <data name="GroupDeleted" xml:space="preserve"><value>Grupo eliminado.</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Nombre</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Introduce un nombre de grupo.</value></data>
+  <data name="GroupSaved" xml:space="preserve"><value>Grupo guardado.</value></data>
+  <data name="Groups" xml:space="preserve"><value>Grupos</value></data>
+  <data name="IconPacks" xml:space="preserve"><value>Paquetes de iconos</value></data>
+  <data name="IdleTimeout" xml:space="preserve"><value>Bloqueo automático</value></data>
+  <data name="IdleTimeoutHelp" xml:space="preserve"><value>Bloquea automáticamente la aplicación tras el periodo de inactividad seleccionado.</value></data>
+  <data name="ImportAccounts" xml:space="preserve"><value>Importar cuentas</value></data>
+  <data name="ImportCancelled" xml:space="preserve"><value>Importación cancelada.</value></data>
+  <data name="ImportCancelledNoChanges" xml:space="preserve"><value>Importación cancelada. No se modificaron datos.</value></data>
+  <data name="ImportConfirmationMessage" xml:space="preserve"><value>Cuentas que se importarán: {0}&#xA;Conflictos que deben revisarse: {1}&#xA;Gestión de conflictos: {2}&#xA;Se creará una copia de recuperación antes de realizar cambios.</value></data>
+  <data name="ImportConflictHandling" xml:space="preserve"><value>Gestión de conflictos</value></data>
+  <data name="ImportEncryptedBackupTitle" xml:space="preserve"><value>Importar copia de seguridad cifrada</value></data>
+  <data name="ImportExistingAccountsUnavailable" xml:space="preserve"><value>No se pudieron cargar las cuentas existentes. No se modificaron datos.</value></data>
+  <data name="ImportFileEmpty" xml:space="preserve"><value>El archivo seleccionado no contiene cuentas.</value></data>
+  <data name="ImportFileInvalid" xml:space="preserve"><value>Este archivo no es una exportación de cuentas compatible ni una copia de OTP Harbor. Consulte la ayuda de exportación.</value></data>
+  <data name="ImportGoogleAuthenticator" xml:space="preserve"><value>Importar desde Google Authenticator</value></data>
+  <data name="ImportInvalidTargets" xml:space="preserve"><value>La importación contiene datos de cuenta no válidos o excesivos. No se modificaron datos.</value></data>
+  <data name="ImportKeepBoth" xml:space="preserve"><value>Conservar ambas cuentas</value></data>
+  <data name="ImportNewAccountsConfirmation" xml:space="preserve"><value>Cuentas nuevas que se importarán: {0}&#xA;Se creará una copia de recuperación antes de realizar cambios.</value></data>
+  <data name="ImportNothingToImport" xml:space="preserve"><value>Cuentas recibidas: {0}&#xA;Cuentas existentes omitidas: {0}&#xA;No hay nada que importar.</value></data>
+  <data name="ImportOtherFormats" xml:space="preserve"><value>Importar cuentas desde otros formatos</value></data>
+  <data name="ImportOutcomeComplete" xml:space="preserve"><value>Importación completada: {0} añadida(s), {1} sustituida(s), {2} omitida(s), {3} fallida(s).</value></data>
+  <data name="ImportOutcomeFailed" xml:space="preserve"><value>El proceso de importación no se pudo completar de forma segura.</value></data>
+  <data name="ImportPasswordPrompt" xml:space="preserve"><value>Introduce la contraseña utilizada al crear esta copia de seguridad.</value></data>
+  <data name="ImportPasswordRequired" xml:space="preserve"><value>Se requiere la contraseña de importación.</value></data>
+  <data name="ImportQrCode" xml:space="preserve"><value>Escanear código QR</value></data>
+  <data name="ImportRecoveryBackupFailed" xml:space="preserve"><value>No se pudo crear una copia de recuperación. La importación se detuvo antes de modificar los datos.</value></data>
+  <data name="ImportReplaceExisting" xml:space="preserve"><value>Sustituir cuentas existentes</value></data>
+  <data name="ImportReviewExistingParameters" xml:space="preserve"><value>{0} · {1}&#xD;&#xA;{2} · {3} dígitos · {4} s</value></data>
+  <data name="ImportSkipExisting" xml:space="preserve"><value>Omitir cuentas existentes</value></data>
+  <data name="ImportSkipExistingConfirmation" xml:space="preserve"><value>Cuentas nuevas que se importarán: {1}&#xA;Cuentas existentes omitidas: {0}&#xA;Se creará una copia de recuperación antes de realizar cambios.</value></data>
+  <data name="ImportWorkflowFailed" xml:space="preserve"><value>El proceso de importación falló de forma segura. No se expusieron datos secretos.</value></data>
+  <data name="ImportingBrandIcons" xml:space="preserve"><value>Importando iconos locales…</value></data>
+  <data name="InstallUpdate" xml:space="preserve"><value>Instalar actualización</value></data>
+  <data name="InterfaceScale" xml:space="preserve"><value>Tamaño de la interfaz</value></data>
+  <data name="InterfaceScaleHelp" xml:space="preserve"><value>Se recomienda la escala del sistema. Un tamaño personalizado multiplica la escala del escritorio y se aplica después de reiniciar.</value></data>
+  <data name="InterfaceScaleRestartRequired" xml:space="preserve"><value>Tamaño de la interfaz guardado. Reinicia la aplicación para aplicarlo.</value></data>
+  <data name="KeepBoth" xml:space="preserve"><value>Conservar ambas</value></data>
+  <data name="LastBackupLocation" xml:space="preserve"><value>Última copia: {0}</value></data>
+  <data name="Loading" xml:space="preserve"><value>Cargando…</value></data>
+  <data name="LockOnSessionLock" xml:space="preserve"><value>Bloquear cuando se bloquee la sesión del sistema operativo</value></data>
+  <data name="LockShortcut" xml:space="preserve"><value>Bloquear (Ctrl+L)</value></data>
+  <data name="LockWhenMinimized" xml:space="preserve"><value>Bloquear al minimizar</value></data>
+  <data name="LogFolderOpenFailed" xml:space="preserve"><value>No se pudo abrir la carpeta de registros.</value></data>
+  <data name="LogFolderOpenFailedSafely" xml:space="preserve"><value>No se pudo abrir la carpeta de registros de forma segura.</value></data>
+  <data name="LogFolderOpened" xml:space="preserve"><value>Carpeta de registros abierta.</value></data>
+  <data name="ManageGroups" xml:space="preserve"><value>Administrar grupos</value></data>
+  <data name="MasterPassword" xml:space="preserve"><value>Contraseña maestra</value></data>
+  <data name="MasterPasswordHelp" xml:space="preserve"><value>Necesaria para desbloquear la caja fuerte local.</value></data>
+  <data name="Minimize" xml:space="preserve"><value>Minimizar</value></data>
+  <data name="NavAccounts" xml:space="preserve"><value>Abrir página de cuentas</value></data>
+  <data name="NavSettings" xml:space="preserve"><value>Abrir página de ajustes</value></data>
+  <data name="NavTools" xml:space="preserve"><value>Abrir página de herramientas</value></data>
+  <data name="No" xml:space="preserve"><value>no</value></data>
+  <data name="NoBackupFileSelected" xml:space="preserve"><value>No se seleccionó ningún archivo de copia de seguridad.</value></data>
+  <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Para consultar las instrucciones de importación y más opciones, ve a Ajustes → Paquetes de iconos.</value></data>
+  <data name="NoEntriesYet" xml:space="preserve"><value>Aún no hay cuentas. Añada una manualmente, escanee un código QR o use Ajustes → Datos y copias de seguridad → Importar cuentas.</value></data>
+  <data name="NoExportFileSelected" xml:space="preserve"><value>No se seleccionó ningún archivo de exportación.</value></data>
+  <data name="NoImportFileSelected" xml:space="preserve"><value>No se seleccionó ningún archivo de importación.</value></data>
+  <data name="NoMatchingEntries" xml:space="preserve"><value>No hay entradas coincidentes.</value></data>
+  <data name="NotNow" xml:space="preserve"><value>Ahora no</value></data>
+  <data name="OlderVaultConflictMessage" xml:space="preserve"><value>Se encontraron una bóveda cifrada anterior y la bóveda actual. Ambas se conservan. Continúa con las cuentas actuales o revisa las anteriores después de desbloquear la bóveda actual. No se reemplazará ninguna cuenta sin confirmación.</value></data>
+  <data name="OlderVaultConflictStrategyMessage" xml:space="preserve"><value>Conserva las versiones actuales de las cuentas coincidentes o reemplázalas por las anteriores. Las cuentas nuevas de la bóveda anterior se pueden añadir tras la confirmación. Se requiere un punto de recuperación antes de realizar cambios.</value></data>
+  <data name="OlderVaultConflictStrategyTitle" xml:space="preserve"><value>Elige cómo tratar las cuentas coincidentes</value></data>
+  <data name="OlderVaultContinueCurrent" xml:space="preserve"><value>Continuar con la bóveda actual</value></data>
+  <data name="OlderVaultCurrentUnavailable" xml:space="preserve"><value>Existen una bóveda actual y una anterior, pero la autorización actual no está disponible. Ambas se conservan. Restaura la envoltura de autorización actual antes de crear una bóveda nueva.</value></data>
+  <data name="OlderVaultImportAllMessage" xml:space="preserve"><value>Cuentas nuevas que se importarán de la bóveda anterior: {0}. Coincidencias sin cambios conservadas automáticamente: {1}.&#xA;&#xA;Cuentas de la bóveda anterior:&#xA;{2}&#xA;&#xA;Se requiere un punto de recuperación antes de realizar cambios. Cancelar deja la bóveda actual sin cambios.</value></data>
+  <data name="OlderVaultKeepCurrentMatches" xml:space="preserve"><value>Mantener actuales</value></data>
+  <data name="OlderVaultPasswordPrompt" xml:space="preserve"><value>Introduce la contraseña maestra de la bóveda anterior para revisar sus cuentas. La bóveda actual permanece intacta hasta que confirmes la restauración.</value></data>
+  <data name="OlderVaultPasswordRequired" xml:space="preserve"><value>Introduce la contraseña maestra anterior.</value></data>
+  <data name="OlderVaultRecoveryFailed" xml:space="preserve"><value>No se pudo abrir o recuperar la bóveda anterior. Comprueba su contraseña maestra y sus archivos, y revisa tus cuentas antes de intentarlo de nuevo.</value></data>
+  <data name="OlderVaultRecoveryTitle" xml:space="preserve"><value>Se encontró una bóveda anterior</value></data>
+  <data name="OlderVaultReviewMessage" xml:space="preserve"><value>Bóveda anterior: {0} cuentas. Cuentas que coinciden con las actuales: {1}. Cuentas nuevas: {2}.&#xA;&#xA;{3}&#xA;&#xA;Elige si quieres conservar las versiones actuales de las cuentas coincidentes o reemplazarlas por las anteriores. Se requieren un punto de recuperación y una confirmación final antes de realizar cambios.</value></data>
+  <data name="OlderVaultReviewOlder" xml:space="preserve"><value>Revisar cuentas anteriores</value></data>
+  <data name="OlderVaultReviewTitle" xml:space="preserve"><value>Revisar las cuentas anteriores</value></data>
+  <data name="OlderVaultUseOlderMatches" xml:space="preserve"><value>Usar anteriores</value></data>
+  <data name="OnboardingPreviewFinish" xml:space="preserve"><value>Cerrar vista previa</value></data>
+  <data name="OnboardingPreviewNotice" xml:space="preserve"><value>Vista previa de la introducción: tu bóveda actual no se modificará.</value></data>
+  <data name="OpenExportAfter" xml:space="preserve"><value>Abrir la ubicación de exportación después de exportar</value></data>
+  <data name="OpenLastBackupFolder" xml:space="preserve"><value>Abrir la carpeta de la última copia</value></data>
+  <data name="OpenLogFolder" xml:space="preserve"><value>Abrir carpeta de registros</value></data>
+  <data name="OpenQrImage" xml:space="preserve"><value>Importar imagen QR</value></data>
+  <data name="OtherFormatAegis" xml:space="preserve"><value>1. Exportación JSON de Aegis (.json, sin cifrar)</value></data>
+  <data name="OtherFormatLegacyOtpHarbor" xml:space="preserve"><value>4. JSON, CSV o texto delimitado por barras verticales heredado de OTP Harbor (.json, .csv, .txt; solo importación de compatibilidad—la versión actual exporta copias cifradas)</value></data>
+  <data name="OtherFormatOtpAuth" xml:space="preserve"><value>3. Lista de URI TOTP otpauth:// estándar (.txt, un URI por línea)</value></data>
+  <data name="OtherFormatTwoFas" xml:space="preserve"><value>2. Copia de seguridad de 2FAS (.2fas, sin cifrar)</value></data>
+  <data name="OtherFormatsImportHelp" xml:space="preserve"><value>Elija un archivo de migración sin cifrar. Formatos compatibles:</value></data>
+  <data name="Password" xml:space="preserve"><value>Contraseña</value></data>
+  <data name="PasswordAuthorizationHelp" xml:space="preserve"><value>Necesaria para autorizar esta acción.</value></data>
+  <data name="PasswordChangeCancelled" xml:space="preserve"><value>La contraseña maestra no se modificó.</value></data>
+  <data name="PasswordChangeFailed" xml:space="preserve"><value>La contraseña maestra no se pudo cambiar de forma segura. El acceso de recuperación existente sigue activo.</value></data>
+  <data name="PasswordChanged" xml:space="preserve"><value>Contraseña maestra cambiada. La recuperación mediante desbloqueo rápido sigue disponible.</value></data>
+  <data name="PasswordMinimumCharacters" xml:space="preserve"><value>Usa al menos {0} caracteres.</value></data>
+  <data name="PasswordMinimumLength" xml:space="preserve"><value>La contraseña maestra debe contener al menos {0} caracteres.</value></data>
+  <data name="PasswordMismatch" xml:space="preserve"><value>La confirmación de la contraseña no coincide.</value></data>
+  <data name="PasswordPreferenceFailed" xml:space="preserve"><value>El método de desbloqueo al iniciar no se pudo cambiar de forma segura.</value></data>
+  <data name="PasswordPreferencePrompt" xml:space="preserve"><value>Verifica tu contraseña maestra antes de cambiar el método de desbloqueo preferido al iniciar.</value></data>
+  <data name="PasswordPreferenceUnchanged" xml:space="preserve"><value>El método de desbloqueo al iniciar no se modificó.</value></data>
+  <data name="PasswordPreferred" xml:space="preserve"><value>Se solicitará la contraseña maestra al iniciar. Se conserva la inscripción existente al desbloqueo rápido.</value></data>
+  <data name="PasswordRequired" xml:space="preserve"><value>Introduce y confirma una contraseña maestra.</value></data>
+  <data name="PasswordSetupFailed" xml:space="preserve"><value>La caja fuerte protegida no se pudo crear de forma segura. No se sustituyeron datos existentes.</value></data>
+  <data name="PasswordSetupHelp" xml:space="preserve"><value>Esta contraseña cifra tu caja fuerte local. OTP Harbor no puede restablecerla si la olvidas, así que elige una que puedas recordar y mantenla en privado.</value></data>
+  <data name="PasswordVerificationFailed" xml:space="preserve"><value>No se pudo verificar la contraseña maestra.</value></data>
+  <data name="ProviderManagedBackupLocation" xml:space="preserve"><value>Última copia: guardada en la ubicación elegida en el proveedor de documentos del sistema.</value></data>
+  <data name="QrAccountAdded" xml:space="preserve"><value>Cuenta QR añadida.</value></data>
+  <data name="QrAccountDuplicate" xml:space="preserve"><value>Esta cuenta QR ya existe y no se modificó.</value></data>
+  <data name="QrAccountKeptBoth" xml:space="preserve"><value>Cuenta QR añadida junto a la cuenta existente.</value></data>
+  <data name="QrAccountUpdated" xml:space="preserve"><value>Cuenta existente actualizada desde el código QR.</value></data>
+  <data name="QrBulkImported" xml:space="preserve"><value>Importación QR: {0} importadas, {1} sin cambios, {2} con error.</value></data>
+  <data name="QrBulkImportedMore" xml:space="preserve"><value>QR {0} de {1}: {2} importadas, {3} sin cambios, {4} con error. Escanee el siguiente código QR.</value></data>
+  <data name="QrConflictMessage" xml:space="preserve"><value>{0} ({1}) ya existe con otro secreto. ¿Quieres actualizarla, conservar ambas cuentas o cancelar?</value></data>
+  <data name="QrDisplayFailed" xml:space="preserve"><value>El código QR no se pudo mostrar de forma segura.</value></data>
+  <data name="QrGenerationFailed" xml:space="preserve"><value>No se pudo generar un código QR para esta cuenta.</value></data>
+  <data name="QrImageFiles" xml:space="preserve"><value>Imágenes de códigos QR</value></data>
+  <data name="QrImageInvalid" xml:space="preserve"><value>El archivo seleccionado no es una imagen de código QR compatible.</value></data>
+  <data name="QrImageNoCode" xml:space="preserve"><value>No se encontró ningún código QR legible en la imagen seleccionada.</value></data>
+  <data name="QrImageReadFailedSafely" xml:space="preserve"><value>La imagen del código QR no se pudo leer de forma segura. No se modificaron datos de cuentas.</value></data>
+  <data name="QrImageReading" xml:space="preserve"><value>Leyendo la imagen del código QR…</value></data>
+  <data name="QrImageSelectionCancelled" xml:space="preserve"><value>No se seleccionó ninguna imagen de código QR.</value></data>
+  <data name="QrImageTooLarge" xml:space="preserve"><value>La imagen de código QR seleccionada supera el límite de tamaño seguro.</value></data>
+  <data name="QrImportCancelled" xml:space="preserve"><value>Importación de cuenta QR cancelada.</value></data>
+  <data name="QrImportFailed" xml:space="preserve"><value>La cuenta QR no se pudo importar de forma segura. Los datos cifrados existentes no se modificaron.</value></data>
+  <data name="QrInvalid" xml:space="preserve"><value>El código QR no corresponde a una cuenta TOTP compatible ni a una exportación de Google Authenticator.</value></data>
+  <data name="QrMigrationCameraUseImage" xml:space="preserve"><value>La cámara reconoció una exportación de Google Authenticator, pero no pudo validarla de forma fiable. Mantén el código QR estable y nítido, o elige «Importar imagen QR» abajo.</value></data>
+  <data name="QrPreviewDisplayFailed" xml:space="preserve"><value>El código QR ampliado no se pudo mostrar de forma segura.</value></data>
+  <data name="QrPreviewScale" xml:space="preserve"><value>Escala de vista previa QR</value></data>
+  <data name="QrPreviewUnavailable" xml:space="preserve"><value>La vista previa del código QR no está disponible en esta plataforma.</value></data>
+  <data name="QrPrivacyNotice" xml:space="preserve"><value>Este código QR contiene el secreto de la cuenta. Mantenlo en privado.</value></data>
+  <data name="QrScannerHelp" xml:space="preserve"><value>Consejos para escanear códigos QR</value></data>
+  <data name="QrScannerSupportedFormats" xml:space="preserve"><value>La cámara puede escanear códigos QR de cuentas e intenta leer exportaciones de Google Authenticator, incluidas las que contienen varias cuentas, si su resolución es suficiente. Asegúrate de que haya buena iluminación y evita los reflejos o la retroiluminación intensa. Mantén el código QR estable, completamente visible y lo más recto posible frente a la cámara. Si es necesario, ajusta lentamente la distancia hasta que el código se vea nítido. Si una exportación de Google Authenticator no se puede leer de forma fiable, usa una imagen QR nítida y elige «Importar imagen QR» abajo.</value></data>
+  <data name="QuickUnlock" xml:space="preserve"><value>Desbloquear con identificación biométrica</value></data>
+  <data name="QuickUnlockAtStartup" xml:space="preserve"><value>Usar identificación biométrica al iniciar</value></data>
+  <data name="QuickUnlockAvailable" xml:space="preserve"><value>El desbloqueo rápido está disponible en este sistema.</value></data>
+  <data name="QuickUnlockCancelled" xml:space="preserve"><value>Se canceló el desbloqueo rápido. Tu caja fuerte sigue bloqueada.</value></data>
+  <data name="QuickUnlockEnabled" xml:space="preserve"><value>El desbloqueo rápido está activado. Conserva tu contraseña maestra para la recuperación.</value></data>
+  <data name="QuickUnlockEnrollmentCancelled" xml:space="preserve"><value>No se activó el desbloqueo rápido. El desbloqueo mediante contraseña maestra no ha cambiado.</value></data>
+  <data name="QuickUnlockEnrollmentFailed" xml:space="preserve"><value>No se pudo activar el desbloqueo rápido. El desbloqueo mediante contraseña maestra sigue disponible.</value></data>
+  <data name="QuickUnlockFailed" xml:space="preserve"><value>No se pudo completar el desbloqueo rápido. Usa tu contraseña maestra para recuperar el acceso.</value></data>
+  <data name="QuickUnlockFallback" xml:space="preserve"><value>El desbloqueo rápido no se completó. Introduce tu contraseña maestra para recuperar el acceso.</value></data>
+  <data name="QuickUnlockRecoveryNotice" xml:space="preserve"><value>El desbloqueo biométrico es opcional. Tu contraseña maestra sigue siendo necesaria para la recuperación y los ajustes de seguridad.</value></data>
+  <data name="QuickUnlockRecoveryPrompt" xml:space="preserve"><value>Introduce tu contraseña maestra para verificar el acceso de recuperación antes de activar el desbloqueo rápido de la plataforma.</value></data>
+  <data name="QuickUnlockUnavailable" xml:space="preserve"><value>El desbloqueo rápido no está disponible en este sistema. El desbloqueo mediante contraseña maestra sigue disponible.</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Actualizar</value></data>
+  <data name="RefreshSupportInformation" xml:space="preserve"><value>Actualizar información de soporte</value></data>
+  <data name="ReleaseNotes" xml:space="preserve"><value>Notas de la versión</value></data>
+  <data name="ResetBrandIconsConfirmation" xml:space="preserve"><value>¿Quitar el paquete de iconos importado? Los datos de las cuentas no cambiarán, pero las cuentas usarán iconos automáticos o genéricos hasta que se importe otro paquete.</value></data>
+  <data name="RestoreBackup" xml:space="preserve"><value>Restaurar copia</value></data>
+  <data name="RestoreBackupAction" xml:space="preserve"><value>Restaurar</value></data>
+  <data name="RestoreBackupHelp" xml:space="preserve"><value>Elige una copia cifrada .otphbp de OTP Harbor (también se admiten archivos .totp antiguos) e introduce su contraseña. De forma predeterminada, se omiten las cuentas existentes. Elige abajo cómo gestionar los conflictos; deberás confirmar antes de cambiar ninguna cuenta.</value></data>
+  <data name="RestoreEncryptedBackup" xml:space="preserve"><value>Restaurar copia cifrada…</value></data>
+  <data name="RevealSecret" xml:space="preserve"><value>Mostrar</value></data>
+  <data name="RevealSecretAutomation" xml:space="preserve"><value>Mostrar u ocultar secreto</value></data>
+  <data name="RevealSecretHelp" xml:space="preserve"><value>Selecciona de nuevo para ocultar el secreto.</value></data>
+  <data name="SaveAccount" xml:space="preserve"><value>Guardar cuenta</value></data>
+  <data name="ScanQrCamera" xml:space="preserve"><value>Escanear QR con la cámara</value></data>
+  <data name="Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="SearchAccounts" xml:space="preserve"><value>Buscar emisor o cuenta</value></data>
+  <data name="SearchAccountsShortcut" xml:space="preserve"><value>Buscar emisor o cuenta (Ctrl+F)</value></data>
+  <data name="SecuritySettings" xml:space="preserve"><value>Ajustes de seguridad</value></data>
+  <data name="SelectAutomaticBackupFolder" xml:space="preserve"><value>Elegir carpeta para copias automáticas</value></data>
+  <data name="SelectQrImage" xml:space="preserve"><value>Seleccionar una imagen de código QR</value></data>
+  <data name="SelectSimpleIconsPack" xml:space="preserve"><value>Seleccionar paquete de iconos de OTP Harbor</value></data>
+  <data name="SelectTotpImportFile" xml:space="preserve"><value>Seleccionar archivo TOTP para importar</value></data>
+  <data name="SetUpFirstAccount" xml:space="preserve"><value>Configura tu primera cuenta</value></data>
+  <data name="Settings" xml:space="preserve"><value>Ajustes</value></data>
+  <data name="SettingsAutoSaveHint" xml:space="preserve"><value>Los cambios se guardan automáticamente.</value></data>
+  <data name="SettingsSaveFailed" xml:space="preserve"><value>No se pudieron guardar los ajustes. Los ajustes existentes siguen activos.</value></data>
+  <data name="SettingsSavedAutomatically" xml:space="preserve"><value>Ajustes guardados automáticamente.</value></data>
+  <data name="ShowIssuerLogoHelp" xml:space="preserve"><value>Mostrar una tesela de marca o de marcador junto a cada cuenta.</value></data>
+  <data name="ShowQrCode" xml:space="preserve"><value>Mostrar código QR</value></data>
+  <data name="SimpleIconsZipFiles" xml:space="preserve"><value>Paquetes de iconos de OTP Harbor</value></data>
+  <data name="SoftwareUpdates" xml:space="preserve"><value>Actualizaciones de software</value></data>
+  <data name="SortAccounts" xml:space="preserve"><value>Ordenar cuentas</value></data>
+  <data name="SortByAccountName" xml:space="preserve"><value>Cuenta ↑</value></data>
+  <data name="SortByAccountNameDescending" xml:space="preserve"><value>Cuenta ↓</value></data>
+  <data name="SortByIssuer" xml:space="preserve"><value>Emisor ↑</value></data>
+  <data name="SortByIssuerDescending" xml:space="preserve"><value>Emisor ↓</value></data>
+  <data name="StartingSafely" xml:space="preserve"><value>Iniciando OTP Harbor de forma segura…</value></data>
+  <data name="StartupCancelled" xml:space="preserve"><value>Inicio cancelado.</value></data>
+  <data name="StartupCreateMasterPassword" xml:space="preserve"><value>Configura el almacenamiento local seguro.</value></data>
+  <data name="StartupEnterMasterPassword" xml:space="preserve"><value>Introduce tu contraseña maestra para desbloquear tu autenticador.</value></data>
+  <data name="StartupFailedSafely" xml:space="preserve"><value>OTP Harbor no pudo iniciarse de forma segura. Tus datos cifrados no se modificaron.</value></data>
+  <data name="StartupPreferencesUnavailable" xml:space="preserve"><value>No se pudieron cargar tus preferencias. Tus datos cifrados no se modificaron.</value></data>
+  <data name="SupportDiagnostics" xml:space="preserve"><value>Diagnóstico de soporte</value></data>
+  <data name="SystemInterfaceScale" xml:space="preserve"><value>Valor del sistema (recomendado)</value></data>
+  <data name="Tools" xml:space="preserve"><value>Herramientas</value></data>
+  <data name="TotpFiles" xml:space="preserve"><value>Archivos TOTP</value></data>
+  <data name="UngroupedAccounts" xml:space="preserve"><value>Sin agrupar</value></data>
+  <data name="Unknown" xml:space="preserve"><value>desconocido</value></data>
+  <data name="UnlockBackup" xml:space="preserve"><value>Desbloquear copia</value></data>
+  <data name="UnlockFailedSafely" xml:space="preserve"><value>La caja fuerte no se pudo desbloquear de forma segura. Reinténtalo.</value></data>
+  <data name="UnlockMethodSeparator" xml:space="preserve"><value>o</value></data>
+  <data name="UnlockRejected" xml:space="preserve"><value>Contraseña maestra incorrecta.</value></data>
+  <data name="UnlockTooManyAttempts" xml:space="preserve"><value>Demasiados intentos. Espera antes de volver a intentarlo.</value></data>
+  <data name="UnlockWithQuickUnlock" xml:space="preserve"><value>Desbloquear con identificación biométrica</value></data>
+  <data name="UpdateAvailable" xml:space="preserve"><value>La actualización firmada {0} está disponible. La descarga solo comienza cuando eliges Descargar.</value></data>
+  <data name="UpdateAvailableOnStartup" xml:space="preserve"><value>La actualización firmada {0} está disponible. Abre Configuración → Acerca de para revisarla.</value></data>
+  <data name="UpdateCheckCancelled" xml:space="preserve"><value>Comprobación de actualizaciones cancelada.</value></data>
+  <data name="UpdateCheckFailed" xml:space="preserve"><value>La comprobación de actualizaciones falló de forma segura. No se inició ninguna descarga.</value></data>
+  <data name="UpdateChecking" xml:space="preserve"><value>Comprobando el canal de actualizaciones firmado…</value></data>
+  <data name="UpdateDisabled" xml:space="preserve"><value>Las actualizaciones automáticas están desactivadas o no están configuradas para este paquete.</value></data>
+  <data name="UpdateDownloadCancelled" xml:space="preserve"><value>Descarga de actualización cancelada. El paquete parcial se descartó.</value></data>
+  <data name="UpdateDownloadFailed" xml:space="preserve"><value>La descarga de la actualización falló de forma segura. No se puede instalar un paquete incompleto.</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>Descargando y verificando el paquete de actualización firmado…</value></data>
+  <data name="UpdateExisting" xml:space="preserve"><value>Actualizar existente</value></data>
+  <data name="UpdateFeedVerificationFailed" xml:space="preserve"><value>No se pudo verificar el canal de actualizaciones firmado. No se inició ninguna descarga.</value></data>
+  <data name="UpdateInstallCancelled" xml:space="preserve"><value>Instalación de actualización cancelada.</value></data>
+  <data name="UpdateInstallerFailedSafely" xml:space="preserve"><value>El instalador de la plataforma no pudo iniciarse de forma segura.</value></data>
+  <data name="UpdateInstallerStartFailed" xml:space="preserve"><value>La actualización verificada está lista, pero no se pudo iniciar el instalador de la plataforma.</value></data>
+  <data name="UpdateInstallerStarted" xml:space="preserve"><value>Se inició el instalador de la plataforma. Sigue sus indicaciones para completar la actualización.</value></data>
+  <data name="UpdateInstallerUnsupported" xml:space="preserve"><value>El paquete de actualización firmado está verificado, pero este paquete de escritorio no dispone de un adaptador de instalación compatible.</value></data>
+  <data name="UpdateNoneAvailable" xml:space="preserve"><value>No hay ninguna actualización firmada aplicable disponible.</value></data>
+  <data name="UpdatePackageVerificationFailed" xml:space="preserve"><value>El paquete de actualización no superó la descarga o la verificación de firma y no se puede instalar.</value></data>
+  <data name="UpdateReadyToCheck" xml:space="preserve"><value>Comprueba el canal de actualizaciones firmado configurado cuando quieras.</value></data>
+  <data name="UpdateReadyToInstall" xml:space="preserve"><value>El paquete de actualización firmado está verificado y listo para instalarse.</value></data>
+  <data name="UpdateResponseIncomplete" xml:space="preserve"><value>La respuesta de actualización estaba incompleta. No se inició ninguna descarga.</value></data>
+  <data name="UseMasterPassword" xml:space="preserve"><value>Desbloquear con contraseña maestra</value></data>
+  <data name="UsePasswordAtStartup" xml:space="preserve"><value>Usar contraseña al iniciar</value></data>
+  <data name="ValidatingSecurely" xml:space="preserve"><value>Validando de forma segura…</value></data>
+  <data name="VaultConfigured" xml:space="preserve"><value>Tu caja fuerte protegida está lista.</value></data>
+  <data name="VaultLockedPassword" xml:space="preserve"><value>Caja fuerte bloqueada. Introduce tu contraseña maestra para continuar.</value></data>
+  <data name="VaultLockedQuickUnlock" xml:space="preserve"><value>Desbloquéala con identificación biométrica o con tu contraseña maestra.</value></data>
+  <data name="VaultLockedTitle" xml:space="preserve"><value>Caja fuerte bloqueada</value></data>
+  <data name="VaultUnlocked" xml:space="preserve"><value>Caja fuerte desbloqueada.</value></data>
+  <data name="VerifyAppcast" xml:space="preserve"><value>Buscar actualizaciones</value></data>
+  <data name="Version" xml:space="preserve"><value>Versión</value></data>
+  <data name="Yes" xml:space="preserve"><value>sí</value></data>
+  <data name="AppLockEnabledDescription" xml:space="preserve"><value>Exigir autenticación al abrir OTP Harbor y cada vez que se bloquee la aplicación.</value></data>
+  <data name="AppLockUnavailable" xml:space="preserve"><value>El bloqueo debe permanecer activado porque no está disponible el almacenamiento seguro para abrir la aplicación sin autenticación.</value></data>
+</root>

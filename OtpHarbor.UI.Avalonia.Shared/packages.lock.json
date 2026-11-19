@@ -67,6 +67,9 @@
           "Otp.NET": "[1.4.1, )",
           "Serilog": "[4.4.0, )"
         }
+      },
+      "TOTP.Localization": {
+        "type": "Project"
       }
     }
   }

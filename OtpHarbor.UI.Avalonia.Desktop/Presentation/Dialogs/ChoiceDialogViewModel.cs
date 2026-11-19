@@ -19,6 +19,7 @@ public sealed class ChoiceDialogViewModel
         PrimaryText = request.PrimaryText;
         SecondaryText = request.SecondaryText;
         CancelText = request.CancelText;
+        StackActions = request.StackActions;
         PrimaryCommand = Command(ChoiceDialogResult.Primary);
         SecondaryCommand = Command(ChoiceDialogResult.Secondary);
         CancelCommand = Command(ChoiceDialogResult.Cancel);
@@ -31,6 +32,13 @@ public sealed class ChoiceDialogViewModel
     public string PrimaryText { get; }
     public string SecondaryText { get; }
     public string CancelText { get; }
+    public bool StackActions { get; }
+    public int SecondaryColumn => StackActions ? 0 : 1;
+    public int PrimaryColumn => StackActions ? 0 : 2;
+    public int SecondaryRow => StackActions ? 1 : 0;
+    public int PrimaryRow => StackActions ? 2 : 0;
+    public int ActionColumnSpan => StackActions ? 3 : 1;
+    public double ActionRowSpacing => StackActions ? 8 : 0;
     public ICommand PrimaryCommand { get; }
     public ICommand SecondaryCommand { get; }
     public ICommand CancelCommand { get; }

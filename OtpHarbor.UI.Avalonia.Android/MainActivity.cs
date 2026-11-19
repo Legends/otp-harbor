@@ -9,6 +9,7 @@ using TOTP.Avalonia.Mobile.Presentation;
 using AndroidXSplashScreen = AndroidX.Core.SplashScreen.SplashScreen;
 
 namespace TOTP.Avalonia.Android;
+//~OTP-Harbor\scripts> .\Android_Emulator_Move-to-screen-center.ps1
 
 [Activity(
     Label = "OTP Harbor",

@@ -29,7 +29,7 @@ using TOTP.Avalonia.Shared.Import;
 
 namespace TOTP.Avalonia.Mobile.Presentation;
 
-public sealed class MobileShellViewModel :
+public sealed partial class MobileShellViewModel :
     INotifyPropertyChanged,
     IMobileLifecycleSink,
     IDisposable
@@ -379,6 +379,15 @@ public sealed class MobileShellViewModel :
         _beginBiometricEnrollmentCommand = new MobileAsyncCommand(
             BeginBiometricEnrollmentAsync,
             () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformQuickUnlock));
+        _chooseInitialBiometricCommand = new MobileAsyncCommand(
+            () => CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod.PlatformQuickUnlock),
+            () => IsInitialQuickUnlockOfferVisible && IsBiometricAvailable && !IsBusy);
+        _chooseInitialDeviceCredentialCommand = new MobileAsyncCommand(
+            () => CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod.PlatformDeviceCredential),
+            () => IsInitialQuickUnlockOfferVisible && IsDeviceCredentialAvailable && !IsBusy);
+        _skipInitialQuickUnlockCommand = new MobileAsyncCommand(
+            () => CompleteInitialQuickUnlockChoiceAsync(null),
+            () => IsInitialQuickUnlockOfferVisible && !IsBusy);
         _beginDeviceCredentialEnrollmentCommand = new MobileAsyncCommand(
             BeginDeviceCredentialEnrollmentAsync,
             () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformDeviceCredential));
@@ -389,7 +398,7 @@ public sealed class MobileShellViewModel :
             EnableBiometricAsync,
             () => IsBiometricEnrollmentVisible
                 && !IsBusy
-                && BiometricRecoveryPassword.Length > 0);
+                && CanConfirmSensitiveAuthorization(BiometricRecoveryPassword));
         _cancelBiometricEnrollmentCommand = new MobileAsyncCommand(
             CancelBiometricEnrollmentAsync,
             () => IsBiometricEnrollmentVisible && !IsBusy);
@@ -402,7 +411,7 @@ public sealed class MobileShellViewModel :
         _confirmDisableAppLockCommand = new MobileAsyncCommand(
             ConfirmDisableAppLockAsync,
             () => IsDisableAppLockConfirmationVisible
-                && AppLockRecoveryPassword.Length > 0
+                && CanConfirmSensitiveAuthorization(AppLockRecoveryPassword)
                 && !IsBusy);
         _cancelDisableAppLockCommand = new MobileAsyncCommand(
             CancelDisableAppLockAsync,
@@ -412,7 +421,13 @@ public sealed class MobileShellViewModel :
             () => IsSettingsVisible && !IsAppLockEnabled && !IsBusy);
         _changeMasterPasswordCommand = new MobileAsyncCommand(
             ChangeMasterPasswordAsync,
-            () => IsSecuritySettingsVisible && !IsBusy);
+            () => IsSecuritySettingsVisible && IsMasterPasswordChangeExpanded && !IsBusy);
+        _beginMasterPasswordChangeCommand = new MobileAsyncCommand(
+            BeginMasterPasswordChangeAsync,
+            () => IsSecuritySettingsVisible && !IsMasterPasswordChangeExpanded && !IsBusy);
+        _cancelMasterPasswordChangeCommand = new MobileAsyncCommand(
+            CancelMasterPasswordChangeAsync,
+            () => IsSecuritySettingsVisible && IsMasterPasswordChangeExpanded && !IsBusy);
         _lockCommand = new MobileAsyncCommand(
             LockAsync,
             () => IsAccountsVisible && IsAppLockEnabled);
@@ -495,7 +510,7 @@ public sealed class MobileShellViewModel :
         _confirmEditorSecretAuthorizationCommand = new MobileAsyncCommand(
             ConfirmEditorSecretAuthorizationAsync,
             () => IsEditorSecretPasswordPromptVisible
-                && EditorSecretAuthorizationPassword.Length > 0
+                && CanConfirmSensitiveAuthorization(EditorSecretAuthorizationPassword)
                 && !IsBusy);
         _cancelEditorSecretAuthorizationCommand = new MobileAsyncCommand(
             CancelEditorSecretAuthorizationAsync,
@@ -577,7 +592,7 @@ public sealed class MobileShellViewModel :
             () => IsSettingsVisible && !IsBusy);
         _importAccountFileCommand = new MobileAsyncCommand(
             ImportAccountFileAsync,
-            () => IsSettingsVisible && !IsBusy);
+            CanImportAccountFile);
         MigrationImport = new TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel(
             _strings.Get, _importAccountFileCommand, _importGoogleQrCommand);
         _importBrandIconsCommand = new MobileAsyncCommand(
@@ -701,7 +716,7 @@ public sealed class MobileShellViewModel :
     public TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel MigrationImport { get; }
     public string InfoText => Get(StorageLocationStringKeys.Info);
     public TOTP.Avalonia.Shared.About.AboutViewModel? About { get; }
-    public string InfoDescriptionText => Get(StorageLocationStringKeys.InfoDescription);
+    public string InfoDescriptionText => Get(MobileStringKeys.InfoDescription);
     public bool IsInfoSettingsVisible => IsSettingsVisible && _settingsCategory == MobileSettingsCategory.Info;
     public ICommand ShowImportFormatsFaqCommand => _showImportFormatsFaqCommand;
     public ICommand ClearSearchCommand => _clearSearchCommand;
@@ -854,7 +869,10 @@ public sealed class MobileShellViewModel :
         && !IsGroupEditorVisible
         && !IsExternalImportReviewVisible;
     public bool CanHandleSystemBack =>
-        IsAccountBrandIconPickerVisible || IsSettingsVisible || IsEditorVisible;
+        IsInitialQuickUnlockOfferVisible || IsAccountBrandIconPickerVisible || IsSettingsVisible || IsEditorVisible
+        || IsImportBackupPasswordVisible || IsImportConfirmationVisible
+        || ExternalImportReview is not null
+        || MigrationImport.HasSelectedFile || MigrationImport.HasFormatChoice;
     public bool IsNativeAccountListVisible => IsAccountListVisible
         && HasAccounts
         && !IsImportProgressVisible
@@ -862,6 +880,7 @@ public sealed class MobileShellViewModel :
         && !IsBackupConflictResolutionVisible
         && !IsQrImportResolutionVisible
         && !IsQrImportResultVisible
+        && !IsInitialQuickUnlockOfferVisible
         && (!IsDeleteConfirmationVisible || _usesNativeDeleteConfirmation);
     public bool IsNativeAccountGroupsVisible =>
         IsNativeAccountListVisible && HasAccountNavigationCards;
@@ -2119,6 +2138,10 @@ public sealed class MobileShellViewModel :
         Get(MobileStringKeys.DiagnosticLogSharingNotice);
     public string FaqText => Get(MobileStringKeys.Faq);
     public string FaqSettingsDescriptionText => Get(MobileStringKeys.FaqSettingsDescription);
+    public string FaqMasterPasswordRecoveryQuestionText => Get(MobileStringKeys.FaqMasterPasswordRecoveryQuestion);
+    public string FaqMasterPasswordRecoveryAnswerText => Get(MobileStringKeys.FaqMasterPasswordRecoveryAnswer);
+    public string FaqOlderVaultsQuestionText => Get(MobileStringKeys.FaqOlderVaultsQuestion);
+    public string FaqOlderVaultsAnswerText => Get(MobileStringKeys.FaqOlderVaultsAnswer);
     public string FaqImportIconPacksQuestionText =>
         Get(MobileStringKeys.FaqImportIconPacksQuestion);
     public string FaqImportIconPacksStepDownloadText =>
@@ -2585,14 +2608,15 @@ public sealed class MobileShellViewModel :
                 return;
             }
 
-            // Android can report biometric hardware as temporarily unavailable while the
-            // activity is still starting. Re-query after password setup so that a stale
-            // startup result cannot disable the secure default enrollment flow.
+            // Recheck capabilities after password setup, when the activity is ready.
             await RefreshUnlockMethodAvailabilityAsync();
-            var biometricEnrollment = await TryEnrollBiometricsAfterSetupAsync(password);
+            if (_disposed || !_authorization.State.IsUnlocked) return;
             SetScreen(MobileScreen.Accounts);
+            ApplyBiometricEnrollmentOutcome(null);
+            IsInitialQuickUnlockOfferVisible = IsBiometricAvailable || IsDeviceCredentialAvailable;
+            if (IsInitialQuickUnlockOfferVisible) return;
+            await _authorization.CompleteInitialQuickUnlockSetupAsync(null);
             await LoadAccountsAsync();
-            ApplyBiometricEnrollmentOutcome(biometricEnrollment);
         }
         catch (Exception)
         {
@@ -2693,26 +2717,35 @@ public sealed class MobileShellViewModel :
         => BeginPlatformUnlockEnrollmentAsync(
             PreferredUnlockMethod.PlatformDeviceCredential);
 
-    private Task BeginPlatformUnlockEnrollmentAsync(PreferredUnlockMethod method)
+    private async Task BeginPlatformUnlockEnrollmentAsync(PreferredUnlockMethod method)
     {
-        if (!CanSelectUnlockMethod(method)) return Task.CompletedTask;
-        if (DisplayedUnlockMethod == method) return Task.CompletedTask;
-        _pendingUnlockMethod = method;
-        IsAppLockReactivationPending = false;
-        BiometricRecoveryPassword = string.Empty;
-        IsBiometricEnrollmentVisible = true;
-        ClearNotification();
-        return Task.CompletedTask;
+        if (!CanSelectUnlockMethod(method) || DisplayedUnlockMethod == method) return;
+        var authenticateImmediately = false;
+        IsBusy = true;
+        try
+        {
+            await PrepareSensitiveAuthenticationAsync(useConfiguredMethod: true);
+            if (!IsSettingsVisible || !_authorization.State.IsUnlocked) return;
+            _pendingUnlockMethod = method;
+            IsAppLockReactivationPending = false;
+            authenticateImmediately = IsPlatformAuthorizationSelected;
+            IsBiometricEnrollmentVisible = !authenticateImmediately;
+            ClearNotification();
+        }
+        finally { IsBusy = false; }
+        if (authenticateImmediately) await ApplyUnlockMethodChangeAsync(fromMethodSelection: true);
     }
 
     public Task SelectPasswordUnlockAsync() =>
         BeginPlatformUnlockEnrollmentAsync(PreferredUnlockMethod.Password);
 
-    public async Task EnableBiometricAsync()
+    public Task EnableBiometricAsync() => ApplyUnlockMethodChangeAsync(fromMethodSelection: false);
+
+    private async Task ApplyUnlockMethodChangeAsync(bool fromMethodSelection)
     {
-        if (!IsBiometricEnrollmentVisible
+        if ((!IsBiometricEnrollmentVisible && !fromMethodSelection)
             || IsBusy
-            || BiometricRecoveryPassword.Length == 0)
+            || !CanConfirmSensitiveAuthorization(BiometricRecoveryPassword))
         {
             return;
         }
@@ -2720,18 +2753,37 @@ public sealed class MobileShellViewModel :
         var recoveryPassword = BiometricRecoveryPassword;
         BiometricRecoveryPassword = string.Empty;
         IsBusy = true;
+        using var operation = BeginSensitiveOperation();
         try
         {
-            var result = IsAppLockReactivationPending
-                ? await _authorization.SetAppLockEnabledAsync(true, recoveryPassword)
-                : _pendingUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock
+            AuthorizationResult result;
+            if (IsPasswordAuthorizationSelected)
+            {
+                if (IsAppLockReactivationPending)
+                {
+                    result = await _authorization.TryUnlockWithPasswordAsync(recoveryPassword);
+                    if (result == AuthorizationResult.Success)
+                        result = await _authorization.SetAppLockEnabledAsync(true, recoveryPassword);
+                }
+                else result = _pendingUnlockMethod == PreferredUnlockMethod.PlatformQuickUnlock
                     ? await _authorization.ConfigureHelloAsync(recoveryPassword)
-                    : await _authorization.ConfigureUnlockMethodAsync(
-                        _pendingUnlockMethod,
-                        recoveryPassword);
+                    : await _authorization.ConfigureUnlockMethodAsync(_pendingUnlockMethod, recoveryPassword);
+            }
+            else result = IsAppLockReactivationPending
+                ? await _authorization.ReactivateAppLockWithPlatformAsync(SelectedAuthorizationMethod, operation.Token)
+                : await _authorization.ConfigureUnlockMethodWithPlatformAsync(
+                    _pendingUnlockMethod, SelectedAuthorizationMethod, operation.Token);
+            if (!_authorization.State.IsUnlocked) { LockCore(); return; }
+            if (operation.IsCancellationRequested) return;
             if (result == AuthorizationResult.Cancelled) return;
             if (result != AuthorizationResult.Success)
             {
+                if (result == AuthorizationResult.PasswordRequired
+                    || fromMethodSelection && result == AuthorizationResult.NotAvailable)
+                {
+                    SelectPasswordAuthorizationFallback();
+                    IsBiometricEnrollmentVisible = true;
+                }
                 SetError(GetUnlockMethodErrorKey(result, _pendingUnlockMethod));
                 if (IsAppLockReactivationPending && IsAppLockEnabled)
                 {
@@ -2748,41 +2800,26 @@ public sealed class MobileShellViewModel :
             NotifyAppLockChanged();
             NotifyUnlockMethodChanged();
             if (IsAppLockReactivationPending)
-                LockCore();
+            {
+                IsAppLockReactivationPending = false;
+                if (_backgroundedAtTimestamp.HasValue) OnEnteredBackground(lockImmediately: false);
+                SetSuccess(MobileStringKeys.AppLockEnabled);
+            }
             else
                 SetSuccess(MobileStringKeys.UnlockMethodChanged);
         }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested) { }
         catch (Exception)
         {
             SetError(MobileStringKeys.UnlockMethodChangeFailed);
         }
         finally
         {
-            IsAppLockReactivationPending = false;
+            EndSensitiveOperation(operation);
+            if (!IsBiometricEnrollmentVisible) IsAppLockReactivationPending = false;
             recoveryPassword = string.Empty;
             IsBusy = false;
-        }
-    }
-
-    private async Task<AuthorizationResult?> TryEnrollBiometricsAfterSetupAsync(
-        string recoveryPassword)
-    {
-        if (!IsBiometricAvailable || !_settings.Current.AppLockEnabled)
-            return null;
-
-        try
-        {
-            var result = await _authorization.ConfigureHelloAsync(recoveryPassword);
-            if (result == AuthorizationResult.Success)
-                IsBiometricEnabled = true;
-
-            return result;
-        }
-        catch (Exception)
-        {
-            // Password setup has already succeeded. A platform enrollment failure must
-            // not strand the user outside the newly created vault.
-            return AuthorizationResult.Failed;
+            NotifyUnlockMethodChanged();
         }
     }
 
@@ -2884,14 +2921,22 @@ public sealed class MobileShellViewModel :
         return Task.CompletedTask;
     }
 
-    public Task BeginDisableAppLockAsync()
+    public async Task BeginDisableAppLockAsync()
     {
         if (!IsSettingsVisible || !IsAppLockEnabled || IsBusy)
-            return Task.CompletedTask;
-        AppLockRecoveryPassword = string.Empty;
-        IsDisableAppLockConfirmationVisible = true;
-        ClearNotification();
-        return Task.CompletedTask;
+            return;
+        var authenticateImmediately = false;
+        IsBusy = true;
+        try
+        {
+            await PrepareSensitiveAuthenticationAsync(useConfiguredMethod: true);
+            if (_disposed || !IsSettingsVisible || !_authorization.State.IsUnlocked) return;
+            authenticateImmediately = IsPlatformAuthorizationSelected;
+            IsDisableAppLockConfirmationVisible = !authenticateImmediately;
+            ClearNotification();
+        }
+        finally { IsBusy = false; }
+        if (authenticateImmediately) await ApplyAppLockDeactivationAsync(fromToggle: true);
     }
 
     public async Task ToggleAppLockAsync()
@@ -2904,11 +2949,14 @@ public sealed class MobileShellViewModel :
             await EnableAppLockAsync();
     }
 
-    public async Task ConfirmDisableAppLockAsync()
+    public Task ConfirmDisableAppLockAsync() => ApplyAppLockDeactivationAsync(fromToggle: false);
+
+    private async Task ApplyAppLockDeactivationAsync(bool fromToggle)
     {
-        if (!IsDisableAppLockConfirmationVisible
+        if (_disposed || !IsSettingsVisible || !IsAppLockEnabled
+            || (!IsDisableAppLockConfirmationVisible && !fromToggle)
             || IsBusy
-            || AppLockRecoveryPassword.Length == 0)
+            || !CanConfirmSensitiveAuthorization(AppLockRecoveryPassword))
         {
             return;
         }
@@ -2916,13 +2964,21 @@ public sealed class MobileShellViewModel :
         var recoveryPassword = AppLockRecoveryPassword;
         AppLockRecoveryPassword = string.Empty;
         IsBusy = true;
+        using var operation = BeginSensitiveOperation();
         try
         {
-            var result = await _authorization.SetAppLockEnabledAsync(
-                false,
-                recoveryPassword);
+            var result = IsPasswordAuthorizationSelected
+                ? await _authorization.SetAppLockEnabledAsync(false, recoveryPassword)
+                : await _authorization.SetAppLockEnabledWithPlatformAsync(false, SelectedAuthorizationMethod, operation.Token);
+            if (!_authorization.State.IsUnlocked) { LockCore(); return; }
+            if (operation.IsCancellationRequested || result == AuthorizationResult.Cancelled) return;
             if (result != AuthorizationResult.Success)
             {
+                if (result is AuthorizationResult.PasswordRequired or AuthorizationResult.NotAvailable)
+                {
+                    SelectPasswordAuthorizationFallback();
+                    IsDisableAppLockConfirmationVisible = true;
+                }
                 SetError(result == AuthorizationResult.InvalidCredentials
                     ? MobileStringKeys.UnlockRejected
                     : MobileStringKeys.AppLockChangeFailed);
@@ -2937,12 +2993,14 @@ public sealed class MobileShellViewModel :
                 Get(MobileStringKeys.AppLockDisabled),
                 NotificationSeverity.Warning);
         }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested) { }
         catch (Exception)
         {
             SetError(MobileStringKeys.AppLockChangeFailed);
         }
         finally
         {
+            EndSensitiveOperation(operation);
             recoveryPassword = string.Empty;
             IsBusy = false;
         }
@@ -2960,41 +3018,17 @@ public sealed class MobileShellViewModel :
     public async Task EnableAppLockAsync()
     {
         if (!IsSettingsVisible || IsAppLockEnabled || IsBusy) return;
-
-        var preferred = _settings.Current.PreferredUnlockMethod;
-        if (preferred is PreferredUnlockMethod.PlatformQuickUnlock
-            or PreferredUnlockMethod.PlatformDeviceCredential)
-        {
-            _pendingUnlockMethod = preferred;
-            IsAppLockReactivationPending = true;
-            BiometricRecoveryPassword = string.Empty;
-            IsBiometricEnrollmentVisible = true;
-            ClearNotification();
-            return;
-        }
-
+        var authenticateImmediately = false;
         IsBusy = true;
         try
         {
-            var result = await _authorization.SetAppLockEnabledAsync(true, string.Empty);
-            NotifyAppLockChanged();
-            NotifyUnlockMethodChanged();
-            if (result != AuthorizationResult.Success || !IsAppLockEnabled)
-            {
-                if (IsAppLockEnabled)
-                {
-                    LockCore();
-                    return;
-                }
-                SetError(MobileStringKeys.AppLockChangeFailed);
-                return;
-            }
-
-            // Enforce the newly enabled policy immediately. Remaining on the
-            // authorized settings screen makes a successful toggle look
-            // ineffective and leaves codes exposed until a later lifecycle
-            // transition.
-            LockCore();
+            await PrepareSensitiveAuthenticationAsync(useConfiguredMethod: true);
+            if (_disposed || !IsSettingsVisible || !_authorization.State.IsUnlocked) return;
+            _pendingUnlockMethod = _settings.Current.PreferredUnlockMethod;
+            IsAppLockReactivationPending = true;
+            authenticateImmediately = IsPlatformAuthorizationSelected;
+            IsBiometricEnrollmentVisible = !authenticateImmediately;
+            ClearNotification();
         }
         catch (Exception)
         {
@@ -3011,11 +3045,12 @@ public sealed class MobileShellViewModel :
         {
             IsBusy = false;
         }
+        if (authenticateImmediately) await ApplyUnlockMethodChangeAsync(fromMethodSelection: true);
     }
 
     public async Task ChangeMasterPasswordAsync()
     {
-        if (!IsSecuritySettingsVisible || IsBusy) return;
+        if (!IsSecuritySettingsVisible || !IsMasterPasswordChangeExpanded || IsBusy) return;
 
         var currentPassword = CurrentMasterPassword;
         var newPassword = NewMasterPassword;
@@ -3055,8 +3090,10 @@ public sealed class MobileShellViewModel :
         try
         {
             var result = await _authorization.ChangePasswordAsync(currentPassword, newPassword);
+            if (_disposed || !_authorization.State.IsUnlocked || !IsSecuritySettingsVisible) return;
             if (result == AuthorizationResult.Success)
             {
+                CloseMasterPasswordChangeEditor();
                 SetSuccess(MobileStringKeys.PasswordChanged);
                 return;
             }
@@ -3122,7 +3159,7 @@ public sealed class MobileShellViewModel :
     public Task ShowSettingsCategoriesAsync()
     {
         if (!IsSettingsVisible || IsBusy) return Task.CompletedTask;
-        ClearMasterPasswordChangeInputs();
+        CloseMasterPasswordChangeEditor();
         _settingsCategory = MobileSettingsCategory.None;
         ClearNotification();
         NotifySettingsCategoryChanged();
@@ -3136,12 +3173,14 @@ public sealed class MobileShellViewModel :
         if (_settingsCategory == MobileSettingsCategory.Security
             && category != MobileSettingsCategory.Security)
         {
-            ClearMasterPasswordChangeInputs();
+            CloseMasterPasswordChangeEditor();
         }
         _settingsCategory = category;
-        if (category == MobileSettingsCategory.Info) StorageLocations?.Refresh();
         if (category == MobileSettingsCategory.Miscellaneous)
+        {
+            StorageLocations?.Refresh();
             OnPropertyChanged(nameof(MinimumLogLevel));
+        }
         ClearNotification();
         NotifySettingsCategoryChanged();
         return Task.CompletedTask;
@@ -3155,9 +3194,34 @@ public sealed class MobileShellViewModel :
 
     public async Task<bool> TryHandleBackNavigationAsync()
     {
+        if (IsInitialQuickUnlockOfferVisible)
+        {
+            await CompleteInitialQuickUnlockChoiceAsync(null);
+            return true;
+        }
+        if (IsDisableAppLockConfirmationVisible)
+        {
+            if (!IsBusy) await CancelDisableAppLockAsync();
+            return true;
+        }
+        if (IsBiometricEnrollmentVisible)
+        {
+            if (!IsBusy) await CancelBiometricEnrollmentAsync();
+            return true;
+        }
+        if (IsEditorSecretPasswordPromptVisible)
+        {
+            if (!IsBusy) await CancelEditorSecretAuthorizationAsync();
+            return true;
+        }
         if (IsImportBackupPasswordVisible)
         {
             _importBackupPasswordCompletion?.TrySetResult(Result.Fail<List<Account>>(new AccountImportReadCancelled()));
+            return true;
+        }
+        if (IsImportConfirmationVisible)
+        {
+            await ResolveImportConfirmationAsync(false);
             return true;
         }
         if (ExternalImportReview is { } review)
@@ -3960,7 +4024,7 @@ public sealed class MobileShellViewModel :
 
     public async Task ImportAccountFileAsync()
     {
-        if (!IsSettingsVisible || IsBusy) return;
+        if (!CanImportAccountFile()) return;
 
         IsBusy = true;
         using var operation = BeginSensitiveOperation();
@@ -3969,7 +4033,7 @@ public sealed class MobileShellViewModel :
             using var document = await _documents.OpenAccountImportAsync(operation.Token);
             if (document is null) return;
             BeginImportProgress(MobileStringKeys.ImportingAccounts);
-            if (!_authorization.State.IsUnlocked || !IsSettingsVisible)
+            if (!_authorization.State.IsUnlocked || !(IsSettingsVisible || IsAccountListVisible))
             {
                 SetError(MobileStringKeys.BackupRetryAfterUnlock);
                 return;
@@ -4491,7 +4555,11 @@ public sealed class MobileShellViewModel :
         if (!RequiresEditorSecretAuthorization || IsBusy) return;
 
         EditorSecretMessage = string.Empty;
-        if (_authorization.State.ConfiguredGate == AuthorizationGateKind.Password)
+        IsBusy = true;
+        try { await PrepareSensitiveAuthenticationAsync(); }
+        finally { IsBusy = false; }
+        if (!RequiresEditorSecretAuthorization) return;
+        if (IsPasswordAuthorizationSelected || !IsAppLockEnabled)
         {
             EditorSecretAuthorizationPassword = string.Empty;
             IsEditorSecretPasswordPromptVisible = true;
@@ -4499,15 +4567,19 @@ public sealed class MobileShellViewModel :
         }
 
         IsBusy = true;
+        using var operation = BeginSensitiveOperation();
         try
         {
-            var result = await _authorization.TryUnlockWithHelloAsync();
+            var result = await _authorization.AuthorizeSensitiveOperationAsync(SelectedAuthorizationMethod, operation.Token);
+            if (!_authorization.State.IsUnlocked) { LockCore(); return; }
+            if (operation.IsCancellationRequested) return;
             if (result == AuthorizationResult.Success)
             {
                 await GrantEditorSecretAccessAsync();
             }
             else if (result == AuthorizationResult.PasswordRequired)
             {
+                SelectPasswordAuthorizationFallback();
                 EditorSecretAuthorizationPassword = string.Empty;
                 IsEditorSecretPasswordPromptVisible = true;
             }
@@ -4516,12 +4588,14 @@ public sealed class MobileShellViewModel :
                 EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
             }
         }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested) { }
         catch (Exception)
         {
             EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
         }
         finally
         {
+            EndSensitiveOperation(operation);
             IsBusy = false;
         }
     }
@@ -4529,7 +4603,7 @@ public sealed class MobileShellViewModel :
     public async Task ConfirmEditorSecretAuthorizationAsync()
     {
         if (!IsEditorSecretPasswordPromptVisible
-            || EditorSecretAuthorizationPassword.Length == 0
+            || !CanConfirmSensitiveAuthorization(EditorSecretAuthorizationPassword)
             || IsBusy)
         {
             return;
@@ -4538,9 +4612,14 @@ public sealed class MobileShellViewModel :
         var password = EditorSecretAuthorizationPassword;
         EditorSecretAuthorizationPassword = string.Empty;
         IsBusy = true;
+        using var operation = BeginSensitiveOperation();
         try
         {
-            var result = await _authorization.TryUnlockWithPasswordAsync(password);
+            var result = IsPasswordAuthorizationSelected
+                ? await _authorization.TryUnlockWithPasswordAsync(password)
+                : await _authorization.AuthorizeSensitiveOperationAsync(SelectedAuthorizationMethod, operation.Token);
+            if (!_authorization.State.IsUnlocked) { LockCore(); return; }
+            if (operation.IsCancellationRequested || result == AuthorizationResult.Cancelled) return;
             if (result == AuthorizationResult.Success)
             {
                 IsEditorSecretPasswordPromptVisible = false;
@@ -4548,15 +4627,18 @@ public sealed class MobileShellViewModel :
             }
             else
             {
+                if (result == AuthorizationResult.PasswordRequired) SelectPasswordAuthorizationFallback();
                 EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
             }
         }
+        catch (OperationCanceledException) when (operation.IsCancellationRequested) { }
         catch (Exception)
         {
             EditorSecretMessage = Get(MobileStringKeys.AccountSecretAuthorizationFailed);
         }
         finally
         {
+            EndSensitiveOperation(operation);
             password = string.Empty;
             IsBusy = false;
         }
@@ -5655,6 +5737,7 @@ public sealed class MobileShellViewModel :
 
     private void LockCore()
     {
+        IsInitialQuickUnlockOfferVisible = false;
         if (_disposed || !IsAppLockEnabled) return;
         CloseAccountBrandIconPicker();
         CapturePostUnlockNavigation();
@@ -6158,7 +6241,7 @@ public sealed class MobileShellViewModel :
         UnlockPassword = string.Empty;
         BiometricRecoveryPassword = string.Empty;
         AppLockRecoveryPassword = string.Empty;
-        ClearMasterPasswordChangeInputs();
+        CloseMasterPasswordChangeEditor();
         BackupPassword = string.Empty;
         BackupPasswordConfirmation = string.Empty;
         ImportPassword = string.Empty;
@@ -6180,6 +6263,11 @@ public sealed class MobileShellViewModel :
         OnPropertyChanged(nameof(HasQrImage));
         _dismissQrCommand?.NotifyCanExecuteChanged();
     }
+
+    private bool CanImportAccountFile() =>
+        _authorization.State.IsUnlocked
+        && !IsBusy
+        && (IsSettingsVisible || CanEditAccounts());
 
     private bool CanEditAccounts() =>
         IsAccountListVisible
@@ -6781,6 +6869,7 @@ public sealed class MobileShellViewModel :
 
     private void NotifyLocalizedTextChanged()
     {
+        RefreshSensitiveAuthenticationTexts();
         MigrationImport?.RefreshLanguage();
         ExternalImportReview?.RefreshLanguage();
         StorageLocations?.RefreshLanguage();
@@ -6998,6 +7087,7 @@ public sealed class MobileShellViewModel :
 
     private void NotifyCommands()
     {
+        NotifySensitiveAuthenticationCommands();
         _initializeCommand.NotifyCanExecuteChanged();
         _previousOnboardingCommand.NotifyCanExecuteChanged();
         _nextOnboardingCommand.NotifyCanExecuteChanged();
@@ -7016,6 +7106,8 @@ public sealed class MobileShellViewModel :
         _cancelDisableAppLockCommand.NotifyCanExecuteChanged();
         _enableAppLockCommand.NotifyCanExecuteChanged();
         _changeMasterPasswordCommand.NotifyCanExecuteChanged();
+        _beginMasterPasswordChangeCommand.NotifyCanExecuteChanged();
+        _cancelMasterPasswordChangeCommand.NotifyCanExecuteChanged();
         _lockCommand.NotifyCanExecuteChanged();
         _showAccountsCommand.NotifyCanExecuteChanged();
         _showSettingsCommand.NotifyCanExecuteChanged();
@@ -7136,6 +7228,7 @@ public sealed class MobileShellViewModel :
         nameof(MasterPasswordText),
         nameof(ConfirmPasswordText),
         nameof(ChangeMasterPasswordText),
+        nameof(ChangeText),
         nameof(ChangeMasterPasswordDescriptionText),
         nameof(CurrentPasswordText),
         nameof(NewPasswordText),
@@ -7212,6 +7305,10 @@ public sealed class MobileShellViewModel :
         nameof(FaqSettingsDescriptionText),
         nameof(InfoText),
         nameof(InfoDescriptionText),
+        nameof(FaqMasterPasswordRecoveryQuestionText),
+        nameof(FaqMasterPasswordRecoveryAnswerText),
+        nameof(FaqOlderVaultsQuestionText),
+        nameof(FaqOlderVaultsAnswerText),
         nameof(FaqImportIconPacksQuestionText),
         nameof(FaqImportIconPacksStepDownloadText),
         nameof(FaqImportIconPacksDownloadLinkText),

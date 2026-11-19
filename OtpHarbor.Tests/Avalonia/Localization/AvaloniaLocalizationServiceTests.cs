@@ -6,6 +6,35 @@ namespace TOTP.Tests.Avalonia.Localization;
 public sealed class AvaloniaLocalizationServiceTests
 {
     [Theory]
+    [InlineData("en", "Manual backup")]
+    [InlineData("de", "Manuelle Sicherung")]
+    [InlineData("fr", "Sauvegarde manuelle")]
+    [InlineData("es", "Copia de seguridad manual")]
+    public void ManualBackupHeading_DistinguishesTheSectionFromAutomaticBackups(string locale, string expected)
+    {
+        var catalog = new AvaloniaStringCatalog();
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(locale);
+        Assert.Equal(expected, catalog.Get(AvaloniaStringKeys.BackupSection, culture));
+        Assert.NotEqual(expected, catalog.Get(AvaloniaStringKeys.AutomaticBackups, culture));
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("es")]
+    public void FirstPasswordSetup_UsesTheSameCompleteOfferOnDesktopAndAndroid(string cultureName)
+    {
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(cultureName);
+        var desktop = new AvaloniaStringCatalog();
+        var mobile = new TOTP.Avalonia.Mobile.Localization.MobileStringCatalog(culture);
+        Assert.Equal(mobile.Get(TOTP.Avalonia.Mobile.Localization.MobileStringKeys.InitialQuickUnlockTitle),
+            desktop.Get(AvaloniaStringKeys.InitialQuickUnlockTitle, culture));
+        Assert.Equal(mobile.Get(TOTP.Avalonia.Mobile.Localization.MobileStringKeys.InitialQuickUnlockDescription),
+            desktop.Get(AvaloniaStringKeys.InitialQuickUnlockDescription, culture));
+    }
+
+    [Theory]
     [InlineData("en", "Minimum logging level")]
     [InlineData("de", "Minimale Protokollstufe")]
     [InlineData("fr", "Niveau minimal de journalisation")]

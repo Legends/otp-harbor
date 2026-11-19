@@ -3,7 +3,7 @@ using TOTP.Core.Security.Models;
 
 namespace TOTP.Platform.MacOS.Security;
 
-public sealed partial class MacOSKeychainNative : IMacOSKeychainNative
+public sealed partial class MacOSKeychainNative(bool requireUserPresence = true) : IMacOSKeychainNative
 {
     private const string ServiceName = "io.github.legends.totpmanager.quick-unlock";
     private const uint Utf8Encoding = 0x08000100;
@@ -20,6 +20,7 @@ public sealed partial class MacOSKeychainNative : IMacOSKeychainNative
     public PlatformSecretStoreAvailability GetAvailability()
     {
         if (!OperatingSystem.IsMacOS()) return PlatformSecretStoreAvailability.NotSupported;
+        if (!requireUserPresence) return PlatformSecretStoreAvailability.Available;
         _ = Symbols.LocalAuthenticationHandle;
         using var context = ObjectiveCHandle.Create("LAContext");
         if (context.IsInvalid) return PlatformSecretStoreAvailability.NotSupported;
@@ -52,7 +53,7 @@ public sealed partial class MacOSKeychainNative : IMacOSKeychainNative
         var accessControl = NativeMethods.SecAccessControlCreateWithFlags(
             IntPtr.Zero,
             accessible,
-            UserPresence,
+            requireUserPresence ? UserPresence : 0,
             out var accessError);
         if (accessError != IntPtr.Zero) NativeMethods.CFRelease(accessError);
         if (accessControl == IntPtr.Zero) return MacOSKeychainNativeStatus.NotConfigured;
@@ -75,7 +76,6 @@ public sealed partial class MacOSKeychainNative : IMacOSKeychainNative
     {
         EnsureMacOS();
         using var query = CreateIdentityQuery(secretReference);
-        using var prompt = CreateString("Unlock OTP Harbor");
         NativeMethods.CFDictionarySetValue(
             query.Value,
             Symbols.SecurityConstant("kSecReturnData"),
@@ -84,10 +84,16 @@ public sealed partial class MacOSKeychainNative : IMacOSKeychainNative
             query.Value,
             Symbols.SecurityConstant("kSecMatchLimit"),
             Symbols.SecurityConstant("kSecMatchLimitOne"));
-        NativeMethods.CFDictionarySetValue(
-            query.Value,
-            Symbols.SecurityConstant("kSecUseOperationPrompt"),
-            prompt.Value);
+        if (requireUserPresence)
+        {
+            using var prompt = CreateString("Unlock OTP Harbor");
+            NativeMethods.CFDictionarySetValue(query.Value,
+                Symbols.SecurityConstant("kSecUseOperationPrompt"), prompt.Value);
+        }
+        else
+            NativeMethods.CFDictionarySetValue(query.Value,
+                Symbols.SecurityConstant("kSecUseAuthenticationUI"),
+                Symbols.SecurityConstant("kSecUseAuthenticationUIFail"));
 
         var status = NativeMethods.SecItemCopyMatching(query.Value, out var result);
         var mapped = MapStatus(status);
@@ -109,7 +115,7 @@ public sealed partial class MacOSKeychainNative : IMacOSKeychainNative
         return MapStatus(NativeMethods.SecItemDelete(query.Value));
     }
 
-    private static CFHandle CreateIdentityQuery(string secretReference)
+    private CFHandle CreateIdentityQuery(string secretReference)
     {
         var dictionary = NativeMethods.CFDictionaryCreateMutable(
             IntPtr.Zero,
@@ -118,7 +124,7 @@ public sealed partial class MacOSKeychainNative : IMacOSKeychainNative
             Symbols.DictionaryValueCallbacks);
         if (dictionary == IntPtr.Zero) throw new InvalidOperationException("Could not create Keychain query.");
         var result = CFHandle.FromOwned(dictionary);
-        using var service = CreateString(ServiceName);
+        using var service = CreateString(requireUserPresence ? ServiceName : "io.github.legends.otpharbor.unattended");
         using var account = CreateString(secretReference);
         NativeMethods.CFDictionarySetValue(
             result.Value,

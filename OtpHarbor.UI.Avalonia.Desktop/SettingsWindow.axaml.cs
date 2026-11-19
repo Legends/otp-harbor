@@ -53,7 +53,11 @@ public partial class SettingsWindow : global::Avalonia.Controls.Window
     {
         if (sender is not global::Avalonia.Controls.Expander expanded) return;
 
-        foreach (var section in new[] { FaqIconPacksExpander, FaqImportFormatsExpander })
+        foreach (var section in new[]
+                 {
+                     FaqMasterPasswordRecoveryExpander,
+                     FaqOlderVaultsExpander, FaqIconPacksExpander, FaqImportFormatsExpander
+                 })
         {
             if (!ReferenceEquals(section, expanded)) section.IsExpanded = false;
         }

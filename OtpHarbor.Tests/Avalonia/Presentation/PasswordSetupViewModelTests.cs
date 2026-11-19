@@ -17,7 +17,7 @@ public sealed class PasswordSetupViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         var sut = CreateSut(authorization.Object);
         var configured = false;
-        sut.Configured += (_, _) => configured = true;
+        sut.Configured += () => { configured = true; return Task.CompletedTask; };
         sut.Password = "synthetic password";
         sut.ConfirmPassword = "synthetic password";
 

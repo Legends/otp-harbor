@@ -1,0 +1,27 @@
+<UserControl
+    x:Class="TOTP.Avalonia.Mobile.Views.SensitiveAuthenticationSelector"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation"
+    xmlns:vm="using:TOTP.Avalonia.Mobile.Presentation"
+    x:DataType="vm:MobileShellViewModel">
+    <StackPanel Spacing="8">
+        <TextBlock IsVisible="{Binding HasAuthenticationMethodChoice}"
+                   Text="{Binding AuthenticationMethodText}" TextWrapping="Wrap" />
+        <ComboBox IsVisible="{Binding HasAuthenticationMethodChoice}"
+                  HorizontalAlignment="Stretch"
+                  automation:AutomationProperties.Name="{Binding AuthenticationMethodText}"
+                  ItemsSource="{Binding AuthenticationMethods}"
+                  SelectedItem="{Binding SelectedAuthenticationMethod, Mode=TwoWay}"
+                  IsEnabled="{Binding !IsBusy}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:SensitiveAuthenticationOption">
+                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <TextBlock IsVisible="{Binding IsPlatformAuthorizationSelected}"
+                   Foreground="{DynamicResource BrushTextSecondary}"
+                   Text="{Binding DeviceAuthenticationPromptText}" TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

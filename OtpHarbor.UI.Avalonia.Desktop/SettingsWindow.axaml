@@ -24,6 +24,15 @@
         <KeyBinding Gesture="Escape" Command="{Binding CloseSettingsCommand}" />
     </Window.KeyBindings>
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <StaticResource x:Key="ExpanderHeaderBackgroundPointerOver" ResourceKey="BrushFaqHeaderBackground" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Window.Styles>
         <Style Selector="Button.settings-action">
             <Setter Property="Background" Value="{DynamicResource BrushAccent}" />
@@ -275,11 +284,22 @@
                             <ContentControl.ContentTemplate>
                                 <DataTemplate x:DataType="presentation:AuthorizationSettingsViewModel">
                                     <StackPanel Spacing="12">
+                                        <Border x:Name="AppLockSettingsPanel" Classes="panel">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Classes="section-title" Text="{DynamicResource AppLockTitle}" />
+                                                <TextBlock Classes="secondary" Text="{Binding AppLockDescription}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="secondary" Text="{DynamicResource DisableAppLockWarning}"
+                                                           IsVisible="{Binding IsAppLockEnabled}" TextWrapping="Wrap" />
+                                                <Button x:Name="AppLockToggleButton" Classes="settings-action" Command="{Binding ToggleAppLockCommand}">
+                                                    <shared:SymbolIconLabel Kind="Lock" Text="{Binding AppLockActionText}" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
                                         <Border Classes="panel">
                                             <StackPanel Spacing="8">
                                                 <TextBlock Classes="section-title" Text="{DynamicResource QuickUnlock}" />
                                                 <TextBlock Classes="secondary" Text="{DynamicResource QuickUnlockRecoveryNotice}" TextWrapping="Wrap" />
-                                                <StackPanel Spacing="6">
+                                                <StackPanel Spacing="6" IsEnabled="{Binding IsAppLockEnabled}">
                                                     <RadioButton
                                                         Command="{Binding EnableQuickUnlockCommand}"
                                                         Content="{DynamicResource QuickUnlockAtStartup}"
@@ -312,14 +332,6 @@
                                                 </Button>
                                             </StackPanel>
                                         </Border>
-                                        <Border Classes="panel">
-                                            <StackPanel Spacing="6">
-                                                <TextBlock Classes="section-title" Text="{DynamicResource RecoveryAndCompatibility}" />
-                                                <TextBlock Text="{DynamicResource PortableEnvelopeStatus}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource AutomaticRollbackStatus}" TextWrapping="Wrap" />
-                                                <TextBlock Classes="secondary" Text="{DynamicResource LegacyMigrationStatus}" TextWrapping="Wrap" />
-                                            </StackPanel>
-                                        </Border>
                                     </StackPanel>
                                 </DataTemplate>
                             </ContentControl.ContentTemplate>
@@ -327,34 +339,41 @@
                             <ContentControl x:Name="SecurityBehaviorSettingsHost" Content="{Binding SettingsPage}">
                                 <ContentControl.ContentTemplate>
                                     <DataTemplate x:DataType="presentation:SettingsPageViewModel">
-                                        <Border x:Name="SecurityBehaviorSettings" Classes="panel">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="settings-label" Text="{DynamicResource IdleTimeout}" />
-                                                <ComboBox
-                                                    x:Name="AutoLockSelector"
-                                                    ItemsSource="{Binding AutoLockOptions}"
-                                                    SelectedItem="{Binding SelectedAutoLock, Mode=TwoWay}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="presentation:SettingsPageViewModel+AutoLockOption">
-                                                            <TextBlock Text="{Binding Label}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                                <CheckBox Content="{DynamicResource LockWhenMinimized}" IsChecked="{Binding LockOnMinimize, Mode=TwoWay}" />
-                                                <CheckBox Content="{DynamicResource LockOnSessionLock}" IsChecked="{Binding LockOnSessionLock, Mode=TwoWay}" />
-                                                <TextBlock Classes="settings-label settings-group-label" Text="{DynamicResource ClipboardClearSeconds}" />
-                                                <ComboBox
-                                                    x:Name="ClipboardLifetimeSelector"
-                                                    ItemsSource="{Binding ClipboardLifetimeOptions}"
-                                                    SelectedItem="{Binding SelectedClipboardLifetime, Mode=TwoWay}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate x:DataType="presentation:SettingsPageViewModel+ClipboardLifetimeOption">
-                                                            <TextBlock Text="{Binding Label}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
-                                            </StackPanel>
-                                        </Border>
+                                        <StackPanel Spacing="12">
+                                            <Border x:Name="SecurityBehaviorSettings" Classes="panel"
+                                                    IsEnabled="{Binding DataContext.AuthorizationSettings.IsAppLockEnabled, ElementName=SettingsRoot}">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource IdleTimeout}" />
+                                                    <ComboBox
+                                                        x:Name="AutoLockSelector"
+                                                        ItemsSource="{Binding AutoLockOptions}"
+                                                        SelectedItem="{Binding SelectedAutoLock, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="presentation:SettingsPageViewModel+AutoLockOption">
+                                                                <TextBlock Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <CheckBox Content="{DynamicResource LockWhenMinimized}" IsChecked="{Binding LockOnMinimize, Mode=TwoWay}" />
+                                                    <CheckBox Content="{DynamicResource LockOnSessionLock}" IsChecked="{Binding LockOnSessionLock, Mode=TwoWay}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="ClipboardBehaviorSettings" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource ClipboardClearSeconds}" TextWrapping="Wrap" />
+                                                    <ComboBox
+                                                        x:Name="ClipboardLifetimeSelector"
+                                                        ItemsSource="{Binding ClipboardLifetimeOptions}"
+                                                        SelectedItem="{Binding SelectedClipboardLifetime, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="presentation:SettingsPageViewModel+ClipboardLifetimeOption">
+                                                                <TextBlock Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ContentControl.ContentTemplate>
                             </ContentControl>
@@ -511,44 +530,76 @@
                             <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{DynamicResource Miscellaneous}" TextWrapping="NoWrap" TextAlignment="Center" />
                         </Grid>
                     </TabItem.Header>
-                    <ContentControl x:Name="MiscSettingsHost" Content="{Binding SettingsPage}">
-                        <ContentControl.ContentTemplate>
-                            <DataTemplate x:DataType="presentation:SettingsPageViewModel">
-                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
-                                    <Border x:Name="MiscSettingsPanel" Margin="4,8,4,4" VerticalAlignment="Top" Classes="panel">
-                                        <StackPanel Spacing="8">
-                                            <TextBlock Classes="settings-label" Text="{DynamicResource LoggingLevel}" />
-                                            <ComboBox
-                                                x:Name="MinimumLoggingLevelPicker"
-                                                ItemsSource="{Binding LogLevels}"
-                                                SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
-                                            <TextBlock
-                                                Classes="secondary"
-                                                Text="{DynamicResource DiagnosticLogSharingNotice}"
-                                                TextWrapping="Wrap" />
-                                            <Button
-                                                x:Name="EmailDiagnosticLogButton"
-                                                Classes="wide settings-action"
-                                                Command="{Binding EmailDiagnosticLogCommand}">
-                                                <shared:SymbolIconLabel Kind="Diagnostics" Text="{DynamicResource EmailDiagnosticLog}" />
-                                            </Button>
-                                            <Button
-                                                x:Name="OpenLogFolderButton"
-                                                Classes="wide settings-action"
-                                                Command="{Binding OpenLogFolderCommand}">
-                                                <shared:SymbolIconLabel Kind="Folder" Text="{DynamicResource OpenLogFolder}" />
-                                            </Button>
-                                            <TextBlock Classes="section-title" Text="{DynamicResource ReportProblemTitle}" TextWrapping="Wrap" />
-                                            <TextBlock Classes="secondary" Text="{DynamicResource GitHubReportNotice}" TextWrapping="Wrap" />
-                                            <Button x:Name="ReportOnGitHubButton" Classes="wide settings-action" Command="{Binding ReportOnGitHubCommand}">
-                                                <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource ReportOnGitHub}" />
-                                            </Button>
+                    <ScrollViewer x:Name="SupportSettingsScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                        <StackPanel Margin="4,8,4,4" Spacing="12">
+                            <ContentControl x:Name="MiscSettingsHost" Content="{Binding SettingsPage}">
+                                <ContentControl.ContentTemplate>
+                                    <DataTemplate x:DataType="presentation:SettingsPageViewModel">
+                                        <StackPanel Spacing="12">
+                                            <Border x:Name="MiscSettingsPanel" VerticalAlignment="Top" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="settings-label" Text="{DynamicResource LoggingLevel}" />
+                                                    <ComboBox
+                                                        x:Name="MinimumLoggingLevelPicker"
+                                                        ItemsSource="{Binding LogLevels}"
+                                                        SelectedItem="{Binding MinimumLogLevel, Mode=TwoWay}" />
+                                                    <TextBlock
+                                                        Classes="secondary"
+                                                        Text="{DynamicResource DiagnosticLogSharingNotice}"
+                                                        TextWrapping="Wrap" />
+                                                    <Button
+                                                        x:Name="EmailDiagnosticLogButton"
+                                                        Classes="wide settings-action"
+                                                        Command="{Binding EmailDiagnosticLogCommand}">
+                                                        <shared:SymbolIconLabel Kind="Diagnostics" Text="{DynamicResource EmailDiagnosticLog}" />
+                                                    </Button>
+                                                    <Button
+                                                        x:Name="OpenLogFolderButton"
+                                                        Classes="wide settings-action"
+                                                        Command="{Binding OpenLogFolderCommand}">
+                                                        <shared:SymbolIconLabel Kind="Folder" Text="{DynamicResource OpenLogFolder}" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="ProblemReportSettingsPanel" Classes="panel">
+                                                <StackPanel Spacing="8">
+                                                    <TextBlock Classes="section-title" Text="{DynamicResource ReportProblemTitle}" TextWrapping="Wrap" />
+                                                    <TextBlock Classes="secondary" Text="{DynamicResource GitHubReportNotice}" TextWrapping="Wrap" />
+                                                    <Button x:Name="ReportOnGitHubButton" Classes="wide settings-action" Command="{Binding ReportOnGitHubCommand}">
+                                                        <shared:SymbolIconLabel Kind="ExternalLink" Text="{DynamicResource ReportOnGitHub}" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </Border>
                                         </StackPanel>
-                                    </Border>
-                                </ScrollViewer>
-                            </DataTemplate>
-                        </ContentControl.ContentTemplate>
-                    </ContentControl>
+                                    </DataTemplate>
+                                </ContentControl.ContentTemplate>
+                            </ContentControl>
+                            <ContentControl x:Name="SupportDiagnosticsHost" Content="{Binding Diagnostics}">
+                                <ContentControl.ContentTemplate>
+                                    <DataTemplate x:DataType="presentation:DiagnosticsViewModel">
+                                        <Border Classes="panel">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Classes="section-title" Text="{DynamicResource SupportDiagnostics}" />
+                                                <Button Classes="settings-action" Command="{Binding RefreshCommand}">
+                                                    <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource RefreshSupportInformation}" />
+                                                </Button>
+                                                <TextBox AcceptsReturn="True" IsReadOnly="True" MinHeight="100" Text="{Binding SupportInformation}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ContentControl.ContentTemplate>
+                            </ContentControl>
+                            <ContentControl x:Name="StorageLocationsHost" Content="{Binding SettingsPage.StorageLocations}">
+                                <ContentControl.ContentTemplate>
+                                    <DataTemplate x:DataType="storage:StorageLocationsViewModel">
+                                        <Border Classes="panel">
+                                            <shared:StorageLocationsPanel />
+                                        </Border>
+                                    </DataTemplate>
+                                </ContentControl.ContentTemplate>
+                            </ContentControl>
+                        </StackPanel>
+                    </ScrollViewer>
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
@@ -559,6 +610,46 @@
                     </TabItem.Header>
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Margin="4,8,4,4" Spacing="10">
+                                <Border x:Name="FaqMasterPasswordRecoveryCard"
+                                        HorizontalAlignment="Stretch"
+                                        Background="{DynamicResource BrushFaqHeaderBackground}"
+                                        BoxShadow="{DynamicResource ElevationCard}" CornerRadius="8">
+                                    <Expander x:Name="FaqMasterPasswordRecoveryExpander" Classes="faq-section"
+                                              Expanded="FaqSectionExpanded" HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,10" MinHeight="38" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <shared:SymbolIcon Grid.Column="0" Kind="Key" IconSize="22"
+                                                                   VerticalAlignment="Center" Foreground="{DynamicResource BrushFaqHeaderIcon}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                           Text="{DynamicResource FaqMasterPasswordRecoveryQuestion}" TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border Background="{DynamicResource BrushFaqContentBackground}" CornerRadius="0,0,8,8" Padding="12">
+                                            <TextBlock Classes="secondary" Text="{DynamicResource FaqMasterPasswordRecoveryAnswer}" TextWrapping="Wrap" />
+                                        </Border>
+                                    </Expander>
+                                </Border>
+                                <Border x:Name="FaqOlderVaultsCard"
+                                        HorizontalAlignment="Stretch"
+                                        Background="{DynamicResource BrushFaqHeaderBackground}"
+                                        BoxShadow="{DynamicResource ElevationCard}" CornerRadius="8">
+                                    <Expander x:Name="FaqOlderVaultsExpander" Classes="faq-section"
+                                              Expanded="FaqSectionExpanded" HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,10" MinHeight="38" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <shared:SymbolIcon Grid.Column="0" Kind="BackupRestore" IconSize="22"
+                                                                   VerticalAlignment="Center" Foreground="{DynamicResource BrushFaqHeaderIcon}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource BrushFaqHeaderForeground}"
+                                                           Text="{DynamicResource FaqOlderVaultsQuestion}" TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border Background="{DynamicResource BrushFaqContentBackground}" CornerRadius="0,0,8,8" Padding="12">
+                                            <TextBlock Classes="secondary" Text="{DynamicResource FaqOlderVaultsAnswer}" TextWrapping="Wrap" />
+                                        </Border>
+                                    </Expander>
+                                </Border>
                                 <Border
                                     x:Name="FaqIconPacksCard"
                                     HorizontalAlignment="Stretch"
@@ -743,8 +834,8 @@
                     </TabItem.Header>
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                         <StackPanel Margin="4,8" Spacing="12">
-                            <Border Classes="panel"><shared:AboutPanel DataContext="{Binding SettingsPage.About}" /></Border>
-                            <ContentControl Content="{Binding UpdateCheck}"
+                            <Border x:Name="AppInformationPanel" Classes="panel"><shared:AboutPanel Classes="compact" DataContext="{Binding SettingsPage.About}" /></Border>
+                            <ContentControl x:Name="SoftwareUpdatesHost" Content="{Binding UpdateCheck}"
                                             IsVisible="{Binding UpdateCheck.IsSoftwareUpdatesVisible}">
                                 <ContentControl.ContentTemplate>
                                     <DataTemplate x:DataType="presentation:UpdateCheckViewModel">
@@ -782,30 +873,6 @@
                                                 </Button>
                                                 <TextBlock IsVisible="{Binding HasReleaseNotes}" Text="{Binding ReleaseNotes}" TextWrapping="Wrap" />
                                             </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ContentControl.ContentTemplate>
-                            </ContentControl>
-                            <ContentControl Content="{Binding Diagnostics}">
-                                <ContentControl.ContentTemplate>
-                                    <DataTemplate x:DataType="presentation:DiagnosticsViewModel">
-                                        <Border Classes="panel">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Classes="section-title" Text="{DynamicResource SupportDiagnostics}" />
-                                                <Button Classes="settings-action" Command="{Binding RefreshCommand}">
-                                                    <shared:SymbolIconLabel Kind="Refresh" Text="{DynamicResource RefreshSupportInformation}" />
-                                                </Button>
-                                                <TextBox AcceptsReturn="True" IsReadOnly="True" MinHeight="100" Text="{Binding SupportInformation}" TextWrapping="Wrap" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ContentControl.ContentTemplate>
-                            </ContentControl>
-                            <ContentControl x:Name="StorageLocationsHost" Content="{Binding SettingsPage.StorageLocations}">
-                                <ContentControl.ContentTemplate>
-                                    <DataTemplate x:DataType="storage:StorageLocationsViewModel">
-                                        <Border Classes="panel">
-                                            <shared:StorageLocationsPanel />
                                         </Border>
                                     </DataTemplate>
                                 </ContentControl.ContentTemplate>

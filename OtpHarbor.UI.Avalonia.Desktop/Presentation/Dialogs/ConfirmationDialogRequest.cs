@@ -9,4 +9,5 @@ public sealed record ConfirmationDialogRequest(
     string ConfirmText,
     string CancelText,
     bool ShowCancel = true,
-    bool IsDestructive = false);
+    bool IsDestructive = false,
+    bool StackActions = false);

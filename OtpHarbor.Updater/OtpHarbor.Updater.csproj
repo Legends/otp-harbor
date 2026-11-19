@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="TOTP.Tests" />
+    <ProjectReference Include="..\OtpHarbor.Localization\OtpHarbor.Localization.csproj" />
   </ItemGroup>
 
 </Project>

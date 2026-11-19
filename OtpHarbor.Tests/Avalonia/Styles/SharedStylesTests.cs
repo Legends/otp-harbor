@@ -574,25 +574,30 @@ public sealed class SharedStylesTests
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "faq-section")
             .ToArray();
-        Assert.Equal(2, faqSections.Length);
+        Assert.Equal(4, faqSections.Length);
         Assert.All(
             faqSections,
             section => Assert.Equal(
                 "FaqSectionExpanded",
                 section.Attribute("Expanded")?.Value));
         Assert.Equal(
-            ["{DynamicResource FaqImportIconPacksQuestion}", "{DynamicResource FaqImportFormatsQuestion}"],
+            ["{DynamicResource FaqMasterPasswordRecoveryQuestion}",
+                "{DynamicResource FaqOlderVaultsQuestion}", "{DynamicResource FaqImportIconPacksQuestion}", "{DynamicResource FaqImportFormatsQuestion}"],
             faqSections.Select(section => section
                 .Descendants(avalonia + "TextBlock")
                 .First()
                 .Attribute("Text")?.Value));
         Assert.Equal(
-            ["Folder", "QrCode"],
+            ["Key", "BackupRestore", "Folder", "QrCode"],
             faqSections.Select(section => section
                 .Element(avalonia + "Expander.Header")!
                 .Descendants()
                 .Single(element => element.Name.LocalName == "SymbolIcon")
                 .Attribute("Kind")?.Value));
+        var iconPacksSection = faqSections.Single(section =>
+            section.Attribute("{http://schemas.microsoft.com/winfx/2006/xaml}Name")?.Value == "FaqIconPacksExpander");
+        var importFormatsSection = faqSections.Single(section =>
+            section.Attribute("{http://schemas.microsoft.com/winfx/2006/xaml}Name")?.Value == "FaqImportFormatsExpander");
         Assert.Equal(
             [
                 "https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest",
@@ -600,14 +605,14 @@ public sealed class SharedStylesTests
                 "https://github.com/aegis-icons/aegis-icons#disclaimer",
                 "https://github.com/homarr-labs/dashboard-icons#legal"
             ],
-            faqSections[0]
+            iconPacksSection
                 .Descendants(avalonia + "HyperlinkButton")
                 .Select(link => link.Attribute("NavigateUri")?.Value));
         Assert.Contains(
-            faqSections[1].Descendants(avalonia + "TextBlock"),
+            importFormatsSection.Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{DynamicResource FaqImportFormatsAegisDescription}");
-        var importFormatSections = faqSections[1]
+        var importFormatSections = importFormatsSection
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "faq-subsection")
             .ToArray();

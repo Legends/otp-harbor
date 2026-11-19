@@ -66,7 +66,7 @@ public sealed class AuthorizationEnvelopeSession : IAuthorizationEnvelopeSession
                 HasQuickUnlock: _envelope?.QuickUnlockWrapper is not null
                     && PlatformQuickUnlockContract.IsSupported(_envelope.QuickUnlockWrapper),
                 HasUnattendedUnlock:
-                    PlatformQuickUnlockContract.IsSupportedAndroidUnattendedWrapper(
+                    PlatformQuickUnlockContract.IsSupportedUnattendedWrapper(
                         _envelope?.QuickUnlockWrapper),
                 PlatformUnlockMethod: PlatformQuickUnlockContract.GetUnlockMethod(
                     _envelope?.QuickUnlockWrapper));

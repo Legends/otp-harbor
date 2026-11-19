@@ -27,6 +27,9 @@ This index lists maintained documentation. Git history preserves completed migra
 
 ## Architecture
 
+- [Common localization and translation ownership](architecture/COMMON_LOCALIZATION.md)
+- [Cross-platform source duplication audit](architecture/DUPLICATION_AUDIT.md)
+- [Application code reuse review and priorities](architecture/CODE_REUSE_REVIEW.md)
 - [Native Avalonia decision](architecture/ADR-0001-native-avalonia-migration.md)
 - [Desktop distribution policy](architecture/AVALONIA_DESKTOP_DISTRIBUTION.md)
 - [Platform application paths](architecture/PLATFORM_APPLICATION_PATHS.md)

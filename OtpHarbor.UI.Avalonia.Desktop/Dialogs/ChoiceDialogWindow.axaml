@@ -2,6 +2,7 @@
     x:Class="TOTP.Avalonia.Desktop.Dialogs.ChoiceDialogWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation"
     xmlns:dialogs="using:TOTP.Avalonia.Desktop.Presentation.Dialogs"
     x:DataType="dialogs:ChoiceDialogViewModel"
     Background="{DynamicResource BrushDialogSurface}"
@@ -25,11 +26,15 @@
         <Grid
             Grid.Row="1"
             Classes="dialog-choice-actions"
+            RowDefinitions="Auto,Auto,Auto"
+            RowSpacing="{Binding ActionRowSpacing}"
             ColumnDefinitions="*,*,*"
             ColumnSpacing="8">
             <Button
                 Grid.Column="0"
+                Grid.ColumnSpan="{Binding ActionColumnSpan}"
                 Classes="secondary"
+                automation:AutomationProperties.Name="{Binding CancelText}"
                 Command="{Binding CancelCommand}"
                 IsCancel="True">
                 <TextBlock
@@ -39,7 +44,10 @@
                     TextWrapping="Wrap" />
             </Button>
             <Button
-                Grid.Column="1"
+                Grid.Column="{Binding SecondaryColumn}"
+                Grid.Row="{Binding SecondaryRow}"
+                Grid.ColumnSpan="{Binding ActionColumnSpan}"
+                automation:AutomationProperties.Name="{Binding SecondaryText}"
                 Command="{Binding SecondaryCommand}">
                 <TextBlock
                     HorizontalAlignment="Center"
@@ -48,8 +56,11 @@
                     TextWrapping="Wrap" />
             </Button>
             <Button
-                Grid.Column="2"
+                Grid.Column="{Binding PrimaryColumn}"
+                Grid.Row="{Binding PrimaryRow}"
+                Grid.ColumnSpan="{Binding ActionColumnSpan}"
                 Classes="primary"
+                automation:AutomationProperties.Name="{Binding PrimaryText}"
                 Command="{Binding PrimaryCommand}"
                 IsDefault="True">
                 <TextBlock

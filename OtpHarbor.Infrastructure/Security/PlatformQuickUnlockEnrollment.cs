@@ -85,6 +85,30 @@ public sealed class PlatformQuickUnlockEnrollment : IPlatformQuickUnlockEnrollme
                 "The recovery password is required.");
         }
 
+        return await EnableCoreAsync((envelope, token) =>
+            _passwordService.UnwrapKeyV2Async(envelope.PasswordWrapper, recoveryPassword, token),
+            unlockMethod, cancellationToken);
+    }
+
+    public Task<Result> EnableWithAuthenticatedKeyAsync(
+        ReadOnlyMemory<byte> vaultKey, PreferredUnlockMethod unlockMethod,
+        CancellationToken cancellationToken = default) =>
+        EnableCoreAsync((_, _) => Task.FromResult<byte[]?>(vaultKey.ToArray()), unlockMethod, cancellationToken);
+
+    public Task<Result> EnableWithPlatformVerificationAsync(
+        ReadOnlyMemory<byte> vaultKey, PreferredUnlockMethod unlockMethod, Func<bool> canCommit,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(canCommit);
+        return EnableCoreAsync((_, _) => Task.FromResult<byte[]?>(vaultKey.ToArray()), unlockMethod,
+            cancellationToken, canCommit, verifyPlatform: true);
+    }
+
+    private async Task<Result> EnableCoreAsync(
+        Func<AuthorizationEnvelopeV2, CancellationToken, Task<byte[]?>> recoverKey,
+        PreferredUnlockMethod unlockMethod, CancellationToken cancellationToken,
+        Func<bool>? canCommit = null, bool verifyPlatform = false)
+    {
         await _lock.WaitAsync(cancellationToken);
         AuthorizationEnvelopeV2? envelope = null;
         AuthorizationEnvelopeV2? updatedEnvelope = null;
@@ -110,10 +134,7 @@ public sealed class PlatformQuickUnlockEnrollment : IPlatformQuickUnlockEnrollme
                     "Password recovery is not configured.");
             }
 
-            recoveredKey = await _passwordService.UnwrapKeyV2Async(
-                envelope.PasswordWrapper,
-                recoveryPassword,
-                cancellationToken);
+            recoveredKey = await recoverKey(envelope, cancellationToken);
             if (recoveredKey is null)
             {
                 return Fail(
@@ -153,7 +174,7 @@ public sealed class PlatformQuickUnlockEnrollment : IPlatformQuickUnlockEnrollme
                     "The requested platform unlock method is unavailable.");
             }
 
-            if (envelope.QuickUnlockWrapper is not null
+            if (!verifyPlatform && envelope.QuickUnlockWrapper is not null
                 && string.Equals(
                     envelope.QuickUnlockWrapper.Provider,
                     platformQuickUnlock.ProviderId,
@@ -180,11 +201,13 @@ public sealed class PlatformQuickUnlockEnrollment : IPlatformQuickUnlockEnrollme
             }
 
             registeredWrapper = registration.Value;
+            cancellationToken.ThrowIfCancellationRequested();
             if (!string.Equals(
                     registeredWrapper.Provider,
                     platformQuickUnlock.ProviderId,
                     StringComparison.Ordinal)
-                || !PlatformQuickUnlockContract.IsSupported(registeredWrapper))
+                || !PlatformQuickUnlockContract.IsSupported(registeredWrapper)
+                || (verifyPlatform && PlatformQuickUnlockContract.GetUnlockMethod(registeredWrapper) != unlockMethod))
             {
                 var cleanupErrors = await RemoveRegistrationAsync(registeredWrapper);
                 AuthorizationEnvelopeBufferCleaner.Clear(registeredWrapper);
@@ -193,6 +216,32 @@ public sealed class PlatformQuickUnlockEnrollment : IPlatformQuickUnlockEnrollme
                     PlatformQuickUnlockEnrollmentErrorCode.RegistrationFailed,
                     "The platform returned invalid quick-unlock metadata.",
                     cleanupErrors);
+            }
+
+            if (verifyPlatform && registeredWrapper.Provider == PlatformQuickUnlockContract.MacOSKeychainProvider)
+            {
+                var verified = await platformQuickUnlock.TryUnlockAsync(registeredWrapper, cancellationToken);
+                using var attempt = verified.IsSuccess ? verified.Value : null;
+                if (attempt?.IsSuccess != true || attempt.VaultKey is null
+                    || !CryptographicOperations.FixedTimeEquals(recoveredKey, attempt.VaultKey.Memory.Span))
+                {
+                    var cleanup = await RemoveRegistrationAsync(registeredWrapper);
+                    var code = attempt?.Status == PlatformQuickUnlockStatus.Cancelled
+                        ? PlatformQuickUnlockErrorCode.Cancelled : PlatformQuickUnlockErrorCode.UnlockFailed;
+                    return Fail(PlatformQuickUnlockEnrollmentErrorCode.RegistrationFailed,
+                        "Platform verification did not recover the registered vault key.",
+                        verified.Errors.Concat(cleanup).Append(new PlatformQuickUnlockError(code, "Platform verification failed.")));
+                }
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (canCommit is not null && !canCommit())
+            {
+                var cleanup = await RemoveRegistrationAsync(registeredWrapper);
+                return Fail(PlatformQuickUnlockEnrollmentErrorCode.RegistrationFailed,
+                    "The authorization session changed before enrollment could be committed.",
+                    cleanup.Append(new PlatformQuickUnlockError(PlatformQuickUnlockErrorCode.Cancelled,
+                        "The authorization session changed.")));
             }
 
             updatedEnvelope = envelope with { QuickUnlockWrapper = registeredWrapper };
@@ -233,6 +282,7 @@ public sealed class PlatformQuickUnlockEnrollment : IPlatformQuickUnlockEnrollme
         finally
         {
             if (recoveredKey is not null) CryptographicOperations.ZeroMemory(recoveredKey);
+            if (registeredWrapper is not null) AuthorizationEnvelopeBufferCleaner.Clear(registeredWrapper);
             if (updatedEnvelope is not null)
             {
                 AuthorizationEnvelopeBufferCleaner.Clear(updatedEnvelope);
@@ -254,7 +304,8 @@ public sealed class PlatformQuickUnlockEnrollment : IPlatformQuickUnlockEnrollme
     public void Dispose() => _lock.Dispose();
 
     private IPlatformQuickUnlock? FindAdapter(PreferredUnlockMethod unlockMethod) =>
-        _platformQuickUnlockAdapters.LastOrDefault(value => value.UnlockMethod == unlockMethod);
+        _platformQuickUnlockAdapters.LastOrDefault(value => value is not IPlatformUnattendedUnlock
+            && value.UnlockMethod == unlockMethod);
 
     private async Task<IReadOnlyList<IError>> RemoveRegistrationAsync(
         PlatformQuickUnlockWrapperV2 wrapper)

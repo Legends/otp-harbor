@@ -100,6 +100,8 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 
 - `OtpHarbor.Core`
   - domain models, enums, common primitives, contracts, security abstractions
+- `OtpHarbor.Localization`
+  - platform-neutral translated resources, typed keys, culture resolution and resource lookup shared by all hosts
 - `OtpHarbor.Infrastructure`
   - concrete implementations for logging, crypto orchestration, security, settings, account management, export, QR generation
 - `OtpHarbor.DAL`
@@ -183,7 +185,7 @@ Releases, auto-update metadata, signatures, and CI behavior are part of the prod
 ### Localization rules
 
 - Localize every user-visible string. This includes headings, labels, buttons, tooltips, placeholders, validation text, errors, confirmations, empty states, transient progress/status messages, notifications, accessibility names, and platform-specific guidance.
-- Do not hard-code user-visible text in views, view models, code-behind, dialog services, or platform adapters. Resolve it through the localization resources used by that UI project.
+- Do not hard-code user-visible text in views, view models, code-behind, dialog services, or platform adapters. Resolve it through `OtpHarbor.Localization`, using the existing UI catalog adapters where appropriate. Keep shared translations in its Common resources and intentional wording differences in its Desktop/Mobile/Updater resources; do not create parallel resource sets in host projects.
 - Add every new localization key to all supported language resources in the same change. Do not assemble a message from localized and hard-coded fragments, because that produces mixed-language UI and makes translation grammatically unsafe.
 - Use stable typed/string-key references rather than duplicating resource-key literals throughout feature code.
 - When behavior selects or composes localized messages, add regression coverage that proves the complete displayed message comes from the active locale. Also keep resource-completeness tests passing.

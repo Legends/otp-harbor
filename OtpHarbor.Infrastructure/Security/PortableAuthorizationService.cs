@@ -12,7 +12,7 @@ namespace TOTP.Infrastructure.Security;
 /// Desktop-facing authorization facade backed exclusively by the portable v2
 /// envelope and preferences contracts.
 /// </summary>
-public sealed class PortableAuthorizationService : IAuthorizationService
+public sealed partial class PortableAuthorizationService : IAuthorizationService
 {
     private readonly ISettingsService _settingsService;
     private readonly IAuthorizationEnvelopeSession _session;
@@ -36,7 +36,8 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         AuthorizationState state,
         ILogger<PortableAuthorizationService> logger,
         IPlatformUnattendedUnlockEnrollment? unattendedUnlockEnrollment = null,
-        IAutomaticBackupCoordinator? automaticBackup = null)
+        IAutomaticBackupCoordinator? automaticBackup = null,
+        IEnumerable<IPlatformQuickUnlock>? platformQuickUnlockMethods = null)
     {
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _session = session ?? throw new ArgumentNullException(nameof(session));
@@ -50,12 +51,14 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         State = state ?? throw new ArgumentNullException(nameof(state));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _automaticBackup = automaticBackup;
+        _sensitiveAuthorizationAdapters = platformQuickUnlockMethods?.ToArray() ?? [platformQuickUnlock];
     }
 
     public AuthorizationState State { get; }
 
     public async Task InitializeAsync()
     {
+        Interlocked.Exchange(ref _initialQuickUnlockSetupPending, 0);
         var initialized = await _session.InitializeAsync();
         if (initialized.IsFailed)
         {
@@ -114,6 +117,13 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         return CompleteUnlock(result, projectPasswordFallback: false);
     }
 
+    public async Task<AuthorizationResult> TryUnlockWithPasswordAsync(string password, CancellationToken cancellationToken)
+    {
+        var result = await _session.TryUnlockWithPasswordAsync(password, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        return CompleteUnlock(result, projectPasswordFallback: false);
+    }
+
     public Task<AuthorizationResult> TryUnlockWithHelloAsync() =>
         TryUnlockWithHelloAsync(CancellationToken.None);
 
@@ -150,6 +160,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         if (!ActivateContext(vaultKey)) return AuthorizationResult.Failed;
         ApplySessionState();
         State.Unlock();
+        Interlocked.Exchange(ref _initialQuickUnlockSetupPending, 1);
         _automaticBackup?.RequestBackup();
         return AuthorizationResult.Success;
     }
@@ -258,10 +269,20 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         return AuthorizationResult.Success;
     }
 
-    public async Task<AuthorizationResult> SetAppLockEnabledAsync(
+    public Task<AuthorizationResult> SetAppLockEnabledAsync(
+        bool enabled, string recoveryPassword, CancellationToken cancellationToken) =>
+        SetAppLockEnabledCoreAsync(enabled, recoveryPassword, null, cancellationToken);
+
+    public Task<AuthorizationResult> SetAppLockEnabledAsync(
         bool enabled,
-        string recoveryPassword)
+        string recoveryPassword) =>
+        SetAppLockEnabledCoreAsync(enabled, recoveryPassword, null, CancellationToken.None);
+
+    private async Task<AuthorizationResult> SetAppLockEnabledCoreAsync(
+        bool enabled, string recoveryPassword, ReadOnlyMemory<byte>? authenticatedKey,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (!State.IsConfigured) return AuthorizationResult.NotConfigured;
         if (_settingsService.Current.AppLockEnabled == enabled)
         {
@@ -271,7 +292,9 @@ public sealed class PortableAuthorizationService : IAuthorizationService
             return preferred is PreferredUnlockMethod.PlatformQuickUnlock
                     or PreferredUnlockMethod.PlatformDeviceCredential
                 && !_session.State.HasQuickUnlock
-                ? string.IsNullOrWhiteSpace(recoveryPassword)
+                ? authenticatedKey.HasValue
+                    ? await ConfigureUnlockMethodFromAuthenticatedKeyAsync(preferred, authenticatedKey.Value, cancellationToken)
+                    : string.IsNullOrWhiteSpace(recoveryPassword)
                     ? AuthorizationResult.InvalidCredentials
                     : await ConfigureUnlockMethodAsync(preferred, recoveryPassword)
                 : AuthorizationResult.Success;
@@ -279,7 +302,10 @@ public sealed class PortableAuthorizationService : IAuthorizationService
 
         if (!enabled)
         {
-            var enrolled = await _unattendedUnlockEnrollment.EnableAsync(recoveryPassword);
+            var enrolled = authenticatedKey.HasValue
+                ? await _unattendedUnlockEnrollment.EnableWithAuthenticatedKeyAsync(authenticatedKey.Value, cancellationToken)
+                : await _unattendedUnlockEnrollment.EnableAsync(recoveryPassword, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             if (enrolled.IsFailed) return MapEnrollmentFailure(enrolled);
 
             _settingsService.Current.AppLockEnabled = false;
@@ -301,7 +327,7 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         // Remove the unattended wrapper before changing the preference. If
         // wrapper removal fails, the persisted disabled state remains usable
         // and the user can retry instead of seeing a half-applied toggle.
-        var disabled = await _unattendedUnlockEnrollment.DisableAsync();
+        var disabled = await _unattendedUnlockEnrollment.DisableAsync(cancellationToken);
         if (disabled.IsFailed) return AuthorizationResult.Failed;
 
         var restoredPreference = _settingsService.Current.PreferredUnlockMethod;
@@ -321,7 +347,9 @@ public sealed class PortableAuthorizationService : IAuthorizationService
         if (restoredPreference is PreferredUnlockMethod.PlatformQuickUnlock
             or PreferredUnlockMethod.PlatformDeviceCredential)
         {
-            return string.IsNullOrWhiteSpace(recoveryPassword)
+            return authenticatedKey.HasValue
+                ? await ConfigureUnlockMethodFromAuthenticatedKeyAsync(restoredPreference, authenticatedKey.Value, cancellationToken)
+                : string.IsNullOrWhiteSpace(recoveryPassword)
                 ? AuthorizationResult.InvalidCredentials
                 : await ConfigureUnlockMethodAsync(restoredPreference, recoveryPassword);
         }
@@ -333,9 +361,12 @@ public sealed class PortableAuthorizationService : IAuthorizationService
 
     public void Lock()
     {
+        Interlocked.Increment(ref _sensitiveAuthorizationGeneration);
+        Interlocked.Exchange(ref _initialQuickUnlockSetupPending, 0);
         var wasUnlocked = State.IsUnlocked;
         _securityContext.Lock();
         State.Lock();
+        CancelSensitiveAuthorizations();
         if (wasUnlocked) _logger.LogInformation("Vault locked.");
     }
 

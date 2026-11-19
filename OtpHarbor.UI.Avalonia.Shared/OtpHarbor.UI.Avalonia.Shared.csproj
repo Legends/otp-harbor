@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OtpHarbor.Core\OtpHarbor.Core.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Localization\OtpHarbor.Localization.csproj" />
   </ItemGroup>
 
   <ItemGroup>

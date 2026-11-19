@@ -26,7 +26,7 @@ using TOTP.Infrastructure.Services;
 
 namespace TOTP.Tests.Avalonia.Mobile;
 
-public sealed class MobileShellViewModelTests
+public sealed partial class MobileShellViewModelTests
 {
     [Fact]
     public async Task EnteOnlyDeletedEntries_ShowsAcknowledgementWithoutPreviewBackupOrCommit()
@@ -61,10 +61,13 @@ public sealed class MobileShellViewModelTests
     }
 
     [Theory]
-    [InlineData("back")]
-    [InlineData("lock")]
-    [InlineData("cancel")]
-    public async Task UnifiedImport_PasswordPromptCancellationClearsInputAndNeverStartsMerge(string action)
+    [InlineData("back", false)]
+    [InlineData("back", true)]
+    [InlineData("lock", false)]
+    [InlineData("lock", true)]
+    [InlineData("cancel", false)]
+    [InlineData("cancel", true)]
+    public async Task UnifiedImport_PasswordPromptCancellationClearsInputAndNeverStartsMerge(string action, bool fromSettings)
     {
         var context = CreateContext(isConfigured: true, appLockEnabled: action == "lock");
         using var sut = context.Sut;
@@ -82,9 +85,10 @@ public sealed class MobileShellViewModelTests
                 unlock(new(false, (_, _) => { reads++; return Task.FromResult(Result.Fail<List<Account>>("Synthetic wrong password")); }), token));
         await sut.InitializeAsync();
         if (action == "lock") { sut.UnlockPassword = "synthetic password"; await sut.UnlockAsync(); }
-        await sut.ShowSettingsAsync();
+        if (fromSettings) await sut.ShowSettingsAsync();
         var importing = sut.ImportAccountFileAsync();
         await WaitUntilAsync(() => sut.IsImportBackupPasswordVisible);
+        Assert.True(sut.CanHandleSystemBack);
         sut.ImportPassword = "synthetic pending password";
         if (action == "lock") await sut.LockAsync();
         else if (action == "back") Assert.True(await sut.TryHandleBackNavigationAsync());
@@ -285,9 +289,11 @@ public sealed class MobileShellViewModelTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task FileImport_OnlyNewAccounts_UsesOneCompactConfirmationBeforeBackupAndCommit(bool accept)
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task FileImport_OnlyNewAccounts_UsesOneCompactConfirmationBeforeBackupAndCommit(bool accept, bool fromSettings)
     {
         var context = CreateContext(isConfigured: true);
         context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
@@ -307,7 +313,7 @@ public sealed class MobileShellViewModelTests
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
-        await context.Sut.ShowSettingsAsync();
+        if (fromSettings) await context.Sut.ShowSettingsAsync();
         var importing = context.Sut.ImportAccountFileAsync();
         await WaitUntilAsync(() => context.Sut.IsImportConfirmationVisible);
         Assert.Equal(context.Strings.Get(TOTP.Avalonia.Shared.Import.ReviewStringKeys.ImportNewOne), context.Sut.ImportConfirmationText);
@@ -315,7 +321,9 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.IsExternalImportReviewVisible);
         context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
         context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
-        await context.Sut.ResolveImportConfirmationAsync(accept);
+        Assert.True(context.Sut.CanHandleSystemBack);
+        if (accept) await context.Sut.ResolveImportConfirmationAsync(true);
+        else Assert.True(await context.Sut.TryHandleBackNavigationAsync());
         await importing.WaitAsync(TimeSpan.FromSeconds(3), global::Xunit.TestContext.Current.CancellationToken);
         context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), accept ? Times.Once() : Times.Never());
         context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), accept ? Times.Once() : Times.Never());
@@ -761,7 +769,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task EnableAppLockAsync_FromDisabledSettings_ImmediatelyLocksAndClearsAccounts()
+    public async Task EnableAppLockAsync_FromDisabledSettings_KeepsVerifiedSessionAndAccounts()
     {
         var account = new Account(Guid.NewGuid(), "Example", ValidSecret, "user@example.test");
         var context = CreateContext(
@@ -792,32 +800,32 @@ public sealed class MobileShellViewModelTests
         Assert.True(context.Sut.IsBiometricEnrollmentVisible);
         Assert.True(context.Sut.IsAppLockReactivationPending);
         Assert.Equal(
-            "Enter your master password to reactivate app lock.",
+            "Confirm your identity to enable app lock.",
             context.Sut.UnlockMethodPasswordPromptText);
         context.Sut.BiometricRecoveryPassword = "recovery-password";
         await context.Sut.EnableBiometricAsync();
 
         Assert.True(context.Sut.IsAppLockEnabled);
         Assert.False(context.Sut.IsAppLockReactivationPending);
-        Assert.True(context.Sut.IsUnlockVisible);
-        Assert.False(context.Sut.IsSettingsVisible);
-        Assert.Empty(context.Sut.Accounts);
+        Assert.False(context.Sut.IsUnlockVisible);
+        Assert.True(context.Sut.IsSettingsVisible);
+        Assert.Single(context.Sut.Accounts);
         Assert.False(context.Sut.EnableAppLockCommand.CanExecute(null));
-        context.Authorization.Verify(value => value.Lock(), Times.Once);
+        context.Authorization.Verify(value => value.Lock(), Times.Never);
     }
 
     [Theory]
-    [InlineData("en", "Enter your master password to reactivate app lock.")]
-    [InlineData("de", "Geben Sie Ihr Masterpasswort ein, um die App-Sperre wieder zu aktivieren.")]
-    [InlineData("fr", "Saisissez votre mot de passe principal pour réactiver le verrouillage de l’application.")]
-    [InlineData("es", "Introduzca su contraseña maestra para volver a activar el bloqueo de la aplicación.")]
+    [InlineData("en", "Confirm your identity to enable app lock.")]
+    [InlineData("de", "Bestätigen Sie Ihre Identität, um die App-Sperre zu aktivieren.")]
+    [InlineData("fr", "Confirmez votre identité pour activer le verrouillage de l’application.")]
+    [InlineData("es", "Confirme su identidad para activar el bloqueo de la aplicación.")]
     public async Task EnableAppLockAsync_UsesCompleteLocalizedReactivationPrompt(
         string cultureName,
         string expectedPrompt)
     {
         var context = CreateContext(
             isConfigured: true,
-            biometricAvailable: true,
+            biometricAvailable: false,
             preferredUnlockMethod:
                 TOTP.Core.Enums.PreferredUnlockMethod.PlatformQuickUnlock,
             cultureName: cultureName,
@@ -838,13 +846,18 @@ public sealed class MobileShellViewModelTests
         context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
-        context.Authorization.Setup(value => value.SetAppLockEnabledAsync(true, string.Empty))
+        context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("recovery-password"))
+            .ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization.Setup(value => value.SetAppLockEnabledAsync(true, "recovery-password"))
             .Callback(() => context.SettingsValue.AppLockEnabled = true)
             .ReturnsAsync(AuthorizationResult.Failed);
         await context.Sut.InitializeAsync();
         await context.Sut.ShowSettingsAsync();
 
         await context.Sut.EnableAppLockAsync();
+
+        context.Sut.BiometricRecoveryPassword = "recovery-password";
+        await context.Sut.EnableBiometricAsync();
 
         Assert.True(context.Sut.IsAppLockEnabled);
         Assert.True(context.Sut.IsUnlockVisible);
@@ -853,7 +866,7 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task Settings_InfoShowsStorageLocationsAndRefreshesTheirLanguage()
+    public async Task Settings_SupportRefreshesStorageLocationsAndTheirLanguage()
     {
         var locations = new Mock<IApplicationStorageLocations>();
         var directory = Path.Combine(Path.GetTempPath(), "otp-demo");
@@ -868,9 +881,12 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(AuthorizationResult.Success);
         await sut.InitializeAsync();
         await sut.ShowSettingsAsync();
-        sut.ShowInfoSettingsCommand.Execute(null);
+        locations.Invocations.Clear();
+        sut.ShowMiscSettingsCommand.Execute(null);
 
-        Assert.True(sut.IsInfoSettingsVisible);
+        locations.Verify(value => value.GetLocations(), Times.Once);
+        Assert.True(sut.IsMiscSettingsVisible);
+        Assert.False(sut.IsInfoSettingsVisible);
         Assert.False(sut.IsSettingsCategoryListVisible);
         var item = Assert.Single(sut.StorageLocations!.Locations);
         Assert.Equal(directory, item.Path);
@@ -884,7 +900,7 @@ public sealed class MobileShellViewModelTests
 
         Assert.Contains(nameof(sut.InfoText), changed);
         Assert.Contains(nameof(sut.InfoDescriptionText), changed);
-        Assert.Equal("Info", sut.SettingsCategoryTitle);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.Miscellaneous), sut.SettingsCategoryTitle);
         Assert.Equal("App-Datenverzeichnis", item.Label);
         Assert.Equal("Der Pfad wurde kopiert.", item.StatusText);
         await sut.NavigateBackAsync();
@@ -1179,6 +1195,7 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ShowSettingsAsync();
         context.Sut.ShowSecuritySettingsCommand.Execute(null);
         await WaitUntilAsync(() => context.Sut.IsSecuritySettingsVisible);
+        await context.Sut.BeginMasterPasswordChangeAsync();
         context.Sut.CurrentMasterPassword = "current-password";
         context.Sut.NewMasterPassword = "new-synthetic-password";
         context.Sut.NewMasterPasswordConfirmation = "new-synthetic-password";
@@ -1285,6 +1302,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
         await context.Sut.FinishOnboardingAsync();
@@ -1346,14 +1364,16 @@ public sealed class MobileShellViewModelTests
     }
 
     [Fact]
-    public async Task ConfigureAsync_WithAvailableBiometrics_ImmediatelyEnrollsQuickUnlock()
+    public async Task ConfigureAsync_WithAvailableBiometrics_OffersQuickUnlockBeforeEnrollment()
     {
         var context = CreateContext(isConfigured: false, biometricAvailable: true);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         context.Authorization
-            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .Setup(value => value.CompleteInitialQuickUnlockSetupAsync(PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
+            .Callback(() => context.State.SetConfiguration(true, PreferredUnlockMethod.PlatformQuickUnlock))
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
         await context.Sut.FinishOnboardingAsync();
@@ -1363,19 +1383,27 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ConfigureAsync();
 
         Assert.True(context.Sut.IsAccountsVisible);
-        Assert.True(context.Sut.IsBiometricEnabled);
+        Assert.True(context.Sut.IsInitialQuickUnlockOfferVisible);
+        Assert.False(context.Sut.IsBiometricEnabled);
         Assert.Empty(context.Sut.SetupPassword);
         Assert.Empty(context.Sut.SetupConfirmation);
+        context.Authorization.Verify(value => value.ConfigureHelloAsync(It.IsAny<string>()), Times.Never);
+        context.Authorization.Verify(value => value.CompleteInitialQuickUnlockSetupAsync(
+            It.IsAny<PreferredUnlockMethod?>(), It.IsAny<CancellationToken>()), Times.Never);
+        context.Sut.ChooseInitialBiometricCommand.Execute(null);
+        await WaitUntilAsync(() => !context.Sut.IsBusy);
+        Assert.False(context.Sut.IsInitialQuickUnlockOfferVisible);
+        Assert.True(context.Sut.IsBiometricEnabled);
         Assert.Equal(
-            context.Strings.Get(MobileStringKeys.BiometricEnabled),
+            context.Strings.Get(MobileStringKeys.QuickUnlockEnabled),
             context.Sut.NotificationText);
         context.Authorization.Verify(
-            value => value.ConfigureHelloAsync("synthetic password"),
+            value => value.CompleteInitialQuickUnlockSetupAsync(PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task ConfigureAsync_WhenBiometricsBecomeAvailableAfterSetup_ImmediatelyEnrollsQuickUnlock()
+    public async Task ConfigureAsync_WhenBiometricsBecomeAvailableAfterSetup_OffersQuickUnlock()
     {
         var context = CreateContext(isConfigured: false);
         context.Authorization
@@ -1384,9 +1412,7 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(true);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
-            .ReturnsAsync(AuthorizationResult.Success);
-        context.Authorization
-            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
         await context.Sut.FinishOnboardingAsync();
@@ -1398,11 +1424,12 @@ public sealed class MobileShellViewModelTests
 
         Assert.True(context.Sut.IsAccountsVisible);
         Assert.True(context.Sut.IsBiometricAvailable);
-        Assert.True(context.Sut.IsBiometricEnabled);
+        Assert.False(context.Sut.IsBiometricEnabled);
+        Assert.True(context.Sut.IsInitialQuickUnlockOfferVisible);
         context.Authorization.Verify(value => value.IsHelloAvailableAsync(), Times.Exactly(2));
         context.Authorization.Verify(
             value => value.ConfigureHelloAsync("synthetic password"),
-            Times.Once);
+            Times.Never);
     }
 
     [Fact]
@@ -1416,6 +1443,7 @@ public sealed class MobileShellViewModelTests
             .ReturnsAsync(true);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
         await context.Sut.FinishOnboardingAsync();
@@ -1437,9 +1465,10 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false, biometricAvailable: true);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         context.Authorization
-            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .Setup(value => value.CompleteInitialQuickUnlockSetupAsync(PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AuthorizationResult.Cancelled);
         await context.Sut.InitializeAsync();
         await context.Sut.FinishOnboardingAsync();
@@ -1447,6 +1476,9 @@ public sealed class MobileShellViewModelTests
         context.Sut.SetupConfirmation = "synthetic password";
 
         await context.Sut.ConfigureAsync();
+        Assert.True(context.Sut.IsInitialQuickUnlockOfferVisible);
+        context.Sut.ChooseInitialBiometricCommand.Execute(null);
+        await WaitUntilAsync(() => !context.Sut.IsBusy);
 
         Assert.True(context.Sut.IsAccountsVisible);
         Assert.False(context.Sut.IsBiometricEnabled);
@@ -1461,9 +1493,10 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false, biometricAvailable: true);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync("synthetic password", "synthetic password"))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         context.Authorization
-            .Setup(value => value.ConfigureHelloAsync("synthetic password"))
+            .Setup(value => value.CompleteInitialQuickUnlockSetupAsync(PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("synthetic platform failure"));
         await context.Sut.InitializeAsync();
         await context.Sut.FinishOnboardingAsync();
@@ -1471,11 +1504,14 @@ public sealed class MobileShellViewModelTests
         context.Sut.SetupConfirmation = "synthetic password";
 
         await context.Sut.ConfigureAsync();
+        Assert.True(context.Sut.IsInitialQuickUnlockOfferVisible);
+        context.Sut.ChooseInitialBiometricCommand.Execute(null);
+        await WaitUntilAsync(() => !context.Sut.IsBusy);
 
         Assert.True(context.Sut.IsAccountsVisible);
         Assert.False(context.Sut.IsBiometricEnabled);
         Assert.Equal(
-            context.Strings.Get(MobileStringKeys.BiometricEnableFailed),
+            context.Strings.Get(MobileStringKeys.QuickUnlockNotEnabled),
             context.Sut.NotificationText);
         Assert.Empty(context.Sut.SetupPassword);
         Assert.Empty(context.Sut.SetupConfirmation);
@@ -2046,9 +2082,8 @@ public sealed class MobileShellViewModelTests
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
         context.Authorization
-            .Setup(value => value.ConfigureUnlockMethodAsync(
-                TOTP.Core.Enums.PreferredUnlockMethod.Password,
-                "recovery-password"))
+            .Setup(value => value.ConfigureUnlockMethodWithPlatformAsync(
+                PreferredUnlockMethod.Password, PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
             .Callback(() =>
             {
                 context.SettingsValue.PreferredUnlockMethod =
@@ -2064,11 +2099,8 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ShowSettingsAsync();
 
         await context.Sut.SelectPasswordUnlockAsync();
-        Assert.True(context.Sut.IsBiometricEnrollmentVisible);
-        Assert.True(context.Sut.IsBiometricUnlockSelected);
-        context.Sut.BiometricRecoveryPassword = "recovery-password";
-        await context.Sut.EnableBiometricAsync();
-
+        Assert.False(context.Sut.IsBiometricEnrollmentVisible);
+        Assert.False(context.Sut.HasAuthenticationMethodChoice);
         Assert.True(context.Sut.IsPasswordUnlockSelected);
         Assert.False(context.Sut.IsBiometricEnabled);
         Assert.False(context.Sut.IsDeviceCredentialEnabled);
@@ -4181,8 +4213,10 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.IsExternalImportReviewVisible);
     }
 
-    [Fact]
-    public async Task ImportAccountFileAsync_UsesPortableParserAndTransactionalImportWorkflow()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ImportAccountFileAsync_UsesPortableParserAndTransactionalImportWorkflow(bool fromSettings)
     {
         var importedAccount = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
         var context = CreateContext(isConfigured: true);
@@ -4216,7 +4250,8 @@ public sealed class MobileShellViewModelTests
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
         await context.Sut.UnlockAsync();
-        await context.Sut.ShowSettingsAsync();
+        if (fromSettings) await context.Sut.ShowSettingsAsync();
+        Assert.True(context.Sut.MigrationImport.FileCommand.CanExecute(null));
 
         await context.Sut.ImportAccountFileAsync();
 
@@ -4226,6 +4261,45 @@ public sealed class MobileShellViewModelTests
             string.Format(context.Strings.Get(MobileStringKeys.AccountFileImported), 1, 0, 0),
             context.Sut.NotificationText);
         Assert.Equal(NotificationSeverity.Success, context.Sut.NotificationSeverity);
+        Assert.Equal(fromSettings, context.Sut.IsSettingsVisible);
+    }
+
+    [Fact]
+    public async Task ImportAccountFileAsync_FromEmptyAccounts_CancelledPickerKeepsAccountsVisibleWithoutWrites()
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false);
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Documents.Setup(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MobileReadableDocument?)null);
+        await sut.InitializeAsync();
+        Assert.True(sut.HasNoAccounts);
+        Assert.True(sut.MigrationImport.FileCommand.CanExecute(null));
+
+        await sut.ImportAccountFileAsync();
+
+        context.Documents.Verify(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()), Times.Once);
+        context.AccountManager.Verify(value => value.BackupOtpEntriesStorageFileAsync(), Times.Never);
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
+        Assert.True(sut.IsAccountListVisible);
+        Assert.False(sut.IsSettingsVisible);
+        Assert.True(sut.HasNoAccounts);
+        Assert.False(sut.IsBusy);
+    }
+
+    [Fact]
+    public async Task ImportAccountFileAsync_WhenLocked_DoesNotOpenThePicker()
+    {
+        var context = CreateContext(isConfigured: true);
+        using var sut = context.Sut;
+        await sut.InitializeAsync();
+
+        Assert.False(sut.MigrationImport.FileCommand.CanExecute(null));
+        await sut.ImportAccountFileAsync();
+
+        context.Documents.Verify(value => value.OpenAccountImportAsync(It.IsAny<CancellationToken>()), Times.Never);
+        context.AccountManager.Verify(value => value.CommitImportAsync(It.IsAny<IReadOnlyCollection<Account>>()), Times.Never);
     }
 
     [Fact]
@@ -4701,6 +4775,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
 
@@ -4734,6 +4809,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         context.AccountManager
             .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
@@ -4761,6 +4837,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
         context.Sut.EditorIssuer = "Example";
@@ -4782,6 +4859,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         Account? persisted = null;
         context.AccountManager
@@ -4876,6 +4954,7 @@ public sealed class MobileShellViewModelTests
             brandIconPackService: brandIcons.Object);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
 
@@ -4927,6 +5006,7 @@ public sealed class MobileShellViewModelTests
             brandIconPackService: brandIcons.Object);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
 
@@ -5013,6 +5093,7 @@ public sealed class MobileShellViewModelTests
             brandIconPackService: brandIcons.Object);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         context.AccountManager
             .Setup(value => value.AddNewAsync(It.IsAny<Account>()))
@@ -5066,6 +5147,7 @@ public sealed class MobileShellViewModelTests
             brandIconPackService: brandIcons.Object);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         context.Documents.Setup(value => value.OpenCustomIconAsync(
                 It.IsAny<CancellationToken>()))
@@ -5182,6 +5264,7 @@ public sealed class MobileShellViewModelTests
             brandIconPackService: brandIcons.Object);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         context.Documents.Setup(value => value.OpenCustomIconAsync(
                 It.IsAny<CancellationToken>()))
@@ -5291,6 +5374,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         Account? persisted = null;
         context.AccountManager
@@ -5391,7 +5475,7 @@ public sealed class MobileShellViewModelTests
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
         context.Authorization
-            .Setup(value => value.TryUnlockWithHelloAsync())
+            .Setup(value => value.AuthorizeSensitiveOperationAsync(PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AuthorizationResult.Success);
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
@@ -5411,7 +5495,7 @@ public sealed class MobileShellViewModelTests
         Assert.False(context.Sut.RequiresEditorSecretAuthorization);
         Assert.Equal(ValidSecret, context.Sut.EditorSecret);
         context.Authorization.Verify(
-            value => value.TryUnlockWithHelloAsync(),
+            value => value.AuthorizeSensitiveOperationAsync(PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()),
             Times.Once);
 
         await context.Sut.CancelEditAsync();
@@ -5437,7 +5521,7 @@ public sealed class MobileShellViewModelTests
             .Callback(context.State.Unlock)
             .ReturnsAsync(AuthorizationResult.Success);
         context.Authorization
-            .Setup(value => value.TryUnlockWithHelloAsync())
+            .Setup(value => value.AuthorizeSensitiveOperationAsync(PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AuthorizationResult.Cancelled);
         await context.Sut.InitializeAsync();
         context.Sut.UnlockPassword = "synthetic password";
@@ -5685,6 +5769,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
         context.Sut.EditorIssuer = "Example";
@@ -5708,6 +5793,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
         context.Sut.EditorIssuer = "Example";
@@ -5730,6 +5816,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
 
@@ -5791,6 +5878,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
         Assert.True(context.Sut.IsAdvancedOptionsExpanded);
@@ -5818,6 +5906,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         await ConfigureAndBeginAddAsync(context);
 
@@ -5838,6 +5927,7 @@ public sealed class MobileShellViewModelTests
         var context = CreateContext(isConfigured: false);
         context.Authorization
             .Setup(value => value.ConfigurePasswordAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
             .ReturnsAsync(AuthorizationResult.Success);
         Account? persisted = null;
         context.AccountManager
@@ -5857,6 +5947,41 @@ public sealed class MobileShellViewModelTests
     }
 
     [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("es")]
+    public async Task SharedRecoveryFaqs_UseCurrentLocaleAndRefreshWhenLanguageChanges(string cultureName)
+    {
+        var context = CreateContext(isConfigured: true, appLockEnabled: false, cultureName: cultureName);
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.TryUnlockOnStartupAsync())
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        await sut.InitializeAsync();
+        await sut.ShowSettingsAsync();
+        sut.ShowFaqSettingsCommand.Execute(null);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.InfoDescription), sut.InfoDescriptionText);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.MiscSettingsDescription), sut.MiscSettingsDescriptionText);
+        var values = new (string Key, string Property, Func<string> Read)[]
+        {
+            (MobileStringKeys.FaqMasterPasswordRecoveryQuestion, nameof(sut.FaqMasterPasswordRecoveryQuestionText), () => sut.FaqMasterPasswordRecoveryQuestionText),
+            (MobileStringKeys.FaqMasterPasswordRecoveryAnswer, nameof(sut.FaqMasterPasswordRecoveryAnswerText), () => sut.FaqMasterPasswordRecoveryAnswerText),
+            (MobileStringKeys.FaqOlderVaultsQuestion, nameof(sut.FaqOlderVaultsQuestionText), () => sut.FaqOlderVaultsQuestionText),
+            (MobileStringKeys.FaqOlderVaultsAnswer, nameof(sut.FaqOlderVaultsAnswerText), () => sut.FaqOlderVaultsAnswerText)
+        };
+        foreach (var entry in values)
+            Assert.Equal(context.Strings.Get(entry.Key), entry.Read());
+        var changed = new List<string?>();
+        sut.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+        await sut.SelectLanguageAsync(cultureName == "de" ? "en" : "de");
+        foreach (var entry in values)
+        {
+            Assert.Contains(entry.Property, changed);
+            Assert.Equal(context.Strings.Get(entry.Key), entry.Read());
+        }
+    }
+
+    [Theory]
     [InlineData("en", true)]
     [InlineData("de", false)]
     [InlineData("fr", true)]
@@ -5873,6 +5998,7 @@ public sealed class MobileShellViewModelTests
         await context.Sut.ShowSettingsAsync();
         context.Sut.ShowMiscSettingsCommand.Execute(null);
         Assert.True(context.Sut.ReportOnGitHubCommand.CanExecute(null));
+        Assert.Equal(context.Strings.Get(MobileStringKeys.ReportOnGitHub), context.Sut.ReportOnGitHubText);
         await context.Sut.ReportOnGitHubAsync();
         Assert.Equal(context.Strings.Get(opened ? MobileStringKeys.GitHubReportOpened : MobileStringKeys.GitHubReportFailed),
             context.Sut.NotificationText);
@@ -6133,6 +6259,18 @@ public sealed class MobileShellViewModelTests
         var authorization = new Mock<IAuthorizationService>();
         authorization.SetupGet(value => value.State).Returns(state);
         authorization.Setup(value => value.InitializeAsync()).Returns(Task.CompletedTask);
+        authorization.Setup(value => value.TryUnlockOnStartupAsync()).Callback(state.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        authorization.Setup(value => value.TryUnlockWithHelloAsync()).Callback(state.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        authorization.Setup(value => value.AuthorizeSensitiveOperationAsync(It.IsAny<PreferredUnlockMethod>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AuthorizationResult.NotAvailable);
+        authorization.Setup(value => value.SetAppLockEnabledWithPlatformAsync(It.IsAny<bool>(), It.IsAny<PreferredUnlockMethod>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AuthorizationResult.NotAvailable);
+        authorization.Setup(value => value.ReactivateAppLockWithPlatformAsync(It.IsAny<PreferredUnlockMethod>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AuthorizationResult.NotAvailable);
+        authorization.Setup(value => value.ConfigureUnlockMethodWithPlatformAsync(It.IsAny<PreferredUnlockMethod>(), It.IsAny<PreferredUnlockMethod>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AuthorizationResult.NotAvailable);
+        authorization.Setup(value => value.CompleteInitialQuickUnlockSetupAsync(It.IsAny<PreferredUnlockMethod?>(), It.IsAny<CancellationToken>()))
+            .Returns((PreferredUnlockMethod? method, CancellationToken _) => Task.FromResult(method is null ? AuthorizationResult.Success : AuthorizationResult.NotAvailable));
         authorization.Setup(value => value.IsHelloAvailableAsync())
             .ReturnsAsync(biometricAvailable);
         authorization.Setup(value => value.IsUnlockMethodAvailableAsync(

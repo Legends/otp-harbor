@@ -102,7 +102,17 @@ public sealed class SessionLockPolicyBackgroundServiceTests
         context.Authorization.Verify(service => service.Lock(), Times.Never);
     }
 
-    private static TestContextData CreateContext(bool lockOnSessionLock, bool isUnlocked = true)
+    [Fact]
+    public async Task SessionLocked_WhenAppLockDisabled_DoesNotLockOrNotify()
+    {
+        var context = CreateContext(lockOnSessionLock: true, appLockEnabled: false);
+        await context.Service.StartAsync(TestContext.Current.CancellationToken);
+        context.Events.Raise(PlatformSessionState.Locked);
+        context.Authorization.Verify(value => value.Lock(), Times.Never);
+        await context.Service.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    private static TestContextData CreateContext(bool lockOnSessionLock, bool isUnlocked = true, bool appLockEnabled = true)
     {
         var events = new FakePlatformSessionEventSource();
         var authorization = new Mock<IAuthorizationService>();
@@ -112,7 +122,7 @@ public sealed class SessionLockPolicyBackgroundServiceTests
         authorization.Setup(service => service.Lock()).Callback(authorizationState.Lock);
         var settings = new Mock<ISettingsService>();
         var logger = new Mock<ILogger<SessionLockPolicyBackgroundService>>();
-        settings.SetupGet(service => service.Current).Returns(new AppSettings { LockOnSessionLock = lockOnSessionLock });
+        settings.SetupGet(service => service.Current).Returns(new AppSettings { LockOnSessionLock = lockOnSessionLock, AppLockEnabled = appLockEnabled });
 
         var service = new SessionLockPolicyBackgroundService(
             events,

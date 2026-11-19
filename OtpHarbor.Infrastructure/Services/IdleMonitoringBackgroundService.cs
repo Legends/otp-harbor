@@ -72,8 +72,9 @@ public sealed class IdleMonitoringBackgroundService : BackgroundService, IActivi
         }
 
         _wasUnlocked = isUnlocked;
-        if (!isUnlocked)
+        if (!isUnlocked || _settingsService.Current?.AppLockEnabled == false)
         {
+            RecordActivity();
             return;
         }
 

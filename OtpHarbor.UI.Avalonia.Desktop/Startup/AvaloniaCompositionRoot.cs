@@ -91,6 +91,8 @@ public static class AvaloniaCompositionRoot
             LogSwitchService.SharedSwitch.MinimumLevel.ToAppLevel(),
             LoggingConfigurator.ManualOverrideLevel.HasValue));
 #if TOTP_PLATFORM_WINDOWS
+        services.AddSingleton<IPlatformUnattendedUnlock, WindowsCngUnattendedUnlock>();
+        services.AddSingleton<IPlatformQuickUnlock>(provider => provider.GetRequiredService<IPlatformUnattendedUnlock>());
         services.AddSingleton<IPlatformSessionEventSource, TOTP.Platform.Windows.WindowsSessionEventSource>();
         services.AddSingleton<IHelloPromptWindowHandleProvider, AvaloniaHelloPromptWindowHandleProvider>();
         services.AddSingleton<IHelloVerificationRequester, WindowsHelloVerificationRequester>();
@@ -99,6 +101,12 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IWindowsEmailComposer, WindowsEmailComposer>();
         services.AddSingleton<IDiagnosticLogEmailService, WindowsDiagnosticLogEmailService>();
 #elif TOTP_PLATFORM_MACOS
+        services.AddSingleton<IPlatformUnattendedUnlock>(provider => new SecretStoreUnattendedUnlock(
+            new MacOSKeychainSecretStore(new MacOSKeychainNative(requireUserPresence: false),
+                provider.GetRequiredService<ILogger<MacOSKeychainSecretStore>>()),
+            TOTP.Core.Security.Models.PlatformQuickUnlockContract.MacOSUnattendedProvider,
+            provider.GetRequiredService<ILogger<SecretStoreUnattendedUnlock>>()));
+        services.AddSingleton<IPlatformQuickUnlock>(provider => provider.GetRequiredService<IPlatformUnattendedUnlock>());
         services.AddSingleton<IMacOSSessionStateReader, MacOSSessionStateReader>();
         services.AddSingleton<IPlatformSessionEventSource, MacOSSessionEventSource>();
         services.AddSingleton<ICameraAccessProbe, MacOSCameraAccessProbe>();
@@ -109,6 +117,11 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<IPlatformQuickUnlock, MacOSPlatformQuickUnlock>();
         services.AddSingleton<IDiagnosticLogEmailService, ShellDiagnosticLogEmailService>();
 #elif TOTP_PLATFORM_LINUX
+        services.AddSingleton<IPlatformUnattendedUnlock>(provider => new SecretStoreUnattendedUnlock(
+            provider.GetRequiredService<LinuxSecretServiceStore>(),
+            TOTP.Core.Security.Models.PlatformQuickUnlockContract.LinuxUnattendedProvider,
+            provider.GetRequiredService<ILogger<SecretStoreUnattendedUnlock>>()));
+        services.AddSingleton<IPlatformQuickUnlock>(provider => provider.GetRequiredService<IPlatformUnattendedUnlock>());
         services.AddSingleton<ILinuxSessionMonitorRuntime, LinuxSessionMonitorRuntime>();
         services.AddSingleton<IPlatformSessionEventSource, LinuxSessionEventSource>();
         services.AddSingleton<ILinuxCameraDeviceAccess, LinuxCameraDeviceAccess>();

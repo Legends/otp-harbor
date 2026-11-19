@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OtpHarbor.Core\OtpHarbor.Core.csproj" />
+    <ProjectReference Include="..\OtpHarbor.Localization\OtpHarbor.Localization.csproj" />
     <ProjectReference Include="..\OtpHarbor.UI.Avalonia.Shared\OtpHarbor.UI.Avalonia.Shared.csproj" />
   </ItemGroup>
 

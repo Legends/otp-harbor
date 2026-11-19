@@ -47,9 +47,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.13, )",
-        "resolved": "10.0.13",
-        "contentHash": "40yrBMsLEcjixBR4G+FiUaBPvxXIPSKJ2OgSrbOZcmSDBda4Sb0k7BWrfDpIvn3IvvDzwOL/tEPa6gDQfh6aRw=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "u0WnRcZgBZYHlVFpbe/3Adpmb9rmNJ8/fmEwqc/xjB7fFppq+gfaLJd3Sdaw+J02zV0eP/T9dneQ3Dv5jWw6bw=="
       },
       "Xamarin.AndroidX.Camera.Camera2": {
         "type": "Direct",
@@ -1393,6 +1393,9 @@
           "TOTP.DAL": "[1.0.0, )"
         }
       },
+      "TOTP.Localization": {
+        "type": "Project"
+      },
       "TOTP.Platform.Android": {
         "type": "Project",
         "dependencies": {
@@ -1406,6 +1409,7 @@
           "Avalonia": "[12.1.1, )",
           "Avalonia.Themes.Fluent": "[12.1.1, )",
           "TOTP.Core": "[1.0.0, )",
+          "TOTP.Localization": "[1.0.0, )",
           "TOTP.UI.Avalonia.Shared": "[1.0.0, )"
         }
       },
@@ -1413,7 +1417,8 @@
         "type": "Project",
         "dependencies": {
           "Avalonia": "[12.1.1, )",
-          "TOTP.Core": "[1.0.0, )"
+          "TOTP.Core": "[1.0.0, )",
+          "TOTP.Localization": "[1.0.0, )"
         }
       }
     },

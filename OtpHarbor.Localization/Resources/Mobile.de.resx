@@ -1,0 +1,232 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="AccountDeleteFailed" xml:space="preserve"><value>Das Konto konnte nicht gelöscht werden.</value></data>
+  <data name="AccountFileImportCancelled" xml:space="preserve"><value>Der Kontodatei-Import wurde abgebrochen. Kein Konto wurde geändert.</value></data>
+  <data name="AccountFileImportFailed" xml:space="preserve"><value>Die Kontodatei konnte nicht sicher importiert werden. Vorhandene Konten wurden nicht geändert.</value></data>
+  <data name="AccountFileImportRejected" xml:space="preserve"><value>Diese Datei ist kein gültiger unterstützter Export. Wählen Sie einen unverschlüsselten JSON-, CSV-, TXT- oder 2FAS-Export oder nutzen Sie die Exporthilfe unten. Verschlüsselte OTP-Harbor-Backups werden separat wiederhergestellt.</value></data>
+  <data name="AccountFileImported" xml:space="preserve"><value>Kontodatei importiert: {0} hinzugefügt, {1} überschrieben, {2} vorhandene unverändert.</value></data>
+  <data name="AccountName" xml:space="preserve"><value>Kontoname (optional)</value></data>
+  <data name="AccountNameField" xml:space="preserve"><value>Kontoname</value></data>
+  <data name="AccountSaveFailed" xml:space="preserve"><value>Das Konto konnte nicht gespeichert werden.</value></data>
+  <data name="AccountSavedIconPreferenceFailed" xml:space="preserve"><value>Das Konto wurde gespeichert, seine lokale Symboleinstellung jedoch nicht.</value></data>
+  <data name="AccountSwipeHint" xml:space="preserve"><value>Nach rechts wischen für QR und Bearbeiten, nach links zum Löschen. Die Kamera importiert auch Google-Authenticator-Exporte.</value></data>
+  <data name="AccountsTitle" xml:space="preserve"><value>Konten</value></data>
+  <data name="AllowScreenshots" xml:space="preserve"><value>Screenshots erlauben</value></data>
+  <data name="AllowScreenshotsHelp" xml:space="preserve"><value>Erlaubt Android-Screenshots und Bildschirmaufnahmen. Aufnahmen können Kontodaten und aktive Tokens offenlegen.</value></data>
+  <data name="AppLockEnabledDescription" xml:space="preserve"><value>Beim Öffnen von OTP Harbor oder nach 30 Sekunden im Hintergrund ist eine Authentifizierung erforderlich.</value></data>
+  <data name="AppearanceSettingsDescription" xml:space="preserve"><value>Sprache, Design und visuelle Einstellungen anpassen.</value></data>
+  <data name="ApplyToAll" xml:space="preserve"><value>Auf alle anwenden</value></data>
+  <data name="ApplyUnlockMethod" xml:space="preserve"><value>Übernehmen</value></data>
+  <data name="AuthenticationMethod" xml:space="preserve"><value>Authentifizierungsmethode</value></data>
+  <data name="AutomaticBackupFolderGuidance" xml:space="preserve"><value>Wählen oder erstellen Sie einen Unterordner, zum Beispiel „Dokumente/OTP Harbor Backups“. Android schützt das Stammverzeichnis des internen Speichers und lässt dessen Auswahl nicht zu.</value></data>
+  <data name="AutomaticBackupFolderGuidanceTitle" xml:space="preserve"><value>Eigenen Sicherungsordner auswählen</value></data>
+  <data name="BackToSettings" xml:space="preserve"><value>Zurück zu Einstellungen</value></data>
+  <data name="BackToTop" xml:space="preserve"><value>Nach oben</value></data>
+  <data name="BackupAccountFormat" xml:space="preserve"><value>Importiert: {0}</value></data>
+  <data name="BackupConflictResolution" xml:space="preserve"><value>{0} Konten: {1} neu, {2} unverändert, {3} zu prüfen. Wählen Sie die Aktion für jedes geänderte Konto. Zuerst wird ein Wiederherstellungs-Backup erstellt.</value></data>
+  <data name="BackupConflictResolutionTitle" xml:space="preserve"><value>Import-Unterschiede auflösen</value></data>
+  <data name="BackupContainsNoAccounts" xml:space="preserve"><value>Diese Sicherung enthält keine Konten zum Wiederherstellen.</value></data>
+  <data name="BackupDescription" xml:space="preserve"><value>Exportieren Sie eine verschlüsselte OTP-Harbor-Sicherung oder stellen Sie sie wieder her. Vorhandene Konten werden standardmäßig übersprungen; geänderte Treffer werden vor dem Import geprüft.</value></data>
+  <data name="BackupExportCleanupFailed" xml:space="preserve"><value>Der Export ist fehlgeschlagen und das unvollständige Ziel konnte nicht entfernt werden. Löschen Sie es im Dokumentanbieter.</value></data>
+  <data name="BackupExportFailed" xml:space="preserve"><value>Das verschlüsselte Backup konnte nicht sicher exportiert werden.</value></data>
+  <data name="BackupExported" xml:space="preserve"><value>Das verschlüsselte Backup „{0}“ wurde am ausgewählten Speicherort gespeichert.</value></data>
+  <data name="BackupFileName" xml:space="preserve"><value>otp-harbor-backup-{0}.otphbp</value></data>
+  <data name="BackupImportCancelled" xml:space="preserve"><value>Backup-Import abgebrochen. Es wurde kein Konto geändert.</value></data>
+  <data name="BackupImportFailed" xml:space="preserve"><value>Das verschlüsselte Backup konnte nicht sicher importiert werden. Kein vorhandenes Konto wurde überschrieben.</value></data>
+  <data name="BackupImportRejected" xml:space="preserve"><value>Das Backup-Passwort war falsch oder das verschlüsselte Backup ist ungültig oder beschädigt.</value></data>
+  <data name="BackupImported" xml:space="preserve"><value>Backup importiert: {0} hinzugefügt, {1} überschrieben, {2} vorhandene unverändert.</value></data>
+  <data name="BackupPassword" xml:space="preserve"><value>Backup-Passwort</value></data>
+  <data name="BackupPasswordMinimumLength" xml:space="preserve"><value>Das Backup-Passwort muss mindestens {0} Zeichen enthalten.</value></data>
+  <data name="BackupPasswordMismatch" xml:space="preserve"><value>Die Backup-Passwörter stimmen nicht überein.</value></data>
+  <data name="BackupPasswordRequired" xml:space="preserve"><value>Geben Sie ein Backup-Passwort ein.</value></data>
+  <data name="BackupRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor wurde während der Dokumentauswahl gesperrt. Entsperren Sie die App und versuchen Sie es erneut.</value></data>
+  <data name="BackupSection" xml:space="preserve"><value>Sicherung</value></data>
+  <data name="BackupSettingsDescription" xml:space="preserve"><value>Konten und verschlüsselte OTP-Harbor-Sicherungen importieren, exportieren und automatische Sicherungen verwalten.</value></data>
+  <data name="BackupTitle" xml:space="preserve"><value>Sichern &amp; Wiederherstellen</value></data>
+  <data name="BiometricDisabledByPolicy" xml:space="preserve"><value>Der biometrische Zugriff ist aufgrund der Gerätesicherheitsrichtlinie nicht verfügbar.</value></data>
+  <data name="BiometricEnable" xml:space="preserve"><value>Biometrische Entsperrung aktivieren</value></data>
+  <data name="BiometricEnableFailed" xml:space="preserve"><value>Die biometrische Entsperrung konnte nicht sicher aktiviert werden.</value></data>
+  <data name="BiometricEnabled" xml:space="preserve"><value>Die biometrische Entsperrung ist aktiviert. Ihr Masterpasswort bleibt zur Wiederherstellung verfügbar.</value></data>
+  <data name="BiometricPromptSubtitle" xml:space="preserve"><value>Bestätigen Sie Ihre Identität mit starker Biometrie.</value></data>
+  <data name="BiometricPromptTitle" xml:space="preserve"><value>OTP Harbor entsperren</value></data>
+  <data name="BiometricRecoveryRequired" xml:space="preserve"><value>Entsperren Sie mit Ihrem Masterpasswort, um den biometrischen Zugriff wiederherzustellen.</value></data>
+  <data name="BiometricRetriesExhausted" xml:space="preserve"><value>Der biometrische Zugriff ist vorübergehend gesperrt. Verwenden Sie Ihr Masterpasswort oder versuchen Sie es später erneut.</value></data>
+  <data name="BiometricSetupDescription" xml:space="preserve"><value>Verwenden Sie starke Biometrie für die Schnellentsperrung. Bestätigen Sie die Einrichtung mit Ihrer aktuellen Authentifizierungsmethode. Ihr Master-Passwort bleibt die Wiederherstellungsmethode.</value></data>
+  <data name="BiometricSetupTitle" xml:space="preserve"><value>Biometrische Entsperrung</value></data>
+  <data name="BiometricUnavailable" xml:space="preserve"><value>Starke biometrische Entsperrung ist auf diesem Gerät nicht verfügbar.</value></data>
+  <data name="BiometricUnlock" xml:space="preserve"><value>Biometrisch entsperren</value></data>
+  <data name="BiometricUnlockFailed" xml:space="preserve"><value>Die biometrische Prüfung hat den Tresor nicht entsperrt.</value></data>
+  <data name="BiometricUsePassword" xml:space="preserve"><value>Masterpasswort verwenden</value></data>
+  <data name="BrandIconSettingsDescription" xml:space="preserve"><value>Lokale Symbolpakete verwalten und importieren.</value></data>
+  <data name="BrandIcons" xml:space="preserve"><value>Symbolpakete</value></data>
+  <data name="BrandIconsDescription" xml:space="preserve"><value>Symbolpakete und benutzerdefinierte Symbole von Drittanbietern werden vom Benutzer importiert und lokal gespeichert. OTP Harbor stellt diese Inhalte weder bereit noch verbreitet sie.&#xA;&#xA;Alle Marken, Logos, Urheberrechte, Lizenzen und Nutzungsrichtlinien verbleiben in der Verantwortung ihrer jeweiligen Eigentümer und gelten unabhängig von OTP Harbor.&#xA;&#xA;Die Kompatibilität mit einem Symbolpaket bedeutet weder eine Verbindung oder Förderung noch eine Empfehlung durch dessen Anbieter oder einen Markeninhaber. Importiere die anbieterunabhängige .otphicons-Datei aus OTP Harbor Icon Pack Builder; OTP Harbor prüft das vollständige Paket, bevor es das installierte Paket ersetzt.</value></data>
+  <data name="Change" xml:space="preserve"><value>Ändern</value></data>
+  <data name="ChangeMasterPasswordDescription" xml:space="preserve"><value>Bestätige dein aktuelles Master-Passwort und wähle ein neues. Deine Konten und eingerichteten Entsperrmethoden bleiben erhalten.</value></data>
+  <data name="ChangedFieldsFormat" xml:space="preserve"><value>Geändert: {0}</value></data>
+  <data name="CloseSettings" xml:space="preserve"><value>Einstellungen schließen</value></data>
+  <data name="CodeCopyFailed" xml:space="preserve"><value>Der Code konnte nicht sicher kopiert werden.</value></data>
+  <data name="CodeUnavailable" xml:space="preserve"><value>Für dieses Konto konnte kein Code erzeugt werden.</value></data>
+  <data name="Codes" xml:space="preserve"><value>Codes</value></data>
+  <data name="ConfirmBackupPassword" xml:space="preserve"><value>Backup-Passwort bestätigen</value></data>
+  <data name="ConfirmImport" xml:space="preserve"><value>Importieren</value></data>
+  <data name="ConfirmPassword" xml:space="preserve"><value>Masterpasswort bestätigen</value></data>
+  <data name="ConflictAccount" xml:space="preserve"><value>Konto</value></data>
+  <data name="CopyCode" xml:space="preserve"><value>Code kopieren</value></data>
+  <data name="CreateVault" xml:space="preserve"><value>Verschlüsselten Tresor erstellen</value></data>
+  <data name="CurrentAccountFormat" xml:space="preserve"><value>Aktuell: {0}</value></data>
+  <data name="CurrentPassword" xml:space="preserve"><value>Aktuelles Master-Passwort</value></data>
+  <data name="CurrentPasswordRequired" xml:space="preserve"><value>Gib dein aktuelles Master-Passwort ein.</value></data>
+  <data name="DeleteAccount" xml:space="preserve"><value>Löschen</value></data>
+  <data name="DeleteAccountPrompt" xml:space="preserve"><value>{0} löschen? Dies kann nicht rückgängig gemacht werden.</value></data>
+  <data name="DeleteConfirmTitle" xml:space="preserve"><value>Löschen bestätigen</value></data>
+  <data name="DeleteGroupPrompt" xml:space="preserve"><value>Die Gruppe „{0}“ löschen? Ihre Konten bleiben im Tresor erhalten.</value></data>
+  <data name="DeviceAuthenticationPrompt" xml:space="preserve"><value>Ihr Gerät fordert Sie auf, Ihre Identität zu bestätigen.</value></data>
+  <data name="DeviceCredentialPromptSubtitle" xml:space="preserve"><value>Verwenden Sie die Gerätesperre (PIN, Muster oder Passwort).</value></data>
+  <data name="DeviceCredentialPromptTitle" xml:space="preserve"><value>OTP Harbor entsperren</value></data>
+  <data name="DeviceCredentialUnlockButton" xml:space="preserve"><value>Gerätesperre&#xA;(PIN, Muster oder Passwort)</value></data>
+  <data name="DevicePinUnavailable" xml:space="preserve"><value>Es ist keine sichere Gerätesperre (PIN, Muster oder Passwort) eingerichtet.</value></data>
+  <data name="DiagnosticLogEmailChooser" xml:space="preserve"><value>Diagnoseprotokoll senden</value></data>
+  <data name="DiagnosticLogEmailDraftOpened" xml:space="preserve"><value>Wählen Sie eine E-Mail-App, um das Diagnoseprotokoll zu prüfen und zu senden.</value></data>
+  <data name="DiagnosticLogExportFailed" xml:space="preserve"><value>Das Diagnoseprotokoll konnte nicht exportiert werden.</value></data>
+  <data name="DiagnosticLogExported" xml:space="preserve"><value>Diagnoseprotokoll wurde exportiert.</value></data>
+  <data name="DiagnosticLogSharingNotice" xml:space="preserve"><value>Die E-Mail enthält Angaben zu App, Betriebssystem, Laufzeit, Anzeige, Sprache und Protokollstufe; unter Android auch Hersteller und Modell. Dem Systembericht werden keine Kontodaten oder Gerätekennungen hinzugefügt. Protokolle können weiterhin System- und Dateipfaddetails enthalten. Prüfen Sie Entwurf und Anhang vor dem Senden.</value></data>
+  <data name="DiscardChanges" xml:space="preserve"><value>Änderungen verwerfen</value></data>
+  <data name="DismissQr" xml:space="preserve"><value>QR-Code ausblenden</value></data>
+  <data name="DuplicateAccount" xml:space="preserve"><value>Ein Konto mit diesem Anbieter und Kontonamen ist bereits vorhanden.</value></data>
+  <data name="EditAccount" xml:space="preserve"><value>Bearbeiten</value></data>
+  <data name="EditorAddTitle" xml:space="preserve"><value>Konto hinzufügen</value></data>
+  <data name="EditorEditTitle" xml:space="preserve"><value>Konto bearbeiten</value></data>
+  <data name="ExistingVaultConflict" xml:space="preserve"><value>Vorhandene verschlüsselte Daten benötigen ihr ursprüngliches Masterpasswort.</value></data>
+  <data name="ExportBackup" xml:space="preserve"><value>Exportieren</value></data>
+  <data name="ExportBackupDescription" xml:space="preserve"><value>Erstellen Sie eine portable, passwortgeschützte Sicherung. Android fragt nach dem Speicherort. Bewahren Sie Sicherung und Passwort getrennt auf; öffnen Sie die Datei mit Konten importieren.</value></data>
+  <data name="ExportDiagnosticLog" xml:space="preserve"><value>Diagnoseprotokoll exportieren…</value></data>
+  <data name="ExportSection" xml:space="preserve"><value>Export</value></data>
+  <data name="Faq" xml:space="preserve"><value>FAQ</value></data>
+  <data name="FaqImportFormatsSupported" xml:space="preserve"><value>Konten importieren unterstützt unverschlüsselte Aegis-/2FAS-Sicherungen, Bitwarden-Authenticator/Password-Manager-JSON/CSV (nur TOTP), LastPass-kompatibles JSON, Proton-Authenticator-v1-JSON, Ente-/otpauth://-URI-Listen, Standard-TOTP-QR-Codes und Übertragungs-QR-Codes von Google Authenticator. Dateien von OTP Harbor: .json, .csv, .txt; 2FAS: .2fas. Verschlüsselte OTP-Harbor-Sicherungen (.otphbp, ältere .totp und automatische .otphbackup) werden im selben Importablauf mit Passwortabfrage geöffnet. Verschlüsselte Fremdexporte werden nicht unterstützt.</value></data>
+  <data name="FaqSettingsDescription" xml:space="preserve"><value>Antworten auf häufige Fragen zu OTP Harbor.</value></data>
+  <data name="FavoriteField" xml:space="preserve"><value>Favorit</value></data>
+  <data name="FavoriteUpdateFailed" xml:space="preserve"><value>Die Favoriten konnten nicht aktualisiert werden.</value></data>
+  <data name="Favorites" xml:space="preserve"><value>Favoriten</value></data>
+  <data name="GroupMembershipField" xml:space="preserve"><value>Gruppen</value></data>
+  <data name="GroupName" xml:space="preserve"><value>Gruppenname</value></data>
+  <data name="GroupNameRequired" xml:space="preserve"><value>Gib einen Gruppennamen ein.</value></data>
+  <data name="ImportAccountFile" xml:space="preserve"><value>Konten aus anderen Formaten importieren</value></data>
+  <data name="ImportAccountFileDescription" xml:space="preserve"><value>Unterstützte Formate:</value></data>
+  <data name="ImportBackup" xml:space="preserve"><value>Wiederherstellen</value></data>
+  <data name="ImportBackupDescription" xml:space="preserve"><value>Wählen Sie eine verschlüsselte OTP-Harbor-Sicherung. Geben Sie für .otphbp-Dateien (oder ältere .totp-Dateien) das Exportpasswort ein. Geben Sie für automatische .otphbackup-Dateien das Masterpasswort ein, das bei der Erstellung der Sicherung aktiv war. Vorhandene Konten werden standardmäßig übersprungen; prüfen Sie jeden geänderten Treffer, bevor ein Konto geändert wird.</value></data>
+  <data name="ImportCancel" xml:space="preserve"><value>Import abbrechen</value></data>
+  <data name="ImportConfirmation" xml:space="preserve"><value>{0} Konten importieren? {1} passende vorhandene Konten bleiben unverändert. Vor Änderungen wird ein Wiederherstellungs-Backup erstellt.</value></data>
+  <data name="ImportConfirmationTitle" xml:space="preserve"><value>Kontoimport bestätigen</value></data>
+  <data name="ImportExportSettingsDescription" xml:space="preserve"><value>Konten aus QR-Codes oder unterstützten Dateien importieren.</value></data>
+  <data name="ImportFormatAegis" xml:space="preserve"><value>1. Unverschlüsselter Aegis-JSON-Export (.json)</value></data>
+  <data name="ImportFormatOtpAuth" xml:space="preserve"><value>3. Textdatei mit einer standardmäßigen otpauth://-TOTP-URI pro Zeile (.txt)</value></data>
+  <data name="ImportFormatTwoFas" xml:space="preserve"><value>2. Unverschlüsselte 2FAS-Sicherung (.2fas)</value></data>
+  <data name="ImportGoogleQr" xml:space="preserve"><value>Aus Google Authenticator importieren</value></data>
+  <data name="ImportGoogleQrDescription" xml:space="preserve"><value>Scanne einen Übertragungs-QR-Code von Google Authenticator. Exporte mit mehreren Konten oder Seiten werden QR-Code für QR-Code unterstützt.</value></data>
+  <data name="ImportReviewExistingParameters" xml:space="preserve"><value>{0} · {1}&#xA;{2} · {3} Ziffern · {4} s</value></data>
+  <data name="ImportSection" xml:space="preserve"><value>Import</value></data>
+  <data name="ImportingBrandIcons" xml:space="preserve"><value>Das Symbolpaket wird importiert und geprüft. Dies kann einige Zeit dauern…</value></data>
+  <data name="IssuerField" xml:space="preserve"><value>Anbieter</value></data>
+  <data name="IssuerRequired" xml:space="preserve"><value>Geben Sie einen Anbieter ein.</value></data>
+  <data name="KeepAccountAutomationFormat" xml:space="preserve"><value>Aktuelle Version von {0} behalten</value></data>
+  <data name="KeepBoth" xml:space="preserve"><value>Beide Konten behalten</value></data>
+  <data name="KeepBothAll" xml:space="preserve"><value>Für alle beide behalten</value></data>
+  <data name="LanguageSaveFailed" xml:space="preserve"><value>Die Spracheinstellung konnte nicht gespeichert werden.</value></data>
+  <data name="LoadingAccountsFailed" xml:space="preserve"><value>Ihre verschlüsselten Konten konnten nicht geladen werden.</value></data>
+  <data name="MasterPassword" xml:space="preserve"><value>Masterpasswort</value></data>
+  <data name="MiscSettingsDescription" xml:space="preserve"><value>Probleme melden, Protokolle verwalten und App-Speicher anzeigen.</value></data>
+  <data name="NoAccounts" xml:space="preserve"><value>Noch keine Konten. Fügen Sie eines manuell hinzu, scannen Sie einen QR-Code oder verwenden Sie Einstellungen → Daten &amp; Backup → Konten importieren.</value></data>
+  <data name="NoBrandIconPackInstructions" xml:space="preserve"><value>Importanleitungen und weitere Optionen findest du unter Einstellungen → Symbolpakete.</value></data>
+  <data name="NoBrandIconsMatchSearch" xml:space="preserve"><value>Keine Symbole entsprechen Ihrer Suche.</value></data>
+  <data name="NoImportIdentical" xml:space="preserve"><value>Alle Konten sind identisch. Es gibt nichts zu importieren.</value></data>
+  <data name="NoImportTitle" xml:space="preserve"><value>Kein Import</value></data>
+  <data name="NoSearchResults" xml:space="preserve"><value>Keine passenden Konten.</value></data>
+  <data name="NotNow" xml:space="preserve"><value>Jetzt nicht</value></data>
+  <data name="Or" xml:space="preserve"><value>oder</value></data>
+  <data name="Override" xml:space="preserve"><value>Ersetzen</value></data>
+  <data name="OverrideAll" xml:space="preserve"><value>Alle ersetzen</value></data>
+  <data name="PasswordChangeFailed" xml:space="preserve"><value>Das Master-Passwort konnte nicht sicher geändert werden. Der bestehende Zugriff bleibt aktiv.</value></data>
+  <data name="PasswordChanged" xml:space="preserve"><value>Master-Passwort geändert.</value></data>
+  <data name="PasswordMinimumLength" xml:space="preserve"><value>Das Masterpasswort muss mindestens {0} Zeichen enthalten.</value></data>
+  <data name="PasswordMismatch" xml:space="preserve"><value>Die Passwörter stimmen nicht überein.</value></data>
+  <data name="PasswordRequired" xml:space="preserve"><value>Geben Sie Ihr Masterpasswort ein.</value></data>
+  <data name="PasswordVerificationFailed" xml:space="preserve"><value>Das aktuelle Master-Passwort konnte nicht bestätigt werden.</value></data>
+  <data name="PeriodField" xml:space="preserve"><value>Zeitraum</value></data>
+  <data name="QrAccountAdded" xml:space="preserve"><value>Konto aus QR-Code hinzugefügt.</value></data>
+  <data name="QrAccountDuplicate" xml:space="preserve"><value>Dieses Konto ist bereits unverändert vorhanden.</value></data>
+  <data name="QrAccountKeptBoth" xml:space="preserve"><value>Beide Konten wurden beibehalten.</value></data>
+  <data name="QrAccountSkipped" xml:space="preserve"><value>Das geänderte Konto wurde übersprungen.</value></data>
+  <data name="QrAccountUpdated" xml:space="preserve"><value>Vorhandenes Konto aus QR-Code aktualisiert.</value></data>
+  <data name="QrBulkImported" xml:space="preserve"><value>QR-Import abgeschlossen. Hinzugefügt: {0}. Aktualisiert: {1}. Beide behalten: {2}. Unverändert: {3}. Übersprungen: {4}. Fehlgeschlagen: {5}.</value></data>
+  <data name="QrBulkImportedMore" xml:space="preserve"><value>QR-Code {0} von {1} abgeschlossen. Hinzugefügt: {2}. Aktualisiert: {3}. Beide behalten: {4}. Unverändert: {5}. Übersprungen: {6}. Fehlgeschlagen: {7}. Scannen Sie den nächsten QR-Code.</value></data>
+  <data name="QrConflictPrompt" xml:space="preserve"><value>{0} ist bereits mit einem anderen Geheimnis vorhanden. Wählen Sie, wie Sie fortfahren möchten.</value></data>
+  <data name="QrDisplayFailed" xml:space="preserve"><value>Der Konto-QR-Code konnte nicht sicher angezeigt werden.</value></data>
+  <data name="QrImportCancelled" xml:space="preserve"><value>QR-Import abgebrochen. Es wurde kein Konto geändert.</value></data>
+  <data name="QrImportChangedAccounts" xml:space="preserve"><value>Wählen Sie für jedes geänderte Konto eine Aktion. Geheimniswerte werden niemals angezeigt.</value></data>
+  <data name="QrImportResultTitle" xml:space="preserve"><value>Ergebnis des QR-Imports</value></data>
+  <data name="QrImportReviewSummary" xml:space="preserve"><value>{0} Konten: {1} neu, {2} unverändert, {3} geändert.</value></data>
+  <data name="QrImportReviewTitle" xml:space="preserve"><value>QR-Import prüfen</value></data>
+  <data name="QrInvalid" xml:space="preserve"><value>Dieser QR-Code enthält kein unterstütztes TOTP-Konto.</value></data>
+  <data name="QrKeepBothAccountAutomationFormat" xml:space="preserve"><value>Für {0} beide behalten</value></data>
+  <data name="QrPrivacyNotice" xml:space="preserve"><value>Dieser QR-Code enthält das Kontogeheimnis. Teilen Sie ihn nur mit einem vertrauenswürdigen Authenticator.</value></data>
+  <data name="QrReplaceAccountAutomationFormat" xml:space="preserve"><value>{0} ersetzen</value></data>
+  <data name="QrScanFailed" xml:space="preserve"><value>Der QR-Code konnte nicht sicher gescannt werden.</value></data>
+  <data name="QrScanRetryAfterUnlock" xml:space="preserve"><value>OTP Harbor wurde während des Scannens gesperrt. Entsperren Sie die App und scannen Sie den QR-Code erneut.</value></data>
+  <data name="QrScannerUnavailable" xml:space="preserve"><value>Das QR-Scannen ist nicht verfügbar. Fügen Sie das Konto stattdessen manuell hinzu.</value></data>
+  <data name="QrSkipAccountAutomationFormat" xml:space="preserve"><value>{0} überspringen</value></data>
+  <data name="QuickUnlockEnabled" xml:space="preserve"><value>Die Schnellentsperrung ist aktiviert. Ihr Master-Passwort bleibt die Wiederherstellungsmethode.</value></data>
+  <data name="QuickUnlockNotEnabled" xml:space="preserve"><value>Die Schnellentsperrung wurde nicht aktiviert. Sie können Ihr Master-Passwort weiter verwenden.</value></data>
+  <data name="RestoreAccountAutomationFormat" xml:space="preserve"><value>Importierte Version von {0} verwenden</value></data>
+  <data name="RevealPassword" xml:space="preserve"><value>Passwort anzeigen oder ausblenden</value></data>
+  <data name="RevealPasswordHelp" xml:space="preserve"><value>Erneut auswählen, um das Passwort auszublenden.</value></data>
+  <data name="ScanQr" xml:space="preserve"><value>QR-Code scannen</value></data>
+  <data name="SearchAccounts" xml:space="preserve"><value>Konten durchsuchen</value></data>
+  <data name="SecretField" xml:space="preserve"><value>Secret</value></data>
+  <data name="SecretInvalid" xml:space="preserve"><value>Gib ein gültiges, nicht leeres Base32-Geheimnis ein.</value></data>
+  <data name="SecretOptionalOnEdit" xml:space="preserve"><value>Neues Base32-Geheimnis (leer lassen, um das aktuelle beizubehalten)</value></data>
+  <data name="SecretRequired" xml:space="preserve"><value>Geben Sie das Kontogeheimnis ein.</value></data>
+  <data name="SecuritySettingsDescription" xml:space="preserve"><value>Verschlüsselung, App-Sperre und Entsperrmethoden konfigurieren.</value></data>
+  <data name="SetUpFirstAccount" xml:space="preserve"><value>Erstes Konto einrichten</value></data>
+  <data name="Settings" xml:space="preserve"><value>Einstellungen</value></data>
+  <data name="SettingsSaveFailed" xml:space="preserve"><value>Diese Einstellung konnte nicht gespeichert werden.</value></data>
+  <data name="SetupDescription" xml:space="preserve"><value>Erstellen Sie ein Masterpasswort, um Ihren lokalen Tresor zu verschlüsseln. OTP Harbor kann es nicht zurücksetzen, wenn Sie es vergessen. Erstellen Sie anschließend eine verschlüsselte Sicherung und bewahren Sie deren Passwort getrennt auf.</value></data>
+  <data name="SetupFailed" xml:space="preserve"><value>Der verschlüsselte Tresor konnte nicht eingerichtet werden.</value></data>
+  <data name="SetupTitle" xml:space="preserve"><value>Authenticator schützen</value></data>
+  <data name="ShowIssuerLogoDescription" xml:space="preserve"><value>Ein Marken- oder Platzhalterfeld neben jedem Konto anzeigen.</value></data>
+  <data name="ShowQr" xml:space="preserve"><value>QR-Code anzeigen</value></data>
+  <data name="Skip" xml:space="preserve"><value>Behalten</value></data>
+  <data name="SkipAll" xml:space="preserve"><value>Alle behalten</value></data>
+  <data name="Starting" xml:space="preserve"><value>Wird geladen…</value></data>
+  <data name="StartupFailed" xml:space="preserve"><value>OTP Harbor konnte nicht sicher gestartet werden. Ihre verschlüsselten Daten wurden nicht verändert.</value></data>
+  <data name="UnlockDescription" xml:space="preserve"><value>Geben Sie Ihr Masterpasswort ein, um den verschlüsselten lokalen Tresor zu öffnen.</value></data>
+  <data name="UnlockFailed" xml:space="preserve"><value>Der Tresor konnte nicht sicher entsperrt werden.</value></data>
+  <data name="UnlockMethodChangeFailed" xml:space="preserve"><value>Die Entsperrmethode konnte nicht sicher geändert werden.</value></data>
+  <data name="UnlockMethodChanged" xml:space="preserve"><value>Entsperrmethode geändert.</value></data>
+  <data name="UnlockMethodDescription" xml:space="preserve"><value>Wählen Sie die primäre App-Sperrmethode. Das Masterpasswort bleibt immer als Alternative verfügbar.</value></data>
+  <data name="UnlockMethodPasswordPrompt" xml:space="preserve"><value>Bestätigen Sie Ihre Identität, um die Entsperrmethode zu ändern.</value></data>
+  <data name="UnlockMethodTitle" xml:space="preserve"><value>Entsperrmethode</value></data>
+  <data name="UnlockRejected" xml:space="preserve"><value>Das Masterpasswort wurde nicht akzeptiert.</value></data>
+  <data name="UnlockTitle" xml:space="preserve"><value>OTP Harbor entsperren</value></data>
+  <data name="UnlockWithBiometrics" xml:space="preserve"><value>Starke Biometrie</value></data>
+  <data name="UnlockWithDevicePin" xml:space="preserve"><value>Gerätesperre (PIN, Muster oder Passwort)</value></data>
+  <data name="UnlockWithPassword" xml:space="preserve"><value>Masterpasswort</value></data>
+  <data name="UnsavedAccountChangesPrompt" xml:space="preserve"><value>Möchten Sie Ihre Änderungen vor dem Verlassen speichern?</value></data>
+  <data name="UnsavedAccountChangesTitle" xml:space="preserve"><value>Ungespeicherte Änderungen</value></data>
+  <data name="UpdateExisting" xml:space="preserve"><value>Vorhandenes Konto aktualisieren</value></data>
+  <data name="UploadQrImage" xml:space="preserve"><value>QR-Code-Bild hochladen</value></data>
+  <data name="ViewImportFormatsFaq" xml:space="preserve"><value>Wie müssen diese Importdateien aufgebaut sein?</value></data>
+  <data name="InfoDescription" xml:space="preserve"><value>App-Version, Lizenz und Links.</value></data>
+  <data name="FaqOlderVaultsAnswer" xml:space="preserve"><value>Ja, wenn du einen unterstützten Export oder eine unterstützte Sicherung hast. Wähle unter Einstellungen → Daten &amp; Backup → Konten importieren die Datei aus der älteren Version aus. OTP Harbor unterstützt seine Kontoexporte, passwortgeschützte Sicherungen im Format .totp und .otphbp sowie automatische .otphbackup-Sicherungen. Gib bei einer verschlüsselten Sicherung das Passwort ein, das bei ihrer Erstellung verwendet wurde. Bewahre die Originaldateien auf, bis du die importierten Konten geprüft hast. Wird die Datei nicht unterstützt, öffne sie zunächst in der älteren App und exportiere die Konten in einem unterstützten Format.</value></data>
+</root>

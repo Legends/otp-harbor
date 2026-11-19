@@ -43,6 +43,18 @@ public sealed class PlatformUnattendedUnlockEnrollment : IPlatformUnattendedUnlo
                 PlatformQuickUnlockEnrollmentErrorCode.RecoveryPasswordRequired,
                 "The recovery password is required.");
 
+        return await EnableCoreAsync((envelope, token) =>
+            _passwordService.UnwrapKeyV2Async(envelope.PasswordWrapper, recoveryPassword, token), cancellationToken);
+    }
+
+    public Task<Result> EnableWithAuthenticatedKeyAsync(
+        ReadOnlyMemory<byte> vaultKey, CancellationToken cancellationToken = default) =>
+        EnableCoreAsync((_, _) => Task.FromResult<byte[]?>(vaultKey.ToArray()), cancellationToken);
+
+    private async Task<Result> EnableCoreAsync(
+        Func<AuthorizationEnvelopeV2, CancellationToken, Task<byte[]?>> recoverKey,
+        CancellationToken cancellationToken)
+    {
         await _lock.WaitAsync(cancellationToken);
         AuthorizationEnvelopeV2? envelope = null;
         AuthorizationEnvelopeV2? updatedEnvelope = null;
@@ -65,10 +77,7 @@ public sealed class PlatformUnattendedUnlockEnrollment : IPlatformUnattendedUnlo
 
             envelope = loaded.Value;
             previousWrapper = envelope.QuickUnlockWrapper;
-            recoveredKey = await _passwordService.UnwrapKeyV2Async(
-                envelope.PasswordWrapper,
-                recoveryPassword,
-                cancellationToken);
+            recoveredKey = await recoverKey(envelope, cancellationToken);
             if (recoveredKey is not { Length: VaultKeySize })
                 return Fail(
                     PlatformQuickUnlockEnrollmentErrorCode.InvalidRecoveryPassword,
@@ -103,11 +112,12 @@ public sealed class PlatformUnattendedUnlockEnrollment : IPlatformUnattendedUnlo
                     registration.Errors);
 
             registeredWrapper = registration.Value;
+            cancellationToken.ThrowIfCancellationRequested();
             if (!string.Equals(
                     registeredWrapper.Provider,
                     _unattendedUnlock.ProviderId,
                     StringComparison.Ordinal)
-                || !PlatformQuickUnlockContract.IsSupportedAndroidUnattendedWrapper(
+                || !PlatformQuickUnlockContract.IsSupportedUnattendedWrapper(
                     registeredWrapper))
             {
                 await RemoveAsync(_unattendedUnlock, registeredWrapper);
@@ -156,6 +166,7 @@ public sealed class PlatformUnattendedUnlockEnrollment : IPlatformUnattendedUnlo
         finally
         {
             if (recoveredKey is not null) CryptographicOperations.ZeroMemory(recoveredKey);
+            if (registeredWrapper is not null) AuthorizationEnvelopeBufferCleaner.Clear(registeredWrapper);
             if (updatedEnvelope is not null)
             {
                 if (envelope?.QuickUnlockWrapper is not null)
@@ -181,7 +192,7 @@ public sealed class PlatformUnattendedUnlockEnrollment : IPlatformUnattendedUnlo
 
             envelope = loaded.Value;
             var wrapper = envelope.QuickUnlockWrapper;
-            if (!PlatformQuickUnlockContract.IsSupportedAndroidUnattendedWrapper(wrapper))
+            if (!PlatformQuickUnlockContract.IsSupportedUnattendedWrapper(wrapper))
                 return Result.Ok();
 
             updatedEnvelope = envelope with { QuickUnlockWrapper = null };

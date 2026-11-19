@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Controls;
+using TOTP.Localization;
 
 namespace TOTP.Avalonia.Desktop.Localization;
 
@@ -55,7 +56,7 @@ public sealed class AvaloniaLocalizationService : IAvaloniaLocalizationService
 
     public void ApplyCulture(string cultureName)
     {
-        var requested = GetSafeCulture(cultureName);
+        var requested = LocalizationCulture.Resolve(cultureName);
         CurrentLanguage = requested.TwoLetterISOLanguageName.ToLowerInvariant() switch
         {
             "de" => _german,
@@ -72,16 +73,4 @@ public sealed class AvaloniaLocalizationService : IAvaloniaLocalizationService
     public string GetString(string key) =>
         _catalog.Get(key, CultureInfo.GetCultureInfo(CurrentLanguage.CultureName));
 
-    private static CultureInfo GetSafeCulture(string cultureName)
-    {
-        if (string.IsNullOrWhiteSpace(cultureName)) return CultureInfo.GetCultureInfo("en");
-        try
-        {
-            return CultureInfo.GetCultureInfo(cultureName);
-        }
-        catch (CultureNotFoundException)
-        {
-            return CultureInfo.GetCultureInfo("en");
-        }
-    }
 }

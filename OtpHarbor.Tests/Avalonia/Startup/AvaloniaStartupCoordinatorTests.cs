@@ -25,7 +25,7 @@ public sealed class AvaloniaStartupCoordinatorTests
         Assert.Equal(AvaloniaStartupOutcome.ReadyForUnlock, outcome);
         settings.Verify(service => service.LoadAsync(), Times.Once);
         authorization.Verify(service => service.InitializeAsync(), Times.Once);
-        authorization.Verify(service => service.TryUnlockOnStartupAsync(It.IsAny<CancellationToken>()), Times.Never);
+        authorization.Verify(service => service.TryUnlockOnStartupAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -44,6 +44,58 @@ public sealed class AvaloniaStartupCoordinatorTests
         var outcome = await sut.InitializeAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(AvaloniaStartupOutcome.ReadyUnlocked, outcome);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WhenUnattendedSessionProjectsPassword_StillAttemptsSharedStartupUnlock()
+    {
+        var state = new AuthorizationState();
+        state.SetConfiguration(true, TOTP.Core.Enums.PreferredUnlockMethod.Password);
+        var (sut, _, authorization) = CreateSut(state);
+        authorization.Setup(service => service.TryUnlockOnStartupAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                state.Unlock();
+                return AuthorizationResult.Success;
+            });
+
+        var outcome = await sut.InitializeAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(AvaloniaStartupOutcome.ReadyUnlocked, outcome);
+        Assert.True(state.IsUnlocked);
+        authorization.Verify(service => service.TryUnlockOnStartupAsync(It.IsAny<CancellationToken>()), Times.Once);
+        authorization.Verify(service => service.TryUnlockWithHelloAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WhenCancelledBeforeStartup_DoesNotLoadPreferencesOrUnlock()
+    {
+        var (sut, settings, authorization) = CreateSut(new AuthorizationState());
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => sut.InitializeAsync(cancellation.Token));
+
+        settings.Verify(service => service.LoadAsync(), Times.Never);
+        authorization.Verify(service => service.TryUnlockOnStartupAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(AuthorizationResult.Cancelled)]
+    [InlineData(AuthorizationResult.Failed)]
+    [InlineData(AuthorizationResult.Success)]
+    public async Task InitializeAsync_WhenPasswordProjectionRemainsLocked_DoesNotOfferUnattendedUnlockAsBiometrics(
+        AuthorizationResult result)
+    {
+        var state = new AuthorizationState();
+        state.SetConfiguration(true, TOTP.Core.Enums.PreferredUnlockMethod.Password);
+        var (sut, _, authorization) = CreateSut(state);
+        authorization.Setup(service => service.TryUnlockOnStartupAsync(It.IsAny<CancellationToken>())).ReturnsAsync(result);
+
+        var outcome = await sut.InitializeAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(AvaloniaStartupOutcome.ReadyForPasswordFallback, outcome);
+        Assert.False(state.IsUnlocked);
     }
 
     [Theory]
@@ -186,6 +238,8 @@ public sealed class AvaloniaStartupCoordinatorTests
 
         var authorization = new Mock<IAuthorizationService>();
         authorization.SetupGet(service => service.State).Returns(state);
+        authorization.Setup(service => service.TryUnlockOnStartupAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(AuthorizationResult.PasswordRequired);
 
         return (
             new AvaloniaStartupCoordinator(

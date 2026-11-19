@@ -18,7 +18,7 @@ using Avalonia.Controls;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
-public sealed class MainWindowViewModelTests
+public sealed partial class MainWindowViewModelTests
 {
     [Fact]
     public async Task InitializeAsync_WithBothVaults_PromptsInActiveLocaleAndKeepsCurrentUnlockFlow()
@@ -1139,7 +1139,9 @@ public sealed class MainWindowViewModelTests
         CameraScannerViewModel? cameraScanner = null,
         OnboardingPreviewOptions? onboardingPreviewOptions = null,
         IAvaloniaDialogService? dialogs = null,
-        ILegacyVaultRecoveryService? legacyVaultRecovery = null) =>
+        ILegacyVaultRecoveryService? legacyVaultRecovery = null,
+        AuthorizationSettingsViewModel? authorizationSettings = null,
+        ISettingsService? settingsService = null) =>
         new(
             coordinator,
             authorization,
@@ -1154,13 +1156,14 @@ public sealed class MainWindowViewModelTests
                 Mock.Of<IAvaloniaDialogService>(),
                 CreateLocalization()),
             CreateSettingsPage(),
-            CreateAuthorizationSettings(authorization),
+            authorizationSettings ?? CreateAuthorizationSettings(authorization),
             nativeFilePicker ?? CreateFilePicker(),
             cameraScanner ?? CreateCameraScanner(),
             updateCheck ?? CreateUpdateCheck(),
             CreateDiagnostics(),
             localization ?? CreateLocalization(),
             scannerDialogs ?? Mock.Of<IAvaloniaCameraScannerDialogService>(),
+            settingsService: settingsService,
             idleLockPolicy: idleLockPolicy,
             settingsNotificationDuration: settingsNotificationDuration,
             onboardingPreviewOptions: onboardingPreviewOptions,

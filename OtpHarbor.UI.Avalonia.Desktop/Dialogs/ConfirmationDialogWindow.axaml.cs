@@ -11,6 +11,10 @@ public partial class ConfirmationDialogWindow : Window
     public ConfirmationDialogWindow()
     {
         InitializeComponent();
+        SizeChanged += (_, _) =>
+        {
+            if (IsVisible) CenterWithinOwner();
+        };
     }
 
     internal void ConfigureForOwner(Window owner, bool isDestructive)

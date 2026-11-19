@@ -123,6 +123,39 @@ the production application.
 
 ## Verify startup on a device
 
+For local ARM64 Release testing on the previously configured phone, run:
+
+```powershell
+./scripts/testing/Android/Install-AndroidReleasePhone.ps1 -Device '<adb-device-serial>'
+```
+
+The installer builds **current source** as the isolated
+`io.github.legends.otpharbor.releasetest` app, verifies its package identity,
+non-debuggable flag, ARM64 ABI, AOT libraries and signature, then installs with
+`adb install -r` and launches once. Existing Release Test data is retained; Debug
+and production installations have different identities. A failed update never
+falls back to uninstalling or clearing data. `-Device` must select the target adb serial when installing.
+
+Use `-BuildOnly` to prepare and verify the APK without accessing a device. The APK
+and SHA-256 are written under `artifacts/testing/android-release-phone`. Local
+builds allow an installed SDK patch within the repository's pinned feature band;
+the repository SDK pin and CI behavior are unchanged. Host intermediates are
+isolated by SDK version, and runtime-specific NuGet locks remain under ignored
+`obj` directories. The test manifest keeps the separate launcher label and app ID.
+
+Use `-TestStartup` to opt into the three twenty-second cold-launch health checks
+described below. This intentionally restarts the app; it is not part of a normal
+install. The former installer always performed these checks and only installed
+an existing APK, which could leave new UI changes absent even after installation.
+An empty-account screen missing an action present in current source should first
+be checked against the installed APK's build date.
+
+Installer behavior can be checked without real build tools or a device:
+
+```powershell
+./scripts/testing/Android/Test-AndroidReleaseInstaller.ps1
+```
+
 After installing a candidate, verify that it survives startup. A successful
 `adb install` or `am start -W` result confirms installation or a launch request;
 it does not prove that the managed runtime initialized successfully.

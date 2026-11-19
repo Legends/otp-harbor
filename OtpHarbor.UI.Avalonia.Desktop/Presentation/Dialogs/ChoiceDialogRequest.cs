@@ -15,4 +15,5 @@ public sealed record ChoiceDialogRequest(
     NotificationSeverity Severity,
     string PrimaryText,
     string SecondaryText,
-    string CancelText);
+    string CancelText,
+    bool StackActions = false);

@@ -83,8 +83,8 @@ $requiredDisclosureText = @(
     'Compatibility with an icon pack does not imply affiliation with, sponsorship by, or endorsement by its provider or any trademark owner.'
 )
 foreach ($disclosure in @(
-    @{ Path = 'OtpHarbor.UI.Avalonia.Desktop/Localization/Strings.resx'; Key = 'BrandIconsHelp' },
-    @{ Path = 'OtpHarbor.UI.Avalonia.Mobile/Localization/Strings.resx'; Key = 'BrandIconsDescription' }
+    @{ Path = 'OtpHarbor.Localization/Resources/Desktop.resx'; Key = 'BrandIconsHelp' },
+    @{ Path = 'OtpHarbor.Localization/Resources/Mobile.resx'; Key = 'BrandIconsDescription' }
 )) {
     [xml]$strings = Read-RepositoryFile $disclosure.Path
     $brandHelp = @($strings.root.data | Where-Object name -eq $disclosure.Key)
@@ -99,7 +99,7 @@ foreach ($disclosure in @(
     }
 }
 
-[xml]$desktopStrings = Read-RepositoryFile 'OtpHarbor.UI.Avalonia.Desktop/Localization/Strings.resx'
+[xml]$desktopStrings = Read-RepositoryFile 'OtpHarbor.Localization/Resources/Desktop.resx'
 $brandFormatHelp = @($desktopStrings.root.data | Where-Object name -eq 'BrandIconsFormatHelp')
 if ($brandFormatHelp.Count -ne 1) {
     throw 'The invariant BrandIconsFormatHelp disclosure is missing or duplicated.'

@@ -35,7 +35,7 @@ using TOTP.Core.Validation;
 
 namespace TOTP.Tests.Avalonia.Headless;
 
-public sealed class MainWindowSmokeTests
+public sealed partial class MainWindowSmokeTests
 {
     [AvaloniaFact]
     public void QuickUnlockGate_FitsStandardWindowWithoutScrolling()
@@ -2712,11 +2712,13 @@ public sealed class MainWindowSmokeTests
         }
     }
 
-    [AvaloniaFact]
-    public void FirstAccountOnboardingCard_ProvidesDirectLocalizedAddAction()
+    [AvaloniaTheory]
+    [InlineData(360, 480)]
+    [InlineData(720, 540)]
+    public void FirstAccountOnboardingCard_ProvidesDirectLocalizedAccountActions(double width, double height)
     {
         var mainWindow = new MainWindow();
-        var templateHost = new Window { Width = 380, Height = 540 };
+        var templateHost = new Window { Width = width, Height = height };
 
         try
         {
@@ -2725,6 +2727,7 @@ public sealed class MainWindowSmokeTests
             Assert.NotNull(accountPage?.ContentTemplate);
             templateHost.Content = accountPage.ContentTemplate.Build(null);
             templateHost.Show();
+            templateHost.UpdateLayout();
 
             var card = Assert.Single(
                 templateHost.GetLogicalDescendants().OfType<Border>(),
@@ -2738,6 +2741,24 @@ public sealed class MainWindowSmokeTests
             Assert.Equal(
                 resources[AvaloniaStringKeys.AddAccount],
                 AutomationProperties.GetName(addButton));
+            var scanButton = Assert.Single(
+                card.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "ScanFirstAccountButton");
+            Assert.Equal(resources[AvaloniaStringKeys.ImportQrCode], scanButton.Content);
+            Assert.Equal(resources[AvaloniaStringKeys.ImportQrCode], AutomationProperties.GetName(scanButton));
+            Assert.Equal(HorizontalAlignment.Center, scanButton.HorizontalContentAlignment);
+            Assert.Equal(VerticalAlignment.Center, scanButton.VerticalContentAlignment);
+            Assert.True(scanButton.Bounds.Y >= addButton.Bounds.Bottom);
+            Assert.True(scanButton.Bounds.Width > 0 && scanButton.Bounds.Width <= card.Bounds.Width);
+            var importButton = Assert.Single(
+                card.GetLogicalDescendants().OfType<Button>(),
+                button => button.Name == "ImportFirstAccountButton");
+            Assert.Equal(resources[AvaloniaStringKeys.ImportAccounts], importButton.Content);
+            Assert.Equal(resources[AvaloniaStringKeys.ImportAccounts], AutomationProperties.GetName(importButton));
+            Assert.Equal(HorizontalAlignment.Center, importButton.HorizontalContentAlignment);
+            Assert.Equal(VerticalAlignment.Center, importButton.VerticalContentAlignment);
+            Assert.True(importButton.Bounds.Y >= scanButton.Bounds.Bottom);
+            Assert.True(importButton.Bounds.Width <= card.Bounds.Width);
             Assert.Contains(
                 card.GetLogicalDescendants().OfType<TextBlock>(),
                 text => Equals(
@@ -3401,9 +3422,10 @@ public sealed class MainWindowSmokeTests
             var faqCards = window
                 .GetVisualDescendants()
                 .OfType<Border>()
-                .Where(border => border.Name is "FaqIconPacksCard" or "FaqImportFormatsCard")
+                .Where(border => border.Name is "FaqIconPacksCard" or "FaqImportFormatsCard"
+                    or "FaqMasterPasswordRecoveryCard" or "FaqOlderVaultsCard")
                 .ToArray();
-            Assert.Equal(2, faqCards.Length);
+            Assert.Equal(4, faqCards.Length);
             Assert.All(faqCards, card => Assert.Equal(
                 Color.Parse("#0E192D"),
                 Assert.IsType<SolidColorBrush>(card.Background).Color));
@@ -3579,9 +3601,11 @@ public sealed class MainWindowSmokeTests
             var host = window.FindControl<ContentControl>("MiscSettingsHost");
             Assert.NotNull(host?.ContentTemplate);
             var content = Assert.IsAssignableFrom<Control>(host.ContentTemplate.Build(null));
-            var panel = Assert.Single(
-                content.GetLogicalDescendants().OfType<Border>(),
-                border => border.Name == "MiscSettingsPanel");
+            var panels = Assert.IsType<StackPanel>(content).Children.OfType<Border>().ToArray();
+            var panel = Assert.Single(panels, border => border.Name == "MiscSettingsPanel");
+            var reportPanel = Assert.Single(panels, border => border.Name == "ProblemReportSettingsPanel");
+            Assert.Equal(2, panels.Length);
+            Assert.Contains("panel", reportPanel.Classes);
             var loggingPicker = Assert.Single(
                 panel.GetLogicalDescendants().OfType<ComboBox>(),
                 comboBox => comboBox.Name == "MinimumLoggingLevelPicker");
@@ -3590,10 +3614,10 @@ public sealed class MainWindowSmokeTests
                 panel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "EmailDiagnosticLogButton");
             Assert.Contains("wide", emailLogButton.Classes);
-            var githubReportButton = Assert.Single(panel.GetLogicalDescendants().OfType<Button>(),
+            var githubReportButton = Assert.Single(reportPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "ReportOnGitHubButton");
             Assert.Contains("wide", githubReportButton.Classes);
-            Assert.Contains(panel.GetLogicalDescendants().OfType<TextBlock>(), text =>
+            Assert.Contains(reportPanel.GetLogicalDescendants().OfType<TextBlock>(), text =>
                 Equals(text.Text, Application.Current!.Resources[AvaloniaStringKeys.GitHubReportNotice])
                 && text.TextWrapping == TextWrapping.Wrap);
             Assert.Contains(
@@ -3698,11 +3722,16 @@ public sealed class MainWindowSmokeTests
         }
     }
 
-    [AvaloniaFact]
-    public void SecurityBehaviorSettings_AreInsideSecurityTab()
+    [AvaloniaTheory]
+    [InlineData(520, 480)]
+    [InlineData(520, 620)]
+    [InlineData(800, 620)]
+    public void SecurityBehaviorSettings_ClipboardHasSeparateMatchingBorder(int width, int height)
     {
-        var window = new SettingsWindow();
-        using var settingsPage = new SettingsPageViewModel(new TestSettingsService());
+        var window = new SettingsWindow { Width = width, Height = height };
+        var catalog = new AvaloniaStringCatalog();
+        var localization = new AvaloniaLocalizationService(window.Resources, catalog);
+        using var settingsPage = new SettingsPageViewModel(new TestSettingsService(), localization);
 
         try
         {
@@ -3734,13 +3763,47 @@ public sealed class MainWindowSmokeTests
                 Assert.IsType<SettingsPageViewModel.AutoLockOption>(
                     autoLockSelector.SelectedItem).Timeout);
             var clipboardLifetimeSelector = Assert.Single(
-                behaviorSettings.GetVisualDescendants().OfType<ComboBox>(),
+                settingsHost.GetVisualDescendants().OfType<ComboBox>(),
                 control => control.Name == "ClipboardLifetimeSelector");
+            var clipboardSettings = Assert.Single(settingsHost.GetVisualDescendants().OfType<Border>(),
+                control => control.Name == "ClipboardBehaviorSettings");
+            Assert.Same(behaviorSettings.Parent, clipboardSettings.Parent);
+            Assert.Contains("panel", behaviorSettings.Classes);
+            Assert.Contains("panel", clipboardSettings.Classes);
+            Assert.Equal(behaviorSettings.BorderThickness, clipboardSettings.BorderThickness);
+            Assert.Equal(behaviorSettings.BorderBrush, clipboardSettings.BorderBrush);
+            Assert.Equal(behaviorSettings.Background, clipboardSettings.Background);
+            Assert.DoesNotContain(clipboardLifetimeSelector, behaviorSettings.GetVisualDescendants());
+            Assert.Contains(clipboardLifetimeSelector, clipboardSettings.GetVisualDescendants());
+            Assert.DoesNotContain(autoLockSelector, clipboardSettings.GetVisualDescendants());
+            Assert.Equal(2, behaviorSettings.GetVisualDescendants().OfType<CheckBox>().Count());
+            Assert.Empty(clipboardSettings.GetVisualDescendants().OfType<CheckBox>());
             Assert.Equal(6, clipboardLifetimeSelector.ItemCount);
             Assert.Equal(
                 [5, 10, 15, 20, 30, 60],
                 settingsPage.ClipboardLifetimeOptions.Select(option => option.Seconds));
             Assert.Empty(behaviorSettings.GetVisualDescendants().OfType<NumericUpDown>());
+            var clipboardHeading = Assert.Single(Assert.IsType<StackPanel>(clipboardSettings.Child).Children.OfType<TextBlock>());
+            foreach (var locale in new[] { "en", "de", "fr", "es" })
+            {
+                localization.ApplyCulture(locale);
+                window.UpdateLayout();
+                Assert.Equal(catalog.Get(AvaloniaStringKeys.ClipboardClearSeconds, CultureInfo.GetCultureInfo(locale)), clipboardHeading.Text);
+                Assert.True(clipboardSettings.Bounds.Top > behaviorSettings.Bounds.Bottom);
+                Assert.True(scrollViewer.Extent.Width <= scrollViewer.Viewport.Width + 1);
+                Assert.True(clipboardHeading.Bounds.Width <= clipboardSettings.Bounds.Width);
+                clipboardLifetimeSelector.BringIntoView();
+                window.UpdateLayout();
+                var bottom = clipboardLifetimeSelector.TranslatePoint(new Point(0, clipboardLifetimeSelector.Bounds.Height), scrollViewer);
+                Assert.NotNull(bottom);
+                Assert.InRange(bottom.Value.Y, 1, scrollViewer.Viewport.Height + 1);
+            }
+            clipboardLifetimeSelector.SelectedItem = settingsPage.ClipboardLifetimeOptions.Single(option => option.Seconds == 30);
+            Assert.Equal(30, settingsPage.SelectedClipboardLifetime!.Seconds);
+            Assert.Equal(TimeSpan.FromMinutes(10), settingsPage.SelectedAutoLock!.Timeout);
+            autoLockSelector.SelectedItem = settingsPage.AutoLockOptions.Single(option => option.Timeout == TimeSpan.FromMinutes(5));
+            Assert.Equal(TimeSpan.FromMinutes(5), settingsPage.SelectedAutoLock!.Timeout);
+            Assert.Equal(30, settingsPage.SelectedClipboardLifetime.Seconds);
         }
         finally
         {

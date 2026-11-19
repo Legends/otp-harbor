@@ -10,6 +10,7 @@ using Avalonia.VisualTree;
 using FluentResults;
 using TOTP.Avalonia.Desktop;
 using TOTP.Avalonia.Desktop.Localization;
+using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Avalonia.Shared.Controls;
 using TOTP.Avalonia.Shared.Storage;
 using TOTP.Core.Services.Interfaces;
@@ -95,26 +96,51 @@ public sealed class StorageLocationsPanelTests
         finally { window.Close(); }
     }
 
-    [AvaloniaFact]
-    public void DesktopInfoTab_RendersTheSharedStorageLocations()
+    [AvaloniaTheory]
+    [InlineData(520, 480, "de")]
+    [InlineData(520, 620, "fr")]
+    [InlineData(800, 620, "es")]
+    public async Task DesktopSupportTab_RendersDiagnosticsAndScrollableStorageLocations(int width, int height, string locale)
     {
-        using var model = CreateModel("de");
-        var window = new SettingsWindow();
+        using var model = CreateModel(locale);
+        var window = new SettingsWindow { Width = width, Height = height };
+        var localization = new AvaloniaLocalizationService(window.Resources, new AvaloniaStringCatalog());
+        localization.ApplyCulture(locale);
+        var diagnostics = new DiagnosticsViewModel(new TestDiagnostics(), localization);
         try
         {
             window.Show();
             var tabs = Assert.Single(window.GetVisualDescendants().OfType<TabControl>());
-            tabs.SelectedIndex = 6;
+            tabs.SelectedIndex = 4;
             window.UpdateLayout();
             var host = window.FindControl<ContentControl>("StorageLocationsHost")!;
             host.Content = model;
             window.UpdateLayout();
             var panel = Assert.Single(host.GetVisualDescendants().OfType<StorageLocationsPanel>());
             Assert.Same(model, panel.DataContext);
-            Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), value => value.Text == "App-Datenverzeichnis");
+            Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), value => value.Text == model.Locations[0].Label);
             Assert.Single(panel.GetVisualDescendants().OfType<SelectableTextBlock>());
+            var diagnosticsHost = window.FindControl<ContentControl>("SupportDiagnosticsHost")!;
+            diagnosticsHost.Content = diagnostics;
+            await diagnostics.RefreshAsync();
+            window.UpdateLayout();
+            var output = Assert.Single(diagnosticsHost.GetVisualDescendants().OfType<TextBox>());
+            Assert.Equal(diagnostics.SupportInformation, output.Text);
+            Assert.Contains("OTP Harbor 3.0.3", output.Text);
+            var scroller = window.FindControl<ScrollViewer>("SupportSettingsScroll")!;
+            Assert.True(scroller.Extent.Width <= scroller.Viewport.Width + 1);
+            var lastButton = panel.GetVisualDescendants().OfType<Button>().Last();
+            lastButton.BringIntoView();
+            window.UpdateLayout();
+            var bottom = lastButton.TranslatePoint(new Point(0, lastButton.Bounds.Height), scroller)!.Value.Y;
+            Assert.InRange(bottom, 1, scroller.Viewport.Height + 1);
         }
         finally { window.Close(); }
+    }
+
+    private sealed class TestDiagnostics : ISupportDiagnosticsService
+    {
+        public SupportDiagnosticsSnapshot Capture() => new("3.0.3", "Windows", "X64", ".NET 10.0", true, []);
     }
 
     private static StorageLocationsViewModel CreateModel(string language, bool folders = true)

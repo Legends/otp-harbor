@@ -14,7 +14,7 @@ using TOTP.Infrastructure.Services;
 
 namespace TOTP.Avalonia.Desktop.Presentation;
 
-public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
+public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IAvaloniaStartupCoordinator _startupCoordinator;
     private readonly IAuthorizationService _authorizationService;
@@ -142,6 +142,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         CameraScanner.AccountImported += OnAccountImported;
         NativeFilePicker.AccountsChanged += OnAccountsChanged;
         SettingsPage.SettingsSaved += OnSettingsSaved;
+        AuthorizationSettings.AppLockChanged += OnAppLockChanged;
         _initializeCommand = new AsyncCommand(InitializeAsync, () => !_isBusy);
         _previousOnboardingCommand = new AsyncCommand(
             PreviousOnboardingAsync,
@@ -154,7 +155,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             () => IsOnboardingVisible);
         _lockCommand = new AsyncCommand(
             LockAsync,
-            () => _isShellVisible && !_isSettingsVisible);
+            () => _isShellVisible && !_isSettingsVisible && AuthorizationSettings.IsAppLockEnabled);
         _showAccountsCommand = new AsyncCommand(
             ShowAccountsAsync,
             () => _isShellVisible && !_isSettingsVisible && !_isAccountListVisible);
@@ -547,6 +548,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         CameraScanner.AccountImported -= OnAccountImported;
         NativeFilePicker.AccountsChanged -= OnAccountsChanged;
         SettingsPage.SettingsSaved -= OnSettingsSaved;
+        AuthorizationSettings.AppLockChanged -= OnAppLockChanged;
         foreach (var source in _settingsNotificationSources.Distinct())
             source.Shown -= SettingsNotificationShown;
         if (_sessionLockPolicy is not null)
@@ -558,6 +560,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         Notification.Dispose();
         SettingsNotification.Dispose();
         NativeFilePicker.Dispose();
+        AuthorizationSettings.Dispose();
         CameraScanner.Dispose();
         UpdateCheck.Dispose();
     }
@@ -567,6 +570,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         if (_shutdownPrepared) return;
         _shutdownPrepared = true;
 
+        _initialQuickUnlockLifetime?.Cancel();
         _authorizationService.Lock();
         AccountList.Clear();
         PasswordSetup.Clear();
@@ -609,13 +613,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private async void OnConfigured(object? sender, EventArgs e)
+    private async Task OnConfigured()
     {
         IsOnboardingVisible = false;
         await EnterAuthorizedShellAsync();
+        if (_disposed || _shutdownPrepared) return;
+        if (_authorizationService.State is not { IsUnlocked: true })
+        {
+            ApplyLockedUiState();
+            return;
+        }
         StatusText = _localization.GetString(AvaloniaStringKeys.VaultConfigured);
         StatusSeverity = NotificationSeverity.Success;
-        StartAutomaticUpdateCheck();
+        await OfferInitialQuickUnlockAsync();
+        if (IsShellVisible) StartAutomaticUpdateCheck();
     }
 
     private async void OnAccountImported(object? sender, AccountImportedEventArgs e)
@@ -644,6 +655,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void OnSettingsSaved(object? sender, EventArgs e) =>
         AccountList.NotifySettingsChanged();
+
+    private void OnAppLockChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(IsManualLockVisible));
+        NotifyShellCommands();
+        if (AuthorizationSettings.IsAppLockEnabled && AuthorizationSettings.RequiresLockAfterAppLockChange)
+        {
+            if (_authorizationService.State.IsUnlocked) _authorizationService.Lock();
+            ApplyLockedUiState();
+        }
+    }
+
+    public bool IsManualLockVisible => IsShellVisible && AuthorizationSettings.IsAppLockEnabled;
 
     public Task LockAsync()
     {
@@ -722,6 +746,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void ApplyLockedUiState()
     {
+        _initialQuickUnlockLifetime?.Cancel();
         NativeFilePicker.CancelPendingImports();
         var availabilityRevision = InvalidateQuickUnlockAvailability();
         CaptureResumeState();
@@ -814,7 +839,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public Task HandleWindowMinimizedAsync()
     {
         AccountList.SuspendRowCodeGeneration();
-        if (!IsShellVisible || _settingsService?.Current.LockOnMinimize != true)
+        if (!IsShellVisible || !AuthorizationSettings.IsAppLockEnabled || _settingsService?.Current.LockOnMinimize != true)
             return Task.CompletedTask;
         return LockAsync();
     }
@@ -1018,6 +1043,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void NotifyShellCommands()
     {
+        OnPropertyChanged(nameof(IsManualLockVisible));
         _lockCommand.NotifyCanExecuteChanged();
         _showAccountsCommand.NotifyCanExecuteChanged();
         _showToolsCommand.NotifyCanExecuteChanged();
