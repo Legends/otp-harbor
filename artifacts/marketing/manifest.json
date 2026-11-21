@@ -2185,27 +2185,27 @@
     },
     {
       "path": "website/gallery.json",
-      "sha256": "02e66d54212a2a7a43ae8abc53cdd26c460049abf0b19ba03e2b5737f927a6fd",
+      "sha256": "a4bb1b056b3726405f999904964c6d07d09c72138ab7b10f99b28b1618ae8f9d",
       "kind": "website-gallery-data",
       "sourceSha256": [
-        "8003c57c5e667ed443b2ee94fc4bdba891c2aa42a130b3bfdafd419133129758",
-        "6af7338f73ff399f5856d38f7c1c09c1293210c0ae82807886f909381fe25963",
-        "3a1f65fac98bc442265bf098adc316524414c59b9a59b852df1d48670675d118",
-        "51282efbd6634bfeb982f68456eebc8cf6f3fc73b00db645ce23d2ffa575adbd",
-        "7129c411367ae82cc4ed949220ce86168f4617029b210a5d9e632c176ab57d1f",
-        "2f341b18e2a8f8f6964f7523c9f57407291ae723486cfcd75b651f5f33c2c440",
-        "1ea92c6a9c083d8007cc3b15ace6dfd42e5006ef4fbd0a868d834f295974c08a",
-        "9b17f25cf11d0097341af5ea6073926a18695a4a1e18c88ab28bef6086a5d820",
-        "e675f1d7fa4970f036be13342877b42ab45fe139d326c975f1f62c6835dd8755",
-        "d1b9ad84b0be8e055d5076249a6da5e88b254593b8c1f85284846d694b65fdcc",
-        "f87bfa17ce690d4f18b1f43e461f83a6bce7a93962ad375c6f21343577ef1abc",
-        "dbef74c7c8daa2f2c2e9e742274314e0bbe59baf605ec270ea02efc8856a42af",
-        "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
-        "2a8c6daf4eb9ce6ac7521c7d7646b52c9c23e1b2fb1c535072a316184974c516",
-        "fd2a148ff52d8efe0cce10fd8eb44f33fd6eecc49edd4fe7dd797cfb45301728",
-        "914b5968bc7a72e60f7f031cd355d065fdab3c144f458d092113118fe00077eb",
-        "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
-        "6895a7cd08208ee26417a6c210ada4237b36572421b14ebc71c62784a8df4358"
+        "8d4c214bf37ba92947e0b2da4e7fdbd1a21011916fad1fc3a59b973277bcef03",
+        "f801f5ffabf272319031ff27082402059f0352981f20e2c8a57d2b3bc467eb96",
+        "f8888e921ccb6d692b3fd98a836a2458aa670a2c52877192ee7006c5ffdcb4f0",
+        "8c7159b06d020bf151c26b44dd7f22083a92339990b19cfdec4a2d84cc4f2c92",
+        "6749b9c16587fb1f9b9315366ead37fc957d6f5124680b93e489563c5a5f0cfa",
+        "c93ccc89285f77807c571753007917335f2c8825165471682e754433f255c1de",
+        "c32c31e2d01c4e697cbc7c888185ecdd51a9ab27f3deb442d2660205628d1b80",
+        "ea433447eb00c0e4fb83c46044efe57edfb74d5ff211704393bdd6457355e242",
+        "0caf2d2163e4f7c4d73d523b398bc3ccda14115a83bfd8e482f3e225641e7ea6",
+        "7e2fdf4d31bddb5afa0e0dcbd1f5f2ecdf4534a4a98123751afc2d23145ad85a",
+        "3f23a345690bf05930e2106a8b0c2a1ba5d9f6602839f53697aa638164d688ee",
+        "7a0493d3041071fe32acc50dae30c866a9fc0210aa5c6305a3363d2568fb3fca",
+        "1a49bed89466e7e1e175bd480d1ddd17ee7504557d1a6f0067e02083346af61f",
+        "de26e2fffc76f12c5986b4a46b13a51534e0a239a07788d8f9e5c897fc158f2b",
+        "26b521854846fbc2cf24b96036ecdbeedc17b4c35255ee9b4be29448d4f3e8f9",
+        "fe590c1e1c5a1e95281329e4946e5965b5a313efab8a013016d316287e7d6464",
+        "1a49bed89466e7e1e175bd480d1ddd17ee7504557d1a6f0067e02083346af61f",
+        "cc7e595cc9e951dbd9d0cbf3627e7a576bb4e10ca9bf4e431ab95030ccfb8f59"
       ]
     },
     {
@@ -3449,6 +3449,21 @@
       "pixelScale": 2
     },
     {
+      "path": "website/optimized/zoom/android/dark/account-list.webp",
+      "sha256": "3f23a345690bf05930e2106a8b0c2a1ba5d9f6602839f53697aa638164d688ee",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "f87bfa17ce690d4f18b1f43e461f83a6bce7a93962ad375c6f21343577ef1abc"
+      ],
+      "pngPath": "website/optimized/zoom/android/dark/account-list.png",
+      "sourcePath": "source/android/dark/account-list.png",
+      "platform": "android",
+      "theme": "dark",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
+    },
+    {
       "path": "website/optimized/zoom/android/dark/backup-restore.png",
       "sha256": "2a8c6daf4eb9ce6ac7521c7d7646b52c9c23e1b2fb1c535072a316184974c516",
       "kind": "designed-website-zoom",
@@ -3490,6 +3505,21 @@
       "pixelScale": 2
     },
     {
+      "path": "website/optimized/zoom/android/dark/backup-restore.webp",
+      "sha256": "de26e2fffc76f12c5986b4a46b13a51534e0a239a07788d8f9e5c897fc158f2b",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "2a8c6daf4eb9ce6ac7521c7d7646b52c9c23e1b2fb1c535072a316184974c516"
+      ],
+      "pngPath": "website/optimized/zoom/android/dark/backup-restore.png",
+      "sourcePath": "source/android/dark/settings.png",
+      "platform": "android",
+      "theme": "dark",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
+    },
+    {
       "path": "website/optimized/zoom/android/dark/qr-scanning.png",
       "sha256": "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
       "kind": "designed-website-zoom",
@@ -3525,6 +3555,21 @@
       "pixelScale": 2
     },
     {
+      "path": "website/optimized/zoom/android/dark/qr-scanning.webp",
+      "sha256": "1a49bed89466e7e1e175bd480d1ddd17ee7504557d1a6f0067e02083346af61f",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb"
+      ],
+      "pngPath": "website/optimized/zoom/android/dark/qr-scanning.png",
+      "sourcePath": "source/android/dark/scanner.png",
+      "platform": "android",
+      "theme": "dark",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
+    },
+    {
       "path": "website/optimized/zoom/android/dark/settings.png",
       "sha256": "dbef74c7c8daa2f2c2e9e742274314e0bbe59baf605ec270ea02efc8856a42af",
       "kind": "designed-website-zoom",
@@ -3557,6 +3602,21 @@
       "pixelScale": 2
     },
     {
+      "path": "website/optimized/zoom/android/dark/settings.webp",
+      "sha256": "7a0493d3041071fe32acc50dae30c866a9fc0210aa5c6305a3363d2568fb3fca",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "dbef74c7c8daa2f2c2e9e742274314e0bbe59baf605ec270ea02efc8856a42af"
+      ],
+      "pngPath": "website/optimized/zoom/android/dark/settings.png",
+      "sourcePath": "source/android/dark/settings.png",
+      "platform": "android",
+      "theme": "dark",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
+    },
+    {
       "path": "website/optimized/zoom/android/light/account-list.png",
       "sha256": "fd2a148ff52d8efe0cce10fd8eb44f33fd6eecc49edd4fe7dd797cfb45301728",
       "kind": "designed-website-zoom",
@@ -3587,6 +3647,21 @@
         "frame": "designed phone frame"
       },
       "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/light/account-list.webp",
+      "sha256": "26b521854846fbc2cf24b96036ecdbeedc17b4c35255ee9b4be29448d4f3e8f9",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "fd2a148ff52d8efe0cce10fd8eb44f33fd6eecc49edd4fe7dd797cfb45301728"
+      ],
+      "pngPath": "website/optimized/zoom/android/light/account-list.png",
+      "sourcePath": "source/android/light/account-list.png",
+      "platform": "android",
+      "theme": "light",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
     },
     {
       "path": "website/optimized/zoom/android/light/backup-restore.png",
@@ -3630,6 +3705,21 @@
       "pixelScale": 2
     },
     {
+      "path": "website/optimized/zoom/android/light/backup-restore.webp",
+      "sha256": "cc7e595cc9e951dbd9d0cbf3627e7a576bb4e10ca9bf4e431ab95030ccfb8f59",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "6895a7cd08208ee26417a6c210ada4237b36572421b14ebc71c62784a8df4358"
+      ],
+      "pngPath": "website/optimized/zoom/android/light/backup-restore.png",
+      "sourcePath": "source/android/light/settings.png",
+      "platform": "android",
+      "theme": "light",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
+    },
+    {
       "path": "website/optimized/zoom/android/light/qr-scanning.png",
       "sha256": "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
       "kind": "designed-website-zoom",
@@ -3665,6 +3755,21 @@
       "pixelScale": 2
     },
     {
+      "path": "website/optimized/zoom/android/light/qr-scanning.webp",
+      "sha256": "1a49bed89466e7e1e175bd480d1ddd17ee7504557d1a6f0067e02083346af61f",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb"
+      ],
+      "pngPath": "website/optimized/zoom/android/light/qr-scanning.png",
+      "sourcePath": "source/android/light/scanner.png",
+      "platform": "android",
+      "theme": "light",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
+    },
+    {
       "path": "website/optimized/zoom/android/light/settings.png",
       "sha256": "914b5968bc7a72e60f7f031cd355d065fdab3c144f458d092113118fe00077eb",
       "kind": "designed-website-zoom",
@@ -3695,6 +3800,21 @@
         "frame": "designed phone frame"
       },
       "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/light/settings.webp",
+      "sha256": "fe590c1e1c5a1e95281329e4946e5965b5a313efab8a013016d316287e7d6464",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "914b5968bc7a72e60f7f031cd355d065fdab3c144f458d092113118fe00077eb"
+      ],
+      "pngPath": "website/optimized/zoom/android/light/settings.png",
+      "sourcePath": "source/android/light/settings.png",
+      "platform": "android",
+      "theme": "light",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
     },
     {
       "path": "website/optimized/zoom/desktop/dark/account-context-menu.png",
@@ -3729,6 +3849,21 @@
       "pixelScale": 1.3524355300859598
     },
     {
+      "path": "website/optimized/zoom/desktop/dark/account-context-menu.webp",
+      "sha256": "f801f5ffabf272319031ff27082402059f0352981f20e2c8a57d2b3bc467eb96",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "6af7338f73ff399f5856d38f7c1c09c1293210c0ae82807886f909381fe25963"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/dark/account-context-menu.png",
+      "sourcePath": "source/desktop/dark/account-context-menu.png",
+      "platform": "desktop",
+      "theme": "dark",
+      "lossless": true,
+      "width": 2597,
+      "height": 1461
+    },
+    {
       "path": "website/optimized/zoom/desktop/dark/account-list.png",
       "sha256": "8003c57c5e667ed443b2ee94fc4bdba891c2aa42a130b3bfdafd419133129758",
       "kind": "designed-website-zoom",
@@ -3759,6 +3894,21 @@
         "frame": "cleaned desktop window"
       },
       "pixelScale": 1.3524355300859598
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/account-list.webp",
+      "sha256": "8d4c214bf37ba92947e0b2da4e7fdbd1a21011916fad1fc3a59b973277bcef03",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "8003c57c5e667ed443b2ee94fc4bdba891c2aa42a130b3bfdafd419133129758"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/dark/account-list.png",
+      "sourcePath": "source/desktop/dark/account-list.png",
+      "platform": "desktop",
+      "theme": "dark",
+      "lossless": true,
+      "width": 2597,
+      "height": 1461
     },
     {
       "path": "website/optimized/zoom/desktop/dark/data-backup.png",
@@ -3792,6 +3942,21 @@
       },
       "visualKind": "marketing-promotion",
       "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/data-backup.webp",
+      "sha256": "8c7159b06d020bf151c26b44dd7f22083a92339990b19cfdec4a2d84cc4f2c92",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "51282efbd6634bfeb982f68456eebc8cf6f3fc73b00db645ce23d2ffa575adbd"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/dark/data-backup.png",
+      "sourcePath": "source/desktop/dark/data-backup.png",
+      "platform": "desktop",
+      "theme": "dark",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
     },
     {
       "path": "website/optimized/zoom/desktop/dark/qr-scanning.png",
@@ -3829,6 +3994,21 @@
       "pixelScale": 1.6209302325581396
     },
     {
+      "path": "website/optimized/zoom/desktop/dark/qr-scanning.webp",
+      "sha256": "6749b9c16587fb1f9b9315366ead37fc957d6f5124680b93e489563c5a5f0cfa",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "7129c411367ae82cc4ed949220ce86168f4617029b210a5d9e632c176ab57d1f"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/dark/qr-scanning.png",
+      "sourcePath": "source/desktop/dark/scanner.png",
+      "platform": "desktop",
+      "theme": "dark",
+      "lossless": true,
+      "width": 3112,
+      "height": 1751
+    },
+    {
       "path": "website/optimized/zoom/desktop/dark/settings.png",
       "sha256": "3a1f65fac98bc442265bf098adc316524414c59b9a59b852df1d48670675d118",
       "kind": "designed-website-zoom",
@@ -3859,6 +4039,21 @@
         "frame": "cleaned desktop window"
       },
       "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/settings.webp",
+      "sha256": "f8888e921ccb6d692b3fd98a836a2458aa670a2c52877192ee7006c5ffdcb4f0",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "3a1f65fac98bc442265bf098adc316524414c59b9a59b852df1d48670675d118"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/dark/settings.png",
+      "sourcePath": "source/desktop/dark/settings.png",
+      "platform": "desktop",
+      "theme": "dark",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
     },
     {
       "path": "website/optimized/zoom/desktop/light/account-context-menu.png",
@@ -3893,6 +4088,21 @@
       "pixelScale": 1.3129346314325452
     },
     {
+      "path": "website/optimized/zoom/desktop/light/account-context-menu.webp",
+      "sha256": "c32c31e2d01c4e697cbc7c888185ecdd51a9ab27f3deb442d2660205628d1b80",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "1ea92c6a9c083d8007cc3b15ace6dfd42e5006ef4fbd0a868d834f295974c08a"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/light/account-context-menu.png",
+      "sourcePath": "source/desktop/light/account-context-menu.png",
+      "platform": "desktop",
+      "theme": "light",
+      "lossless": true,
+      "width": 2521,
+      "height": 1418
+    },
+    {
       "path": "website/optimized/zoom/desktop/light/account-list.png",
       "sha256": "2f341b18e2a8f8f6964f7523c9f57407291ae723486cfcd75b651f5f33c2c440",
       "kind": "designed-website-zoom",
@@ -3923,6 +4133,21 @@
         "frame": "cleaned desktop window"
       },
       "pixelScale": 1.3524355300859598
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/account-list.webp",
+      "sha256": "c93ccc89285f77807c571753007917335f2c8825165471682e754433f255c1de",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "2f341b18e2a8f8f6964f7523c9f57407291ae723486cfcd75b651f5f33c2c440"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/light/account-list.png",
+      "sourcePath": "source/desktop/light/account-list.png",
+      "platform": "desktop",
+      "theme": "light",
+      "lossless": true,
+      "width": 2597,
+      "height": 1461
     },
     {
       "path": "website/optimized/zoom/desktop/light/data-backup.png",
@@ -3956,6 +4181,21 @@
       },
       "visualKind": "marketing-promotion",
       "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/data-backup.webp",
+      "sha256": "0caf2d2163e4f7c4d73d523b398bc3ccda14115a83bfd8e482f3e225641e7ea6",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "e675f1d7fa4970f036be13342877b42ab45fe139d326c975f1f62c6835dd8755"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/light/data-backup.png",
+      "sourcePath": "source/desktop/light/data-backup.png",
+      "platform": "desktop",
+      "theme": "light",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
     },
     {
       "path": "website/optimized/zoom/desktop/light/qr-scanning.png",
@@ -3993,6 +4233,21 @@
       "pixelScale": 1.6209302325581396
     },
     {
+      "path": "website/optimized/zoom/desktop/light/qr-scanning.webp",
+      "sha256": "7e2fdf4d31bddb5afa0e0dcbd1f5f2ecdf4534a4a98123751afc2d23145ad85a",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "d1b9ad84b0be8e055d5076249a6da5e88b254593b8c1f85284846d694b65fdcc"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/light/qr-scanning.png",
+      "sourcePath": "source/desktop/light/scanner.png",
+      "platform": "desktop",
+      "theme": "light",
+      "lossless": true,
+      "width": 3112,
+      "height": 1751
+    },
+    {
       "path": "website/optimized/zoom/desktop/light/settings.png",
       "sha256": "9b17f25cf11d0097341af5ea6073926a18695a4a1e18c88ab28bef6086a5d820",
       "kind": "designed-website-zoom",
@@ -4023,6 +4278,21 @@
         "frame": "cleaned desktop window"
       },
       "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/settings.webp",
+      "sha256": "ea433447eb00c0e4fb83c46044efe57edfb74d5ff211704393bdd6457355e242",
+      "kind": "website-full-lossless",
+      "sourceSha256": [
+        "9b17f25cf11d0097341af5ea6073926a18695a4a1e18c88ab28bef6086a5d820"
+      ],
+      "pngPath": "website/optimized/zoom/desktop/light/settings.png",
+      "sourcePath": "source/desktop/light/settings.png",
+      "platform": "desktop",
+      "theme": "light",
+      "lossless": true,
+      "width": 3840,
+      "height": 2160
     }
   ],
   "storeUploadOrder": [

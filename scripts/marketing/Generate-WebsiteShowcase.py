@@ -265,15 +265,53 @@ def add_previews(manifest, gallery, platforms=('desktop', 'android')):
     MANIFEST.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 
 
+def add_lossless_fulls(manifest, gallery, platforms=('desktop', 'android')):
+    """Deliver the same native pixels with smaller lossless WebP payloads."""
+    generated = [entry for entry in manifest['generated']
+                 if entry['kind'] != 'website-gallery-data'
+                 and not (entry['kind'] == 'website-full-lossless' and selected_website_asset(entry, platforms))]
+    metadata = {entry['path']: entry for entry in generated}
+    for item in gallery['items']:
+        if item['platform'] not in platforms:
+            continue
+        png = (OPTIMIZED / item['full']['src'].removeprefix('assets/marketing/')).with_suffix('.png')
+        target = png.with_suffix('.webp')
+        with Image.open(png) as source:
+            source.save(target, format='WEBP', lossless=True, method=6, exact=True)
+            with Image.open(target) as delivered:
+                if source.convert('RGBA').tobytes() != delivered.convert('RGBA').tobytes():
+                    raise ValueError(f'Lossless delivery changed source pixels: {target}')
+            if target.stat().st_size >= png.stat().st_size:
+                raise ValueError(f'Lossless delivery is not smaller: {target}')
+        generated.append(record(target, 'website-full-lossless', [png],
+                                pngPath=png.relative_to(ROOT).as_posix(),
+                                sourcePath=metadata[png.relative_to(ROOT).as_posix()]['sourcePath'],
+                                platform=item['platform'], theme=item['theme'], lossless=True,
+                                width=item['full']['width'], height=item['full']['height']))
+        item['full']['src'] = item['full']['src'].removesuffix('.png') + '.webp'
+    GALLERY.write_text(json.dumps(gallery, indent=2) + '\n', encoding='utf-8')
+    generated.append(record(GALLERY, 'website-gallery-data',
+                            [OPTIMIZED / item['full']['src'].removeprefix('assets/marketing/')
+                             for item in gallery['items']]))
+    manifest['generated'] = sorted(generated, key=lambda entry: entry['path'])
+    MANIFEST.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--previews-only', action='store_true',
                         help='Keep existing reviewed full-size frames and canonical captures byte-for-byte.')
+    parser.add_argument('--lossless-fulls-only', action='store_true',
+                        help='Keep reviewed PNGs and previews; derive pixel-identical lossless delivery WebPs.')
     parser.add_argument('--platform', choices=('all', 'desktop', 'android'), default='all')
     args = parser.parse_args()
     require_pinned_dependencies()
     platforms = ('desktop', 'android') if args.platform == 'all' else (args.platform,)
     manifest = json.loads(MANIFEST.read_text(encoding='utf-8'))
+    if args.lossless_fulls_only:
+        add_lossless_fulls(manifest, json.loads(GALLERY.read_text(encoding='utf-8')), platforms)
+        print('Generated pixel-identical lossless WebP full-size delivery images.')
+        return
     if args.previews_only:
         add_previews(manifest, json.loads(GALLERY.read_text(encoding='utf-8')), platforms)
         print('Generated quality-95 WebP previews; publication review required.')
@@ -394,6 +432,7 @@ def main():
         if stale.is_file():
             stale.unlink()
     add_previews(manifest, {'items': gallery}, platforms)
+    add_lossless_fulls(manifest, json.loads(GALLERY.read_text(encoding='utf-8')), platforms)
     print(f'Generated {len(gallery)} framed website captures, cleaned sources and WebP previews.')
 
 

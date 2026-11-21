@@ -10,7 +10,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/dark/account-list.png",
+        "src": "assets/marketing/zoom/desktop/dark/account-list.webp",
         "width": 2597,
         "height": 1461
       },
@@ -32,7 +32,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/dark/account-context-menu.png",
+        "src": "assets/marketing/zoom/desktop/dark/account-context-menu.webp",
         "width": 2597,
         "height": 1461
       },
@@ -54,7 +54,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/dark/settings.png",
+        "src": "assets/marketing/zoom/desktop/dark/settings.webp",
         "width": 3840,
         "height": 2160
       },
@@ -76,7 +76,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/dark/data-backup.png",
+        "src": "assets/marketing/zoom/desktop/dark/data-backup.webp",
         "width": 3840,
         "height": 2160
       },
@@ -98,7 +98,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/dark/qr-scanning.png",
+        "src": "assets/marketing/zoom/desktop/dark/qr-scanning.webp",
         "width": 3112,
         "height": 1751
       },
@@ -120,7 +120,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/light/account-list.png",
+        "src": "assets/marketing/zoom/desktop/light/account-list.webp",
         "width": 2597,
         "height": 1461
       },
@@ -142,7 +142,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/light/account-context-menu.png",
+        "src": "assets/marketing/zoom/desktop/light/account-context-menu.webp",
         "width": 2521,
         "height": 1418
       },
@@ -164,7 +164,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/light/settings.png",
+        "src": "assets/marketing/zoom/desktop/light/settings.webp",
         "width": 3840,
         "height": 2160
       },
@@ -186,7 +186,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/light/data-backup.png",
+        "src": "assets/marketing/zoom/desktop/light/data-backup.webp",
         "width": 3840,
         "height": 2160
       },
@@ -208,7 +208,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/desktop/light/qr-scanning.png",
+        "src": "assets/marketing/zoom/desktop/light/qr-scanning.webp",
         "width": 3112,
         "height": 1751
       },
@@ -230,7 +230,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/dark/account-list.png",
+        "src": "assets/marketing/zoom/android/dark/account-list.webp",
         "width": 3840,
         "height": 2160
       },
@@ -252,7 +252,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/dark/settings.png",
+        "src": "assets/marketing/zoom/android/dark/settings.webp",
         "width": 3840,
         "height": 2160
       },
@@ -274,7 +274,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/dark/qr-scanning.png",
+        "src": "assets/marketing/zoom/android/dark/qr-scanning.webp",
         "width": 3840,
         "height": 2160
       },
@@ -296,7 +296,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/dark/backup-restore.png",
+        "src": "assets/marketing/zoom/android/dark/backup-restore.webp",
         "width": 3840,
         "height": 2160
       },
@@ -318,7 +318,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/light/account-list.png",
+        "src": "assets/marketing/zoom/android/light/account-list.webp",
         "width": 3840,
         "height": 2160
       },
@@ -340,7 +340,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/light/settings.png",
+        "src": "assets/marketing/zoom/android/light/settings.webp",
         "width": 3840,
         "height": 2160
       },
@@ -362,7 +362,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/light/qr-scanning.png",
+        "src": "assets/marketing/zoom/android/light/qr-scanning.webp",
         "width": 3840,
         "height": 2160
       },
@@ -384,7 +384,7 @@
         "height": 1080
       },
       "full": {
-        "src": "assets/marketing/zoom/android/light/backup-restore.png",
+        "src": "assets/marketing/zoom/android/light/backup-restore.webp",
         "width": 3840,
         "height": 2160
       },

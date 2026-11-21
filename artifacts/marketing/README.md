@@ -116,13 +116,16 @@ are supported. GitHub sanitizes those styles and uses its own themed table
 background and spacing. No separate bordered screenshot files are generated.
 
 Gallery schema version 2 separates `preview` and `full` assets. Cards and the
-build-selected hero use previews; enlargement alone requests the original PNG.
+build-selected hero use previews; the full assets are prepared after theme previews.
 The `frame` asset retains the reviewed 1920 × 1080 campaign image used to derive
-previews. The `full` asset is a separate lossless PNG in `website/optimized/zoom/`,
+previews. The `full` asset is a separate lossless WebP in `website/optimized/zoom/`,
 rendered directly from source captures at up to 3840 × 2160. Each frame's scale
 is limited by its original app capture: interface pixels are never upscaled.
 Typography is rendered at the delivery resolution. Preview and Store assets
-remain unchanged; high-resolution images are requested only on enlargement.
+remain unchanged. Reviewed PNG originals remain available beside delivery WebPs.
+The 18 full images total 29,378,480 bytes instead of 38,309,609 bytes (23.3% less),
+with identical decoded pixels. `Generate-WebsiteShowcase.py --lossless-fulls-only`
+derives these without regenerating PNGs or previews; validation checks every pixel.
 Pages runs marketing validation before copying approved assets, selects the hero
 in the generated HTML (without a second JavaScript source swap), and removes the
 Android fallback campaign from approved HTML before browsers discover its PNGs.
@@ -139,8 +142,11 @@ previews, and mobile viewports get four. Desktop caches all four groups; mobile
 keeps two, with one on the most constrained devices. These limits bound retained
 image nodes, while the browser controls its own decoded-image memory. A complete
 decoded group replaces the previous gallery atomically. Full-size dialogs show a
-loading/error state until decoding completes and retain at most one full-size image
-(released on close on constrained devices).
+loading/error state until decoding completes. Ready navigation swaps synchronously;
+uncached navigation retains the previous image until its replacement is decoded,
+with a progress message only after 180 ms. Failures retain navigation and retry.
+At most two decoded full images (current and next, within 64 MiB of RGBA pixels)
+are retained, rather than a decoded theme set.
 
 
 
@@ -149,12 +155,26 @@ buttons and Left/Right keys navigate within the selected platform and theme, wra
 at either end. A counter reports the position; Escape closes and returns focus to
 the original thumbnail. Focus stays inside the modal. Touch users can swipe horizontally;
 vertical scrolling and pinch gestures retain their browser behavior. Full-size images
-load on demand, with navigation and retry available during failures and loading.
+remain available on demand, with navigation and retry during failures and loading.
 Superseded downloads/decodes cannot replace the current image.
 Decoded full-size images reveal with a 180 ms fade and a small directional slide
 for Previous/Next navigation. Reduced-motion preferences disable the animation,
 including when the preference changes while the lightbox is open. Navigation
 and closing cancel an in-progress transition.
+
+Full-size preparation starts at idle after eligible theme previews finish. The
+current theme comes first, with one speculative full image at a time and low fetch
+priority. The first/current image and its next neighbor are decoded. Remaining
+images only warm the HTTP cache by streaming and discarding response chunks.
+Opening a pending prefetch reuses its transfer; ready images reuse their nodes.
+Foreground selections preempt unrelated speculation. Hidden pages abort/pause
+full preparation and resume when visible. Save-Data, 2G, 3G and devices with at
+most 2 GB RAM skip full speculation; other mobile layouts prepare two images in
+their selected group. Explicit image opens still work under these limits.
+Background failures/timeouts do not retry in a loop. No service worker, persistent
+application cache or object-URL collection is required. See
+[Fetch priority](https://web.dev/articles/fetch-priority) and
+[image decoding](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode).
 
 The viewer fills 98% of the available viewport while preserving the marketing
 frame and aspect ratio. A translucent Previous/Next bar overlays the bottom of

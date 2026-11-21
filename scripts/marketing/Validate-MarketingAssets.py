@@ -90,7 +90,7 @@ onboarding_art={
 for name in onboarding_art:
     source_hashes.add(hashlib.sha256((onboarding_root/name).read_bytes()).hexdigest())
 source_hashes.update(item['sha256'] for item in manifest['generated'] if item['kind'] in (
-    'cleaned-website-capture', 'designed-website-campaign', 'designed-website-zoom',
+    'cleaned-website-capture', 'designed-website-campaign', 'designed-website-zoom', 'website-full-lossless',
     'designed-scanner-qr', 'transparent-biometric-cutout'))
 for item in manifest['generated']:
     path=ROOT/item['path']
@@ -100,6 +100,13 @@ for item in manifest['generated']:
     item_platform=item.get('platform') or next((platform for platform in ('desktop','android') if f'/{platform}/' in item['path']),None)
     if args.platform!='all' and item_platform and item_platform!=args.platform:
         continue
+    if item['kind']=='website-full-lossless':
+        png=ROOT/item['pngPath']
+        assert item['lossless'] is True and item['sourceSha256']==[file_sha256(png)]
+        assert path.with_suffix('.png')==png and path.stat().st_size<png.stat().st_size
+        with Image.open(path) as delivered, Image.open(png) as original:
+            assert delivered.format=='WEBP' and delivered.size==(item['width'],item['height'])==original.size
+            assert delivered.convert('RGBA').tobytes()==original.convert('RGBA').tobytes(),f'Lossless delivery changed pixels: {path}'
     if item['kind']=='website-preview':
         full=ROOT/item['fullPath']
         assert item['sourceSha256']==[file_sha256(full)]
@@ -380,7 +387,7 @@ if gallery_path.exists():
         assert item['theme'] in ('light','dark')
         assert 'src' not in item,'Ambiguous legacy gallery source'
         assert item['caption']==expected_titles[item['screen']],f'Unexpected gallery title: {item}'
-        for kind,folder,suffix,dimensions in (('preview','previews','.webp',(1200,675)),('frame','framed','.png',(1920,1080)),('full','zoom','.png',None)):
+        for kind,folder,suffix,dimensions in (('preview','previews','.webp',(1200,675)),('frame','framed','.png',(1920,1080)),('full','zoom','.webp',None)):
             asset=item[kind]
             expected=f'assets/marketing/{folder}/{item["platform"]}/{item["theme"]}/{item["screen"]}{suffix}'
             assert asset['src']==expected
@@ -391,7 +398,7 @@ if gallery_path.exists():
                 if dimensions:
                     assert image.size==dimensions
                 else:
-                    assert image.format=='PNG' and 1920<=image.width<=3840 and 1080<=image.height<=2160
+                    assert image.format=='WEBP' and 1920<=image.width<=3840 and 1080<=image.height<=2160
                     assert abs(image.width/image.height-16/9)<.002
 tracked_generated={item['path'] for item in manifest['generated']}
 for folder in ('composites','store/windows/screenshots','store/windows/icons','store/windows/promotional','store/android','website/optimized'):

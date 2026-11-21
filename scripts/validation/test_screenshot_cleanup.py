@@ -110,6 +110,28 @@ class ScreenshotCleanupTests(unittest.TestCase):
                 red, green, blue = image.convert('RGB').getpixel((600, 337))
                 self.assertGreater(red, blue * 2)
 
+    def test_lossless_full_delivery_preserves_pixels_and_original_png(self):
+        spec = importlib.util.spec_from_file_location('website_showcase', ROOT / 'scripts/marketing/Generate-WebsiteShowcase.py')
+        showcase = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(showcase)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            optimized = root / 'website/optimized'
+            png = optimized / 'zoom/desktop/dark/settings.png'
+            png.parent.mkdir(parents=True)
+            Image.new('RGB', (1920, 1080), '#314159').save(png)
+            original = png.read_bytes()
+            item = {'platform': 'desktop', 'theme': 'dark', 'screen': 'settings',
+                    'full': {'src': 'assets/marketing/zoom/desktop/dark/settings.png', 'width': 1920, 'height': 1080}}
+            manifest = {'generated': [{'path': png.relative_to(root).as_posix(), 'kind': 'designed-website-zoom', 'sourcePath': 'source/desktop/dark/settings.png'}]}
+            with patch.multiple(showcase, ROOT=root, OPTIMIZED=optimized, GALLERY=root/'gallery.json', MANIFEST=root/'manifest.json'):
+                showcase.add_lossless_fulls(manifest, {'items': [item]})
+            self.assertEqual(original, png.read_bytes())
+            self.assertTrue(item['full']['src'].endswith('.webp'))
+            with Image.open(png) as source, Image.open(png.with_suffix('.webp')) as delivered:
+                self.assertEqual(source.convert('RGBA').tobytes(), delivered.convert('RGBA').tobytes())
+            self.assertLess(png.with_suffix('.webp').stat().st_size, png.stat().st_size)
+
     def test_desktop_import_and_recovery_share_one_data_backup_view(self):
         spec = importlib.util.spec_from_file_location('website_showcase', ROOT / 'scripts/marketing/Generate-WebsiteShowcase.py')
         showcase = importlib.util.module_from_spec(spec)

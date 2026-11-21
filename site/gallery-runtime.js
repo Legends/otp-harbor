@@ -1,4 +1,4 @@
-/* Shared static gallery: preview resources are cached; full-size images are on demand. */
+/* Shared static gallery: prepare previews first, then bounded full-size images at idle. */
 (() => {
   const decode = async (image) => {
     if (typeof image.decode === 'function') await image.decode();
@@ -25,7 +25,8 @@
         const slow = /(^|-)2g$/.test(connection?.effectiveType || '') || navigator.deviceMemory <= 2;
         return {
           budget: connection?.saveData || slow ? 0 : connection?.effectiveType === '3g' ? 2 : mobile ? 4 : Infinity,
-          groups: connection?.saveData || slow || navigator.deviceMemory <= 2 ? 1 : mobile ? 2 : 4
+          groups: connection?.saveData || slow || navigator.deviceMemory <= 2 ? 1 : mobile ? 2 : 4,
+          fulls: connection?.saveData || slow || connection?.effectiveType === '3g' ? 0 : mobile ? 2 : Infinity
         };
       };
       const groups = new Map();
@@ -60,10 +61,12 @@
           record.image.onload = null;
           record.image.onerror = null;
           record.status = error ? 'failed' : 'ready';
+          if (!error && record.kind === 'full') warmedFulls.add(record.src);
           record.card?.classList.toggle('preview-failed', Boolean(error));
           record.card?.classList.remove('preview-loading');
           if (error) record.reject(error); else record.resolve(record.image);
           if (counted) { active.delete(record); pump(); }
+          else scheduleFullPreparation();
         };
         record.image.onload = async () => {
           try { await decode(record.image); finish(); }
@@ -78,17 +81,18 @@
       function pump() {
         queue.sort((a, b) => a.priority - b.priority || a.order - b.order);
         while (active.size < 2) {
-          const index = queue.findIndex((record) => record.priority === 0 || (!document.hidden && backgroundStarted));
+          const index = queue.findIndex((record) => record.priority === 0 || (!document.hidden && backgroundStarted && (record.kind !== 'full' || canPrepareFull())));
           if (index < 0) break;
           const record = queue.splice(index, 1)[0];
-          if (record.priority > 0 && backgroundIssued >= policy().budget) {
+          if (record.kind !== 'full' && record.priority > 0 && backgroundIssued >= policy().budget) {
             record.status = 'new';
             continue;
           }
-          if (record.priority > 0) backgroundIssued++;
+          if (record.kind !== 'full' && record.priority > 0) backgroundIssued++;
           active.add(record);
           begin(record, true);
         }
+        scheduleFullPreparation();
       }
 
       function prioritize() {
@@ -102,7 +106,7 @@
           active.delete(record);
           record.status = 'queued';
           queue.push(record);
-          backgroundIssued--;
+          if (record.kind !== 'full') backgroundIssued--;
         }
       }
 
@@ -137,7 +141,7 @@
             record.timer = setTimeout(record.fail, 30000);
           }
         }
-        if (priority === 0) prioritize();
+        if (priority === 0) { stopFullTransfer(record.src); prioritize(); }
         pump();
         return record.promise;
       }
@@ -191,6 +195,7 @@
       }
 
       async function select(key) {
+        suspendFullPreparation();
         const token = ++revision;
         const started = performance.now();
         const [platform, theme] = key.split('/');
@@ -224,7 +229,7 @@
           current.textContent = `Could not load ${title(key)}. The previous gallery is still available.`;
           retry.hidden = false;
         } finally {
-          if (token === revision) { grid.setAttribute('aria-busy', 'false'); trim(); }
+          if (token === revision) { grid.setAttribute('aria-busy', 'false'); trim(); scheduleFullPreparation(); }
         }
       }
       retry.addEventListener('click', () => void select(`${state.platform}/${state.theme}`));
@@ -306,6 +311,127 @@
       let opener;
       let lastItem;
       let fullRecord;
+      const fullImages = new Map();
+      const warmedFulls = new Set();
+      const attemptedFulls = new Set();
+      let fullTransfer;
+      let fullPreparation;
+      let preparingFull = false;
+      let loadingTimer;
+
+      function fullSource(item) {
+        return new URL(options.prefix + item.full.src, document.baseURI).href;
+      }
+      function canPrepareFull() {
+        return backgroundStarted && !document.hidden && policy().fulls > 0
+          && grid.getAttribute('aria-busy') !== 'true'
+          && (!dialog.open || stage.getAttribute('aria-busy') !== 'true')
+          && ![...groups.values()].some((group) => group.records.some((record) => ['loading', 'queued'].includes(record.status)))
+          && ![...active].some((record) => record.priority === 0);
+      }
+      function stopFullTransfer(except) {
+        if (fullTransfer && fullTransfer.src !== except) fullTransfer.controller.abort();
+      }
+      function suspendFullPreparation() {
+        stopFullTransfer();
+        for (const record of fullImages.values()) {
+          if (record !== fullRecord && record.priority > 0 && ['loading', 'queued'].includes(record.status)) releaseFullImage(record);
+        }
+      }
+      function fullImage(item) {
+        const src = fullSource(item);
+        let record = fullImages.get(src);
+        if (!record) {
+          const image = new Image(item.full.width, item.full.height);
+          image.alt = item.alt;
+          image.decoding = 'async';
+          record = { src, image, item, kind: 'full', status: 'new' };
+          fullImages.set(src, record);
+        }
+        record.used = ++used;
+        return record;
+      }
+      function trimFullImages(keep) {
+        const visible = dialog.open ? dialog.querySelector('img') : null;
+        const candidates = [...fullImages.values()]
+          .filter((record) => record !== keep && record !== fullRecord && record.image !== visible)
+          .sort((a, b) => a.used - b.used);
+        // Two 4K RGBA images fit within 64 MiB; never retain a decoded theme set.
+        let bytes = [...fullImages.values()].reduce((sum, record) => sum + record.item.full.width * record.item.full.height * 4, 0);
+        while ((fullImages.size > 2 || bytes > 64 * 1024 * 1024) && candidates.length) {
+          const record = candidates.shift();
+          bytes -= record.item.full.width * record.item.full.height * 4;
+          releaseFullImage(record);
+        }
+      }
+      async function requestFull(record, priority) {
+        if (fullTransfer?.src === record.src) {
+          await fullTransfer.promise.catch(() => {});
+        }
+        if (fullImages.get(record.src) !== record) throw new Error('Image superseded');
+        return request(record, priority);
+      }
+      function scheduleFullPreparation() {
+        if (fullPreparation !== undefined || preparingFull || !canPrepareFull()) return;
+        const run = () => { fullPreparation = undefined; void prepareFullImages(); };
+        fullPreparation = 'requestIdleCallback' in window
+          ? requestIdleCallback(run, { timeout: 1000 }) : setTimeout(run, 150);
+      }
+      async function prepareFullImages() {
+        if (preparingFull || !canPrepareFull()) return;
+        preparingFull = true;
+        let candidate, worked = false;
+        try {
+          const key = dialog.open ? `${lastItem.platform}/${lastItem.theme}` : displayed;
+          const items = data.items.filter((item) => `${item.platform}/${item.theme}` === key);
+          const index = dialog.open ? dialogIndex : Math.max(0, items.indexOf(lastItem));
+          const targets = [items[index], items[(index + 1) % items.length]].filter(Boolean);
+          for (const item of targets) {
+            const record = fullImage(item);
+            trimFullImages(record);
+            if (record.status === 'failed') continue;
+            if (record.status !== 'ready') {
+              worked = true;
+              await requestFull(record, 1);
+              warmedFulls.add(record.src);
+              return;
+            }
+            warmedFulls.add(record.src);
+          }
+          const eligible = data.items.filter((item) => {
+            const group = groups.get(`${item.platform}/${item.theme}`);
+            return group?.records.every((record) => record.status === 'ready')
+              && (policy().fulls === Infinity || `${item.platform}/${item.theme}` === key && items.indexOf(item) < policy().fulls);
+          }).sort((a, b) => Number(`${b.platform}/${b.theme}` === key) - Number(`${a.platform}/${a.theme}` === key));
+          candidate = eligible.find((item) => !warmedFulls.has(fullSource(item)) && !attemptedFulls.has(fullSource(item)));
+          if (!candidate) return;
+          worked = true;
+          const src = fullSource(candidate), controller = new AbortController();
+          attemptedFulls.add(src);
+          const transfer = { src, controller };
+          const timeout = setTimeout(() => { transfer.timedOut = true; controller.abort(); }, 30000);
+          fullTransfer = transfer;
+          transfer.promise = (async () => {
+            // Warm the HTTP cache without decoding or retaining another 4K image.
+            const response = await fetch(src, { priority: 'low', signal: controller.signal, credentials: 'include' });
+            if (!response.ok) throw new Error('Image unavailable');
+            if (response.body) {
+              const reader = response.body.getReader();
+              while (!(await reader.read()).done) { /* Discard chunks after the HTTP cache receives them. */ }
+            } else await response.arrayBuffer();
+          })();
+          try {
+            await transfer.promise;
+            warmedFulls.add(src);
+          } catch (error) {
+            if (error.name === 'AbortError' && !transfer.timedOut) attemptedFulls.delete(src);
+          } finally {
+            clearTimeout(timeout);
+            if (fullTransfer === transfer) fullTransfer = undefined;
+          }
+        } catch { /* Failed speculation never blocks opening or retrying an image. */ }
+        finally { preparingFull = false; if (worked) scheduleFullPreparation(); }
+      }
       let dialogItems = [];
       let dialogIndex = -1;
       let imageScale = null;
@@ -397,14 +523,14 @@
       imageViewport.addEventListener('pointerup', endPan);
       imageViewport.addEventListener('pointercancel', endPan);
       imageViewport.addEventListener('lostpointercapture', () => { pan = undefined; imageViewport.classList.remove('is-panning'); });
-      function discardFullRecord() {
-        const record = fullRecord;
+      function releaseFullImage(record) {
         if (!record) return;
-        fullRecord = undefined;
+        fullImages.delete(record.src);
         record.attempt = (record.attempt || 0) + 1;
         clearTimeout(record.timer);
         record.image.onload = record.image.onerror = null;
         record.image.removeAttribute('src');
+        record.status = 'failed';
         active.delete(record);
         const index = queue.indexOf(record);
         if (index >= 0) queue.splice(index, 1);
@@ -419,44 +545,41 @@
         dialogIndex = dialogItems.indexOf(item);
         lastItem = item;
         const token = ++dialogRevision;
+        clearTimeout(loadingTimer);
         stopImageTransition();
         endPan();
-        imageLayout = undefined;
-        imageScale = null;
         if ((tools.contains(document.activeElement) && document.activeElement !== close) || imageViewport.contains(document.activeElement)) close.focus();
-        imageViewport.hidden = true;
-        for (const property of ['--showcase-top', '--showcase-left', '--showcase-right', '--showcase-bottom']) dialog.style.removeProperty(property);
+        if (opening) {
+          imageViewport.hidden = true;
+          dialog.querySelector('img').hidden = true;
+          for (const property of ['--showcase-top', '--showcase-left', '--showcase-right', '--showcase-bottom']) dialog.style.removeProperty(property);
+        }
         zoomValue.textContent = '';
         for (const button of [zoomOut, zoomIn, fit, actual]) button.disabled = true;
-        dialog.querySelector('img').hidden = true;
-        dialogCaption.textContent = item.caption;
         dialogStatus.textContent = 'Loading full-size image…';
-        dialogStatus.hidden = false;
+        dialogStatus.hidden = !opening;
+        loadingTimer = setTimeout(() => { if (token === dialogRevision) dialogStatus.hidden = false; }, 180);
         stage.setAttribute('aria-busy', 'true');
         dialogRetry.hidden = true;
         counter.textContent = `Image ${dialogIndex + 1} of ${dialogItems.length}`;
         previous.disabled = next.disabled = dialogItems.length < 2;
         if (opening) { dialog.showModal(); close.focus(); }
-        const src = new URL(options.prefix + item.full.src, document.baseURI).href;
-        if (fullRecord?.src !== src) {
-          discardFullRecord();
-          fullRecord = { src, image: new Image(item.full.width, item.full.height), status: 'new' };
-          fullRecord.image.alt = item.alt;
-          fullRecord.image.decoding = 'async';
-        }
+        fullRecord = fullImage(item);
+        trimFullImages(fullRecord);
+        stopFullTransfer(fullRecord.src);
         try {
-          const image = await request(fullRecord, 0);
+          const image = fullRecord.status === 'ready' ? fullRecord.image : await requestFull(fullRecord, 0);
           if (token !== dialogRevision || !dialog.open) {
-            if (policy().groups < 4 && (!dialog.open || fullRecord?.image !== image)) {
-              image.removeAttribute('src');
-              if (fullRecord?.image === image) fullRecord = undefined;
-            }
             return;
           }
+          clearTimeout(loadingTimer);
+          imageLayout = undefined;
+          imageScale = null;
           image.hidden = false;
           image.draggable = false;
           dialog.querySelector('img').replaceWith(image);
           imageViewport.hidden = false;
+          dialogCaption.textContent = item.caption;
           renderZoom();
           if (!reducedMotion.matches && typeof image.animate === 'function') {
             imageTransition = image.animate([
@@ -467,9 +590,12 @@
           dialogStatus.textContent = '';
           dialogStatus.hidden = true;
           stage.setAttribute('aria-busy', 'false');
+          scheduleFullPreparation();
         } catch {
           if (token !== dialogRevision || !dialog.open) return;
+          clearTimeout(loadingTimer);
           dialogStatus.textContent = 'Could not load the full-size image.';
+          dialogStatus.hidden = false;
           stage.setAttribute('aria-busy', 'false');
           dialogRetry.hidden = false;
         }
@@ -530,13 +656,14 @@
       dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
       dialog.addEventListener('close', () => {
         dialogRevision++;
+        clearTimeout(loadingTimer);
         stopImageTransition();
         endPan();
         swipeStart = undefined;
-        if (policy().groups < 4 && fullRecord?.status !== 'loading') {
-          fullRecord?.image.removeAttribute('src');
-          fullRecord = undefined;
-        }
+        fullRecord = undefined;
+        if (!policy().fulls) for (const record of [...fullImages.values()]) releaseFullImage(record);
+        trimFullImages();
+        scheduleFullPreparation();
         if (opener?.isConnected) opener.focus();
       });
 
@@ -578,8 +705,8 @@
       }
       if (document.readyState === 'complete') afterRender();
       else window.addEventListener('load', afterRender, { once: true });
-      document.addEventListener('visibilitychange', pump);
-      connection?.addEventListener?.('change', () => { pump(); trim(); });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) suspendFullPreparation(); pump(); });
+      connection?.addEventListener?.('change', () => { if (!policy().fulls) suspendFullPreparation(); pump(); trim(); });
     }
   };
 })();

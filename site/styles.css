@@ -79,6 +79,7 @@ a.button:hover, a.button:focus-visible { transform: translateY(-1px); filter: br
 .showcase-stage.is-zoomed .showcase-image-viewport { overflow: auto; touch-action: pan-x pan-y pinch-zoom; cursor: grab; }
 .showcase-stage.is-zoomed .showcase-image-viewport.is-panning { cursor: grabbing; }
 .showcase-dialog p { flex-shrink: 0; margin: 0; color: var(--muted); text-align: center; }
+.showcase-stage .showcase-status, .showcase-stage > button { position: relative; z-index: 1; padding: 10px 14px; border-radius: 9px; background: rgba(5, 18, 35, .85); }
 .showcase-tools, .showcase-footer { position: absolute; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid rgba(187, 220, 255, .25); border-radius: 12px; background: rgba(5, 18, 35, .55); backdrop-filter: blur(6px); }
 .showcase-tools { top: var(--showcase-top, 10px); right: var(--showcase-right, 10px); font-size: .875rem; }
 .showcase-footer { left: var(--showcase-left, 10px); right: var(--showcase-right, 10px); bottom: var(--showcase-bottom, 10px); padding: 6px 10px; }
