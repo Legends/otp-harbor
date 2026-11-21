@@ -288,7 +288,7 @@ def add_lossless_fulls(manifest, gallery, platforms=('desktop', 'android')):
                                 sourcePath=metadata[png.relative_to(ROOT).as_posix()]['sourcePath'],
                                 platform=item['platform'], theme=item['theme'], lossless=True,
                                 width=item['full']['width'], height=item['full']['height']))
-        item['full']['src'] = item['full']['src'].removesuffix('.png') + '.webp'
+        item['full']['src'] = 'assets/marketing/' + target.relative_to(OPTIMIZED).as_posix()
     GALLERY.write_text(json.dumps(gallery, indent=2) + '\n', encoding='utf-8')
     generated.append(record(GALLERY, 'website-gallery-data',
                             [OPTIMIZED / item['full']['src'].removeprefix('assets/marketing/')

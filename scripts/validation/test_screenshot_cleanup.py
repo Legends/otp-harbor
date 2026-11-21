@@ -126,6 +126,10 @@ class ScreenshotCleanupTests(unittest.TestCase):
             manifest = {'generated': [{'path': png.relative_to(root).as_posix(), 'kind': 'designed-website-zoom', 'sourcePath': 'source/desktop/dark/settings.png'}]}
             with patch.multiple(showcase, ROOT=root, OPTIMIZED=optimized, GALLERY=root/'gallery.json', MANIFEST=root/'manifest.json'):
                 showcase.add_lossless_fulls(manifest, {'items': [item]})
+                first = copy.deepcopy(item)
+                showcase.add_lossless_fulls(manifest, {'items': [item]})
+                self.assertEqual(first, item)
+                self.assertEqual(1, sum(entry['kind'] == 'website-full-lossless' for entry in manifest['generated']))
             self.assertEqual(original, png.read_bytes())
             self.assertTrue(item['full']['src'].endswith('.webp'))
             with Image.open(png) as source, Image.open(png.with_suffix('.webp')) as delivered:
