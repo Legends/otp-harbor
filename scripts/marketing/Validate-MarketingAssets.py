@@ -90,7 +90,7 @@ onboarding_art={
 for name in onboarding_art:
     source_hashes.add(hashlib.sha256((onboarding_root/name).read_bytes()).hexdigest())
 source_hashes.update(item['sha256'] for item in manifest['generated'] if item['kind'] in (
-    'cleaned-website-capture', 'designed-website-campaign',
+    'cleaned-website-capture', 'designed-website-campaign', 'designed-website-zoom',
     'designed-scanner-qr', 'transparent-biometric-cutout'))
 for item in manifest['generated']:
     path=ROOT/item['path']
@@ -144,7 +144,9 @@ for item in manifest['generated']:
             assert difference.getbbox() is None,f'QR composite changed pixels outside scanner artwork: {path}'
             result=zxingcpp.read_barcode(composite)
             assert result and result.text==item['qrPayload'],f'Demo QR cannot be decoded: {path}'
-    if item['kind']=='designed-website-campaign':
+    if item['kind'] in ('designed-website-campaign','designed-website-zoom'):
+        pixel_scale=item.get('pixelScale',1)
+        assert 1<=pixel_scale<=2
         capture=ROOT/item['sourcePath']
         cleaned_path=ROOT/item['cleanedPath']
         if item['platform']=='desktop' and path.stem in ('settings','import-formats','backup-restore'):
@@ -158,9 +160,10 @@ for item in manifest['generated']:
             assert illustration.parent==onboarding_root and illustration.name=='move-accounts.png'
             assert item['visualKind']=='marketing-promotion'
         x,y,width,height=item['appPlacement']['bounds']
-        assert 25<=x<x+width<1895 and 25<=y<y+height<1055
+        assert 25*pixel_scale<=x<x+width<1895*pixel_scale and 25*pixel_scale<=y<y+height<1055*pixel_scale
         with Image.open(path) as framed, Image.open(cleaned_path) as cleaned:
-            assert framed.size==(1920,1080)
+            assert framed.size==(round(1920*pixel_scale),round(1080*pixel_scale))
+            assert width<=cleaned.width and height<=cleaned.height,f'App capture upscaled: {path}'
             expected=cleaned.convert('RGB').resize((width,height),Image.Resampling.LANCZOS)
             actual=framed.crop((x,y,x+width,y+height)).convert('RGB')
             assert actual.crop((25,25,width-25,height-25)).tobytes()==expected.crop((25,25,width-25,height-25)).tobytes(),f'Framed app interior changed: {path}'
@@ -377,14 +380,19 @@ if gallery_path.exists():
         assert item['theme'] in ('light','dark')
         assert 'src' not in item,'Ambiguous legacy gallery source'
         assert item['caption']==expected_titles[item['screen']],f'Unexpected gallery title: {item}'
-        for kind,folder,suffix,dimensions in (('preview','previews','.webp',(1200,675)),('full','framed','.png',(1920,1080))):
+        for kind,folder,suffix,dimensions in (('preview','previews','.webp',(1200,675)),('frame','framed','.png',(1920,1080)),('full','zoom','.png',None)):
             asset=item[kind]
             expected=f'assets/marketing/{folder}/{item["platform"]}/{item["theme"]}/{item["screen"]}{suffix}'
             assert asset['src']==expected
             image_path=ROOT/'website/optimized'/asset['src'].removeprefix('assets/marketing/')
             assert image_path.is_file(),f'Gallery image is missing: {image_path}'
             with Image.open(image_path) as image:
-                assert image.size==dimensions==(asset['width'],asset['height'])
+                assert image.size==(asset['width'],asset['height'])
+                if dimensions:
+                    assert image.size==dimensions
+                else:
+                    assert image.format=='PNG' and 1920<=image.width<=3840 and 1080<=image.height<=2160
+                    assert abs(image.width/image.height-16/9)<.002
 tracked_generated={item['path'] for item in manifest['generated']}
 for folder in ('composites','store/windows/screenshots','store/windows/icons','store/windows/promotional','store/android','website/optimized'):
     for path in (ROOT/folder).rglob('*') if (ROOT/folder).exists() else ():

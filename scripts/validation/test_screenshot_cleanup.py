@@ -65,6 +65,51 @@ class ScreenshotCleanupTests(unittest.TestCase):
             with self.subTest(radius=radius), self.assertRaises(ValueError):
                 mask_desktop_corners(source, radius)
 
+    def test_zoom_frame_resolution_uses_original_capture_without_upscaling(self):
+        spec = importlib.util.spec_from_file_location('website_showcase', ROOT / 'scripts/marketing/Generate-WebsiteShowcase.py')
+        showcase = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(showcase)
+        for platform, size in [('desktop', (1330, 1010)), ('desktop', (2394, 1794)),
+                               ('android', (1220, 2450)), ('desktop', (500, 400))]:
+            with self.subTest(platform=platform, size=size):
+                capture = Image.new('RGB', size, '#314159')
+                scale = showcase.zoom_pixel_scale(capture, platform)
+                self.assertGreaterEqual(scale, 1)
+                self.assertLessEqual(scale, 2)
+                delivered = showcase.scaled_capture(capture, platform, scale)
+                self.assertLessEqual(delivered.width, capture.width)
+                self.assertLessEqual(delivered.height, capture.height)
+                base = showcase.scaled_capture(capture, platform)
+                if size[0] > 1000:
+                    self.assertGreater(delivered.width, base.width)
+                    self.assertGreater(delivered.height, base.height)
+
+    def test_preview_still_uses_reviewed_frame_when_full_is_higher_resolution(self):
+        spec = importlib.util.spec_from_file_location('website_showcase', ROOT / 'scripts/marketing/Generate-WebsiteShowcase.py')
+        showcase = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(showcase)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            optimized = root / 'website/optimized'
+            for folder, size, color in [('framed', (1920, 1080), '#bb3333'),
+                                        ('zoom', (3840, 2160), '#3333bb')]:
+                path = optimized / folder / 'desktop/dark/settings.png'
+                path.parent.mkdir(parents=True)
+                Image.new('RGB', size, color).save(path)
+            full = {'src': 'assets/marketing/zoom/desktop/dark/settings.png', 'width': 3840, 'height': 2160}
+            gallery = {'items': [{'platform': 'desktop', 'theme': 'dark', 'screen': 'settings',
+                                  'frame': {'src': 'assets/marketing/framed/desktop/dark/settings.png', 'width': 1920, 'height': 1080},
+                                  'full': full.copy()}]}
+            manifest = {'generated': []}
+            with patch.multiple(showcase, ROOT=root, OPTIMIZED=optimized, GALLERY=root/'gallery.json', MANIFEST=root/'manifest.json'):
+                showcase.add_previews(manifest, gallery)
+            self.assertEqual(full, gallery['items'][0]['full'])
+            preview = next(entry for entry in manifest['generated'] if entry['kind'] == 'website-preview')
+            self.assertEqual('website/optimized/framed/desktop/dark/settings.png', preview['fullPath'])
+            with Image.open(root / preview['path']) as image:
+                red, green, blue = image.convert('RGB').getpixel((600, 337))
+                self.assertGreater(red, blue * 2)
+
     def test_desktop_import_and_recovery_share_one_data_backup_view(self):
         spec = importlib.util.spec_from_file_location('website_showcase', ROOT / 'scripts/marketing/Generate-WebsiteShowcase.py')
         showcase = importlib.util.module_from_spec(spec)

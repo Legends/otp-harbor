@@ -98,67 +98,79 @@ def record(path, kind, parents, **metadata):
     }
 
 
-def scaled_capture(cleaned, platform):
-    bounds = (860, 900) if platform == 'desktop' else (455, 900)
+def scaled_capture(cleaned, platform, pixel_scale=1):
+    bounds = tuple(round(value * pixel_scale) for value in
+                   ((860, 900) if platform == 'desktop' else (455, 900)))
     scale = min(bounds[0] / cleaned.width, bounds[1] / cleaned.height, 1)
     size = (round(cleaned.width * scale), round(cleaned.height * scale))
     return cleaned.resize(size, Image.Resampling.LANCZOS)
 
 
+def zoom_pixel_scale(cleaned, platform):
+    base = scaled_capture(cleaned, platform)
+    return min(2, cleaned.width / base.width, cleaned.height / base.height)
+
+
 def compose(platform, theme, screen, cleaned, background, icon, title=None, subtitle=None,
-            chip=None):
-    canvas = ImageOps.fit(background, (1920, 1080), method=Image.Resampling.LANCZOS).convert('RGBA')
+            chip=None, pixel_scale=1):
+    def px(value):
+        return round(value * pixel_scale)
+
+    def coords(*values):
+        return tuple(px(value) for value in values)
+
+    canvas = ImageOps.fit(background, coords(1920, 1080), method=Image.Resampling.LANCZOS).convert('RGBA')
     shade = Image.new('RGBA', canvas.size, (1, 10, 31, 0))
-    fade = Image.new('L', (1920, 1))
-    fade.putdata([204 if x < 610 else round(204 * max(0, (1180 - x) / 570))
-                  for x in range(1920)])
+    fade = Image.new('L', (canvas.width, 1))
+    fade.putdata([204 if x / pixel_scale < 610 else round(204 * max(0, (1180 - x / pixel_scale) / 570))
+                  for x in range(canvas.width)])
     shade.putalpha(fade.resize(canvas.size))
     canvas.alpha_composite(shade)
     draw = ImageDraw.Draw(canvas)
-    draw.rounded_rectangle((94, 68, 164, 138), radius=15, fill='#101e43')
-    canvas.alpha_composite(icon, (98, 72))
+    draw.rounded_rectangle(coords(94, 68, 164, 138), radius=px(15), fill='#101e43')
+    canvas.alpha_composite(icon.resize(coords(62, 62), Image.Resampling.LANCZOS), coords(98, 72))
     campaign_platform = 'WINDOWS' if platform == 'desktop' else 'ANDROID'
-    draw.text((184, 86), f'OTP HARBOR  /  {campaign_platform}', font=font(23, True), fill='#EAF3FF')
+    draw.text(coords(184, 86), f'OTP HARBOR  /  {campaign_platform}', font=font(px(23), True), fill='#EAF3FF')
     title_size = 66
     title = title or TITLES[screen]
-    while draw.textbbox((0, 0), title, font=font(title_size, True))[2] > 755:
+    while draw.textbbox((0, 0), title, font=font(px(title_size), True))[2] > px(755):
         title_size -= 2
-    draw.text((98, 258), title, font=font(title_size, True), fill='#FFFFFF')
+    draw.text(coords(98, 258), title, font=font(px(title_size), True), fill='#FFFFFF')
     if subtitle:
-        draw.multiline_text((102, 381), subtitle,
-                            font=font(28), fill='#C8E1F9', spacing=12)
+        draw.multiline_text(coords(102, 381), subtitle,
+                            font=font(px(28)), fill='#C8E1F9', spacing=px(12))
     if chip:
-        draw.rounded_rectangle((99, 872, 455, 932), radius=17,
-                               fill='#132E57', outline='#36BDF4', width=2)
-        draw.text((123, 888), chip, font=font(22, True), fill='#FFFFFF')
+        draw.rounded_rectangle(coords(99, 872, 455, 932), radius=px(17),
+                               fill='#132E57', outline='#36BDF4', width=px(2))
+        draw.text(coords(123, 888), chip, font=font(px(22), True), fill='#FFFFFF')
 
-    app = scaled_capture(cleaned, platform)
+    app = scaled_capture(cleaned, platform, pixel_scale)
     if platform == 'desktop':
-        x = 970 + (870 - app.width) // 2
-        y = 80 + (910 - app.height) // 2
+        x = px(970) + (px(870) - app.width) // 2
+        y = px(80) + (px(910) - app.height) // 2
         shadow = Image.new('RGBA', canvas.size)
         ImageDraw.Draw(shadow).rounded_rectangle(
-            (x + 18, y + 23, x + app.width + 18, y + app.height + 23),
-            radius=26, fill=(0, 4, 18, 120))
+            (x + px(18), y + px(23), x + app.width + px(18), y + app.height + px(23)),
+            radius=px(26), fill=(0, 4, 18, 120))
         canvas.alpha_composite(shadow)
         canvas.alpha_composite(app.convert('RGBA'), (x, y))
         frame = 'cleaned desktop window'
         radius = DESKTOP_CORNER_RADIUS
     else:
-        frame_width, frame_height = app.width + 42, app.height + 42
-        x = 1220 + (520 - frame_width) // 2
-        y = (1080 - frame_height) // 2
+        frame_width, frame_height = app.width + px(42), app.height + px(42)
+        x = px(1220) + (px(520) - frame_width) // 2
+        y = (px(1080) - frame_height) // 2
         shadow = Image.new('RGBA', canvas.size)
         ImageDraw.Draw(shadow).rounded_rectangle(
-            (x + 20, y + 25, x + frame_width + 20, y + frame_height + 25),
-            radius=44, fill=(0, 4, 18, 140))
+            (x + px(20), y + px(25), x + frame_width + px(20), y + frame_height + px(25)),
+            radius=px(44), fill=(0, 4, 18, 140))
         canvas.alpha_composite(shadow)
         draw = ImageDraw.Draw(canvas)
         draw.rounded_rectangle((x, y, x + frame_width, y + frame_height),
-                               radius=40, fill='#09172E', outline='#53D2FF', width=5)
-        x += 21
-        y += 21
-        radius = 20
+                               radius=px(40), fill='#09172E', outline='#53D2FF', width=px(5))
+        x += px(21)
+        y += px(21)
+        radius = px(20)
         mask = Image.new('L', app.size)
         ImageDraw.Draw(mask).rounded_rectangle((0, 0, app.width - 1, app.height - 1),
                                                radius=radius, fill=255)
@@ -168,19 +180,21 @@ def compose(platform, theme, screen, cleaned, background, icon, title=None, subt
                                    'cornerMaskRadius': radius, 'frame': frame}
 
 
-def add_illustration(canvas, path):
+def add_illustration(canvas, path, pixel_scale=1):
+    def px(value):
+        return round(value * pixel_scale)
     with Image.open(path) as source:
         illustration = source.convert('RGB')
-    illustration.thumbnail((555, 300), Image.Resampling.LANCZOS)
-    x, y = 105, 510
+    illustration.thumbnail((px(555), px(300)), Image.Resampling.LANCZOS)
+    x, y = px(105), px(510)
     draw = ImageDraw.Draw(canvas)
-    draw.text((x, y - 33), 'CONCEPT ILLUSTRATION', font=font(18, True), fill='#9DDFFF')
-    draw.rounded_rectangle((x - 2, y - 2, x + illustration.width + 2,
-                            y + illustration.height + 2), radius=18,
-                           fill='#112A50', outline='#47C7F7', width=2)
+    draw.text((x, y - px(33)), 'CONCEPT ILLUSTRATION', font=font(px(18), True), fill='#9DDFFF')
+    draw.rounded_rectangle((x - px(2), y - px(2), x + illustration.width + px(2),
+                            y + illustration.height + px(2)), radius=px(18),
+                           fill='#112A50', outline='#47C7F7', width=px(2))
     mask = Image.new('L', illustration.size)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, illustration.width - 1,
-                                            illustration.height - 1), radius=15, fill=255)
+                                            illustration.height - 1), radius=px(15), fill=255)
     canvas.paste(illustration, (x, y), mask)
     return [x, y, illustration.width, illustration.height]
 
@@ -225,7 +239,8 @@ def add_previews(manifest, gallery, platforms=('desktop', 'android')):
         if item['platform'] not in platforms:
             continue
         full = item['full'] if 'full' in item else {key: item[key] for key in ('src', 'width', 'height')}
-        source = OPTIMIZED / full['src'].removeprefix('assets/marketing/')
+        frame = item.get('frame', full)
+        source = OPTIMIZED / frame['src'].removeprefix('assets/marketing/')
         relative = Path('previews') / item['platform'] / item['theme'] / (item['screen'] + '.webp')
         target = OPTIMIZED / relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -271,7 +286,7 @@ def main():
     gallery = []
     written_direct = set()
     with Image.open(ICON) as original_icon:
-        icon = original_icon.convert('RGBA').resize((62, 62), Image.Resampling.LANCZOS)
+        icon = original_icon.convert('RGBA')
     for platform in ('desktop', 'android'):
         if platform not in platforms:
             gallery.extend(item for item in previous_gallery if item['platform'] == platform)
@@ -336,6 +351,20 @@ def main():
                                         **({'visualKind': 'marketing-promotion'} if title else {}),
                                         **({'illustrationPath': illustration.relative_to(REPO).as_posix(),
                                             'illustrationBounds': art_bounds} if illustration else {})))
+                pixel_scale = zoom_pixel_scale(visual, platform)
+                zoom_image, zoom_placement = compose(
+                    platform, theme, screen, visual, background, icon, title, subtitle,
+                    'GITHUB DEMO QR' if qr_composite else None, pixel_scale=pixel_scale)
+                zoom_art = add_illustration(zoom_image, illustration, pixel_scale) if illustration else None
+                zoom = OPTIMIZED / 'zoom' / platform / theme / f'{slug}.png'
+                zoom.parent.mkdir(parents=True, exist_ok=True)
+                zoom_image.save(zoom, optimize=True)
+                zoom_metadata = {key: value for key, value in generated[-1].items()
+                                 if key not in ('path', 'sha256', 'kind', 'sourceSha256')}
+                zoom_metadata.update(pixelScale=pixel_scale, appPlacement=zoom_placement)
+                if zoom_art:
+                    zoom_metadata['illustrationBounds'] = zoom_art
+                generated.append(record(zoom, 'designed-website-zoom', parents, **zoom_metadata))
                 label = GALLERY_TITLES[slug]
                 alt_kind = ('with an isolated render of the production Data & backup view using synthetic state'
                             if platform == 'desktop' and screen == 'data-backup' else
@@ -345,8 +374,10 @@ def main():
                             if illustration else 'with a genuine app capture')
                 gallery.append({
                     'platform': platform, 'theme': theme, 'screen': slug,
-                    'src': f'assets/marketing/framed/{platform}/{theme}/{slug}.png',
-                    'width': 1920, 'height': 1080,
+                    'frame': {'src': f'assets/marketing/framed/{platform}/{theme}/{slug}.png',
+                              'width': 1920, 'height': 1080},
+                    'full': {'src': f'assets/marketing/zoom/{platform}/{theme}/{slug}.png',
+                             'width': zoom_image.width, 'height': zoom_image.height},
                     'alt': f'OTP Harbor {platform} {label.lower()} in {theme} theme, {alt_kind}',
                     'caption': label,
                 })

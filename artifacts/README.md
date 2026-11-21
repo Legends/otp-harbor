@@ -63,5 +63,11 @@ Build the complete local site using
 Omit `-NoServe` to serve it on localhost. This local review includes candidate
 gallery assets; public Pages publication retains its approval and integrity gates.
 
+For IIS, point a site's or virtual directory's physical path to `artifacts/website`,
+then refresh with `-NoServe`. Keep `site/` as the editable source directory.
+Ensure static content has a `.webp` MIME mapping to `image/webp`; PNG, CSS,
+JavaScript and JSON must also be served. Open the configured IIS URL, including
+its virtual directory (for example `http://localhost/otp/`).
+
 Older experiments are retained under their platform's `testing/` directory.
 No vaults, credentials, signing material or personal backups belong in source control.

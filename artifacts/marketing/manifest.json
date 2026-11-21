@@ -2185,27 +2185,27 @@
     },
     {
       "path": "website/gallery.json",
-      "sha256": "4f9a10c35b6a138afdec6fe195e189d1df47079995bec42b0570a07d0b895406",
+      "sha256": "02e66d54212a2a7a43ae8abc53cdd26c460049abf0b19ba03e2b5737f927a6fd",
       "kind": "website-gallery-data",
       "sourceSha256": [
-        "e5ea88cf3eaccf55d7688519171221ab2011d84203de954b69ab1adf1cf61f07",
-        "0c29c2f00c60f5dbaf1069db7688038a3d39d43ac490e57a9a02afbebe1d44c4",
-        "7f6288483e0107b1c8796887dc12b74d1be532693ab153b01e45506bcbc1f2b9",
-        "1df95129eab74d5127db37466e74c18a22eb2a4e6f023a72fedb6bb43ee8f61f",
-        "34069fef1fac14b6f7cc8651f6557453f625d137fc7b894d900fbbfc1b43c6b0",
-        "8f60ac2db6ae2e23eebc2a582afc18fa88b13f2ff7696e39d457b2f3fcd954f3",
-        "c492d4a68170ddfae8191c64835414d86805e96ac44eed092ad59a9ae5dc1895",
-        "7d26e052728c45f1fa92136c4811fa106c76599c63f8ad1d2e814c5771380a0c",
-        "9d9eeb500f3afdaf3d2fac103935f33748399300dd4645a5a8e3250b3214ea6f",
-        "f02fa96bf6733dad262fa3c2fe725e6cf0013183fe2a41283334469c2a7146a7",
-        "0799835fe51f42f90f3d87a9dbe75ad1e251c0073395b21bc42719f4ca1ded53",
-        "9683fe9632011cfdba61a658f2ab1380da0d3b8d5d93ac03d26c18caf4e9837c",
-        "70f0f24b9dd06bba319b2dd437eb0ba862dfd65fc8b954b0e3362c78bb8a97a2",
-        "7c99f271f173cd02b9d6f329892d5c6f9082db2d3d5dbd5f121ec1cb817c5500",
-        "b419b1fe113240c0cb0e22e636ae9aac69bfe31d84d78023207cb431061cdc3d",
-        "de9fbce7a3d2d35d175d188c9ed6a04ec940ead3aa59f3a4b17cd7d346b4ba32",
-        "70f0f24b9dd06bba319b2dd437eb0ba862dfd65fc8b954b0e3362c78bb8a97a2",
-        "7dc0af41eae9d760b42764adee0146cf9a1e40975cd9d7d57967e3ba87a3a2e4"
+        "8003c57c5e667ed443b2ee94fc4bdba891c2aa42a130b3bfdafd419133129758",
+        "6af7338f73ff399f5856d38f7c1c09c1293210c0ae82807886f909381fe25963",
+        "3a1f65fac98bc442265bf098adc316524414c59b9a59b852df1d48670675d118",
+        "51282efbd6634bfeb982f68456eebc8cf6f3fc73b00db645ce23d2ffa575adbd",
+        "7129c411367ae82cc4ed949220ce86168f4617029b210a5d9e632c176ab57d1f",
+        "2f341b18e2a8f8f6964f7523c9f57407291ae723486cfcd75b651f5f33c2c440",
+        "1ea92c6a9c083d8007cc3b15ace6dfd42e5006ef4fbd0a868d834f295974c08a",
+        "9b17f25cf11d0097341af5ea6073926a18695a4a1e18c88ab28bef6086a5d820",
+        "e675f1d7fa4970f036be13342877b42ab45fe139d326c975f1f62c6835dd8755",
+        "d1b9ad84b0be8e055d5076249a6da5e88b254593b8c1f85284846d694b65fdcc",
+        "f87bfa17ce690d4f18b1f43e461f83a6bce7a93962ad375c6f21343577ef1abc",
+        "dbef74c7c8daa2f2c2e9e742274314e0bbe59baf605ec270ea02efc8856a42af",
+        "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
+        "2a8c6daf4eb9ce6ac7521c7d7646b52c9c23e1b2fb1c535072a316184974c516",
+        "fd2a148ff52d8efe0cce10fd8eb44f33fd6eecc49edd4fe7dd797cfb45301728",
+        "914b5968bc7a72e60f7f031cd355d065fdab3c144f458d092113118fe00077eb",
+        "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
+        "6895a7cd08208ee26417a6c210ada4237b36572421b14ebc71c62784a8df4358"
       ]
     },
     {
@@ -3415,6 +3415,614 @@
       "width": 1200,
       "height": 675,
       "quality": 95
+    },
+    {
+      "path": "website/optimized/zoom/android/dark/account-list.png",
+      "sha256": "f87bfa17ce690d4f18b1f43e461f83a6bce7a93962ad375c6f21343577ef1abc",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "9988e7bf1b24d19b4a742b89bb1b9afc70ecf9cdcedc2b1a065221b2fa13c51c",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "android",
+      "theme": "dark",
+      "sourcePath": "source/android/dark/account-list.png",
+      "cleanedPath": "website/optimized/android/dark/account-list.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/dark/backup-restore.png",
+      "sha256": "2a8c6daf4eb9ce6ac7521c7d7646b52c9c23e1b2fb1c535072a316184974c516",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "8f0e0f7269aeaade38adb1e1d6b691670b78b5ce23543afd55688f0e80a665f1",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
+        "eed277cf42570eecfaa1acf2090c4e5a1ed19ccdb6aec76415e8e6de39f593c4"
+      ],
+      "platform": "android",
+      "theme": "dark",
+      "sourcePath": "source/android/dark/settings.png",
+      "cleanedPath": "website/optimized/android/dark/settings.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "visualKind": "marketing-promotion",
+      "illustrationPath": "OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/move-accounts.png",
+      "illustrationBounds": [
+        210,
+        1020,
+        1000,
+        563
+      ],
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/dark/qr-scanning.png",
+      "sha256": "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "6805099585937108513c0b0c9e5e41c98158f3946742c7a2153548d8902aaff4",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "android",
+      "theme": "dark",
+      "sourcePath": "source/android/dark/scanner.png",
+      "cleanedPath": "website/optimized/composites/android/dark/scanner-project-repo-qr.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "qrCompositePath": "website/optimized/composites/android/dark/scanner-project-repo-qr.png",
+      "qrPayload": "https://github.com/Legends/otp-harbor",
+      "visualKind": "marketing-promotion",
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/dark/settings.png",
+      "sha256": "dbef74c7c8daa2f2c2e9e742274314e0bbe59baf605ec270ea02efc8856a42af",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "8f0e0f7269aeaade38adb1e1d6b691670b78b5ce23543afd55688f0e80a665f1",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "android",
+      "theme": "dark",
+      "sourcePath": "source/android/dark/settings.png",
+      "cleanedPath": "website/optimized/android/dark/settings.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/light/account-list.png",
+      "sha256": "fd2a148ff52d8efe0cce10fd8eb44f33fd6eecc49edd4fe7dd797cfb45301728",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "b9f876c65d6e9605167e6618a59af977cad1ed4d8292489267ff5401e36374ec",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "android",
+      "theme": "light",
+      "sourcePath": "source/android/light/account-list.png",
+      "cleanedPath": "website/optimized/android/light/account-list.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/light/backup-restore.png",
+      "sha256": "6895a7cd08208ee26417a6c210ada4237b36572421b14ebc71c62784a8df4358",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "249c37961388771cb4cf6fc3f2533249387768b4845fa18f8c7eeb2392c8e9d6",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
+        "eed277cf42570eecfaa1acf2090c4e5a1ed19ccdb6aec76415e8e6de39f593c4"
+      ],
+      "platform": "android",
+      "theme": "light",
+      "sourcePath": "source/android/light/settings.png",
+      "cleanedPath": "website/optimized/android/light/settings.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "visualKind": "marketing-promotion",
+      "illustrationPath": "OtpHarbor.UI.Avalonia.Shared/Assets/Onboarding/move-accounts.png",
+      "illustrationBounds": [
+        210,
+        1020,
+        1000,
+        563
+      ],
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/light/qr-scanning.png",
+      "sha256": "1d7fb15036b03789c5d5ebc8cd19749ebea157ead9cb7f0c57427155a81593cb",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "6805099585937108513c0b0c9e5e41c98158f3946742c7a2153548d8902aaff4",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "android",
+      "theme": "light",
+      "sourcePath": "source/android/light/scanner.png",
+      "cleanedPath": "website/optimized/composites/android/light/scanner-project-repo-qr.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "qrCompositePath": "website/optimized/composites/android/light/scanner-project-repo-qr.png",
+      "qrPayload": "https://github.com/Legends/otp-harbor",
+      "visualKind": "marketing-promotion",
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/android/light/settings.png",
+      "sha256": "914b5968bc7a72e60f7f031cd355d065fdab3c144f458d092113118fe00077eb",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "249c37961388771cb4cf6fc3f2533249387768b4845fa18f8c7eeb2392c8e9d6",
+        "282b99c342a4713b830cd905035eb579f81c05a5b92914b50adf8151d6cd7383",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "android",
+      "theme": "light",
+      "sourcePath": "source/android/light/settings.png",
+      "cleanedPath": "website/optimized/android/light/settings.png",
+      "backgroundPath": "packaging/android/marketing/source/android-marketing-background.png",
+      "sourceCrop": [
+        0,
+        100,
+        1220,
+        2632
+      ],
+      "appPlacement": {
+        "bounds": [
+          2526,
+          180,
+          867,
+          1800
+        ],
+        "cornerMaskRadius": 40,
+        "frame": "designed phone frame"
+      },
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/account-context-menu.png",
+      "sha256": "6af7338f73ff399f5856d38f7c1c09c1293210c0ae82807886f909381fe25963",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "13f0ec4068c26c92291918642b2c3e34e235a21f9217eb60bd7cf364b2163352",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "dark",
+      "sourcePath": "source/desktop/dark/account-context-menu.png",
+      "cleanedPath": "website/optimized/desktop/dark/account-context-menu.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        947,
+        1221
+      ],
+      "appPlacement": {
+        "bounds": [
+          1429,
+          115,
+          943,
+          1217
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "pixelScale": 1.3524355300859598
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/account-list.png",
+      "sha256": "8003c57c5e667ed443b2ee94fc4bdba891c2aa42a130b3bfdafd419133129758",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "f0380b9fcf5b70dfc5f77e5a6b4b4bbe191c5d2baf074d60b0cdf7c499c3dd13",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "dark",
+      "sourcePath": "source/desktop/dark/account-list.png",
+      "cleanedPath": "website/optimized/desktop/dark/account-list.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        947,
+        1221
+      ],
+      "appPlacement": {
+        "bounds": [
+          1429,
+          115,
+          943,
+          1217
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "pixelScale": 1.3524355300859598
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/data-backup.png",
+      "sha256": "51282efbd6634bfeb982f68456eebc8cf6f3fc73b00db645ce23d2ffa575adbd",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "2c6ea56fea65ff4d6bf2188f1b5d892b974e6096f0d4f25760b579198f07f00f",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "dark",
+      "sourcePath": "source/desktop/dark/data-backup.png",
+      "cleanedPath": "website/optimized/desktop/dark/data-backup.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        2397,
+        1797
+      ],
+      "appPlacement": {
+        "bounds": [
+          1950,
+          425,
+          1720,
+          1289
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "visualKind": "marketing-promotion",
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/qr-scanning.png",
+      "sha256": "7129c411367ae82cc4ed949220ce86168f4617029b210a5d9e632c176ab57d1f",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "c1052620f10499610b3375b9f942471d52eca8f1641dfeded5c8c6cb7d2bba2e",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "dark",
+      "sourcePath": "source/desktop/dark/scanner.png",
+      "cleanedPath": "website/optimized/composites/desktop/dark/scanner-project-repo-qr.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        1397,
+        1047
+      ],
+      "appPlacement": {
+        "bounds": [
+          1580,
+          345,
+          1394,
+          1044
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "qrCompositePath": "website/optimized/composites/desktop/dark/scanner-project-repo-qr.png",
+      "qrPayload": "https://github.com/Legends/otp-harbor",
+      "visualKind": "marketing-promotion",
+      "pixelScale": 1.6209302325581396
+    },
+    {
+      "path": "website/optimized/zoom/desktop/dark/settings.png",
+      "sha256": "3a1f65fac98bc442265bf098adc316524414c59b9a59b852df1d48670675d118",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "dark",
+      "sourcePath": "source/desktop/dark/settings.png",
+      "cleanedPath": "website/optimized/desktop/dark/settings.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        2247,
+        1627
+      ],
+      "appPlacement": {
+        "bounds": [
+          1950,
+          447,
+          1720,
+          1245
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/account-context-menu.png",
+      "sha256": "1ea92c6a9c083d8007cc3b15ace6dfd42e5006ef4fbd0a868d834f295974c08a",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "309db9d37224f3939163d012f2e079c6cbd6f9ede337a14ab6cee6b84b15c8f9",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/account-context-menu.png",
+      "cleanedPath": "website/optimized/desktop/light/account-context-menu.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        947,
+        1185
+      ],
+      "appPlacement": {
+        "bounds": [
+          1373,
+          111,
+          944,
+          1182
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "pixelScale": 1.3129346314325452
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/account-list.png",
+      "sha256": "2f341b18e2a8f8f6964f7523c9f57407291ae723486cfcd75b651f5f33c2c440",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "582ccaeaf485878e07e41aecd37d5a488b75fdfe23553d0866845be36d6dccc5",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/account-list.png",
+      "cleanedPath": "website/optimized/desktop/light/account-list.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        947,
+        1221
+      ],
+      "appPlacement": {
+        "bounds": [
+          1429,
+          115,
+          943,
+          1217
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "pixelScale": 1.3524355300859598
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/data-backup.png",
+      "sha256": "e675f1d7fa4970f036be13342877b42ab45fe139d326c975f1f62c6835dd8755",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "809a112d559ea5354488b4f7685735476a7408757159e86699f10003d3492d39",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/data-backup.png",
+      "cleanedPath": "website/optimized/desktop/light/data-backup.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        2397,
+        1797
+      ],
+      "appPlacement": {
+        "bounds": [
+          1950,
+          425,
+          1720,
+          1289
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "visualKind": "marketing-promotion",
+      "pixelScale": 2
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/qr-scanning.png",
+      "sha256": "d1b9ad84b0be8e055d5076249a6da5e88b254593b8c1f85284846d694b65fdcc",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "21e28132e71e7b3b504a9e4f1ab572e252c54465f35c851941324ee987044403",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/scanner.png",
+      "cleanedPath": "website/optimized/composites/desktop/light/scanner-project-repo-qr.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        1397,
+        1047
+      ],
+      "appPlacement": {
+        "bounds": [
+          1580,
+          345,
+          1394,
+          1044
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "qrCompositePath": "website/optimized/composites/desktop/light/scanner-project-repo-qr.png",
+      "qrPayload": "https://github.com/Legends/otp-harbor",
+      "visualKind": "marketing-promotion",
+      "pixelScale": 1.6209302325581396
+    },
+    {
+      "path": "website/optimized/zoom/desktop/light/settings.png",
+      "sha256": "9b17f25cf11d0097341af5ea6073926a18695a4a1e18c88ab28bef6086a5d820",
+      "kind": "designed-website-zoom",
+      "sourceSha256": [
+        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278",
+        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
+        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/settings.png",
+      "cleanedPath": "website/optimized/desktop/light/settings.png",
+      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
+      "sourceCrop": [
+        3,
+        3,
+        2247,
+        1627
+      ],
+      "appPlacement": {
+        "bounds": [
+          1950,
+          447,
+          1720,
+          1245
+        ],
+        "cornerMaskRadius": 20,
+        "frame": "cleaned desktop window"
+      },
+      "pixelScale": 2
     }
   ],
   "storeUploadOrder": [

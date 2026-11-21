@@ -231,11 +231,20 @@
 
       const dialogCaption = dialog.querySelector('p');
       dialogCaption.classList.add('showcase-caption');
+      dialogCaption.id = `${options.dialog}-caption`;
+      dialog.setAttribute('aria-describedby', dialogCaption.id);
       const close = dialog.querySelector('.showcase-close');
       const stage = document.createElement('div');
       stage.className = 'showcase-stage';
       dialogCaption.before(stage);
-      stage.append(dialog.querySelector('img'));
+      const imageViewport = document.createElement('div');
+      imageViewport.className = 'showcase-image-viewport';
+      imageViewport.setAttribute('role', 'group');
+      const imageCanvas = document.createElement('div');
+      imageCanvas.className = 'showcase-image-canvas';
+      stage.append(imageViewport);
+      imageViewport.append(imageCanvas);
+      imageCanvas.append(dialog.querySelector('img'));
       const dialogStatus = document.createElement('p');
       dialogStatus.className = 'showcase-status';
       dialogStatus.setAttribute('role', 'status');
@@ -266,13 +275,42 @@
       next.setAttribute('aria-keyshortcuts', 'ArrowRight');
       next.title = 'Next image (Right arrow)';
       navigation.append(previous, counter, next);
-      dialogCaption.after(navigation);
+      const footer = document.createElement('div');
+      footer.className = 'showcase-footer';
+      dialogCaption.before(footer);
+      footer.append(dialogCaption, navigation);
+      const tools = document.createElement('div');
+      tools.className = 'showcase-tools';
+      tools.setAttribute('role', 'group');
+      tools.setAttribute('aria-label', 'Image zoom');
+      function zoomButton(text, label, shortcut) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = text;
+        button.setAttribute('aria-label', label);
+        button.title = label;
+        button.setAttribute('aria-keyshortcuts', shortcut);
+        return button;
+      }
+      const zoomOut = zoomButton('−', 'Zoom out', '-');
+      const zoomIn = zoomButton('+', 'Zoom in', '+');
+      const fit = zoomButton('Fit', 'Fit image to screen', '0');
+      const actual = zoomButton('100%', 'Show image at actual size', '1');
+      const zoomValue = document.createElement('span');
+      zoomValue.className = 'showcase-zoom-value';
+      zoomValue.setAttribute('aria-label', 'Image zoom percentage');
+      zoomValue.setAttribute('role', 'status');
+      close.before(tools);
+      tools.append(zoomOut, zoomValue, zoomIn, fit, actual, close);
       let dialogRevision = 0;
       let opener;
       let lastItem;
       let fullRecord;
       let dialogItems = [];
       let dialogIndex = -1;
+      let imageScale = null;
+      let imageLayout;
+      let pan;
       const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
       let imageTransition;
       function stopImageTransition() {
@@ -282,6 +320,83 @@
       reducedMotion.addEventListener('change', (event) => {
         if (event.matches) stopImageTransition();
       });
+      function endPan() {
+        if (pan && imageViewport.hasPointerCapture(pan.id)) imageViewport.releasePointerCapture(pan.id);
+        pan = undefined;
+        imageViewport.classList.remove('is-panning');
+      }
+      function renderZoom(anchor) {
+        const image = dialog.querySelector('img');
+        if (!dialog.open || imageViewport.hidden || image.hidden || !image.naturalWidth) return;
+        const width = imageViewport.clientWidth, height = imageViewport.clientHeight;
+        if (!width || !height) return;
+        const fitScale = Math.min(width / image.naturalWidth, height / image.naturalHeight, 1);
+        const scale = imageScale ?? fitScale;
+        const beforeX = anchor?.x ?? (imageLayout?.width ?? width) / 2;
+        const beforeY = anchor?.y ?? (imageLayout?.height ?? height) / 2;
+        const x = imageLayout ? (imageViewport.scrollLeft + beforeX - imageLayout.left) / imageLayout.scale : image.naturalWidth / 2;
+        const y = imageLayout ? (imageViewport.scrollTop + beforeY - imageLayout.top) / imageLayout.scale : image.naturalHeight / 2;
+        const renderedWidth = image.naturalWidth * scale, renderedHeight = image.naturalHeight * scale;
+        const left = Math.max(0, (width - renderedWidth) / 2), top = Math.max(0, (height - renderedHeight) / 2);
+        imageCanvas.style.width = `${Math.max(width, renderedWidth)}px`;
+        imageCanvas.style.height = `${Math.max(height, renderedHeight)}px`;
+        Object.assign(image.style, { width: `${renderedWidth}px`, height: `${renderedHeight}px`, left: `${left}px`, top: `${top}px` });
+        stage.classList.toggle('is-zoomed', renderedWidth > width + 1 || renderedHeight > height + 1);
+        const zoomed = stage.classList.contains('is-zoomed');
+        imageViewport.tabIndex = zoomed ? 0 : -1;
+        imageViewport.setAttribute('aria-label', zoomed ? 'Zoomed image; use Shift and arrow keys to pan' : 'Full-size image');
+        imageViewport.scrollLeft = x * scale + left - (anchor?.x ?? width / 2);
+        imageViewport.scrollTop = y * scale + top - (anchor?.y ?? height / 2);
+        imageLayout = { width, height, scale, fitScale, left, top };
+        const gap = parseFloat(getComputedStyle(dialog).getPropertyValue('--showcase-control-gap')) || 10;
+        dialog.style.setProperty('--showcase-top', `${Math.max(gap, top + gap)}px`);
+        dialog.style.setProperty('--showcase-left', `${Math.max(gap, left + gap)}px`);
+        dialog.style.setProperty('--showcase-right', `${Math.max(gap, width - left - renderedWidth + gap)}px`);
+        dialog.style.setProperty('--showcase-bottom', `${Math.max(gap, height - top - renderedHeight + gap)}px`);
+        zoomValue.textContent = `${Math.round(scale * 100)}%`;
+        const focused = document.activeElement;
+        zoomOut.disabled = scale <= Math.min(fitScale, 1) + .001;
+        zoomIn.disabled = scale >= 1 - .001;
+        fit.disabled = imageScale === null;
+        actual.disabled = Math.abs(scale - 1) < .001;
+        if (focused?.disabled && tools.contains(focused)) tools.querySelector('button:not(:disabled)')?.focus();
+      }
+      function setZoom(scale, anchor) {
+        if (!imageLayout || imageViewport.hidden) return;
+        stopImageTransition();
+        endPan();
+        swipeStart = undefined;
+        imageScale = scale;
+        renderZoom(anchor);
+      }
+      zoomIn.addEventListener('click', () => setZoom(Math.min(1, imageLayout.scale * 1.5)));
+      zoomOut.addEventListener('click', () => {
+        const scale = Math.max(Math.min(imageLayout.fitScale, 1), imageLayout.scale / 1.5);
+        setZoom(Math.abs(scale - imageLayout.fitScale) < .001 ? null : scale);
+      });
+      fit.addEventListener('click', () => setZoom(null));
+      actual.addEventListener('click', () => setZoom(1));
+      new ResizeObserver(() => renderZoom()).observe(imageViewport);
+      imageViewport.addEventListener('dblclick', (event) => {
+        if (!imageLayout) return;
+        const bounds = imageViewport.getBoundingClientRect();
+        setZoom(stage.classList.contains('is-zoomed') ? null : Math.min(1, imageLayout.scale * 2), { x: event.clientX - bounds.left, y: event.clientY - bounds.top });
+      });
+      imageViewport.addEventListener('pointerdown', (event) => {
+        if (event.pointerType !== 'mouse' || event.button !== 0 || !stage.classList.contains('is-zoomed')) return;
+        event.preventDefault();
+        pan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: imageViewport.scrollLeft, top: imageViewport.scrollTop };
+        imageViewport.setPointerCapture(event.pointerId);
+        imageViewport.classList.add('is-panning');
+      });
+      imageViewport.addEventListener('pointermove', (event) => {
+        if (!pan || event.pointerId !== pan.id) return;
+        imageViewport.scrollLeft = pan.left - (event.clientX - pan.x);
+        imageViewport.scrollTop = pan.top - (event.clientY - pan.y);
+      });
+      imageViewport.addEventListener('pointerup', endPan);
+      imageViewport.addEventListener('pointercancel', endPan);
+      imageViewport.addEventListener('lostpointercapture', () => { pan = undefined; imageViewport.classList.remove('is-panning'); });
       function discardFullRecord() {
         const record = fullRecord;
         if (!record) return;
@@ -305,6 +420,14 @@
         lastItem = item;
         const token = ++dialogRevision;
         stopImageTransition();
+        endPan();
+        imageLayout = undefined;
+        imageScale = null;
+        if ((tools.contains(document.activeElement) && document.activeElement !== close) || imageViewport.contains(document.activeElement)) close.focus();
+        imageViewport.hidden = true;
+        for (const property of ['--showcase-top', '--showcase-left', '--showcase-right', '--showcase-bottom']) dialog.style.removeProperty(property);
+        zoomValue.textContent = '';
+        for (const button of [zoomOut, zoomIn, fit, actual]) button.disabled = true;
         dialog.querySelector('img').hidden = true;
         dialogCaption.textContent = item.caption;
         dialogStatus.textContent = 'Loading full-size image…';
@@ -331,7 +454,10 @@
             return;
           }
           image.hidden = false;
+          image.draggable = false;
           dialog.querySelector('img').replaceWith(image);
+          imageViewport.hidden = false;
+          renderZoom();
           if (!reducedMotion.matches && typeof image.animate === 'function') {
             imageTransition = image.animate([
               { opacity: 0, transform: `translateX(${direction * 12}px)` },
@@ -365,6 +491,20 @@
           if (target && document.activeElement === boundary) { event.preventDefault(); target.focus(); }
           return;
         }
+        if (imageLayout && ['=', '+', '-', '0', '1'].includes(event.key)) {
+          event.preventDefault();
+          if (event.key === '=' || event.key === '+') zoomIn.click();
+          else if (event.key === '-') zoomOut.click();
+          else if (event.key === '0') setZoom(null);
+          else setZoom(1);
+          return;
+        }
+        if (event.shiftKey && event.target === imageViewport && stage.classList.contains('is-zoomed') && event.key.startsWith('Arrow')) {
+          event.preventDefault();
+          imageViewport.scrollLeft += event.key === 'ArrowLeft' ? -80 : event.key === 'ArrowRight' ? 80 : 0;
+          imageViewport.scrollTop += event.key === 'ArrowUp' ? -80 : event.key === 'ArrowDown' ? 80 : 0;
+          return;
+        }
         if (event.shiftKey) return;
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
           event.preventDefault();
@@ -373,7 +513,7 @@
       });
       let swipeStart;
       stage.addEventListener('pointerdown', (event) => {
-        if (event.pointerType !== 'touch') return;
+        if (event.pointerType !== 'touch' || stage.classList.contains('is-zoomed')) return;
         swipeStart = event.isPrimary ? { id: event.pointerId, x: event.clientX, y: event.clientY, time: performance.now() } : undefined;
       });
       stage.addEventListener('pointercancel', () => { swipeStart = undefined; });
@@ -391,6 +531,7 @@
       dialog.addEventListener('close', () => {
         dialogRevision++;
         stopImageTransition();
+        endPan();
         swipeStart = undefined;
         if (policy().groups < 4 && fullRecord?.status !== 'loading') {
           fullRecord?.image.removeAttribute('src');

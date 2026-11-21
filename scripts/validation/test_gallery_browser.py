@@ -117,7 +117,7 @@ def desktop(page, url, report):
     timings = page.evaluate('performance.getEntriesByName("gallery-switch").map(e=>e.duration)')
     assert max(timings) < 100, timings
     assert max(paint_timings) < 100, paint_timings
-    assert not any('/framed/' in request for request in requests), 'Full-size gallery image requested at startup'
+    assert not any('/zoom/' in request for request in requests), 'Full-size gallery image requested at startup'
     assert not any('/assets/otp-harbor-totp-authenticator-windows.png' in request for request in requests), 'Fallback hero downloaded'
     assert len([request for request in requests if '/previews/desktop/dark/account-list.webp' in request]) == 1, 'Hero downloaded twice'
     assert page.evaluate('''() => {
@@ -129,7 +129,7 @@ def desktop(page, url, report):
     page.screenshot(path=str(ROOT / '.codex/gallery-perf/desktop-after.png')) if (ROOT / '.codex/gallery-perf').exists() else None
     # Hold the full-size response: only a loading message may appear before decode finishes.
     held = []
-    page.route('**/framed/desktop/dark/account-list.png', lambda route: held.append(route))
+    page.route('**/zoom/desktop/dark/account-list.png', lambda route: held.append(route))
     first = page.locator('#showcase-grid button').first
     first.focus()
     page.keyboard.press('Enter')
@@ -138,7 +138,7 @@ def desktop(page, url, report):
     assert held and page.locator('dialog img').is_hidden()
     assert page.get_by_text('Loading full-size image…', exact=True).is_visible()
     held.pop().continue_()
-    page.wait_for_function('document.querySelector("dialog img").naturalWidth===1920 && !document.querySelector("dialog img").hidden')
+    page.wait_for_function('document.querySelector("dialog img").naturalWidth>=1920 && !document.querySelector("dialog img").hidden')
     assert page.locator('dialog .showcase-close').evaluate('(e)=>e===document.activeElement')
     page.keyboard.press('Escape')
     assert not page.locator('dialog').evaluate('(d)=>d.open')
@@ -151,8 +151,8 @@ def desktop(page, url, report):
     light_menu.click()
     page.wait_for_function('''() => {
         const image = document.querySelector('dialog img');
-        return !image.hidden && image.naturalWidth === 1920
-            && image.src.endsWith('/framed/desktop/light/account-context-menu.png');
+        return !image.hidden && image.naturalWidth >= 1920
+            && image.src.endsWith('/zoom/desktop/light/account-context-menu.png');
     }''')
     page.keyboard.press('Escape')
     assert not page.evaluate('galleryTest.errors'), page.evaluate('galleryTest.errors')
@@ -204,13 +204,13 @@ def races_and_failures(browser, url, report):
     page.unroute('**/previews/android/dark/settings.webp')
     page.get_by_role('button', name='Retry gallery', exact=True).click()
     ready(page, '#showcase-grid', 'android/dark')
-    page.route('**/framed/android/dark/account-list.png', lambda route: route.abort())
+    page.route('**/zoom/android/dark/account-list.png', lambda route: route.abort())
     page.locator('#showcase-grid button').first.click()
     page.get_by_role('button', name='Retry full-size image', exact=True).wait_for(state='visible')
     assert page.locator('dialog img').is_hidden()
-    page.unroute('**/framed/android/dark/account-list.png')
+    page.unroute('**/zoom/android/dark/account-list.png')
     page.get_by_role('button', name='Retry full-size image', exact=True).click()
-    page.wait_for_function('document.querySelector("dialog img").naturalWidth===1920 && !document.querySelector("dialog img").hidden')
+    page.wait_for_function('document.querySelector("dialog img").naturalWidth>=1920 && !document.querySelector("dialog img").hidden')
     page.keyboard.press('Escape')
     assert not page.evaluate('galleryTest.errors')
     page.close()
@@ -253,7 +253,7 @@ def android_page(browser, url, report):
         click(page, '[data-android-theme="dark"]')
         ready(page, '#android-showcase-grid', 'android/dark')
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'), f'Android overflow {width}'
-        assert not any('/assets/android/' in req or '/framed/' in req for req in requests)
+        assert not any('/assets/android/' in req or '/zoom/' in req for req in requests)
         assert not page.evaluate('galleryTest.errors')
         page.close()
     report['android_page'] = 'Light/Dark and responsive layouts at 360, 430, 820, 1440px; no legacy full-size downloads'
@@ -311,7 +311,7 @@ def decode_barrier(browser, url, report):
     ready(page, '#showcase-grid', 'desktop/light')
     # A close while a full-size request is pending must not reveal a stale dialog later.
     held = []
-    page.route('**/framed/desktop/light/account-list.png', lambda route: held.append(route))
+    page.route('**/zoom/desktop/light/account-list.png', lambda route: held.append(route))
     page.locator('#showcase-grid button').first.click()
     page.wait_for_timeout(100)
     page.keyboard.press('Escape')
@@ -325,7 +325,7 @@ def decode_barrier(browser, url, report):
 
 def lightbox(browser, url, report):
     def image_ready(page, suffix):
-        page.wait_for_function('suffix => { const i=document.querySelector("dialog img"); return !i.hidden && i.naturalWidth===1920 && i.src.endsWith(suffix); }', arg=suffix)
+        page.wait_for_function('suffix => { const i=document.querySelector("dialog img"); return !i.hidden && i.naturalWidth>=1920 && i.src.endsWith(suffix); }', arg=suffix)
 
     for path, grid, platform, count in [('', '#showcase-grid', 'desktop', 5), ('android/', '#android-showcase-grid', 'android', 4)]:
         page = new_page(browser, width=360)
@@ -336,19 +336,19 @@ def lightbox(browser, url, report):
         first = page.locator(grid + ' button').first
         assert not page.locator('dialog').evaluate('(d)=>d.open')
         first.locator('img').click()
-        image_ready(page, f'/framed/{platform}/dark/account-list.png')
+        image_ready(page, f'/zoom/{platform}/dark/account-list.png')
         assert page.locator('dialog img').evaluate('(i)=>i.getAnimations().length===0'), 'Reduced-motion opening animated'
         assert page.locator('.showcase-counter').inner_text() == f'Image 1 of {count}'
         page.keyboard.press('ArrowLeft')
         last = 'qr-scanning' if platform == 'desktop' else 'backup-restore'
-        image_ready(page, f'/framed/{platform}/dark/{last}.png')
+        image_ready(page, f'/zoom/{platform}/dark/{last}.png')
         assert page.locator('.showcase-counter').inner_text() == f'Image {count} of {count}'
         page.keyboard.press('ArrowRight')
-        image_ready(page, f'/framed/{platform}/dark/account-list.png')
+        image_ready(page, f'/zoom/{platform}/dark/account-list.png')
         next_button = page.get_by_role('button', name='Next image', exact=True)
         next_button.click()
         second = 'account-context-menu' if platform == 'desktop' else 'settings'
-        image_ready(page, f'/framed/{platform}/dark/{second}.png')
+        image_ready(page, f'/zoom/{platform}/dark/{second}.png')
         assert next_button.evaluate('(e)=>e===document.activeElement'), 'Navigation moved keyboard focus'
         # Native modal focus stays inside while Tab/Shift+Tab cycle through controls.
         for _ in range(5):
@@ -356,11 +356,11 @@ def lightbox(browser, url, report):
             assert page.evaluate('document.querySelector("dialog").contains(document.activeElement)')
         previous = page.get_by_role('button', name='Previous image', exact=True)
         previous.click()
-        image_ready(page, f'/framed/{platform}/dark/account-list.png')
+        image_ready(page, f'/zoom/{platform}/dark/account-list.png')
         stage = page.locator('.showcase-stage')
         stage.dispatch_event('pointerdown', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 1, 'clientX': 250, 'clientY': 120})
         stage.dispatch_event('pointerup', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 1, 'clientX': 140, 'clientY': 125})
-        image_ready(page, f'/framed/{platform}/dark/{second}.png')
+        image_ready(page, f'/zoom/{platform}/dark/{second}.png')
         assert page.locator('.showcase-counter').inner_text() == f'Image 2 of {count}'
         stage.dispatch_event('pointerdown', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 2, 'clientX': 250, 'clientY': 120})
         stage.dispatch_event('pointerup', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 2, 'clientX': 240, 'clientY': 230})
@@ -388,9 +388,9 @@ def lightbox(browser, url, report):
         ready(page, grid, platform + '/light')
         light_first = page.locator(grid + ' button').first
         light_first.locator('img').click()
-        image_ready(page, f'/framed/{platform}/light/account-list.png')
+        image_ready(page, f'/zoom/{platform}/light/account-list.png')
         page.keyboard.press('ArrowRight')
-        image_ready(page, f'/framed/{platform}/light/{second}.png')
+        image_ready(page, f'/zoom/{platform}/light/{second}.png')
         assert page.locator('.showcase-counter').inner_text() == f'Image 2 of {count}'
         page.keyboard.press('Escape')
         assert light_first.evaluate('(e)=>e===document.activeElement')
@@ -403,20 +403,20 @@ def lightbox(browser, url, report):
         const decode=HTMLImageElement.prototype.decode;
         HTMLImageElement.prototype.decode=async function() {
             await decode.call(this);
-            if(this.src.endsWith('/framed/desktop/dark/account-context-menu.png')) await new Promise(r=>window.releaseLightboxMenu=r);
-            if(this.src.endsWith('/framed/desktop/dark/settings.png')) await new Promise(r=>window.releaseLightboxSettings=r);
+            if(this.src.endsWith('/zoom/desktop/dark/account-context-menu.png')) await new Promise(r=>window.releaseLightboxMenu=r);
+            if(this.src.endsWith('/zoom/desktop/dark/settings.png')) await new Promise(r=>window.releaseLightboxSettings=r);
         };
     }''')
     page.locator('#showcase-grid button').first.click()
-    image_ready(page, '/framed/desktop/dark/account-list.png')
+    image_ready(page, '/zoom/desktop/dark/account-list.png')
     page.keyboard.press('ArrowRight')
     page.wait_for_function('typeof releaseLightboxMenu==="function"')
     page.keyboard.press('ArrowRight')
     page.wait_for_function('typeof releaseLightboxSettings==="function"')
     page.keyboard.press('ArrowRight')
-    image_ready(page, '/framed/desktop/dark/data-backup.png')
+    image_ready(page, '/zoom/desktop/dark/data-backup.png')
     page.evaluate('releaseLightboxMenu(); releaseLightboxSettings()')
-    image_ready(page, '/framed/desktop/dark/data-backup.png')
+    image_ready(page, '/zoom/desktop/dark/data-backup.png')
     assert page.locator('.showcase-counter').inner_text() == 'Image 4 of 5'
     page.keyboard.press('Escape')
     page.close()
@@ -424,18 +424,18 @@ def lightbox(browser, url, report):
     page = new_page(browser)
     loaded(page, url)
     ready(page, '#showcase-grid', 'desktop/dark')
-    page.route('**/framed/desktop/dark/account-context-menu.png', lambda route: route.abort())
+    page.route('**/zoom/desktop/dark/account-context-menu.png', lambda route: route.abort())
     page.locator('#showcase-grid button').first.click()
-    image_ready(page, '/framed/desktop/dark/account-list.png')
+    image_ready(page, '/zoom/desktop/dark/account-list.png')
     page.keyboard.press('ArrowRight')
     page.get_by_role('button', name='Retry full-size image', exact=True).wait_for(state='visible')
     page.keyboard.press('ArrowRight')
-    image_ready(page, '/framed/desktop/dark/settings.png')
+    image_ready(page, '/zoom/desktop/dark/settings.png')
     page.keyboard.press('ArrowLeft')
     page.get_by_role('button', name='Retry full-size image', exact=True).wait_for(state='visible')
-    page.unroute('**/framed/desktop/dark/account-context-menu.png')
+    page.unroute('**/zoom/desktop/dark/account-context-menu.png')
     page.get_by_role('button', name='Retry full-size image', exact=True).click()
-    image_ready(page, '/framed/desktop/dark/account-context-menu.png')
+    image_ready(page, '/zoom/desktop/dark/account-context-menu.png')
     assert page.locator('.showcase-counter').inner_text() == 'Image 2 of 5'
     page.close()
     report['lightbox'] = 'Previous/next buttons, keyboard wraparound, group scope, modal focus/return, touch swipe/scroll, compact bounds, superseded decodes, failed-image navigation/retry'
@@ -473,11 +473,13 @@ def lightbox_motion(browser, url, report):
                 await decode.call(this);
                 if(!held && this.src.endsWith(suffix)) { held=true; await new Promise(r=>window.releaseMotionDecode=r); }
             };
-        }''', f'/framed/{platform}/dark/{second}.png')
+        }''', f'/zoom/{platform}/dark/{second}.png')
         page.keyboard.press('ArrowRight')
         page.wait_for_function('typeof releaseMotionDecode==="function"')
         assert page.evaluate('lightboxTransitions.length===1 && lightboxTransitions[0].playState==="idle"')
         assert page.locator('dialog img').is_hidden(), 'Image appeared before decoding'
+        page.set_viewport_size({'width': 430, 'height': 320})
+        assert page.locator('.showcase-close').evaluate('(b)=>{const r=b.getBoundingClientRect();return r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;}'), 'Loading controls escaped the viewport after resizing'
         page.evaluate('releaseMotionDecode()')
         page.wait_for_function('lightboxTransitions.length===2')
         assert page.evaluate('''() => {
@@ -518,6 +520,86 @@ def lightbox_motion(browser, url, report):
     report['lightbox_motion'] = 'Real 180ms fade/directional slide, decode barrier, intermediate/final frames, predecessor/close cancellation, live reduced-motion changes; main and Android pages'
 
 
+def lightbox_zoom(browser, url, report):
+    for path, grid, platform, width, height in [('', '#showcase-grid', 'desktop', 1440, 1000), ('', '#showcase-grid', 'desktop', 360, 640), ('android/', '#android-showcase-grid', 'android', 430, 640)]:
+        page = new_page(browser, width=width)
+        page.set_viewport_size({'width': width, 'height': height})
+        full_requests = []
+        page.on('request', lambda request: full_requests.append(request.url) if '/zoom/' in request.url else None)
+        loaded(page, url + path, grid)
+        click(page, '[data-android-theme="dark"]' if path else '[data-gallery-theme="dark"]')
+        ready(page, grid, platform + '/dark')
+        opener = page.locator(grid + ' button').filter(has_text='Data & Backup') if platform == 'desktop' else page.locator(grid + ' button').first
+        opener.locator('img').click()
+        page.wait_for_function('document.querySelector(".showcase-stage").getAttribute("aria-busy")==="false"')
+        image = page.locator('dialog img')
+        assert '/zoom/' in image.get_attribute('src'), 'Viewer replaced the marketing frame'
+        assert page.evaluate('''() => {
+            const image=document.querySelector('dialog img').getBoundingClientRect(), bar=document.querySelector('.showcase-footer'), r=bar.getBoundingClientRect();
+            const idealWidth=Math.min(innerWidth*.98, innerHeight*.98*16/9);
+            const alpha=Number(getComputedStyle(bar).backgroundColor.match(/[0-9.]+/g).at(-1));
+            return image.width>=idealWidth*.98 && r.bottom<=image.bottom+1 && r.top>image.top+image.height/2 && alpha>0 && alpha<1;
+        }'''), 'Marketing frame does not fill the available space with a translucent bottom overlay'
+        assert page.evaluate('''() => {
+            const r=document.querySelector('dialog').getBoundingClientRect();
+            return [...document.querySelectorAll('.showcase-tools button,.showcase-navigation button')].every(b=>{
+                const p=b.getBoundingClientRect();return p.width>=44&&p.height>=44&&p.left>=r.left&&p.right<=r.right&&p.top>=r.top&&p.bottom<=r.bottom;
+            });
+        }'''), (width, height, 'Viewer controls are clipped')
+        before = image.bounding_box()['width']
+        position = page.locator('.showcase-counter').inner_text()
+        requests = len(full_requests)
+        page.get_by_role('button', name='Zoom in', exact=True).click()
+        assert image.bounding_box()['width'] >= before * 1.45
+        viewport = page.locator('.showcase-image-viewport')
+        assert viewport.evaluate('(v)=>v.scrollWidth>v.clientWidth && (getComputedStyle(v).touchAction.includes("pan-x") || getComputedStyle(v).touchAction==="manipulation")')
+        scroll = viewport.evaluate('(v)=>v.scrollLeft')
+        bounds = viewport.bounding_box()
+        x, y = bounds['x'] + bounds['width'] / 2, bounds['y'] + bounds['height'] / 2
+        page.mouse.move(x, y)
+        page.mouse.down()
+        page.mouse.move(x + 60, y + 5, steps=4)
+        assert viewport.evaluate('(v)=>getComputedStyle(v).cursor==="grabbing"')
+        page.mouse.up()
+        assert viewport.evaluate('(v)=>v.scrollLeft') < scroll - 40, 'Dragging did not pan the enlarged image'
+        assert page.locator('.showcase-counter').inner_text() == position
+        page.keyboard.press('1')
+        assert image.evaluate('(i)=>Math.abs(i.getBoundingClientRect().width-i.naturalWidth)<1')
+        assert page.locator('.showcase-zoom-value').inner_text() == '100%'
+        viewport.focus()
+        keyboard_scroll = viewport.evaluate('(v)=>v.scrollLeft')
+        page.keyboard.press('Shift+ArrowRight')
+        assert viewport.evaluate('(v)=>v.scrollLeft') > keyboard_scroll + 40, 'Keyboard panning did not move the image'
+        assert page.locator('.showcase-counter').inner_text() == position
+        page.keyboard.press('Shift+Equal')
+        assert image.evaluate('(i)=>Math.abs(i.getBoundingClientRect().width-i.naturalWidth)<1'), 'Zoom enlarged the bitmap beyond its native pixels'
+        assert page.get_by_role('button', name='Zoom in', exact=True).is_disabled()
+        page.keyboard.press('0')
+        assert not page.locator('.showcase-stage').evaluate('(s)=>s.classList.contains("is-zoomed")')
+        assert viewport.evaluate('(v)=>v.scrollLeft===0 && v.scrollTop===0')
+        image.dblclick(position={'x': image.bounding_box()['width'] * .7, 'y': image.bounding_box()['height'] * .55})
+        assert page.locator('.showcase-stage').evaluate('(s)=>s.classList.contains("is-zoomed")')
+        stage = page.locator('.showcase-stage')
+        stage.dispatch_event('pointerdown', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 7, 'clientX': 250, 'clientY': 120})
+        stage.dispatch_event('pointerup', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 7, 'clientX': 140, 'clientY': 125})
+        assert page.locator('.showcase-counter').inner_text() == position, 'Panning switched gallery images'
+        assert len(full_requests) == requests, 'Zoom downloaded another full-size image'
+        page.get_by_role('button', name='Next image', exact=True).click()
+        page.wait_for_function('document.querySelector(".showcase-stage").getAttribute("aria-busy")==="false"')
+        assert not page.locator('.showcase-stage').evaluate('(s)=>s.classList.contains("is-zoomed")'), 'Next image retained an unusable zoom'
+        assert page.get_by_role('button', name='Next image', exact=True).evaluate('(b)=>b===document.activeElement')
+        page.keyboard.press('1')
+        viewport.focus()
+        page.keyboard.press('ArrowRight')
+        page.wait_for_function('document.querySelector(".showcase-stage").getAttribute("aria-busy")==="false"')
+        assert page.locator('.showcase-close').evaluate('(b)=>b===document.activeElement'), 'Navigation lost focus when the zoomed viewport was hidden'
+        page.keyboard.press('Escape')
+        assert opener.evaluate('(b)=>b===document.activeElement')
+        assert not page.evaluate('galleryTest.errors'), page.evaluate('galleryTest.errors')
+        page.close()
+    report['lightbox_zoom'] = 'Viewport-filling marketing frames, translucent bottom navigation, 44px controls, actual-size/Fit/keyboard zoom, mouse pan, touch pan without slide changes, no duplicate downloads; desktop and mobile'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path)
@@ -546,6 +628,7 @@ def main():
                 android_page(browser, url, report)
                 lightbox(browser, url, report)
                 lightbox_motion(browser, url, report)
+                lightbox_zoom(browser, url, report)
                 browser.close()
         finally:
             server.shutdown()

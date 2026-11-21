@@ -117,6 +117,12 @@ background and spacing. No separate bordered screenshot files are generated.
 
 Gallery schema version 2 separates `preview` and `full` assets. Cards and the
 build-selected hero use previews; enlargement alone requests the original PNG.
+The `frame` asset retains the reviewed 1920 × 1080 campaign image used to derive
+previews. The `full` asset is a separate lossless PNG in `website/optimized/zoom/`,
+rendered directly from source captures at up to 3840 × 2160. Each frame's scale
+is limited by its original app capture: interface pixels are never upscaled.
+Typography is rendered at the delivery resolution. Preview and Store assets
+remain unchanged; high-resolution images are requested only on enlargement.
 Pages runs marketing validation before copying approved assets, selects the hero
 in the generated HTML (without a second JavaScript source swap), and removes the
 Android fallback campaign from approved HTML before browsers discover its PNGs.
@@ -149,6 +155,14 @@ Decoded full-size images reveal with a 180 ms fade and a small directional slide
 for Previous/Next navigation. Reduced-motion preferences disable the animation,
 including when the preference changes while the lightbox is open. Navigation
 and closing cancel an in-progress transition.
+
+The viewer fills 98% of the available viewport while preserving the marketing
+frame and aspect ratio. A translucent Previous/Next bar overlays the bottom of
+the image; zoom and Close controls overlay the top. Controls keep 44-pixel targets.
+Use +/− to zoom, 0 to fit, and 1 for actual size. Zoom stops at native 100% to avoid
+enlarging bitmap pixels. Drag to pan with a mouse, use native touch panning, or
+focus the zoomed image and press Shift with an arrow key. Double-click toggles
+zoom. Navigation resets the zoom; ordinary Left/Right still change images.
 
 Keyboard and focus behavior follow the WAI-ARIA
 [modal dialog guidance](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/).
