@@ -146,7 +146,7 @@ It validates Git and the pinned .NET SDK, checks `origin/master`, permits only a
 
 ### Android device testing
 
-Use [`scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1) to build only when inputs changed, select the connected device ABI, install the isolated `.debug` application with `adb install -r`, preserve app data, and relaunch it. See [Android foundation](android/FOUNDATION.md) for platform architecture and [Android release and signing](release/ANDROID.md) for production packaging.
+Use [`scripts/testing/android/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/android/Install-AndroidDevelopmentBuild.ps1) to build only when inputs changed, select the connected device ABI, install the isolated `.debug` application with `adb install -r`, preserve app data, and relaunch it. See [Android foundation](android/FOUNDATION.md) for platform architecture and [Android release and signing](release/ANDROID.md) for production packaging.
 
 ### Linux testing
 
@@ -190,31 +190,31 @@ This catalog covers all 59 version-controlled PowerShell scripts currently maint
 
 | Script | Purpose |
 | --- | --- |
-| [`scripts/dev/Publish-And-Run-AvaloniaWindows.ps1`](../scripts/dev/Publish-And-Run-AvaloniaWindows.ps1) | Publishes a local Windows Avalonia build into `artifacts/dev` without rewriting canonical NuGet locks, optionally stops the existing instance, validates the executable, reports its hash, and launches it. |
+| [`scripts/dev/windows/Publish-And-Run-AvaloniaWindows.ps1`](../scripts/dev/windows/Publish-And-Run-AvaloniaWindows.ps1) | Publishes a local Windows Avalonia build into `artifacts/windows/testing` without rewriting canonical NuGet locks, optionally stops the existing instance, validates the executable, reports its hash, and launches it. |
 
 ### Release tooling
 
 | Script | Purpose |
 | --- | --- |
-| [`scripts/release/Apply-SignPathSignedPayload.ps1`](../scripts/release/Apply-SignPathSignedPayload.ps1) | Applies a SignPath result to prepared Windows directories and fails unless every first-party PE has a valid Authenticode signature and expected product metadata. |
-| [`scripts/release/Generate-AvaloniaAppcast.ps1`](../scripts/release/Generate-AvaloniaAppcast.ps1) | Validates release metadata and Ed25519 identity, invokes the NetSparkle generator, and writes the authenticated desktop update appcast. |
-| [`scripts/release/Get-AndroidReleaseVersion.ps1`](../scripts/release/Get-AndroidReleaseVersion.ps1) | Converts an `android-vX.Y.Z` tag into deterministic Android `versionName`, monotonic `versionCode`, and application identity metadata. |
-| [`scripts/release/Get-AndroidSigningCertificateFingerprint.ps1`](../scripts/release/Get-AndroidSigningCertificateFingerprint.ps1) | Parses exactly one PEM signing certificate from `apksigner` output and returns its SHA-256 fingerprint. |
-| [`scripts/release/Get-MicrosoftStoreVersion.ps1`](../scripts/release/Get-MicrosoftStoreVersion.ps1) | Maps stable or RC release tags into four-part Microsoft Store versions while preserving correct ordering. |
-| [`scripts/release/New-AndroidRelease.ps1`](../scripts/release/New-AndroidRelease.ps1) | Produces and verifies the production-signed Android APK using an external keystore and password files that do not enter process arguments or logs. |
-| [`scripts/release/New-CurrentSourceMicrosoftStoreMsix.ps1`](../scripts/release/New-CurrentSourceMicrosoftStoreMsix.ps1) | Resolves and validates the current stable source/tag, then invokes the Store packager with the reserved Partner Center identity. |
-| [`scripts/release/New-MicrosoftStoreMsix.ps1`](../scripts/release/New-MicrosoftStoreMsix.ps1) | Publishes Windows, renders the reviewed Appx manifest/assets, enforces Store update policy, validates boundaries, and creates the unsigned Partner Center MSIX input. |
-| [`scripts/release/New-ReleaseArtifactManifest.ps1`](../scripts/release/New-ReleaseArtifactManifest.ps1) | Creates deterministic release inventory metadata containing platform, architecture, ownership, update policy, byte length, SHA-256, and source commit. |
-| [`scripts/release/New-WindowsMsi.ps1`](../scripts/release/New-WindowsMsi.ps1) | Stages the Windows payload and package-manager update policy, generates WiX source, builds the MSI, and validates it. |
-| [`scripts/release/New-WindowsSetup.ps1`](../scripts/release/New-WindowsSetup.ps1) | Publishes the custom installer UI and uses WiX to wrap a validated MSI in the OTP Harbor setup executable. |
-| [`scripts/release/Package-AvaloniaLinux.ps1`](../scripts/release/Package-AvaloniaLinux.ps1) | Validates a Linux publish, applies update policy, adds launcher/desktop metadata, and creates portable tarball and DEB packages. |
-| [`scripts/release/Package-AvaloniaMacOS.ps1`](../scripts/release/Package-AvaloniaMacOS.ps1) | Creates the macOS `.app` and DMG, applies channel metadata, and optionally performs Developer ID signing and notarization. |
-| [`scripts/release/Prepare-AvaloniaReleasePayload.ps1`](../scripts/release/Prepare-AvaloniaReleasePayload.ps1) | Sanitizes a publish directory, rejects stale updater subtrees, removes contained debug symbols safely, and verifies the release payload. |
-| [`scripts/release/Select-PublishedUpdateFeed.ps1`](../scripts/release/Select-PublishedUpdateFeed.ps1) | Selects the newest non-draft GitHub release with a complete appcast and signature pair. |
-| [`scripts/release/Set-PackageUpdatePolicy.ps1`](../scripts/release/Set-PackageUpdatePolicy.ps1) | Writes and validates the distribution mode, update channel, and optional HTTPS appcast URL embedded in a package. |
-| [`scripts/release/Set-PublicMicrosoftStoreVersion.ps1`](../scripts/release/Set-PublicMicrosoftStoreVersion.ps1) | Updates or checks canonical public Store-version metadata, the README Store badge/status, and Store-listing heading. |
-| [`scripts/release/Test-AvaloniaAppcast.ps1`](../scripts/release/Test-AvaloniaAppcast.ps1) | Verifies appcast signatures, URLs, versions, platforms, architectures, byte sizes, channels, and manifest correspondence. |
-| [`scripts/release/Test-ReleaseArtifactManifest.ps1`](../scripts/release/Test-ReleaseArtifactManifest.ps1) | Validates release-manifest schema, safe paths, package policies, file inventory, sizes, and SHA-256 hashes. |
+| [`scripts/release/windows/Apply-SignPathSignedPayload.ps1`](../scripts/release/windows/Apply-SignPathSignedPayload.ps1) | Applies a SignPath result to prepared Windows directories and fails unless every first-party PE has a valid Authenticode signature and expected product metadata. |
+| [`scripts/release/shared/Generate-AvaloniaAppcast.ps1`](../scripts/release/shared/Generate-AvaloniaAppcast.ps1) | Validates release metadata and Ed25519 identity, invokes the NetSparkle generator, and writes the authenticated desktop update appcast. |
+| [`scripts/release/android/Get-AndroidReleaseVersion.ps1`](../scripts/release/android/Get-AndroidReleaseVersion.ps1) | Converts an `android-vX.Y.Z` tag into deterministic Android `versionName`, monotonic `versionCode`, and application identity metadata. |
+| [`scripts/release/android/Get-AndroidSigningCertificateFingerprint.ps1`](../scripts/release/android/Get-AndroidSigningCertificateFingerprint.ps1) | Parses exactly one PEM signing certificate from `apksigner` output and returns its SHA-256 fingerprint. |
+| [`scripts/release/windows/Get-MicrosoftStoreVersion.ps1`](../scripts/release/windows/Get-MicrosoftStoreVersion.ps1) | Maps stable or RC release tags into four-part Microsoft Store versions while preserving correct ordering. |
+| [`scripts/release/android/New-AndroidRelease.ps1`](../scripts/release/android/New-AndroidRelease.ps1) | Produces and verifies the production-signed Android APK using an external keystore and password files that do not enter process arguments or logs. |
+| [`scripts/release/windows/New-CurrentSourceMicrosoftStoreMsix.ps1`](../scripts/release/windows/New-CurrentSourceMicrosoftStoreMsix.ps1) | Resolves and validates the current stable source/tag, then invokes the Store packager with the reserved Partner Center identity. |
+| [`scripts/release/windows/New-MicrosoftStoreMsix.ps1`](../scripts/release/windows/New-MicrosoftStoreMsix.ps1) | Publishes Windows, renders the reviewed Appx manifest/assets, enforces Store update policy, validates boundaries, and creates the unsigned Partner Center MSIX input. |
+| [`scripts/release/shared/New-ReleaseArtifactManifest.ps1`](../scripts/release/shared/New-ReleaseArtifactManifest.ps1) | Creates deterministic release inventory metadata containing platform, architecture, ownership, update policy, byte length, SHA-256, and source commit. |
+| [`scripts/release/windows/New-WindowsMsi.ps1`](../scripts/release/windows/New-WindowsMsi.ps1) | Stages the Windows payload and package-manager update policy, generates WiX source, builds the MSI, and validates it. |
+| [`scripts/release/windows/New-WindowsSetup.ps1`](../scripts/release/windows/New-WindowsSetup.ps1) | Publishes the custom installer UI and uses WiX to wrap a validated MSI in the OTP Harbor setup executable. |
+| [`scripts/release/linux/Package-AvaloniaLinux.ps1`](../scripts/release/linux/Package-AvaloniaLinux.ps1) | Validates a Linux publish, applies update policy, adds launcher/desktop metadata, and creates portable tarball and DEB packages. |
+| [`scripts/release/macos/Package-AvaloniaMacOS.ps1`](../scripts/release/macos/Package-AvaloniaMacOS.ps1) | Creates the macOS `.app` and DMG, applies channel metadata, and optionally performs Developer ID signing and notarization. |
+| [`scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1`](../scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1) | Sanitizes a publish directory, rejects stale updater subtrees, removes contained debug symbols safely, and verifies the release payload. |
+| [`scripts/release/shared/Select-PublishedUpdateFeed.ps1`](../scripts/release/shared/Select-PublishedUpdateFeed.ps1) | Selects the newest non-draft GitHub release with a complete appcast and signature pair. |
+| [`scripts/release/shared/Set-PackageUpdatePolicy.ps1`](../scripts/release/shared/Set-PackageUpdatePolicy.ps1) | Writes and validates the distribution mode, update channel, and optional HTTPS appcast URL embedded in a package. |
+| [`scripts/release/windows/Set-PublicMicrosoftStoreVersion.ps1`](../scripts/release/windows/Set-PublicMicrosoftStoreVersion.ps1) | Updates or checks canonical public Store-version metadata, the README Store badge/status, and Store-listing heading. |
+| [`scripts/release/shared/Test-AvaloniaAppcast.ps1`](../scripts/release/shared/Test-AvaloniaAppcast.ps1) | Verifies appcast signatures, URLs, versions, platforms, architectures, byte sizes, channels, and manifest correspondence. |
+| [`scripts/release/shared/Test-ReleaseArtifactManifest.ps1`](../scripts/release/shared/Test-ReleaseArtifactManifest.ps1) | Validates release-manifest schema, safe paths, package policies, file inventory, sizes, and SHA-256 hashes. |
 
 ### Repository security administration
 
@@ -226,7 +226,7 @@ This catalog covers all 59 version-controlled PowerShell scripts currently maint
 
 ### Test and preview tooling
 
-Testing scripts are grouped under `scripts/testing/Windows`, `Android`, and `Linux`.
+Testing scripts are grouped under `scripts/testing/windows`, `Android`, and `Linux`.
 Repository-relative paths are resolved from the script location by the shared
 `Testing.Common.ps1` helper, so callers do not need to change their working directory.
 Shared fixtures remain in `scripts/testing/fixtures`. Run
@@ -235,20 +235,20 @@ references after moving scripts; this check also runs in CI.
 
 | Script | Purpose |
 | --- | --- |
-| [`scripts/testing/Windows/Prepare-StoreUpgradeTestKit.ps1`](../scripts/testing/Windows/Prepare-StoreUpgradeTestKit.ps1) | Publishes a portable Windows x64 Store v2-to-v3 test kit with synthetic accounts and a read-only vault verifier. |
-| [`scripts/testing/Windows/Invoke-StoreUpgradeTest.ps1`](../scripts/testing/Windows/Invoke-StoreUpgradeTest.ps1) | Runs the prepared kit's clean-profile initialization, encrypted v2 baseline capture, or v3 account/rollback verification. |
-| [`scripts/testing/Windows/Invoke-SyntheticV2UpgradeTest.ps1`](../scripts/testing/Windows/Invoke-SyntheticV2UpgradeTest.ps1) | Preserves current app data and seeds a synthetic encrypted v2 vault for migration by the real v3 app, then verifies every account and rollback file. No v2 installer required. |
-| [`scripts/testing/Windows/Test-StoreUpgradeTestKit.ps1`](../scripts/testing/Windows/Test-StoreUpgradeTestKit.ps1) | Runs synthetic verifier/migration regressions and script safety checks without accessing installed app data. |
-| [`scripts/testing/Linux/Ensure-UbuntuHyperVNetwork.ps1`](../scripts/testing/Linux/Ensure-UbuntuHyperVNetwork.ps1) | Creates or repairs the guarded internal Hyper-V switch, host address, static VM adapter, and NAT used by the Ubuntu test VM. Requires elevation. |
-| [`scripts/testing/Windows/Generate-BrandAccountFixture.ps1`](../scripts/testing/Windows/Generate-BrandAccountFixture.ps1) | Creates deterministic synthetic account fixtures from the display names in a user-supplied `.otphicons` pack, ensuring every generated issuer is resolvable by that same imported pack. |
-| [`scripts/testing/Windows/Generate-ProminentPlatformAccountFixture.ps1`](../scripts/testing/Windows/Generate-ProminentPlatformAccountFixture.ps1) | Downloads a pinned Tranco ranking and creates deterministic synthetic TOTP account fixtures for large-list and performance testing. |
-| [`scripts/testing/Android/Get-AndroidRuntimeIdentifier.ps1`](../scripts/testing/Android/Get-AndroidRuntimeIdentifier.ps1) | Maps supported device ABIs (`arm64-v8a`, `x86_64`) to the corresponding .NET Android runtime identifier and rejects unsupported ABIs. |
-| [`scripts/testing/Windows/Get-LatestIconPackCompatibilityAssets.ps1`](../scripts/testing/Windows/Get-LatestIconPackCompatibilityAssets.ps1) | Downloads bounded latest-release Aegis Icons and Simple Icons archives, records versions and SHA-256 values, and exposes paths to CI compatibility tests. |
-| [`scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/Android/Install-AndroidDevelopmentBuild.ps1) | Discovers or connects to a selected Android device, fingerprints build inputs, performs an ABI-specific incremental build or requested clean/fast deploy without rewriting canonical NuGet locks, preserves app data, installs, and relaunches the debug package. |
-| [`scripts/testing/Windows/Start-OnboardingPreview.ps1`](../scripts/testing/Windows/Start-OnboardingPreview.ps1) | Starts desktop or Android Debug with onboarding forced visible; desktop also supports a Light or Dark preview theme. |
-| [`scripts/testing/Linux/Sync-Restore-Run-AvaloniaLinuxVm.ps1`](../scripts/testing/Linux/Sync-Restore-Run-AvaloniaLinuxVm.ps1) | Archives the working tree without build/Git data, transfers it by SSH, synchronizes a guarded Ubuntu VM directory, restores, imports the desktop session environment, and runs the app. |
+| [`scripts/testing/windows/Prepare-StoreUpgradeTestKit.ps1`](../scripts/testing/windows/Prepare-StoreUpgradeTestKit.ps1) | Publishes a portable Windows x64 Store v2-to-v3 test kit with synthetic accounts and a read-only vault verifier. |
+| [`scripts/testing/windows/Invoke-StoreUpgradeTest.ps1`](../scripts/testing/windows/Invoke-StoreUpgradeTest.ps1) | Runs the prepared kit's clean-profile initialization, encrypted v2 baseline capture, or v3 account/rollback verification. |
+| [`scripts/testing/windows/Invoke-SyntheticV2UpgradeTest.ps1`](../scripts/testing/windows/Invoke-SyntheticV2UpgradeTest.ps1) | Preserves current app data and seeds a synthetic encrypted v2 vault for migration by the real v3 app, then verifies every account and rollback file. No v2 installer required. |
+| [`scripts/testing/windows/Test-StoreUpgradeTestKit.ps1`](../scripts/testing/windows/Test-StoreUpgradeTestKit.ps1) | Runs synthetic verifier/migration regressions and script safety checks without accessing installed app data. |
+| [`scripts/testing/linux/Ensure-UbuntuHyperVNetwork.ps1`](../scripts/testing/linux/Ensure-UbuntuHyperVNetwork.ps1) | Creates or repairs the guarded internal Hyper-V switch, host address, static VM adapter, and NAT used by the Ubuntu test VM. Requires elevation. |
+| [`scripts/testing/windows/Generate-BrandAccountFixture.ps1`](../scripts/testing/windows/Generate-BrandAccountFixture.ps1) | Creates deterministic synthetic account fixtures from the display names in a user-supplied `.otphicons` pack, ensuring every generated issuer is resolvable by that same imported pack. |
+| [`scripts/testing/windows/Generate-ProminentPlatformAccountFixture.ps1`](../scripts/testing/windows/Generate-ProminentPlatformAccountFixture.ps1) | Downloads a pinned Tranco ranking and creates deterministic synthetic TOTP account fixtures for large-list and performance testing. |
+| [`scripts/testing/android/Get-AndroidRuntimeIdentifier.ps1`](../scripts/testing/android/Get-AndroidRuntimeIdentifier.ps1) | Maps supported device ABIs (`arm64-v8a`, `x86_64`) to the corresponding .NET Android runtime identifier and rejects unsupported ABIs. |
+| [`scripts/testing/windows/Get-LatestIconPackCompatibilityAssets.ps1`](../scripts/testing/windows/Get-LatestIconPackCompatibilityAssets.ps1) | Downloads bounded latest-release Aegis Icons and Simple Icons archives, records versions and SHA-256 values, and exposes paths to CI compatibility tests. |
+| [`scripts/testing/android/Install-AndroidDevelopmentBuild.ps1`](../scripts/testing/android/Install-AndroidDevelopmentBuild.ps1) | Discovers or connects to a selected Android device, fingerprints build inputs, performs an ABI-specific incremental build or requested clean/fast deploy without rewriting canonical NuGet locks, preserves app data, installs, and relaunches the debug package. |
+| [`scripts/testing/windows/Start-OnboardingPreview.ps1`](../scripts/testing/windows/Start-OnboardingPreview.ps1) | Starts desktop or Android Debug with onboarding forced visible; desktop also supports a Light or Dark preview theme. |
+| [`scripts/testing/linux/Sync-Restore-Run-AvaloniaLinuxVm.ps1`](../scripts/testing/linux/Sync-Restore-Run-AvaloniaLinuxVm.ps1) | Archives the working tree without build/Git data, transfers it by SSH, synchronizes a guarded Ubuntu VM directory, restores, imports the desktop session environment, and runs the app. |
 
-The `scripts/testing/Linux` directory also contains two shell helpers: `configure-ubuntu-hyperv-network.sh` configures the Ubuntu guest's stable network profile, and `run-avalonia-wsl.sh` runs the desktop project under WSL/WSLg.
+The `scripts/testing/linux` directory also contains two shell helpers: `configure-ubuntu-hyperv-network.sh` configures the Ubuntu guest's stable network profile, and `run-avalonia-wsl.sh` runs the desktop project under WSL/WSLg.
 
 ### Validation tooling
 

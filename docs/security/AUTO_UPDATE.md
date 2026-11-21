@@ -57,7 +57,7 @@ Do not enable application-owned updates in DEB, Microsoft Store, or other extern
 The release workflow first creates and validates `release-artifacts-v2.json`, then runs:
 
 ```powershell
-./scripts/release/Generate-AvaloniaAppcast.ps1 `
+./scripts/release/shared/Generate-AvaloniaAppcast.ps1 `
   -ManifestPath ./release-assets/release-artifacts-v2.json `
   -ArtifactDirectory ./release-assets `
   -BaseDownloadUrl "https://github.com/<owner>/<repo>/releases/download/<tag>/" `
@@ -66,7 +66,7 @@ The release workflow first creates and validates `release-artifacts-v2.json`, th
   -ExpectedPublicKey "<your-public-key>" `
   -OutputDirectory ./release-feed
 
-./scripts/release/Test-AvaloniaAppcast.ps1 `
+./scripts/release/shared/Test-AvaloniaAppcast.ps1 `
   -AppcastPath ./release-feed/appcast-v2.xml `
   -ManifestPath ./release-assets/release-artifacts-v2.json `
   -BaseDownloadUrl "https://github.com/<owner>/<repo>/releases/download/<tag>/"

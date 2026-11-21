@@ -39,12 +39,10 @@ ORDER = {
 }
 MARKETING = {
     'desktop': (
-        ('import-formats', 'settings', 'Import more formats.',
-         'Aegis JSON · 2FAS · otpauth:// lists\nGoogle Authenticator transfer QR images', None),
+        ('data-backup', 'data-backup', 'Data & backup.',
+         'Import more formats. Keep a way back.\nAegis JSON · 2FAS · otpauth:// lists\nGoogle Authenticator transfer QR images\nEncrypted backup and restore', None),
         ('qr-scanning', 'scanner', 'Scan a QR code.',
          'Account QR codes and Google Authenticator\ntransfer codes', None),
-        ('backup-restore', 'settings', 'Keep a way back.',
-         'Encrypted backup and restore', None),
     ),
     'android': (
         ('qr-scanning', 'scanner', 'Scan a QR code.',
@@ -57,6 +55,7 @@ MARKETING = {
 TITLES = {
     'account-list': 'Account List',
     'settings': 'Settings',
+    'data-backup': 'Data & Backup',
     'account-context-menu': 'Account Context Menu',
     'account-editor': 'Add with confidence.',
     'backup-top': 'Keep a way back.',
@@ -70,7 +69,7 @@ GALLERY_TITLES = {
     'account-list': 'Account List',
     'account-context-menu': 'Account Context Menu',
     'settings': 'Settings',
-    'import-formats': 'Import Formats',
+    'data-backup': 'Data & Backup',
     'qr-scanning': 'QR Scanning',
     'backup-restore': 'Backup and Restore',
 }
@@ -338,8 +337,8 @@ def main():
                                         **({'illustrationPath': illustration.relative_to(REPO).as_posix(),
                                             'illustrationBounds': art_bounds} if illustration else {})))
                 label = GALLERY_TITLES[slug]
-                alt_kind = ('with a genuine Settings capture reused for this feature overview'
-                            if platform == 'desktop' and screen == 'settings' and slug != 'settings' else
+                alt_kind = ('with an isolated render of the production Data & backup view using synthetic state'
+                            if platform == 'desktop' and screen == 'data-backup' else
                             'with a labeled GitHub demonstration QR in a genuine scanner capture'
                             if qr_composite else
                             'with a concept illustration and genuine app capture'

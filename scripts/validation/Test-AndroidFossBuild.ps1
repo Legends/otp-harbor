@@ -8,7 +8,7 @@ dependency families, CI locked-restore controls, and the explicit F-Droid readin
 This is a repository guardrail, not a substitute for F-Droid's scanner or review.
 #>
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 
 function Read-RequiredFile([string]$RelativePath) {
     $path = Join-Path $repositoryRoot $RelativePath
@@ -84,8 +84,8 @@ foreach ($lockFile in $lockFiles) {
 }
 
 foreach ($localRidBuildScript in @(
-    'scripts\testing\Android\Install-AndroidDevelopmentBuild.ps1',
-    'scripts\dev\Publish-And-Run-AvaloniaWindows.ps1')) {
+    'scripts/testing/android\Install-AndroidDevelopmentBuild.ps1',
+    'scripts/dev/windows/Publish-And-Run-AvaloniaWindows.ps1')) {
     $localRidBuild = Read-RequiredFile $localRidBuildScript
     foreach ($requiredLockIsolationControl in @(
         'NuGetLockFilePath',

@@ -1,10 +1,18 @@
 """Select approved gallery heroes in HTML before publishing, never after navigation."""
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def local_review_allowed(output):
+    return (output.resolve() == ROOT / 'artifacts/website'
+            and not output.is_symlink()
+            and os.environ.get('CI', '').lower() not in ('true', '1')
+            and os.environ.get('GITHUB_ACTIONS', '').lower() not in ('true', '1'))
 
 
 def prepare(output, manifest):
@@ -46,13 +54,13 @@ def prepare(output, manifest):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=ROOT / '_site')
-    parser.add_argument('--local-review', action='store_true', help='Preview candidates in ignored local marketing staging only.')
+    parser.add_argument('--output', type=Path, default=ROOT / 'artifacts/website')
+    parser.add_argument('--local-review', action='store_true', help='Preview candidates in the fixed local website output, outside CI only.')
     args = parser.parse_args()
     manifest = json.loads((ROOT / 'artifacts/marketing/manifest.json').read_text(encoding='utf-8'))
     if args.local_review:
-        if not args.output.resolve().is_relative_to((ROOT / 'artifacts/marketing/staging').resolve()):
-            parser.error('--local-review is restricted to local marketing staging')
+        if not local_review_allowed(args.output):
+            parser.error('--local-review is restricted to artifacts/website outside CI')
         manifest['publicationStatus'] = 'approved for website publication'
     approved = prepare(args.output, manifest)
     print('Selected approved preview heroes.' if approved else 'Publication gate retained: using existing fallback heroes.')

@@ -8,6 +8,7 @@ obj/
 .git-commands/
 .codex
 artifacts/*
+!artifacts/README.md
 !artifacts/marketing/
 artifacts/marketing/staging/
 __pycache__/
@@ -90,4 +91,4 @@ Moq.AutoMock.res
 Moq.AutoMock.Resources.Strings.resources
 App-Store-Paths.docx
 /~$p-Store-Paths.docx
-/scripts/testing/Android/Pixel_7_API-36-PIN.txt
+/scripts/testing/android/Pixel_7_API-36-PIN.txt

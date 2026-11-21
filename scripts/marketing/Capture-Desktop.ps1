@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 if (-not $ConfirmedSyntheticData) { throw 'Inspect all visible accounts and pass -ConfirmedSyntheticData.' }
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $process = @(Get-Process -Name 'TOTP.UI.Avalonia.Desktop' -ErrorAction SilentlyContinue)
-if ($process.Count -ne 1 -or $process[0].Path -notlike (Join-Path $root 'artifacts/dev/avalonia-windows-debug/*')) {
+if ($process.Count -ne 1 -or $process[0].Path -notlike (Join-Path $root 'artifacts/windows/testing/avalonia-windows-debug/*')) {
     throw 'Exactly one published Debug desktop app must be running.'
 }
 $output = Join-Path $root "artifacts/marketing/source/desktop/$Theme/$Screen.png"

@@ -9,7 +9,7 @@ allows an immediate refresh.
 
 The workflow checks out the default branch, checks Microsoft's public Store catalog,
 fetches every page of GitHub release metadata, and updates the README and website.
-`scripts/release/Update-ReadmeReleases.py` updates the README's generated release block
+`scripts/release/shared/Update-ReadmeReleases.py` updates the README's generated release block
 and, with `--website`, the three version fields in the homepage.
 It records the greatest published stable version of each independent channel, publication
 date, actual package/integrity assets, and release-note links. Drafts, prereleases, RCs,
@@ -61,9 +61,9 @@ For a deterministic local refresh, save `gh api --paginate --slurp
 repos/Legends/otp-harbor/releases?per_page=100` to a JSON file, then run:
 
 ```powershell
-python scripts/release/Update-ReadmeReleases.py --releases-json releases.json
-python scripts/release/Update-ReadmeReleases.py --releases-json releases.json --check
+python scripts/release/shared/Update-ReadmeReleases.py --releases-json releases.json
+python scripts/release/shared/Update-ReadmeReleases.py --releases-json releases.json --check
 python -m unittest discover -s scripts/validation -p test_readme_releases.py
 python -m unittest discover -s scripts/validation -p test_public_store_version.py
-python scripts/release/Sync-PublicMicrosoftStoreVersion.py --check
+python scripts/release/windows/Sync-PublicMicrosoftStoreVersion.py --check
 ```

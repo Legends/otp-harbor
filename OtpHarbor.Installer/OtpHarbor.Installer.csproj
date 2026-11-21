@@ -28,7 +28,7 @@
   <ItemGroup>
     <AvaloniaResource Include="..\OtpHarbor.UI.Avalonia.Desktop\Assets\Icons\app-128.png"
                       Link="Assets\app-128.png" />
-    <AvaloniaResource Include="..\scripts\release\installer\Setup.*.wxl"
+    <AvaloniaResource Include="..\scripts/release/windows/installer\Setup.*.wxl"
                       Link="Localization\%(Filename)%(Extension)" />
     <AvaloniaResource Include="Localization\License.*.txt" />
   </ItemGroup>

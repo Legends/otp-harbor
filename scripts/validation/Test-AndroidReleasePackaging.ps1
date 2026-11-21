@@ -3,7 +3,7 @@
 Regression-checks the permanent Android identity, version mapping, and release controls.
 #>
 $ErrorActionPreference = "Stop"
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "../.."))
 
 function Read-RequiredFile([string]$RelativePath) {
     $path = Join-Path $repositoryRoot $RelativePath
@@ -15,12 +15,12 @@ function Read-RequiredFile([string]$RelativePath) {
 
 $project = Read-RequiredFile "OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj"
 $manifest = Read-RequiredFile "OtpHarbor.UI.Avalonia.Android\Properties\AndroidManifest.xml"
-$installer = Read-RequiredFile "scripts\testing\Android\Install-AndroidDevelopmentBuild.ps1"
+$installer = Read-RequiredFile "scripts/testing/android\Install-AndroidDevelopmentBuild.ps1"
 $workflow = Read-RequiredFile ".github\workflows\build-and-test.yml"
 $documentation = Read-RequiredFile "docs\release\ANDROID.md"
-$releasePackager = Read-RequiredFile "scripts\release\New-AndroidRelease.ps1"
+$releasePackager = Read-RequiredFile "scripts/release/android/New-AndroidRelease.ps1"
 $fingerprintParserPath = Join-Path $repositoryRoot `
-    "scripts\release\Get-AndroidSigningCertificateFingerprint.ps1"
+    "scripts/release/android/Get-AndroidSigningCertificateFingerprint.ps1"
 
 foreach ($required in @(
     '<AndroidProductionApplicationId>io.github.legends.otpharbor</AndroidProductionApplicationId>',
@@ -98,7 +98,7 @@ foreach ($requiredInstallerControl in @(
 }
 
 $runtimeIdentifierResolver = Join-Path $repositoryRoot `
-    'scripts\testing\Android\Get-AndroidRuntimeIdentifier.ps1'
+    'scripts/testing/android\Get-AndroidRuntimeIdentifier.ps1'
 foreach ($case in @(
     @{ Abi = 'arm64-v8a'; RuntimeIdentifier = 'android-arm64' },
     @{ Abi = 'x86_64'; RuntimeIdentifier = 'android-x64' })) {
@@ -120,7 +120,7 @@ $versionCases = @(
     @{ Tag = "android-v2.0.17"; Code = 20001799L; Name = "2.0.17" },
     @{ Tag = "android-v2.1.0"; Code = 20100099L; Name = "2.1.0" })
 foreach ($case in $versionCases) {
-    $actual = & (Join-Path $repositoryRoot "scripts\release\Get-AndroidReleaseVersion.ps1") `
+    $actual = & (Join-Path $repositoryRoot "scripts/release/android/Get-AndroidReleaseVersion.ps1") `
         -ReleaseTag $case.Tag | ConvertFrom-Json
     if ($actual.applicationId -cne "io.github.legends.otpharbor" -or
         [int64]$actual.versionCode -ne $case.Code -or
@@ -136,7 +136,7 @@ foreach ($invalidTag in @(
     "android-v2.0.0-rc1",
     "android-v210.0.0")) {
     try {
-        & (Join-Path $repositoryRoot "scripts\release\Get-AndroidReleaseVersion.ps1") `
+        & (Join-Path $repositoryRoot "scripts/release/android/Get-AndroidReleaseVersion.ps1") `
             -ReleaseTag $invalidTag 2>$null | Out-Null
         throw "Android version mapping accepted invalid tag $invalidTag."
     }

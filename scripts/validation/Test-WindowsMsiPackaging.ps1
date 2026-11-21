@@ -12,11 +12,11 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
-$packagerPath = Join-Path $repositoryRoot 'scripts/release/New-WindowsMsi.ps1'
-$setupPackagerPath = Join-Path $repositoryRoot 'scripts/release/New-WindowsSetup.ps1'
+$packagerPath = Join-Path $repositoryRoot 'scripts/release/windows/New-WindowsMsi.ps1'
+$setupPackagerPath = Join-Path $repositoryRoot 'scripts/release/windows/New-WindowsSetup.ps1'
 $workflowPath = Join-Path $repositoryRoot '.github/workflows/build-and-test.yml'
-$manifestPath = Join-Path $repositoryRoot 'scripts/release/New-ReleaseArtifactManifest.ps1'
-$installerResourceRoot = Join-Path $repositoryRoot 'scripts/release/installer'
+$manifestPath = Join-Path $repositoryRoot 'scripts/release/shared/New-ReleaseArtifactManifest.ps1'
+$installerResourceRoot = Join-Path $repositoryRoot 'scripts/release/windows/installer'
 $customInstallerProject = Join-Path $repositoryRoot 'OtpHarbor.Installer/OtpHarbor.Installer.csproj'
 $customInstallerView = Join-Path $repositoryRoot 'OtpHarbor.Installer/Views/InstallerWindow.axaml'
 

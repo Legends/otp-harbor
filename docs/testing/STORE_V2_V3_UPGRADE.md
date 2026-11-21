@@ -40,11 +40,11 @@ be caused by the verifier converting the vault first.
 From the repository, using PowerShell 7 and the .NET 10 SDK:
 
 ```powershell
-pwsh -File .\scripts\testing\Windows\Test-StoreUpgradeTestKit.ps1
-pwsh -File .\scripts\testing\Windows\Prepare-StoreUpgradeTestKit.ps1
+pwsh -File .\scripts/testing/windows\Test-StoreUpgradeTestKit.ps1
+pwsh -File .\scripts/testing/windows\Prepare-StoreUpgradeTestKit.ps1
 ```
 
-Preparation prints the new directory under `artifacts/testing/store-v2-v3-...`.
+Preparation prints the new directory under `artifacts/windows/testing/store-v2-v3-...`.
 Copy the **whole folder** to a disposable Windows VM or fresh Windows test user.
 The verifier is self-contained for Windows x64; the target needs neither the source
 repository nor a .NET SDK. Run the commands below from the copied kit directory,

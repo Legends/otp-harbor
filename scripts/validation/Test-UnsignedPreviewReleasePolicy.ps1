@@ -27,7 +27,7 @@ try {
         "$settings`n",
         [Text.UTF8Encoding]::new($false))
 
-    & (Join-Path $PSScriptRoot "../release/Set-PackageUpdatePolicy.ps1") `
+    & (Join-Path $PSScriptRoot "../release/shared/Set-PackageUpdatePolicy.ps1") `
         -PackageDirectory $packageRoot `
         -DistributionMode direct `
         -Channel rc `
@@ -41,7 +41,7 @@ try {
         throw "Direct preview package policy did not enable the signed RC feed."
     }
 
-    & (Join-Path $PSScriptRoot "../release/Set-PackageUpdatePolicy.ps1") `
+    & (Join-Path $PSScriptRoot "../release/shared/Set-PackageUpdatePolicy.ps1") `
         -PackageDirectory $packageRoot `
         -DistributionMode direct `
         -Channel stable
@@ -53,7 +53,7 @@ try {
         throw "Stable direct package policy did not enable automatic updates."
     }
 
-    & (Join-Path $PSScriptRoot "../release/Set-PackageUpdatePolicy.ps1") `
+    & (Join-Path $PSScriptRoot "../release/shared/Set-PackageUpdatePolicy.ps1") `
         -PackageDirectory $packageRoot `
         -DistributionMode store `
         -Channel stable
@@ -85,13 +85,13 @@ try {
     }
 
     $manifestPath = Join-Path $artifactRoot "release-artifacts-unsigned-preview.json"
-    & (Join-Path $PSScriptRoot "../release/New-ReleaseArtifactManifest.ps1") `
+    & (Join-Path $PSScriptRoot "../release/shared/New-ReleaseArtifactManifest.ps1") `
         -ReleaseVersion "2.0.0-rc3" `
         -SourceCommit ("a" * 40) `
         -ArtifactPath $artifactPaths `
         -OutputPath $manifestPath `
         -ReleaseProfile unsigned-platform-preview | Out-Null
-    & (Join-Path $PSScriptRoot "../release/Test-ReleaseArtifactManifest.ps1") `
+    & (Join-Path $PSScriptRoot "../release/shared/Test-ReleaseArtifactManifest.ps1") `
         -ManifestPath $manifestPath `
         -ArtifactDirectory $artifactRoot | Out-Null
 
@@ -134,7 +134,7 @@ try {
         $publishedReleasesPath,
         $publishedReleases,
         [Text.UTF8Encoding]::new($false))
-    $selectedFeed = & (Join-Path $PSScriptRoot "../release/Select-PublishedUpdateFeed.ps1") `
+    $selectedFeed = & (Join-Path $PSScriptRoot "../release/shared/Select-PublishedUpdateFeed.ps1") `
         -ReleasesJsonPath $publishedReleasesPath
     if ($selectedFeed -cne "v2.1.0-rc2") {
         throw "The public RC endpoint did not select the highest signed published feed."
@@ -157,7 +157,7 @@ try {
         $sameBaseReleasesPath,
         $sameBaseReleases,
         [Text.UTF8Encoding]::new($false))
-    $selectedStableFeed = & (Join-Path $PSScriptRoot "../release/Select-PublishedUpdateFeed.ps1") `
+    $selectedStableFeed = & (Join-Path $PSScriptRoot "../release/shared/Select-PublishedUpdateFeed.ps1") `
         -ReleasesJsonPath $sameBaseReleasesPath
     if ($selectedStableFeed -cne "v2.1.0") {
         throw "A stable release did not supersede RCs of the same base version."
@@ -174,13 +174,13 @@ try {
         $path
     }
     $legacyManifestPath = Join-Path $legacyArtifactRoot "legacy-release-artifacts.json"
-    & (Join-Path $PSScriptRoot "../release/New-ReleaseArtifactManifest.ps1") `
+    & (Join-Path $PSScriptRoot "../release/shared/New-ReleaseArtifactManifest.ps1") `
         -ReleaseVersion "2.0.0-rc3" `
         -SourceCommit ("b" * 40) `
         -ArtifactPath $legacyArtifactPaths `
         -OutputPath $legacyManifestPath `
         -ReleaseProfile unsigned-preview | Out-Null
-    & (Join-Path $PSScriptRoot "../release/Test-ReleaseArtifactManifest.ps1") `
+    & (Join-Path $PSScriptRoot "../release/shared/Test-ReleaseArtifactManifest.ps1") `
         -ManifestPath $legacyManifestPath `
         -ArtifactDirectory $legacyArtifactRoot | Out-Null
 

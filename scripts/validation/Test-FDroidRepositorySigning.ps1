@@ -9,7 +9,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$initializer = Join-Path $repositoryRoot 'scripts/release/Initialize-FDroidRepositorySigning.ps1'
+$initializer = Join-Path $repositoryRoot 'scripts/release/android/Initialize-FDroidRepositorySigning.ps1'
 & $initializer -OutputDirectory $TestDirectory -KeytoolPath $KeytoolPath
 $password = [Security.Cryptography.ProtectedData]::Unprotect(
     [IO.File]::ReadAllBytes((Join-Path $TestDirectory 'keystore-password.dpapi')),

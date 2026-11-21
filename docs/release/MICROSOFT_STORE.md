@@ -50,13 +50,13 @@ For a local rebuild of the current clean, tagged source on Windows with the Wind
 run:
 
 ```powershell
-.\scripts\release\New-CurrentSourceMicrosoftStoreMsix.ps1
+.\scripts/release/windows/New-CurrentSourceMicrosoftStoreMsix.ps1
 ```
 
 For a clean commit that has not been tagged yet, provide its intended stable tag:
 
 ```powershell
-.\scripts\release\New-CurrentSourceMicrosoftStoreMsix.ps1 -ReleaseTag v2.0.1
+.\scripts/release/windows/New-CurrentSourceMicrosoftStoreMsix.ps1 -ReleaseTag v2.0.1
 ```
 
 The wrapper resolves the Store version, uses the reviewed Partner Center identity, builds directly
@@ -67,7 +67,7 @@ artifact.
 The lower-level packager remains available when explicit identity values are required:
 
 ```powershell
-.\scripts\release\New-MicrosoftStoreMsix.ps1 `
+.\scripts/release/windows/New-MicrosoftStoreMsix.ps1 `
   -IdentityName '<Partner Center Identity Name>' `
   -Publisher '<Partner Center Publisher, such as CN=...>' `
   -PublisherDisplayName '<Partner Center publisher display name>' `
@@ -76,7 +76,7 @@ The lower-level packager remains available when explicit identity values are req
 ```
 
 The fourth version component is reserved by Microsoft and must remain `0`. The output under
-`artifacts/store` contains:
+`artifacts/windows/release` contains:
 
 - the unsigned x64 MSIX for Partner Center only;
 - `store-package.json` with the identity, version, distribution policy, and hash; and

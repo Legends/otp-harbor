@@ -43,9 +43,9 @@
     <Using Include="Xunit" />
     <Compile Include="..\OtpHarbor.UI.Avalonia.Android\NativeTextSizing.cs"
              Link="Fixtures\Android\NativeTextSizing.cs" />
-    <Compile Include="..\scripts\testing\Windows\StoreUpgradeVerifier\UpgradeVerifier.cs"
+    <Compile Include="..\scripts/testing/windows\StoreUpgradeVerifier\UpgradeVerifier.cs"
              Link="Fixtures\StoreUpgrade\UpgradeVerifier.cs" />
-    <Compile Include="..\scripts\testing\Windows\StoreUpgradeVerifier\SyntheticV2Vault.cs"
+    <Compile Include="..\scripts/testing/windows\StoreUpgradeVerifier\SyntheticV2Vault.cs"
              Link="Fixtures\StoreUpgrade\SyntheticV2Vault.cs" />
   </ItemGroup>
 

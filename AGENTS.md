@@ -362,9 +362,9 @@ Use the scripts under `scripts/release` and the guidance in
 
 Relevant helpers include:
 
-- `scripts/release/Generate-AvaloniaAppcast.ps1`
-- `scripts/release/Test-AvaloniaAppcast.ps1`
-- `scripts/release/Set-PackageUpdatePolicy.ps1`
+- `scripts/release/shared/Generate-AvaloniaAppcast.ps1`
+- `scripts/release/shared/Test-AvaloniaAppcast.ps1`
+- `scripts/release/shared/Set-PackageUpdatePolicy.ps1`
 
 ## CI / Release Reality
 

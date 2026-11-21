@@ -203,6 +203,16 @@
       "originalSha256": "5d7272b8581cbcfd2472085b1ebfdb1f20dd1ddcd99f9e41582df1751cb63ff8"
     },
     {
+      "path": "source/desktop/dark/data-backup.png",
+      "platform": "desktop",
+      "theme": "dark",
+      "purpose": "data-backup",
+      "method": "isolated headless render of production SettingsWindow with synthetic service state; DataBackupMarketingView_ShowsImportsAndRecoveryWithoutNativeServices",
+      "width": 2400,
+      "height": 1800,
+      "sha256": "2c6ea56fea65ff4d6bf2188f1b5d892b974e6096f0d4f25760b579198f07f00f"
+    },
+    {
       "path": "source/desktop/dark/scanner.png",
       "platform": "desktop",
       "theme": "dark",
@@ -268,6 +278,16 @@
       "height": 1483,
       "sha256": "366e572010fe552e81fceadea1805b6cf4754c7113bdd40825f4e1ef9bdc629f",
       "originalSha256": "dfd6a69d38b598e53ff4fb8c8c0bb8a6598af0ea1d8f9962c1d1a9caf98fd205"
+    },
+    {
+      "path": "source/desktop/light/data-backup.png",
+      "platform": "desktop",
+      "theme": "light",
+      "purpose": "data-backup",
+      "method": "isolated headless render of production SettingsWindow with synthetic service state; DataBackupMarketingView_ShowsImportsAndRecoveryWithoutNativeServices",
+      "width": 2400,
+      "height": 1800,
+      "sha256": "809a112d559ea5354488b4f7685735476a7408757159e86699f10003d3492d39"
     },
     {
       "path": "source/desktop/light/scanner.png",
@@ -2165,21 +2185,19 @@
     },
     {
       "path": "website/gallery.json",
-      "sha256": "062d8c4942a7b45ed2aeb3b86fda5d17c2a8cc307b0db4e39b8a8cd0b2680b86",
+      "sha256": "4f9a10c35b6a138afdec6fe195e189d1df47079995bec42b0570a07d0b895406",
       "kind": "website-gallery-data",
       "sourceSha256": [
         "e5ea88cf3eaccf55d7688519171221ab2011d84203de954b69ab1adf1cf61f07",
         "0c29c2f00c60f5dbaf1069db7688038a3d39d43ac490e57a9a02afbebe1d44c4",
         "7f6288483e0107b1c8796887dc12b74d1be532693ab153b01e45506bcbc1f2b9",
-        "a83d21b211aa159e46261e03c1f8335cf85dfa6cf96cc07692b92f622fa51709",
+        "1df95129eab74d5127db37466e74c18a22eb2a4e6f023a72fedb6bb43ee8f61f",
         "34069fef1fac14b6f7cc8651f6557453f625d137fc7b894d900fbbfc1b43c6b0",
-        "f9412b99b192930c83b3f3bf281743e7ba3fce56e2816249b842177cb8731f70",
         "8f60ac2db6ae2e23eebc2a582afc18fa88b13f2ff7696e39d457b2f3fcd954f3",
         "c492d4a68170ddfae8191c64835414d86805e96ac44eed092ad59a9ae5dc1895",
         "7d26e052728c45f1fa92136c4811fa106c76599c63f8ad1d2e814c5771380a0c",
-        "e5659a2a01b33d2c400c3f3f91127cc590749764a3bf1d8297120de1012241e8",
+        "9d9eeb500f3afdaf3d2fac103935f33748399300dd4645a5a8e3250b3214ea6f",
         "f02fa96bf6733dad262fa3c2fe725e6cf0013183fe2a41283334469c2a7146a7",
-        "22d550b38c3c94a555637999c504269aa4a3eab7ec7e44c0b50381df01c068e2",
         "0799835fe51f42f90f3d87a9dbe75ad1e251c0073395b21bc42719f4ca1ded53",
         "9683fe9632011cfdba61a658f2ab1380da0d3b8d5d93ac03d26c18caf4e9837c",
         "70f0f24b9dd06bba319b2dd437eb0ba862dfd65fc8b954b0e3362c78bb8a97a2",
@@ -2449,6 +2467,24 @@
       "cornerMaskRadius": 20
     },
     {
+      "path": "website/optimized/desktop/dark/data-backup.png",
+      "sha256": "86e17852bc4d8f61cda5aea857ed90ca04b58aa1b94b6691b8f4fb50b7dea92b",
+      "kind": "cleaned-website-capture",
+      "sourceSha256": [
+        "2c6ea56fea65ff4d6bf2188f1b5d892b974e6096f0d4f25760b579198f07f00f"
+      ],
+      "platform": "desktop",
+      "theme": "dark",
+      "sourcePath": "source/desktop/dark/data-backup.png",
+      "sourceCrop": [
+        3,
+        3,
+        2397,
+        1797
+      ],
+      "cornerMaskRadius": 20
+    },
+    {
       "path": "website/optimized/desktop/dark/scanner.png",
       "sha256": "41ccab6202b68963cb480c088cc79418ba9cd17b91a7ea57ad2aac15d8f31f7a",
       "kind": "cleaned-website-capture",
@@ -2517,6 +2553,24 @@
         3,
         947,
         1221
+      ],
+      "cornerMaskRadius": 20
+    },
+    {
+      "path": "website/optimized/desktop/light/data-backup.png",
+      "sha256": "a34e8e0d3ec6855f2716ae6a6c0d49aa567fb7f7a59485439295ef2892f6710a",
+      "kind": "cleaned-website-capture",
+      "sourceSha256": [
+        "809a112d559ea5354488b4f7685735476a7408757159e86699f10003d3492d39"
+      ],
+      "platform": "desktop",
+      "theme": "light",
+      "sourcePath": "source/desktop/light/data-backup.png",
+      "sourceCrop": [
+        3,
+        3,
+        2397,
+        1797
       ],
       "cornerMaskRadius": 20
     },
@@ -2891,63 +2945,31 @@
       }
     },
     {
-      "path": "website/optimized/framed/desktop/dark/backup-restore.png",
-      "sha256": "f9412b99b192930c83b3f3bf281743e7ba3fce56e2816249b842177cb8731f70",
+      "path": "website/optimized/framed/desktop/dark/data-backup.png",
+      "sha256": "1df95129eab74d5127db37466e74c18a22eb2a4e6f023a72fedb6bb43ee8f61f",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39",
+        "2c6ea56fea65ff4d6bf2188f1b5d892b974e6096f0d4f25760b579198f07f00f",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
       "platform": "desktop",
       "theme": "dark",
-      "sourcePath": "source/desktop/dark/settings.png",
-      "cleanedPath": "website/optimized/desktop/dark/settings.png",
+      "sourcePath": "source/desktop/dark/data-backup.png",
+      "cleanedPath": "website/optimized/desktop/dark/data-backup.png",
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "sourceCrop": [
         3,
         3,
-        2247,
-        1627
+        2397,
+        1797
       ],
       "appPlacement": {
         "bounds": [
           975,
-          224,
+          213,
           860,
-          622
-        ],
-        "cornerMaskRadius": 20,
-        "frame": "cleaned desktop window"
-      },
-      "visualKind": "marketing-promotion"
-    },
-    {
-      "path": "website/optimized/framed/desktop/dark/import-formats.png",
-      "sha256": "a83d21b211aa159e46261e03c1f8335cf85dfa6cf96cc07692b92f622fa51709",
-      "kind": "designed-website-campaign",
-      "sourceSha256": [
-        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39",
-        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
-        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
-      ],
-      "platform": "desktop",
-      "theme": "dark",
-      "sourcePath": "source/desktop/dark/settings.png",
-      "cleanedPath": "website/optimized/desktop/dark/settings.png",
-      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
-      "sourceCrop": [
-        3,
-        3,
-        2247,
-        1627
-      ],
-      "appPlacement": {
-        "bounds": [
-          975,
-          224,
-          860,
-          622
+          644
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3082,63 +3104,31 @@
       }
     },
     {
-      "path": "website/optimized/framed/desktop/light/backup-restore.png",
-      "sha256": "22d550b38c3c94a555637999c504269aa4a3eab7ec7e44c0b50381df01c068e2",
+      "path": "website/optimized/framed/desktop/light/data-backup.png",
+      "sha256": "9d9eeb500f3afdaf3d2fac103935f33748399300dd4645a5a8e3250b3214ea6f",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278",
+        "809a112d559ea5354488b4f7685735476a7408757159e86699f10003d3492d39",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
       "platform": "desktop",
       "theme": "light",
-      "sourcePath": "source/desktop/light/settings.png",
-      "cleanedPath": "website/optimized/desktop/light/settings.png",
+      "sourcePath": "source/desktop/light/data-backup.png",
+      "cleanedPath": "website/optimized/desktop/light/data-backup.png",
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "sourceCrop": [
         3,
         3,
-        2247,
-        1627
+        2397,
+        1797
       ],
       "appPlacement": {
         "bounds": [
           975,
-          224,
+          213,
           860,
-          622
-        ],
-        "cornerMaskRadius": 20,
-        "frame": "cleaned desktop window"
-      },
-      "visualKind": "marketing-promotion"
-    },
-    {
-      "path": "website/optimized/framed/desktop/light/import-formats.png",
-      "sha256": "e5659a2a01b33d2c400c3f3f91127cc590749764a3bf1d8297120de1012241e8",
-      "kind": "designed-website-campaign",
-      "sourceSha256": [
-        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278",
-        "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
-        "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
-      ],
-      "platform": "desktop",
-      "theme": "light",
-      "sourcePath": "source/desktop/light/settings.png",
-      "cleanedPath": "website/optimized/desktop/light/settings.png",
-      "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
-      "sourceCrop": [
-        3,
-        3,
-        2247,
-        1627
-      ],
-      "appPlacement": {
-        "bounds": [
-          975,
-          224,
-          860,
-          622
+          644
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3331,25 +3321,13 @@
       "quality": 95
     },
     {
-      "path": "website/optimized/previews/desktop/dark/backup-restore.webp",
-      "sha256": "3fa90253b2ca923635f20078d2e53a7f496ae4842cbfb6427901bf0bd44becf2",
+      "path": "website/optimized/previews/desktop/dark/data-backup.webp",
+      "sha256": "8f1c5e079c79b13f9f222f468f6aeac1c3d79c931858336892785b713d52fed3",
       "kind": "website-preview",
       "sourceSha256": [
-        "f9412b99b192930c83b3f3bf281743e7ba3fce56e2816249b842177cb8731f70"
+        "1df95129eab74d5127db37466e74c18a22eb2a4e6f023a72fedb6bb43ee8f61f"
       ],
-      "fullPath": "website/optimized/framed/desktop/dark/backup-restore.png",
-      "width": 1200,
-      "height": 675,
-      "quality": 95
-    },
-    {
-      "path": "website/optimized/previews/desktop/dark/import-formats.webp",
-      "sha256": "c23b46b98d4c59e3f9eed8a3737789ecbf174ce1f437a0dd12a822fcac54fda9",
-      "kind": "website-preview",
-      "sourceSha256": [
-        "a83d21b211aa159e46261e03c1f8335cf85dfa6cf96cc07692b92f622fa51709"
-      ],
-      "fullPath": "website/optimized/framed/desktop/dark/import-formats.png",
+      "fullPath": "website/optimized/framed/desktop/dark/data-backup.png",
       "width": 1200,
       "height": 675,
       "quality": 95
@@ -3403,25 +3381,13 @@
       "quality": 95
     },
     {
-      "path": "website/optimized/previews/desktop/light/backup-restore.webp",
-      "sha256": "39e61aff2453b816fa9361a0ddd84554be797f1bb221cc4dc7a93a8f0e3b9ff5",
+      "path": "website/optimized/previews/desktop/light/data-backup.webp",
+      "sha256": "a5432a3051254e97054a0d046e5b7b7c03e9e7d5e4a00c77f7635a5ebb0723c8",
       "kind": "website-preview",
       "sourceSha256": [
-        "22d550b38c3c94a555637999c504269aa4a3eab7ec7e44c0b50381df01c068e2"
+        "9d9eeb500f3afdaf3d2fac103935f33748399300dd4645a5a8e3250b3214ea6f"
       ],
-      "fullPath": "website/optimized/framed/desktop/light/backup-restore.png",
-      "width": 1200,
-      "height": 675,
-      "quality": 95
-    },
-    {
-      "path": "website/optimized/previews/desktop/light/import-formats.webp",
-      "sha256": "372824af9b836803efaea02036613bc21eddcc4079b7c1bf5e24692ec27686a4",
-      "kind": "website-preview",
-      "sourceSha256": [
-        "e5659a2a01b33d2c400c3f3f91127cc590749764a3bf1d8297120de1012241e8"
-      ],
-      "fullPath": "website/optimized/framed/desktop/light/import-formats.png",
+      "fullPath": "website/optimized/framed/desktop/light/data-backup.png",
       "width": 1200,
       "height": 675,
       "quality": 95

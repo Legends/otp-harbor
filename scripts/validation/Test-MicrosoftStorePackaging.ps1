@@ -20,12 +20,12 @@ function Read-RequiredFile {
 }
 
 $manifest = Read-RequiredFile 'packaging/windows-store/AppxManifest.xml.template'
-$packager = Read-RequiredFile 'scripts/release/New-MicrosoftStoreMsix.ps1'
-$currentSourcePackager = Read-RequiredFile 'scripts/release/New-CurrentSourceMicrosoftStoreMsix.ps1'
+$packager = Read-RequiredFile 'scripts/release/windows/New-MicrosoftStoreMsix.ps1'
+$currentSourcePackager = Read-RequiredFile 'scripts/release/windows/New-CurrentSourceMicrosoftStoreMsix.ps1'
 $workflow = Read-RequiredFile '.github/workflows/store-msix.yml'
 $releaseWorkflow = Read-RequiredFile '.github/workflows/build-and-test.yml'
-$versionResolver = Join-Path $repositoryRoot 'scripts/release/Get-MicrosoftStoreVersion.ps1'
-$publicVersionUpdater = Join-Path $repositoryRoot 'scripts/release/Set-PublicMicrosoftStoreVersion.ps1'
+$versionResolver = Join-Path $repositoryRoot 'scripts/release/windows/Get-MicrosoftStoreVersion.ps1'
+$publicVersionUpdater = Join-Path $repositoryRoot 'scripts/release/windows/Set-PublicMicrosoftStoreVersion.ps1'
 $documentation = Read-RequiredFile 'docs/release/MICROSOFT_STORE.md'
 $listing = Read-RequiredFile 'packaging/windows-store/STORE_LISTING.md'
 $readme = Read-RequiredFile 'readme.md'

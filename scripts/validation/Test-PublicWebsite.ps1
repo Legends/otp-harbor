@@ -54,7 +54,7 @@ foreach ($file in $androidCampaignFiles) {
         throw "The Android product page does not reference campaign asset $file."
     }
 }
-if (-not $pagesWorkflow.Contains('cp packaging/android/marketing/en-US/*.png _site/assets/android/', [StringComparison]::Ordinal)) {
+if (-not $pagesWorkflow.Contains('cp packaging/android/marketing/en-US/*.png artifacts/website/assets/android/', [StringComparison]::Ordinal)) {
     throw 'The Android campaign assets are not included in the Pages artifact.'
 }
 if (-not $compactIndex.Contains('id="showcase"', [StringComparison]::Ordinal) -or
@@ -62,8 +62,8 @@ if (-not $compactIndex.Contains('id="showcase"', [StringComparison]::Ordinal) -o
     -not $compactIndex.Contains('src="gallery-runtime.js?v=4"', [StringComparison]::Ordinal) -or
     -not $compactAndroidIndex.Contains('src="../gallery-runtime.js?v=4"', [StringComparison]::Ordinal) -or
     -not $galleryScript.Contains("platform: 'desktop'", [StringComparison]::Ordinal) -or
-    -not $pagesWorkflow.Contains('cp -R artifacts/marketing/website/optimized/. _site/assets/marketing/', [StringComparison]::Ordinal) -or
-    -not $pagesWorkflow.Contains('Prepare-PublicGallery.py --output _site', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('cp -R artifacts/marketing/website/optimized/. artifacts/website/assets/marketing/', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('Prepare-PublicGallery.py --output artifacts/website', [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains('approved for website publication', [StringComparison]::Ordinal)) {
     throw 'The shared preview gallery and publication gate must be wired into both product pages.'
 }
@@ -139,7 +139,7 @@ foreach ($requiredText in @(
 
 foreach ($releaseStampControl in @(
     'Stamp independent public release versions',
-    'Update-ReadmeReleases.py --website _site/index.html',
+    'Update-ReadmeReleases.py --website artifacts/website/index.html',
     'packaging/windows-store/public-version.json',
     '--paginate --slurp'
 )) {
@@ -189,7 +189,7 @@ if (-not $robots.Contains('Sitemap: https://legends.github.io/otp-harbor/sitemap
 }
 
 if ($compactIndex.Contains('class="search-preview-image"', [StringComparison]::Ordinal) -or
-    -not $pagesWorkflow.Contains("cp $preferredImageRelativePath _site/assets/otp-harbor-totp-authenticator-windows.png", [StringComparison]::Ordinal)) {
+    -not $pagesWorkflow.Contains("cp $preferredImageRelativePath artifacts/website/assets/otp-harbor-totp-authenticator-windows.png", [StringComparison]::Ordinal)) {
     throw 'The former Windows campaign image must not duplicate the v3 hero on the page.'
 }
 
@@ -208,8 +208,8 @@ foreach ($requiredText in @(
 if (-not $compactIndex.Contains('href="android/"', [StringComparison]::Ordinal) -or
     -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/android/</loc>', [StringComparison]::Ordinal) -or
     -not $sitemap.Contains('<loc>https://legends.github.io/otp-harbor/android/guide/</loc>', [StringComparison]::Ordinal) -or
-    -not $pagesWorkflow.Contains('cp site/android/index.html site/android/gallery.js _site/android/', [StringComparison]::Ordinal) -or
-    -not $pagesWorkflow.Contains('cp site/android/guide/index.html _site/android/guide/index.html', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('cp site/android/index.html site/android/gallery.js artifacts/website/android/', [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains('cp site/android/guide/index.html artifacts/website/android/guide/index.html', [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains('urlList = @($siteUrl, $androidUrl, $androidGuideUrl)', [StringComparison]::Ordinal)) {
     throw 'The Android product page is not cross-linked, deployable, and discoverable.'
 }
@@ -231,7 +231,7 @@ if (-not $compactAndroidIndex.Contains('href="guide/"', [StringComparison]::Ordi
 }
 
 if ($indexNowVerificationFile.Trim() -cne $indexNowVerificationValue -or
-    -not $pagesWorkflow.Contains("cp site/$indexNowVerificationValue.txt _site/", [StringComparison]::Ordinal) -or
+    -not $pagesWorkflow.Contains("cp site/$indexNowVerificationValue.txt artifacts/website/", [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains("https://www.bing.com/indexnow", [StringComparison]::Ordinal) -or
     -not $pagesWorkflow.Contains("https://www.googleapis.com/webmasters/v3/sites/", [StringComparison]::Ordinal)) {
     throw 'The website search-engine notification configuration is incomplete.'

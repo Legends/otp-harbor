@@ -230,29 +230,83 @@
       retry.addEventListener('click', () => void select(`${state.platform}/${state.theme}`));
 
       const dialogCaption = dialog.querySelector('p');
+      dialogCaption.classList.add('showcase-caption');
       const close = dialog.querySelector('.showcase-close');
+      const stage = document.createElement('div');
+      stage.className = 'showcase-stage';
+      dialogCaption.before(stage);
+      stage.append(dialog.querySelector('img'));
       const dialogStatus = document.createElement('p');
+      dialogStatus.className = 'showcase-status';
       dialogStatus.setAttribute('role', 'status');
       const dialogRetry = document.createElement('button');
       dialogRetry.type = 'button';
       dialogRetry.textContent = 'Retry full-size image';
-      dialog.append(dialogStatus, dialogRetry);
+      stage.append(dialogStatus, dialogRetry);
+      const navigation = document.createElement('div');
+      navigation.className = 'showcase-navigation';
+      navigation.setAttribute('role', 'group');
+      navigation.setAttribute('aria-label', 'Image navigation');
+      const previous = document.createElement('button');
+      previous.type = 'button';
+      previous.className = 'showcase-previous';
+      previous.textContent = 'Previous';
+      previous.setAttribute('aria-label', 'Previous image');
+      previous.setAttribute('aria-keyshortcuts', 'ArrowLeft');
+      previous.title = 'Previous image (Left arrow)';
+      const counter = document.createElement('span');
+      counter.className = 'showcase-counter';
+      counter.setAttribute('aria-live', 'polite');
+      counter.setAttribute('aria-atomic', 'true');
+      const next = document.createElement('button');
+      next.type = 'button';
+      next.className = 'showcase-next';
+      next.textContent = 'Next';
+      next.setAttribute('aria-label', 'Next image');
+      next.setAttribute('aria-keyshortcuts', 'ArrowRight');
+      next.title = 'Next image (Right arrow)';
+      navigation.append(previous, counter, next);
+      dialogCaption.after(navigation);
       let dialogRevision = 0;
       let opener;
       let lastItem;
       let fullRecord;
+      let dialogItems = [];
+      let dialogIndex = -1;
+      function discardFullRecord() {
+        const record = fullRecord;
+        if (!record) return;
+        fullRecord = undefined;
+        record.attempt = (record.attempt || 0) + 1;
+        clearTimeout(record.timer);
+        record.image.onload = record.image.onerror = null;
+        record.image.removeAttribute('src');
+        active.delete(record);
+        const index = queue.indexOf(record);
+        if (index >= 0) queue.splice(index, 1);
+        record.reject?.(new Error('Image superseded'));
+      }
       async function enlarge(item, source) {
-        opener = source;
+        const opening = !dialog.open;
+        if (opening) {
+          opener = source;
+          dialogItems = data.items.filter((entry) => entry.platform === item.platform && entry.theme === item.theme);
+        }
+        dialogIndex = dialogItems.indexOf(item);
         lastItem = item;
         const token = ++dialogRevision;
         dialog.querySelector('img').hidden = true;
         dialogCaption.textContent = item.caption;
         dialogStatus.textContent = 'Loading full-size image…';
+        dialogStatus.hidden = false;
+        stage.setAttribute('aria-busy', 'true');
         dialogRetry.hidden = true;
-        if (!dialog.open) dialog.showModal();
-        close.focus();
+        counter.textContent = `Image ${dialogIndex + 1} of ${dialogItems.length}`;
+        previous.disabled = next.disabled = dialogItems.length < 2;
+        if (opening) { dialog.showModal(); close.focus(); }
         const src = new URL(options.prefix + item.full.src, document.baseURI).href;
         if (fullRecord?.src !== src) {
+          discardFullRecord();
           fullRecord = { src, image: new Image(item.full.width, item.full.height), status: 'new' };
           fullRecord.image.alt = item.alt;
           fullRecord.image.decoding = 'async';
@@ -260,7 +314,7 @@
         try {
           const image = await request(fullRecord, 0);
           if (token !== dialogRevision || !dialog.open) {
-            if (policy().groups < 4) {
+            if (policy().groups < 4 && (!dialog.open || fullRecord?.image !== image)) {
               image.removeAttribute('src');
               if (fullRecord?.image === image) fullRecord = undefined;
             }
@@ -269,17 +323,58 @@
           image.hidden = false;
           dialog.querySelector('img').replaceWith(image);
           dialogStatus.textContent = '';
+          dialogStatus.hidden = true;
+          stage.setAttribute('aria-busy', 'false');
         } catch {
           if (token !== dialogRevision || !dialog.open) return;
           dialogStatus.textContent = 'Could not load the full-size image.';
+          stage.setAttribute('aria-busy', 'false');
           dialogRetry.hidden = false;
         }
       }
-      dialogRetry.addEventListener('click', () => void enlarge(lastItem, opener));
+      function moveImage(offset) {
+        if (!dialog.open || dialogItems.length < 2) return;
+        const index = (dialogIndex + offset + dialogItems.length) % dialogItems.length;
+        if (index !== dialogIndex) void enlarge(dialogItems[index], opener);
+      }
+      previous.addEventListener('click', () => moveImage(-1));
+      next.addEventListener('click', () => moveImage(1));
+      dialog.addEventListener('keydown', (event) => {
+        if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.key === 'Tab') {
+          const controls = [...dialog.querySelectorAll('button,[href],input,select,textarea,[tabindex]')]
+            .filter((element) => !element.disabled && element.tabIndex >= 0 && element.getClientRects().length);
+          const target = event.shiftKey ? controls.at(-1) : controls[0];
+          const boundary = event.shiftKey ? controls[0] : controls.at(-1);
+          if (target && document.activeElement === boundary) { event.preventDefault(); target.focus(); }
+          return;
+        }
+        if (event.shiftKey) return;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          moveImage(event.key === 'ArrowLeft' ? -1 : 1);
+        }
+      });
+      let swipeStart;
+      stage.addEventListener('pointerdown', (event) => {
+        if (event.pointerType !== 'touch') return;
+        swipeStart = event.isPrimary ? { id: event.pointerId, x: event.clientX, y: event.clientY, time: performance.now() } : undefined;
+      });
+      stage.addEventListener('pointercancel', () => { swipeStart = undefined; });
+      stage.addEventListener('pointerup', (event) => {
+        const start = swipeStart;
+        swipeStart = undefined;
+        if (!start || event.pointerId !== start.id) return;
+        const dx = event.clientX - start.x;
+        const dy = event.clientY - start.y;
+        if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && performance.now() - start.time < 800) moveImage(dx < 0 ? 1 : -1);
+      });
+      dialogRetry.addEventListener('click', () => { close.focus(); void enlarge(lastItem, opener); });
       close.addEventListener('click', () => dialog.close());
       dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
       dialog.addEventListener('close', () => {
         dialogRevision++;
+        swipeStart = undefined;
         if (policy().groups < 4 && fullRecord?.status !== 'loading') {
           fullRecord?.image.removeAttribute('src');
           fullRecord = undefined;

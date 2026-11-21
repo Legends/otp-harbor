@@ -1,7 +1,7 @@
 [CmdletBinding()]
-param([switch]$RequireCaptures)
+param([switch]$RequireCaptures, [string]$PythonExecutable = 'python')
 $ErrorActionPreference='Stop'
 $arguments=@((Join-Path $PSScriptRoot 'Validate-MarketingAssets.py'))
 if ($RequireCaptures) { $arguments+='--require-captures' }
-& python @arguments
+& $PythonExecutable @arguments
 if ($LASTEXITCODE -ne 0) { throw 'Marketing validation failed.' }

@@ -95,7 +95,7 @@ fails closed unless exactly one signer fingerprint is present.
 ## Versioning
 
 The visible Android version matches its `android-v` tag without that prefix. Android's integer
-`versionCode` is mapped deterministically by `scripts/release/Get-AndroidReleaseVersion.ps1`:
+`versionCode` is mapped deterministically by `scripts/release/android/Get-AndroidReleaseVersion.ps1`:
 
 ```text
 major * 10,000,000 + minor * 100,000 + patch * 100 + 99
@@ -126,7 +126,7 @@ the production application.
 For local ARM64 Release testing on the connected physical USB phone, run:
 
 ```powershell
-./scripts/testing/Android/Install-AndroidReleasePhone.ps1
+./scripts/testing/android/Install-AndroidReleasePhone.ps1
 ```
 
 The installer builds **current source** as the isolated
@@ -142,7 +142,7 @@ Missing, offline or unauthorized phones stop the script before building.
 See the [Android adb target-selection documentation](https://developer.android.com/tools/adb#directingcommands).
 
 Use `-BuildOnly` to prepare and verify the APK without accessing a device. The APK
-and SHA-256 are written under `artifacts/testing/android-release-phone`. Local
+and SHA-256 are written under `artifacts/android/testing/release-phone`. Local
 builds allow an installed SDK patch within the repository's pinned feature band;
 the repository SDK pin and CI behavior are unchanged. Host intermediates are
 isolated by SDK version, and runtime-specific NuGet locks remain under ignored
@@ -158,7 +158,7 @@ be checked against the installed APK's build date.
 Installer behavior can be checked without real build tools or a device:
 
 ```powershell
-./scripts/testing/Android/Test-AndroidReleaseInstaller.ps1
+./scripts/testing/android/Test-AndroidReleaseInstaller.ps1
 ```
 
 After installing a candidate, verify that it survives startup. A successful
@@ -168,7 +168,7 @@ it does not prove that the managed runtime initialized successfully.
 Keep the device unlocked and its screen on, then run:
 
 ```powershell
-./scripts/testing/Android/Test-AndroidAppLaunch.ps1 `
+./scripts/testing/android/Test-AndroidAppLaunch.ps1 `
   -Device '<adb-device-serial>' `
   -PackageName 'io.github.legends.otpharbor' `
   -LaunchCount 3 -ObservationSeconds 20

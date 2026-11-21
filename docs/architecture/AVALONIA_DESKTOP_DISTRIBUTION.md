@@ -19,7 +19,7 @@ The direct Windows ZIP/update implementation is retained only as dormant future-
 Publish the ARM64 host self-contained on macOS, then run:
 
 ```powershell
-./scripts/release/Package-AvaloniaMacOS.ps1 `
+./scripts/release/macos/Package-AvaloniaMacOS.ps1 `
   -PublishDirectory ./publish-osx-arm64 `
   -OutputDirectory ./distribution-osx-arm64 `
   -ReleaseVersion 2.0.0 `
@@ -49,7 +49,7 @@ The entitlements are limited to the camera capability and the current Microsoft-
 Publish the x64 host self-contained on Ubuntu 24.04, then run:
 
 ```powershell
-./scripts/release/Package-AvaloniaLinux.ps1 `
+./scripts/release/linux/Package-AvaloniaLinux.ps1 `
   -PublishDirectory ./publish-linux-x64 `
   -OutputDirectory ./distribution-linux-x64 `
   -ReleaseVersion 2.0.0

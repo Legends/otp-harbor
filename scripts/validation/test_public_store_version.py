@@ -12,7 +12,7 @@ from unittest.mock import patch
 import urllib.error
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location("public_store_version", ROOT / "scripts/release/Sync-PublicMicrosoftStoreVersion.py")
+SPEC = importlib.util.spec_from_file_location("public_store_version", ROOT / "scripts/release/windows/Sync-PublicMicrosoftStoreVersion.py")
 SYNC = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SYNC)
 NOW = datetime(2026, 11, 10, tzinfo=timezone.utc)
@@ -98,10 +98,10 @@ class PublicStoreVersionTests(unittest.TestCase):
 
     def fixture(self, directory):
         root = Path(directory)
-        for path in ("packaging/windows-store", "scripts/release", "site"):
+        for path in ("packaging/windows-store", "scripts/release/windows", "site"):
             (root / path).mkdir(parents=True)
-        shutil.copyfile(ROOT / "scripts/release/Set-PublicMicrosoftStoreVersion.ps1",
-                        root / "scripts/release/Set-PublicMicrosoftStoreVersion.ps1")
+        shutil.copyfile(ROOT / "scripts/release/windows/Set-PublicMicrosoftStoreVersion.ps1",
+                        root / "scripts/release/windows/Set-PublicMicrosoftStoreVersion.ps1")
         (root / "packaging/windows-store/public-version.json").write_text(json.dumps({
             "displayVersion": "2.0.1", "packageVersion": "2.1.65535.0"
         }), encoding="utf-8")

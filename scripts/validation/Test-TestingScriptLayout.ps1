@@ -3,13 +3,13 @@ param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot '../testing/Testing.Common.ps1')
+. (Join-Path $PSScriptRoot '../testing/shared/Testing.Common.ps1')
 $repositoryRoot = Get-OtpHarborRepositoryRoot -StartDirectory $PSScriptRoot
-$testingRoot = Join-Path $repositoryRoot 'scripts/testing'
+$scriptsRoot = Join-Path $repositoryRoot 'scripts'
 
 # Parse and resolve references without running installers, device commands or vault operations.
 $scriptCount = 0
-foreach ($script in Get-ChildItem -LiteralPath $testingRoot -Filter '*.ps1' -File -Recurse) {
+foreach ($script in Get-ChildItem -LiteralPath $scriptsRoot -Filter '*.ps1' -File -Recurse) {
     $parseErrors = $null
     $tokens = $null
     $ast = [Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref]$tokens, [ref]$parseErrors)
@@ -18,10 +18,10 @@ foreach ($script in Get-ChildItem -LiteralPath $testingRoot -Filter '*.ps1' -Fil
     foreach ($command in $commands) {
         $elements = $command.CommandElements
         if ($command.GetCommandName() -eq 'Join-Path' -and $elements.Count -eq 3 -and
-            $elements[1].Extent.Text -eq '$PSScriptRoot' -and
+            $elements[1].Extent.Text -in '$PSScriptRoot', '$scriptDirectory' -and
             $elements[2] -is [Management.Automation.Language.StringConstantExpressionAst]) {
             $relative = $elements[2].Value
-            if ($relative -match '\.(ps1|sh)$' -or $relative -eq 'fixtures') {
+            if ($relative -match '\.(ps1|py|sh|csproj|wxs|wxl|rtf|bmp)$' -or $relative -in 'fixtures', 'installer') {
                 $path = Join-Path $script.DirectoryName $relative
                 if (-not (Test-Path -LiteralPath $path)) { throw "Broken script-relative reference in $($script.Name): $relative" }
             }
@@ -42,7 +42,14 @@ foreach ($relativeDirectory in @('scripts', 'docs', '.github', 'artifacts/market
     foreach ($file in Get-ChildItem -LiteralPath (Join-Path $repositoryRoot $relativeDirectory) -File -Recurse |
              Where-Object Extension -In '.ps1', '.sh', '.md', '.yml', '.yaml') {
         $content = [IO.File]::ReadAllText($file.FullName)
-        foreach ($match in [regex]::Matches($content, 'scripts[\\/]+testing[\\/]+[A-Za-z0-9_./\\-]+\.(?:ps1|sh|md|json|2fas|csv|txt)\b')) {
+        # Policy tests deliberately refer to absent retired scripts; keep their
+        # existing testing-reference checks and validate their execution separately.
+        $referencePattern = if ($file.DirectoryName -eq (Join-Path $repositoryRoot 'scripts/validation')) {
+            'scripts[\\/]+testing[\\/]+[A-Za-z0-9_./\\-]+\.(?:ps1|sh|md|json|2fas|csv|txt)\b'
+        } else {
+            'scripts[\\/]+[A-Za-z0-9_./\\-]+\.(?:ps1|py|sh|md|json|2fas|csv|txt)\b'
+        }
+        foreach ($match in [regex]::Matches($content, $referencePattern)) {
             $relative = $match.Value -replace '[\\/]+', '/'
             if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $relative) -PathType Leaf)) {
                 throw "Broken testing-script reference in $($file.FullName): $relative"
@@ -54,7 +61,7 @@ foreach ($relativeDirectory in @('scripts', 'docs', '.github', 'artifacts/market
 
 # A source archive without .git, extra nesting and spaces must also resolve correctly.
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ('otp-testing-layout-' + [guid]::NewGuid().ToString('N'))
-$nested = Join-Path $temporaryRoot 'source archive/scripts/testing/Android/nested'
+$nested = Join-Path $temporaryRoot 'source archive/scripts/testing/android/nested'
 $archiveRoot = Join-Path $temporaryRoot 'source archive'
 try {
     [IO.Directory]::CreateDirectory($nested) | Out-Null
@@ -84,4 +91,4 @@ finally {
     }
 }
 
-Write-Host "Validated $scriptCount testing scripts, $referenceCount documented/CI references and repository discovery."
+Write-Host "Validated $scriptCount repository scripts, $referenceCount documented/CI references and repository discovery."

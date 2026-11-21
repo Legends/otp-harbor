@@ -7,7 +7,7 @@ Use the repository root as the working directory unless stated otherwise.
 Run in **Windows PowerShell** from the repository root:
 
 ```powershell
-.\scripts\dev\Publish-And-Run-AvaloniaWindows.ps1 -Configuration Release
+.\scripts/dev/windows/Publish-And-Run-AvaloniaWindows.ps1 -Configuration Release
 ```
 
 This publishes and starts the Windows version of `OtpHarbor.UI.Avalonia.Desktop`. It stops an existing
@@ -18,7 +18,7 @@ single-instance process by default so the launched window always uses the newly 
 Run in **Windows PowerShell** from the repository root while the Ubuntu VM is running and its desktop user is signed in:
 
 ```powershell
-.\scripts\testing\Linux\Sync-Restore-Run-AvaloniaLinuxVm.ps1
+.\scripts/testing/linux\Sync-Restore-Run-AvaloniaLinuxVm.ps1
 ```
 
 This packages the current Windows working tree, transfers it over SSH to the
@@ -38,7 +38,7 @@ The default VM-local repository is `~/source/otp-harbor`. A pre-existing
 shared mount can still be used explicitly when needed:
 
 ```powershell
-.\scripts\testing\Linux\Sync-Restore-Run-AvaloniaLinuxVm.ps1 `
+.\scripts/testing/linux\Sync-Restore-Run-AvaloniaLinuxVm.ps1 `
     -MountedRepository /mnt/otp-harbor
 ```
 
@@ -47,7 +47,7 @@ runner automatically uses `%USERPROFILE%\.ssh\legends` when that key exists.
 Use another identity explicitly when needed:
 
 ```powershell
-.\scripts\testing\Linux\Sync-Restore-Run-AvaloniaLinuxVm.ps1 `
+.\scripts/testing/linux\Sync-Restore-Run-AvaloniaLinuxVm.ps1 `
     -SshIdentityFile "$env:USERPROFILE\.ssh\id_ed25519"
 ```
 
@@ -63,7 +63,7 @@ depending on the changing Hyper-V Default Switch address.
 Run in the **Ubuntu WSL shell**:
 
 ```bash
-./scripts/testing/Linux/run-avalonia-wsl.sh
+./scripts/testing/linux/run-avalonia-wsl.sh
 ```
 
 Use WSL/WSLg for quick development checks. Use the full Hyper-V VM for Linux desktop and end-user acceptance testing.

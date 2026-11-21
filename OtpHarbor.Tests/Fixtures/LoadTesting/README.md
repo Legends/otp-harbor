@@ -16,7 +16,7 @@ be used for real accounts.
 Generate the fixture with:
 
 ```powershell
-.\scripts\testing\Windows\Generate-ProminentPlatformAccountFixture.ps1
+.\scripts/testing/windows\Generate-ProminentPlatformAccountFixture.ps1
 ```
 
 This Tranco-based fixture intentionally uses ranked domains and is therefore
@@ -25,13 +25,13 @@ accounts whose issuers are guaranteed to resolve against a particular imported
 OTP Harbor icon pack, run:
 
 ```powershell
-.\scripts\testing\Windows\Generate-BrandAccountFixture.ps1 `
+.\scripts/testing/windows\Generate-BrandAccountFixture.ps1 `
   -IconPackPath C:\path\to\otp-harbor-icons.otphicons `
   -Count 600
 ```
 
 Import the same `.otphicons` pack into OTP Harbor before importing the generated
-`artifacts/test-data/brand-accounts-600.json` account fixture. Brand names repeat
+`artifacts/shared/testing/test-data/brand-accounts-600.json` account fixture. Brand names repeat
 when the requested account count exceeds the number of brands in the pack;
 account identifiers, names, and synthetic secrets remain unique.
 

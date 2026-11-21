@@ -55,10 +55,10 @@ jobs:
           for attempt in 1 2 3; do
             echo "README refresh push attempt $attempt of 3."
             git pull --rebase origin "$DEFAULT_BRANCH"
-            python scripts/release/Sync-PublicMicrosoftStoreVersion.py --keep-current-on-error
+            python scripts/release/windows/Sync-PublicMicrosoftStoreVersion.py --keep-current-on-error
             gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > "$RUNNER_TEMP/releases.json"
-            python scripts/release/Update-ReadmeReleases.py --repository "$GITHUB_REPOSITORY" --releases-json "$RUNNER_TEMP/releases.json"
-            python scripts/release/Update-ReadmeReleases.py --website site/index.html --releases-json "$RUNNER_TEMP/releases.json"
+            python scripts/release/shared/Update-ReadmeReleases.py --repository "$GITHUB_REPOSITORY" --releases-json "$RUNNER_TEMP/releases.json"
+            python scripts/release/shared/Update-ReadmeReleases.py --website site/index.html --releases-json "$RUNNER_TEMP/releases.json"
             if git diff --quiet -- readme.md site/index.html packaging/windows-store/public-version.json packaging/windows-store/STORE_LISTING.md; then
               exit 0
             fi

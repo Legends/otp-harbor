@@ -1,4 +1,4 @@
-"""Record every genuine capture with dimensions, provenance and source hash."""
+"""Record source screenshots with dimensions, explicit provenance and source hash."""
 import hashlib
 import json
 from pathlib import Path
@@ -39,4 +39,4 @@ for capture in sorted((root / "source").rglob("*.png")):
 
 manifest["captures"] = items
 manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-print(f"Recorded {len(items)} genuine captures.")
+print(f"Recorded {len(items)} source screenshots.")

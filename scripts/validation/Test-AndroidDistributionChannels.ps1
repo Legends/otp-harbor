@@ -4,7 +4,7 @@ Validates the Android distribution-channel signing and migration policy.
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 
 function Read-RequiredFile([string]$RelativePath) {
     $path = Join-Path $repositoryRoot $RelativePath

@@ -42,7 +42,7 @@ Repository history retains two versions; older releases remain available on GitH
 ## Signing identity and recovery
 
 The index key is separate from the GitHub/Play APK key. Initialize it once with
-`scripts/release/Initialize-FDroidRepositorySigning.ps1` on Windows, using the JDK's `keytool`.
+`scripts/release/android/Initialize-FDroidRepositorySigning.ps1` on Windows, using the JDK's `keytool`.
 The initializer rejects an existing signing directory and any directory inside the checkout.
 It restricts the directory to the current user and SYSTEM, creates an encrypted PKCS#12 keystore,
 and protects the local keystore password with current-user Windows DPAPI.

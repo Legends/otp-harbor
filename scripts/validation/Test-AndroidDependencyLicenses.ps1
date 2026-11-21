@@ -8,7 +8,7 @@ not prove that F-Droid will accept a prebuilt dependency or its source provenanc
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 
 $lockFiles = @(
     'OtpHarbor.Core\packages.lock.json',

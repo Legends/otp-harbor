@@ -93,8 +93,8 @@ def desktop(page, url, report):
     requests = []
     page.on('request', lambda req: requests.append(req.url))
     loaded(page, url)
-    # All 20 previews, including initially lazy bottom cards, prepare after critical load.
-    page.wait_for_function('galleryTest.decode.filter(e=>e.src.includes("/previews/")).length>=20')
+    # All previews, including initially lazy bottom cards, prepare after critical load.
+    page.wait_for_function('galleryTest.decode.filter(e=>e.src.includes("/previews/")).length>=18')
     page.locator('#showcase').scroll_into_view_if_needed()
     ready(page, '#showcase-grid', 'desktop/dark')
     page.wait_for_function('document.querySelectorAll("#showcase-grid .preview-loading").length===0')
@@ -110,7 +110,7 @@ def desktop(page, url, report):
                 return performance.now()-started;
             }'''))
             ready(page, '#showcase-grid', key)
-            assert page.locator('#showcase-grid button').count() == (6 if key.startswith('desktop/') else 4), key
+            assert page.locator('#showcase-grid button').count() == (5 if key.startswith('desktop/') else 4), key
     assert len(requests) == before, 'Prepared switches caused new network requests'
     assert page.evaluate('galleryTest.decode.length') == before_decode, 'Prepared switches decoded again'
     assert page.evaluate('originalCards.every((c,i)=>c===document.querySelectorAll("#showcase-grid button")[i])'), 'Cards were recreated'
@@ -323,6 +323,123 @@ def decode_barrier(browser, url, report):
     report['decode_barrier'] = 'Successful download cannot reveal a group before decode; late full-size completion cannot reopen dialog'
 
 
+def lightbox(browser, url, report):
+    def image_ready(page, suffix):
+        page.wait_for_function('suffix => { const i=document.querySelector("dialog img"); return !i.hidden && i.naturalWidth===1920 && i.src.endsWith(suffix); }', arg=suffix)
+
+    for path, grid, platform, count in [('', '#showcase-grid', 'desktop', 5), ('android/', '#android-showcase-grid', 'android', 4)]:
+        page = new_page(browser, width=360)
+        page.set_viewport_size({'width': 360, 'height': 480})
+        loaded(page, url + path, grid)
+        click(page, '[data-android-theme="dark"]' if path else '[data-gallery-theme="dark"]')
+        ready(page, grid, platform + '/dark')
+        first = page.locator(grid + ' button').first
+        assert not page.locator('dialog').evaluate('(d)=>d.open')
+        first.locator('img').click()
+        image_ready(page, f'/framed/{platform}/dark/account-list.png')
+        assert page.locator('.showcase-counter').inner_text() == f'Image 1 of {count}'
+        page.keyboard.press('ArrowLeft')
+        last = 'qr-scanning' if platform == 'desktop' else 'backup-restore'
+        image_ready(page, f'/framed/{platform}/dark/{last}.png')
+        assert page.locator('.showcase-counter').inner_text() == f'Image {count} of {count}'
+        page.keyboard.press('ArrowRight')
+        image_ready(page, f'/framed/{platform}/dark/account-list.png')
+        next_button = page.get_by_role('button', name='Next image', exact=True)
+        next_button.click()
+        second = 'account-context-menu' if platform == 'desktop' else 'settings'
+        image_ready(page, f'/framed/{platform}/dark/{second}.png')
+        assert next_button.evaluate('(e)=>e===document.activeElement'), 'Navigation moved keyboard focus'
+        # Native modal focus stays inside while Tab/Shift+Tab cycle through controls.
+        for _ in range(5):
+            page.keyboard.press('Tab')
+            assert page.evaluate('document.querySelector("dialog").contains(document.activeElement)')
+        previous = page.get_by_role('button', name='Previous image', exact=True)
+        previous.click()
+        image_ready(page, f'/framed/{platform}/dark/account-list.png')
+        stage = page.locator('.showcase-stage')
+        stage.dispatch_event('pointerdown', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 1, 'clientX': 250, 'clientY': 120})
+        stage.dispatch_event('pointerup', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 1, 'clientX': 140, 'clientY': 125})
+        image_ready(page, f'/framed/{platform}/dark/{second}.png')
+        assert page.locator('.showcase-counter').inner_text() == f'Image 2 of {count}'
+        stage.dispatch_event('pointerdown', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 2, 'clientX': 250, 'clientY': 120})
+        stage.dispatch_event('pointerup', {'pointerType': 'touch', 'isPrimary': True, 'pointerId': 2, 'clientX': 240, 'clientY': 230})
+        assert page.locator('.showcase-counter').inner_text() == f'Image 2 of {count}', 'Vertical scroll navigated the gallery'
+        assert page.evaluate('''() => {
+            const d=document.querySelector('dialog'), r=d.getBoundingClientRect();
+            return d.scrollWidth<=d.clientWidth && [...d.querySelectorAll('.showcase-navigation button,.showcase-close')].every(b=>{
+                const q=b.getBoundingClientRect(); return q.width>=44&&q.height>=44&&q.top>=r.top&&q.bottom<=r.bottom;
+            });
+        }'''), 'Compact lightbox clips controls or shrinks touch targets'
+        for width, height in ((430, 320), (900, 480)):
+            page.set_viewport_size({'width': width, 'height': height})
+            assert page.evaluate('''() => {
+                const d=document.querySelector('dialog'), r=d.getBoundingClientRect();
+                return d.scrollWidth<=d.clientWidth && [...d.querySelectorAll('.showcase-navigation button,.showcase-close')].every(b=>{
+                    const q=b.getBoundingClientRect(); return q.width>=44&&q.height>=44&&q.top>=r.top&&q.bottom<=r.bottom;
+                });
+            }'''), (width, height, 'Lightbox navigation clipped')
+        page.keyboard.press('Escape')
+        assert first.evaluate('(e)=>e===document.activeElement')
+        # Keyboard navigation must not survive the closed modal.
+        page.keyboard.press('ArrowRight')
+        assert not page.locator('dialog').evaluate('(d)=>d.open')
+        click(page, '[data-android-theme="light"]' if path else '[data-gallery-theme="light"]')
+        ready(page, grid, platform + '/light')
+        light_first = page.locator(grid + ' button').first
+        light_first.locator('img').click()
+        image_ready(page, f'/framed/{platform}/light/account-list.png')
+        page.keyboard.press('ArrowRight')
+        image_ready(page, f'/framed/{platform}/light/{second}.png')
+        assert page.locator('.showcase-counter').inner_text() == f'Image 2 of {count}'
+        page.keyboard.press('Escape')
+        assert light_first.evaluate('(e)=>e===document.activeElement')
+        page.close()
+
+    page = new_page(browser)
+    loaded(page, url)
+    ready(page, '#showcase-grid', 'desktop/dark')
+    page.evaluate('''() => {
+        const decode=HTMLImageElement.prototype.decode;
+        HTMLImageElement.prototype.decode=async function() {
+            await decode.call(this);
+            if(this.src.endsWith('/framed/desktop/dark/account-context-menu.png')) await new Promise(r=>window.releaseLightboxMenu=r);
+            if(this.src.endsWith('/framed/desktop/dark/settings.png')) await new Promise(r=>window.releaseLightboxSettings=r);
+        };
+    }''')
+    page.locator('#showcase-grid button').first.click()
+    image_ready(page, '/framed/desktop/dark/account-list.png')
+    page.keyboard.press('ArrowRight')
+    page.wait_for_function('typeof releaseLightboxMenu==="function"')
+    page.keyboard.press('ArrowRight')
+    page.wait_for_function('typeof releaseLightboxSettings==="function"')
+    page.keyboard.press('ArrowRight')
+    image_ready(page, '/framed/desktop/dark/data-backup.png')
+    page.evaluate('releaseLightboxMenu(); releaseLightboxSettings()')
+    image_ready(page, '/framed/desktop/dark/data-backup.png')
+    assert page.locator('.showcase-counter').inner_text() == 'Image 4 of 5'
+    page.keyboard.press('Escape')
+    page.close()
+
+    page = new_page(browser)
+    loaded(page, url)
+    ready(page, '#showcase-grid', 'desktop/dark')
+    page.route('**/framed/desktop/dark/account-context-menu.png', lambda route: route.abort())
+    page.locator('#showcase-grid button').first.click()
+    image_ready(page, '/framed/desktop/dark/account-list.png')
+    page.keyboard.press('ArrowRight')
+    page.get_by_role('button', name='Retry full-size image', exact=True).wait_for(state='visible')
+    page.keyboard.press('ArrowRight')
+    image_ready(page, '/framed/desktop/dark/settings.png')
+    page.keyboard.press('ArrowLeft')
+    page.get_by_role('button', name='Retry full-size image', exact=True).wait_for(state='visible')
+    page.unroute('**/framed/desktop/dark/account-context-menu.png')
+    page.get_by_role('button', name='Retry full-size image', exact=True).click()
+    image_ready(page, '/framed/desktop/dark/account-context-menu.png')
+    assert page.locator('.showcase-counter').inner_text() == 'Image 2 of 5'
+    page.close()
+    report['lightbox'] = 'Previous/next buttons, keyboard wraparound, group scope, modal focus/return, touch swipe/scroll, compact bounds, superseded decodes, failed-image navigation/retry'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path)
@@ -349,6 +466,7 @@ def main():
                 queue_and_fallback(browser, url, report)
                 decode_barrier(browser, url, report)
                 android_page(browser, url, report)
+                lightbox(browser, url, report)
                 browser.close()
         finally:
             server.shutdown()

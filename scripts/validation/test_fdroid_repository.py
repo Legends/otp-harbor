@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location("fdroid_repository", ROOT / "scripts/release/Build-FDroidRepository.py")
+spec = importlib.util.spec_from_file_location("fdroid_repository", ROOT / "scripts/release/android/Build-FDroidRepository.py")
 repository = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(repository)
 

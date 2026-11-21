@@ -18,6 +18,17 @@ from marketing_environment import require_pinned_dependencies
 
 
 class ScreenshotCleanupTests(unittest.TestCase):
+    def test_candidate_gallery_review_is_local_only_and_cannot_override_ci_approval(self):
+        spec = importlib.util.spec_from_file_location('public_gallery', ROOT / 'scripts/marketing/Prepare-PublicGallery.py')
+        gallery = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gallery)
+        with patch.dict(gallery.os.environ, {'CI': '', 'GITHUB_ACTIONS': ''}):
+            self.assertTrue(gallery.local_review_allowed(ROOT / 'artifacts/website'))
+            self.assertFalse(gallery.local_review_allowed(ROOT / 'site'))
+            for name in ('CI', 'GITHUB_ACTIONS'):
+                with patch.dict(gallery.os.environ, {name: 'true'}):
+                    self.assertFalse(gallery.local_review_allowed(ROOT / 'artifacts/website'))
+
     def test_mismatched_processing_versions_are_rejected_before_generation(self):
         with patch('marketing_environment.version', return_value='0.0.0'):
             with self.assertRaisesRegex(RuntimeError, 'Marketing dependencies differ from CI'):
@@ -54,20 +65,37 @@ class ScreenshotCleanupTests(unittest.TestCase):
             with self.subTest(radius=radius), self.assertRaises(ValueError):
                 mask_desktop_corners(source, radius)
 
-    def test_desktop_feature_cards_share_settings_without_missing_tab_captures(self):
+    def test_desktop_import_and_recovery_share_one_data_backup_view(self):
         spec = importlib.util.spec_from_file_location('website_showcase', ROOT / 'scripts/marketing/Generate-WebsiteShowcase.py')
         showcase = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(showcase)
         self.assertIn('settings', showcase.ORDER['desktop']['light'])
         self.assertIn('settings', showcase.ORDER['desktop']['dark'])
         screens = {slug: screen for slug, screen, *_ in showcase.MARKETING['desktop']}
-        self.assertEqual('settings', screens['import-formats'])
-        self.assertEqual('settings', screens['backup-restore'])
+        self.assertNotIn('import-formats', screens)
+        self.assertNotIn('backup-restore', screens)
+        self.assertEqual('data-backup', screens['data-backup'])
+        self.assertEqual(2, len(screens))
         self.assertEqual('scanner', screens['qr-scanning'])
         for folder in ('desktop', 'framed/desktop', 'previews/desktop', 'composites/desktop'):
             self.assertTrue(showcase.selected_website_asset({'path': f'website/optimized/{folder}/dark/settings.png'}, ('desktop',)))
         for folder in ('android', 'framed/android', 'previews/android', 'composites/android'):
             self.assertFalse(showcase.selected_website_asset({'path': f'website/optimized/{folder}/dark/settings.png'}, ('desktop',)))
+
+    def test_desktop_gallery_has_one_merged_card_using_its_own_view(self):
+        gallery = json.loads((ROOT / 'artifacts/marketing/website/gallery.json').read_text())
+        manifest = json.loads((ROOT / 'artifacts/marketing/manifest.json').read_text())
+        generated = {entry['path']: entry for entry in manifest['generated']}
+        for theme in ('light', 'dark'):
+            cards = [item for item in gallery['items'] if item['platform'] == 'desktop' and item['theme'] == theme]
+            self.assertEqual({'account-list', 'account-context-menu', 'settings', 'data-backup', 'qr-scanning'},
+                             {item['screen'] for item in cards})
+            self.assertEqual(5, len(cards))
+            for screen in ('settings', 'data-backup'):
+                item = next(item for item in cards if item['screen'] == screen)
+                full = item['full']['src'].replace('assets/marketing/', 'website/optimized/')
+                self.assertEqual(f'source/desktop/{theme}/{screen}.png', generated[full]['sourcePath'])
+                self.assertTrue((ROOT / 'artifacts/marketing' / generated[full]['sourcePath']).is_file())
 
     def test_desktop_refresh_retains_android_previews_and_gallery_metadata(self):
         spec = importlib.util.spec_from_file_location('website_showcase', ROOT / 'scripts/marketing/Generate-WebsiteShowcase.py')

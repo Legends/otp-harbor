@@ -54,16 +54,16 @@
     {
       "platform": "desktop",
       "theme": "dark",
-      "screen": "import-formats",
-      "alt": "OTP Harbor desktop import formats in dark theme, with a genuine Settings capture reused for this feature overview",
-      "caption": "Import Formats",
+      "screen": "data-backup",
+      "alt": "OTP Harbor desktop data & backup in dark theme, with an isolated render of the production Data & backup view using synthetic state",
+      "caption": "Data & Backup",
       "preview": {
-        "src": "assets/marketing/previews/desktop/dark/import-formats.webp",
+        "src": "assets/marketing/previews/desktop/dark/data-backup.webp",
         "width": 1200,
         "height": 675
       },
       "full": {
-        "src": "assets/marketing/framed/desktop/dark/import-formats.png",
+        "src": "assets/marketing/framed/desktop/dark/data-backup.png",
         "width": 1920,
         "height": 1080
       }
@@ -81,23 +81,6 @@
       },
       "full": {
         "src": "assets/marketing/framed/desktop/dark/qr-scanning.png",
-        "width": 1920,
-        "height": 1080
-      }
-    },
-    {
-      "platform": "desktop",
-      "theme": "dark",
-      "screen": "backup-restore",
-      "alt": "OTP Harbor desktop backup and restore in dark theme, with a genuine Settings capture reused for this feature overview",
-      "caption": "Backup and Restore",
-      "preview": {
-        "src": "assets/marketing/previews/desktop/dark/backup-restore.webp",
-        "width": 1200,
-        "height": 675
-      },
-      "full": {
-        "src": "assets/marketing/framed/desktop/dark/backup-restore.png",
         "width": 1920,
         "height": 1080
       }
@@ -156,16 +139,16 @@
     {
       "platform": "desktop",
       "theme": "light",
-      "screen": "import-formats",
-      "alt": "OTP Harbor desktop import formats in light theme, with a genuine Settings capture reused for this feature overview",
-      "caption": "Import Formats",
+      "screen": "data-backup",
+      "alt": "OTP Harbor desktop data & backup in light theme, with an isolated render of the production Data & backup view using synthetic state",
+      "caption": "Data & Backup",
       "preview": {
-        "src": "assets/marketing/previews/desktop/light/import-formats.webp",
+        "src": "assets/marketing/previews/desktop/light/data-backup.webp",
         "width": 1200,
         "height": 675
       },
       "full": {
-        "src": "assets/marketing/framed/desktop/light/import-formats.png",
+        "src": "assets/marketing/framed/desktop/light/data-backup.png",
         "width": 1920,
         "height": 1080
       }
@@ -183,23 +166,6 @@
       },
       "full": {
         "src": "assets/marketing/framed/desktop/light/qr-scanning.png",
-        "width": 1920,
-        "height": 1080
-      }
-    },
-    {
-      "platform": "desktop",
-      "theme": "light",
-      "screen": "backup-restore",
-      "alt": "OTP Harbor desktop backup and restore in light theme, with a genuine Settings capture reused for this feature overview",
-      "caption": "Backup and Restore",
-      "preview": {
-        "src": "assets/marketing/previews/desktop/light/backup-restore.webp",
-        "width": 1200,
-        "height": 675
-      },
-      "full": {
-        "src": "assets/marketing/framed/desktop/light/backup-restore.png",
         "width": 1920,
         "height": 1080
       }

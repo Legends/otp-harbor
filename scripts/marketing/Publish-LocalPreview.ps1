@@ -1,17 +1,18 @@
 [CmdletBinding()]
-param([int]$Port = 8765, [switch]$NoServe)
+param([int]$Port = 8765, [switch]$NoServe, [string]$PythonExecutable = 'python')
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $marketing = Join-Path $repo 'artifacts/marketing'
-$preview = Join-Path $marketing 'staging/local-site'
+$preview = Join-Path $repo 'artifacts/website'
 $resolvedPreview = [System.IO.Path]::GetFullPath($preview)
-$resolvedStaging = [System.IO.Path]::GetFullPath((Join-Path $marketing 'staging'))
-if (-not $resolvedPreview.StartsWith($resolvedStaging + [System.IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Local preview target is outside marketing staging.'
+$expectedPreview = [System.IO.Path]::GetFullPath((Join-Path $repo 'artifacts/website'))
+if ($resolvedPreview -cne $expectedPreview -or ((Test-Path -LiteralPath $resolvedPreview) -and
+    ((Get-Item -LiteralPath $resolvedPreview).Attributes -band [IO.FileAttributes]::ReparsePoint))) {
+    throw 'Local preview target must be the generated artifacts/website directory, without a link.'
 }
 
-& (Join-Path $PSScriptRoot 'Validate-MarketingAssets.ps1') -RequireCaptures
+& (Join-Path $PSScriptRoot 'Validate-MarketingAssets.ps1') -RequireCaptures -PythonExecutable $PythonExecutable
 if (Test-Path -LiteralPath $resolvedPreview) {
     Remove-Item -LiteralPath $resolvedPreview -Recurse -Force
 }
@@ -30,7 +31,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'OtpHarbor.UI.Avalonia.Desktop/Assets/Ic
 # The local preview deliberately includes reviewed candidates before the public Pages gate is opened.
 Copy-Item -LiteralPath (Join-Path $marketing 'website/gallery.json') -Destination (Join-Path $resolvedPreview 'assets/marketing/gallery.json')
 Copy-Item -Path (Join-Path $marketing 'website/optimized/*') -Destination (Join-Path $resolvedPreview 'assets/marketing') -Recurse
-python (Join-Path $PSScriptRoot 'Prepare-PublicGallery.py') --output $resolvedPreview --local-review
+& $PythonExecutable (Join-Path $PSScriptRoot 'Prepare-PublicGallery.py') --output $resolvedPreview --local-review
 if ($LASTEXITCODE -ne 0) { throw 'Unable to prepare candidate gallery heroes.' }
 
 if ($NoServe) {
@@ -48,7 +49,7 @@ if ($listener) {
     throw "Port $Port is used by another process. Preview created at $resolvedPreview; rerun with another -Port."
 }
 $arguments = @('-m','http.server',"$Port",'--bind','127.0.0.1','--directory',('"' + $resolvedPreview + '"'))
-$server = Start-Process -FilePath 'python' -ArgumentList $arguments -WindowStyle Hidden -PassThru
+$server = Start-Process -FilePath $PythonExecutable -ArgumentList $arguments -WindowStyle Hidden -PassThru
 Start-Sleep -Milliseconds 800
 if ($server.HasExited) { throw 'Local preview server exited unexpectedly.' }
 Write-Host "Local preview: http://127.0.0.1:$Port/"

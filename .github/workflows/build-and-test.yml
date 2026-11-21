@@ -71,6 +71,10 @@ jobs:
         shell: pwsh
         run: ./scripts/validation/Test-MicrosoftStorePackaging.ps1
 
+      - name: Validate retained Store release artifacts
+        shell: pwsh
+        run: ./scripts/validation/Test-StoreReleaseArtifact.ps1
+
       - name: Validate public website
         shell: pwsh
         run: ./scripts/validation/Test-PublicWebsite.ps1
@@ -367,7 +371,7 @@ jobs:
         if: ${{ matrix.rid == 'linux-x64' }}
         shell: pwsh
         run: |
-          ./scripts/release/Package-AvaloniaLinux.ps1 `
+          ./scripts/release/linux/Package-AvaloniaLinux.ps1 `
             -PublishDirectory m3-publish `
             -OutputDirectory m6-linux-distribution `
             -ReleaseVersion "2.0.0" `
@@ -380,7 +384,7 @@ jobs:
         if: ${{ matrix.rid == 'osx-arm64' }}
         shell: pwsh
         run: |
-          ./scripts/release/Package-AvaloniaMacOS.ps1 `
+          ./scripts/release/macos/Package-AvaloniaMacOS.ps1 `
             -PublishDirectory m3-publish `
             -OutputDirectory m6-macos-distribution `
             -ReleaseVersion "2.0.0"
@@ -410,12 +414,12 @@ jobs:
           }
 
           $manifestPath = "m7-release/release-artifacts-${{ matrix.rid }}.json"
-          ./scripts/release/New-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
             -ReleaseVersion "2.0.0" `
             -SourceCommit "${{ github.sha }}" `
             -ArtifactPath $artifactPaths `
             -OutputPath $manifestPath
-          ./scripts/release/Test-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
             -ManifestPath $manifestPath `
             -ArtifactDirectory m7-release
 
@@ -537,8 +541,8 @@ jobs:
             --configuration Release --runtime win-x64 --self-contained false --no-restore `
             --nologo --verbosity minimal -p:PublishSingleFile=false -p:PublishTrimmed=false `
             -p:PublishReadyToRun=true -p:DebugType=None -p:DebugSymbols=false @metadata --output release-fast
-          ./scripts/release/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-publish
-          ./scripts/release/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
+          ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-publish
+          ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
 
       - name: Upload unsigned Windows rehearsal payload
         id: upload-signpath-rehearsal
@@ -568,7 +572,7 @@ jobs:
       - name: Validate signed rehearsal payload
         shell: pwsh
         run: |
-          ./scripts/release/Apply-SignPathSignedPayload.ps1 `
+          ./scripts/release/windows/Apply-SignPathSignedPayload.ps1 `
             -SignedRoot signpath-signed `
             -TargetDirectory release-publish,release-fast `
             -ExpectedProductVersion "${{ steps.versioning.outputs.release_version }}"
@@ -694,9 +698,9 @@ jobs:
       - name: Prepare bounded release payload
         shell: pwsh
         run: |
-          ./scripts/release/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-publish
+          ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-publish
           if (Test-Path -LiteralPath release-fast) {
-            ./scripts/release/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
+            ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
           }
 
       - name: Install pinned WiX Toolset
@@ -738,7 +742,7 @@ jobs:
         if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' }}
         shell: pwsh
         run: |
-          ./scripts/release/Apply-SignPathSignedPayload.ps1 `
+          ./scripts/release/windows/Apply-SignPathSignedPayload.ps1 `
             -SignedRoot signpath-signed `
             -TargetDirectory release-publish,release-fast `
             -ExpectedProductVersion "${{ steps.versioning.outputs.release_version }}"
@@ -796,7 +800,7 @@ jobs:
           switch ("${{ matrix.rid }}") {
             "win-x64" {
               if ("${{ steps.versioning.outputs.channel }}" -eq "stable") {
-                ./scripts/release/Set-PackageUpdatePolicy.ps1 `
+                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
                   -PackageDirectory release-publish `
                   -DistributionMode store `
                   -Channel stable `
@@ -807,12 +811,12 @@ jobs:
               }
               else {
                 $appcastUrl = "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
-                ./scripts/release/Set-PackageUpdatePolicy.ps1 `
+                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
                   -PackageDirectory release-publish `
                   -DistributionMode direct `
                   -Channel rc `
                   -AppcastUrl $appcastUrl
-                ./scripts/release/Set-PackageUpdatePolicy.ps1 `
+                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
                   -PackageDirectory release-fast `
                   -DistributionMode direct `
                   -Channel rc `
@@ -824,7 +828,7 @@ jobs:
                   -Path release-fast/* `
                   -DestinationPath "release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip"
                 $productVersion = "${{ steps.versioning.outputs.release_version }}".Split('-')[0]
-                ./scripts/release/New-WindowsMsi.ps1 `
+                ./scripts/release/windows/New-WindowsMsi.ps1 `
                   -PublishDirectory release-publish `
                   -OutputDirectory release-assets `
                   -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
@@ -838,7 +842,7 @@ jobs:
               else {
                 "https://github.com/Legends/otp-harbor/releases/latest/download/appcast-v2.xml"
               }
-              ./scripts/release/Package-AvaloniaLinux.ps1 `
+              ./scripts/release/linux/Package-AvaloniaLinux.ps1 `
                 -PublishDirectory release-publish `
                 -OutputDirectory linux-distribution `
                 -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
@@ -847,7 +851,7 @@ jobs:
               Copy-Item linux-distribution/*.deb release-assets/
             }
             "osx-arm64" {
-              ./scripts/release/Package-AvaloniaMacOS.ps1 `
+              ./scripts/release/macos/Package-AvaloniaMacOS.ps1 `
                 -PublishDirectory release-publish `
                 -OutputDirectory macos-distribution `
                 -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
@@ -965,7 +969,7 @@ jobs:
       - name: Build and verify signed Android APK
         shell: pwsh
         run: |
-          ./scripts/release/New-AndroidRelease.ps1 `
+          ./scripts/release/android/New-AndroidRelease.ps1 `
             -ReleaseTag "${{ github.ref_name }}" `
             -OutputDirectory android-release-assets `
             -KeyStorePath $env:ANDROID_KEYSTORE_PATH `
@@ -1011,7 +1015,7 @@ jobs:
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
-          $storeVersion = ./scripts/release/Get-MicrosoftStoreVersion.ps1 -ReleaseTag $tag
+          $storeVersion = ./scripts/release/windows/Get-MicrosoftStoreVersion.ps1 -ReleaseTag $tag
           $releaseVersion = $tag.Substring(1)
           "store_version=$storeVersion" >> $env:GITHUB_OUTPUT
           "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
@@ -1034,11 +1038,13 @@ jobs:
       - name: Build unsigned Partner Center MSIX
         shell: pwsh
         run: |
-          ./scripts/release/New-MicrosoftStoreMsix.ps1 `
+          ./scripts/release/windows/New-MicrosoftStoreMsix.ps1 `
             -IdentityName 'Legends77.OTPHarbor' `
             -Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9' `
             -PublisherDisplayName 'Legends77' `
             -Version '${{ steps.versioning.outputs.store_version }}' `
+            -ProductVersion '${{ steps.versioning.outputs.release_version }}' `
+            -OutputDirectory 'artifacts/windows/release/${{ github.ref_name }}' `
             -PublishDirectory store-publish
 
       - name: Upload Partner Center submission artifact
@@ -1046,9 +1052,9 @@ jobs:
         with:
           name: otp-harbor-microsoft-store-${{ steps.versioning.outputs.release_version }}
           path: |
-            artifacts/store/*.msix
-            artifacts/store/SHA256SUMS
-            artifacts/store/store-package.json
+            artifacts/windows/release/${{ github.ref_name }}/*.msix
+            artifacts/windows/release/${{ github.ref_name }}/SHA256SUMS
+            artifacts/windows/release/${{ github.ref_name }}/store-package.json
           if-no-files-found: error
           retention-days: 90
 
@@ -1104,13 +1110,13 @@ jobs:
             throw "Unsigned previews cannot contain appcasts or macOS artifacts."
           }
 
-          ./scripts/release/New-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
             -ReleaseVersion $releaseVersion `
             -SourceCommit "${{ github.sha }}" `
             -ArtifactPath $artifactPaths `
             -OutputPath preview-assets/release-artifacts-v2.json `
             -ReleaseProfile unsigned-platform-preview
-          ./scripts/release/Test-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
             -ManifestPath preview-assets/release-artifacts-v2.json `
             -ArtifactDirectory preview-assets
 
@@ -1149,7 +1155,7 @@ jobs:
           & chmod 600 $privateKeyPath
 
           $baseUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/"
-          ./scripts/release/Generate-AvaloniaAppcast.ps1 `
+          ./scripts/release/shared/Generate-AvaloniaAppcast.ps1 `
             -ManifestPath preview-assets/release-artifacts-v2.json `
             -ArtifactDirectory preview-assets `
             -BaseDownloadUrl $baseUrl `
@@ -1157,7 +1163,7 @@ jobs:
             -PublicKeyPath $publicKeyPath `
             -ExpectedPublicKey $expectedPublicKey `
             -OutputDirectory preview-feed
-          ./scripts/release/Test-AvaloniaAppcast.ps1 `
+          ./scripts/release/shared/Test-AvaloniaAppcast.ps1 `
             -AppcastPath preview-feed/appcast-v2.xml `
             -ManifestPath preview-assets/release-artifacts-v2.json `
             -BaseDownloadUrl $baseUrl
@@ -1337,12 +1343,12 @@ jobs:
             throw "The stable desktop GitHub release must contain exactly the two Linux artifacts."
           }
 
-          ./scripts/release/New-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
             -ReleaseVersion $releaseVersion `
             -SourceCommit "${{ github.sha }}" `
             -ArtifactPath $artifactPaths `
             -OutputPath release-assets/release-artifacts-v2.json
-          ./scripts/release/Test-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
             -ManifestPath release-assets/release-artifacts-v2.json `
             -ArtifactDirectory release-assets
 
@@ -1406,7 +1412,7 @@ jobs:
           & chmod 600 $privateKeyPath
 
           $baseUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/"
-          ./scripts/release/Generate-AvaloniaAppcast.ps1 `
+          ./scripts/release/shared/Generate-AvaloniaAppcast.ps1 `
             -ManifestPath release-assets/release-artifacts-v2.json `
             -ArtifactDirectory release-assets `
             -BaseDownloadUrl $baseUrl `
@@ -1414,7 +1420,7 @@ jobs:
             -PublicKeyPath $publicKeyPath `
             -ExpectedPublicKey $expectedPublicKey `
             -OutputDirectory release-feed
-          ./scripts/release/Test-AvaloniaAppcast.ps1 `
+          ./scripts/release/shared/Test-AvaloniaAppcast.ps1 `
             -AppcastPath release-feed/appcast-v2.xml `
             -ManifestPath release-assets/release-artifacts-v2.json `
             -BaseDownloadUrl $baseUrl
@@ -1570,12 +1576,12 @@ jobs:
             throw "The verified Android release metadata is missing."
           }
 
-          ./scripts/release/New-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
             -ReleaseVersion $releaseVersion `
             -SourceCommit "${{ github.sha }}" `
             -ArtifactPath $apkPaths[0].FullName `
             -OutputPath android-release-assets/release-artifacts-v2.json
-          ./scripts/release/Test-ReleaseArtifactManifest.ps1 `
+          ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
             -ManifestPath android-release-assets/release-artifacts-v2.json `
             -ArtifactDirectory android-release-assets
 

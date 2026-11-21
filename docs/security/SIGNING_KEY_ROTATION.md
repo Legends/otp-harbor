@@ -47,4 +47,4 @@ If a Foundation certificate, SignPath organization, artifact configuration, or s
 - Upstream binaries were not signed with the project's Foundation certificate.
 - No exportable Windows certificate or password exists in GitHub Actions secrets or repository history.
 
-The local PFX helper scripts under `scripts/release/signing` are not used by the Foundation-backed hosted workflow and must not be wired back into stable publication.
+Legacy local PFX signing helpers are not used by the Foundation-backed hosted workflow and must not be wired back into stable publication.

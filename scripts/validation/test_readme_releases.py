@@ -6,7 +6,7 @@ import re
 from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location("readme_releases", ROOT / "scripts/release/Update-ReadmeReleases.py")
+SPEC = importlib.util.spec_from_file_location("readme_releases", ROOT / "scripts/release/shared/Update-ReadmeReleases.py")
 GENERATOR = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(GENERATOR)
 
@@ -100,7 +100,7 @@ class ReadmeReleaseTests(unittest.TestCase):
         self.assertIn('gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$DEFAULT_BRANCH"', updater)
         pages = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
         self.assertIn("'packaging/windows-store/public-version.json'", pages)
-        self.assertIn("Update-ReadmeReleases.py --website _site/index.html", pages)
+        self.assertIn("Update-ReadmeReleases.py --website artifacts/website/index.html", pages)
         self.assertNotIn("gh pr create", updater)
 
     def test_version_badges_keep_three_distribution_channels_independent(self):

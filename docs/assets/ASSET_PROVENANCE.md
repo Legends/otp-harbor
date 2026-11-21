@@ -70,7 +70,7 @@ fingerprint, secure vault, and key.
 
 ## Windows installer artwork
 
-`scripts/release/installer/InstallerDialog.bmp` and `InstallerBanner.bmp` were rendered in the project workspace on 2026-09-08 from geometric shapes and the reviewed project-owned `app-1024.png`. They provide the branded WiX welcome/license and banner surfaces. No downloaded or third-party artwork is included. Both bitmaps were visually reviewed at their exact Windows Installer dimensions.
+`scripts/release/windows/installer/InstallerDialog.bmp` and `InstallerBanner.bmp` were rendered in the project workspace on 2026-09-08 from geometric shapes and the reviewed project-owned `app-1024.png`. They provide the branded WiX welcome/license and banner surfaces. No downloaded or third-party artwork is included. Both bitmaps were visually reviewed at their exact Windows Installer dimensions.
 
 ## Microsoft Store promotional artwork
 
@@ -214,8 +214,8 @@ account data. They are retained solely to exercise the offline Google Authentica
 | `OtpHarbor.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png` | `26fe7fe9a91c7f2e939c7d794cbade4d1e22090ef3c40a59b8ae9ffb3c9aaf88` |
 | `packaging/marketing/source/recraft/biometric-fingerprint-master.svg` | `eb8d9731e7884ed53d5bb5ff2e542e37a51e5518d63b72d68f658de313f1534b` |
 | `packaging/marketing/source/recraft/biometric-lock-screen-master.svg` | `1ffb46aab0b9247fa1ee3f9543b3c9e6f4a8bb70385acb24bcf0312a3aafeee0` |
-| `scripts/release/installer/InstallerDialog.bmp` | `be89b19fbb5e0c3abcf6e6d6df916e8f79fa9c3528a3c2cdf5881f5b419ddacc` |
-| `scripts/release/installer/InstallerBanner.bmp` | `7ba45f2c67dafb51e370d97cc31ac7555d986703ea1dcada4403b458108e8a58` |
+| `scripts/release/windows/installer/InstallerDialog.bmp` | `be89b19fbb5e0c3abcf6e6d6df916e8f79fa9c3528a3c2cdf5881f5b419ddacc` |
+| `scripts/release/windows/installer/InstallerBanner.bmp` | `7ba45f2c67dafb51e370d97cc31ac7555d986703ea1dcada4403b458108e8a58` |
 | `packaging/windows-store/assets/source/store-abstract-background.png` | `9a45a1d07a9b3912af600cd0156847117b2cf2f9367665cf5c439df8324eb102` |
 | `packaging/windows-store/assets/source/store-marketing-screenshot-background.png` | `2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4` |
 | `packaging/windows-store/assets/store-super-hero-1920x1080.png` | `1df8efd083a88c7aaef390ec3b5c9774458aa8ff5db8055e188a737a30184a41` |

@@ -10,7 +10,7 @@ on:
         required: true
   pull_request:
     paths:
-      - 'scripts/release/Build-FDroidRepository.py'
+      - 'scripts/release/android/Build-FDroidRepository.py'
       - 'scripts/validation/test_fdroid_repository.py'
       - 'packaging/fdroid/**'
       - 'site/fdroid/**'
@@ -72,7 +72,7 @@ jobs:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: |
           export PATH="$JAVA_HOME/bin:$PATH"
-          python scripts/release/Build-FDroidRepository.py \
+          python scripts/release/android/Build-FDroidRepository.py \
             --releases-json "$RUNNER_TEMP/otp-fdroid-releases.json" \
             --workspace "$RUNNER_TEMP/otp-fdroid-private"
 

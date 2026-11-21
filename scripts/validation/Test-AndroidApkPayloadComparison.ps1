@@ -4,7 +4,7 @@ Regression-tests the Android APK payload comparator with deterministic synthetic
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $comparisonScript = Join-Path $repositoryRoot 'scripts\validation\Compare-AndroidApkPayload.ps1'
 $systemTempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $testRoot = Join-Path $systemTempRoot "otp-harbor-apk-compare-$([Guid]::NewGuid().ToString('N'))"
