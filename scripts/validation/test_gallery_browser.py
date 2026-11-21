@@ -697,7 +697,25 @@ def full_preloading(browser, url, report):
     page.wait_for_function('performance.getEntriesByType("resource").filter(e=>e.name.includes("/zoom/")).length>=18')
     assert not page.evaluate('galleryTest.errors')
     page.close()
-    report['full_preloading'] = 'Theme previews finish first; 18 unique full transfers, ready Next commits without loader; HTTP/in-flight reuse; two decoded images within 64 MiB; hidden transfer abort/pause/resume and cached theme changes'
+    page = new_page(browser)
+    page.add_init_script('''
+        const decode=HTMLImageElement.prototype.decode;
+        HTMLImageElement.prototype.decode=async function(){
+            await decode.call(this);
+            if(this.src.endsWith('/previews/desktop/light/settings.webp')) await new Promise(r=>window.releaseEarlyPreview=r);
+        };
+    ''')
+    loaded(page, url)
+    page.wait_for_function('typeof releaseEarlyPreview==="function"')
+    page.locator('#showcase-grid button').first.locator('img').click()
+    page.wait_for_function('document.querySelector(".showcase-stage").getAttribute("aria-busy")==="false"')
+    page.wait_for_function('galleryTest.decode.some(e=>e.src.endsWith("/zoom/desktop/dark/account-context-menu.webp"))')
+    page.get_by_role('button', name='Next image', exact=True).click()
+    assert page.locator('.showcase-stage').get_attribute('aria-busy') == 'false', 'Unrelated theme previews blocked active lightbox preparation'
+    assert page.locator('.showcase-status').is_hidden()
+    assert not page.evaluate('galleryTest.errors')
+    page.close()
+    report['full_preloading'] = 'Theme previews finish first; 18 unique full transfers, ready Next commits without loader; HTTP/in-flight reuse; two decoded images within 64 MiB; hidden transfer abort/pause/resume; active lightbox takes priority over unrelated previews'
 
 
 def main():

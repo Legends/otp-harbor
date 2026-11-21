@@ -81,7 +81,8 @@
       function pump() {
         queue.sort((a, b) => a.priority - b.priority || a.order - b.order);
         while (active.size < 2) {
-          const index = queue.findIndex((record) => record.priority === 0 || (!document.hidden && backgroundStarted && (record.kind !== 'full' || canPrepareFull())));
+          const index = queue.findIndex((record) => record.priority === 0 || (!document.hidden &&
+            (record.kind === 'full' ? canPrepareFull() : backgroundStarted && !dialog.open)));
           if (index < 0) break;
           const record = queue.splice(index, 1)[0];
           if (record.kind !== 'full' && record.priority > 0 && backgroundIssued >= policy().budget) {
@@ -95,10 +96,10 @@
         scheduleFullPreparation();
       }
 
-      function prioritize() {
+      function prioritize(includeFull = true) {
         // Free speculative slots immediately rather than waiting on slow background images.
         for (const record of active) {
-          if (record.priority === 0) continue;
+          if (record.priority === 0 || !includeFull && record.kind === 'full') continue;
           record.attempt++;
           clearTimeout(record.timer);
           record.image.onload = record.image.onerror = null;
@@ -323,10 +324,10 @@
         return new URL(options.prefix + item.full.src, document.baseURI).href;
       }
       function canPrepareFull() {
-        return backgroundStarted && !document.hidden && policy().fulls > 0
+        return (backgroundStarted || dialog.open) && !document.hidden && policy().fulls > 0
           && grid.getAttribute('aria-busy') !== 'true'
           && (!dialog.open || stage.getAttribute('aria-busy') !== 'true')
-          && ![...groups.values()].some((group) => group.records.some((record) => ['loading', 'queued'].includes(record.status)))
+          && (dialog.open || ![...groups.values()].some((group) => group.records.some((record) => ['loading', 'queued'].includes(record.status))))
           && ![...active].some((record) => record.priority === 0);
       }
       function stopFullTransfer(except) {
@@ -563,7 +564,7 @@
         dialogRetry.hidden = true;
         counter.textContent = `Image ${dialogIndex + 1} of ${dialogItems.length}`;
         previous.disabled = next.disabled = dialogItems.length < 2;
-        if (opening) { dialog.showModal(); close.focus(); }
+        if (opening) { dialog.showModal(); close.focus(); prioritize(false); pump(); }
         fullRecord = fullImage(item);
         trimFullImages(fullRecord);
         stopFullTransfer(fullRecord.src);
@@ -663,7 +664,7 @@
         fullRecord = undefined;
         if (!policy().fulls) for (const record of [...fullImages.values()]) releaseFullImage(record);
         trimFullImages();
-        scheduleFullPreparation();
+        pump();
         if (opener?.isConnected) opener.focus();
       });
 

@@ -175,6 +175,9 @@ Background failures/timeouts do not retry in a loop. No service worker, persiste
 application cache or object-URL collection is required. See
 [Fetch priority](https://web.dev/articles/fetch-priority) and
 [image decoding](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode).
+Opening the lightbox prioritizes its current/next images over unrelated theme
+previews: speculative preview work pauses while the modal is open, then resumes
+on close. An early gallery click therefore does not wait for offscreen themes.
 
 The viewer fills 98% of the available viewport while preserving the marketing
 frame and aspect ratio. A translucent Previous/Next bar overlays the bottom of
