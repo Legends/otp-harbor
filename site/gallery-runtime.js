@@ -273,6 +273,15 @@
       let fullRecord;
       let dialogItems = [];
       let dialogIndex = -1;
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+      let imageTransition;
+      function stopImageTransition() {
+        imageTransition?.cancel();
+        imageTransition = undefined;
+      }
+      reducedMotion.addEventListener('change', (event) => {
+        if (event.matches) stopImageTransition();
+      });
       function discardFullRecord() {
         const record = fullRecord;
         if (!record) return;
@@ -286,7 +295,7 @@
         if (index >= 0) queue.splice(index, 1);
         record.reject?.(new Error('Image superseded'));
       }
-      async function enlarge(item, source) {
+      async function enlarge(item, source, direction = 0) {
         const opening = !dialog.open;
         if (opening) {
           opener = source;
@@ -295,6 +304,7 @@
         dialogIndex = dialogItems.indexOf(item);
         lastItem = item;
         const token = ++dialogRevision;
+        stopImageTransition();
         dialog.querySelector('img').hidden = true;
         dialogCaption.textContent = item.caption;
         dialogStatus.textContent = 'Loading full-size image…';
@@ -322,6 +332,12 @@
           }
           image.hidden = false;
           dialog.querySelector('img').replaceWith(image);
+          if (!reducedMotion.matches && typeof image.animate === 'function') {
+            imageTransition = image.animate([
+              { opacity: 0, transform: `translateX(${direction * 12}px)` },
+              { opacity: 1, transform: 'translateX(0)' }
+            ], { duration: 180, easing: 'ease-out' });
+          }
           dialogStatus.textContent = '';
           dialogStatus.hidden = true;
           stage.setAttribute('aria-busy', 'false');
@@ -335,7 +351,7 @@
       function moveImage(offset) {
         if (!dialog.open || dialogItems.length < 2) return;
         const index = (dialogIndex + offset + dialogItems.length) % dialogItems.length;
-        if (index !== dialogIndex) void enlarge(dialogItems[index], opener);
+        if (index !== dialogIndex) void enlarge(dialogItems[index], opener, Math.sign(offset));
       }
       previous.addEventListener('click', () => moveImage(-1));
       next.addEventListener('click', () => moveImage(1));
@@ -374,6 +390,7 @@
       dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
       dialog.addEventListener('close', () => {
         dialogRevision++;
+        stopImageTransition();
         swipeStart = undefined;
         if (policy().groups < 4 && fullRecord?.status !== 'loading') {
           fullRecord?.image.removeAttribute('src');

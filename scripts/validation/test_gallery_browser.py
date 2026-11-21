@@ -337,6 +337,7 @@ def lightbox(browser, url, report):
         assert not page.locator('dialog').evaluate('(d)=>d.open')
         first.locator('img').click()
         image_ready(page, f'/framed/{platform}/dark/account-list.png')
+        assert page.locator('dialog img').evaluate('(i)=>i.getAnimations().length===0'), 'Reduced-motion opening animated'
         assert page.locator('.showcase-counter').inner_text() == f'Image 1 of {count}'
         page.keyboard.press('ArrowLeft')
         last = 'qr-scanning' if platform == 'desktop' else 'backup-restore'
@@ -440,6 +441,83 @@ def lightbox(browser, url, report):
     report['lightbox'] = 'Previous/next buttons, keyboard wraparound, group scope, modal focus/return, touch swipe/scroll, compact bounds, superseded decodes, failed-image navigation/retry'
 
 
+def lightbox_motion(browser, url, report):
+    for path, grid, platform, second in [('', '#showcase-grid', 'desktop', 'account-context-menu'), ('android/', '#android-showcase-grid', 'android', 'settings')]:
+        page = new_page(browser)
+        page.emulate_media(reduced_motion='no-preference')
+        # Pause real browser animations so intermediate-frame assertions never depend on timing.
+        page.add_init_script('''
+            window.lightboxTransitions=[];
+            const animate=HTMLImageElement.prototype.animate;
+            HTMLImageElement.prototype.animate=function(...args) {
+                const player=animate.apply(this,args); player.pause();
+                lightboxTransitions.push(player); return player;
+            };
+        ''')
+        loaded(page, url + path, grid)
+        click(page, '[data-android-theme="dark"]' if path else '[data-gallery-theme="dark"]')
+        ready(page, grid, platform + '/dark')
+        first = page.locator(grid + ' button').first
+        first.locator('img').click()
+        page.wait_for_function('lightboxTransitions.length===1')
+        assert page.evaluate('''() => {
+            const player=lightboxTransitions[0], image=document.querySelector('dialog img');
+            player.currentTime=90;
+            const opacity=Number(getComputedStyle(image).opacity);
+            return player.effect.target===image && player.effect.getTiming().duration===180 && opacity>0 && opacity<1;
+        }'''), 'Opening does not fade a decoded image'
+
+        page.evaluate('''suffix => {
+            const decode=HTMLImageElement.prototype.decode; let held=false;
+            HTMLImageElement.prototype.decode=async function() {
+                await decode.call(this);
+                if(!held && this.src.endsWith(suffix)) { held=true; await new Promise(r=>window.releaseMotionDecode=r); }
+            };
+        }''', f'/framed/{platform}/dark/{second}.png')
+        page.keyboard.press('ArrowRight')
+        page.wait_for_function('typeof releaseMotionDecode==="function"')
+        assert page.evaluate('lightboxTransitions.length===1 && lightboxTransitions[0].playState==="idle"')
+        assert page.locator('dialog img').is_hidden(), 'Image appeared before decoding'
+        page.evaluate('releaseMotionDecode()')
+        page.wait_for_function('lightboxTransitions.length===2')
+        assert page.evaluate('''() => {
+            const player=lightboxTransitions.at(-1), image=document.querySelector('dialog img');
+            player.currentTime=90;
+            const style=getComputedStyle(image);
+            return Number(style.opacity)>0 && Number(style.opacity)<1 && new DOMMatrixReadOnly(style.transform).m41>0
+                && getComputedStyle(document.querySelector('.showcase-stage')).overflowX==='hidden';
+        }'''), 'Next image does not fade/slide from the right without overflow'
+
+        page.keyboard.press('ArrowLeft')
+        page.wait_for_function('lightboxTransitions.length===3')
+        assert page.evaluate('''() => {
+            const player=lightboxTransitions.at(-1); player.currentTime=90;
+            return lightboxTransitions[1].playState==='idle' && new DOMMatrixReadOnly(getComputedStyle(player.effect.target).transform).m41<0;
+        }'''), 'Previous image does not slide from the left or cancel its predecessor'
+        page.evaluate('lightboxTransitions.at(-1).finish()')
+        assert page.locator('dialog img').evaluate('(i)=>getComputedStyle(i).opacity==="1" && getComputedStyle(i).transform==="none"')
+
+        page.keyboard.press('ArrowRight')
+        page.wait_for_function('lightboxTransitions.length===4')
+        page.emulate_media(reduced_motion='reduce')
+        page.wait_for_function('lightboxTransitions.at(-1).playState==="idle"')
+        page.keyboard.press('ArrowLeft')
+        page.wait_for_function('document.querySelector("dialog img").src.endsWith("/account-list.png") && !document.querySelector("dialog img").hidden')
+        assert page.evaluate('lightboxTransitions.length===4'), 'Reduced-motion navigation animated'
+        assert page.locator('dialog img').evaluate('(i)=>i.getAnimations().length===0 && getComputedStyle(i).opacity==="1"')
+
+        page.emulate_media(reduced_motion='no-preference')
+        page.keyboard.press('ArrowRight')
+        page.wait_for_function('lightboxTransitions.length===5')
+        page.keyboard.press('Escape')
+        page.wait_for_function('lightboxTransitions.at(-1).playState==="idle"')
+        assert not page.locator('dialog').evaluate('(d)=>d.open')
+        assert first.evaluate('(e)=>e===document.activeElement')
+        assert not page.evaluate('galleryTest.errors')
+        page.close()
+    report['lightbox_motion'] = 'Real 180ms fade/directional slide, decode barrier, intermediate/final frames, predecessor/close cancellation, live reduced-motion changes; main and Android pages'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path)
@@ -467,6 +545,7 @@ def main():
                 decode_barrier(browser, url, report)
                 android_page(browser, url, report)
                 lightbox(browser, url, report)
+                lightbox_motion(browser, url, report)
                 browser.close()
         finally:
             server.shutdown()

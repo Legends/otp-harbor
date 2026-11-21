@@ -145,6 +145,10 @@ the original thumbnail. Focus stays inside the modal. Touch users can swipe hori
 vertical scrolling and pinch gestures retain their browser behavior. Full-size images
 load on demand, with navigation and retry available during failures and loading.
 Superseded downloads/decodes cannot replace the current image.
+Decoded full-size images reveal with a 180 ms fade and a small directional slide
+for Previous/Next navigation. Reduced-motion preferences disable the animation,
+including when the preference changes while the lightbox is open. Navigation
+and closing cancel an in-progress transition.
 
 Keyboard and focus behavior follow the WAI-ARIA
 [modal dialog guidance](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/).
