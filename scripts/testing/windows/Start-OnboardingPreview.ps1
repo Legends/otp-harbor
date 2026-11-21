@@ -212,7 +212,7 @@ $packageName = 'io.github.legends.otpharbor.debug'
 $receiverName = 'io.github.legends.otpharbor.debug.DebugAccountDataReceiver'
 $actionName = 'io.github.legends.otpharbor.debug.action.SHOW_ONBOARDING'
 if ($Install) {
-    $installerPath = Resolve-OtpHarborTestingPath 'Android/Install-AndroidDevelopmentBuild.ps1'
+    $installerPath = Resolve-OtpHarborTestingPath 'android/Install-AndroidDevelopmentBuild.ps1'
     if ($device -match '^(?:\d{1,3}\.){3}\d{1,3}:\d{1,5}$') {
         & $installerPath -Device $device
     }

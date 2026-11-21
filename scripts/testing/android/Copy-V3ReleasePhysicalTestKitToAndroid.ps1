@@ -4,11 +4,11 @@ param([string]$Device)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '../shared/Testing.Common.ps1')
-. (Resolve-OtpHarborTestingPath 'Windows/DevelopmentAccountSnapshot.Common.ps1')
+. (Resolve-OtpHarborTestingPath 'windows/DevelopmentAccountSnapshot.Common.ps1')
 
 $repositoryRoot = Get-OtpHarborRepositoryRoot -StartDirectory $PSScriptRoot
 $kit = Join-Path $repositoryRoot 'artifacts/shared/testing/v3-release-physical'
-& (Resolve-OtpHarborTestingPath 'Windows/Prepare-V3ReleasePhysicalTestKit.ps1') | Out-Null
+& (Resolve-OtpHarborTestingPath 'windows/Prepare-V3ReleasePhysicalTestKit.ps1') | Out-Null
 $connection = Resolve-AndroidDevice -Device $Device
 $remoteRoot = '/sdcard/Download/OTP-Harbor-v3-release-test'
 & $connection.Adb -s $connection.Device shell mkdir -p $remoteRoot

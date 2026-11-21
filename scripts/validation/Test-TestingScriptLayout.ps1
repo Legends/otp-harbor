@@ -59,6 +59,14 @@ foreach ($relativeDirectory in @('scripts', 'docs', '.github', 'artifacts/market
     }
 }
 
+# Reject legacy folder casing even on Windows, where existence checks alone accept it.
+foreach ($legacyPath in @('Android/Install-AndroidReleasePhone.ps1', 'Windows/StoreUpgrade.Testing.ps1', 'Linux/CopyFileToUbuntu.ps1')) {
+    $caseRejected = $false
+    try { $null = Resolve-OtpHarborTestingPath $legacyPath }
+    catch { $caseRejected = $_.Exception.Message -like '*lowercase platform*' }
+    if (-not $caseRejected) { throw "Legacy testing-platform casing was accepted: $legacyPath" }
+}
+
 # A source archive without .git, extra nesting and spaces must also resolve correctly.
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ('otp-testing-layout-' + [guid]::NewGuid().ToString('N'))
 $nested = Join-Path $temporaryRoot 'source archive/scripts/testing/android/nested'

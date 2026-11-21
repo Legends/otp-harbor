@@ -6,7 +6,7 @@ param(
 )
 
 . (Join-Path $PSScriptRoot '../shared/Testing.Common.ps1')
-. (Resolve-OtpHarborTestingPath 'Windows/DevelopmentAccountSnapshot.Common.ps1')
+. (Resolve-OtpHarborTestingPath 'windows/DevelopmentAccountSnapshot.Common.ps1')
 
 $source = Get-ValidatedSnapshot -Path $Snapshot
 $connection = Resolve-AndroidDevice -Device $Device

@@ -2,7 +2,7 @@
 param([string]$Device)
 
 . (Join-Path $PSScriptRoot '../shared/Testing.Common.ps1')
-. (Resolve-OtpHarborTestingPath 'Windows/DevelopmentAccountSnapshot.Common.ps1')
+. (Resolve-OtpHarborTestingPath 'windows/DevelopmentAccountSnapshot.Common.ps1')
 
 $connection = Resolve-AndroidDevice -Device $Device
 Assert-AndroidDebugPackage -Connection $connection

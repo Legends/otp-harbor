@@ -17,6 +17,9 @@ function Resolve-OtpHarborTestingPath {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$RelativePath)
 
+    if ($RelativePath.Replace('\', '/') -cmatch '^(Android|Windows|Linux|MacOS|iOS)(/|$)') {
+        throw 'Testing-script references must use canonical lowercase platform folder names.'
+    }
     $path = Join-Path (Get-OtpHarborRepositoryRoot) "scripts/testing/$RelativePath"
     return (Resolve-Path -LiteralPath $path -ErrorAction Stop).Path
 }
