@@ -111,7 +111,7 @@ $changes = @($contentByPath.GetEnumerator() | ForEach-Object {
 })
 $drifted = @($changes | Where-Object {
     -not (Test-Path -LiteralPath $_.Path -PathType Leaf) -or
-    [IO.File]::ReadAllText($_.Path) -cne $_.Content
+    [IO.File]::ReadAllText($_.Path).Replace("`r`n", "`n") -cne $_.Content.Replace("`r`n", "`n")
 })
 
 if ($Check) {

@@ -1,0 +1,71 @@
+<UserControl x:Class="TOTP.Avalonia.Desktop.Controls.SettingsAboutIdentityPanel"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:about="using:TOTP.Avalonia.Shared.About" xmlns:shared="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:automation="using:Avalonia.Automation" x:DataType="about:AboutViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.about-link-card">
+            <Setter Property="HorizontalAlignment" Value="Stretch" /><Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="MinHeight" Value="64" /><Setter Property="Padding" Value="14,10" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" /><Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+            <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style Selector="Button.about-link-card:pointerover"><Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" /><Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorderHover}" /></Style>
+        <Style Selector="Button.about-link-card:pressed"><Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" /></Style>
+        <Style Selector="Button.about-link-card:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" /></Style>
+        <Style Selector="Button#AboutWebsiteButton"><Setter Property="Grid.Column" Value="1" /></Style>
+        <Style Selector="Button#AboutLicenseButton"><Setter Property="Grid.Column" Value="2" /></Style>
+        <ContainerQuery Name="about-identity" Query="max-width:620">
+            <Style Selector="Grid#AboutLinkCards"><Setter Property="RowSpacing" Value="10" /></Style>
+            <Style Selector="Button.about-link-card"><Setter Property="Grid.Column" Value="0" /><Setter Property="Grid.ColumnSpan" Value="3" /></Style>
+            <Style Selector="Button#AboutWebsiteButton"><Setter Property="Grid.Row" Value="1" /></Style>
+            <Style Selector="Button#AboutLicenseButton"><Setter Property="Grid.Row" Value="2" /></Style>
+        </ContainerQuery>
+    </UserControl.Styles>
+    <StackPanel Container.Name="about-identity" Container.Sizing="Width" Spacing="18">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
+            <Image x:Name="AboutAppLogo" Width="56" Height="56" VerticalAlignment="Center" Stretch="Uniform"
+                   Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png" />
+            <StackPanel Grid.Column="1" Spacing="8">
+                <TextBlock x:Name="AboutAppTitle" Text="{Binding AppName}" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" TextWrapping="Wrap" />
+                <TextBlock Classes="settings-help" Text="{DynamicResource AboutDescription}" TextWrapping="Wrap" />
+                <Border x:Name="AboutVersionBadge" HorizontalAlignment="Left" Background="{DynamicResource BrushSurfaceAlternate}" BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="1" CornerRadius="10" Padding="10,5">
+                    <WrapPanel Orientation="Horizontal">
+                        <TextBlock Text="{DynamicResource AboutVersionLabel}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <SelectableTextBlock x:Name="AboutInstalledVersion" Text="{Binding VersionEntry.Value}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                    </WrapPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+        <Grid x:Name="AboutLinkCards" ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12">
+            <Button x:Name="AboutRepositoryButton" Classes="about-link-card" Command="{Binding RepositoryEntry.Command}" automation:AutomationProperties.Name="{Binding RepositoryEntry.Title}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <shared:SymbolIcon Kind="ExternalLink" IconSize="24" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding RepositoryEntry.Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Classes="settings-help" Text="{DynamicResource AboutRepositoryHelp}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+            <Button x:Name="AboutWebsiteButton" Classes="about-link-card" Command="{Binding WebsiteEntry.Command}" automation:AutomationProperties.Name="{Binding WebsiteEntry.Title}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <shared:SymbolIcon Kind="ExternalLink" IconSize="24" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding WebsiteEntry.Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Classes="settings-help" Text="{DynamicResource AboutWebsiteHelp}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+            <Button x:Name="AboutLicenseButton" Classes="about-link-card" Command="{Binding LicenseEntry.Command}" automation:AutomationProperties.Name="{Binding LicenseEntry.Title}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <shared:SymbolIcon Kind="License" IconSize="24" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding LicenseEntry.Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Classes="settings-help" Text="{Binding LicenseEntry.Value}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+        </Grid>
+        <TextBlock x:Name="AboutLinkStatus" Text="{Binding Status}" IsVisible="{Binding HasStatus}" Foreground="{DynamicResource BrushDanger}" TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

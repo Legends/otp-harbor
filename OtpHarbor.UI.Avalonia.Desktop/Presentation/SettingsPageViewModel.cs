@@ -41,6 +41,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private bool _showIssuerLogo;
     private bool _showNextToken;
     private AppLogLevel _minimumLogLevel;
+    private LogLevelOption? _selectedLogLevel;
     private bool _isBusy;
     private bool _isReloading;
     private bool _saveRequested;
@@ -50,6 +51,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     private IReadOnlyList<ThemeOption> _themes = [];
     private IReadOnlyList<AutoLockOption> _autoLockOptions = [];
     private IReadOnlyList<ClipboardLifetimeOption> _clipboardLifetimeOptions = [];
+    private IReadOnlyList<LogLevelOption> _logLevelOptions = [];
 
     public SettingsPageViewModel(
         ISettingsService settingsService,
@@ -84,6 +86,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         LogFolderNotification = new NotificationState(transientMessageDuration);
         Languages = localization?.SupportedLanguages ?? [];
         LogLevels = Enum.GetValues<AppLogLevel>();
+        _logLevelOptions = CreateLogLevelOptions();
         InterfaceScales = CreateInterfaceScaleOptions();
         _autoLockOptions = CreateAutoLockOptions(_settingsService.Current.IdleTimeout);
         _clipboardLifetimeOptions = CreateClipboardLifetimeOptions();
@@ -109,6 +112,12 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
 
     public IReadOnlyList<LanguageOption> Languages { get; }
     public IReadOnlyList<AppLogLevel> LogLevels { get; }
+    public IReadOnlyList<LogLevelOption> LogLevelOptions => _logLevelOptions;
+    public LogLevelOption? SelectedLogLevel
+    {
+        get => _selectedLogLevel;
+        set { if (value is not null) MinimumLogLevel = value.Level; }
+    }
     public IReadOnlyList<InterfaceScaleOption> InterfaceScales { get; }
     public IReadOnlyList<AutoLockOption> AutoLockOptions => _autoLockOptions;
     public IReadOnlyList<ClipboardLifetimeOption> ClipboardLifetimeOptions =>
@@ -237,8 +246,9 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         get => _minimumLogLevel;
         set
         {
-            if (!SetField(ref _minimumLogLevel, value)) return;
-            QueueAutoSave();
+            var changed = SetField(ref _minimumLogLevel, value);
+            SetField(ref _selectedLogLevel, LogLevelOptions.FirstOrDefault(option => option.Level == value), nameof(SelectedLogLevel));
+            if (changed) QueueAutoSave();
         }
     }
 
@@ -398,6 +408,9 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
         if (_disposed || _localization is null) return;
         StorageLocations?.RefreshLanguage();
         About?.RefreshLanguage();
+        _logLevelOptions = CreateLogLevelOptions();
+        OnPropertyChanged(nameof(LogLevelOptions));
+        SetField(ref _selectedLogLevel, LogLevelOptions.FirstOrDefault(option => option.Level == MinimumLogLevel), nameof(SelectedLogLevel));
         SetField(
             ref _selectedLanguage,
             _localization.CurrentLanguage,
@@ -706,6 +719,18 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
             (int)timeout.TotalMinutes);
     }
 
+    private IReadOnlyList<LogLevelOption> CreateLogLevelOptions() => LogLevels.Select(level =>
+        new LogLevelOption(level, Localize(level switch
+        {
+            AppLogLevel.Verbose => AvaloniaStringKeys.DiagnosticLogLevelVerbose,
+            AppLogLevel.Debug => AvaloniaStringKeys.DiagnosticLogLevelDebug,
+            AppLogLevel.Information => AvaloniaStringKeys.DiagnosticLogLevelInformation,
+            AppLogLevel.Warning => AvaloniaStringKeys.DiagnosticLogLevelWarning,
+            AppLogLevel.Error => AvaloniaStringKeys.DiagnosticLogLevelError,
+            AppLogLevel.Fatal => AvaloniaStringKeys.DiagnosticLogLevelFatal,
+            _ => AvaloniaStringKeys.DiagnosticValueUnavailable
+        }))).ToArray();
+
     private IReadOnlyList<ThemeOption> CreateThemeOptions() =>
     [
         new(AppThemePreference.System, Localize(AvaloniaStringKeys.ThemeFollowSystem)),
@@ -729,5 +754,14 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged, IDisposable
     public sealed record InterfaceScaleOption(int Percent, string Label);
     public sealed record AutoLockOption(TimeSpan Timeout, string Label);
     public sealed record ClipboardLifetimeOption(int Seconds, string Label);
-    public sealed record ThemeOption(AppThemePreference Preference, string Label);
+    public sealed record LogLevelOption(AppLogLevel Level, string Label);
+    public sealed record ThemeOption(AppThemePreference Preference, string Label)
+    {
+        public TOTP.Avalonia.Shared.Controls.SymbolIconKind Icon => Preference switch
+        {
+            AppThemePreference.Dark => TOTP.Avalonia.Shared.Controls.SymbolIconKind.Moon,
+            AppThemePreference.Light => TOTP.Avalonia.Shared.Controls.SymbolIconKind.Sun,
+            _ => TOTP.Avalonia.Shared.Controls.SymbolIconKind.Monitor
+        };
+    }
 }

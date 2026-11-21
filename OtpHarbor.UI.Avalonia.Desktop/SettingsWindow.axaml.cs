@@ -1,27 +1,22 @@
+using Avalonia.Controls;
+
 namespace TOTP.Avalonia.Desktop;
 
 public partial class SettingsWindow : global::Avalonia.Controls.Window
 {
-    private const double LinuxPreferredWidth = 720;
-    private const double LinuxPreferredHeight = 760;
+    private const double PreferredWidth = 900;
+    private const double PreferredHeight = 720;
     private const double WorkingAreaMargin = 24;
 
     public SettingsWindow()
     {
         InitializeComponent();
-        if (OperatingSystem.IsLinux())
-        {
-            Width = LinuxPreferredWidth;
-            Height = LinuxPreferredHeight;
-            FitToScreen(Screens.Primary);
-        }
+        FitToScreen(Screens.Primary);
     }
 
     public void FitToOwnerScreen(global::Avalonia.Controls.Window owner)
     {
         ArgumentNullException.ThrowIfNull(owner);
-        if (!OperatingSystem.IsLinux()) return;
-
         FitToScreen(owner.Screens.ScreenFromWindow(owner) ?? owner.Screens.Primary);
     }
 
@@ -29,38 +24,80 @@ public partial class SettingsWindow : global::Avalonia.Controls.Window
     {
         if (screen is null) return;
 
-        var scaling = screen.Scaling > 0 ? screen.Scaling : 1;
-        var availableWidth = Math.Max(
-            1,
-            (screen.WorkingArea.Width / scaling) - WorkingAreaMargin);
-        var availableHeight = Math.Max(
-            1,
-            (screen.WorkingArea.Height / scaling) - WorkingAreaMargin);
-        var width = Math.Floor(Math.Min(LinuxPreferredWidth, availableWidth));
-        var height = Math.Floor(Math.Min(LinuxPreferredHeight, availableHeight));
-        // Match the fixed X11 size hints to the requested size before mapping.
-        MaxWidth = width;
-        MaxHeight = height;
-        MinWidth = width;
-        MinHeight = height;
-        Width = width;
-        Height = height;
+        var placement = CalculatePlacement(screen.WorkingArea, screen.Scaling);
+        MaxWidth = placement.Maximum.Width;
+        MaxHeight = placement.Maximum.Height;
+        MinWidth = placement.Minimum.Width;
+        MinHeight = placement.Minimum.Height;
+        Width = placement.Preferred.Width;
+        Height = placement.Preferred.Height;
+        Position = placement.Position;
+    }
+
+    private static (global::Avalonia.Size Preferred, global::Avalonia.Size Minimum,
+        global::Avalonia.Size Maximum, global::Avalonia.PixelPoint Position) CalculatePlacement(
+        global::Avalonia.PixelRect workArea, double scaling)
+    {
+        scaling = scaling > 0 ? scaling : 1;
+        var maximum = new global::Avalonia.Size(
+            Math.Max(1, Math.Floor(workArea.Width / scaling - WorkingAreaMargin)),
+            Math.Max(1, Math.Floor(workArea.Height / scaling * 0.8)));
+        var minimum = new global::Avalonia.Size(Math.Min(520, maximum.Width), Math.Min(480, maximum.Height));
+        var preferred = new global::Avalonia.Size(Math.Min(PreferredWidth, maximum.Width), Math.Min(PreferredHeight, maximum.Height));
+        var position = new global::Avalonia.PixelPoint(
+            workArea.X + (int)Math.Floor((workArea.Width - preferred.Width * scaling) / 2),
+            workArea.Y + (int)Math.Floor((workArea.Height - preferred.Height * scaling) / 2));
+        return (preferred, minimum, maximum, position);
+    }
+
+    private void FaqSectionPropertyChanged(object? sender, global::Avalonia.AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == Expander.IsExpandedProperty && e.NewValue is true)
+            FaqSectionExpanded(sender, new global::Avalonia.Interactivity.RoutedEventArgs());
     }
 
     private void FaqSectionExpanded(
         object? sender,
         global::Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (sender is not global::Avalonia.Controls.Expander expanded) return;
+        if (sender is not global::Avalonia.Controls.Expander { IsExpanded: true } expanded) return;
 
         foreach (var section in new[]
                  {
                      FaqMasterPasswordRecoveryExpander,
-                     FaqOlderVaultsExpander, FaqIconPacksExpander, FaqImportFormatsExpander
+                     FaqOlderVaultsExpander, FaqIconPacksExpander, FaqImportFormatsExpander,
+                     FaqCreateBackupExpander, FaqBackupLocationsExpander, FaqForgottenPasswordExpander
                  })
         {
-            if (!ReferenceEquals(section, expanded)) section.IsExpanded = false;
+            if (section is not null && !ReferenceEquals(section, expanded)) section.IsExpanded = false;
         }
+    }
+
+    private void PasswordPanelTransitionCompleted(object? sender, global::Avalonia.Controls.TransitionCompletedEventArgs e)
+    {
+        if (sender is not global::Avalonia.Controls.TransitioningContentControl panel) return;
+        global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (TopLevel.GetTopLevel(panel) is null || !panel.IsEffectivelyVisible || !ReferenceEquals(panel.Content, e.To)) return;
+            var descendants = global::Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(panel);
+            if (e.To is Presentation.AuthorizationSettingsViewModel.PasswordEditorPresentation)
+            {
+                var input = descendants.OfType<TOTP.Avalonia.Shared.Controls.RevealableSecretInput>()
+                    .FirstOrDefault(value => value.IsEffectivelyVisible);
+                input?.BringIntoView();
+                input?.FocusInput();
+            }
+            else if (e.From is Presentation.AuthorizationSettingsViewModel.PasswordEditorPresentation)
+            {
+                var button = descendants.OfType<global::Avalonia.Controls.Button>()
+                    .FirstOrDefault(value => value.Name == "MasterPasswordChangeButton" && value.IsEffectivelyVisible);
+                if (button is { IsEffectivelyEnabled: true })
+                {
+                    button.BringIntoView();
+                    button.Focus();
+                }
+            }
+        }, global::Avalonia.Threading.DispatcherPriority.Loaded);
     }
 
     private void FaqImportFormatSectionExpanded(

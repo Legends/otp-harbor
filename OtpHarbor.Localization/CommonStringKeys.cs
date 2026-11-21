@@ -2,6 +2,15 @@ namespace TOTP.Localization;
 
 public static class CommonStringKeys
 {
+    public const string FaqImportIconPacksIntro = nameof(FaqImportIconPacksIntro);
+    public const string FaqImportIconPacksStepsTitle = nameof(FaqImportIconPacksStepsTitle);
+    public const string FaqImportIconPacksDownloadTitle = nameof(FaqImportIconPacksDownloadTitle);
+    public const string FaqImportIconPacksBuildTitle = nameof(FaqImportIconPacksBuildTitle);
+    public const string FaqImportIconPacksImportTitle = nameof(FaqImportIconPacksImportTitle);
+    public const string FaqImportIconPacksCustomTitle = nameof(FaqImportIconPacksCustomTitle);
+    public const string FaqIconPackFileExtension = nameof(FaqIconPackFileExtension);
+    public const string FaqCreateBackupQuestion = nameof(FaqCreateBackupQuestion);
+    public const string FaqCreateBackupAnswer = nameof(FaqCreateBackupAnswer);
     public const string AppLockEnabled = nameof(AppLockEnabled);
     public const string AppLockTitle = nameof(AppLockTitle);
     public const string AppLockDisabledDescription = nameof(AppLockDisabledDescription);
@@ -505,6 +514,15 @@ public static class CommonStringKeys
         FaqImportFormatsOtpAuthDescription,
         FaqImportFormatsOtpAuthExample,
         FaqImportFormatsOtpAuthTitle,
+        FaqImportIconPacksIntro,
+        FaqImportIconPacksStepsTitle,
+        FaqImportIconPacksDownloadTitle,
+        FaqImportIconPacksBuildTitle,
+        FaqImportIconPacksImportTitle,
+        FaqImportIconPacksCustomTitle,
+        FaqIconPackFileExtension,
+        FaqCreateBackupQuestion,
+        FaqCreateBackupAnswer,
         FaqMasterPasswordRecoveryQuestion,
         FaqMasterPasswordRecoveryAnswer,
         FaqOlderVaultsQuestion,

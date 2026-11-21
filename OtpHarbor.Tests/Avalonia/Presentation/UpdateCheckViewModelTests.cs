@@ -11,6 +11,60 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class UpdateCheckViewModelTests
 {
     [Theory]
+    [InlineData("en", "Version 3.0.3.65535 is the latest version.")]
+    [InlineData("de", "Version 3.0.3.65535 ist die aktuelle Version.")]
+    [InlineData("fr", "La version 3.0.3.65535 est la plus récente.")]
+    [InlineData("es", "La versión 3.0.3.65535 es la más reciente.")]
+    public async Task ConfirmedCurrentVersion_UsesInstalledMetadataAndActiveLocaleWithoutInferringSuccess(string locale, string expected)
+    {
+        var localization = new AvaloniaLocalizationService(new ResourceDictionary(), new AvaloniaStringCatalog());
+        localization.ApplyCulture(locale);
+        var updates = new Mock<IPortableUpdateService>();
+        updates.Setup(value => value.CheckAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new PortableUpdateCheckResult(PortableUpdateCheckStatus.NoUpdate)));
+        using var model = new UpdateCheckViewModel(updates.Object, Mock.Of<IUpdateInstallerLauncher>(), localization,
+            installedVersionProvider: () => "3.0.3.65535");
+        Assert.False(model.IsUpToDate);
+        Assert.Empty(model.CurrentVersionStatus);
+        await model.CheckAsync();
+        model.Notification.Clear();
+        Assert.True(model.IsUpToDate);
+        Assert.Equal(expected, model.CurrentVersionStatus);
+        var changed = new List<string?>();
+        model.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+        localization.ApplyCulture(locale == "de" ? "en" : "de");
+        Assert.Contains(nameof(model.CurrentVersionStatus), changed);
+        Assert.Equal(string.Format(localization.GetString(AvaloniaStringKeys.AboutUpdatesCurrentVersion), "3.0.3.65535"), model.CurrentVersionStatus);
+        updates.Setup(value => value.CheckAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Fail<PortableUpdateCheckResult>("private boundary details"));
+        await model.CheckAsync();
+        Assert.False(model.IsUpToDate);
+        Assert.Empty(model.CurrentVersionStatus);
+        Assert.DoesNotContain("private", model.Message);
+        updates.Setup(value => value.CheckAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new PortableUpdateCheckResult(PortableUpdateCheckStatus.Disabled)));
+        await model.CheckAsync();
+        Assert.False(model.IsUpToDate);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MissingInstalledMetadata_DoesNotInventVersionOrPreventChecks(bool throws)
+    {
+        var localization = new AvaloniaLocalizationService(new ResourceDictionary(), new AvaloniaStringCatalog());
+        localization.ApplyCulture("fr");
+        var updates = new Mock<IPortableUpdateService>();
+        updates.Setup(value => value.CheckAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(new PortableUpdateCheckResult(PortableUpdateCheckStatus.NoUpdate)));
+        using var model = new UpdateCheckViewModel(updates.Object, Mock.Of<IUpdateInstallerLauncher>(), localization,
+            installedVersionProvider: () => throws ? throw new InvalidOperationException("private metadata") : " ");
+        await model.CheckAsync();
+        Assert.True(model.IsUpToDate);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.UpdateNoneAvailable), model.CurrentVersionStatus);
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task DistributionPolicy_OnlyStoreHidesUpdatesAndSuppressesChecking(bool store)

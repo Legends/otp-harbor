@@ -42,6 +42,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     private readonly IAutomaticBackupSnapshotService? _automaticBackupSnapshots;
     private readonly IUiScheduler? _uiScheduler;
     private bool _isBusy;
+    private bool _useNetworkBackupFolder;
+    private string? _lastAutomaticBackupFolder;
     private bool _isImportProgressVisible;
     private string _importProgressText = string.Empty;
     private bool _disposed;
@@ -84,6 +86,8 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         _cameraScanner = cameraScanner;
         _brandIconPackService = brandIconPackService;
         _automaticBackup = automaticBackup;
+        _lastAutomaticBackupFolder = AutomaticBackupFolderPath;
+        _useNetworkBackupFolder = _lastAutomaticBackupFolder.StartsWith(@"\\", StringComparison.Ordinal);
         _automaticBackupSnapshots = automaticBackupSnapshots;
         _uiScheduler = uiScheduler;
         Notification = new NotificationState(transientMessageDuration);
@@ -177,6 +181,18 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
     public ICommand ResetBrandIconsCommand => _resetBrandIconsCommand;
     public bool HasImportedBrandIcons => _brandIconPackService?.Status.IsInstalled == true;
     public bool IsAutomaticBackupConfigured => _automaticBackup?.Status.IsConfigured == true;
+    public ICommand ToggleAutomaticBackupCommand => IsAutomaticBackupConfigured
+        ? DisableAutomaticBackupCommand : ConfigureAutomaticBackupCommand;
+    public bool UseNetworkBackupFolder
+    {
+        // This selects picker guidance; the operating system handles mounted shares and sign-in.
+        get => _useNetworkBackupFolder;
+        set => SetField(ref _useNetworkBackupFolder, value);
+    }
+    public string AutomaticBackupFolderPath => _automaticBackup?.Destination?.Location
+        ?? _automaticBackup?.Status.DestinationDisplayName ?? string.Empty;
+    public string AutomaticBackupEnabledText => Localized(IsAutomaticBackupConfigured
+        ? AvaloniaStringKeys.DataBackupEnabled : AvaloniaStringKeys.DataBackupDisabled);
     public string AutomaticBackupStatusText => (_automaticBackup?.Status.Kind ?? AutomaticBackupStatusKind.NotConfigured) switch
     {
         AutomaticBackupStatusKind.BackingUp => Localized(AvaloniaStringKeys.AutomaticBackupRunning),
@@ -1137,7 +1153,15 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
 
     private void RefreshAutomaticBackupState()
     {
+        if (_lastAutomaticBackupFolder != AutomaticBackupFolderPath)
+        {
+            _lastAutomaticBackupFolder = AutomaticBackupFolderPath;
+            if (_lastAutomaticBackupFolder.StartsWith(@"\\", StringComparison.Ordinal)) UseNetworkBackupFolder = true;
+        }
         OnPropertyChanged(nameof(IsAutomaticBackupConfigured));
+        OnPropertyChanged(nameof(ToggleAutomaticBackupCommand));
+        OnPropertyChanged(nameof(AutomaticBackupFolderPath));
+        OnPropertyChanged(nameof(AutomaticBackupEnabledText));
         OnPropertyChanged(nameof(AutomaticBackupStatusText));
         OnPropertyChanged(nameof(AutomaticBackupDestinationText));
         OnPropertyChanged(nameof(AutomaticBackupLastSuccessText));

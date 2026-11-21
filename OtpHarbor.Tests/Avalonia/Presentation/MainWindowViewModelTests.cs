@@ -1141,7 +1141,9 @@ public sealed partial class MainWindowViewModelTests
         IAvaloniaDialogService? dialogs = null,
         ILegacyVaultRecoveryService? legacyVaultRecovery = null,
         AuthorizationSettingsViewModel? authorizationSettings = null,
-        ISettingsService? settingsService = null) =>
+        ISettingsService? settingsService = null,
+        DiagnosticsViewModel? diagnostics = null,
+        SettingsPageViewModel? settingsPage = null) =>
         new(
             coordinator,
             authorization,
@@ -1155,12 +1157,12 @@ public sealed partial class MainWindowViewModelTests
                 Mock.Of<IAvaloniaQrImageFactory>(),
                 Mock.Of<IAvaloniaDialogService>(),
                 CreateLocalization()),
-            CreateSettingsPage(),
+            settingsPage ?? CreateSettingsPage(),
             authorizationSettings ?? CreateAuthorizationSettings(authorization),
             nativeFilePicker ?? CreateFilePicker(),
             cameraScanner ?? CreateCameraScanner(),
             updateCheck ?? CreateUpdateCheck(),
-            CreateDiagnostics(),
+            diagnostics ?? CreateDiagnostics(),
             localization ?? CreateLocalization(),
             scannerDialogs ?? Mock.Of<IAvaloniaCameraScannerDialogService>(),
             settingsService: settingsService,

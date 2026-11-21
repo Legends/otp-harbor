@@ -574,7 +574,7 @@ public sealed class SharedStylesTests
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "faq-section")
             .ToArray();
-        Assert.Equal(4, faqSections.Length);
+        Assert.Equal(7, faqSections.Length);
         Assert.All(
             faqSections,
             section => Assert.Equal(
@@ -582,13 +582,14 @@ public sealed class SharedStylesTests
                 section.Attribute("Expanded")?.Value));
         Assert.Equal(
             ["{DynamicResource FaqMasterPasswordRecoveryQuestion}",
-                "{DynamicResource FaqOlderVaultsQuestion}", "{DynamicResource FaqImportIconPacksQuestion}", "{DynamicResource FaqImportFormatsQuestion}"],
+                "{DynamicResource FaqOlderVaultsQuestion}", "{DynamicResource FaqImportIconPacksQuestion}", "{DynamicResource FaqImportFormatsQuestion}",
+                "{DynamicResource FaqCreateBackupQuestion}", "{DynamicResource FaqBackupLocationsQuestion}", "{DynamicResource FaqForgottenPasswordQuestion}"],
             faqSections.Select(section => section
                 .Descendants(avalonia + "TextBlock")
                 .First()
                 .Attribute("Text")?.Value));
         Assert.Equal(
-            ["Key", "BackupRestore", "Folder", "QrCode"],
+            ["Key", "BackupRestore", "Folder", "QrCode", "Export", "Vault", "Lock"],
             faqSections.Select(section => section
                 .Element(avalonia + "Expander.Header")!
                 .Descendants()
@@ -649,13 +650,11 @@ public sealed class SharedStylesTests
             {
                 var card = Assert.IsType<XElement>(section.Parent);
                 Assert.Equal(avalonia + "Border", card.Name);
-                Assert.Equal("Stretch", card.Attribute("HorizontalAlignment")?.Value);
-                Assert.Equal("{DynamicResource BrushFaqHeaderBackground}", card.Attribute("Background")?.Value);
-                Assert.Equal("{DynamicResource ElevationCard}", card.Attribute("BoxShadow")?.Value);
-                Assert.Null(card.Attribute("BorderBrush"));
+                Assert.Equal("faq-card", card.Attribute("Classes")?.Value);
+                Assert.NotNull(card.Attribute("Classes.expanded"));
                 Assert.Equal("Stretch", section.Attribute("HorizontalAlignment")?.Value);
                 var content = section.Elements(avalonia + "Border").Single();
-                Assert.Equal("{DynamicResource BrushFaqContentBackground}", content.Attribute("Background")?.Value);
+                Assert.Equal("Transparent", content.Attribute("Background")?.Value);
                 Assert.Null(content.Attribute("BorderBrush"));
             });
         Assert.DoesNotContain(
@@ -688,8 +687,8 @@ public sealed class SharedStylesTests
         XNamespace avalonia = "https://github.com/avaloniaui";
 
         var categoryScrollViewers = document
-            .Descendants(avalonia + "ScrollViewer")
-            .Where(element => element.Attribute("VerticalScrollBarVisibility") is not null)
+            .Descendants(avalonia + "TabItem")
+            .Select(tab => tab.Descendants(avalonia + "ScrollViewer").First(element => element.Attribute("VerticalScrollBarVisibility") is not null))
             .ToArray();
 
         Assert.Equal(7, categoryScrollViewers.Length);
@@ -1185,7 +1184,7 @@ public sealed class SharedStylesTests
     }
 
     [Fact]
-    public void DesktopIssuerLogoCheckboxesShareOneTwoWaySettingBinding()
+    public void DesktopIssuerLogoSwitchesShareOneTwoWaySettingBinding()
     {
         var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
@@ -1195,9 +1194,9 @@ public sealed class SharedStylesTests
         XNamespace avalonia = "https://github.com/avaloniaui";
 
         var issuerLogoCheckBoxes = document
-            .Descendants(avalonia + "CheckBox")
-            .Where(checkBox => checkBox.Attribute("Content")?.Value
-                == "{DynamicResource ShowIssuerLogo}")
+            .Descendants(avalonia + "ToggleSwitch")
+            .Where(checkBox => checkBox.Attribute("IsChecked")?.Value
+                == "{Binding ShowIssuerLogo, Mode=TwoWay}")
             .ToArray();
 
         Assert.Equal(2, issuerLogoCheckBoxes.Length);

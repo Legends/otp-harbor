@@ -29,7 +29,58 @@ The static website's screenshot gallery loads `website/gallery.json` and `websit
 
 For a private approval preview, run `./scripts/marketing/Publish-LocalPreview.ps1`. It validates the assets, assembles the same static site into ignored `staging/local-site/`, includes the candidate gallery locally, and starts a server bound to `127.0.0.1:8765`. Review both `http://127.0.0.1:8765/` and `http://127.0.0.1:8765/android/`. The Android page defaults to genuine Dark captures, with a Light switch and keyboard-accessible enlarged viewing. This local preview does not alter the public Pages approval gate or publish any release.
 
-Microsoft's [MSIX screenshot requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images) require PNG, at least 1366 × 768 pixels for Desktop, at most 50 MB, and advise against added marketing messages or logos. Use up to ten Desktop images; four or more are recommended. The existing published Store listing uses branded campaign slides, so a matching **v3 campaign candidate set** is generated in `store/windows/promotional/` with actual v3 UI and clearly distinguished conceptual illustrations. These branded files meet the technical dimensions but need manual policy and Partner Center acceptance review before they can replace the published v1/v2 art; prior Store acceptance does not guarantee new acceptance. `storeCampaignOrder` lists ten slides per locale; `01-light-account-list.png` was removed, with Dark shown first. The quick-unlock slide uses the actual Windows Security PIN prompt cutout and explains that fingerprint depends on device support. The QR slide uses the documented website QR composite and labels that code as an example. Slides 08–11 use only repo-owned onboarding artwork and verified feature/format descriptions; format names indicate compatibility and use no third-party logos. The separate `storeUploadOrder` contains conservative gallery candidates: main Light, main Dark, settings Light, settings Dark, account actions and Imports. Their app UI was not enlarged, repainted or replaced; a neutral frame brings each file to the size minimum. Captions must be 200 characters or less. The optional `store/windows/icons/otp-harbor-tile-300.png` is generated from the application's 1024-pixel original icon, with its source path and hash recorded in the manifest. Submit nothing without explicit authorization.
+Microsoft's [MSIX screenshot requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images) require PNG, at least 1366 × 768 pixels for Desktop, at most 50 MB, and advise against added marketing messages or logos. Use up to ten Desktop images; four or more are recommended. The existing published Store listing uses branded campaign slides, so a matching **v3 campaign candidate set** is generated in `store/windows/promotional/` with actual v3 UI and clearly distinguished conceptual illustrations. These branded files meet the technical dimensions but need manual policy and Partner Center acceptance review before they can replace the published v1/v2 art; prior Store acceptance does not guarantee new acceptance. `storeCampaignOrder` lists ten slides per locale; `01-light-account-list.png` was removed, with Dark shown first. The quick-unlock slide uses the actual Windows Security PIN prompt cutout and explains that fingerprint depends on device support. The QR slide uses the documented website QR composite and labels that code as an example. Slides 08–11 use only repo-owned onboarding artwork and verified feature/format descriptions; format names indicate compatibility and use no third-party logos. The separate `storeUploadOrder` contains conservative gallery candidates: main Light, main Dark, settings Light, settings Dark and account actions. Their app UI was not enlarged, repainted or replaced; a neutral frame brings each file to the size minimum. Captions must be 200 characters or less. The optional `store/windows/icons/otp-harbor-tile-300.png` is generated from the application's 1024-pixel original icon, with its source path and hash recorded in the manifest. Submit nothing without explicit authorization.
+
+## Refreshing desktop Settings
+
+Maintain only `source/desktop/light/settings.png` and
+`source/desktop/dark/settings.png`. Desktop website cards **Settings**,
+**Import more formats**, and **Keep a way back** deliberately reuse the matching
+theme's Settings capture. The latter two cards are feature overviews; their alt
+text identifies the reused Settings view. No separate import or backup tab
+captures are required. The Store **Make it yours** campaign keeps its existing
+Dark Settings composition in all four locales; the conservative Store screenshot
+set contains both updated themes.
+
+Create an isolated environment once using the same pinned dependencies as CI:
+
+```powershell
+python -m venv "$env:LOCALAPPDATA/OTP-Harbor/marketing-venv"
+& "$env:LOCALAPPDATA/OTP-Harbor/marketing-venv/Scripts/python.exe" -m pip install -r scripts/marketing/requirements.txt
+```
+
+After replacing the two canonical Settings captures, run from the repository root:
+
+```powershell
+./scripts/marketing/Refresh-DesktopMarketing.ps1 -SettingsCornerRadius 45 -PythonExecutable "$env:LOCALAPPDATA/OTP-Harbor/marketing-venv/Scripts/python.exe"
+```
+
+The supplied 2250 × 1630 Settings captures use a 45 physical-pixel corner radius
+(18 logical pixels at 250% scaling). Use the actual radius when capture scaling
+changes. Cleanup changes only alpha outside the rounded outline: image dimensions
+and every RGB pixel remain intact. Existing transparency survives subsequent
+website and Store compositing. The script records source hashes, regenerates
+derivatives/previews, validates native-pixel preservation and provenance, and
+syncs the four localized campaigns into the local Partner Center submission
+tree. It resets publication review; it does not publish, submit, restart the app,
+or touch a vault. Omit `-SettingsCornerRadius` when captures already have correct
+transparency. The canonical sources remain reusable for other layouts.
+
+`Capture-Desktop.ps1` already captures a running published Debug demo app and
+requires `-ConfirmedSyntheticData`. The lower-level
+`scripts/assets/Capture-WindowsStoreScreenshot.ps1` also supports `-WindowName`
+to target an open Settings window. These tools capture the currently selected
+view; they do not navigate tabs. Existing Avalonia headless tests already select
+Settings tabs, change themes, and render the actual controls with isolated fake
+services. That is the best seam for a future opt-in batch exporter of every tab:
+it can render without a live vault or moving the user's mouse. Such renders must
+be identified as test-data captures and reviewed before Store use. For the current
+gallery, refreshing the two sources and running the command above avoids that
+extra capture maintenance entirely. Desktop refresh passes `--platform desktop`
+to website generation so Android images remain byte-for-byte unchanged, and to
+validation so desktop pixels are reconstructed while hashes, dependencies and
+gallery references are still checked across the full manifest. The default
+validator without this flag continues to reconstruct all platforms.
 
 ## Pre-publication gate
 

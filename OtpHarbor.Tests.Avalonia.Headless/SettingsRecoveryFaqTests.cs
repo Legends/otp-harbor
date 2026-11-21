@@ -23,7 +23,10 @@ public sealed class SettingsRecoveryFaqTests
         (string Name, string Question, string Answer)[] entries =
         [
             ("FaqMasterPasswordRecoveryExpander", AvaloniaStringKeys.FaqMasterPasswordRecoveryQuestion, AvaloniaStringKeys.FaqMasterPasswordRecoveryAnswer),
-            ("FaqOlderVaultsExpander", AvaloniaStringKeys.FaqOlderVaultsQuestion, AvaloniaStringKeys.FaqOlderVaultsAnswer)
+            ("FaqOlderVaultsExpander", AvaloniaStringKeys.FaqOlderVaultsQuestion, AvaloniaStringKeys.FaqOlderVaultsAnswer),
+            ("FaqCreateBackupExpander", AvaloniaStringKeys.FaqCreateBackupQuestion, AvaloniaStringKeys.FaqCreateBackupAnswer),
+            ("FaqBackupLocationsExpander", AvaloniaStringKeys.FaqBackupLocationsQuestion, AvaloniaStringKeys.FaqBackupLocationsAnswer),
+            ("FaqForgottenPasswordExpander", AvaloniaStringKeys.FaqForgottenPasswordQuestion, AvaloniaStringKeys.FaqForgottenPasswordAnswer)
         ];
         try
         {
@@ -75,7 +78,7 @@ public sealed class SettingsRecoveryFaqTests
         {
             window.Show();
             var sections = new[] { "FaqIconPacksExpander", "FaqMasterPasswordRecoveryExpander",
-                "FaqOlderVaultsExpander", "FaqImportFormatsExpander" }
+                "FaqOlderVaultsExpander", "FaqImportFormatsExpander", "FaqCreateBackupExpander", "FaqBackupLocationsExpander", "FaqForgottenPasswordExpander" }
                 .Select(name => Assert.IsType<Expander>(window.FindControl<Expander>(name))).ToArray();
             foreach (var expanded in sections)
             {

@@ -203,7 +203,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         set
         {
             if (!SetField(ref _selectedSettingsTabIndex, value)) return;
+            if (value != 2) AuthorizationSettings.ClearSensitiveInputs();
             ClearSettingsNotifications();
+            if (IsSettingsVisible && value is 4 or 6) _ = Diagnostics.RefreshAsync();
         }
     }
 
@@ -563,6 +565,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         AuthorizationSettings.Dispose();
         CameraScanner.Dispose();
         UpdateCheck.Dispose();
+        Diagnostics.Dispose();
     }
 
     public void PrepareForShutdown()
@@ -653,8 +656,11 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
     private void OnAccountsChanged(object? sender, EventArgs e) =>
         _accountsChangedWhileSettingsOpen = true;
 
-    private void OnSettingsSaved(object? sender, EventArgs e) =>
+    private void OnSettingsSaved(object? sender, EventArgs e)
+    {
         AccountList.NotifySettingsChanged();
+        Diagnostics.RefreshSummaryLabels();
+    }
 
     private void OnAppLockChanged(object? sender, EventArgs e)
     {
@@ -889,6 +895,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         IsSettingsVisible = true;
         SettingsPage.Reload();
         await AuthorizationSettings.RefreshAsync();
+        if (SelectedSettingsTabIndex is 4 or 6) await Diagnostics.RefreshAsync();
     }
 
     public async Task CloseSettingsAsync()

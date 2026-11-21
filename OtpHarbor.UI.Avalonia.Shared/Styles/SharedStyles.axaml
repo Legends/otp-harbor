@@ -754,6 +754,8 @@
         <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}" />
     </Style>
     <Style Selector="Button">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="MinHeight" Value="{DynamicResource ControlMinimumHeight}" />
         <Setter Property="Padding" Value="{DynamicResource ControlPadding}" />
         <Setter Property="CornerRadius" Value="{DynamicResource RadiusSmall}" />
@@ -1867,15 +1869,5 @@
     </Style>
     <Style Selector="Grid.settings-page TextBlock.secondary">
         <Setter Property="FontSize" Value="11" />
-    </Style>
-    <Style Selector="Grid.settings-page TabControl.settings-tabs TabItem">
-        <Setter Property="MinWidth" Value="104" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="Padding" Value="7,6" />
-    </Style>
-    <Style Selector="Grid.settings-page TabControl.settings-tabs TabItem:selected">
-        <Setter Property="Foreground" Value="{DynamicResource BrushTextBrand}" />
     </Style>
 </Styles>

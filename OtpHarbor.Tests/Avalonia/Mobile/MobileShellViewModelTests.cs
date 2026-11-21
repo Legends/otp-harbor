@@ -5967,7 +5967,16 @@ public sealed partial class MobileShellViewModelTests
             (MobileStringKeys.FaqMasterPasswordRecoveryQuestion, nameof(sut.FaqMasterPasswordRecoveryQuestionText), () => sut.FaqMasterPasswordRecoveryQuestionText),
             (MobileStringKeys.FaqMasterPasswordRecoveryAnswer, nameof(sut.FaqMasterPasswordRecoveryAnswerText), () => sut.FaqMasterPasswordRecoveryAnswerText),
             (MobileStringKeys.FaqOlderVaultsQuestion, nameof(sut.FaqOlderVaultsQuestionText), () => sut.FaqOlderVaultsQuestionText),
-            (MobileStringKeys.FaqOlderVaultsAnswer, nameof(sut.FaqOlderVaultsAnswerText), () => sut.FaqOlderVaultsAnswerText)
+            (MobileStringKeys.FaqOlderVaultsAnswer, nameof(sut.FaqOlderVaultsAnswerText), () => sut.FaqOlderVaultsAnswerText),
+            (MobileStringKeys.FaqCreateBackupQuestion, nameof(sut.FaqCreateBackupQuestionText), () => sut.FaqCreateBackupQuestionText),
+            (MobileStringKeys.FaqCreateBackupAnswer, nameof(sut.FaqCreateBackupAnswerText), () => sut.FaqCreateBackupAnswerText),
+            (MobileStringKeys.FaqImportIconPacksIntro, nameof(sut.FaqImportIconPacksIntroText), () => sut.FaqImportIconPacksIntroText),
+            (MobileStringKeys.FaqImportIconPacksStepsTitle, nameof(sut.FaqImportIconPacksStepsTitleText), () => sut.FaqImportIconPacksStepsTitleText),
+            (MobileStringKeys.FaqImportIconPacksDownloadTitle, nameof(sut.FaqImportIconPacksDownloadTitleText), () => sut.FaqImportIconPacksDownloadTitleText),
+            (MobileStringKeys.FaqImportIconPacksBuildTitle, nameof(sut.FaqImportIconPacksBuildTitleText), () => sut.FaqImportIconPacksBuildTitleText),
+            (MobileStringKeys.FaqImportIconPacksImportTitle, nameof(sut.FaqImportIconPacksImportTitleText), () => sut.FaqImportIconPacksImportTitleText),
+            (MobileStringKeys.FaqImportIconPacksCustomTitle, nameof(sut.FaqImportIconPacksCustomTitleText), () => sut.FaqImportIconPacksCustomTitleText),
+            (MobileStringKeys.FaqIconPackFileExtension, nameof(sut.FaqIconPackFileExtensionText), () => sut.FaqIconPackFileExtensionText)
         };
         foreach (var entry in values)
             Assert.Equal(context.Strings.Get(entry.Key), entry.Read());

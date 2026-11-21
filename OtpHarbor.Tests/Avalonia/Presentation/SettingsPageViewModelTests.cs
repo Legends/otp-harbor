@@ -14,6 +14,35 @@ namespace TOTP.Tests.Avalonia.Presentation;
 public sealed class SettingsPageViewModelTests
 {
     [Fact]
+    public async Task LogLevelChoices_LocalizeAndRetainSelectionWithoutSavingOnCultureChange()
+    {
+        var localization = new AvaloniaLocalizationService(new global::Avalonia.Controls.ResourceDictionary(), new AvaloniaStringCatalog());
+        var settings = CreateSettings(new AppSettings { MinimumLogLevel = AppLogLevel.Warning });
+        settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        using var model = new SettingsPageViewModel(settings.Object, localization, autoSaveDelay: TimeSpan.FromHours(1));
+        foreach (var locale in new[] { "en", "de", "fr", "es" })
+        {
+            localization.ApplyCulture(locale);
+            Assert.Equal(AppLogLevel.Warning, model.SelectedLogLevel!.Level);
+            Assert.Equal(Enum.GetValues<AppLogLevel>(), model.LogLevelOptions.Select(option => option.Level));
+            Assert.Equal(new[]
+            {
+                AvaloniaStringKeys.DiagnosticLogLevelVerbose, AvaloniaStringKeys.DiagnosticLogLevelDebug,
+                AvaloniaStringKeys.DiagnosticLogLevelInformation, AvaloniaStringKeys.DiagnosticLogLevelWarning,
+                AvaloniaStringKeys.DiagnosticLogLevelError, AvaloniaStringKeys.DiagnosticLogLevelFatal
+            }.Select(localization.GetString), model.LogLevelOptions.Select(option => option.Label));
+            Assert.Equal(model.LogLevelOptions.Single(option => option.Level == AppLogLevel.Warning), model.SelectedLogLevel);
+        }
+        settings.Verify(value => value.SaveAsync(), Times.Never);
+
+        model.SelectedLogLevel = model.LogLevelOptions.Single(option => option.Level == AppLogLevel.Error);
+        Assert.Equal(AppLogLevel.Error, model.MinimumLogLevel);
+        await model.SaveAsync();
+        Assert.Equal(AppLogLevel.Error, settings.Object.Current.MinimumLogLevel);
+        settings.Verify(value => value.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
     public async Task StorageLocations_LanguageChangeUpdatesLabelsAndActionFeedback()
     {
         var localization = new AvaloniaLocalizationService(new global::Avalonia.Controls.ResourceDictionary(), new AvaloniaStringCatalog());

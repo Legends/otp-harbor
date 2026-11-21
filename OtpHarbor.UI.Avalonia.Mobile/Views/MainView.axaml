@@ -1714,7 +1714,7 @@
                             <StackPanel Spacing="12">
                                 <Border HorizontalAlignment="Stretch" Background="{DynamicResource BrushFaqHeaderBackground}"
                                         BoxShadow="{DynamicResource ElevationCard}" CornerRadius="8">
-                                    <Expander x:Name="FaqMasterPasswordRecoveryExpander" Classes="mobile-faq-section"
+                                    <Expander x:Name="FaqMasterPasswordRecoveryExpander" Classes="mobile-faq-section" PropertyChanged="FaqSectionPropertyChanged"
                                               Expanded="FaqSectionExpanded" HorizontalAlignment="Stretch">
                                         <Expander.Header>
                                             <Grid Margin="14,11" MinHeight="44" ColumnDefinitions="Auto,*" ColumnSpacing="12">
@@ -1732,7 +1732,7 @@
                                 </Border>
                                 <Border HorizontalAlignment="Stretch" Background="{DynamicResource BrushFaqHeaderBackground}"
                                         BoxShadow="{DynamicResource ElevationCard}" CornerRadius="8">
-                                    <Expander x:Name="FaqOlderVaultsExpander" Classes="mobile-faq-section"
+                                    <Expander x:Name="FaqOlderVaultsExpander" Classes="mobile-faq-section" PropertyChanged="FaqSectionPropertyChanged"
                                               Expanded="FaqSectionExpanded" HorizontalAlignment="Stretch">
                                         <Expander.Header>
                                             <Grid Margin="14,11" MinHeight="44" ColumnDefinitions="Auto,*" ColumnSpacing="12">
@@ -1748,6 +1748,22 @@
                                         </Border>
                                     </Expander>
                                 </Border>
+                                <Border HorizontalAlignment="Stretch" Background="{DynamicResource BrushFaqHeaderBackground}"
+                                        BoxShadow="{DynamicResource ElevationCard}" CornerRadius="8">
+                                    <Expander x:Name="FaqCreateBackupExpander" Classes="mobile-faq-section" PropertyChanged="FaqSectionPropertyChanged"
+                                              Expanded="FaqSectionExpanded" HorizontalAlignment="Stretch">
+                                        <Expander.Header>
+                                            <Grid Margin="14,11" MinHeight="44" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                <controls:SymbolIcon Kind="Export" IconSize="24" VerticalAlignment="Center" Foreground="{DynamicResource BrushFaqHeaderIcon}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource BrushFaqHeaderForeground}" Text="{Binding FaqCreateBackupQuestionText}" TextWrapping="Wrap" />
+                                            </Grid>
+                                        </Expander.Header>
+                                        <Border Background="{DynamicResource BrushFaqContentBackground}" CornerRadius="0,0,8,8" Padding="12">
+                                            <TextBlock Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FaqCreateBackupAnswerText}" TextWrapping="Wrap" />
+                                        </Border>
+                                    </Expander>
+                                </Border>
                                 <Border
                                     HorizontalAlignment="Stretch"
                                     Background="{DynamicResource BrushFaqHeaderBackground}"
@@ -1755,7 +1771,7 @@
                                     CornerRadius="8">
                                     <Expander
                                         x:Name="FaqIconPacksExpander"
-                                        Classes="mobile-faq-section"
+                                        Classes="mobile-faq-section" PropertyChanged="FaqSectionPropertyChanged"
                                         Expanded="FaqSectionExpanded"
                                         HorizontalAlignment="Stretch">
                                         <Expander.Header>
@@ -1776,69 +1792,97 @@
                                                     TextWrapping="Wrap" />
                                             </Grid>
                                         </Expander.Header>
-                                        <Border
-                                            Background="{DynamicResource BrushFaqContentBackground}"
-                                            CornerRadius="0,0,8,8"
-                                            Padding="12">
-                                            <StackPanel Spacing="8">
-                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                                    <TextBlock Grid.Column="0" Text="1." />
-                                                    <StackPanel Grid.Column="1" Spacing="2">
-                                                        <TextBlock
-                                                            Foreground="{DynamicResource BrushTextSecondary}"
-                                                            Text="{Binding FaqImportIconPacksStepDownloadText}"
-                                                            TextWrapping="Wrap" />
-                                                        <HyperlinkButton
-                                                            HorizontalAlignment="Left"
-                                                            NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest"
-                                                            Padding="0,4">
-                                                            <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqImportIconPacksDownloadLinkText}" />
-                                                        </HyperlinkButton>
+                                        <Border Background="{DynamicResource BrushFaqContentBackground}" CornerRadius="0,0,8,8" Padding="12">
+                                            <StackPanel x:Name="IconPackFaqContent" Container.Name="icon-faq" Container.Sizing="Width" Spacing="14">
+                                                <StackPanel.Styles>
+                                                    <Style Selector="Border.icon-faq-step"><Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" /><Setter Property="Padding" Value="0,12,0,0" /><Setter Property="BorderThickness" Value="0,1,0,0" /></Style>
+                                                    <Style Selector="Border.icon-faq-number"><Setter Property="Width" Value="36" /><Setter Property="Height" Value="36" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Background" Value="{DynamicResource BrushAccent}" /><Setter Property="VerticalAlignment" Value="Top" /></Style>
+                                                    <Style Selector="TextBlock.icon-faq-number-text"><Setter Property="FontSize" Value="20" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+                                                    <Style Selector="HyperlinkButton.icon-faq-action"><Setter Property="Grid.Column" Value="2" /><Setter Property="MinHeight" Value="44" /><Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="HorizontalContentAlignment" Value="Center" /></Style>
+                                                    <Style Selector="HyperlinkButton.icon-faq-action"><Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" /><Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" /></Style>
+                                                    <Style Selector="HyperlinkButton.icon-faq-legal-link"><Setter Property="MinHeight" Value="44" /><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+                                                    <Style Selector="HyperlinkButton.icon-faq-legal-second"><Setter Property="Grid.Column" Value="1" /></Style>
+                                                    <Style Selector="HyperlinkButton.icon-faq-legal-third"><Setter Property="Grid.Column" Value="2" /></Style>
+                                                    <ContainerQuery Name="icon-faq" Query="max-width:700">
+                                                        <Style Selector="HyperlinkButton.icon-faq-action"><Setter Property="Grid.Column" Value="1" /><Setter Property="Grid.Row" Value="1" /><Setter Property="Grid.ColumnSpan" Value="2" /></Style>
+                                                        <Style Selector="StackPanel.icon-faq-art"><Setter Property="IsVisible" Value="False" /></Style>
+                                                    </ContainerQuery>
+                                                    <ContainerQuery Name="icon-faq" Query="max-width:1000">
+                                                        <Style Selector="HyperlinkButton.icon-faq-legal-link"><Setter Property="Grid.Column" Value="0" /><Setter Property="Grid.ColumnSpan" Value="3" /></Style>
+                                                        <Style Selector="HyperlinkButton.icon-faq-legal-second"><Setter Property="Grid.Row" Value="1" /></Style>
+                                                        <Style Selector="HyperlinkButton.icon-faq-legal-third"><Setter Property="Grid.Row" Value="2" /></Style>
+                                                    </ContainerQuery>
+                                                </StackPanel.Styles>
+                                                <TextBlock Text="{Binding FaqImportIconPacksIntroText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" />
+                                                <TextBlock Text="{Binding FaqImportIconPacksStepsTitleText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="16"/>
+                                        <Border Classes="icon-faq-step" BorderThickness="0" Padding="0">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="14" RowSpacing="10">
+                                                        <Border Classes="icon-faq-number" Grid.RowSpan="2"><TextBlock Classes="icon-faq-number-text" Text="1" /></Border>
+                                                        <StackPanel Grid.Column="1" Spacing="4">
+                                                            <TextBlock Text="{Binding FaqImportIconPacksDownloadTitleText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="16"/>
+                                                            <TextBlock Text="{Binding FaqImportIconPacksStepDownloadText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" />
+                                                        </StackPanel>
+                                        <HyperlinkButton x:Name="IconPackBuilderDownloadLink" Classes="icon-faq-action" HorizontalAlignment="Left" VerticalAlignment="Center" Padding="12,6" NavigateUri="https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest">
+                                                        <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqImportIconPacksDownloadLinkText}" />
+                                                    </HyperlinkButton></Grid></Border>
+                                        <Border Classes="icon-faq-step" >
+                                                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="14" RowSpacing="10">
+                                                        <Border Classes="icon-faq-number" Grid.RowSpan="2"><TextBlock Classes="icon-faq-number-text" Text="2" /></Border>
+                                                        <StackPanel Grid.Column="1" Spacing="4">
+                                                            <TextBlock Text="{Binding FaqImportIconPacksBuildTitleText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="16"/>
+                                                            <TextBlock Text="{Binding FaqImportIconPacksStepBuildText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" />
+                                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Classes="icon-faq-art" Spacing="4" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                        <controls:SymbolIcon Kind="Vault" IconSize="36" Foreground="{DynamicResource BrushAccent}" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding FaqIconPackFileExtensionText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" />
+                                                    </StackPanel></Grid></Border>
+                                        <Border Classes="icon-faq-step" >
+                                                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="14" RowSpacing="10">
+                                                        <Border Classes="icon-faq-number" Grid.RowSpan="2"><TextBlock Classes="icon-faq-number-text" Text="3" /></Border>
+                                                        <StackPanel Grid.Column="1" Spacing="4">
+                                                            <TextBlock Text="{Binding FaqImportIconPacksImportTitleText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="16"/>
+                                                            <TextBlock Text="{Binding FaqImportIconPacksStepImportText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" />
+                                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Classes="icon-faq-art" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                        <controls:SymbolIcon Kind="Settings" IconSize="28" Foreground="{DynamicResource BrushAccent}" />
+                                                        <controls:SymbolIcon Kind="Import" IconSize="24" Foreground="{DynamicResource BrushAccent}" />
+                                                        <controls:SymbolIcon Kind="ImageStack" IconSize="28" Foreground="{DynamicResource BrushAccent}" />
+                                                    </StackPanel></Grid></Border>
+                                        <Border x:Name="IconPackCustomIconTip" Background="{DynamicResource BrushSurfaceAlternate}" BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                    <controls:SymbolIcon Kind="Information" IconSize="24" Foreground="{DynamicResource BrushAccent}" VerticalAlignment="Top" />
+                                                    <StackPanel Grid.Column="1" Spacing="4">
+                                                        <TextBlock Text="{Binding FaqImportIconPacksCustomTitleText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding FaqImportIconPacksCustomIconTipText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" />
                                                     </StackPanel>
                                                 </Grid>
-                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                                    <TextBlock Grid.Column="0" Text="2." />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        Foreground="{DynamicResource BrushTextSecondary}"
-                                                        Text="{Binding FaqImportIconPacksStepBuildText}"
-                                                        TextWrapping="Wrap" />
-                                                </Grid>
-                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                                    <TextBlock Grid.Column="0" Text="3." />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        Foreground="{DynamicResource BrushTextSecondary}"
-                                                        Text="{Binding FaqImportIconPacksStepImportText}"
-                                                        TextWrapping="Wrap" />
-                                                </Grid>
-                                                <TextBlock
-                                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                                    Text="{Binding FaqImportIconPacksCustomIconTipText}"
-                                                    TextWrapping="Wrap" />
-                                                <TextBlock Margin="0,8,0,0" FontWeight="SemiBold" Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" />
-                                                <HyperlinkButton
-                                                    HorizontalAlignment="Left"
-                                                    NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
-                                                    Padding="0,4">
-                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqSimpleIconsOfficialLinkText}" />
-                                                </HyperlinkButton>
-                                                <HyperlinkButton
-                                                    HorizontalAlignment="Left"
-                                                    NavigateUri="https://github.com/aegis-icons/aegis-icons#disclaimer"
-                                                    Padding="0,4">
-                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqAegisIconPackDocsLinkText}" />
-                                                </HyperlinkButton>
-                                                <HyperlinkButton
-                                                    HorizontalAlignment="Left"
-                                                    NavigateUri="https://github.com/homarr-labs/dashboard-icons#legal"
-                                                    Padding="0,4">
-                                                    <controls:SymbolIconLabel Kind="ExternalLink" Text="{Binding FaqDashboardIconsLegalLinkText}" />
-                                                </HyperlinkButton>
-                                                <TextBlock
-                                                    Foreground="{DynamicResource BrushTextSecondary}"
-                                                    Text="{Binding FaqImportIconPacksDisclaimerText}"
-                                                    TextWrapping="Wrap" />
+                                            </Border>
+                                            <Border x:Name="IconPackFaqLegalSection" BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
+                                                <StackPanel Spacing="8">
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                        <controls:SymbolIcon Kind="License" IconSize="24" Foreground="{DynamicResource BrushAccent}" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding FaqImportIconPacksSourcesText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" Grid.Column="1" FontSize="16" FontWeight="SemiBold"/>
+                                                    </Grid>
+                                                    <Grid Classes="icon-faq-legal-links" ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="4">
+                                        <HyperlinkButton Classes="icon-faq-legal-link icon-faq-legal-first" Padding="0,4" NavigateUri="https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md">
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                        <controls:SymbolIcon Kind="ExternalLink" IconSize="18" VerticalAlignment="Top" Margin="0,2,0,0" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding FaqSimpleIconsOfficialLinkText}" TextWrapping="Wrap" />
+                                                    </Grid>
+                                                </HyperlinkButton><HyperlinkButton Classes="icon-faq-legal-link icon-faq-legal-second" Padding="0,4" NavigateUri="https://github.com/aegis-icons/aegis-icons#disclaimer">
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                        <controls:SymbolIcon Kind="ExternalLink" IconSize="18" VerticalAlignment="Top" Margin="0,2,0,0" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding FaqAegisIconPackDocsLinkText}" TextWrapping="Wrap" />
+                                                    </Grid>
+                                                </HyperlinkButton><HyperlinkButton Classes="icon-faq-legal-link icon-faq-legal-third" Padding="0,4" NavigateUri="https://github.com/homarr-labs/dashboard-icons#legal">
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                        <controls:SymbolIcon Kind="ExternalLink" IconSize="18" VerticalAlignment="Top" Margin="0,2,0,0" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding FaqDashboardIconsLegalLinkText}" TextWrapping="Wrap" />
+                                                    </Grid>
+                                                </HyperlinkButton></Grid>
+                                                    <TextBlock Text="{Binding FaqImportIconPacksDisclaimerText}" TextWrapping="Wrap" Foreground="{DynamicResource BrushTextPrimary}" />
+                                                </StackPanel>
+                                            </Border>
                                             </StackPanel>
                                         </Border>
                                     </Expander>
@@ -1850,7 +1894,7 @@
                                     CornerRadius="8">
                                     <Expander
                                         x:Name="FaqImportFormatsExpander"
-                                        Classes="mobile-faq-section"
+                                        Classes="mobile-faq-section" PropertyChanged="FaqSectionPropertyChanged"
                                         Expanded="FaqSectionExpanded"
                                         HorizontalAlignment="Stretch">
                                         <Expander.Header>

@@ -28,18 +28,22 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
     private bool _isDownloading;
     private bool _isBusy;
     private bool _disposed;
+    private readonly string? _installedVersion;
 
     public UpdateCheckViewModel(
         IPortableUpdateService updates,
         IUpdateInstallerLauncher installer,
         IAvaloniaLocalizationService localization,
         TimeSpan? transientMessageDuration = null,
-        bool isStoreDistribution = false)
+        bool isStoreDistribution = false,
+        Func<string>? installedVersionProvider = null)
     {
         _updates = updates ?? throw new ArgumentNullException(nameof(updates));
         _installer = installer ?? throw new ArgumentNullException(nameof(installer));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         IsSoftwareUpdatesVisible = !isStoreDistribution;
+        try { _installedVersion = installedVersionProvider?.Invoke(); }
+        catch (Exception) { _installedVersion = null; }
         Notification = new NotificationState(transientMessageDuration);
         if (IsSoftwareUpdatesVisible)
             Notification.ShowForSeverity(LocalizeMessage(), NotificationSeverity.Information);
@@ -65,6 +69,10 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
 
     public NotificationState Notification { get; }
     public bool IsSoftwareUpdatesVisible { get; }
+    public bool IsUpToDate => IsSoftwareUpdatesVisible && _messageKey == AvaloniaStringKeys.UpdateNoneAvailable;
+    public string CurrentVersionStatus => !IsUpToDate ? string.Empty : string.IsNullOrWhiteSpace(_installedVersion)
+        ? _localization.GetString(AvaloniaStringKeys.UpdateNoneAvailable)
+        : string.Format(_localization.GetString(AvaloniaStringKeys.AboutUpdatesCurrentVersion), _installedVersion);
     public string Message => Notification.Text;
 
     public string Version
@@ -313,6 +321,8 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
         _messageKey = key;
         _messageArguments = arguments;
         Notification.ShowForSeverity(LocalizeMessage(), severity);
+        OnPropertyChanged(nameof(IsUpToDate));
+        OnPropertyChanged(nameof(CurrentVersionStatus));
     }
 
     private string LocalizeMessage()
@@ -325,6 +335,7 @@ public sealed class UpdateCheckViewModel : INotifyPropertyChanged, IDisposable
 
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
+        OnPropertyChanged(nameof(CurrentVersionStatus));
         if (Notification.HasMessage)
             Notification.ShowForSeverity(LocalizeMessage(), Notification.Severity);
     }

@@ -2142,6 +2142,15 @@ public sealed partial class MobileShellViewModel :
     public string FaqMasterPasswordRecoveryAnswerText => Get(MobileStringKeys.FaqMasterPasswordRecoveryAnswer);
     public string FaqOlderVaultsQuestionText => Get(MobileStringKeys.FaqOlderVaultsQuestion);
     public string FaqOlderVaultsAnswerText => Get(MobileStringKeys.FaqOlderVaultsAnswer);
+    public string FaqImportIconPacksIntroText => Get(MobileStringKeys.FaqImportIconPacksIntro);
+    public string FaqImportIconPacksStepsTitleText => Get(MobileStringKeys.FaqImportIconPacksStepsTitle);
+    public string FaqImportIconPacksDownloadTitleText => Get(MobileStringKeys.FaqImportIconPacksDownloadTitle);
+    public string FaqImportIconPacksBuildTitleText => Get(MobileStringKeys.FaqImportIconPacksBuildTitle);
+    public string FaqImportIconPacksImportTitleText => Get(MobileStringKeys.FaqImportIconPacksImportTitle);
+    public string FaqImportIconPacksCustomTitleText => Get(MobileStringKeys.FaqImportIconPacksCustomTitle);
+    public string FaqIconPackFileExtensionText => Get(MobileStringKeys.FaqIconPackFileExtension);
+    public string FaqCreateBackupQuestionText => Get(MobileStringKeys.FaqCreateBackupQuestion);
+    public string FaqCreateBackupAnswerText => Get(MobileStringKeys.FaqCreateBackupAnswer);
     public string FaqImportIconPacksQuestionText =>
         Get(MobileStringKeys.FaqImportIconPacksQuestion);
     public string FaqImportIconPacksStepDownloadText =>
@@ -7309,6 +7318,15 @@ public sealed partial class MobileShellViewModel :
         nameof(FaqMasterPasswordRecoveryAnswerText),
         nameof(FaqOlderVaultsQuestionText),
         nameof(FaqOlderVaultsAnswerText),
+        nameof(FaqImportIconPacksIntroText),
+        nameof(FaqImportIconPacksStepsTitleText),
+        nameof(FaqImportIconPacksDownloadTitleText),
+        nameof(FaqImportIconPacksBuildTitleText),
+        nameof(FaqImportIconPacksImportTitleText),
+        nameof(FaqImportIconPacksCustomTitleText),
+        nameof(FaqIconPackFileExtensionText),
+        nameof(FaqCreateBackupQuestionText),
+        nameof(FaqCreateBackupAnswerText),
         nameof(FaqImportIconPacksQuestionText),
         nameof(FaqImportIconPacksStepDownloadText),
         nameof(FaqImportIconPacksDownloadLinkText),

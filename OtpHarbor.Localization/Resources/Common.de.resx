@@ -398,4 +398,17 @@
   <data name="AppLockChangeFailed" xml:space="preserve"><value>Die App-Sperre konnte nicht sicher geändert werden.</value></data>
   <data name="AppLockDisabled" xml:space="preserve"><value>App-Sperre deaktiviert. Jeder Benutzer dieses entsperrten Geräts kann die Codes sehen.</value></data>
   <data name="AppLockEnabled" xml:space="preserve"><value>App-Sperre aktiviert.</value></data>
+  <data name="FaqCreateBackupQuestion" xml:space="preserve"><value>Wie erstelle ich ein Backup?</value></data>
+  <data name="FaqCreateBackupAnswer" xml:space="preserve"><value>Öffnen Sie Einstellungen → Daten &amp; Backup. Für ein manuelles Backup exportieren Sie Ihre Konten, legen ein Exportpasswort fest, bestätigen es und wählen den Speicherort für die verschlüsselte Datei. Bewahren Sie dieses Passwort sicher auf: Sie benötigen es zum Importieren dieses Backups.
+
+Für automatische Backups richten Sie unter Automatische Sicherungen einen Zielordner ein und gewähren bei Bedarf Zugriff. OTP Harbor speichert verschlüsselte Wiederherstellungskopien, wenn sich Ihr Tresor ändert. Prüfen Sie den Backup-Status und halten Sie den Zielordner erreichbar. Zum Wiederherstellen einer automatischen Kopie benötigen Sie das Master-Passwort, das beim Erstellen dieser Kopie verwendet wurde.
+
+Bewahren Sie eine zusätzliche Wiederherstellungskopie an einem anderen sicheren Ort auf und prüfen Sie, ob Sie ein Backup importieren können, bevor Sie sich darauf verlassen.</value></data>
+  <data name="FaqImportIconPacksIntro" xml:space="preserve"><value>Verwenden Sie ein OTP-Harbor-Icon-Paket aus dem Icon Pack Builder für Desktop oder wählen Sie ein einzelnes SVG- oder PNG-Icon.</value></data>
+  <data name="FaqImportIconPacksStepsTitle" xml:space="preserve"><value>Ein Icon-Paket importieren</value></data>
+  <data name="FaqImportIconPacksDownloadTitle" xml:space="preserve"><value>Icon Pack Builder herunterladen</value></data>
+  <data name="FaqImportIconPacksBuildTitle" xml:space="preserve"><value>Eigenes Icon-Paket erstellen</value></data>
+  <data name="FaqImportIconPacksImportTitle" xml:space="preserve"><value>Icon-Paket importieren</value></data>
+  <data name="FaqImportIconPacksCustomTitle" xml:space="preserve"><value>Stattdessen ein einzelnes Icon verwenden</value></data>
+  <data name="FaqIconPackFileExtension" xml:space="preserve"><value>.otphicons</value></data>
 </root>

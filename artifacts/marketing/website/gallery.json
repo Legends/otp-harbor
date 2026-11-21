@@ -55,7 +55,7 @@
       "platform": "desktop",
       "theme": "dark",
       "screen": "import-formats",
-      "alt": "OTP Harbor desktop import formats in dark theme, with a genuine app capture",
+      "alt": "OTP Harbor desktop import formats in dark theme, with a genuine Settings capture reused for this feature overview",
       "caption": "Import Formats",
       "preview": {
         "src": "assets/marketing/previews/desktop/dark/import-formats.webp",
@@ -89,7 +89,7 @@
       "platform": "desktop",
       "theme": "dark",
       "screen": "backup-restore",
-      "alt": "OTP Harbor desktop backup and restore in dark theme, with a genuine app capture",
+      "alt": "OTP Harbor desktop backup and restore in dark theme, with a genuine Settings capture reused for this feature overview",
       "caption": "Backup and Restore",
       "preview": {
         "src": "assets/marketing/previews/desktop/dark/backup-restore.webp",
@@ -157,7 +157,7 @@
       "platform": "desktop",
       "theme": "light",
       "screen": "import-formats",
-      "alt": "OTP Harbor desktop import formats in light theme, with a genuine app capture",
+      "alt": "OTP Harbor desktop import formats in light theme, with a genuine Settings capture reused for this feature overview",
       "caption": "Import Formats",
       "preview": {
         "src": "assets/marketing/previews/desktop/light/import-formats.webp",
@@ -191,7 +191,7 @@
       "platform": "desktop",
       "theme": "light",
       "screen": "backup-restore",
-      "alt": "OTP Harbor desktop backup and restore in light theme, with a genuine app capture",
+      "alt": "OTP Harbor desktop backup and restore in light theme, with a genuine Settings capture reused for this feature overview",
       "caption": "Backup and Restore",
       "preview": {
         "src": "assets/marketing/previews/desktop/light/backup-restore.webp",

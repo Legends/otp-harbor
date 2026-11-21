@@ -53,7 +53,9 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
         _usePasswordCommand = new AsyncCommand(
             UsePasswordAsync,
             () => CanChangeUnlockMethod);
-        _changePasswordCommand = new AsyncCommand(ChangePasswordAsync, () => !_disposed && !IsBusy);
+        _changePasswordCommand = new AsyncCommand(ChangePasswordAsync, () => CanEditPassword && IsPasswordEditorOpen);
+        _beginPasswordChangeCommand = new AsyncCommand(BeginPasswordChangeAsync, () => CanEditPassword && !IsPasswordEditorOpen);
+        _cancelPasswordChangeCommand = new AsyncCommand(CancelPasswordChangeAsync, () => !_disposed && !IsBusy && IsPasswordEditorOpen);
         _settingsService = settingsService;
         _unattendedUnlock = unattendedUnlock;
         _toggleAppLockCommand = new AsyncCommand(ToggleAppLockAsync, () =>
@@ -74,6 +76,7 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
         {
             if (!SetField(ref _newPassword, value ?? string.Empty)) return;
             Notification.Clear();
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PasswordLengthProgress)));
         }
     }
 
@@ -93,6 +96,7 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
         private set
         {
             if (!SetField(ref _isBusy, value)) return;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsPasswordEditorEnabled)));
             NotifyCommands();
         }
     }
@@ -230,12 +234,13 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
 
     public async Task ChangePasswordAsync()
     {
-        if (_disposed || IsBusy) return;
+        if (!CanEditPassword || !IsPasswordEditorOpen) return;
 
+        var currentPassword = CurrentPassword;
         var newPassword = NewPassword;
         var confirmation = ConfirmPassword;
-        ClearSensitiveInputs();
-        if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmation))
+        ClearPasswordFields();
+        if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmation))
         {
             SetMessage(AvaloniaStringKeys.PasswordRequired, NotificationSeverity.Error);
             return;
@@ -258,17 +263,24 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
         }
 
         IsBusy = true;
-        string? currentPassword = null;
+        var sessionLocked = !_authorization.State.IsUnlocked;
+        void TrackSessionLock(object? sender, EventArgs args)
+        {
+            if (!_authorization.State.IsUnlocked) sessionLocked = true;
+        }
+        _authorization.State.Changed += TrackSessionLock;
         try
         {
-            currentPassword = await _dialogs.PromptForPasswordAsync(CreateCurrentPasswordRequest());
-            if (currentPassword is null)
+            if (!_authorization.State.IsUnlocked) sessionLocked = true;
+            if (_disposed || sessionLocked || !IsPasswordEditorOpen) return;
+            var changed = await _authorization.ChangePasswordAsync(currentPassword, newPassword);
+            // Rotation can finish after a session lock; it must not leave the session reopened.
+            if (sessionLocked)
             {
-                SetMessage(AvaloniaStringKeys.PasswordChangeCancelled, NotificationSeverity.Information);
                 return;
             }
-
-            var changed = await _authorization.ChangePasswordAsync(currentPassword, newPassword);
+            if (_disposed || !_authorization.State.IsUnlocked) return;
+            if (changed == AuthorizationResult.Success) IsPasswordEditorOpen = false;
             SetMessage(
                 changed == AuthorizationResult.Success
                     ? AvaloniaStringKeys.PasswordChanged
@@ -285,7 +297,9 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
         }
         finally
         {
-            currentPassword = null;
+            _authorization.State.Changed -= TrackSessionLock;
+            if (sessionLocked) _authorization.Lock();
+            currentPassword = string.Empty;
             newPassword = string.Empty;
             confirmation = string.Empty;
             IsBusy = false;
@@ -295,8 +309,8 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
     public void ClearSensitiveInputs()
     {
         _unlockMethodChangeLifetime?.Cancel();
-        NewPassword = string.Empty;
-        ConfirmPassword = string.Empty;
+        ClearPasswordFields();
+        IsPasswordEditorOpen = false;
     }
 
     private bool CanChangeUnlockMethod => !_disposed && !IsBusy && _authorization.State.IsUnlocked && IsAppLockEnabled;
@@ -381,14 +395,6 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
                 : _localization.GetString(AvaloniaStringKeys.PasswordVerificationFailed);
         });
 
-    private PasswordDialogRequest CreateCurrentPasswordRequest() => new(
-        _localization.GetString(AvaloniaStringKeys.ChangeMasterPassword),
-        _localization.GetString(AvaloniaStringKeys.CurrentPasswordPrompt),
-        _localization.GetString(AvaloniaStringKeys.Confirm),
-        _localization.GetString(AvaloniaStringKeys.Cancel),
-        _localization.GetString(AvaloniaStringKeys.PasswordRequired),
-        _localization.GetString(AvaloniaStringKeys.PasswordVerificationFailed));
-
     private bool IsQuickUnlockPreferred() =>
         (IsAppLockEnabled ? _authorization.State.PreferredUnlockMethod
             : _settingsService?.Current.PreferredUnlockMethod) is PreferredUnlockMethod.PlatformQuickUnlock
@@ -404,6 +410,8 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
         NotifyAppLockState();
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PasswordMinimumLengthHelp)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(QuickUnlockOptionHelp)));
         if (_messageKey is not null && Notification.HasMessage)
             Notification.ShowForSeverity(_localization.GetString(_messageKey), Notification.Severity);
     }
@@ -414,6 +422,8 @@ public sealed partial class AuthorizationSettingsViewModel : INotifyPropertyChan
         _enableQuickUnlockCommand.NotifyCanExecuteChanged();
         _usePasswordCommand.NotifyCanExecuteChanged();
         _changePasswordCommand.NotifyCanExecuteChanged();
+        _beginPasswordChangeCommand.NotifyCanExecuteChanged();
+        _cancelPasswordChangeCommand.NotifyCanExecuteChanged();
         _toggleAppLockCommand.NotifyCanExecuteChanged();
     }
 

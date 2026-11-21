@@ -398,4 +398,17 @@
   <data name="AppLockChangeFailed" xml:space="preserve"><value>The app-lock setting could not be changed safely.</value></data>
   <data name="AppLockDisabled" xml:space="preserve"><value>App lock disabled. Codes are available to anyone using this unlocked device.</value></data>
   <data name="AppLockEnabled" xml:space="preserve"><value>App lock enabled.</value></data>
+  <data name="FaqCreateBackupQuestion" xml:space="preserve"><value>How do I create a backup?</value></data>
+  <data name="FaqCreateBackupAnswer" xml:space="preserve"><value>Open Settings → Data &amp; backup. For a manual backup, export your accounts, set and confirm an export password, and choose where to save the encrypted file. Keep this password safe: you need it to import that backup.
+
+For automatic backups, set up a destination folder under Automatic backups and grant access if prompted. OTP Harbor saves encrypted recovery copies when your vault changes. Check the backup status and keep the destination accessible. To restore an automatic copy, you need the master password that was in use when that copy was created.
+
+Keep an additional recovery copy in a separate safe location, and check that you can import a backup before relying on it.</value></data>
+  <data name="FaqImportIconPacksIntro" xml:space="preserve"><value>Use an OTP Harbor icon pack created with the desktop Icon Pack Builder, or choose an individual SVG or PNG icon.</value></data>
+  <data name="FaqImportIconPacksStepsTitle" xml:space="preserve"><value>Import an icon pack</value></data>
+  <data name="FaqImportIconPacksDownloadTitle" xml:space="preserve"><value>Get the Icon Pack Builder</value></data>
+  <data name="FaqImportIconPacksBuildTitle" xml:space="preserve"><value>Create your icon pack</value></data>
+  <data name="FaqImportIconPacksImportTitle" xml:space="preserve"><value>Import the icon pack</value></data>
+  <data name="FaqImportIconPacksCustomTitle" xml:space="preserve"><value>Use a single icon instead</value></data>
+  <data name="FaqIconPackFileExtension" xml:space="preserve"><value>.otphicons</value></data>
 </root>

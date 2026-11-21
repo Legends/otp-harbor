@@ -2,6 +2,96 @@ namespace TOTP.Avalonia.Desktop.Localization;
 
 public static class AvaloniaStringKeys
 {
+    public const string AboutDescription = nameof(AboutDescription);
+    public const string AboutVersionLabel = nameof(AboutVersionLabel);
+    public const string AboutRepositoryHelp = nameof(AboutRepositoryHelp);
+    public const string AboutWebsiteHelp = nameof(AboutWebsiteHelp);
+    public const string AboutUpdatesHelp = nameof(AboutUpdatesHelp);
+    public const string AboutUpdatesCurrentTitle = nameof(AboutUpdatesCurrentTitle);
+    public const string AboutUpdatesCurrentVersion = nameof(AboutUpdatesCurrentVersion);
+    public const string AboutDetailsTitle = nameof(AboutDetailsTitle);
+    public const string AboutCreditsTitle = nameof(AboutCreditsTitle);
+    public const string AboutCreditsHelp = nameof(AboutCreditsHelp);
+    public const string AboutViewCredits = nameof(AboutViewCredits);
+    public const string FaqImportIconPacksIntro = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksIntro;
+    public const string FaqImportIconPacksStepsTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksStepsTitle;
+    public const string FaqImportIconPacksDownloadTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksDownloadTitle;
+    public const string FaqImportIconPacksBuildTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksBuildTitle;
+    public const string FaqImportIconPacksImportTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksImportTitle;
+    public const string FaqImportIconPacksCustomTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksCustomTitle;
+    public const string FaqIconPackFileExtension = global::TOTP.Localization.CommonStringKeys.FaqIconPackFileExtension;
+    public const string FaqDescription = nameof(FaqDescription);
+    public const string FaqBackupLocationsQuestion = nameof(FaqBackupLocationsQuestion);
+    public const string FaqBackupLocationsAnswer = nameof(FaqBackupLocationsAnswer);
+    public const string FaqForgottenPasswordQuestion = nameof(FaqForgottenPasswordQuestion);
+    public const string FaqForgottenPasswordAnswer = nameof(FaqForgottenPasswordAnswer);
+    public const string FaqCreateBackupQuestion = global::TOTP.Localization.CommonStringKeys.FaqCreateBackupQuestion;
+    public const string FaqCreateBackupAnswer = global::TOTP.Localization.CommonStringKeys.FaqCreateBackupAnswer;
+    public const string SupportDescription = nameof(SupportDescription);
+    public const string SupportLogsTitle = nameof(SupportLogsTitle);
+    public const string SupportLogsHelp = nameof(SupportLogsHelp);
+    public const string SupportLogsNotice = nameof(SupportLogsNotice);
+    public const string SupportReportTitle = nameof(SupportReportTitle);
+    public const string SupportReportPublicHelp = nameof(SupportReportPublicHelp);
+    public const string SupportReportWarning = nameof(SupportReportWarning);
+    public const string SupportApplicationDataTitle = nameof(SupportApplicationDataTitle);
+    public const string DataBackupBackupsTitle = nameof(DataBackupBackupsTitle);
+    public const string DataBackupDescription = nameof(DataBackupDescription);
+    public const string DataBackupFormatExamples = nameof(DataBackupFormatExamples);
+    public const string DataBackupHelp = nameof(DataBackupHelp);
+    public const string DataBackupManualTitle = nameof(DataBackupManualTitle);
+    public const string DataBackupManualHelp = nameof(DataBackupManualHelp);
+    public const string DataBackupAutomaticHelp = nameof(DataBackupAutomaticHelp);
+    public const string DataBackupPasswordNotice = nameof(DataBackupPasswordNotice);
+    public const string DataBackupLocation = nameof(DataBackupLocation);
+    public const string DataBackupLocalFolder = nameof(DataBackupLocalFolder);
+    public const string DataBackupNetworkFolder = nameof(DataBackupNetworkFolder);
+    public const string DataBackupNetworkHelp = nameof(DataBackupNetworkHelp);
+    public const string DataBackupEnabled = nameof(DataBackupEnabled);
+    public const string DataBackupDisabled = nameof(DataBackupDisabled);
+    public const string DataBackupChange = nameof(DataBackupChange);
+    public const string SecurityDescription = nameof(SecurityDescription);
+    public const string SecurityUnlockMethod = nameof(SecurityUnlockMethod);
+    public const string SecurityQuickUnlockTitle = nameof(SecurityQuickUnlockTitle);
+    public const string SecurityQuickUnlockWindowsHelp = nameof(SecurityQuickUnlockWindowsHelp);
+    public const string SecurityQuickUnlockMacHelp = nameof(SecurityQuickUnlockMacHelp);
+    public const string SecurityQuickUnlockOtherHelp = nameof(SecurityQuickUnlockOtherHelp);
+    public const string SecurityPasswordOnly = nameof(SecurityPasswordOnly);
+    public const string SecurityPasswordOnlyHelp = nameof(SecurityPasswordOnlyHelp);
+    public const string SecurityMasterPasswordHelp = nameof(SecurityMasterPasswordHelp);
+    public const string SecurityChangePasswordAction = nameof(SecurityChangePasswordAction);
+    public const string SecuritySavePasswordAction = nameof(SecuritySavePasswordAction);
+    public const string SecurityCurrentMasterPassword = nameof(SecurityCurrentMasterPassword);
+    public const string SecurityNewMasterPassword = nameof(SecurityNewMasterPassword);
+    public const string SecurityConfirmMasterPassword = nameof(SecurityConfirmMasterPassword);
+    public const string SecurityPasswordLengthRequirement = nameof(SecurityPasswordLengthRequirement);
+    public const string SecurityPasswordRotationNotice = nameof(SecurityPasswordRotationNotice);
+    public const string SecurityAutoLockTitle = nameof(SecurityAutoLockTitle);
+    public const string SecurityAutoLockRequiresAppLock = nameof(SecurityAutoLockRequiresAppLock);
+    public const string SecurityAutoLockHelp = nameof(SecurityAutoLockHelp);
+    public const string SecurityClipboardTitle = nameof(SecurityClipboardTitle);
+    public const string SecurityClipboardHelp = nameof(SecurityClipboardHelp);
+    public const string IncreaseQrScale = nameof(IncreaseQrScale);
+    public const string DecreaseQrScale = nameof(DecreaseQrScale);
+    public const string IconPackLocalHelp = nameof(IconPackLocalHelp);
+    public const string IconPackRights = nameof(IconPackRights);
+    public const string IconPackResponsibility = nameof(IconPackResponsibility);
+    public const string AppearanceDescription = nameof(AppearanceDescription);
+    public const string AppearancePersonalization = nameof(AppearancePersonalization);
+    public const string AppearanceLanguageHelp = nameof(AppearanceLanguageHelp);
+    public const string AppearanceThemeHelp = nameof(AppearanceThemeHelp);
+    public const string AppearanceAccountDisplay = nameof(AppearanceAccountDisplay);
+    public const string AppearanceQrDisplay = nameof(AppearanceQrDisplay);
+    public const string QrPreviewScaleHelp = nameof(QrPreviewScaleHelp);
+    public const string QrPreviewScaleRange = nameof(QrPreviewScaleRange);
+    public const string IconPackDescription = nameof(IconPackDescription);
+    public const string InstalledIconPack = nameof(InstalledIconPack);
+    public const string IconPackUsedLocally = nameof(IconPackUsedLocally);
+    public const string ManageIconPack = nameof(ManageIconPack);
+    public const string IconPackDisplay = nameof(IconPackDisplay);
+    public const string AboutIconPacks = nameof(AboutIconPacks);
+    public const string ImportIconPackAction = nameof(ImportIconPackAction);
+    public const string RemoveIconPackAction = nameof(RemoveIconPackAction);
     public const string AppLockTitle = global::TOTP.Localization.CommonStringKeys.AppLockTitle;
     public const string AppLockDisabledDescription = global::TOTP.Localization.CommonStringKeys.AppLockDisabledDescription;
     public const string DisableAppLock = global::TOTP.Localization.CommonStringKeys.DisableAppLock;
@@ -500,6 +590,21 @@ public static class AvaloniaStringKeys
     public const string SelectTotpImportFile = nameof(SelectTotpImportFile);
     public const string ExportEncryptedTotpBackup = nameof(ExportEncryptedTotpBackup);
     public const string EncryptedTotpBackupFile = nameof(EncryptedTotpBackupFile);
+    public const string DiagnosticDescription = nameof(DiagnosticDescription);
+    public const string DiagnosticDetails = nameof(DiagnosticDetails);
+    public const string DiagnosticDisplayLabel = nameof(DiagnosticDisplayLabel);
+    public const string DiagnosticLanguageValue = nameof(DiagnosticLanguageValue);
+    public const string DiagnosticLogLevelDebug = nameof(DiagnosticLogLevelDebug);
+    public const string DiagnosticLogLevelError = nameof(DiagnosticLogLevelError);
+    public const string DiagnosticLogLevelFatal = nameof(DiagnosticLogLevelFatal);
+    public const string DiagnosticLogLevelInformation = nameof(DiagnosticLogLevelInformation);
+    public const string DiagnosticLogLevelLabel = nameof(DiagnosticLogLevelLabel);
+    public const string DiagnosticLogLevelVerbose = nameof(DiagnosticLogLevelVerbose);
+    public const string DiagnosticLogLevelWarning = nameof(DiagnosticLogLevelWarning);
+    public const string DiagnosticOperatingSystemLabel = nameof(DiagnosticOperatingSystemLabel);
+    public const string DiagnosticRuntimeLabel = nameof(DiagnosticRuntimeLabel);
+    public const string DiagnosticValueUnavailable = nameof(DiagnosticValueUnavailable);
+
     public const string DiagnosticPlatform = nameof(DiagnosticPlatform);
     public const string DiagnosticArchitecture = nameof(DiagnosticArchitecture);
     public const string DiagnosticRuntime = nameof(DiagnosticRuntime);
@@ -579,9 +684,113 @@ public static class AvaloniaStringKeys
 
     public static IReadOnlyList<string> All { get; } =
     [
+        AboutDescription,
+        AboutVersionLabel,
+        AboutRepositoryHelp,
+        AboutWebsiteHelp,
+        AboutUpdatesHelp,
+        AboutUpdatesCurrentTitle,
+        AboutUpdatesCurrentVersion,
+        AboutDetailsTitle,
+        AboutCreditsTitle,
+        AboutCreditsHelp,
+        AboutViewCredits,
+
+        FaqImportIconPacksIntro,
+        FaqImportIconPacksStepsTitle,
+        FaqImportIconPacksDownloadTitle,
+        FaqImportIconPacksBuildTitle,
+        FaqImportIconPacksImportTitle,
+        FaqImportIconPacksCustomTitle,
+        FaqIconPackFileExtension,
+
+        FaqDescription, FaqBackupLocationsQuestion, FaqBackupLocationsAnswer,
+        FaqForgottenPasswordQuestion, FaqForgottenPasswordAnswer, FaqCreateBackupQuestion, FaqCreateBackupAnswer,
+        "SupportDescription",
+        "SupportLogsTitle",
+        "SupportLogsHelp",
+        "SupportLogsNotice",
+        "SupportReportTitle",
+        "SupportReportPublicHelp",
+        "SupportReportWarning",
+        "SupportApplicationDataTitle",
+        "DataBackupBackupsTitle",
+        "DataBackupDescription",
+        "DataBackupFormatExamples",
+        "DataBackupHelp",
+        "DataBackupManualTitle",
+        "DataBackupManualHelp",
+        "DataBackupAutomaticHelp",
+        "DataBackupPasswordNotice",
+        "DataBackupLocation",
+        "DataBackupLocalFolder",
+        "DataBackupNetworkFolder",
+        "DataBackupNetworkHelp",
+        "DataBackupEnabled",
+        "DataBackupDisabled",
+        "DataBackupChange",
+        "SecurityDescription",
+        "SecurityUnlockMethod",
+        "SecurityQuickUnlockTitle",
+        "SecurityQuickUnlockWindowsHelp",
+        "SecurityQuickUnlockMacHelp",
+        "SecurityQuickUnlockOtherHelp",
+        "SecurityPasswordOnly",
+        "SecurityPasswordOnlyHelp",
+        "SecurityMasterPasswordHelp",
+        "SecurityChangePasswordAction",
+        "SecuritySavePasswordAction",
+        "SecurityCurrentMasterPassword",
+        "SecurityNewMasterPassword",
+        "SecurityConfirmMasterPassword",
+        "SecurityPasswordLengthRequirement",
+        "SecurityPasswordRotationNotice",
+        "SecurityAutoLockTitle",
+        "SecurityAutoLockRequiresAppLock",
+        "SecurityAutoLockHelp",
+        "SecurityClipboardTitle",
+        "SecurityClipboardHelp",
+
+        "IncreaseQrScale",
+        "DecreaseQrScale",
+        "IconPackLocalHelp",
+        "IconPackRights",
+        "IconPackResponsibility",
+
+        "AppearanceDescription",
+        "AppearancePersonalization",
+        "AppearanceLanguageHelp",
+        "AppearanceThemeHelp",
+        "AppearanceAccountDisplay",
+        "AppearanceQrDisplay",
+        "QrPreviewScaleHelp",
+        "QrPreviewScaleRange",
+        "IconPackDescription",
+        "InstalledIconPack",
+        "IconPackUsedLocally",
+        "ManageIconPack",
+        "IconPackDisplay",
+        "AboutIconPacks",
+        "ImportIconPackAction",
+        "RemoveIconPackAction",
+
         "About",
         "AppLockTitle",
         "AppLockDisabledDescription",
+        "DiagnosticDescription",
+        "DiagnosticDetails",
+        "DiagnosticDisplayLabel",
+        "DiagnosticLanguageValue",
+        "DiagnosticLogLevelDebug",
+        "DiagnosticLogLevelError",
+        "DiagnosticLogLevelFatal",
+        "DiagnosticLogLevelInformation",
+        "DiagnosticLogLevelLabel",
+        "DiagnosticLogLevelVerbose",
+        "DiagnosticLogLevelWarning",
+        "DiagnosticOperatingSystemLabel",
+        "DiagnosticRuntimeLabel",
+        "DiagnosticValueUnavailable",
         "DisableAppLock",
         "EnableAppLock",
         "DisableAppLockWarning",

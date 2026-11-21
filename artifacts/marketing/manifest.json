@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "releaseTarget": "v3 (upcoming; exact public version unverified)",
+  "releaseTarget": "Desktop v3.0.4",
   "demoAccounts": 26,
   "demoBrands": 26,
   "captures": [
@@ -192,28 +192,6 @@
       "originalSha256": "278694c5a60313ce8eb31a140ed3cbf9dedd6b6b1b7c5701ef254c8d5f56565d"
     },
     {
-      "path": "source/desktop/dark/backup-restore.png",
-      "platform": "desktop",
-      "theme": "dark",
-      "purpose": "backup-restore",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "622ac0843fa59aa080f87ea138de57cf4f5036325be700eaa462c7eb9a20d0a9",
-      "originalSha256": "7048bf2c9fedc0b2f6dfe817a5f5e88fedd83d508ae08c6abe20e349742f992b"
-    },
-    {
-      "path": "source/desktop/dark/backup-top.png",
-      "platform": "desktop",
-      "theme": "dark",
-      "purpose": "backup-top",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "ce806898657c1f9fbef4e45700a53f4153db2304cc8c90b58c9b0b81bd47237c",
-      "originalSha256": "45773e56a388269a1b57fcb49fd6b4b5db287ec5d842f1fd82c5a4df73a2616a"
-    },
-    {
       "path": "source/desktop/dark/biometric-prompt.png",
       "platform": "desktop",
       "theme": "dark",
@@ -223,17 +201,6 @@
       "height": 1544,
       "sha256": "0978bf0346a5160b0733db4d116b145f349a97a7afda73f2b1421b7ef8b3abef",
       "originalSha256": "5d7272b8581cbcfd2472085b1ebfdb1f20dd1ddcd99f9e41582df1751cb63ff8"
-    },
-    {
-      "path": "source/desktop/dark/imports.png",
-      "platform": "desktop",
-      "theme": "dark",
-      "purpose": "imports",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "def47ddbb1ec715dc4534b1ada4616bd2fa45dc6ea7cb5a91613cc1b85811b5a",
-      "originalSha256": "bdab7b49c301ba3b97c867644164a50caf0662cd9c57f3a7ddf6381b027725c3"
     },
     {
       "path": "source/desktop/dark/scanner.png",
@@ -251,11 +218,12 @@
       "platform": "desktop",
       "theme": "dark",
       "purpose": "settings",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee",
-      "originalSha256": "176e4459bb9207b8fd461aee9e2a30a1fe87003c41cd84015b4989fdb6eab130"
+      "method": "manual live-app capture; lossless exterior corner alpha mask",
+      "width": 2250,
+      "height": 1630,
+      "sha256": "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39",
+      "originalSha256": "c985a5dd7a5fae1ee1c139366da91c58e44857cfca51290b93ac52bd947b4475",
+      "cornerMaskRadius": 45
     },
     {
       "path": "source/desktop/light/account-context-menu.png",
@@ -291,28 +259,6 @@
       "originalSha256": "7afe00ed50abb004d74596194db24ae72e4eed8e611870fee46f6cec0ca2c1b4"
     },
     {
-      "path": "source/desktop/light/backup-restore.png",
-      "platform": "desktop",
-      "theme": "light",
-      "purpose": "backup-restore",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "946f8ed22917b9ce997e2633529d10bd998f5c7a305aeee4eea264b64d9506aa",
-      "originalSha256": "ef6e2f686d3fd4712bc8764b790c66c36c149751812a24906d283059e327a7d1"
-    },
-    {
-      "path": "source/desktop/light/backup-top.png",
-      "platform": "desktop",
-      "theme": "light",
-      "purpose": "backup-top",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "7319730ba5144aab97c61d5701eb17b859dff67d49e01335478b1dec39bc171f",
-      "originalSha256": "af14547e02f73e401e255703ef0c0a2e1e46e2150235541c3441defcbd6bfec4"
-    },
-    {
       "path": "source/desktop/light/biometric-prompt.png",
       "platform": "desktop",
       "theme": "light",
@@ -322,17 +268,6 @@
       "height": 1483,
       "sha256": "366e572010fe552e81fceadea1805b6cf4754c7113bdd40825f4e1ef9bdc629f",
       "originalSha256": "dfd6a69d38b598e53ff4fb8c8c0bb8a6598af0ea1d8f9962c1d1a9caf98fd205"
-    },
-    {
-      "path": "source/desktop/light/imports.png",
-      "platform": "desktop",
-      "theme": "light",
-      "purpose": "imports",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "7ecc40b1b3d07162177a99e93210585e76f9656fe0d6fe1e5dc79b4b40347822",
-      "originalSha256": "a576c0001e0a6a6569562742a469cb7c027c536b7906cf2d749a2d70df8a2179"
     },
     {
       "path": "source/desktop/light/scanner.png",
@@ -350,11 +285,12 @@
       "platform": "desktop",
       "theme": "light",
       "purpose": "settings",
-      "method": "manual capture of the live app",
-      "width": 1300,
-      "height": 1550,
-      "sha256": "77ca2eed592b70613cf06b012b00b3a4c70f5d4a204937efa578eaca2e4a42ef",
-      "originalSha256": "fb216a303854a8efa95fad2487bb4efb0451b7d98608648e5599d9ca79685706"
+      "method": "manual live-app capture; lossless exterior corner alpha mask",
+      "width": 2250,
+      "height": 1630,
+      "sha256": "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278",
+      "originalSha256": "afcec3bf3f84b343eb5179aefe95ab7810902432b56f636cd3210e5f500ac743",
+      "cornerMaskRadius": 45
     }
   ],
   "generated": [
@@ -848,13 +784,13 @@
     },
     {
       "path": "store/windows/promotional/de-DE/04-appearance-settings.png",
-      "sha256": "2bf2e6d1aa5ea9eb407d71225e17407827a18cb208b638fda665be440efa0c88",
+      "sha256": "f06988eaee6779233e935f9e0a7a430ea33e1827123ddd6272a3d13c30bb7854",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee"
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
@@ -863,16 +799,17 @@
           "sourceCrop": [
             2,
             2,
-            1298,
-            1548
+            2248,
+            1628
           ],
           "appBounds": [
-            1042,
-            78,
-            775,
-            925
+            1030,
+            251,
+            800,
+            579
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -938,7 +875,7 @@
     },
     {
       "path": "store/windows/promotional/de-DE/07-qr-import.png",
-      "sha256": "9b05c9c3e1d73a9038f5242c27f24f36312a1fd107db165c776fad5f56d78b0b",
+      "sha256": "5bddda6e2454c08891533eb6e256108d276b44b0c1830c65052bfd0dfe73ae60",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
@@ -963,7 +900,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
@@ -979,7 +917,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -1176,13 +1115,13 @@
     },
     {
       "path": "store/windows/promotional/en-US/04-appearance-settings.png",
-      "sha256": "2d815eb9cd357df59edf80aac2c6fec5014fefef6d6f7483a42f810e5739837e",
+      "sha256": "bcbe311e8ce96854c1ed5c8a28f5ae177e0a6a01ba0048c8ad8489336e2256e9",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee"
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
@@ -1191,16 +1130,17 @@
           "sourceCrop": [
             2,
             2,
-            1298,
-            1548
+            2248,
+            1628
           ],
           "appBounds": [
-            1042,
-            78,
-            775,
-            925
+            1030,
+            251,
+            800,
+            579
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -1266,7 +1206,7 @@
     },
     {
       "path": "store/windows/promotional/en-US/07-qr-import.png",
-      "sha256": "4c565f1e6bdb29e6105572c155f889406409ec3eeef0f85a86149171827f4487",
+      "sha256": "ad77c1832b77e8f433424c886008d2b4528c81ccab5a52e86d3fe7112a2a8dbf",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
@@ -1291,7 +1231,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
@@ -1307,7 +1248,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -1504,13 +1446,13 @@
     },
     {
       "path": "store/windows/promotional/es-ES/04-appearance-settings.png",
-      "sha256": "8d9009b57e8404031fca745113418c2b646039fc44dba1a9e6406a567b35e930",
+      "sha256": "5fd92d34606ed37bca53d575193854645cf2ec9a2f779cc268aea643a9cdc484",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee"
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
@@ -1519,16 +1461,17 @@
           "sourceCrop": [
             2,
             2,
-            1298,
-            1548
+            2248,
+            1628
           ],
           "appBounds": [
-            1042,
-            78,
-            775,
-            925
+            1030,
+            251,
+            800,
+            579
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -1594,7 +1537,7 @@
     },
     {
       "path": "store/windows/promotional/es-ES/07-qr-import.png",
-      "sha256": "e12673ad2afd3f05b0b09d10ae918cff4b78c27b33826fa6012f4bb6ac22d7b8",
+      "sha256": "e643f3ea22222b74c37bbc19875b30c016e99a7d2f6a3df96f0f4bd7a41d85d8",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
@@ -1619,7 +1562,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
@@ -1635,7 +1579,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -1832,13 +1777,13 @@
     },
     {
       "path": "store/windows/promotional/fr-FR/04-appearance-settings.png",
-      "sha256": "18db14256f9621844bae5f33d6c9e5f121659b6f6af07b1a55473f6e72425657",
+      "sha256": "ab49ceaefed005c884ff85214c519a07c680f9b3c0f1fe91120fcd045e9ff3b2",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4",
-        "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee"
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39"
       ],
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "appCapturePlacements": [
@@ -1847,16 +1792,17 @@
           "sourceCrop": [
             2,
             2,
-            1298,
-            1548
+            2248,
+            1628
           ],
           "appBounds": [
-            1042,
-            78,
-            775,
-            925
+            1030,
+            251,
+            800,
+            579
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -1922,7 +1868,7 @@
     },
     {
       "path": "store/windows/promotional/fr-FR/07-qr-import.png",
-      "sha256": "97ea78c81fa604b964b76c251915305a4baf9f03cb4c3122e3b5399145fb74ae",
+      "sha256": "5eacd9e0967f42259fba4c3e7787746730f58bb689caab2c6ef9f4c81b384b7e",
       "kind": "designed-store-campaign",
       "platform": "desktop",
       "sourceSha256": [
@@ -1947,7 +1893,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         },
         {
           "sourcePath": "composites/desktop/scanner-website-qr-dark.png",
@@ -1963,7 +1910,8 @@
             708,
             530
           ],
-          "cornerMaskRadius": 22
+          "cornerMaskRadius": 0,
+          "sourceAlphaPreserved": true
         }
       ],
       "publicationUse": "Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required",
@@ -2124,47 +2072,47 @@
       "publicationUse": "Store screenshot candidate: cleaned app pixels on neutral frame; manual review required"
     },
     {
-      "path": "store/windows/screenshots/dark/imports.png",
-      "sha256": "4e97d79c1d12f2f65da7b5ca48d09bb5488b8766a870d5807bd0806ca4aa7913",
+      "path": "store/windows/screenshots/dark/settings.png",
+      "sha256": "412c872018a8bb5ef77c13b73837c1eccabd87cd98139df0827a07f18402b796",
       "kind": "framed-store-screenshot-candidate",
       "platform": "desktop",
       "sourceSha256": [
-        "def47ddbb1ec715dc4534b1ada4616bd2fa45dc6ea7cb5a91613cc1b85811b5a"
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39"
       ],
       "nativeAppBounds": [
         80,
-        60,
-        1294,
-        1544
+        407,
+        2244,
+        1624
       ],
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "cornerMaskRadius": 20,
       "publicationUse": "Store screenshot candidate: cleaned app pixels on neutral frame; manual review required"
     },
     {
-      "path": "store/windows/screenshots/dark/settings.png",
-      "sha256": "5711fe9303b0a9b45f373eb80851ab77fc49470e707c2520ff0bfa1cfde0452f",
+      "path": "store/windows/screenshots/light/account-context-menu.png",
+      "sha256": "17c40f1271ff5e8e26fb02491c5ee556fd27d9e7d50ca2da243817a31c435a6f",
       "kind": "framed-store-screenshot-candidate",
       "platform": "desktop",
       "sourceSha256": [
-        "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee"
+        "309db9d37224f3939163d012f2e079c6cbd6f9ede337a14ab6cee6b84b15c8f9"
       ],
       "nativeAppBounds": [
-        80,
-        60,
-        1294,
-        1544
+        211,
+        109,
+        944,
+        1182
       ],
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        947,
+        1185
       ],
       "cornerMaskRadius": 20,
       "publicationUse": "Store screenshot candidate: cleaned app pixels on neutral frame; manual review required"
@@ -2193,68 +2141,45 @@
       "publicationUse": "Store screenshot candidate: cleaned app pixels on neutral frame; manual review required"
     },
     {
-      "path": "store/windows/screenshots/light/imports.png",
-      "sha256": "b3e2e1eb72ef73a4ae204149dec67c190890ca0e1566c7deb4f30e0b5d08483f",
-      "kind": "framed-store-screenshot-candidate",
-      "platform": "desktop",
-      "sourceSha256": [
-        "7ecc40b1b3d07162177a99e93210585e76f9656fe0d6fe1e5dc79b4b40347822"
-      ],
-      "nativeAppBounds": [
-        80,
-        60,
-        1294,
-        1544
-      ],
-      "sourceCrop": [
-        3,
-        3,
-        1297,
-        1547
-      ],
-      "cornerMaskRadius": 20,
-      "publicationUse": "Store screenshot candidate: cleaned app pixels on neutral frame; manual review required"
-    },
-    {
       "path": "store/windows/screenshots/light/settings.png",
-      "sha256": "fdd936b89a4fe3c0fabdc1fc768764c2b485d49157c61d65bbfbfab3895859d4",
+      "sha256": "cbda8c119a425abe1f2d739cdcdce874aa339ba0dc74c3d3b8ed1b1c149d8cdc",
       "kind": "framed-store-screenshot-candidate",
       "platform": "desktop",
       "sourceSha256": [
-        "77ca2eed592b70613cf06b012b00b3a4c70f5d4a204937efa578eaca2e4a42ef"
+        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278"
       ],
       "nativeAppBounds": [
         80,
-        60,
-        1294,
-        1544
+        407,
+        2244,
+        1624
       ],
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "cornerMaskRadius": 20,
       "publicationUse": "Store screenshot candidate: cleaned app pixels on neutral frame; manual review required"
     },
     {
       "path": "website/gallery.json",
-      "sha256": "002bee5c34c6bb63b7aa49553a62561bdb0297a5f68fa7bcbdd10a15415e9436",
+      "sha256": "062d8c4942a7b45ed2aeb3b86fda5d17c2a8cc307b0db4e39b8a8cd0b2680b86",
       "kind": "website-gallery-data",
       "sourceSha256": [
         "e5ea88cf3eaccf55d7688519171221ab2011d84203de954b69ab1adf1cf61f07",
         "0c29c2f00c60f5dbaf1069db7688038a3d39d43ac490e57a9a02afbebe1d44c4",
-        "e5599c7d72560972d864aad0a8b779d74648035c4c56106187d0797b9727a117",
-        "bc96353abbd24e775afd605ef5ccf0e8a206efa546ff41a219385a0d809dad6e",
+        "7f6288483e0107b1c8796887dc12b74d1be532693ab153b01e45506bcbc1f2b9",
+        "a83d21b211aa159e46261e03c1f8335cf85dfa6cf96cc07692b92f622fa51709",
         "34069fef1fac14b6f7cc8651f6557453f625d137fc7b894d900fbbfc1b43c6b0",
-        "19d46855bfbd548bc3779797c6b033ab633b1d595b3d2beb38fff6b9b0802c8b",
+        "f9412b99b192930c83b3f3bf281743e7ba3fce56e2816249b842177cb8731f70",
         "8f60ac2db6ae2e23eebc2a582afc18fa88b13f2ff7696e39d457b2f3fcd954f3",
         "c492d4a68170ddfae8191c64835414d86805e96ac44eed092ad59a9ae5dc1895",
-        "487cadeb0ca1912e98b2aa31a15f1d99841f5351c693f28192f9fe59bca8fda9",
-        "47409abcf56caa7ed3715c766edd6061b40579614ab983d32d433f65ee0edbcf",
+        "7d26e052728c45f1fa92136c4811fa106c76599c63f8ad1d2e814c5771380a0c",
+        "e5659a2a01b33d2c400c3f3f91127cc590749764a3bf1d8297120de1012241e8",
         "f02fa96bf6733dad262fa3c2fe725e6cf0013183fe2a41283334469c2a7146a7",
-        "9d458a3e571312b95e96fa6733248312a2fd997e6675098c72249b63fce3b595",
+        "22d550b38c3c94a555637999c504269aa4a3eab7ec7e44c0b50381df01c068e2",
         "0799835fe51f42f90f3d87a9dbe75ad1e251c0073395b21bc42719f4ca1ded53",
         "9683fe9632011cfdba61a658f2ab1380da0d3b8d5d93ac03d26c18caf4e9837c",
         "70f0f24b9dd06bba319b2dd437eb0ba862dfd65fc8b954b0e3362c78bb8a97a2",
@@ -2524,42 +2449,6 @@
       "cornerMaskRadius": 20
     },
     {
-      "path": "website/optimized/desktop/dark/backup-restore.png",
-      "sha256": "1fd2c5b3e6ad638ed9109d62a976e13eb76d61f550a4a9c1fd71781ee03ace44",
-      "kind": "cleaned-website-capture",
-      "sourceSha256": [
-        "622ac0843fa59aa080f87ea138de57cf4f5036325be700eaa462c7eb9a20d0a9"
-      ],
-      "platform": "desktop",
-      "theme": "dark",
-      "sourcePath": "source/desktop/dark/backup-restore.png",
-      "sourceCrop": [
-        3,
-        3,
-        1297,
-        1547
-      ],
-      "cornerMaskRadius": 20
-    },
-    {
-      "path": "website/optimized/desktop/dark/imports.png",
-      "sha256": "9043a7434f3458f99442d9cdadad5485fb5a387d86a6baf7109ce32ec33b039e",
-      "kind": "cleaned-website-capture",
-      "sourceSha256": [
-        "def47ddbb1ec715dc4534b1ada4616bd2fa45dc6ea7cb5a91613cc1b85811b5a"
-      ],
-      "platform": "desktop",
-      "theme": "dark",
-      "sourcePath": "source/desktop/dark/imports.png",
-      "sourceCrop": [
-        3,
-        3,
-        1297,
-        1547
-      ],
-      "cornerMaskRadius": 20
-    },
-    {
       "path": "website/optimized/desktop/dark/scanner.png",
       "sha256": "41ccab6202b68963cb480c088cc79418ba9cd17b91a7ea57ad2aac15d8f31f7a",
       "kind": "cleaned-website-capture",
@@ -2579,10 +2468,10 @@
     },
     {
       "path": "website/optimized/desktop/dark/settings.png",
-      "sha256": "82d172a05dc189db7ed6cea531fc6ab1c11801353619c5b200101c957214e6b1",
+      "sha256": "7986293733e66085bcde17fcf51fb7ab42a6cf22a6ab7f207f0c5796e90c8cb3",
       "kind": "cleaned-website-capture",
       "sourceSha256": [
-        "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee"
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39"
       ],
       "platform": "desktop",
       "theme": "dark",
@@ -2590,8 +2479,8 @@
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "cornerMaskRadius": 20
     },
@@ -2632,42 +2521,6 @@
       "cornerMaskRadius": 20
     },
     {
-      "path": "website/optimized/desktop/light/backup-restore.png",
-      "sha256": "867dd4c3674e526d97887378acf152571b6ccee31b1ef3b7da8fe73c4bea1f30",
-      "kind": "cleaned-website-capture",
-      "sourceSha256": [
-        "946f8ed22917b9ce997e2633529d10bd998f5c7a305aeee4eea264b64d9506aa"
-      ],
-      "platform": "desktop",
-      "theme": "light",
-      "sourcePath": "source/desktop/light/backup-restore.png",
-      "sourceCrop": [
-        3,
-        3,
-        1297,
-        1547
-      ],
-      "cornerMaskRadius": 20
-    },
-    {
-      "path": "website/optimized/desktop/light/imports.png",
-      "sha256": "50872d3076da7a8282343132c15aa90940f90bb7c07eabeca692f8205a066cd6",
-      "kind": "cleaned-website-capture",
-      "sourceSha256": [
-        "7ecc40b1b3d07162177a99e93210585e76f9656fe0d6fe1e5dc79b4b40347822"
-      ],
-      "platform": "desktop",
-      "theme": "light",
-      "sourcePath": "source/desktop/light/imports.png",
-      "sourceCrop": [
-        3,
-        3,
-        1297,
-        1547
-      ],
-      "cornerMaskRadius": 20
-    },
-    {
       "path": "website/optimized/desktop/light/scanner.png",
       "sha256": "6847c1ad250b1c5198edd7de2806b3ac9191a7f0b9459ef4f65749c16f2f90aa",
       "kind": "cleaned-website-capture",
@@ -2687,10 +2540,10 @@
     },
     {
       "path": "website/optimized/desktop/light/settings.png",
-      "sha256": "32e6b2f360ad3fbff0afeb2ab195e976461d05c59ad2ba36155db6ba428b20de",
+      "sha256": "99a13c8bfa6cd74bbbd3149325de138e1cff4e756f1bb8164983307a8804c3dd",
       "kind": "cleaned-website-capture",
       "sourceSha256": [
-        "77ca2eed592b70613cf06b012b00b3a4c70f5d4a204937efa578eaca2e4a42ef"
+        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278"
       ],
       "platform": "desktop",
       "theme": "light",
@@ -2698,8 +2551,8 @@
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "cornerMaskRadius": 20
     },
@@ -3039,30 +2892,30 @@
     },
     {
       "path": "website/optimized/framed/desktop/dark/backup-restore.png",
-      "sha256": "19d46855bfbd548bc3779797c6b033ab633b1d595b3d2beb38fff6b9b0802c8b",
+      "sha256": "f9412b99b192930c83b3f3bf281743e7ba3fce56e2816249b842177cb8731f70",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "622ac0843fa59aa080f87ea138de57cf4f5036325be700eaa462c7eb9a20d0a9",
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
       "platform": "desktop",
       "theme": "dark",
-      "sourcePath": "source/desktop/dark/backup-restore.png",
-      "cleanedPath": "website/optimized/desktop/dark/backup-restore.png",
+      "sourcePath": "source/desktop/dark/settings.png",
+      "cleanedPath": "website/optimized/desktop/dark/settings.png",
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "appPlacement": {
         "bounds": [
-          1028,
-          85,
-          754,
-          900
+          975,
+          224,
+          860,
+          622
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3071,30 +2924,30 @@
     },
     {
       "path": "website/optimized/framed/desktop/dark/import-formats.png",
-      "sha256": "bc96353abbd24e775afd605ef5ccf0e8a206efa546ff41a219385a0d809dad6e",
+      "sha256": "a83d21b211aa159e46261e03c1f8335cf85dfa6cf96cc07692b92f622fa51709",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "def47ddbb1ec715dc4534b1ada4616bd2fa45dc6ea7cb5a91613cc1b85811b5a",
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
       "platform": "desktop",
       "theme": "dark",
-      "sourcePath": "source/desktop/dark/imports.png",
-      "cleanedPath": "website/optimized/desktop/dark/imports.png",
+      "sourcePath": "source/desktop/dark/settings.png",
+      "cleanedPath": "website/optimized/desktop/dark/settings.png",
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "appPlacement": {
         "bounds": [
-          1028,
-          85,
-          754,
-          900
+          975,
+          224,
+          860,
+          622
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3137,10 +2990,10 @@
     },
     {
       "path": "website/optimized/framed/desktop/dark/settings.png",
-      "sha256": "e5599c7d72560972d864aad0a8b779d74648035c4c56106187d0797b9727a117",
+      "sha256": "7f6288483e0107b1c8796887dc12b74d1be532693ab153b01e45506bcbc1f2b9",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "024904d7d6f19bcb47c147ebcdd644c70aafbc93b0ef67fdb1e801c5fdbaebee",
+        "f769e79826d7493c76ba5686923187c9ef2bac49e1aba4849ca35f64089adb39",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
@@ -3152,15 +3005,15 @@
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "appPlacement": {
         "bounds": [
-          1028,
-          85,
-          754,
-          900
+          975,
+          224,
+          860,
+          622
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3230,30 +3083,30 @@
     },
     {
       "path": "website/optimized/framed/desktop/light/backup-restore.png",
-      "sha256": "9d458a3e571312b95e96fa6733248312a2fd997e6675098c72249b63fce3b595",
+      "sha256": "22d550b38c3c94a555637999c504269aa4a3eab7ec7e44c0b50381df01c068e2",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "946f8ed22917b9ce997e2633529d10bd998f5c7a305aeee4eea264b64d9506aa",
+        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
       "platform": "desktop",
       "theme": "light",
-      "sourcePath": "source/desktop/light/backup-restore.png",
-      "cleanedPath": "website/optimized/desktop/light/backup-restore.png",
+      "sourcePath": "source/desktop/light/settings.png",
+      "cleanedPath": "website/optimized/desktop/light/settings.png",
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "appPlacement": {
         "bounds": [
-          1028,
-          85,
-          754,
-          900
+          975,
+          224,
+          860,
+          622
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3262,30 +3115,30 @@
     },
     {
       "path": "website/optimized/framed/desktop/light/import-formats.png",
-      "sha256": "47409abcf56caa7ed3715c766edd6061b40579614ab983d32d433f65ee0edbcf",
+      "sha256": "e5659a2a01b33d2c400c3f3f91127cc590749764a3bf1d8297120de1012241e8",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "7ecc40b1b3d07162177a99e93210585e76f9656fe0d6fe1e5dc79b4b40347822",
+        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
       "platform": "desktop",
       "theme": "light",
-      "sourcePath": "source/desktop/light/imports.png",
-      "cleanedPath": "website/optimized/desktop/light/imports.png",
+      "sourcePath": "source/desktop/light/settings.png",
+      "cleanedPath": "website/optimized/desktop/light/settings.png",
       "backgroundPath": "packaging/windows-store/assets/source/store-marketing-screenshot-background.png",
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "appPlacement": {
         "bounds": [
-          1028,
-          85,
-          754,
-          900
+          975,
+          224,
+          860,
+          622
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3328,10 +3181,10 @@
     },
     {
       "path": "website/optimized/framed/desktop/light/settings.png",
-      "sha256": "487cadeb0ca1912e98b2aa31a15f1d99841f5351c693f28192f9fe59bca8fda9",
+      "sha256": "7d26e052728c45f1fa92136c4811fa106c76599c63f8ad1d2e814c5771380a0c",
       "kind": "designed-website-campaign",
       "sourceSha256": [
-        "77ca2eed592b70613cf06b012b00b3a4c70f5d4a204937efa578eaca2e4a42ef",
+        "5ef88c540f818a8433b9d6775afd7038f530047015dfe550a4f36de0c966f278",
         "2a08328ae20abe713330235b08071262ce00827838966cd474009a23b1e2bef4",
         "66748954507b3f9f9cff87dc23c97134c1d7d029e8275de179b9f3872f2d12b4"
       ],
@@ -3343,15 +3196,15 @@
       "sourceCrop": [
         3,
         3,
-        1297,
-        1547
+        2247,
+        1627
       ],
       "appPlacement": {
         "bounds": [
-          1028,
-          85,
-          754,
-          900
+          975,
+          224,
+          860,
+          622
         ],
         "cornerMaskRadius": 20,
         "frame": "cleaned desktop window"
@@ -3479,10 +3332,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/dark/backup-restore.webp",
-      "sha256": "1b86c36ab6ee2c9de7298abe7af0e71b59ea99e7e2d1a5b9981a097d7606085c",
+      "sha256": "3fa90253b2ca923635f20078d2e53a7f496ae4842cbfb6427901bf0bd44becf2",
       "kind": "website-preview",
       "sourceSha256": [
-        "19d46855bfbd548bc3779797c6b033ab633b1d595b3d2beb38fff6b9b0802c8b"
+        "f9412b99b192930c83b3f3bf281743e7ba3fce56e2816249b842177cb8731f70"
       ],
       "fullPath": "website/optimized/framed/desktop/dark/backup-restore.png",
       "width": 1200,
@@ -3491,10 +3344,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/dark/import-formats.webp",
-      "sha256": "d87606e5cb6d12ca73ed2b3ac9370cc2e768553dfbceb0f0f25ca050e593399d",
+      "sha256": "c23b46b98d4c59e3f9eed8a3737789ecbf174ce1f437a0dd12a822fcac54fda9",
       "kind": "website-preview",
       "sourceSha256": [
-        "bc96353abbd24e775afd605ef5ccf0e8a206efa546ff41a219385a0d809dad6e"
+        "a83d21b211aa159e46261e03c1f8335cf85dfa6cf96cc07692b92f622fa51709"
       ],
       "fullPath": "website/optimized/framed/desktop/dark/import-formats.png",
       "width": 1200,
@@ -3515,10 +3368,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/dark/settings.webp",
-      "sha256": "f44adc627fb0b52456f3996561bb3ea92f93df43d3a83e604fa7a43aa21984bf",
+      "sha256": "d259b58d8706182dacb21f7dc27932e676874104fdefccebcdeefb666c6b88bc",
       "kind": "website-preview",
       "sourceSha256": [
-        "e5599c7d72560972d864aad0a8b779d74648035c4c56106187d0797b9727a117"
+        "7f6288483e0107b1c8796887dc12b74d1be532693ab153b01e45506bcbc1f2b9"
       ],
       "fullPath": "website/optimized/framed/desktop/dark/settings.png",
       "width": 1200,
@@ -3551,10 +3404,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/light/backup-restore.webp",
-      "sha256": "2356b96d951d19f88a99e20c37049a8baa83f75c032330513cccd57e503a54e2",
+      "sha256": "39e61aff2453b816fa9361a0ddd84554be797f1bb221cc4dc7a93a8f0e3b9ff5",
       "kind": "website-preview",
       "sourceSha256": [
-        "9d458a3e571312b95e96fa6733248312a2fd997e6675098c72249b63fce3b595"
+        "22d550b38c3c94a555637999c504269aa4a3eab7ec7e44c0b50381df01c068e2"
       ],
       "fullPath": "website/optimized/framed/desktop/light/backup-restore.png",
       "width": 1200,
@@ -3563,10 +3416,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/light/import-formats.webp",
-      "sha256": "7fdaa0b8ecfc948c665158ad8225cacc16e8285460c7fac2e8315e73fb9235f1",
+      "sha256": "372824af9b836803efaea02036613bc21eddcc4079b7c1bf5e24692ec27686a4",
       "kind": "website-preview",
       "sourceSha256": [
-        "47409abcf56caa7ed3715c766edd6061b40579614ab983d32d433f65ee0edbcf"
+        "e5659a2a01b33d2c400c3f3f91127cc590749764a3bf1d8297120de1012241e8"
       ],
       "fullPath": "website/optimized/framed/desktop/light/import-formats.png",
       "width": 1200,
@@ -3587,10 +3440,10 @@
     },
     {
       "path": "website/optimized/previews/desktop/light/settings.webp",
-      "sha256": "90ab286bb7458f099b0cfde08a4423ac0efe1d5363eb81deb149b8034ec69aaf",
+      "sha256": "bf2628c1837415b676986626547867b37429b460dd42e73c5b9252affeffc643",
       "kind": "website-preview",
       "sourceSha256": [
-        "487cadeb0ca1912e98b2aa31a15f1d99841f5351c693f28192f9fe59bca8fda9"
+        "7d26e052728c45f1fa92136c4811fa106c76599c63f8ad1d2e814c5771380a0c"
       ],
       "fullPath": "website/optimized/framed/desktop/light/settings.png",
       "width": 1200,
@@ -3620,12 +3473,8 @@
       "caption": "Account actions and QR options"
     },
     {
-      "path": "store/windows/screenshots/dark/imports.png",
-      "caption": "Account import formats \u2014 Dark theme"
-    },
-    {
-      "path": "store/windows/screenshots/light/imports.png",
-      "caption": "Account import formats \u2014 Light theme"
+      "path": "store/windows/screenshots/light/account-context-menu.png",
+      "caption": "OTP Harbor for Windows"
     }
   ],
   "publicationStatus": "approved for website publication",
@@ -3658,12 +3507,12 @@
     {
       "path": "store/windows/screenshots/dark/imports.png",
       "caption": "Account import formats \u2014 Dark theme",
-      "status": "ready for manual review"
+      "status": "awaiting eligible genuine capture"
     },
     {
       "path": "store/windows/screenshots/light/imports.png",
       "caption": "Account import formats \u2014 Light theme",
-      "status": "ready for manual review"
+      "status": "awaiting eligible genuine capture"
     },
     {
       "path": "store/windows/screenshots/light/search.png",

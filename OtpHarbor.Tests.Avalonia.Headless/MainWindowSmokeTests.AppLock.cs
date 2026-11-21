@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Automation;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
 using TOTP.Avalonia.Desktop;
@@ -43,11 +44,10 @@ public sealed partial class MainWindowSmokeTests
             host.Content = model;
             window.UpdateLayout();
             var panel = Assert.Single(host.GetVisualDescendants().OfType<Border>(), border => border.Name == "AppLockSettingsPanel");
-            var button = Assert.Single(panel.GetVisualDescendants().OfType<Button>());
+            var button = Assert.Single(panel.GetVisualDescendants().OfType<Button>(), value => value.Name == "AppLockToggleButton");
             Assert.Equal("AppLockToggleButton", button.Name);
-            Assert.Contains("panel", panel.Classes);
+            Assert.Contains("settings-card", panel.Classes);
             Assert.Same(model.ToggleAppLockCommand, button.Command);
-            var label = Assert.IsType<SymbolIconLabel>(button.Content);
             var scroller = window.FindControl<ScrollViewer>("SecuritySettingsScroll")!;
             foreach (var enabled in new[] { true, false })
             {
@@ -58,7 +58,7 @@ public sealed partial class MainWindowSmokeTests
                     localization.ApplyCulture(locale);
                     window.UpdateLayout();
                     var culture = CultureInfo.GetCultureInfo(locale);
-                    Assert.Equal(strings.Get(enabled ? AvaloniaStringKeys.DisableAppLock : AvaloniaStringKeys.EnableAppLock, culture), label.Text);
+                    Assert.Equal(strings.Get(enabled ? AvaloniaStringKeys.DisableAppLock : AvaloniaStringKeys.EnableAppLock, culture), AutomationProperties.GetName(button));
                     Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), text => text.Text ==
                         strings.Get(enabled ? AvaloniaStringKeys.AppLockEnabledDescription : AvaloniaStringKeys.AppLockDisabledDescription, culture));
                     Assert.All(host.GetVisualDescendants().OfType<RadioButton>(), control => Assert.Equal(enabled, control.IsEffectivelyEnabled));
@@ -78,6 +78,8 @@ public sealed partial class MainWindowSmokeTests
 
     private sealed class LayoutAuthorization : IAuthorizationService
     {
+        public AuthorizationResult RotationResult { get; set; } = AuthorizationResult.Success;
+        public (string Current, string Next)? RotatedPasswords { get; private set; }
         public LayoutAuthorization() { State.SetConfiguration(true, PreferredUnlockMethod.Password); State.Unlock(); }
         public AuthorizationState State { get; } = new();
         public Task InitializeAsync() => Task.CompletedTask;
@@ -93,7 +95,11 @@ public sealed partial class MainWindowSmokeTests
         public Task<AuthorizationResult> ConfigureHelloAsync(string password) => throw new NotSupportedException();
         public Task<AuthorizationResult> ConfigureUnlockMethodAsync(PreferredUnlockMethod method, string password) => throw new NotSupportedException();
         public Task<AuthorizationResult> SetGateAsync(AuthorizationGateKind gate) => throw new NotSupportedException();
-        public Task<AuthorizationResult> ChangePasswordAsync(string current, string next) => throw new NotSupportedException();
+        public Task<AuthorizationResult> ChangePasswordAsync(string current, string next)
+        {
+            RotatedPasswords = (current, next);
+            return Task.FromResult(RotationResult);
+        }
         public Task<AuthorizationResult> SetAppLockEnabledAsync(bool enabled, string password) => throw new NotSupportedException();
         public void Logout() => State.Lock();
         public void Lock() => State.Lock();

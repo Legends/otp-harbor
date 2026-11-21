@@ -35,7 +35,7 @@ public sealed partial class MainWindowSmokeTests
             var report = Assert.Single(window.GetVisualDescendants().OfType<Border>(),
                 border => border.Name == "ProblemReportSettingsPanel");
             Assert.Same(logging.Parent, report.Parent);
-            Assert.Contains("panel", report.Classes);
+            Assert.Contains("settings-card", report.Classes);
             Assert.Equal(logging.BorderThickness, report.BorderThickness);
             Assert.Equal(logging.BorderBrush, report.BorderBrush);
             Assert.Equal(logging.Background, report.Background);
@@ -47,17 +47,19 @@ public sealed partial class MainWindowSmokeTests
             Assert.Same(settings.ReportOnGitHubCommand, button.Command);
             var label = Assert.IsType<SymbolIconLabel>(button.Content);
             var heading = Assert.Single(report.GetVisualDescendants().OfType<TextBlock>(),
-                text => text.Classes.Contains("section-title"));
-            var disclosure = Assert.Single(report.GetVisualDescendants().OfType<TextBlock>(),
-                text => text.Classes.Contains("secondary"));
+                text => text.Classes.Contains("settings-card-title"));
+            var disclosure = Assert.Single(Named<Grid>(report, "SupportReportHeading").GetVisualDescendants().OfType<TextBlock>(),
+                text => text.Classes.Contains("settings-help"));
+            var warning = Assert.Single(Named<Border>(report, "SupportReportWarning").GetVisualDescendants().OfType<TextBlock>());
             var scroller = window.FindControl<ScrollViewer>("SupportSettingsScroll")!;
             foreach (var locale in new[] { "en", "de", "fr", "es" })
             {
                 localization.ApplyCulture(locale);
                 window.UpdateLayout();
                 var culture = CultureInfo.GetCultureInfo(locale);
-                Assert.Equal(catalog.Get(AvaloniaStringKeys.ReportProblemTitle, culture), heading.Text);
-                Assert.Equal(catalog.Get(AvaloniaStringKeys.GitHubReportNotice, culture), disclosure.Text);
+                Assert.Equal(catalog.Get(AvaloniaStringKeys.SupportReportTitle, culture), heading.Text);
+                Assert.Equal(catalog.Get(AvaloniaStringKeys.SupportReportPublicHelp, culture), disclosure.Text);
+                Assert.Equal(catalog.Get(AvaloniaStringKeys.SupportReportWarning, culture), warning.Text);
                 Assert.Equal(catalog.Get(AvaloniaStringKeys.ReportOnGitHub, culture), label.Text);
                 Assert.True(report.Bounds.Top > logging.Bounds.Bottom);
                 Assert.True(scroller.Extent.Width <= scroller.Viewport.Width + 1);

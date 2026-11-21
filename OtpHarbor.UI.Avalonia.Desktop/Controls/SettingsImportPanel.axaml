@@ -1,0 +1,64 @@
+<UserControl x:Class="TOTP.Avalonia.Desktop.Controls.SettingsImportPanel"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation" xmlns:import="using:TOTP.Avalonia.Shared.Import"
+    xmlns:shared="using:TOTP.Avalonia.Shared.Controls" x:DataType="import:AuthenticatorImportViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button#ImportQrButton"><Setter Property="Grid.Column" Value="2" /></Style>
+        <Style Selector="ComboBox#ExportHelpSource"><Setter Property="Grid.Column" Value="1" /></Style>
+        <ContainerQuery Name="desktop-import" Query="max-width:520">
+            <Style Selector="Button#ImportFileButton"><Setter Property="Grid.ColumnSpan" Value="3" /></Style>
+            <Style Selector="Button#ImportQrButton"><Setter Property="Grid.Column" Value="0" /><Setter Property="Grid.Row" Value="1" /><Setter Property="Grid.ColumnSpan" Value="3" /></Style>
+            <Style Selector="Border#ImportActionDivider"><Setter Property="IsVisible" Value="False" /></Style>
+            <Style Selector="ComboBox#ExportHelpSource"><Setter Property="Grid.Column" Value="0" /><Setter Property="Grid.Row" Value="1" /><Setter Property="Grid.ColumnSpan" Value="2" /></Style>
+            <Style Selector="Grid#ImportActionRow, Grid#ImportHelpRow"><Setter Property="RowSpacing" Value="10" /></Style>
+        </ContainerQuery>
+    </UserControl.Styles>
+    <StackPanel Container.Name="desktop-import" Container.Sizing="Width" Spacing="8">
+        <TextBlock Classes="settings-card-title" Text="{Binding Title}" TextWrapping="Wrap" />
+        <TextBlock Classes="settings-help" Text="{Binding Description}" />
+        <Grid x:Name="ImportActionRow" ColumnDefinitions="5*,Auto,3*" RowDefinitions="Auto,Auto" ColumnSpacing="16" Margin="0,4,0,0">
+            <Button x:Name="ImportFileButton" Classes="primary settings-action" HorizontalAlignment="Stretch" MinHeight="40" Command="{Binding FileCommand}">
+                <shared:SymbolIconLabel Kind="Folder" Text="{Binding FileText}" />
+            </Button>
+            <Border x:Name="ImportActionDivider" Grid.Column="1" Width="1" Background="{DynamicResource BrushControlBorder}" />
+            <Button x:Name="ImportQrButton" Classes="secondary settings-action" HorizontalAlignment="Stretch" MinHeight="40" Command="{Binding QrCommand}">
+                <shared:SymbolIconLabel Kind="QrCode" Text="{Binding QrText}" />
+            </Button>
+        </Grid>
+        <TextBlock Classes="settings-help" Text="{Binding AutoDetectionText}" />
+        <TextBlock Classes="settings-help" Text="{DynamicResource DataBackupFormatExamples}" />
+        <Border IsVisible="{Binding HasFormatChoice}" Padding="12" CornerRadius="8" BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="1">
+            <StackPanel Spacing="10">
+                <TextBlock FontWeight="SemiBold" Text="{Binding SelectedFileName}" TextWrapping="Wrap" />
+                <TextBlock Classes="settings-help" Text="{Binding AmbiguousFormatText}" />
+                <ComboBox Classes="settings-choice" MinHeight="40" HorizontalAlignment="Stretch" ItemsSource="{Binding FormatOptions}" SelectedItem="{Binding SelectedFormat, Mode=TwoWay}" PlaceholderText="{Binding ChooseFormatText}" automation:AutomationProperties.Name="{Binding ChooseFormatText}">
+                    <ComboBox.ItemTemplate><DataTemplate x:DataType="import:AuthenticatorImportViewModel+FormatOption"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Classes="primary settings-action" HorizontalAlignment="Left" MinHeight="40" Command="{Binding UseFormatCommand}" Content="{Binding UseFormatText}" />
+                <Button Classes="secondary settings-action" HorizontalAlignment="Left" MinHeight="40" Command="{Binding ClearFileCommand}" Content="{Binding ClearFileText}" />
+            </StackPanel>
+        </Border>
+        <Border BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+            <StackPanel Spacing="10">
+                <Grid x:Name="ImportHelpRow" ColumnDefinitions="4*,5*" RowDefinitions="Auto,Auto" ColumnSpacing="16">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalAlignment="Center">
+                        <shared:SymbolIcon Kind="Help" IconSize="20" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Classes="settings-row-label" Text="{Binding HelpTitle}" />
+                    </Grid>
+                    <ComboBox x:Name="ExportHelpSource" Classes="settings-choice" HorizontalAlignment="Stretch" MinHeight="40" ItemsSource="{Binding Sources}" PlaceholderText="{Binding OptionalSourceText}"
+                              SelectedItem="{Binding SelectedSource, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding OptionalSourceText}">
+                        <ComboBox.ItemTemplate><DataTemplate x:DataType="import:AuthenticatorImportViewModel+SourceOption"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" /></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+                <Border IsVisible="{Binding HasGuidance}" Padding="12" CornerRadius="8" Background="{DynamicResource BrushSurfaceAlternate}">
+                    <StackPanel Spacing="8">
+                        <TextBlock FontWeight="SemiBold" Text="{Binding InstructionsTitle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Instructions}" TextWrapping="Wrap" />
+                        <TextBlock Classes="settings-help" Text="{Binding SupportNotice}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+        <TextBlock Classes="settings-help" Text="{Binding LocalProcessingText}" />
+    </StackPanel>
+</UserControl>

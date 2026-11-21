@@ -3,10 +3,12 @@ import argparse, hashlib, json, shutil, subprocess, sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from screenshot_cleanup import clean_android, clean_desktop, DESKTOP_CORNER_RADIUS
+from marketing_environment import require_pinned_dependencies
 ROOT=Path(__file__).resolve().parents[2]/'artifacts/marketing'
 parser=argparse.ArgumentParser()
 parser.add_argument('--platform',choices=('all','desktop','android'),default='all')
 args=parser.parse_args()
+require_pinned_dependencies()
 source=ROOT/'source'; manifest_path=ROOT/'manifest.json'
 manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
 previous_generated=manifest.get('generated',[])
@@ -230,7 +232,9 @@ if 'desktop' in selected:
             crop=source_crop or (crop_inset,crop_inset,original.width-crop_inset,original.height-crop_inset)
             if not (0<=crop[0]<crop[2]<=original.width and 0<=crop[1]<crop[3]<=original.height):
                 raise ValueError(f'Invalid source crop for {screenshot}: {crop}')
-            app=original.crop(crop).convert('RGB')
+            capture=original.crop(crop).convert('RGBA')
+            capture_alpha=capture.getchannel('A')
+            app=capture.convert('RGB')
         x,y,max_width,max_height=bounds
         scale=min(max_width/app.width,max_height/app.height,1)
         size=(round(app.width*scale),round(app.height*scale))
@@ -242,11 +246,13 @@ if 'desktop' in selected:
         for radius,alpha in ((30,24),(22,30),(14,36)):
             sd.rounded_rectangle((x-radius//2,y-radius//2+12,x+size[0]+radius//2,y+size[1]+radius//2+12),radius=24,fill=(0,5,20,alpha))
         canvas.alpha_composite(shadow)
-        corner_radius=min(22,size[0]//20,size[1]//20)
-        mask=Image.new('L',size)
-        ImageDraw.Draw(mask).rounded_rectangle((0,0,size[0]-1,size[1]-1),radius=corner_radius,fill=255)
+        source_alpha=capture_alpha.getextrema()!=(255,255)
+        corner_radius=0 if source_alpha else min(22,size[0]//20,size[1]//20)
+        mask=capture_alpha.resize(size,Image.Resampling.LANCZOS) if source_alpha else Image.new('L',size)
+        if not source_alpha:
+            ImageDraw.Draw(mask).rounded_rectangle((0,0,size[0]-1,size[1]-1),radius=corner_radius,fill=255)
         canvas.paste(app,(x,y),mask)
-        return {'sourcePath':screenshot.relative_to(ROOT).as_posix(),'sourceCrop':list(crop),'appBounds':[x,y,*size],'cornerMaskRadius':corner_radius}
+        return {'sourcePath':screenshot.relative_to(ROOT).as_posix(),'sourceCrop':list(crop),'appBounds':[x,y,*size],'cornerMaskRadius':corner_radius,**({'sourceAlphaPreserved':True} if source_alpha else {})}
     def paste_illustration(canvas, illustration, bounds):
         with Image.open(illustration) as original:
             art=original.convert('RGB')
@@ -370,34 +376,13 @@ if 'desktop' in selected:
             entry['publicationUse']='Branded Store campaign candidate; genuine captures and labeled composites only; manual and Partner Center review required'
             entry['locale']=culture
             generated.append(entry)
-gallery=[]
-gallery_sources=[]
-optimized_paths={entry['path'] for entry in generated if entry['path'].startswith('website/optimized/')}
-for platform in ('desktop','android'):
-    for theme in ('light','dark'):
-        for capture in sorted((source/platform/theme).glob('*.png')):
-            if f'website/optimized/{platform}/{theme}/{capture.name}' not in optimized_paths:
-                continue
-            with Image.open(ROOT/'website/optimized'/platform/theme/capture.name) as image:
-                width,height=image.size
-            screen=capture.stem.replace('-',' ')
-            gallery.append({
-                'platform':platform,'theme':theme,'screen':capture.stem,
-                'src':f'assets/marketing/{platform}/{theme}/{capture.name}',
-                'width':width,'height':height,
-                'alt':f'OTP Harbor {platform} {screen} in {theme} theme with fictional demo accounts',
-                'caption':f'{screen.title()} · {platform.title()} · {theme.title()} theme',
-            })
-            gallery_sources.append(capture)
-gallery_path=ROOT/'website/gallery.json'
-gallery_path.parent.mkdir(parents=True,exist_ok=True)
-gallery_path.write_text(json.dumps({'items':gallery},indent=2)+'\n',encoding='utf-8')
-generated.append(record(gallery_path,'website-gallery-data',gallery_sources))
 manifest['generated']=sorted(generated,key=lambda entry:entry['path'])
 current_paths={entry['path'] for entry in generated}
 for entry in previous_generated:
-    if belongs_to_selected(entry) and entry['path'] not in current_paths:
-        stale=ROOT/entry['path']
+    if belongs_to_selected(entry) and entry['path'] not in current_paths and entry['path']!='website/gallery.json':
+        stale=(ROOT/entry['path']).resolve()
+        if not stale.is_relative_to(ROOT.resolve()):
+            raise ValueError(f'Stale marketing asset escaped its root: {stale}')
         if stale.is_file(): stale.unlink()
 store_priority={
     'light/account-list.png':(1,'Main account list — Light theme'),
@@ -448,4 +433,4 @@ manifest['storeCampaignOrder']={culture:[{
 manifest['publicationStatus']='review required: inspect every image, legal names and app state before publication'
 manifest_path.write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
 print(f'Generated {len(generated)} derivatives from genuine app captures.')
-subprocess.run([sys.executable, str(Path(__file__).with_name('Generate-WebsiteShowcase.py'))], check=True)
+subprocess.run([sys.executable, str(Path(__file__).with_name('Generate-WebsiteShowcase.py')), '--platform', args.platform], check=True)

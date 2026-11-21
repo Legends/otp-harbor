@@ -233,6 +233,14 @@ try {
         New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
         Copy-Item -LiteralPath $source -Destination $destination
     }
+    $lineEndingFixture = Join-Path $versionUpdateFixture 'packaging/windows-store/public-version.json'
+    $lineEndingContent = [IO.File]::ReadAllText($lineEndingFixture).Replace("`r`n", "`n").Replace("`n", "`r`n")
+    [IO.File]::WriteAllText($lineEndingFixture, $lineEndingContent)
+    & $publicVersionUpdater `
+        -RepositoryRoot $versionUpdateFixture `
+        -PackageVersion $publicVersion.packageVersion `
+        -DisplayVersion $publicVersion.displayVersion `
+        -Check
     & $publicVersionUpdater `
         -RepositoryRoot $versionUpdateFixture `
         -PackageVersion "$(([version]$publicVersion.packageVersion).Major + 1).2.65535.0"

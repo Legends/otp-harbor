@@ -398,4 +398,17 @@
   <data name="AppLockChangeFailed" xml:space="preserve"><value>Le réglage du verrouillage n’a pas pu être modifié de manière sûre.</value></data>
   <data name="AppLockDisabled" xml:space="preserve"><value>Verrouillage désactivé. Toute personne utilisant cet appareil déverrouillé peut voir les codes.</value></data>
   <data name="AppLockEnabled" xml:space="preserve"><value>Verrouillage de l’application activé.</value></data>
+  <data name="FaqCreateBackupQuestion" xml:space="preserve"><value>Comment créer une sauvegarde ?</value></data>
+  <data name="FaqCreateBackupAnswer" xml:space="preserve"><value>Ouvrez Paramètres → Données et sauvegarde. Pour une sauvegarde manuelle, exportez vos comptes, définissez et confirmez un mot de passe d’exportation, puis choisissez où enregistrer le fichier chiffré. Conservez ce mot de passe en lieu sûr : il est nécessaire pour importer cette sauvegarde.
+
+Pour les sauvegardes automatiques, configurez un dossier de destination sous Sauvegardes automatiques et autorisez l’accès si nécessaire. OTP Harbor enregistre des copies de récupération chiffrées lorsque votre coffre-fort change. Vérifiez l’état des sauvegardes et maintenez la destination accessible. Pour restaurer une copie automatique, vous avez besoin du mot de passe principal utilisé lors de sa création.
+
+Conservez une copie de récupération supplémentaire dans un autre endroit sûr et vérifiez que vous pouvez importer une sauvegarde avant de vous y fier.</value></data>
+  <data name="FaqImportIconPacksIntro" xml:space="preserve"><value>Utilisez un pack d’icônes OTP Harbor créé avec l’Icon Pack Builder pour ordinateur, ou choisissez une icône SVG ou PNG individuelle.</value></data>
+  <data name="FaqImportIconPacksStepsTitle" xml:space="preserve"><value>Importer un pack d’icônes</value></data>
+  <data name="FaqImportIconPacksDownloadTitle" xml:space="preserve"><value>Obtenir l’Icon Pack Builder</value></data>
+  <data name="FaqImportIconPacksBuildTitle" xml:space="preserve"><value>Créer votre pack d’icônes</value></data>
+  <data name="FaqImportIconPacksImportTitle" xml:space="preserve"><value>Importer le pack d’icônes</value></data>
+  <data name="FaqImportIconPacksCustomTitle" xml:space="preserve"><value>Utiliser plutôt une seule icône</value></data>
+  <data name="FaqIconPackFileExtension" xml:space="preserve"><value>.otphicons</value></data>
 </root>

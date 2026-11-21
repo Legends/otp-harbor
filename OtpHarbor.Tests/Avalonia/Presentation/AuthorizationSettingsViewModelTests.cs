@@ -152,20 +152,18 @@ public sealed partial class AuthorizationSettingsViewModelTests
     {
         var state = ConfiguredState(PreferredUnlockMethod.PlatformQuickUnlock);
         var authorization = Authorization(state);
-        authorization.Setup(value => value.ChangePasswordAsync("current-password", "new-password"))
-            .ReturnsAsync(AuthorizationResult.Success);
         var dialogs = new Mock<IAvaloniaDialogService>();
-        AuthorizationSettingsViewModel? sut = null;
-        dialogs.Setup(value => value.PromptForPasswordAsync(
-                It.IsAny<PasswordDialogRequest>(),
-                It.IsAny<CancellationToken>()))
+        var sut = CreateSut(authorization.Object, dialogs.Object);
+        await sut.BeginPasswordChangeAsync();
+        authorization.Setup(value => value.ChangePasswordAsync("current-password", "new-password"))
             .ReturnsAsync(() =>
             {
-                Assert.Equal(string.Empty, sut!.NewPassword);
+                Assert.Equal(string.Empty, sut.CurrentPassword);
+                Assert.Equal(string.Empty, sut.NewPassword);
                 Assert.Equal(string.Empty, sut.ConfirmPassword);
-                return "current-password";
+                return AuthorizationResult.Success;
             });
-        sut = CreateSut(authorization.Object, dialogs.Object);
+        sut.CurrentPassword = "current-password";
         sut.NewPassword = "new-password";
         sut.ConfirmPassword = "new-password";
 
@@ -184,6 +182,8 @@ public sealed partial class AuthorizationSettingsViewModelTests
         var authorization = Authorization(ConfiguredState(PreferredUnlockMethod.Password));
         var dialogs = new Mock<IAvaloniaDialogService>();
         var sut = CreateSut(authorization.Object, dialogs.Object);
+        await sut.BeginPasswordChangeAsync();
+        sut.CurrentPassword = "current-password";
         sut.NewPassword = "new-password";
         sut.ConfirmPassword = "different-password";
 

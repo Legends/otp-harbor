@@ -4,13 +4,14 @@
 Builds current source and installs the isolated ARM64 Release Test app without clearing app data.
 .DESCRIPTION
 Retains Release optimization, AOT and signature/package checks. A normal install launches once.
+Without -Device, adb selects the single physical USB phone and ignores running emulators.
 TestStartup opts into three force-stop/cold-launch checks of twenty seconds each.
 BuildOnly builds and verifies the APK without accessing a device. Local testing permits only
 SDK patch roll-forward within the repository's pinned feature band; the repository pin is unchanged.
 .EXAMPLE
-.\Install-AndroidReleasePhone.ps1 -Device '<adb-device-serial>'
+.\Install-AndroidReleasePhone.ps1
 .EXAMPLE
-.\Install-AndroidReleasePhone.ps1 -Device '<adb-device-serial>' -TestStartup
+.\Install-AndroidReleasePhone.ps1 -TestStartup
 .EXAMPLE
 .\Install-AndroidReleasePhone.ps1 -BuildOnly
 #>
@@ -31,9 +32,6 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ($BuildOnly -and $TestStartup) { throw 'BuildOnly and TestStartup cannot be used together.' }
-if (-not $BuildOnly -and [string]::IsNullOrWhiteSpace($Device)) {
-    throw 'Specify -Device with the target adb serial, or use -BuildOnly.'
-}
 . (Join-Path $PSScriptRoot '../Testing.Common.ps1')
 $releaseRoot = Get-OtpHarborRepositoryRoot -StartDirectory $PSScriptRoot
 $releasePackage = 'io.github.legends.otpharbor.releasetest'
@@ -49,6 +47,28 @@ $releaseSdk = (Get-Content -LiteralPath (Join-Path $releaseRoot 'global.json') -
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $releaseRunner 'global.json') -Encoding UTF8
 
 $releaseSdkRoot = Join-Path $env:LOCALAPPDATA 'Android/Sdk'
+if (-not $BuildOnly) {
+    if ([string]::IsNullOrWhiteSpace($AdbPath)) {
+        $releaseAdbCommand = Get-Command adb -ErrorAction SilentlyContinue
+        if ($null -ne $releaseAdbCommand) { $AdbPath = $releaseAdbCommand.Source }
+        elseif (Test-Path -LiteralPath 'D:/android-platform-tools/adb.exe') { $AdbPath = 'D:/android-platform-tools/adb.exe' }
+        else { $AdbPath = Join-Path $releaseSdkRoot 'platform-tools/adb.exe' }
+    }
+    if (-not (Test-Path -LiteralPath $AdbPath -PathType Leaf)) { throw 'adb was not found. Supply -AdbPath.' }
+    if ([string]::IsNullOrWhiteSpace($Device)) {
+        $releasePhysicalSerial = @(& $AdbPath -d get-serialno 2>$null | ForEach-Object { ([string]$_).Trim() })
+        if ($LASTEXITCODE -ne 0 -or $releasePhysicalSerial.Count -ne 1 -or
+            [string]::IsNullOrWhiteSpace([string]$releasePhysicalSerial[0]) -or
+            [string]$releasePhysicalSerial[0] -match '^(unknown|emulator-.*)$') {
+            throw 'Could not select one physical USB phone. Connect and authorize one phone, or specify -Device if several phones are connected. Emulators are ignored.'
+        }
+        $Device = ([string]$releasePhysicalSerial[0]).Trim()
+        $releasePhysicalState = @(& $AdbPath -s $Device get-state 2>$null)
+        if ($LASTEXITCODE -ne 0 -or ($releasePhysicalState -join '').Trim() -cne 'device') {
+            throw 'The physical phone is offline or unauthorized. Unlock it and allow USB debugging, then retry.'
+        }
+    }
+}
 if ([string]::IsNullOrWhiteSpace($BuildToolsPath)) {
     $releaseBuildTools = @(Get-ChildItem -LiteralPath (Join-Path $releaseSdkRoot 'build-tools') -Directory |
         Where-Object Name -Match '^\d+\.\d+\.\d+$' | Sort-Object { [version]$_.Name } -Descending)
@@ -137,13 +157,6 @@ Write-Output "APK: $releaseArtifact"
 Write-Output "SHA256: $releaseHash"
 if ($BuildOnly) { return }
 
-if ([string]::IsNullOrWhiteSpace($AdbPath)) {
-    $releaseAdbCommand = Get-Command adb -ErrorAction SilentlyContinue
-    if ($null -ne $releaseAdbCommand) { $AdbPath = $releaseAdbCommand.Source }
-    elseif (Test-Path -LiteralPath 'D:/android-platform-tools/adb.exe') { $AdbPath = 'D:/android-platform-tools/adb.exe' }
-    else { $AdbPath = Join-Path $releaseSdkRoot 'platform-tools/adb.exe' }
-}
-if (-not (Test-Path -LiteralPath $AdbPath -PathType Leaf)) { throw 'adb was not found. Supply -AdbPath.' }
 & $AdbPath -s $Device install -r $releaseArtifact
 if ($LASTEXITCODE -ne 0) { throw 'Release installation failed; existing app data was retained. No uninstall fallback is performed.' }
 if ($TestStartup) {

@@ -4,7 +4,8 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw, ImageOps, ImageStat
 import zxingcpp
 from scanner_marketing import desktop_demo_qr_bounds
-from screenshot_cleanup import rounded_alpha
+from screenshot_cleanup import rounded_alpha, clean_desktop
+from marketing_environment import require_pinned_dependencies
 ROOT=Path(__file__).resolve().parents[2]/'artifacts/marketing'
 def normalized_text_sha256(path):
     text=path.read_text(encoding='utf-8').replace('\r\n','\n').replace('\r','\n')
@@ -12,7 +13,9 @@ def normalized_text_sha256(path):
 def file_sha256(path):
     return normalized_text_sha256(path) if path.suffix.lower()=='.json' else hashlib.sha256(path.read_bytes()).hexdigest()
 parser=argparse.ArgumentParser(); parser.add_argument('--require-captures',action='store_true')
+parser.add_argument('--platform',choices=('all','desktop','android'),default='all',help='Limit pixel reconstruction checks; hashes and provenance remain checked for every asset.')
 args=parser.parse_args()
+require_pinned_dependencies()
 accounts=json.loads((ROOT/'demo-data/otp-harbor-demo-accounts.json').read_text(encoding='utf-8'))
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
 assert normalized_text_sha256(ROOT/'demo-data/otp-harbor-demo-accounts.json')==manifest['demoAccountsSha256']
@@ -94,6 +97,9 @@ for item in manifest['generated']:
     assert path.is_file(),f'Missing generated image: {path}'
     assert file_sha256(path)==item['sha256'],f'Stale generated image: {path}'
     assert item.get('sourceSha256') and set(item['sourceSha256'])<=source_hashes,f'Unknown source for {path}'
+    item_platform=item.get('platform') or next((platform for platform in ('desktop','android') if f'/{platform}/' in item['path']),None)
+    if args.platform!='all' and item_platform and item_platform!=args.platform:
+        continue
     if item['kind']=='website-preview':
         full=ROOT/item['fullPath']
         assert item['sourceSha256']==[file_sha256(full)]
@@ -118,6 +124,8 @@ for item in manifest['generated']:
             if item['platform']=='desktop':
                 assert cleaned.mode=='RGBA' and cleaned.getpixel((0,0))[3]==0
                 assert cleaned.getpixel((cleaned.width//2,cleaned.height//2))[3]==255
+                expected,_=clean_desktop(original)
+                assert cleaned.getchannel('A').tobytes()==expected.getchannel('A').tobytes(),f'Capture alpha changed: {path}'
     if item['kind']=='designed-scanner-repo-qr':
         assert item['platform'] in ('desktop','android') and item['qrPayload']=='https://github.com/Legends/otp-harbor'
         source=ROOT/item['sourcePath']
@@ -139,6 +147,8 @@ for item in manifest['generated']:
     if item['kind']=='designed-website-campaign':
         capture=ROOT/item['sourcePath']
         cleaned_path=ROOT/item['cleanedPath']
+        if item['platform']=='desktop' and path.stem in ('settings','import-formats','backup-restore'):
+            assert capture==ROOT/'source/desktop'/item['theme']/'settings.png',f'Desktop settings cards must share one capture: {path}'
         expected_background=(campaign_background if item['platform']=='desktop' else android_background)
         assert item['backgroundPath']==expected_background.relative_to(ROOT.parents[1]).as_posix()
         illustration=(ROOT.parents[1]/item['illustrationPath']) if 'illustrationPath' in item else None
@@ -179,8 +189,9 @@ for item in manifest['generated']:
             assert (width,height)==(right-left,bottom-top)
             background='#e8eef7' if path.parent.name=='light' else '#071121'
             expected=Image.new('RGB',(width,height),background)
-            expected.paste(original.crop((left,top,right,bottom)).convert('RGBA'),
-                           (0,0),rounded_alpha((width,height),item['cornerMaskRadius']))
+            cleaned,crop=clean_desktop(original)
+            assert tuple(item['sourceCrop'])==crop
+            expected.paste(cleaned,(0,0),cleaned)
             assert output.crop((x,y,x+width,y+height)).convert('RGB').tobytes()==expected.tobytes(),f'App pixels changed in Store frame: {path}'
     if item['kind']=='store-app-tile-icon':
         assert item['sourcePath']=='OtpHarbor.UI.Avalonia.Desktop/Assets/Icons/app-1024.png'
@@ -213,6 +224,11 @@ for item in manifest['generated']:
                 if 'cornerMaskRadius' in placement:
                     mask=Image.new('L',(width,height))
                     ImageDraw.Draw(mask).rounded_rectangle((0,0,width-1,height-1),radius=placement['cornerMaskRadius'],fill=255)
+                    if placement.get('sourceAlphaPreserved'):
+                        with Image.open(capture) as original:
+                            alpha=original.crop((left,top,right,bottom)).convert('RGBA').getchannel('A').resize((width,height),Image.Resampling.LANCZOS)
+                        assert alpha.getextrema()!=(255,255) and placement['cornerMaskRadius']==0
+                        mask=alpha.point(lambda value:255 if value==255 else 0)
                     difference=ImageChops.difference(actual,expected)
                     assert not ImageChops.multiply(difference,mask.convert('RGB')).getbbox(),f'Campaign changed interior app pixels: {path}'
                 else:

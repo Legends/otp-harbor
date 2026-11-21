@@ -14,6 +14,7 @@ public sealed class AboutViewModelTests
         var model = new AboutViewModel(key => key, () => "1.0", _ => { calls++; return handoff.Task; });
         model.Entries[1].Command!.Execute(null);
         Assert.All(model.Entries.Skip(1), entry => Assert.False(entry.Command!.CanExecute(null)));
+        Assert.False(model.CreditsCommand.CanExecute(null));
         model.Entries[3].Command!.Execute(null);
         Assert.Equal(1, calls);
         handoff.SetResult(false);
@@ -22,6 +23,7 @@ public sealed class AboutViewModelTests
         while (!model.Entries[1].Command!.CanExecute(null)) await Task.Delay(5, timeout.Token);
         Assert.True(model.HasStatus);
         Assert.All(model.Entries.Skip(1), entry => Assert.True(entry.Command!.CanExecute(null)));
+        Assert.True(model.CreditsCommand.CanExecute(null));
     }
 
     [Theory]
@@ -36,6 +38,10 @@ public sealed class AboutViewModelTests
         { opened.Add(uri); return Task.FromResult(true); }, mobile, (title, body) =>
         { shareTitle = title; shareBody = body; return Task.FromResult(true); });
         Assert.Equal(mobile ? 5 : 4, model.Entries.Count);
+        Assert.Same(model.Entries[0], model.VersionEntry);
+        Assert.Same(model.Entries[1], model.RepositoryEntry);
+        Assert.Same(model.Entries[2], model.LicenseEntry);
+        Assert.Same(model.Entries[3], model.WebsiteEntry);
         Assert.Equal("3.2.65535.0", model.Entries[0].Value);
         Assert.Equal("GPL-3.0-only", model.Entries[2].Value);
         Assert.Equal(new Uri(mobile ? "https://legends.github.io/otp-harbor/android/" : "https://legends.github.io/otp-harbor/"), model.WebsiteUri);
@@ -99,5 +105,22 @@ public sealed class AboutViewModelTests
         var model = new AboutViewModel(key => key, () => throw new InvalidOperationException(), _ => Task.FromResult(true));
         Assert.Equal("—", model.Entries[0].Value);
         Assert.All(model.Entries.Skip(1), entry => Assert.True(entry.Command!.CanExecute(null)));
+    }
+
+    [Fact]
+    public void Credits_OpensExistingProjectNoticesAndRecoversFromFailedHandoff()
+    {
+        var strings = new MobileStringCatalog(CultureInfo.GetCultureInfo("de"));
+        var opened = new List<Uri>();
+        var succeeds = false;
+        var model = new AboutViewModel(strings.Get, () => "3.0.3.65535", uri =>
+        { opened.Add(uri); return Task.FromResult(succeeds); });
+        model.CreditsCommand.Execute(null);
+        Assert.Equal(new Uri("https://github.com/Legends/otp-harbor/blob/master/THIRD_PARTY_NOTICES.md"), Assert.Single(opened));
+        Assert.Equal(strings.Get(AboutStringKeys.ActionFailed), model.Status);
+        succeeds = true;
+        model.CreditsCommand.Execute(null);
+        Assert.False(model.HasStatus);
+        Assert.True(model.RepositoryEntry.Command!.CanExecute(null));
     }
 }

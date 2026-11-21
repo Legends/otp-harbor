@@ -17,7 +17,7 @@ public sealed class SettingsFaqHoverTests
     [AvaloniaTheory]
     [InlineData(520, 480)]
     [InlineData(800, 620)]
-    public void HeaderHover_StaysNavyOnlyInDarkThemeAndPreservesChevronFeedback(int width, int height)
+    public void HeaderHover_UsesSemanticSurfacesAndPreservesChevronFeedback(int width, int height)
     {
         var window = new SettingsWindow { Width = width, Height = height };
         var reference = new Expander { Header = "Reference header", Width = 360 };
@@ -38,20 +38,19 @@ public sealed class SettingsFaqHoverTests
                 baseline.MouseMove(new Point(-1, -1));
                 var baselineHeader = Assert.Single(reference.GetVisualDescendants().OfType<ToggleButton>(), control => control.Name == "ExpanderHeader");
                 Hover(baseline, baselineHeader);
-                var baselineSurface = Surface(baselineHeader, "ToggleButtonBackground");
                 var baselineChevron = Surface(baselineHeader, "ExpandCollapseChevronBorder");
                 baseline.MouseMove(new Point(-1, -1));
                 var headers = window.GetVisualDescendants().OfType<ToggleButton>()
                     .Where(control => control.Name == "ExpanderHeader" && control.IsEffectivelyVisible).ToArray();
-                Assert.Equal(4, headers.Length);
+                Assert.Equal(7, headers.Length);
                 foreach (var header in headers)
                 {
                     window.MouseMove(new Point(-1, -1));
                     window.UpdateLayout();
                     var beforeChevron = Surface(header, "ExpandCollapseChevronBorder");
                     Hover(window, header);
-                    Assert.Equal(theme == ThemeVariant.Dark ? Color.Parse("#0E192D") : baselineSurface,
-                        Surface(header, "ToggleButtonBackground"));
+                    Assert.True(window.TryFindResource("BrushSurfaceHover", theme, out var hoverBrush));
+                    Assert.Equal(Assert.IsAssignableFrom<ISolidColorBrush>(hoverBrush).Color, Surface(header, "ToggleButtonBackground"));
                     Assert.Equal(baselineChevron, Surface(header, "ExpandCollapseChevronBorder"));
                     Assert.NotEqual(beforeChevron, Surface(header, "ExpandCollapseChevronBorder"));
                 }

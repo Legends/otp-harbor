@@ -159,7 +159,7 @@
   <data name="GroupNameRequired" xml:space="preserve"><value>Introduce un nombre de grupo.</value></data>
   <data name="GroupSaved" xml:space="preserve"><value>Grupo guardado.</value></data>
   <data name="Groups" xml:space="preserve"><value>Grupos</value></data>
-  <data name="IconPacks" xml:space="preserve"><value>Paquetes de iconos</value></data>
+  <data name="IconPacks" xml:space="preserve"><value>Paquete de iconos</value></data>
   <data name="IdleTimeout" xml:space="preserve"><value>Bloqueo automático</value></data>
   <data name="IdleTimeoutHelp" xml:space="preserve"><value>Bloquea automáticamente la aplicación tras el periodo de inactividad seleccionado.</value></data>
   <data name="ImportAccounts" xml:space="preserve"><value>Importar cuentas</value></data>
@@ -385,4 +385,99 @@
   <data name="Yes" xml:space="preserve"><value>sí</value></data>
   <data name="AppLockEnabledDescription" xml:space="preserve"><value>Exigir autenticación al abrir OTP Harbor y cada vez que se bloquee la aplicación.</value></data>
   <data name="AppLockUnavailable" xml:space="preserve"><value>El bloqueo debe permanecer activado porque no está disponible el almacenamiento seguro para abrir la aplicación sin autenticación.</value></data>
+  <data name="DiagnosticDescription" xml:space="preserve"><value>Entorno y configuración actuales para asistencia y resolución de problemas.</value></data>
+  <data name="DiagnosticDetails" xml:space="preserve"><value>Información de asistencia detallada</value></data>
+  <data name="DiagnosticDisplayLabel" xml:space="preserve"><value>Pantalla</value></data>
+  <data name="DiagnosticLanguageValue" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="DiagnosticLogLevelDebug" xml:space="preserve"><value>Depuración</value></data>
+  <data name="DiagnosticLogLevelError" xml:space="preserve"><value>Error</value></data>
+  <data name="DiagnosticLogLevelFatal" xml:space="preserve"><value>Crítico</value></data>
+  <data name="DiagnosticLogLevelInformation" xml:space="preserve"><value>Información</value></data>
+  <data name="DiagnosticLogLevelLabel" xml:space="preserve"><value>Nivel de registro</value></data>
+  <data name="DiagnosticLogLevelVerbose" xml:space="preserve"><value>Detallado</value></data>
+  <data name="DiagnosticLogLevelWarning" xml:space="preserve"><value>Advertencia</value></data>
+  <data name="DiagnosticOperatingSystemLabel" xml:space="preserve"><value>Sistema</value></data>
+  <data name="DiagnosticRuntimeLabel" xml:space="preserve"><value>Entorno</value></data>
+  <data name="DiagnosticValueUnavailable" xml:space="preserve"><value>No disponible</value></data>
+  <data name="AppearanceDescription" xml:space="preserve"><value>Personaliza el aspecto, el idioma y la visualización de cuentas de OTP Harbor.</value></data>
+  <data name="AppearancePersonalization" xml:space="preserve"><value>Personalización</value></data>
+  <data name="AppearanceLanguageHelp" xml:space="preserve"><value>Elige el idioma de la aplicación.</value></data>
+  <data name="AppearanceThemeHelp" xml:space="preserve"><value>Elige el aspecto de OTP Harbor.</value></data>
+  <data name="AppearanceAccountDisplay" xml:space="preserve"><value>Visualización de cuentas</value></data>
+  <data name="AppearanceQrDisplay" xml:space="preserve"><value>Visualización de códigos QR</value></data>
+  <data name="QrPreviewScaleHelp" xml:space="preserve"><value>Ajusta el tamaño de los códigos QR de la aplicación.</value></data>
+  <data name="QrPreviewScaleRange" xml:space="preserve"><value>Intervalo: 1,0× – 6,0×</value></data>
+  <data name="IconPackDescription" xml:space="preserve"><value>Gestiona los iconos de marca opcionales de tus cuentas.</value></data>
+  <data name="InstalledIconPack" xml:space="preserve"><value>Paquete de iconos instalado</value></data>
+  <data name="IconPackUsedLocally" xml:space="preserve"><value>Activo · Uso local (sin conexión)</value></data>
+  <data name="ManageIconPack" xml:space="preserve"><value>Gestionar paquete de iconos</value></data>
+  <data name="IconPackDisplay" xml:space="preserve"><value>Visualización</value></data>
+  <data name="AboutIconPacks" xml:space="preserve"><value>Acerca de los paquetes de iconos</value></data>
+  <data name="ImportIconPackAction" xml:space="preserve"><value>Importar paquete de iconos…</value></data>
+  <data name="RemoveIconPackAction" xml:space="preserve"><value>Eliminar iconos</value></data>
+  <data name="IncreaseQrScale" xml:space="preserve"><value>Ampliar vista previa QR</value></data>
+  <data name="DecreaseQrScale" xml:space="preserve"><value>Reducir vista previa QR</value></data>
+  <data name="IconPackLocalHelp" xml:space="preserve"><value>Tú importas y guardas localmente los paquetes de iconos de terceros y los iconos personalizados. OTP Harbor no proporciona ni distribuye estos recursos.</value></data>
+  <data name="IconPackRights" xml:space="preserve"><value>Licencias y uso</value></data>
+  <data name="IconPackResponsibility" xml:space="preserve"><value>Eres responsable de cumplir las licencias, los requisitos de atribución, los derechos de marca y las pautas de uso de cada recurso. OTP Harbor no concede derechos sobre recursos de terceros.</value></data>
+  <data name="SecurityDescription" xml:space="preserve"><value>Protege tus códigos y controla el acceso a OTP Harbor.</value></data>
+  <data name="SecurityUnlockMethod" xml:space="preserve"><value>Método de desbloqueo</value></data>
+  <data name="SecurityQuickUnlockTitle" xml:space="preserve"><value>Identificación biométrica</value></data>
+  <data name="SecurityQuickUnlockWindowsHelp" xml:space="preserve"><value>Desbloquea con Windows Hello (huella, rostro o PIN).</value></data>
+  <data name="SecurityQuickUnlockMacHelp" xml:space="preserve"><value>Desbloquea con Touch ID.</value></data>
+  <data name="SecurityQuickUnlockOtherHelp" xml:space="preserve"><value>Desbloquea con la autenticación segura de tu escritorio.</value></data>
+  <data name="SecurityPasswordOnly" xml:space="preserve"><value>Solo contraseña</value></data>
+  <data name="SecurityPasswordOnlyHelp" xml:space="preserve"><value>Usa tu contraseña maestra para desbloquear.</value></data>
+  <data name="SecurityMasterPasswordHelp" xml:space="preserve"><value>Actualiza la contraseña maestra de cifrado y recuperación.</value></data>
+  <data name="SecurityChangePasswordAction" xml:space="preserve"><value>Cambiar</value></data>
+  <data name="SecuritySavePasswordAction" xml:space="preserve"><value>Guardar</value></data>
+  <data name="SecurityCurrentMasterPassword" xml:space="preserve"><value>Contraseña maestra actual</value></data>
+  <data name="SecurityNewMasterPassword" xml:space="preserve"><value>Nueva contraseña maestra</value></data>
+  <data name="SecurityConfirmMasterPassword" xml:space="preserve"><value>Confirmar nueva contraseña maestra</value></data>
+  <data name="SecurityPasswordLengthRequirement" xml:space="preserve"><value>Longitud mínima de la contraseña</value></data>
+  <data name="SecurityPasswordRotationNotice" xml:space="preserve"><value>Cambiar la contraseña maestra actualiza la protección por contraseña de esta bóveda.</value></data>
+  <data name="SecurityAutoLockTitle" xml:space="preserve"><value>Bloqueo automático</value></data>
+  <data name="SecurityAutoLockHelp" xml:space="preserve"><value>Bloquea OTP Harbor automáticamente tras un período de inactividad.</value></data>
+  <data name="SecurityClipboardTitle" xml:space="preserve"><value>Portapapeles</value></data>
+  <data name="SecurityClipboardHelp" xml:space="preserve"><value>Limita cuánto tiempo permanecen los códigos copiados en el portapapeles.</value></data>
+  <data name="DataBackupDescription" xml:space="preserve"><value>Importa cuentas, crea copias de seguridad y gestiona las copias de recuperación.</value></data>
+  <data name="DataBackupFormatExamples" xml:space="preserve"><value>JSON · CSV · TXT · 2FAS · copias de OTP Harbor · etc.</value></data>
+  <data name="DataBackupHelp" xml:space="preserve"><value>Crea una copia protegida por contraseña y configura copias automáticas para la recuperación.</value></data>
+  <data name="DataBackupManualTitle" xml:space="preserve"><value>Copia manual</value></data>
+  <data name="DataBackupManualHelp" xml:space="preserve"><value>Crea una copia cifrada y portátil de todas las cuentas. Guarda la copia y la contraseña por separado.</value></data>
+  <data name="DataBackupAutomaticHelp" xml:space="preserve"><value>Guarda copias de recuperación cifradas cuando cambie tu bóveda.</value></data>
+  <data name="DataBackupPasswordNotice" xml:space="preserve"><value>Las copias requieren la contraseña maestra usada al crearlas. OTP Harbor no puede recuperar esa contraseña.</value></data>
+  <data name="DataBackupLocation" xml:space="preserve"><value>Ubicación de la copia</value></data>
+  <data name="DataBackupLocalFolder" xml:space="preserve"><value>Carpeta local</value></data>
+  <data name="DataBackupNetworkFolder" xml:space="preserve"><value>Recurso de red (SMB)</value></data>
+  <data name="DataBackupNetworkHelp" xml:space="preserve"><value>Elige un recurso ya accesible mediante el sistema operativo, como una ruta de red o carpeta montada. Gestiona el inicio de sesión de red en el sistema.</value></data>
+  <data name="DataBackupEnabled" xml:space="preserve"><value>Activadas</value></data>
+  <data name="DataBackupDisabled" xml:space="preserve"><value>Desactivadas</value></data>
+  <data name="DataBackupChange" xml:space="preserve"><value>Cambiar…</value></data>
+  <data name="DataBackupBackupsTitle" xml:space="preserve"><value>Copias de seguridad</value></data>
+  <data name="SupportDescription" xml:space="preserve"><value>Recopila registros, informa de problemas y consulta la información de soporte.</value></data>
+  <data name="SupportLogsTitle" xml:space="preserve"><value>Registros de diagnóstico</value></data>
+  <data name="SupportLogsHelp" xml:space="preserve"><value>Recopila registros de diagnóstico para ayudar a resolver problemas.</value></data>
+  <data name="SupportLogsNotice" xml:space="preserve"><value>Los registros incluyen datos de la aplicación, el sistema, el entorno de ejecución, la pantalla, el idioma y el registro, y pueden contener rutas del sistema y de archivos. Revisa los registros y adjuntos antes de enviarlos.</value></data>
+  <data name="SupportReportTitle" xml:space="preserve"><value>Informar de un problema</value></data>
+  <data name="SupportReportPublicHelp" xml:space="preserve"><value>Los informes de GitHub son públicos y visibles para todos. La versión de la aplicación y el sistema se rellenan automáticamente; revisa el formulario antes de enviarlo.</value></data>
+  <data name="SupportReportWarning" xml:space="preserve"><value>No incluyas datos de cuentas, secretos, códigos QR, copias de seguridad ni registros sin revisar. Informa de las vulnerabilidades de seguridad de forma privada.</value></data>
+  <data name="SupportApplicationDataTitle" xml:space="preserve"><value>Datos de la aplicación</value></data>
+  <data name="FaqDescription" xml:space="preserve"><value>Encuentra respuestas a preguntas habituales sobre OTP Harbor.</value></data>
+  <data name="FaqBackupLocationsQuestion" xml:space="preserve"><value>¿Dónde se guardan las copias de seguridad?</value></data>
+  <data name="FaqBackupLocationsAnswer" xml:space="preserve"><value>Eliges el destino de cada exportación manual. Las copias automáticas usan la carpeta que aparece en Configuración → Datos y copias de seguridad → Copias de seguridad automáticas. Puede ser una carpeta local o un recurso compartido de red accesible desde tu sistema operativo. Conserva una copia de recuperación adicional en otro lugar seguro.</value></data>
+  <data name="FaqForgottenPasswordQuestion" xml:space="preserve"><value>¿Qué pasa si olvido mi contraseña maestra?</value></data>
+  <data name="FaqForgottenPasswordAnswer" xml:space="preserve"><value>OTP Harbor no puede restablecer ni recuperar tu contraseña maestra. Si aún puedes desbloquear la aplicación con la autenticación del dispositivo configurada, exporta tus cuentas a una copia cifrada mientras tengas acceso y guarda su contraseña de exportación en un lugar seguro. De lo contrario, usa una copia cuya contraseña conozcas o recupera el acceso por separado con cada proveedor de cuenta. Conserva tu caja fuerte y tus copias existentes mientras revisas las opciones de recuperación.</value></data>
+  <data name="AboutDescription" xml:space="preserve"><value>Una aplicación de autenticación sencilla y segura para códigos TOTP, 2FA y OTP.</value></data>
+  <data name="AboutVersionLabel" xml:space="preserve"><value>Versión</value></data>
+  <data name="AboutRepositoryHelp" xml:space="preserve"><value>Código fuente, incidencias y versiones</value></data>
+  <data name="AboutWebsiteHelp" xml:space="preserve"><value>Información del producto y documentación</value></data>
+  <data name="AboutUpdatesHelp" xml:space="preserve"><value>Buscar una nueva versión de OTP Harbor.</value></data>
+  <data name="AboutUpdatesCurrentTitle" xml:space="preserve"><value>Estás al día</value></data>
+  <data name="AboutUpdatesCurrentVersion" xml:space="preserve"><value>La versión {0} es la más reciente.</value></data>
+  <data name="AboutDetailsTitle" xml:space="preserve"><value>Detalles de la aplicación</value></data>
+  <data name="AboutCreditsTitle" xml:space="preserve"><value>Créditos</value></data>
+  <data name="AboutCreditsHelp" xml:space="preserve"><value>Bibliotecas y recursos de terceros usados por OTP Harbor.</value></data>
+  <data name="AboutViewCredits" xml:space="preserve"><value>Ver créditos</value></data>
+  <data name="SecurityAutoLockRequiresAppLock" xml:space="preserve"><value>(Activa primero el bloqueo)</value></data>
 </root>

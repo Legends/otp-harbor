@@ -1369,7 +1369,7 @@ public sealed class MobileAccountInteractionTests
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "mobile-faq-section")
             .ToArray();
-        Assert.Equal(4, faqSections.Length);
+        Assert.Equal(5, faqSections.Length);
         Assert.All(
             faqSections,
             section => Assert.Equal(
@@ -1377,13 +1377,13 @@ public sealed class MobileAccountInteractionTests
                 section.Attribute("Expanded")?.Value));
         Assert.Equal(
             ["{Binding FaqMasterPasswordRecoveryQuestionText}", "{Binding FaqOlderVaultsQuestionText}",
-                "{Binding FaqImportIconPacksQuestionText}", "{Binding FaqImportFormatsQuestionText}"],
+                "{Binding FaqCreateBackupQuestionText}", "{Binding FaqImportIconPacksQuestionText}", "{Binding FaqImportFormatsQuestionText}"],
             faqSections.Select(section => section
                 .Descendants(avalonia + "TextBlock")
                 .First()
                 .Attribute("Text")?.Value));
         Assert.Equal(
-            ["Key", "BackupRestore", "Folder", "QrCode"],
+            ["Key", "BackupRestore", "Export", "Folder", "QrCode"],
             faqSections.Select(section => section
                 .Element(avalonia + "Expander.Header")!
                 .Descendants()
@@ -1396,13 +1396,15 @@ public sealed class MobileAccountInteractionTests
                 "https://github.com/aegis-icons/aegis-icons#disclaimer",
                 "https://github.com/homarr-labs/dashboard-icons#legal"
             ],
-            faqSections[2]
+            faqSections[3]
                 .Descendants(avalonia + "HyperlinkButton")
                 .Select(link => link.Attribute("NavigateUri")?.Value));
-        var iconPackSteps = faqSections[2]
-            .Descendants(avalonia + "Grid")
-            .Where(grid => grid.Elements(avalonia + "TextBlock").Any(text =>
-                text.Attribute("Text")?.Value is "1." or "2." or "3."))
+        var iconPackSteps = faqSections[3]
+            .Descendants(avalonia + "TextBlock")
+            .Where(text => text.Attribute("Text")?.Value is
+                "{Binding FaqImportIconPacksStepDownloadText}" or
+                "{Binding FaqImportIconPacksStepBuildText}" or
+                "{Binding FaqImportIconPacksStepImportText}")
             .ToArray();
         Assert.Equal(3, iconPackSteps.Length);
         Assert.Equal(
@@ -1411,25 +1413,20 @@ public sealed class MobileAccountInteractionTests
                 "{Binding FaqImportIconPacksStepBuildText}",
                 "{Binding FaqImportIconPacksStepImportText}"
             ],
-            iconPackSteps.Select(step => step
-                .Descendants(avalonia + "TextBlock")
-                .Single(text => text.Attribute("Text")?.Value?.StartsWith(
-                    "{Binding FaqImportIconPacksStep",
-                    StringComparison.Ordinal) == true)
-                .Attribute("Text")?.Value));
+            iconPackSteps.Select(step => step.Attribute("Text")?.Value));
         Assert.Contains(
-            faqSections[2].Descendants(avalonia + "TextBlock"),
+            faqSections[3].Descendants(avalonia + "TextBlock"),
             text => text.Attribute("Text")?.Value
                 == "{Binding FaqImportIconPacksCustomIconTipText}");
         Assert.Contains(
-            faqSections[3].Descendants(avalonia + "TextBlock"),
+            faqSections[4].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{Binding FaqImportFormatsAegisDescriptionText}");
         Assert.Contains(
-            faqSections[3].Descendants(avalonia + "TextBlock"),
+            faqSections[4].Descendants(avalonia + "TextBlock"),
             element => element.Attribute("Text")?.Value
                 == "{Binding FaqImportFormatsSupportedText}");
-        var importFormatSections = faqSections[3]
+        var importFormatSections = faqSections[4]
             .Descendants(avalonia + "Expander")
             .Where(section => section.Attribute("Classes")?.Value == "mobile-faq-subsection")
             .ToArray();

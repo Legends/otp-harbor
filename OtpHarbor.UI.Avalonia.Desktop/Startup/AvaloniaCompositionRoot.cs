@@ -59,14 +59,15 @@ public static class AvaloniaCompositionRoot
         services.AddSingleton<AvaloniaStringCatalog>();
         services.AddSingleton<IAvaloniaLocalizationService, AvaloniaLocalizationService>();
         services.AddSingleton<IConfiguration>(configuration);
-        services.AddSingleton<IDiagnosticEnvironmentProvider>(new DiagnosticEnvironmentProvider(
+        services.AddSingleton<IDiagnosticEnvironmentProvider>(provider => new DiagnosticEnvironmentProvider(
             typeof(AvaloniaCompositionRoot).Assembly,
 #if DEBUG
             "debug",
 #else
             configuration["AutoUpdate:DistributionMode"] ?? "direct",
 #endif
-            () => desktopLifetime.MainWindow));
+            () => desktopLifetime.MainWindow,
+            getApplicationVersion: () => AboutApplicationVersion.Read(provider.GetRequiredService<IApplicationVersionProvider>())));
         services.AddSingleton<IGitHubIssueReporter>(provider => new GitHubIssueReporter(
             provider.GetRequiredService<IDiagnosticEnvironmentProvider>(),
             uri => desktopLifetime.MainWindow?.Launcher.LaunchUriAsync(uri) ?? Task.FromResult(false),
@@ -246,7 +247,8 @@ public static class AvaloniaCompositionRoot
             provider.GetRequiredService<IPortableUpdateService>(),
             provider.GetRequiredService<IUpdateInstallerLauncher>(),
             provider.GetRequiredService<IAvaloniaLocalizationService>(),
-            isStoreDistribution: string.Equals(configuration["AutoUpdate:DistributionMode"], "store", StringComparison.Ordinal)));
+            isStoreDistribution: string.Equals(configuration["AutoUpdate:DistributionMode"], "store", StringComparison.Ordinal),
+            installedVersionProvider: () => AboutApplicationVersion.Read(provider.GetRequiredService<IApplicationVersionProvider>())));
         services.AddSingleton<DiagnosticsViewModel>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient(provider => new MainWindow

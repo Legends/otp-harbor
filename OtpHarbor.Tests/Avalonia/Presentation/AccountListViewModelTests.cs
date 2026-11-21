@@ -1686,7 +1686,7 @@ public sealed class AccountListViewModelTests
         previewDialogs.Verify(value => value.ShowAsync(
             image.Object,
             "Issuer · account — QR code",
-            384,
+            256,
             It.IsAny<CancellationToken>()), Times.Once);
         previewDialogs.Verify(value => value.Close(), Times.AtLeastOnce);
         lifetime.Verify(value => value.Dispose(), Times.Once);
@@ -1726,7 +1726,7 @@ public sealed class AccountListViewModelTests
         previewDialogs.Verify(value => value.ShowAsync(
             image,
             "Context · account — QR code",
-            384,
+            256,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

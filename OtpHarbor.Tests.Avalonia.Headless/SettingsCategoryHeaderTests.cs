@@ -50,7 +50,8 @@ public sealed class SettingsCategoryHeaderTests
                     Assert.True(label.TextLayout.Height <= label.Bounds.Height + 0.5);
                     Assert.True(label.TextLayout.Width <= label.Bounds.Width + 0.5);
                     Assert.Equal(TextTrimming.None, label.TextTrimming);
-                    Assert.Single(label.TextLayout.TextLines);
+                    Assert.Equal(TextWrapping.Wrap, label.TextWrapping);
+                    Assert.NotEmpty(label.TextLayout.TextLines);
                 }
             }
         }

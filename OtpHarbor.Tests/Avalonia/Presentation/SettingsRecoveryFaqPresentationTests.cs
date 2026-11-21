@@ -2,13 +2,35 @@ using System.Xml.Linq;
 using TOTP.Avalonia.Desktop.Localization;
 using System.Globalization;
 using TOTP.Avalonia.Shared.Import;
+using TOTP.Avalonia.Mobile.Localization;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
 public sealed class SettingsRecoveryFaqPresentationTests
 {
+    [Theory]
+    [InlineData("en", "How do I create a backup?", "export password", "master password")]
+    [InlineData("de", "Wie erstelle ich ein Backup?", "Exportpasswort", "Master-Passwort")]
+    [InlineData("fr", "Comment créer une sauvegarde ?", "mot de passe d’exportation", "mot de passe principal")]
+    [InlineData("es", "¿Cómo creo una copia de seguridad?", "contraseña de exportación", "contraseña maestra")]
+    public void BackupCreationHelp_IsSharedAndExplainsBothPasswordBoundaries(string locale, string question, string exportPassword, string masterPassword)
+    {
+        var culture = CultureInfo.GetCultureInfo(locale);
+        var desktop = new AvaloniaStringCatalog();
+        var mobile = new MobileStringCatalog(culture);
+        var answer = desktop.Get(AvaloniaStringKeys.FaqCreateBackupAnswer, culture);
+        Assert.Equal(question, desktop.Get(AvaloniaStringKeys.FaqCreateBackupQuestion, culture));
+        Assert.Equal(question, mobile.Get(MobileStringKeys.FaqCreateBackupQuestion));
+        Assert.Equal(answer, mobile.Get(MobileStringKeys.FaqCreateBackupAnswer));
+        Assert.Contains(exportPassword, answer);
+        Assert.Contains(masterPassword, answer);
+        Assert.Contains(desktop.Get(AvaloniaStringKeys.AutomaticBackups, culture), answer);
+        Assert.Contains(desktop.Get(MigrationStringKeys.DataAndBackup, culture), answer);
+        Assert.Equal(3, answer.ReplaceLineEndings("\n").Split("\n\n").Length);
+    }
+
     [Fact]
-    public void DesktopAndMobileFaqs_KeepTheSameItemsAndAccordionHandlers()
+    public void DesktopAndMobileFaqs_RetainSharedTopicsAndBackupGuidanceInTheirAccordions()
     {
         var fixtures = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
         XNamespace ui = "https://github.com/avaloniaui";
@@ -19,9 +41,10 @@ public sealed class SettingsRecoveryFaqPresentationTests
             (string?)control.Attribute("Classes") == "faq-section").ToArray();
         var mobileSections = mobile.Descendants(ui + "Expander").Where(control =>
             (string?)control.Attribute("Classes") == "mobile-faq-section").ToArray();
-        Assert.Equal(desktopSections.Select(control => (string?)control.Attribute(xaml + "Name")),
-            mobileSections.Select(control => (string?)control.Attribute(xaml + "Name")));
-        Assert.Equal(4, mobileSections.Length);
+        Assert.Equal(7, desktopSections.Length);
+        Assert.Equal(5, mobileSections.Length);
+        Assert.All(mobileSections, section => Assert.Contains(desktopSections,
+            desktopSection => (string?)desktopSection.Attribute(xaml + "Name") == (string?)section.Attribute(xaml + "Name")));
         foreach (var section in mobileSections)
             Assert.Equal("FaqSectionExpanded", (string?)section.Attribute("Expanded"));
         var source = File.ReadAllText(Path.Combine(fixtures, "MobileMainView.axaml.cs"));
@@ -29,8 +52,40 @@ public sealed class SettingsRecoveryFaqPresentationTests
             source.IndexOf("private void FaqImportFormatSectionExpanded", StringComparison.Ordinal)];
         foreach (var section in mobileSections)
             Assert.Contains((string)section.Attribute(xaml + "Name")!, accordion, StringComparison.Ordinal);
-        var about = Assert.Single(desktop.Descendants(), control => control.Name.LocalName == "AboutPanel");
-        Assert.Equal("compact", (string?)about.Attribute("Classes"));
+        var desktopBackup = Assert.Single(desktopSections, control => (string?)control.Attribute(xaml + "Name") == "FaqCreateBackupExpander");
+        Assert.Contains(desktopBackup.Descendants(ui + "TextBlock"), text => (string?)text.Attribute("Text") == "{DynamicResource FaqCreateBackupAnswer}");
+        var mobileBackup = Assert.Single(mobileSections, control => (string?)control.Attribute(xaml + "Name") == "FaqCreateBackupExpander");
+        Assert.Contains(mobileBackup.Descendants(ui + "TextBlock"), text => (string?)text.Attribute("Text") == "{Binding FaqCreateBackupAnswerText}"
+            && (string?)text.Attribute("TextWrapping") == "Wrap");
+        var about = Assert.Single(desktop.Descendants(), control => control.Name.LocalName == "SettingsAboutIdentityPanel");
+        Assert.Equal("{Binding SettingsPage.About}", (string?)about.Attribute("DataContext"));
+    }
+
+    [Fact]
+    public void IconPackHelp_BothPresentationsKeepLegalNoticesAndWrappingProviderLinks()
+    {
+        var fixtures = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
+        XNamespace ui = "https://github.com/avaloniaui";
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        foreach (var mobile in new[] { false, true })
+        {
+            var document = XDocument.Load(Path.Combine(fixtures, mobile ? "MobileMainView.axaml" : "DesktopSettingsWindow.axaml"));
+            var section = document.Descendants(ui + "Expander").Single(value => (string?)value.Attribute(xaml + "Name") == "FaqIconPacksExpander");
+            Assert.Contains(section.Descendants(ui + "TextBlock"), value => (string?)value.Attribute("Text") ==
+                (mobile ? "{Binding FaqImportIconPacksDisclaimerText}" : "{DynamicResource FaqImportIconPacksDisclaimer}"));
+            var links = section.Descendants(ui + "HyperlinkButton").ToArray();
+            Assert.Equal(new[]
+            {
+                "https://github.com/Legends/otp-harbor-icon-pack-builder/releases/latest",
+                "https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md",
+                "https://github.com/aegis-icons/aegis-icons#disclaimer",
+                "https://github.com/homarr-labs/dashboard-icons#legal"
+            }, links.Select(value => (string?)value.Attribute("NavigateUri")));
+            foreach (var link in links.Skip(1))
+                Assert.Contains(link.Descendants(ui + "TextBlock"), value => (string?)value.Attribute("TextWrapping") == "Wrap");
+            Assert.Contains(section.Descendants(ui + "TextBlock"), value => (string?)value.Attribute("Text") ==
+                (mobile ? "{Binding FaqImportIconPacksCustomIconTipText}" : "{DynamicResource FaqImportIconPacksCustomIconTip}"));
+        }
     }
 
     [Theory]
@@ -76,6 +131,12 @@ public sealed class SettingsRecoveryFaqPresentationTests
             .Single(control => (string?)control.Attribute(xaml + "Name") == "SupportDiagnosticsHost").Attribute("Content"));
         Assert.Equal("{Binding SettingsPage.StorageLocations}", (string?)support.Descendants(ui + "ContentControl")
             .Single(control => (string?)control.Attribute(xaml + "Name") == "StorageLocationsHost").Attribute("Content"));
+        var updates = about.Descendants(ui + "ContentControl").Single(control => (string?)control.Attribute(xaml + "Name") == "SoftwareUpdatesHost");
+        Assert.Equal("{Binding UpdateCheck.IsSoftwareUpdatesVisible}", (string?)updates.Attribute("IsVisible"));
+        Assert.Equal("{Binding IsSoftwareUpdatesVisible}", (string?)updates.Descendants(ui + "Border")
+            .Single(control => (string?)control.Attribute(xaml + "Name") == "AboutSoftwareUpdatesCard").Attribute("IsVisible"));
+        Assert.Equal("{Binding Diagnostics}", (string?)about.Descendants(ui + "ContentControl")
+            .Single(control => (string?)control.Attribute(xaml + "Name") == "AboutDiagnosticsHost").Attribute("Content"));
     }
 
     [Fact]
@@ -102,7 +163,7 @@ public sealed class SettingsRecoveryFaqPresentationTests
         var manualBackup = Assert.Single(tabs[3].Descendants(ui + "Border"), control =>
             (string?)control.Attribute(xaml + "Name") == "EncryptedBackupExportPanel");
         Assert.Contains(manualBackup.Descendants(ui + "TextBlock"), text =>
-            (string?)text.Attribute("Text") == "{DynamicResource BackupSection}");
+            (string?)text.Attribute("Text") == "{DynamicResource DataBackupManualTitle}");
         Assert.Contains(manualBackup.Descendants(ui + "Button"), button => (string?)button.Attribute("Command") == "{Binding ExportCommand}");
     }
 }

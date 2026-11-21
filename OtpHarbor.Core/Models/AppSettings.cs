@@ -7,7 +7,7 @@ public sealed class AppSettings : IAppSettings
 {
     public static readonly TimeSpan DefaultIdleTimeout = TimeSpan.FromMinutes(10);
     public const int DefaultClearClipboardSeconds = 15;
-    public const double DefaultQrPreviewScaleFactor = 1.5;
+    public const double DefaultQrPreviewScaleFactor = 1;
     public const int DefaultInterfaceScalePercent = 0;
     public const string DefaultFavoriteGroupColor = "#F59E0B";
 

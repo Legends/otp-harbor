@@ -123,10 +123,10 @@ the production application.
 
 ## Verify startup on a device
 
-For local ARM64 Release testing on the previously configured phone, run:
+For local ARM64 Release testing on the connected physical USB phone, run:
 
 ```powershell
-./scripts/testing/Android/Install-AndroidReleasePhone.ps1 -Device '<adb-device-serial>'
+./scripts/testing/Android/Install-AndroidReleasePhone.ps1
 ```
 
 The installer builds **current source** as the isolated
@@ -134,7 +134,12 @@ The installer builds **current source** as the isolated
 non-debuggable flag, ARM64 ABI, AOT libraries and signature, then installs with
 `adb install -r` and launches once. Existing Release Test data is retained; Debug
 and production installations have different identities. A failed update never
-falls back to uninstalling or clearing data. `-Device` must select the target adb serial when installing.
+falls back to uninstalling or clearing data. The default uses adb’s hardware
+selector (`-d`) to choose one physical USB phone,
+even while emulators run. If several physical phones are connected, specify
+`-Device <adb-device-serial>`; this also supports an explicit wireless target.
+Missing, offline or unauthorized phones stop the script before building.
+See the [Android adb target-selection documentation](https://developer.android.com/tools/adb#directingcommands).
 
 Use `-BuildOnly` to prepare and verify the APK without accessing a device. The APK
 and SHA-256 are written under `artifacts/testing/android-release-phone`. Local

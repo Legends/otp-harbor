@@ -34,10 +34,32 @@ $global:LASTEXITCODE = if ($global:OtpHarborReleaseInstallerFixture.Scenario -eq
 $installerAdb = Join-Path $installerTools 'adb.ps1'
 [IO.File]::WriteAllText($installerAdb, @'
 $fixture = $global:OtpHarborReleaseInstallerFixture
-$command = $args[2..($args.Length - 1)] -join ' '
+$command = if ($args.Count -ge 3 -and $args[0] -eq '-s') {
+    $fixture.Targets.Add([string]$args[1])
+    $args[2..($args.Length - 1)] -join ' '
+} else { $args -join ' ' }
 $fixture.Calls.Add($command)
 $global:LASTEXITCODE = 0
 switch -Regex ($command) {
+    '^-d get-serialno$' {
+        switch ($fixture.Scenario) {
+            'auto-multiple-phones' { $global:LASTEXITCODE = 1; 'unknown' }
+            'auto-no-phone' { $global:LASTEXITCODE = 1; 'unknown' }
+            'auto-emulator-only' { $global:LASTEXITCODE = 1; 'unknown' }
+            'auto-adb-failed' { $global:LASTEXITCODE = 1 }
+            'auto-invalid-emulator' { ' emulator-5554 ' }
+            default { 'synthetic-physical-phone' }
+        }
+        break
+    }
+    '^get-state$' {
+        switch ($fixture.Scenario) {
+            'auto-offline' { 'offline' }
+            'auto-unauthorized' { $global:LASTEXITCODE = 1; 'unauthorized' }
+            default { 'device' }
+        }
+        break
+    }
     '^install -r ' {
         if ($fixture.Scenario -eq 'install-failed') { $global:LASTEXITCODE = 1 } else { 'Success' }
         break
@@ -82,7 +104,16 @@ $installerCases = @(
     @{ Name = 'startup'; Options = @{ TestStartup = $true }; Installs = 1; Launches = 3; Cold = 3; Error = $null },
     @{ Name = 'build-only'; Options = @{ BuildOnly = $true }; Installs = 0; Launches = 0; Cold = 0; Error = $null },
     @{ Name = 'build-only-no-device'; Options = @{ BuildOnly = $true; Device = $null }; Installs = 0; Launches = 0; Cold = 0; Error = $null },
-    @{ Name = 'missing-device'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'Specify -Device' },
+    @{ Name = 'auto-physical-phone'; Options = @{ Device = $null }; Installs = 1; Launches = 1; Cold = 0; Error = $null },
+    @{ Name = 'auto-physical-and-emulator'; Options = @{ Device = $null }; Installs = 1; Launches = 1; Cold = 0; Error = $null },
+    @{ Name = 'auto-startup'; Options = @{ Device = $null; TestStartup = $true }; Installs = 1; Launches = 3; Cold = 3; Error = $null },
+    @{ Name = 'auto-multiple-phones'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'Could not select one physical USB phone' },
+    @{ Name = 'auto-no-phone'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'Could not select one physical USB phone' },
+    @{ Name = 'auto-emulator-only'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'Could not select one physical USB phone' },
+    @{ Name = 'auto-invalid-emulator'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'Could not select one physical USB phone' },
+    @{ Name = 'auto-offline'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'offline or unauthorized' },
+    @{ Name = 'auto-unauthorized'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'offline or unauthorized' },
+    @{ Name = 'auto-adb-failed'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'Could not select one physical USB phone' },
     @{ Name = 'build-failed'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'Current-source Release build failed' },
     @{ Name = 'wrong-identity'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'identity/version mismatch' },
     @{ Name = 'debuggable'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'APK is debuggable' },
@@ -93,7 +124,7 @@ $installerCases = @(
 )
 try {
     foreach ($case in $installerCases) {
-        $global:OtpHarborReleaseInstallerFixture = @{ Scenario = $case.Name; Calls = [Collections.Generic.List[string]]::new() }
+        $global:OtpHarborReleaseInstallerFixture = @{ Scenario = $case.Name; Calls = [Collections.Generic.List[string]]::new(); Targets = [Collections.Generic.List[string]]::new() }
         $options = @{ Device = 'synthetic-phone'; ArtifactDirectory = (Join-Path $installerTestRoot $case.Name)
             AdbPath = $installerAdb; AaptPath = $installerAapt; JavaPath = $installerJava; BuildToolsPath = $installerTools }
         foreach ($key in $case.Options.Keys) { $options[$key] = $case.Options[$key] }
@@ -113,6 +144,15 @@ try {
             throw "Unexpected build/install/launch counts for $($case.Name): $($calls -join '; ')"
         }
         if ($calls -match 'uninstall|\bclear\b') { throw 'The installer attempted to remove application data.' }
+        $usesAutoDevice = [string]::IsNullOrWhiteSpace($options.Device) -and -not ($options.ContainsKey('BuildOnly') -and $options.BuildOnly)
+        $expectedQueries = if ($usesAutoDevice) { 1 } else { 0 }
+        if (@($calls | Where-Object { $_ -eq '-d get-serialno' }).Count -ne $expectedQueries) {
+            throw "Unexpected physical-device query count for $($case.Name)."
+        }
+        $expectedTarget = if ($usesAutoDevice) { 'synthetic-physical-phone' } else { 'synthetic-phone' }
+        if (@($global:OtpHarborReleaseInstallerFixture.Targets | Where-Object { $_ -ne $expectedTarget }).Count -gt 0) {
+            throw "The installer targeted a different device for $($case.Name)."
+        }
         Write-Output "PASS: $($case.Name)"
     }
 }

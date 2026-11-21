@@ -56,7 +56,8 @@ public sealed class ImportReviewPanelTests
                 Assert.True(heading.TextLayout.TextLines.Count > 1);
             Assert.All(heading.TextLayout.TextLines, line => Assert.False(line.HasCollapsed));
             Assert.True(heading.TextLayout.Height <= heading.Bounds.Height + 1);
-            Assert.True(heading.TextLayout.WidthIncludingTrailingWhitespace <= heading.Bounds.Width + 1);
+            // Wrapped trailing spaces can exceed the column without painting visible glyphs.
+            Assert.True(heading.TextLayout.Width <= heading.Bounds.Width + 1);
         }
         finally { window.Close(); }
     }

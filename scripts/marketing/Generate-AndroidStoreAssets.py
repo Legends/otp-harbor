@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 from PIL import Image, ImageOps
+from marketing_environment import require_pinned_dependencies
 
 
 REPO = Path(__file__).resolve().parents[2]
@@ -140,4 +141,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
+    require_pinned_dependencies()
     main()

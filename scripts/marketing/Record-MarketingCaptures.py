@@ -33,6 +33,8 @@ for capture in sorted((root / "source").rglob("*.png")):
     }
     if prior.get("sha256") == digest and prior.get("originalSha256"):
         item["originalSha256"] = prior["originalSha256"]
+    if prior.get("sha256") == digest and prior.get("cornerMaskRadius"):
+        item["cornerMaskRadius"] = prior["cornerMaskRadius"]
     items.append(item)
 
 manifest["captures"] = items

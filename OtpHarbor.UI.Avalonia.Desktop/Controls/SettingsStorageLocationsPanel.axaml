@@ -1,0 +1,42 @@
+<UserControl x:Class="TOTP.Avalonia.Desktop.Controls.SettingsStorageLocationsPanel"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation" xmlns:storage="using:TOTP.Avalonia.Shared.Storage"
+    xmlns:shared="using:TOTP.Avalonia.Shared.Controls" x:DataType="storage:StorageLocationsViewModel">
+    <UserControl.Styles>
+        <Style Selector="Border.storage-settings-path"><Setter Property="Grid.Column" Value="1" /></Style>
+        <Style Selector="StackPanel.storage-settings-actions"><Setter Property="Grid.Column" Value="2" /></Style>
+        <ContainerQuery Name="support-storage" Query="max-width:600">
+            <Style Selector="TextBlock.storage-settings-label"><Setter Property="Grid.ColumnSpan" Value="3" /></Style>
+            <Style Selector="Border.storage-settings-path"><Setter Property="Grid.Column" Value="0" /><Setter Property="Grid.ColumnSpan" Value="2" /><Setter Property="Grid.Row" Value="1" /></Style>
+            <Style Selector="StackPanel.storage-settings-actions"><Setter Property="Grid.Row" Value="1" /></Style>
+            <Style Selector="Grid.storage-settings-row"><Setter Property="RowSpacing" Value="10" /></Style>
+        </ContainerQuery>
+    </UserControl.Styles>
+    <ItemsControl Container.Name="support-storage" Container.Sizing="Width" ItemsSource="{Binding Locations}">
+        <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="storage:StorageLocationsViewModel+StorageLocationViewModel">
+                <StackPanel Spacing="8">
+                    <Grid Classes="storage-settings-row" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
+                        <TextBlock Classes="storage-settings-label" MaxWidth="160" Text="{Binding Label}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        <Border Classes="storage-settings-path" MinHeight="40" Padding="12,8" VerticalAlignment="Center" CornerRadius="8"
+                                Background="{DynamicResource BrushSurfaceAlternate}" BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="1">
+                            <SelectableTextBlock x:Name="StorageSettingsPath" Text="{Binding Path}" TextTrimming="CharacterEllipsis" MaxLines="1" TextWrapping="NoWrap"
+                                                 ToolTip.Tip="{Binding Path}" VerticalAlignment="Center" Foreground="{DynamicResource BrushTextPrimary}" />
+                        </Border>
+                        <StackPanel Classes="storage-settings-actions" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Button x:Name="CopyStorageSettingsPathButton" Classes="icon secondary settings-action" Width="44" Height="44" Padding="0"
+                                    Command="{Binding CopyCommand}" ToolTip.Tip="{Binding CopyText}" automation:AutomationProperties.Name="{Binding CopyAccessibleName}">
+                                <shared:SymbolIcon Kind="Copy" IconSize="20" />
+                            </Button>
+                            <Button x:Name="OpenStorageSettingsFolderButton" Classes="icon secondary settings-action" Width="44" Height="44" Padding="0"
+                                    IsVisible="{Binding CanOpenFolder}" Command="{Binding OpenFolderCommand}" ToolTip.Tip="{Binding OpenText}" automation:AutomationProperties.Name="{Binding OpenAccessibleName}">
+                                <shared:SymbolIcon Kind="Folder" IconSize="20" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <shared:NotificationBanner IsVisible="{Binding HasStatus}" Text="{Binding StatusText}" Severity="{Binding StatusSeverity}" />
+                </StackPanel>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

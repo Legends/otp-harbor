@@ -12,7 +12,10 @@ public sealed record DiagnosticDevice(string Manufacturer, string Model, string 
 public sealed record DiagnosticEnvironment(
     DateTimeOffset CollectedUtc, string AppVersion, string Build, string Configuration,
     string Distribution, string OperatingSystem, string Architecture, string Runtime,
-    string Display, bool IsDarkTheme, string Language, string? Device, bool? IsPortrait = null);
+    string Display, bool IsDarkTheme, string Language, string? Device, bool? IsPortrait = null)
+{
+    public string? ScreenDisplay { get; init; }
+}
 
 public interface IDiagnosticEnvironmentProvider
 {
@@ -36,6 +39,7 @@ public sealed class DiagnosticEnvironmentProvider(
         var channel = getDistribution is null ? distribution : Read(getDistribution);
         var display = topLevel is null ? "—" : FormattableString.Invariant(
             $"{topLevel.ClientSize.Width:0} × {topLevel.ClientSize.Height:0}; {topLevel.RenderScaling:0.##}×");
+        var screen = topLevel is Window window ? Read(() => window.Screens.ScreenFromWindow(window) ?? window.Screens.Primary) : null;
         return new(
             (timeProvider ?? TimeProvider.System).GetUtcNow(),
             Clean(version ?? applicationAssembly.GetName().Version?.ToString()),
@@ -48,7 +52,11 @@ public sealed class DiagnosticEnvironmentProvider(
             display, (topLevel?.ActualThemeVariant ?? Application.Current?.ActualThemeVariant) == ThemeVariant.Dark,
             CultureInfo.CurrentUICulture.Name,
             device is null ? null : Clean($"{device.Manufacturer} {device.Model}"),
-            topLevel is null ? null : topLevel.ClientSize.Width < topLevel.ClientSize.Height);
+            topLevel is null ? null : topLevel.ClientSize.Width < topLevel.ClientSize.Height)
+        {
+            ScreenDisplay = screen is null ? null : FormattableString.Invariant(
+                $"{screen.Bounds.Width} × {screen.Bounds.Height} ({screen.Scaling * 100:0}%)")
+        };
     }
 
     private static T? Read<T>(Func<T?> read) where T : class

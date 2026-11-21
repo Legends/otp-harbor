@@ -11,6 +11,7 @@ using FluentResults;
 using TOTP.Avalonia.Desktop;
 using TOTP.Avalonia.Desktop.Localization;
 using TOTP.Avalonia.Desktop.Presentation;
+using TOTP.Avalonia.Desktop.Controls;
 using TOTP.Avalonia.Shared.Controls;
 using TOTP.Avalonia.Shared.Storage;
 using TOTP.Core.Services.Interfaces;
@@ -97,18 +98,20 @@ public sealed class StorageLocationsPanelTests
     }
 
     [AvaloniaTheory]
-    [InlineData(520, 480, "de")]
+    [InlineData(520, 416, "de")]
     [InlineData(520, 620, "fr")]
-    [InlineData(800, 620, "es")]
+    [InlineData(900, 720, "es")]
+    [InlineData(1440, 820, "en")]
     public async Task DesktopSupportTab_RendersDiagnosticsAndScrollableStorageLocations(int width, int height, string locale)
     {
         using var model = CreateModel(locale);
-        var window = new SettingsWindow { Width = width, Height = height };
+        var window = new SettingsWindow { Width = width, Height = height, MinHeight = Math.Min(height, 480) };
         var localization = new AvaloniaLocalizationService(window.Resources, new AvaloniaStringCatalog());
         localization.ApplyCulture(locale);
-        var diagnostics = new DiagnosticsViewModel(new TestDiagnostics(), localization);
+        using var diagnostics = new DiagnosticsViewModel(new TestDiagnostics(), localization);
         try
         {
+            window.FindControl<Border>("SettingsImportProgressOverlay")!.IsVisible = false;
             window.Show();
             var tabs = Assert.Single(window.GetVisualDescendants().OfType<TabControl>());
             tabs.SelectedIndex = 4;
@@ -116,13 +119,21 @@ public sealed class StorageLocationsPanelTests
             var host = window.FindControl<ContentControl>("StorageLocationsHost")!;
             host.Content = model;
             window.UpdateLayout();
-            var panel = Assert.Single(host.GetVisualDescendants().OfType<StorageLocationsPanel>());
+            var panel = Assert.Single(host.GetVisualDescendants().OfType<SettingsStorageLocationsPanel>());
             Assert.Same(model, panel.DataContext);
             Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), value => value.Text == model.Locations[0].Label);
             Assert.Single(panel.GetVisualDescendants().OfType<SelectableTextBlock>());
             var diagnosticsHost = window.FindControl<ContentControl>("SupportDiagnosticsHost")!;
             diagnosticsHost.Content = diagnostics;
             await diagnostics.RefreshAsync();
+            window.UpdateLayout();
+            var values = diagnosticsHost.GetVisualDescendants().OfType<SelectableTextBlock>()
+                .Where(value => value.Classes.Contains("diagnostic-value")).ToArray();
+            Assert.Equal(6, values.Length);
+            Assert.Contains(values, value => value.Text == diagnostics.ApplicationVersion);
+            var details = Assert.Single(diagnosticsHost.GetVisualDescendants().OfType<Expander>());
+            Assert.False(details.IsExpanded);
+            details.IsExpanded = true;
             window.UpdateLayout();
             var output = Assert.Single(diagnosticsHost.GetVisualDescendants().OfType<TextBox>());
             Assert.Equal(diagnostics.SupportInformation, output.Text);
@@ -134,6 +145,46 @@ public sealed class StorageLocationsPanelTests
             window.UpdateLayout();
             var bottom = lastButton.TranslatePoint(new Point(0, lastButton.Bounds.Height), scroller)!.Value.Y;
             Assert.InRange(bottom, 1, scroller.Viewport.Height + 1);
+            foreach (var theme in new[] { ThemeVariant.Light, ThemeVariant.Dark })
+            {
+                window.RequestedThemeVariant = theme;
+                window.UpdateLayout();
+                var card = host.GetVisualDescendants().OfType<Border>().Single(value => value.Name == "ApplicationDataSettingsPanel");
+                Assert.Contains("settings-card", card.Classes);
+                Assert.Contains(card.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == localization.GetString(AvaloniaStringKeys.SupportApplicationDataTitle));
+                var path = Assert.Single(panel.GetVisualDescendants().OfType<SelectableTextBlock>());
+                Assert.Equal(model.Locations[0].Path, path.Text);
+                Assert.Equal(path.Text, ToolTip.GetTip(path));
+                Assert.Single(path.TextLayout.TextLines);
+                Assert.Equal(TextTrimming.CharacterEllipsis, path.TextTrimming);
+                Assert.True(path.Bounds.Width >= 120);
+                var field = Assert.IsType<Border>(path.Parent);
+                Assert.Equal(panel.Bounds.Width <= 600 ? 1 : 0, Grid.GetRow(field));
+                foreach (var button in panel.GetVisualDescendants().OfType<Button>())
+                {
+                    Assert.True(button.Bounds.Height >= 44);
+                    Assert.Equal(global::Avalonia.Layout.VerticalAlignment.Center, button.VerticalContentAlignment);
+                    Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(button)));
+                    var left = button.TranslatePoint(default, panel)!.Value.X;
+                    Assert.InRange(left + button.Bounds.Width, 0, panel.Bounds.Width + 1);
+                }
+                var copy = panel.GetVisualDescendants().OfType<Button>().Single(value => value.Name == "CopyStorageSettingsPathButton");
+                var open = panel.GetVisualDescendants().OfType<Button>().Single(value => value.Name == "OpenStorageSettingsFolderButton");
+                Assert.Same(model.Locations[0].CopyCommand, copy.Command);
+                Assert.Same(model.Locations[0].OpenFolderCommand, open.Command);
+                copy.Command!.Execute(null);
+                window.UpdateLayout();
+                var feedback = Assert.Single(panel.GetVisualDescendants().OfType<NotificationBanner>());
+                Assert.True(feedback.IsVisible);
+                Assert.Equal(localization.GetString(StorageLocationStringKeys.CopySucceeded), feedback.Text);
+                open.Command!.Execute(null);
+                window.UpdateLayout();
+                Assert.Equal(localization.GetString(StorageLocationStringKeys.FolderOpened), feedback.Text);
+                Assert.Equal(NotificationSeverity.Success, feedback.Severity);
+                lastButton.BringIntoView();
+                window.UpdateLayout();
+                Assert.True(scroller.Extent.Width <= scroller.Viewport.Width + 1);
+            }
         }
         finally { window.Close(); }
     }

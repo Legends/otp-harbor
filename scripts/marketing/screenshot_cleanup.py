@@ -1,6 +1,6 @@
 """Lossless app-region extraction shared by review and marketing generation."""
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops, ImageDraw
 
 DESKTOP_EDGE = 3
 DESKTOP_CORNER_RADIUS = 20
@@ -22,8 +22,16 @@ def rounded_alpha(size, radius=DESKTOP_CORNER_RADIUS):
 def clean_desktop(image):
     crop = (DESKTOP_EDGE, DESKTOP_EDGE, image.width - DESKTOP_EDGE, image.height - DESKTOP_EDGE)
     cleaned = image.crop(crop).convert('RGBA')
-    cleaned.putalpha(rounded_alpha(cleaned.size))
+    cleaned.putalpha(ImageChops.darker(cleaned.getchannel('A'), rounded_alpha(cleaned.size)))
     return cleaned, crop
+
+
+def mask_desktop_corners(image, radius):
+    if not 0 < radius <= min(image.size) / 2:
+        raise ValueError('Corner radius must be positive and fit within the capture.')
+    cleaned = image.convert('RGBA')
+    cleaned.putalpha(ImageChops.darker(cleaned.getchannel('A'), rounded_alpha(cleaned.size, radius)))
+    return cleaned
 
 
 def clean_android(image):

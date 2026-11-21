@@ -516,14 +516,20 @@ public partial class MainView : UserControl
         }
     }
 
+    private void FaqSectionPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == Expander.IsExpandedProperty && e.NewValue is true)
+            FaqSectionExpanded(sender, new RoutedEventArgs());
+    }
+
     private void FaqSectionExpanded(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Expander expanded) return;
+        if (sender is not Expander { IsExpanded: true } expanded) return;
 
         foreach (var section in new[] { FaqMasterPasswordRecoveryExpander, FaqOlderVaultsExpander,
-                     FaqIconPacksExpander, FaqImportFormatsExpander })
+                     FaqIconPacksExpander, FaqImportFormatsExpander, FaqCreateBackupExpander })
         {
-            if (!ReferenceEquals(section, expanded)) section.IsExpanded = false;
+            if (section is not null && !ReferenceEquals(section, expanded)) section.IsExpanded = false;
         }
     }
 

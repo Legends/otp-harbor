@@ -14,12 +14,13 @@ public sealed class AutomaticBackupUiTests
 
         var panel = NamedBorder(document, "AutomaticBackupPanel");
 
-        Assert.Equal("1", panel.Attribute("Grid.Row")?.Value);
-        Assert.Equal("0", NamedBorder(document, "EncryptedBackupExportPanel").Attribute("Grid.Row")?.Value);
+        var export = NamedBorder(document, "EncryptedBackupExportPanel");
+        Assert.Same(export.Parent, panel.Parent);
+        Assert.Contains(panel, export.NodesAfterSelf());
         Assert.DoesNotContain(document.Descendants(), element => element.Attribute(Xaml + "Name")?.Value == "EncryptedBackupRestorePanel");
         Assert.DoesNotContain(document.Descendants(Avalonia + "Button"), element => element.Attribute("Command")?.Value == "{Binding RestoreEncryptedBackupCommand}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
-            element.Attribute("Text")?.Value == "{DynamicResource AutomaticBackupDescription}");
+            element.Attribute("Text")?.Value == "{DynamicResource DataBackupAutomaticHelp}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
             element.Attribute("Text")?.Value == "{Binding AutomaticBackupDestinationAccessText}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
@@ -28,8 +29,12 @@ public sealed class AutomaticBackupUiTests
             element.Attribute("Command")?.Value == "{Binding ConfigureAutomaticBackupCommand}");
         Assert.Contains(panel.Descendants(Avalonia + "Button"), element =>
             element.Attribute("Command")?.Value == "{Binding AutomaticBackupNowCommand}");
-        Assert.Contains(panel.Descendants(Avalonia + "Button"), element =>
-            element.Attribute("Command")?.Value == "{Binding DisableAutomaticBackupCommand}");
+        Assert.Contains(panel.Descendants(), element =>
+            element.Attribute("Command")?.Value == "{Binding ToggleAutomaticBackupCommand}");
+        var location = panel.Descendants(Avalonia + "StackPanel").Single(element =>
+            element.Attribute(Xaml + "Name")?.Value == "AutomaticBackupLocationSection");
+        Assert.Equal("{Binding IsAutomaticBackupConfigured}", location.Attribute("IsEnabled")?.Value);
+        Assert.Null(location.Attribute("IsVisible"));
     }
 
     [Fact]

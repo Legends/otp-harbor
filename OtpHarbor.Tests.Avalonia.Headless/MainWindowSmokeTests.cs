@@ -159,7 +159,8 @@ public sealed partial class MainWindowSmokeTests
                 localization.ApplyCulture(cultureName);
                 window.UpdateLayout();
                 var culture = CultureInfo.GetCultureInfo(cultureName);
-                var steps = content.Children.OfType<Grid>().ToArray();
+                var steps = content.Children.OfType<Border>().Where(value => value.Classes.Contains("icon-faq-step"))
+                    .Select(value => Assert.IsType<Grid>(value.Child)).ToArray();
                 Assert.Equal(3, steps.Length);
                 var stepKeys = new[]
                 {
@@ -169,7 +170,7 @@ public sealed partial class MainWindowSmokeTests
                 };
                 for (var index = 0; index < steps.Length; index++)
                 {
-                    Assert.Equal($"{index + 1}.", steps[index].Children.OfType<TextBlock>().First().Text);
+                    Assert.Equal($"{index + 1}", Assert.IsType<TextBlock>(steps[index].Children.OfType<Border>().First().Child).Text);
                     Assert.Contains(steps[index].GetVisualDescendants().OfType<TextBlock>(),
                         text => text.Text == catalog.Get(stepKeys[index], culture));
                 }
@@ -179,14 +180,15 @@ public sealed partial class MainWindowSmokeTests
                     download.NavigateUri?.AbsoluteUri);
                 Assert.Equal(catalog.Get(AvaloniaStringKeys.FaqImportIconPacksDownloadLink, culture),
                     Assert.IsType<SymbolIconLabel>(download.Content).Text);
-                Assert.Contains(content.Children.OfType<TextBlock>(),
+                Assert.Contains(content.GetVisualDescendants().OfType<TextBlock>(),
                     text => text.Text == catalog.Get(AvaloniaStringKeys.FaqImportIconPacksCustomIconTip, culture));
-                Assert.Equal(3, content.Children.OfType<HyperlinkButton>().Count());
-                var disclaimer = Assert.IsType<TextBlock>(content.Children.Last());
+                var legal = Named<Border>(content, "IconPackFaqLegalSection");
+                Assert.Equal(3, legal.GetVisualDescendants().OfType<HyperlinkButton>().Count());
+                var disclaimer = Assert.IsType<TextBlock>(Assert.IsType<StackPanel>(legal.Child).Children.Last());
                 Assert.Equal(catalog.Get(AvaloniaStringKeys.FaqImportIconPacksDisclaimer, culture), disclaimer.Text);
                 Assert.True(scroller.Viewport.Width > 0);
                 Assert.True(scroller.Extent.Width <= scroller.Viewport.Width + 1);
-                foreach (var text in content.GetVisualDescendants().OfType<TextBlock>())
+                foreach (var text in content.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible))
                 {
                     var left = text.TranslatePoint(default, scroller)!.Value.X;
                     Assert.True(left >= -1 && left + text.Bounds.Width <= scroller.Viewport.Width + 1,
@@ -3173,9 +3175,14 @@ public sealed partial class MainWindowSmokeTests
             window.Show();
             window.UpdateLayout();
 
-            Assert.Equal(OperatingSystem.IsLinux() ? 720 : 520, window.Width);
-            Assert.Equal(OperatingSystem.IsLinux() ? 760 : 620, window.Height);
-            Assert.Equal(OperatingSystem.IsLinux() ? 720 : 520, window.MinWidth);
+            Assert.Equal(900, window.Width);
+            Assert.Equal(720, window.Height);
+            Assert.Equal(520, window.MinWidth);
+            var screen = window.Screens.Primary!;
+            var scale = screen.Scaling > 0 ? screen.Scaling : 1;
+            Assert.True(window.Height <= screen.WorkingArea.Height / scale * .8);
+            Assert.Equal(WindowStartupLocation.Manual, window.WindowStartupLocation);
+            Assert.InRange(Math.Abs(window.Position.Y + window.Height * scale / 2 - (screen.WorkingArea.Y + screen.WorkingArea.Height / 2.0)), 0, 1);
             Assert.True(window.Topmost);
             Assert.Equal(WindowDecorations.None, window.WindowDecorations);
             Assert.Empty(window.GetVisualDescendants().OfType<ProductTitleBar>());
@@ -3202,14 +3209,15 @@ public sealed partial class MainWindowSmokeTests
                 [
                     SymbolIconKind.Palette,
                     SymbolIconKind.ImageStack,
-                    SymbolIconKind.Vault,
+                    SymbolIconKind.ShieldCheck,
                     SymbolIconKind.BackupRestore,
                     SymbolIconKind.Diagnostics,
                     SymbolIconKind.Help,
                     SymbolIconKind.Information
                 ],
                 tabHeaders.Select(header => Assert.Single(header.Children.OfType<SymbolIcon>()).Kind));
-            Assert.Contains(settingsTabs.GetVisualDescendants(), control => control is WrapPanel);
+            Assert.Equal(Dock.Left, settingsTabs.TabStripPlacement);
+            Assert.True(window.CanResize);
             foreach (var row in tabs.GroupBy(tab => Math.Round(tab.Bounds.Top, 2)))
             {
                 var rowTabs = row.OrderBy(tab => tab.Bounds.Left).ToArray();
@@ -3221,11 +3229,11 @@ public sealed partial class MainWindowSmokeTests
                 tabs,
                 tabItem =>
                 {
-                    Assert.Equal(104, tabItem.MinWidth);
+                    Assert.Equal(0, tabItem.MinWidth);
                     Assert.Equal(12, tabItem.FontSize);
-                    Assert.Equal(FontWeight.SemiBold, tabItem.FontWeight);
+                    Assert.Equal(FontWeight.Normal, tabItem.FontWeight);
                     Assert.Equal(
-                        global::Avalonia.Layout.HorizontalAlignment.Center,
+                        global::Avalonia.Layout.HorizontalAlignment.Stretch,
                         tabItem.HorizontalContentAlignment);
                 });
         }
@@ -3249,27 +3257,28 @@ public sealed partial class MainWindowSmokeTests
                 try
                 {
                     window.FitToOwnerScreen(owner);
+                    var preparedPosition = window.Position;
                     var preparedSize = new Size(window.Width, window.Height);
                     var preparedMinimum = new Size(window.MinWidth, window.MinHeight);
                     var preparedMaximum = new Size(window.MaxWidth, window.MaxHeight);
                     Assert.False(window.IsVisible);
-                    if (OperatingSystem.IsLinux())
-                    {
-                        var screen = owner.Screens.ScreenFromWindow(owner) ?? owner.Screens.Primary;
-                        Assert.NotNull(screen);
-                        var scaling = screen.Scaling > 0 ? screen.Scaling : 1;
-                        Assert.Equal(Math.Floor(Math.Min(720, Math.Max(1, screen.WorkingArea.Width / scaling - 24))), window.MaxWidth);
-                        Assert.Equal(Math.Floor(Math.Min(760, Math.Max(1, screen.WorkingArea.Height / scaling - 24))), window.MaxHeight);
-                        Assert.Equal(preparedSize, preparedMinimum);
-                        Assert.Equal(preparedSize, preparedMaximum);
-                    }
+                    var screen = owner.Screens.ScreenFromWindow(owner) ?? owner.Screens.Primary;
+                    Assert.NotNull(screen);
+                    var scaling = screen.Scaling > 0 ? screen.Scaling : 1;
+                    Assert.Equal(Math.Floor(Math.Max(1, screen.WorkingArea.Width / scaling - 24)), window.MaxWidth);
+                    Assert.Equal(Math.Floor(Math.Max(1, screen.WorkingArea.Height / scaling * .8)), window.MaxHeight);
+                    Assert.Equal(Math.Min(900, window.MaxWidth), window.Width);
+                    Assert.Equal(Math.Min(720, window.MaxHeight), window.Height);
+                    Assert.Equal(Math.Min(520, window.MaxWidth), window.MinWidth);
+                    Assert.Equal(Math.Min(480, window.MaxHeight), window.MinHeight);
 
                     var closed = window.ShowDialog(owner);
                     window.UpdateLayout();
                     Dispatcher.UIThread.RunJobs();
 
                     Assert.Same(owner, window.Owner);
-                    Assert.False(window.CanResize);
+                    Assert.Equal(preparedPosition, window.Position);
+                    Assert.True(window.CanResize);
                     Assert.Equal(preparedSize, new Size(window.Width, window.Height));
                     Assert.Equal(preparedSize, window.ClientSize);
                     Assert.Equal(preparedMinimum, new Size(window.MinWidth, window.MinHeight));
@@ -3292,12 +3301,12 @@ public sealed partial class MainWindowSmokeTests
     }
 
     [AvaloniaFact]
-    public void SettingsWindow_ExpandedViewportFitsDefaultAppearanceCategoryWithoutVerticalScrolling()
+    public void SettingsWindow_RegularViewportFitsCommonAppearanceCardsAndScrollsToPlatformOptions()
     {
         var window = new SettingsWindow
         {
-            Width = 720,
-            Height = 760
+            Width = 960,
+            Height = 820
         };
         using var settingsPage = new SettingsPageViewModel(new TestSettingsService());
 
@@ -3314,9 +3323,20 @@ public sealed partial class MainWindowSmokeTests
                 window.GetVisualDescendants().OfType<ScrollViewer>(),
                 control => control.Name == "AppearanceSettingsScroll");
             Assert.True(scroller.Viewport.Height > 0);
-            Assert.True(
-                scroller.Extent.Height <= scroller.Viewport.Height + 0.5,
-                $"Appearance settings extent {scroller.Extent.Height} exceeded viewport {scroller.Viewport.Height}.");
+            var panel = window.GetVisualDescendants().OfType<StackPanel>().Single(control => control.Name == "AppearanceSettingsPanel");
+            var qrCard = panel.GetVisualDescendants().OfType<Border>().Single(control => control.Name == "AppearanceQrPreviewCard");
+            Assert.True(qrCard.Bounds.Bottom <= scroller.Viewport.Height + .5);
+            var interfaceCard = panel.GetVisualDescendants().OfType<Border>().Single(control => control.Name == "AppearanceInterfaceScaleCard");
+            Assert.Equal(OperatingSystem.IsLinux(), interfaceCard.IsVisible);
+            // Exercise the additional platform row on every test host.
+            interfaceCard.IsVisible = true;
+            window.UpdateLayout();
+            interfaceCard.BringIntoView();
+            window.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+            var position = interfaceCard.TranslatePoint(default, scroller)!.Value;
+            Assert.True(position.Y >= -.5 && position.Y + interfaceCard.Bounds.Height <= scroller.Viewport.Height + .5);
+            Assert.True(scroller.Extent.Width <= scroller.Viewport.Width + .5);
         }
         finally
         {
@@ -3343,9 +3363,12 @@ public sealed partial class MainWindowSmokeTests
                 control => control.Name == "AuthorizationSettingsHost");
             var contentTemplate = authorizationHost.ContentTemplate;
             Assert.NotNull(contentTemplate);
-            var content = Assert.IsAssignableFrom<Control>(contentTemplate.Build(null));
+            using var authorization = new AuthorizationSettingsViewModel(new LayoutAuthorization(), new LayoutDialogs(),
+                new AvaloniaLocalizationService(window.Resources, new AvaloniaStringCatalog()), new TOTP.Infrastructure.Security.PasswordValidationService());
+            authorizationHost.Content = authorization;
+            window.UpdateLayout();
             var changeButton = Assert.Single(
-                content.GetLogicalDescendants().OfType<Button>(),
+                authorizationHost.GetVisualDescendants().OfType<Button>(),
                 control => control.Name == "MasterPasswordChangeButton");
 
             Assert.DoesNotContain("primary", changeButton.Classes);
@@ -3422,12 +3445,11 @@ public sealed partial class MainWindowSmokeTests
             var faqCards = window
                 .GetVisualDescendants()
                 .OfType<Border>()
-                .Where(border => border.Name is "FaqIconPacksCard" or "FaqImportFormatsCard"
-                    or "FaqMasterPasswordRecoveryCard" or "FaqOlderVaultsCard")
+                .Where(border => border.Classes.Contains("faq-card"))
                 .ToArray();
-            Assert.Equal(4, faqCards.Length);
+            Assert.Equal(7, faqCards.Length);
             Assert.All(faqCards, card => Assert.Equal(
-                Color.Parse("#0E192D"),
+                Color.Parse(card.Classes.Contains("expanded") ? "#12203A" : "#0E192D"),
                 Assert.IsType<SolidColorBrush>(card.Background).Color));
             var renderedHeaders = faqCards
                 .Select(card => Assert.Single(
@@ -3437,14 +3459,14 @@ public sealed partial class MainWindowSmokeTests
             Assert.All(renderedHeaders, header =>
             {
                 Assert.Equal(
-                    Color.Parse("#0E192D"),
-                    Assert.IsType<SolidColorBrush>(header.Background).Color);
+                    Brushes.Transparent.Color,
+                    Assert.IsAssignableFrom<ISolidColorBrush>(header.Background).Color);
                 var renderedHeaderSurface = Assert.Single(
                     header.GetVisualDescendants().OfType<Border>(),
                     border => border.Name == "ToggleButtonBackground");
                 Assert.Equal(
-                    Color.Parse("#0E192D"),
-                    Assert.IsType<SolidColorBrush>(renderedHeaderSurface.Background).Color);
+                    Brushes.Transparent.Color,
+                    Assert.IsAssignableFrom<ISolidColorBrush>(renderedHeaderSurface.Background).Color);
             });
         }
         finally
@@ -3533,9 +3555,9 @@ public sealed partial class MainWindowSmokeTests
                 content.GetLogicalDescendants().OfType<Border>(),
                 border => border.Name == "EncryptedBackupExportPanel");
             Assert.Contains("primary", exportButton.Classes);
-            Assert.Contains("wide", exportButton.Classes);
+            Assert.Equal(HorizontalAlignment.Left, exportButton.HorizontalAlignment);
             Assert.Contains("secondary", openFolderButton.Classes);
-            Assert.Contains("wide", openFolderButton.Classes);
+            Assert.Equal(HorizontalAlignment.Left, openFolderButton.HorizontalAlignment);
             Assert.Contains(openFolderButton, exportPanel.GetLogicalDescendants());
             Assert.Contains(openExportAfterCheckBox, exportPanel.GetLogicalDescendants());
             Assert.DoesNotContain(content.GetLogicalDescendants().OfType<Button>(), button => button.Name == "EncryptedBackupRestoreButton");
@@ -3548,7 +3570,7 @@ public sealed partial class MainWindowSmokeTests
                 content.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
 
-            var migrationPanel = Assert.Single(content.GetLogicalDescendants().OfType<AuthenticatorImportPanel>());
+            var migrationPanel = Assert.Single(content.GetLogicalDescendants().OfType<SettingsImportPanel>());
             Assert.Single(migrationPanel.GetLogicalDescendants().OfType<ComboBox>(), combo => combo.Name == "ExportHelpSource");
 
         }
@@ -3578,25 +3600,23 @@ public sealed partial class MainWindowSmokeTests
                 .ToArray();
             Assert.Equal(
                 [
-                    "AppearanceLanguagePanel",
-                    "AppearanceThemePanel",
-                    "AppearanceNextTokenPanel",
-                    "AppearanceIssuerLogoPanel",
-                    "AppearanceQrPreviewPanel",
-                    "AppearanceInterfaceScalePanel"
+                    "AppearancePersonalizationCard",
+                    "AppearanceAccountDisplayCard",
+                    "AppearanceQrPreviewCard",
+                    "AppearanceInterfaceScaleCard"
                 ],
                 appearanceSettingPanels.Select(panel => panel.Name));
             Assert.All(
                 appearanceSettingPanels,
-                panel => Assert.Contains("panel", panel.Classes));
+                panel => Assert.Contains("settings-card", panel.Classes));
             var appearanceIssuerLogoPanel = Assert.Single(
-                appearanceSettingPanels,
+                appearancePanel.GetLogicalDescendants().OfType<Grid>(),
                 panel => panel.Name == "AppearanceIssuerLogoPanel");
             var appearanceIssuerLogoCheckBox = Assert.Single(
-                appearanceIssuerLogoPanel.GetLogicalDescendants().OfType<CheckBox>());
+                appearanceIssuerLogoPanel.GetLogicalDescendants().OfType<ToggleSwitch>());
             Assert.Equal(
                 Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo],
-                appearanceIssuerLogoCheckBox.Content);
+                AutomationProperties.GetName(appearanceIssuerLogoCheckBox));
 
             var host = window.FindControl<ContentControl>("MiscSettingsHost");
             Assert.NotNull(host?.ContentTemplate);
@@ -3605,7 +3625,7 @@ public sealed partial class MainWindowSmokeTests
             var panel = Assert.Single(panels, border => border.Name == "MiscSettingsPanel");
             var reportPanel = Assert.Single(panels, border => border.Name == "ProblemReportSettingsPanel");
             Assert.Equal(2, panels.Length);
-            Assert.Contains("panel", reportPanel.Classes);
+            Assert.Contains("settings-card", reportPanel.Classes);
             var loggingPicker = Assert.Single(
                 panel.GetLogicalDescendants().OfType<ComboBox>(),
                 comboBox => comboBox.Name == "MinimumLoggingLevelPicker");
@@ -3613,18 +3633,21 @@ public sealed partial class MainWindowSmokeTests
             var emailLogButton = Assert.Single(
                 panel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "EmailDiagnosticLogButton");
-            Assert.Contains("wide", emailLogButton.Classes);
+            Assert.DoesNotContain("wide", emailLogButton.Classes);
+            Assert.Equal(HorizontalAlignment.Left, emailLogButton.HorizontalAlignment);
+            Assert.IsType<WrapPanel>(emailLogButton.Parent);
             var githubReportButton = Assert.Single(reportPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "ReportOnGitHubButton");
-            Assert.Contains("wide", githubReportButton.Classes);
+            Assert.DoesNotContain("wide", githubReportButton.Classes);
             Assert.Contains(reportPanel.GetLogicalDescendants().OfType<TextBlock>(), text =>
-                Equals(text.Text, Application.Current!.Resources[AvaloniaStringKeys.GitHubReportNotice])
-                && text.TextWrapping == TextWrapping.Wrap);
+                Equals(text.Text, Application.Current!.Resources[AvaloniaStringKeys.SupportReportPublicHelp]));
+            Assert.Contains(reportPanel.GetLogicalDescendants().OfType<TextBlock>(), text =>
+                Equals(text.Text, Application.Current!.Resources[AvaloniaStringKeys.SupportReportWarning]));
             Assert.Contains(
                 panel.GetLogicalDescendants().OfType<TextBlock>(),
                 textBlock => Equals(
                     textBlock.Text,
-                    Application.Current!.Resources[AvaloniaStringKeys.DiagnosticLogSharingNotice]));
+                    Application.Current!.Resources[AvaloniaStringKeys.SupportLogsNotice]));
             Assert.DoesNotContain(
                 panel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name is "BrandIconsImportButton" or "BrandIconsResetButton");
@@ -3634,7 +3657,7 @@ public sealed partial class MainWindowSmokeTests
             var brandIconContent = Assert.IsAssignableFrom<Control>(
                 brandIconHost.ContentTemplate!.Build(null));
             var brandIconsPanel = Assert.Single(
-                brandIconContent.GetLogicalDescendants().OfType<Border>(),
+                brandIconContent.GetLogicalDescendants().OfType<StackPanel>(),
                 border => border.Name == "BrandIconsPanel");
             Assert.Equal(new Thickness(4, 8, 4, 4), brandIconsPanel.Margin);
             var importButton = Assert.Single(
@@ -3643,11 +3666,13 @@ public sealed partial class MainWindowSmokeTests
             var resetButton = Assert.Single(
                 brandIconsPanel.GetLogicalDescendants().OfType<Button>(),
                 button => button.Name == "BrandIconsResetButton");
-            Assert.Contains("wide", importButton.Classes);
+            Assert.DoesNotContain("wide", importButton.Classes);
             Assert.Equal(HorizontalAlignment.Stretch, importButton.HorizontalAlignment);
             Assert.Contains("secondary", resetButton.Classes);
-            Assert.Contains("wide", resetButton.Classes);
+            Assert.DoesNotContain("wide", resetButton.Classes);
             Assert.Equal(HorizontalAlignment.Stretch, resetButton.HorizontalAlignment);
+            Assert.Same(importButton.Parent, resetButton.Parent);
+            Assert.Equal(HorizontalAlignment.Stretch, Assert.IsAssignableFrom<Control>(importButton.Parent).HorizontalAlignment);
             var resetButtonLabel = Assert.IsType<SymbolIconLabel>(resetButton.Content);
             Assert.Equal(SymbolIconKind.Delete, resetButtonLabel.Kind);
             var builderLink = Assert.Single(
@@ -3663,9 +3688,9 @@ public sealed partial class MainWindowSmokeTests
                     textBlock.Text,
                     Application.Current!.Resources[AvaloniaStringKeys.BrandIconsHelp]));
             Assert.Contains(
-                brandIconsPanel.GetLogicalDescendants().OfType<CheckBox>(),
+                brandIconsPanel.GetLogicalDescendants().OfType<ToggleSwitch>(),
                 checkBox => Equals(
-                    checkBox.Content,
+                    AutomationProperties.GetName(checkBox),
                     Application.Current!.Resources[AvaloniaStringKeys.ShowIssuerLogo]));
             Assert.DoesNotContain(
                 panel.GetLogicalDescendants().OfType<CheckBox>(),
@@ -3768,8 +3793,8 @@ public sealed partial class MainWindowSmokeTests
             var clipboardSettings = Assert.Single(settingsHost.GetVisualDescendants().OfType<Border>(),
                 control => control.Name == "ClipboardBehaviorSettings");
             Assert.Same(behaviorSettings.Parent, clipboardSettings.Parent);
-            Assert.Contains("panel", behaviorSettings.Classes);
-            Assert.Contains("panel", clipboardSettings.Classes);
+            Assert.Contains("settings-card", behaviorSettings.Classes);
+            Assert.Contains("settings-card", clipboardSettings.Classes);
             Assert.Equal(behaviorSettings.BorderThickness, clipboardSettings.BorderThickness);
             Assert.Equal(behaviorSettings.BorderBrush, clipboardSettings.BorderBrush);
             Assert.Equal(behaviorSettings.Background, clipboardSettings.Background);
@@ -3783,12 +3808,12 @@ public sealed partial class MainWindowSmokeTests
                 [5, 10, 15, 20, 30, 60],
                 settingsPage.ClipboardLifetimeOptions.Select(option => option.Seconds));
             Assert.Empty(behaviorSettings.GetVisualDescendants().OfType<NumericUpDown>());
-            var clipboardHeading = Assert.Single(Assert.IsType<StackPanel>(clipboardSettings.Child).Children.OfType<TextBlock>());
+            var clipboardHeading = Assert.Single(clipboardSettings.GetVisualDescendants().OfType<TextBlock>(), text => text.Classes.Contains("settings-row-label"));
             foreach (var locale in new[] { "en", "de", "fr", "es" })
             {
                 localization.ApplyCulture(locale);
                 window.UpdateLayout();
-                Assert.Equal(catalog.Get(AvaloniaStringKeys.ClipboardClearSeconds, CultureInfo.GetCultureInfo(locale)), clipboardHeading.Text);
+                Assert.Equal(catalog.Get(AvaloniaStringKeys.SecurityClipboardTitle, CultureInfo.GetCultureInfo(locale)), clipboardHeading.Text);
                 Assert.True(clipboardSettings.Bounds.Top > behaviorSettings.Bounds.Bottom);
                 Assert.True(scrollViewer.Extent.Width <= scrollViewer.Viewport.Width + 1);
                 Assert.True(clipboardHeading.Bounds.Width <= clipboardSettings.Bounds.Width);

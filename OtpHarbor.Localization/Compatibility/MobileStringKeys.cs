@@ -2,6 +2,15 @@ namespace TOTP.Avalonia.Mobile.Localization;
 
 public static class MobileStringKeys
 {
+    public const string FaqImportIconPacksIntro = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksIntro;
+    public const string FaqImportIconPacksStepsTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksStepsTitle;
+    public const string FaqImportIconPacksDownloadTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksDownloadTitle;
+    public const string FaqImportIconPacksBuildTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksBuildTitle;
+    public const string FaqImportIconPacksImportTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksImportTitle;
+    public const string FaqImportIconPacksCustomTitle = global::TOTP.Localization.CommonStringKeys.FaqImportIconPacksCustomTitle;
+    public const string FaqIconPackFileExtension = global::TOTP.Localization.CommonStringKeys.FaqIconPackFileExtension;
+    public const string FaqCreateBackupQuestion = global::TOTP.Localization.CommonStringKeys.FaqCreateBackupQuestion;
+    public const string FaqCreateBackupAnswer = global::TOTP.Localization.CommonStringKeys.FaqCreateBackupAnswer;
     public const string Change = nameof(Change);
     public const string AuthenticationMethod = nameof(AuthenticationMethod);
     public const string DeviceAuthenticationPrompt = nameof(DeviceAuthenticationPrompt);
@@ -422,6 +431,14 @@ public static class MobileStringKeys
 
     public static IReadOnlyList<string> All { get; } =
     [
+        FaqImportIconPacksIntro,
+        FaqImportIconPacksStepsTitle,
+        FaqImportIconPacksDownloadTitle,
+        FaqImportIconPacksBuildTitle,
+        FaqImportIconPacksImportTitle,
+        FaqImportIconPacksCustomTitle,
+        FaqIconPackFileExtension,
+
         "AboutActionFailed",
         "AboutAppName",
         "AboutAppVersion",
@@ -638,6 +655,8 @@ public static class MobileStringKeys
         "FaqImportFormatsOtpAuthDescription",
         "FaqImportFormatsOtpAuthExample",
         "FaqImportFormatsOtpAuthTitle",
+        FaqCreateBackupQuestion,
+        FaqCreateBackupAnswer,
         "FaqMasterPasswordRecoveryQuestion",
         "FaqMasterPasswordRecoveryAnswer",
         "FaqOlderVaultsQuestion",

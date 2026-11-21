@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from scanner_marketing import desktop_demo_qr_bounds
 
 from screenshot_cleanup import DESKTOP_CORNER_RADIUS, clean_android, clean_desktop
+from marketing_environment import require_pinned_dependencies
 
 
 REPO = Path(__file__).resolve().parents[2]
@@ -38,11 +39,11 @@ ORDER = {
 }
 MARKETING = {
     'desktop': (
-        ('import-formats', 'imports', 'Import more formats.',
+        ('import-formats', 'settings', 'Import more formats.',
          'Aegis JSON · 2FAS · otpauth:// lists\nGoogle Authenticator transfer QR images', None),
         ('qr-scanning', 'scanner', 'Scan a QR code.',
          'Account QR codes and Google Authenticator\ntransfer codes', None),
-        ('backup-restore', 'backup-restore', 'Keep a way back.',
+        ('backup-restore', 'settings', 'Keep a way back.',
          'Encrypted backup and restore', None),
     ),
     'android': (
@@ -211,11 +212,19 @@ def add_github_demo_qr(cleaned, platform):
     return composite, bounds, art_bounds
 
 
-def add_previews(manifest, gallery):
+def selected_website_asset(entry, platforms):
+    return entry['path'].startswith('website/optimized/') and any(
+        f'/{platform}/' in entry['path'] for platform in platforms)
+
+
+def add_previews(manifest, gallery, platforms=('desktop', 'android')):
     """Derive delivery assets without changing reviewed captures or full-size frames."""
     generated = [entry for entry in manifest['generated']
-                 if entry['kind'] not in ('website-preview', 'website-gallery-data')]
+                 if entry['kind'] != 'website-gallery-data'
+                 and not (entry['kind'] == 'website-preview' and selected_website_asset(entry, platforms))]
     for item in gallery['items']:
+        if item['platform'] not in platforms:
+            continue
         full = item['full'] if 'full' in item else {key: item[key] for key in ('src', 'width', 'height')}
         source = OPTIMIZED / full['src'].removeprefix('assets/marketing/')
         relative = Path('previews') / item['platform'] / item['theme'] / (item['screen'] + '.webp')
@@ -246,21 +255,28 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--previews-only', action='store_true',
                         help='Keep existing reviewed full-size frames and canonical captures byte-for-byte.')
+    parser.add_argument('--platform', choices=('all', 'desktop', 'android'), default='all')
     args = parser.parse_args()
+    require_pinned_dependencies()
+    platforms = ('desktop', 'android') if args.platform == 'all' else (args.platform,)
     manifest = json.loads(MANIFEST.read_text(encoding='utf-8'))
     if args.previews_only:
-        add_previews(manifest, json.loads(GALLERY.read_text(encoding='utf-8')))
+        add_previews(manifest, json.loads(GALLERY.read_text(encoding='utf-8')), platforms)
         print('Generated quality-95 WebP previews; publication review required.')
         return
     previous = manifest['generated']
-    generated = [entry for entry in previous if not entry['path'].startswith('website/optimized/')
+    generated = [entry for entry in previous if not selected_website_asset(entry, platforms)
                  and entry['path'] != 'website/gallery.json']
-    previous_paths = {entry['path'] for entry in previous if entry['path'].startswith('website/optimized/')}
+    previous_paths = {entry['path'] for entry in previous if selected_website_asset(entry, platforms)}
+    previous_gallery = json.loads(GALLERY.read_text(encoding='utf-8'))['items'] if GALLERY.exists() else []
     gallery = []
     written_direct = set()
     with Image.open(ICON) as original_icon:
         icon = original_icon.convert('RGBA').resize((62, 62), Image.Resampling.LANCZOS)
     for platform in ('desktop', 'android'):
+        if platform not in platforms:
+            gallery.extend(item for item in previous_gallery if item['platform'] == platform)
+            continue
         background_path = BACKGROUNDS[platform]
         with Image.open(background_path) as original_background:
             background = original_background.convert('RGB')
@@ -322,7 +338,9 @@ def main():
                                         **({'illustrationPath': illustration.relative_to(REPO).as_posix(),
                                             'illustrationBounds': art_bounds} if illustration else {})))
                 label = GALLERY_TITLES[slug]
-                alt_kind = ('with a labeled GitHub demonstration QR in a genuine scanner capture'
+                alt_kind = ('with a genuine Settings capture reused for this feature overview'
+                            if platform == 'desktop' and screen == 'settings' and slug != 'settings' else
+                            'with a labeled GitHub demonstration QR in a genuine scanner capture'
                             if qr_composite else
                             'with a concept illustration and genuine app capture'
                             if illustration else 'with a genuine app capture')
@@ -345,7 +363,7 @@ def main():
         stale = ROOT / relative
         if stale.is_file():
             stale.unlink()
-    add_previews(manifest, {'items': gallery})
+    add_previews(manifest, {'items': gallery}, platforms)
     print(f'Generated {len(gallery)} framed website captures, cleaned sources and WebP previews.')
 
 

@@ -79,6 +79,9 @@ Required posture:
   and scrollable content over device-model checks or fixed screen coordinates
 - preserve accessible touch targets and readable text when compacting a layout;
   reflow controls before making them too small
+- explicitly center button content vertically when creating or restyling buttons;
+  check rendered text/icon alignment in normal, hover, focus, and disabled states
+  at compact and regular sizes instead of relying on template defaults
 - treat fixed widths as exceptional and use them only for intentionally bounded
   elements such as icons, QR images, or horizontally scrollable cards
 - verify important views at compact and regular widths and at constrained heights;

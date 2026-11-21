@@ -16,7 +16,7 @@ using TOTP.Avalonia.Shared.Import;
 
 namespace TOTP.Tests.Avalonia.Presentation;
 
-public sealed class NativeFilePickerViewModelTests
+public sealed partial class NativeFilePickerViewModelTests
 {
     [Fact]
     public async Task EnteOnlyDeletedEntries_ShowsInformationWithoutPreviewBackupOrCommit()
@@ -474,6 +474,37 @@ public sealed class NativeFilePickerViewModelTests
             localization: Localization(cultureName));
 
         Assert.Equal(expected, sut.BrandIconPackStatusText);
+    }
+
+    [Fact]
+    public void BrandCatalogChanges_RefreshInstalledCardVisibilityAndLocalizedStatus()
+    {
+        var status = new BrandIconPackStatus(false, null, 0);
+        var brandIcons = new Mock<IBrandIconPackService>();
+        brandIcons.SetupGet(value => value.Status).Returns(() => status);
+        var localization = Localization("en");
+        using var sut = Create(Mock.Of<IAvaloniaFilePicker>(), Mock.Of<IExportService>(),
+            Mock.Of<IAccountManager>(), Mock.Of<IAvaloniaDialogService>(),
+            brandIconPackService: brandIcons.Object, localization: localization);
+        var notifications = new List<string?>();
+        sut.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+        Assert.False(sut.HasImportedBrandIcons);
+
+        status = new BrandIconPackStatus(true, "format-3", 5745, BrandIconPackFormat.OtpHarbor, "OTP Harbor Icons");
+        brandIcons.Raise(value => value.CatalogChanged += null, EventArgs.Empty);
+        Assert.True(sut.HasImportedBrandIcons);
+        Assert.Equal("5745 local icons installed (OTP Harbor Icons vformat-3).", sut.BrandIconPackStatusText);
+        Assert.Contains(nameof(sut.HasImportedBrandIcons), notifications);
+        Assert.Contains(nameof(sut.BrandIconPackStatusText), notifications);
+
+        localization.ApplyCulture("de");
+        Assert.Equal("5745 lokale Symbole installiert (OTP Harbor Icons vformat-3).", sut.BrandIconPackStatusText);
+        notifications.Clear();
+        status = new BrandIconPackStatus(false, null, 0);
+        brandIcons.Raise(value => value.CatalogChanged += null, EventArgs.Empty);
+        Assert.False(sut.HasImportedBrandIcons);
+        Assert.Contains(nameof(sut.HasImportedBrandIcons), notifications);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.BrandIconPackNotInstalled), sut.BrandIconPackStatusText);
     }
 
     [Fact]
