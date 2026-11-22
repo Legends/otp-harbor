@@ -1,0 +1,2 @@
+WARNING: apksigner not found! Cannot sign or verify modern APKs
+{"fatalProblems": 0, "report": "source-scan.json"}

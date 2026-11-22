@@ -1,0 +1,2012 @@
+{
+  "releaseTag": "android-v3.0.3",
+  "sourceCommit": "c801e73224f3d6abed33396f858c54866b8e70f2",
+  "scope": "Application NuGet lock graph in the tagged Android solution; excludes SDK/workload packs and is not proof of source correspondence or F-Droid acceptance.",
+  "projectCount": 7,
+  "packageCount": 137,
+  "projects": [
+    "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+    "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+    "OtpHarbor.Core/OtpHarbor.Core.csproj",
+    "OtpHarbor.DAL/OtpHarbor.DAL.csproj",
+    "OtpHarbor.Platform.Android/OtpHarbor.Platform.Android.csproj",
+    "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+    "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj"
+  ],
+  "packages": [
+    {
+      "id": "Avalonia",
+      "version": "12.1.1",
+      "contentHashSha512": "o8pZ1oE9AQ6gklpGM0lnOBp/JlVH0J/0mYszBf0GsSAcEnzHNCLM9NnrPZwKu4j2q9oNbVHYzzEPkszQeuqaKw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Avalonia.Android",
+      "version": "12.1.1",
+      "contentHashSha512": "r3ePTQtZoyNQsSlp4I2pZg7mca5QD3ijHWAF3BXOK5BarJx22m1lliixdqc0hwPDnJJPYC3A07c3f++qfZXUqA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Avalonia.BuildServices",
+      "version": "11.3.2",
+      "contentHashSha512": "qHDToxto1e3hci5YqbG9n0Ty8mlp3zBUN5wT66wKqaDVzXyQ0do3EnRILd4Ke9jpvsktaPpgE0YjEk7hornryQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Avalonia.HarfBuzz",
+      "version": "12.1.1",
+      "contentHashSha512": "vgd/Fl4bIXgv3QtYk6WCd6iGAag4i3OOAozo6/DW3xPr5dWjpi1MmJaeE9MYoZBEDJ4egD0gfHz6nYhkDADz9g==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Avalonia.Remote.Protocol",
+      "version": "12.1.1",
+      "contentHashSha512": "0u77tnOwJnHtVLu+WBY7T56fN9W8n7++Uq9kHW6J+bfv5y13WZUMVS+PBzoBe32taYvz/oSomDGO1V41AHaFcQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Avalonia.Skia",
+      "version": "12.1.1",
+      "contentHashSha512": "Q0jRMXb212RYIZNV7p6L/zWx8lyPck9dFFW+l86moeN4dNxHjPBdJS3nLdLvAd20Eno7JC4gwRa5Fewg52td8g==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Avalonia.Themes.Fluent",
+      "version": "12.1.1",
+      "contentHashSha512": "7vdtZsM9o8I8LpU9dyiB/Ah7WB8a5V3JHLsExe4T433ynn5x57F+DBskctZuNOxml8hbe1GmtNUNkBDsqSVKVg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "FluentResults",
+      "version": "4.0.0",
+      "contentHashSha512": "wKfdLvDnDVhXlSreU7u/NFNHH6EfoOhAloEID4ePAyk+ZliowKZJvX+aCL4hxhFc9Jj74t62amS4LyOYTjXGCg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Core/OtpHarbor.Core.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.DAL/OtpHarbor.DAL.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Platform.Android/OtpHarbor.Platform.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "HarfBuzzSharp",
+      "version": "8.3.1.3",
+      "contentHashSha512": "NGZ2+ZVNPM+NdHB/asW0/ykWngyHWwcqjrbN2nDeH1B/aptPGlCUl8wkQ2cSJxw5fdWgdmIPmNuTPWpLwNVXWg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "HarfBuzzSharp.NativeAssets.Android",
+      "version": "8.3.1.3",
+      "contentHashSha512": "Yte9/yYql8ngAjo7YgHlXSinLJcJXIRBM9gegVXpJ2SVYT1i2O/wMA+H3jmYiYiTQxHpHKi4exZUcMzry171MA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-arm64",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-x64",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "HarfBuzzSharp.NativeAssets.Linux",
+      "version": "8.3.1.3",
+      "contentHashSha512": "RI6A1LgmooU30+4QIyFt5rmBCzP0VzTR+587IJSGvYIsHHWlahFufihYxtraLfsIhW7I8dn6+xX+DZGygOPKWQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-arm64",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-x64",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "HarfBuzzSharp.NativeAssets.WebAssembly",
+      "version": "8.3.1.3",
+      "contentHashSha512": "w2QfdNm9Uz/sUa0B5D+OnVQhyq3G/fBq6ibQMdWBlQqqwh0g0/5j3RFvYqZAmRZ5+RzvjVe8o8SFFnWYUSkuxA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "libsodium",
+      "version": "1.0.22",
+      "contentHashSha512": "KPD9SloJFclrsjnhABu7dzWrcyYkwPbvx5l1gRSPAX/0n+OBtSiVCKtGFv4n+ecWUHU0tCG9LSSwoZZx673zBQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-arm64",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-x64",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "MicroCom.Runtime",
+      "version": "0.11.6",
+      "contentHashSha512": "NdNWGDiZ6eS/Mf/9+QHR91cj1K7Hy+PX9yrHI/zM7xFYuj9IWT2uxtB6sCHjrnxAeLV9fut1R6zHDUGKX6f9lQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Configuration",
+      "version": "10.0.11",
+      "contentHashSha512": "wlhRqZW8LcJPa+vk2oLAc/REXDItHtkFQdf/QcXYGZbZOO13izcsKY1pCvuFQYwUiZD+hwSZwsKASjqT+BNaVg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Configuration.Abstractions",
+      "version": "10.0.11",
+      "contentHashSha512": "fVi053xdpda9Em7vSkmgVxO/PtgC2m78ekReKWsgcyskqY0U82Bz/MONwxpGzI0hElYKJfw+fupqMVeKW3fSaA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Configuration.Binder",
+      "version": "10.0.0",
+      "contentHashSha512": "tMF9wNh+hlyYDWB8mrFCQHQmWHlRosol1b/N2Jrefy1bFLnuTlgSYmPyHNmz8xVQgs7DpXytBRWxGhG+mSTp0g==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.DependencyInjection",
+      "version": "10.0.11",
+      "contentHashSha512": "PSmotV19c7E3lKed++uYo1kSiXFI+uTl37CBSrhq+CfLC3FCHjG7R91+xPnNehQfHS1b0Tzo/CCLPWH3qaEheg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "version": "10.0.11",
+      "contentHashSha512": "/a1aJz4m7ylhEDf25ugQChLQoN5XwoGjWw/BoR/ZWWKsO1v4DdJElS1uyngahz4B/eOzjFk1KNTkarRLE5wsIg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Core/OtpHarbor.Core.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.DAL/OtpHarbor.DAL.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Platform.Android/OtpHarbor.Platform.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.DependencyModel",
+      "version": "10.0.0",
+      "contentHashSha512": "RFYJR7APio/BiqdQunRq6DB+nDB6nc2qhHr77mlvZ0q0BT8PubMXN7XicmfzCbrDE/dzhBnUKBRXLTcqUiZDGg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Diagnostics.Abstractions",
+      "version": "10.0.0",
+      "contentHashSha512": "SfK89ytD61S7DgzorFljSkUeluC1ncn6dtZgwc0ot39f/BEYWBl5jpgvodxduoYAs1d9HG8faCDRZxE95UMo2A==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.FileProviders.Abstractions",
+      "version": "10.0.0",
+      "contentHashSha512": "/ppSdehKk3fuXjlqCDgSOtjRK/pSHU8eWgzSHfHdwVm5BP4Dgejehkw+PtxKG2j98qTDEHDst2Y99aNsmJldmw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Hosting.Abstractions",
+      "version": "10.0.0",
+      "contentHashSha512": "KrN6TGFwCwqOkLLk/idW/XtDQh+8In+CL9T4M1Dx+5ScsjTq4TlVbal8q532m82UYrMr6RiQJF2HvYCN0QwVsA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Logging",
+      "version": "10.0.0",
+      "contentHashSha512": "BStFkd5CcnEtarlcgYDBcFzGYCuuNMzPs02wN3WBsOFoYIEmYoUdAiU+au6opzoqfTYJsMTW00AeqDdnXH2CvA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Logging",
+      "version": "10.0.11",
+      "contentHashSha512": "nUOJwgFkSiLHiVGFpU22pIJtuWYewuSYQ3JVuP/gdK8ASMT807Px+TYQiRWs6uSsOmoyFTaVCwKXTasczV6BpA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Logging.Abstractions",
+      "version": "10.0.11",
+      "contentHashSha512": "Ljd0Uxoq5XpScD2Bg0nM/r3mwx7Ao5Uq24eo2ARxbGvqJ7Zht6rt2cJtwVRH4Cv+1ZVMdXz6TB43KbpmsxRrvQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Core/OtpHarbor.Core.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.DAL/OtpHarbor.DAL.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Platform.Android/OtpHarbor.Platform.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Options",
+      "version": "10.0.0",
+      "contentHashSha512": "8oCAgXOow5XDrY9HaXX1QmH3ORsyZO/ANVHBlhLyCeWTH5Sg4UuqZeOTWJi6484M+LqSx0RqQXDJtdYy2BNiLQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Options",
+      "version": "10.0.11",
+      "contentHashSha512": "eY1GAKcTfD2maP27J84X9IovT3yjHJ2dVDzPmDg6/XqYvt3jMzJhtfQCLjG9pVsZGAd+8DQ2QrjaDcs2+VQLGw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.Extensions.Primitives",
+      "version": "10.0.11",
+      "contentHashSha512": "SXcz+kF+4Oo9b1+55zntpJFYfwb1jw66ioxptyNOOTDc8g2FHnBFWjZpsWfCvZIhzr0x+4e2trVTs4OKwQfBtw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Microsoft.NET.ILLink.Tasks",
+      "version": "10.0.13",
+      "contentHashSha512": "40yrBMsLEcjixBR4G+FiUaBPvxXIPSKJ2OgSrbOZcmSDBda4Sb0k7BWrfDpIvn3IvvDzwOL/tEPa6gDQfh6aRw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "NSec.Cryptography",
+      "version": "26.4.0",
+      "contentHashSha512": "0vsCtY5f+YgQROiWNqzgWp+l2pddfk9FkWoGV/bEo0MuEYPKlJWuoA8aOfO6qp3f+EnObKE3zSJhn1PspJeJVg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Otp.NET",
+      "version": "1.4.1",
+      "contentHashSha512": "UXjZ80T6BfVACJWmEcz4UFZ93hwX3STKojKvVpPk3qUhubjnLwIiZMsI4Hh91HhYxC0JlatNdNrVK2wkv4O9/Q==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Core/OtpHarbor.Core.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.DAL/OtpHarbor.DAL.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Platform.Android/OtpHarbor.Platform.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "QRCoder",
+      "version": "1.6.0",
+      "contentHashSha512": "XmPA81eo+oRxBuyVdswsSkTGTE1d3thfF11Z1PdD7oB56A6HU4G4AAOdySmGRMb/cljwlFTMWUtosGEnwpS6GA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog",
+      "version": "4.4.0",
+      "contentHashSha512": "ZC6Le3rr4TVJJjS4KsQAesxeF1EhW9qcZmmG7eP5Y2G3+gTGkJEUXkq4+tZNPtyp05I0wWOxnIjwtxFweJsObw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.Core/OtpHarbor.Core.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        },
+        {
+          "project": "OtpHarbor.DAL/OtpHarbor.DAL.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Platform.Android/OtpHarbor.Platform.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Mobile/OtpHarbor.UI.Avalonia.Mobile.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Enrichers.Environment",
+      "version": "3.0.1",
+      "contentHashSha512": "9BqCE4C9FF+/rJb/CsQwe7oVf44xqkOvMwX//CUxvUR25lFL4tSS6iuxE5eW07quby1BAyAEP+vM6TWsnT3iqw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Enrichers.Thread",
+      "version": "4.0.0",
+      "contentHashSha512": "C7BK25a1rhUyr+Tp+1BYcVlBJq7M2VCHlIgnwoIUVJcicM9jYcvQK18+OeHiXw7uLPSjqWxJIp1EfaZ/RGmEwA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Extensions.Hosting",
+      "version": "10.0.0",
+      "contentHashSha512": "E7juuIc+gzoGxgzFooFgAV8g9BfiSXNKsUok9NmEpyAXg2odkcPsMa/Yo4axkJRlh0se7mkYQ1GXDaBemR+b6w==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Extensions.Logging",
+      "version": "10.0.0",
+      "contentHashSha512": "vx0kABKl2dWbBhhqAfTOk53/i8aV/5VaT3a6il9gn72Wqs2pM7EK2OB6No6xdqK2IaY6Zf9gdjLuK9BVa2rT+Q==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Settings.Configuration",
+      "version": "10.0.1",
+      "contentHashSha512": "ayFE7h66mqMqzwfPrzDCMbWU27FdNC2bkCG+jnkeHFZTBRh+yWdr4aa/2WuX7c8RmqxGPMW2UqoJ3fw9hK3QhA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Sinks.Async",
+      "version": "1.5.0",
+      "contentHashSha512": "csHYIqAwI4Gy9oAhXYRwxGrQEAtBg3Ep7WaCzsnA1cZuBZjVAU0n7hWaJhItjO7hbLHh/9gRVxALCUB4Dv+gZw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Sinks.Console",
+      "version": "6.0.0",
+      "contentHashSha512": "fQGWqVMClCP2yEyTXPIinSr5c+CBGUvBybPxjAGcf7ctDhadFhrQw03Mv8rJ07/wR5PDfFjewf2LimvXCDzpbA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Sinks.Debug",
+      "version": "3.0.0",
+      "contentHashSha512": "4BzXcdrgRX7wde9PmHuYd9U6YqycCC28hhpKonK7hx0wb19eiuRj16fPcPSVp0o/Y1ipJuNLYQ00R3q2Zs8FDA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Serilog.Sinks.File",
+      "version": "7.0.0",
+      "contentHashSha512": "fKL7mXv7qaiNBUC71ssvn/dU0k9t0o45+qm2XgKAlSt19xF+ijjxyA3R6HmCgfKEKwfcfkwWjayuQtRueZFkYw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.Infrastructure/OtpHarbor.Infrastructure.csproj",
+          "framework": "net10.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "SkiaSharp",
+      "version": "3.119.4",
+      "contentHashSha512": "53NOSUZ1Us+91Sm0uCkIivh/k7jOowRErZT2sIWwPFN9mLUvdxnE6rS4sWo4255+Rd2MWUSF+j0NMZHD6Cke+Q==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "SkiaSharp.NativeAssets.Android",
+      "version": "3.119.4",
+      "contentHashSha512": "qfjNh5hZBZxpOIM1aeDByj2qNbcK2JZG5Y7YyGSeliaYnf1N/hVfsswIPUa+qzcMqS9Q0VCGk85zQLvwVXtrvQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-arm64",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-x64",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "SkiaSharp.NativeAssets.Linux",
+      "version": "3.119.4",
+      "contentHashSha512": "UAyVzbqNfZsZbKbzj68zXLyUyF/SbTKmzTfOO6qDu++dtIUMMTzPBe8oOuzU/DiewpfKoUUlOSsJmqWc6blxBw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-arm64",
+          "type": "Transitive"
+        },
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0/android-x64",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "SkiaSharp.NativeAssets.WebAssembly",
+      "version": "3.119.4",
+      "contentHashSha512": "S1HOxtBbD4bYDtA2e9WH5TX+lxqRrTPvKjrjttRhxnHNNu7YY8VFo/LeCP7tNqoTA6PV+8vsvNbmRUEC2ip8RQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Activity",
+      "version": "1.13.0.1",
+      "contentHashSha512": "W2Tvk9UOvP6i/cCJrv0vQyAFzaxejfzSQDvjj9BoHtbM7fCVSXUngHTSaWptRcgUQQJyRNmKmTJ2YipndCZijw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Annotation",
+      "version": "1.10.0.1",
+      "contentHashSha512": "OFFhDPUvfvyAaYU1s32hkiRt460zLkNxBgW1l2QUZDa2sSAQSGdrdpSZSpeXGXI0r1lgXPLIv8PWNmStIDr+Hw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Annotation.Experimental",
+      "version": "1.6.0.1",
+      "contentHashSha512": "sZSJtoivC3uBRIZVkRoBeYtpRcs1MxBxRoW9hcHeNwbQO9yPxBBpUsQyztZT4DrUNXvbLVAjA+fS4kvy7rUjbA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Annotation.Jvm",
+      "version": "1.10.0.1",
+      "contentHashSha512": "TwAZDaPB2TYKAfRnrkh59rqrk0KaCKAqkMomZ84WuFJ5elkVzO1ttZjAHY7oD6XkmnaZyOkGhBacxmu4ApTh0g==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.AppCompat",
+      "version": "1.7.1.4",
+      "contentHashSha512": "txambMgIFpDjAEpwqk0j1GK+pQdwu3JSxVqu5Zd83RrGSFnHoUZEM4ep+ESD75UARqLWYqhMfxpl5P52O2q6pQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.AppCompat.AppCompatResources",
+      "version": "1.7.1.4",
+      "contentHashSha512": "FMooskcnJ3pU03GtRMVd1Y16ZGahVQ6mgl4msPzWQ2QUoxlie2yPijYQka5k9ssNWjQNsSuEAOfpPz1A3LYsxg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Arch.Core.Common",
+      "version": "2.2.0.21",
+      "contentHashSha512": "K3/VTkAn9aKFPjMQZnMyXwU3jA3hj5RZps/KoQGzGBeg+4KtBpx+aZd8n6bSJQGRg0YF0Viz8bocSoCKfylvtw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Arch.Core.Runtime",
+      "version": "2.2.0.21",
+      "contentHashSha512": "d+xgYu109rmZRpRA3QjdOxHWFwJBndtAudu/XbfeqQR+OTaW7dpFYNAKLK2bGlihQqVszOuVdUdn3crpbZeUGw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.Camera2",
+      "version": "1.6.1.1",
+      "contentHashSha512": "jXmzG53wYxE9RzOsH9wR0rOnF3vd6oger1bcDPhiGPqqt3h3JhwWByWdscotgSiWkgEYylIosPTmp1g7vjpqAg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.Camera2.Pipe",
+      "version": "1.6.1.1",
+      "contentHashSha512": "PWIpLgqp2vsL5+6WIBDMXbritUVQMxtDmi8vU2TwgiwTLxiQ7c3U3g76+xL+GDIkeTOfU/JdHMIyv1Vz7fMBcQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.Core",
+      "version": "1.6.1.1",
+      "contentHashSha512": "SS/2XT1GVxDgCX5gtLcgpSIFRnMm4oZnB+rDzFPVgcn5fWwFS6RcRja7AQsd4JPwr8blZ2+AjYFaG6G0BNjMdw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.FeatureCombinationQuery",
+      "version": "1.6.1.1",
+      "contentHashSha512": "4Yq/YV9D5b9Oc6MU1sZXCtG0iNdCv+cw9Hr6cU5BzqKMdnTMxoZ87ADIPU+ihLCbmySVDewE70y/1n2tKLYwuQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.Lifecycle",
+      "version": "1.6.1.1",
+      "contentHashSha512": "r/k4Vrb91lSAr1wjWTa5LB55uXo/JyKX4FjV0PP30RQ2wmkjoADYeR5IOE3mBdShCIoGPkt69ywqTBOsDg6Mug==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.Video",
+      "version": "1.6.1.1",
+      "contentHashSha512": "uTPGNChNAns3aAeGyxaxMF92/gynQ3j99D4n3gnjnAZnfwcczxKmRYZLyav8TRe9dv2kwsRymTIQOfdSDZs5Cg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.View",
+      "version": "1.6.1.1",
+      "contentHashSha512": "aZzBcjacDK72S8ktsg43ySgi+1zioptk6NWCELW+HOJ5ZAWa08F+9HkU3AwSe+OvCjV5JmrA1PBmC+faoBa3vA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Camera.Viewfinder.Core",
+      "version": "1.6.1.1",
+      "contentHashSha512": "xPDEivFmrBHTwy1SAzlMu97my3jSjzpe1lXxBvqFTs3z6pvamGZy5NWzemXHCWdKUo6nJnQxHKwJVAZN37zqaA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Collection",
+      "version": "1.6.0.1",
+      "contentHashSha512": "2KWXJOSjKTcJRIUrayYj5Kic+UP7TsTCieDBgiyImMhft5cEvdHUJjhseH7WIrKRVkpNoj5PAIlZgRimVSbayA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Collection.Jvm",
+      "version": "1.6.0.1",
+      "contentHashSha512": "qmUjU7y9SOuhBwVOVtsJogWE8xuDQIRGN+IQtL+JK4du6BDKrpY4sKSBaPH//+9SAzo+l6V8EgGXd/KhJQM0dg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Compose.Runtime.Annotation",
+      "version": "1.11.3.1",
+      "contentHashSha512": "IP+ct5uaVhAp0f2Spe62kXgaoGwLuogBeG42q5ta6Nj7mQlHgxetJC5dwauMXjKnT8hwoZthpP4lvagpCZZdnA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Compose.Runtime.Annotation.Android",
+      "version": "1.11.3.1",
+      "contentHashSha512": "NCz5fp215Nj4lE6SQd8EXjJ6vTztoLCa3rtrOYmb39Tlv96NdDNHTR/jl5ARL8+RjcLuwxwL/q1Na1aVPjFDGA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Concurrent.Futures",
+      "version": "1.3.0.4",
+      "contentHashSha512": "KiRIKChlF+ZUSmwF7WsBXl5ACfr/dxaCzk8o3xRqLaUxuY5BFK7mrG1zGahkl1WZFSvXkMIqzA88DShr7EdnXQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Concurrent.Futures.Ktx",
+      "version": "1.3.0.4",
+      "contentHashSha512": "nIS245hjYxqU0Lf4f7YBqmZLo1AHmfyApfFs97M8kY56rhAu7/PJzngQUC9q9SIflrgXvjqj+C72Qz2RAQZVzg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Core",
+      "version": "1.19.0.1",
+      "contentHashSha512": "o99imtQhC8lAEzxbvoeh+Tk4Gr2yHOE5LlV0YJK0n561PZlFvQYBSGrM+ZYL3pivXBO2IjAcWZdRGy67DZI0oA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Core.BackportedFixes",
+      "version": "1.0.0.1",
+      "contentHashSha512": "kkP3nSlVHHdM8JfONuAY8YUGZ6cS6sT+hWuSMsVLBpKIxxzrMzK1yENHwe+/NdcJ8HFBsANULYUIo0inVRBZSg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Core.Core.Ktx",
+      "version": "1.19.0.1",
+      "contentHashSha512": "oYMa8qwe+Rs4v3Rs1SXA0UJ3DLyFWJtpjwSeFeh1+jlS+SF1xHbOt9G5zKqz193zPP+mDJkaYmdJpv8ahhAjlA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Core.SplashScreen",
+      "version": "1.0.1.15",
+      "contentHashSha512": "lIrwgrscmgm3lAa6orpTPb27MoUeg5RdgUSshSga3wdAS503pK8OWQ8l+7QzTM4/mypop8RpHg0LHNv9y0WX4Q==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Core.ViewTree",
+      "version": "1.0.0.6",
+      "contentHashSha512": "BJP0aUy9fLExMVrrjqvzSj5MKU9RFVfT+fxW/5oUrlkmSewDZyfJfHo4MwtmbUDQGDDG+ARpPIABOalhWqYJdA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.CursorAdapter",
+      "version": "1.0.0.37",
+      "contentHashSha512": "tZxKuVjw9HwxSSVyhxVw4Hs+YRNHbLwpu+5QpSq6RCjY7NVNoHeLklytntBVuDY2EUKOuR2hSrBRhcgijfrxXg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.CustomView",
+      "version": "1.2.0.4",
+      "contentHashSha512": "AuBRKJ1l2NwVze0pnkCflJM2rWortwoQ3Vz3ZUniYYEfVInDyQVRkNxwlDJqnxCxg/MPYK+120dV/fEQDGOOHg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.CustomView.PoolingContainer",
+      "version": "1.0.0.12",
+      "contentHashSha512": "hmru32pJ4e15aaSdGncXXYamGpJt/lOTeM+hl2kSwC904B4JzvWaYuYb0JP8GZTQ8T3WMgTLAAw96ryuP84iAQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.DrawerLayout",
+      "version": "1.2.0.21",
+      "contentHashSha512": "BIvdnKMHI6JFPpApPBjL5/inu/L0wU88bKMDZOE+fnIAob0Qz4ZxyynSJJkC8D2dw2mVITYcAJxXK7zPkas3rg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Emoji2",
+      "version": "1.6.0.3",
+      "contentHashSha512": "Pb603fbsfvfqbLHrFyn0deReLxb4gJMzBnSXRuuJrh2VL9TcOeNQ7WgpLa0QGJ0Z+3b6iuQhfnd6vNZ7fvYg5w==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Emoji2.ViewsHelper",
+      "version": "1.6.0.3",
+      "contentHashSha512": "gVKEntE5UctFDeszUM+/+JVyqiyNkVyRyKXlf27/qUjPV5BzTVCx2JG2xL5C5hYNDQ+XiqKMEA35P+q9hZD+MQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.ExifInterface",
+      "version": "1.4.2.3",
+      "contentHashSha512": "OkfEbH6yZ0b4S4vJMduFwj4YEDFzqkSc4hMkDWRhSnK76UrJM+N72MzQM3+pVBN5gNyOiKIZHZYLxEKXb0KagQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Fragment",
+      "version": "1.8.9.3",
+      "contentHashSha512": "PJ4Cz/w2kDMiS2Jb74qQVFFYspE6aySP46v8CnBXTSL5GdvQ18LR/MvpOvHVqy6owXh+MhOFhQYcumQHqqPRIA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Interpolator",
+      "version": "1.0.0.37",
+      "contentHashSha512": "uBGc0kgh8v/SDiSWanClynPGz7sa6pQzkGgISn87MsiUqS8wtYlB+4HmXh7kEE449spgwPTf3ziEIEq/uJd99g==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.Common",
+      "version": "2.11.0.1",
+      "contentHashSha512": "fCKqf0sAnuA0J4AqusRBWfMSoLQPEt9uDNTB9X2ZM2oed1JKyt8ipdOTvX46pes2HsyCT+0etu4oaJh4Agcdvw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.Common.Jvm",
+      "version": "2.11.0.1",
+      "contentHashSha512": "wnp6hF14kO3zO9LFdH1SJJMIY6Vm0kIY+/goCRbtLMuF2/ZLnAW4SHGPqNrB467+YAVjNCNkc+CxLWP2ER7EIg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.LiveData",
+      "version": "2.11.0.1",
+      "contentHashSha512": "gvZr8/vTBP4A+P634ihLUO7MDDgvwicn/BQS+OfZppdsnC8Eyz8l905QutC7oDZhBTihZCxonFRnxerddWFq7w==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.LiveData.Core",
+      "version": "2.11.0.1",
+      "contentHashSha512": "oPRlEve2Cnngh15/6OoEzVE3mwYSo9XAfuphB37ya54+mxSrINO/deTuIR7zgwjG5iTUYKDAHlya848h1/VSug==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.LiveData.Core.Ktx",
+      "version": "2.11.0.1",
+      "contentHashSha512": "Pwfym46gRvOiDR24WEk2aA8CmKLJnX4o4GfFjH5hQDj35MvUSBOvOl8oSn2WVsz1/v5WqppjlvQyyd8ciQdoBQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.Process",
+      "version": "2.11.0.1",
+      "contentHashSha512": "vQbEwTh0oOhmGgJUx6zobjLl6ZEvFfEL9ZTsmQAovOdtvJvrQb/9bAqTxRgO81pOP8b3ZFiwISl5b1yd2hkKXw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.Runtime",
+      "version": "2.11.0.1",
+      "contentHashSha512": "Xb/G30kVZVClyHiylVzxG+5Rhce9Zk4BBo1qNzrh8vGztLVg8c1dof1zodB3DOaCE/Kz08xe+azYdeuzgvKwmw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.Runtime.Android",
+      "version": "2.11.0.1",
+      "contentHashSha512": "XdoCaH+dVCnr5ya24MIgasaMyZV2mnUg812Ns+WO2gocOOtSjIxYzbXqihkFTaDUlWk0A+OFRIXTKYZ3ec6Viw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.ViewModel",
+      "version": "2.11.0.1",
+      "contentHashSha512": "XhweDAL6Gehaep9XhmrJCC5y4xNsHAR1+yWcvjreRnLWbSFVc8+qcBRI6emvYC6pzb0y2XjhFaFYEbgmJi3cNA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.ViewModel.Android",
+      "version": "2.11.0.1",
+      "contentHashSha512": "Yy0/eissXgeHSeyL6x4qeB4XbUy6H007c4xHMtpCP2ujhV7smebva2RbwMB4ikTAON/C715amv1mVfVeo3/JEA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.ViewModelSavedState",
+      "version": "2.11.0.1",
+      "contentHashSha512": "vjN7bimU3WXfJc12fN5uQV1X2iYbFiB7b46v2i7N4qpCHgnkP/3Ae2fY+7OPEMsLu32N/keO8ZWGX52mGb4ZQw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Lifecycle.ViewModelSavedState.Android",
+      "version": "2.11.0.1",
+      "contentHashSha512": "f+dRGHiNQSAYmSFi78uZ57ZqcgaRK5C6vsA7oyGCeM/yi0S29lWRX1wAlEjcaDal+XB7IE+4AT3gh4gK6RmbFg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Loader",
+      "version": "1.1.0.37",
+      "contentHashSha512": "pwovhD7xX+PlXLH9O9aU+oZXmAcjCS51f1JN7DoUoE83DWYK90/mWCSSuYcxdly9gJHCcHGoklIoM01qHv7Z7w==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Media3.Common",
+      "version": "1.10.1.1",
+      "contentHashSha512": "pItzW1qahCTm0w0M3QZKxSjKARtJqrtsVuTngqlNGCuPMslByu1YmccMZOw+kmvZyvD6napWmsfZm6C75kLNYQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Media3.Container",
+      "version": "1.10.1.1",
+      "contentHashSha512": "xEOwt2EQPedFv8CLWK+5G8XgaOMWwI7UMsJUNtJSBnLCYS5cFc+Ef4x92w/ZBvFAgseMQTkR9Teeby8RbHkz7Q==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Media3.Muxer",
+      "version": "1.10.1.1",
+      "contentHashSha512": "vCR7rq9yi9Duz8h7GY2uukjTMKIIw6UX86LzWa3PS6yDNM4b2gScwdo2uL1R21INjmhDghuYOsCdtI6YryhtmQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.NavigationEvent",
+      "version": "1.1.2.1",
+      "contentHashSha512": "BuHoykG9rBTQg8WwXhwRl3NQPkroyksciRyuHVuYiO3gtU+M4MQwKj5JUW228yso8psjJhnhNg/79N2ExRF+og==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.NavigationEvent.Android",
+      "version": "1.1.2.1",
+      "contentHashSha512": "rRcewSbsor2c/RS/kSCGvahu0boa9jvrNjLCOek8WeQJNyjhMqji7YECbv1PqT9jwHUXcx1FB4ULvjJnqVEtxQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.ProfileInstaller.ProfileInstaller",
+      "version": "1.4.1.8",
+      "contentHashSha512": "zBwJUR3ipSDdFs8yQCSHZVRc1Ngz6LRcdojEAF3Fn3YeXYjGEpQIWeGaruZi95bePWwk0L5628y3aqznAKfccQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.RecyclerView",
+      "version": "1.3.2.5",
+      "contentHashSha512": "Baf95ORSv1i97j3jwKRjf6wd7jKS76H1C7LQ2x4Pn5BZJLnV/r0R22tFMa/Fzo9hr9WYDHristoWW5ANGWy8iQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.ResourceInspection.Annotation",
+      "version": "1.0.1.25",
+      "contentHashSha512": "0L7m/q7Ea0Q8Dx4nFK3BjtJZtcQfPs1DyziPpt7BXplj6zrf4GqKjHhneWNowr/LJxUZvxO+qx9F3/GU+ELlbA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.SavedState",
+      "version": "1.5.0.1",
+      "contentHashSha512": "H9wF2dchEuakH4gj4vnPpjgCcZ/f3WU+g1CCO+abTmYmZs3qUYzE4nekVoqNJHQ6PNYc7kMMo7hzM97nSXmS2Q==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.SavedState.SavedState.Android",
+      "version": "1.5.0.1",
+      "contentHashSha512": "7XfPayLSlP2RRYcpvvEgbQG/t/g5o/RWtAEVE+sO0NBPNJWlQ/zvEzWjH7JeZE+ttRGov78AiwKfeWVX1ptPwQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Startup.StartupRuntime",
+      "version": "1.2.0.8",
+      "contentHashSha512": "HKloS4O57Oniv/5VF0fkHh6zEWRwToK7VyW2ajyWZ7+l+bkxUFZy9tHIHS/TCGvDYR6NVM8yA/Mz2x+TrWwPmg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Tracing.Tracing",
+      "version": "1.3.0.4",
+      "contentHashSha512": "x0Oig3saZ/b2zk0R8Um713vT15I428kKm0jh/cW2t1XDbk/LF9Cnrsbo6/0p8SFPyqQch7JJACbnvsH+xEunZQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Tracing.Tracing.Android",
+      "version": "1.3.0.4",
+      "contentHashSha512": "qQNpa9D6q6CgtgGRJGfaEZUVFH+0pzA+58V2z8CYosv6K/mKwJys9InR+0xNmMDshm1IuGhX4mgJ3Lf54D2BQg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Tracing.Tracing.Ktx",
+      "version": "1.3.0.4",
+      "contentHashSha512": "0+AuutPW7587SKRcJcEZ+ua1gQTrPnCY2ZT0vDLJu9DQBelU0ocwy95KWQnWxqivBbFA9atGanKiSH92HtTBdw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.VectorDrawable",
+      "version": "1.2.0.11",
+      "contentHashSha512": "281B3dHTUiAyLl3ewj/cHgY0Sm0KAUP4PgLRs2jbeYt+TAvSoIoIM7EXu//bnmG6erY1dIFAfbNKfHQ/yBNp2A==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.VectorDrawable.Animated",
+      "version": "1.2.0.11",
+      "contentHashSha512": "6IIN9+ShJm59mc3mEe/s3HmB1EHh3wlfyBoQj7boMbmdK0e/kcLxvcVtLFH1WfkmhyYeWwGZY3mLTryVF8mWoQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.VersionedParcelable",
+      "version": "1.2.1.6",
+      "contentHashSha512": "RxZnmS3nBqOGHUUegHWBqAU4qlApR8s1nhCZ4CnCJBwvfXJQ1Y9aschXn2fXrYgV86xtwRR31+TN5KufIIvINw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.ViewPager",
+      "version": "1.1.0.7",
+      "contentHashSha512": "O8iQpk7iyF9yIdctfT1RMq2m2paOoJ6oDhkK6EC02iQuCrv09dv7n7suS0N1a9XEL+UNzQd3ul/lCXHmsIB3QA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Window",
+      "version": "1.5.1.2",
+      "contentHashSha512": "7f1EmaLM3xQFPbNKirCYRxTWW0EWDxWSORHvMVnmlGetBwt4iue8KjJ0mqw5Veq2tv1Q8SBrlT+jHqTXNxvvcA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Window.WindowCore",
+      "version": "1.5.1.2",
+      "contentHashSha512": "mpO/kUUF/l3sipJM9yyNyHk7UpJ83wjNl2BMkMEuy29fVka1sb7avjAZPOuYICFIJE2gW9W/wvAoWclLLwVBXw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.AndroidX.Window.WindowCore.Jvm",
+      "version": "1.5.1.2",
+      "contentHashSha512": "ovPEz7SEdYUlA7wiwToLJLmJ7YkVEfoI9ZOAiKOO3HnqjaoC3PIzzCP9ybJGLF3FaHpfFwm6LTXEU+llaQSGbg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Google.AutoValue.Annotations",
+      "version": "1.11.1.3",
+      "contentHashSha512": "ui+vpFgDdk/Xt8Mv52yoJdHOPRZGgtSH8W08K/f3k+6v5mIULpGdAqL/RzTBBrmiyXF+aF5vDjmFEIfFnS0OnQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Google.Dagger",
+      "version": "2.59.2.2",
+      "contentHashSha512": "rGBiuu2Ar75CiyAWq3Q24AS9yvA7Eu5Q6TV4bQM0/iGLKNpwHHRP4V41Gqd9tXIIo7UWeetrCIxXfCh6ibYd8A==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Google.ErrorProne.Annotations",
+      "version": "2.50.0.1",
+      "contentHashSha512": "ip4SsCz/U2n/nJVL4Hk6BVzNWdWeQkyyLyo6zm3vWrCeAq/U4tIdNnR7i355pTZMzFeDwcITsTvStf0JQhpBxQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Google.Guava",
+      "version": "33.6.0.1",
+      "contentHashSha512": "cce1rIPHHod/83hpHkMFJ8ZNQEC/lpd0tco7rwpMaseqLkhoPbBnWJCpNRLAsuNawqSjeQmzgGg9wDp4ZJuMQQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Google.Guava.FailureAccess",
+      "version": "1.0.3.6",
+      "contentHashSha512": "aTTpKitg0MMphAg5ujSkz6FhULSYsEID2yFJEJ8+c1FKHy+Yo/y5TY2Ndde8+EZ+40R0wpe10EXooI9W3gNaIw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Google.Guava.ListenableFuture",
+      "version": "9999.0.0",
+      "contentHashSha512": "TFcYM0FvRuHrpgyiCQp/uSWSLVRiN8w9vZ9FclPMUvyFOkaRZ+xItV0CAVw0QCpwARvDeQaEV6Egujru11Hgcg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Google.J2Objc.Annotations",
+      "version": "3.1.0.3",
+      "contentHashSha512": "ZAtSx4HAb1t3L4fBmqnyDxgIeRHuaJerR/wI/XPAuF6clQLbUxox9dIhc0BQ134XBoF70C0hE2LJlPtrMvfyig==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Jakarta.Inject.InjectApi",
+      "version": "2.0.1.10",
+      "contentHashSha512": "b20+lI+aZowg8RdaOjFQAwttMFTGLtVcezZ6pHoUXdAtfxUWVse4pN0KllOaVEgNgWGq3BvY4tfXILyUclpLaA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.JavaX.Inject",
+      "version": "1.0.0.24",
+      "contentHashSha512": "3zYLFaF3dKqgfsRw2GMm8max7ZJzIGVmHeXVCTG59TlcHqOtQPJ+n4GqJ5bNeshM0VAKwFacsxOU6BejSzKIUw==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Jetbrains.Annotations",
+      "version": "26.1.0.2",
+      "contentHashSha512": "mwKW1QGbVFT649s9fJ/tTX1kkekI8Mt+n4sWS4kP39J78FjaatbNFu7bdyzxHYMbBB61S4cU6XRuaGAw2mhQCQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.JSpecify",
+      "version": "1.0.0.7",
+      "contentHashSha512": "pX+mTpwy0SkHGBxi3YPvQb0xLdl31GZD/VH+ebwXr97d5j7a+DGEyLWRqzC+hgZNK+bCOnlYlnUYYLD4TfSXSA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.Kotlin.StdLib",
+      "version": "2.4.0.1",
+      "contentHashSha512": "ZGskPNF6lIQWzkwfhoRLuf9isUSOmjfTZVOVXXfDP/vL/xLNC4H4h/NC63AcNoscOAReRic0po3VZsqfvLsgZQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.KotlinX.AtomicFU",
+      "version": "0.33.0.1",
+      "contentHashSha512": "9khTuFz9CvgZJc6pzKXNlmtTZF9zun1TCRHIlWpHddqmLoFjiN2Xy/Qfwj8+KK8EJZEBLPETOu0XsagKlm//SQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.KotlinX.AtomicFU.Jvm",
+      "version": "0.33.0.1",
+      "contentHashSha512": "4HAO14g7RTJm+WsahmXwzZBhBAEixKZuyiE+oxdQKAHCOfZzbh5uQphkcbp6YPpV3YVw/oOxE+vgL3Hn4ZPNUA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.KotlinX.Coroutines.Android",
+      "version": "1.11.0.1",
+      "contentHashSha512": "C+N1XS1s7bOD6ydON8DYjucwIsH/y1+zVRNQdwSqAG/6NEQPeTTxww2PpMnnIft9zxrpuCRBmnbb58BvL6j7+g==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.KotlinX.Coroutines.Core",
+      "version": "1.11.0.1",
+      "contentHashSha512": "7zMBcmtyOqguwRLVZ8q6/GkWQ5RMu26W+me5KUJZU2yamHjdTfrOHIrnd0zmx3+3wwgohEmzjFfwwyJf3QOSwg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.KotlinX.Coroutines.Core.Jvm",
+      "version": "1.11.0.1",
+      "contentHashSha512": "PfimvxVnQSf3E6eXnWIw3ZW60cSDCNAFNnouf0Bw19/GoHUFnDRIjUrOccnX5TR+V7rvfGP2c3nblijKyPxM+w==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.KotlinX.Serialization.Core",
+      "version": "1.11.0.1",
+      "contentHashSha512": "Isdm4DA4BNRzQr+bX9p31taWWrf0pG0icOpq7kIeXb6qOR96kI6wi1nOlYt46mFtTpbJ2UyY5hkhJC+C+NknwA==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "Xamarin.KotlinX.Serialization.Core.Jvm",
+      "version": "1.11.0.1",
+      "contentHashSha512": "UKb1C/+LxDhbLU2uQlR/4hEnbMbVir02j6jZE78H2TfP24E7NzXhIlCniFw6qp1nrSRCI4ZSs0dpxHvTANNoZQ==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Transitive"
+        }
+      ]
+    },
+    {
+      "id": "ZXing.Net",
+      "version": "0.16.11",
+      "contentHashSha512": "OZfAVu88hl87BffQ+rlWCj/vLvAhhCK4QnFaoveeF/MY8SjHNSYBQ3qyUEWlPKNgBQGh1syXhCDg10vUnCsqkg==",
+      "usedBy": [
+        {
+          "project": "OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj",
+          "framework": "net10.0-android36.0",
+          "type": "Direct"
+        }
+      ]
+    }
+  ]
+}

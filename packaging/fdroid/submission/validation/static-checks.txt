@@ -1,0 +1,2 @@
+PASS: YAML, immutable Android tag/SHA, tagged SDK, Microsoft SDK SHA-512, version mapping, disabled automation/build, signing boundaries and all three bash phases.
+SCOPE: Static recipe checks only; see validation-results.json for separate fdroidserver checks. A full buildserver run and APK verification remain unperformed.

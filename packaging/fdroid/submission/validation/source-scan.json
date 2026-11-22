@@ -1,0 +1,10 @@
+{
+  "scope": "Pristine tagged source before workload installation, restore or compilation; not an APK scan or official acceptance.",
+  "commit": "c801e73224f3d6abed33396f858c54866b8e70f2",
+  "fatalProblems": 0,
+  "messages": {
+    "infos": [],
+    "warnings": [],
+    "errors": []
+  }
+}

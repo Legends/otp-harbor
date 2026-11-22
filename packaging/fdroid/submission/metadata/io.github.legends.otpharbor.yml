@@ -1,0 +1,83 @@
+Categories:
+  - Security
+License: GPL-3.0-only
+AuthorName: OTP Harbor contributors
+WebSite: https://legends.github.io/otp-harbor/android/
+SourceCode: https://github.com/Legends/otp-harbor
+IssueTracker: https://github.com/Legends/otp-harbor/issues
+Changelog: https://github.com/Legends/otp-harbor/releases/tag/android-v3.0.3
+
+AutoName: OTP Harbor
+
+RepoType: git
+Repo: https://github.com/Legends/otp-harbor.git
+
+Builds:
+  - versionName: 3.0.3
+    versionCode: 30000399
+    disable: Review draft; .NET/NuGet policy approval and buildserver validation pending
+    commit: c801e73224f3d6abed33396f858c54866b8e70f2
+    sudo:
+      - apt-get update
+      - apt-get install -y ca-certificates curl libicu-dev libssl-dev openjdk-21-jdk-headless
+        zlib1g
+    output: artifacts/android/release/fdroid/apk/io.github.legends.otpharbor.apk
+    prebuild:
+      - export DOTNET_ROOT="$HOME/.cache/otp-harbor-dotnet-10.0.402"
+      - export PATH="$DOTNET_ROOT:$PATH"
+      - export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+      - export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+      - mkdir -p "$DOTNET_ROOT"
+      - curl --fail --location --output "$DOTNET_ROOT/sdk.tar.gz" https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.402/dotnet-sdk-10.0.402-linux-x64.tar.gz
+      - printf '%s  %s\n' '1904a98dda2db34ba78ba3c4fb1b224455329af91c341d83547843c1839e112b04ae699ee92fa2449a8f62249196a938723078c0c60b9f65c88539d5687729c2'
+        "$DOTNET_ROOT/sdk.tar.gz" | sha512sum --check --status
+      - tar -xzf "$DOTNET_ROOT/sdk.tar.gz" -C "$DOTNET_ROOT"
+      - test "$(dotnet --version)" = 10.0.402
+      - dotnet workload install android --skip-manifest-update
+      - dotnet build OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj
+        -t:InstallAndroidDependencies -p:RestoreLockedMode=true -f net10.0-android
+        -p:AndroidSdkDirectory=$$SDK$$ -p:JavaSdkDirectory="$JAVA_HOME" -p:AcceptAndroidSDKLicenses=true
+      - dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj
+        --locked-mode --configfile NuGet.config -p:AndroidSdkDirectory=$$SDK$$ -p:JavaSdkDirectory="$JAVA_HOME"
+    build:
+      - export DOTNET_ROOT="$HOME/.cache/otp-harbor-dotnet-10.0.402"
+      - export PATH="$DOTNET_ROOT:$PATH"
+      - export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+      - export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+      - test "$(dotnet --version)" = 10.0.402
+      - dotnet publish OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj
+        -c Release -f net10.0-android --no-restore -p:AndroidPackageFormats=apk -p:ApplicationId=io.github.legends.otpharbor
+        -p:ApplicationDisplayVersion=$$VERSION$$ -p:ApplicationVersion=$$VERCODE$$
+        -p:AndroidKeyStore=false -p:AndroidSdkDirectory=$$SDK$$ -p:JavaSdkDirectory="$JAVA_HOME"
+        --output artifacts/android/release/fdroid/apk
+      - test -f artifacts/android/release/fdroid/apk/io.github.legends.otpharbor.apk
+
+MaintainerNotes: |-
+  REVIEW DRAFT ONLY. Do not enable until the .NET Android toolchain and the
+  locked NuGet dependency provenance have passed F-Droid policy review and
+  this recipe has completed a clean build/scanner run on the buildserver.
+  There are deliberately no scanignore or scandelete exemptions.
+
+  android-v3.0.3 resolves to c801e73224f3d6abed33396f858c54866b8e70f2 and
+  pins SDK 10.0.402, not the development branch's 10.0.404. SDK URL/SHA-512
+  are from Microsoft's public .NET 10 release metadata. An accepted source
+  toolchain recipe may have to replace the proposed binary SDK bootstrap.
+
+  Use F-Droid-managed signing. No Binaries or AllowedAPKSigningKeys fields
+  are supplied: upstream-signature reproducibility is not established.
+  The output selects the unsigned APK sibling, not the debug-signed sibling.
+  Verify the actual Linux output path and unsigned status before activation.
+
+  VersionCode = major*10000000 + minor*100000 + patch*100 + 99.
+  Automatic updates are disabled for this draft. Default Tags detection
+  cannot infer the CI-injected version from development csproj values.
+  A reviewed extraction strategy is needed before enabling automation.
+  Localized text and images are maintained in fastlane/metadata/android.
+  Do not override the four upstream listing locales with top-level Summary
+  or Description fields. Switching between F-Droid and GitHub/Play signing
+  identities requires the documented encrypted-backup migration.
+
+AutoUpdateMode: None
+UpdateCheckMode: None
+CurrentVersion: 3.0.3
+CurrentVersionCode: 30000399

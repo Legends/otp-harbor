@@ -1,0 +1,2 @@
+2026-11-22 10:46:41,242 WARNING: apksigner not found! Cannot sign or verify modern APKs
+2026-11-22 10:46:41,570 INFO: Rewriting 'io.github.legends.otpharbor'

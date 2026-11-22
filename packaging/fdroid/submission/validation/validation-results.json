@@ -1,0 +1,74 @@
+{
+  "validatedAtUtc": "2026-11-22T09:46:44.974262+00:00",
+  "sourceCommit": "c801e73224f3d6abed33396f858c54866b8e70f2",
+  "releaseTag": "android-v3.0.3",
+  "tooling": {
+    "fdroidserver": "2.4.5",
+    "python": "3.12.3",
+    "androguard": "3.3.5"
+  },
+  "draftSha256": "981120180f11b3ce52bc6bae9e9f0ceaedc376bcf153e24dcde99925f94d5979",
+  "checks": [
+    {
+      "check": "readmeta",
+      "exitCode": 0,
+      "log": "readmeta.txt"
+    },
+    {
+      "check": "rewritemeta",
+      "exitCode": 0,
+      "log": "rewritemeta.txt"
+    },
+    {
+      "check": "lint",
+      "exitCode": 0,
+      "log": "lint.txt"
+    },
+    {
+      "check": "active-rewritemeta",
+      "exitCode": 0,
+      "log": "active-rewritemeta.txt"
+    },
+    {
+      "check": "active-lint",
+      "exitCode": 0,
+      "log": "active-lint.txt"
+    },
+    {
+      "check": "static-recipe-checks",
+      "exitCode": 0,
+      "log": "static-checks.txt"
+    }
+  ],
+  "sourceScan": {
+    "scope": "Pristine tagged source before workload installation, restore or compilation; not an APK scan or official acceptance.",
+    "commit": "c801e73224f3d6abed33396f858c54866b8e70f2",
+    "fatalProblems": 0,
+    "messages": {
+      "infos": [],
+      "warnings": [],
+      "errors": []
+    }
+  },
+  "nugetPackageCount": 137,
+  "categoryConfiguration": {
+    "url": "https://gitlab.com/fdroid/fdroiddata/-/raw/master/config/categories.yml",
+    "sha256": "0c65415f443fdda52b9740f255095114a0b6cf75bf8576f33f5a8723d1aef675"
+  },
+  "sourceSignatures": {
+    "url": "https://fdroid.gitlab.io/fdroid-suss/suss.json",
+    "sha256": "a0dbbdf0dd77fb48d6043627cd07fe7a62c268f01979c0315e99e2434631d49e"
+  },
+  "remaining": [
+    "F-Droid acceptance of toolchain and NuGet binary-origin strategy",
+    "Clean official buildserver run with restored dependencies",
+    "APK runtime scan and signature/output verification"
+  ],
+  "notes": [
+    "Active-build lint changed only the isolated fixture; the review draft remains disabled.",
+    "The source scan preceded package restoration and compilation.",
+    "apksigner is unavailable in this metadata-only environment; its warning is retained.",
+    "No fdroiddata merge request or RFP comment was submitted by this validation work.",
+    "Published snapshot of captured local validation; log extensions normalized to .txt. No full buildserver run or APK verification is claimed."
+  ]
+}
