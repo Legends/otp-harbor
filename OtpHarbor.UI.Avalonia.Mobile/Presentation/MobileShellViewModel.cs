@@ -2462,7 +2462,8 @@ public sealed partial class MobileShellViewModel :
             NotifyLocalizedTextChanged();
             SetNotification(Get(MobileStringKeys.Starting), NotificationSeverity.Information);
 
-            StartBrandIconInitialization();
+            if (_settings.Current.AppLockEnabled || _brandIconPackService is not IAccountBrandIconInitializer)
+                StartBrandIconInitialization();
 
             await _authorization.InitializeAsync();
             if (!_authorization.State.IsConfigured
@@ -2544,6 +2545,35 @@ public sealed partial class MobileShellViewModel :
     {
         StartBrandIconInitialization();
         await _brandIconInitializationTask;
+    }
+
+    public void PreloadSecondaryResources()
+    {
+        if (!_disposed) StartBrandIconInitialization();
+    }
+
+    public void ReportSecondaryViewPreloadFailure(Exception exception) =>
+        _logger.LogWarning("Mobile view preloading failed with exception type {ExceptionType}.",
+            exception.GetType().Name);
+
+    private async Task PrepareAccountBrandIconsAsync(IReadOnlyCollection<string> issuers)
+    {
+        if (!_brandIconInitializationStarted
+            && _brandIconPackService is IAccountBrandIconInitializer accountIcons)
+        {
+            try
+            {
+                await accountIcons.InitializeForAccountsAsync(issuers);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning("Account icon preparation failed with exception type {ExceptionType}.",
+                    exception.GetType().Name);
+            }
+            if (!_disposed) BrandCatalogChanged(this, EventArgs.Empty);
+            return;
+        }
+        await EnsureBrandIconCatalogInitializedAsync();
     }
 
     private void StartAutomaticBackupInitialization()
@@ -3159,10 +3189,11 @@ public sealed partial class MobileShellViewModel :
         CancelCodeRefresh();
         ClearQrImage();
         ClearNotification();
+        NotifyUnlockedSectionChanged();
         await RefreshUnlockMethodAvailabilityAsync();
+        if (_disposed || !IsSettingsVisible) return;
         RefreshUnlockMethodState();
         NotifyAppLockChanged();
-        NotifyUnlockedSectionChanged();
     }
 
     public Task ShowSettingsCategoriesAsync()
@@ -5167,14 +5198,14 @@ public sealed partial class MobileShellViewModel :
             return;
         }
 
-        var accountsTask = _accountManager.GetAllOtpEntriesSortedAsync();
-        await Task.WhenAll(accountsTask, EnsureBrandIconCatalogInitializedAsync());
-        var loaded = await accountsTask;
+        var loaded = await _accountManager.GetAllOtpEntriesSortedAsync();
         if (loaded.IsFailed)
         {
             SetError(MobileStringKeys.LoadingAccountsFailed);
             return;
         }
+
+        await PrepareAccountBrandIconsAsync(loaded.Value.Select(account => account.Issuer).ToArray());
 
         var existingAccounts = _allAccounts.ToDictionary(account => account.Id);
         var refreshedAccounts = new List<MobileAccountItem>(loaded.Value.Count);
@@ -5235,14 +5266,14 @@ public sealed partial class MobileShellViewModel :
 
     private async Task LoadAccountSnapshotsAsync(Guid? selectedId)
     {
-        var snapshotsTask = _accountListSnapshots!.LoadAsync();
-        await Task.WhenAll(snapshotsTask, EnsureBrandIconCatalogInitializedAsync());
-        var loaded = await snapshotsTask;
+        var loaded = await _accountListSnapshots!.LoadAsync();
         if (loaded.IsFailed)
         {
             SetError(MobileStringKeys.LoadingAccountsFailed);
             return;
         }
+
+        await PrepareAccountBrandIconsAsync(loaded.Value.Accounts.Select(account => account.Issuer).ToArray());
 
         var existingAccounts = _allAccounts.ToDictionary(account => account.Id);
         var refreshedAccounts = new List<MobileAccountItem>(loaded.Value.Accounts.Count);

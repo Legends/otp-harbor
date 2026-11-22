@@ -15,7 +15,7 @@ using TOTP.Tests.Common;
 
 namespace TOTP.Tests.Services;
 
-public sealed class SimpleIconsBrandIconPackServiceTests
+public sealed partial class SimpleIconsBrandIconPackServiceTests
 {
     private const string AegisCompatibilityArchiveVariable = "OTP_HARBOR_AEGIS_ICON_PACK";
     private const string SimpleIconsCompatibilityArchiveVariable = "OTP_HARBOR_SIMPLE_ICONS_PACK";

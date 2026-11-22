@@ -1234,7 +1234,9 @@ public sealed class MobileAccountInteractionTests
                 attribute.Name.LocalName == "Name" && attribute.Value == "DiagnosticLogSettingsPanel"));
         var report = document.Descendants(avalonia + "Border").Single(element =>
             element.Attributes().Any(attribute => attribute.Name.LocalName == "Name" && attribute.Value == "ProblemReportSettingsPanel"));
-        Assert.Same(misc.Parent, report.Parent);
+        Assert.Same(
+            misc.Ancestors().Single(element => element.Attribute(xaml + "Name")?.Value == "SettingsRoot"),
+            report.Ancestors().Single(element => element.Attribute(xaml + "Name")?.Value == "SettingsRoot"));
         Assert.Equal("card", report.Attribute("Classes")?.Value);
         Assert.Equal(misc.Attribute("Padding")?.Value, report.Attribute("Padding")?.Value);
         Assert.Equal("{Binding IsMiscSettingsVisible}", misc.Attribute("IsVisible")?.Value);
@@ -1461,7 +1463,7 @@ public sealed class MobileAccountInteractionTests
             faqSections,
             section =>
             {
-                var card = Assert.IsType<XElement>(section.Parent);
+                var card = section.Ancestors(avalonia + "Border").First();
                 Assert.Equal(avalonia + "Border", card.Name);
                 Assert.Equal("Stretch", card.Attribute("HorizontalAlignment")?.Value);
                 Assert.Equal("{DynamicResource BrushFaqHeaderBackground}", card.Attribute("Background")?.Value);

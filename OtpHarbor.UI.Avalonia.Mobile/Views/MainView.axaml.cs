@@ -56,6 +56,7 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
+        InitializeDeferredContent();
         _accountListScrollIdleTimer = new DispatcherTimer
         {
             Interval = AccountListScrollStateCheckInterval
@@ -80,6 +81,7 @@ public partial class MainView : UserControl
 
     private void MainViewAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
+        if (_startupTransitionCompleted) BeginSecondaryPreload();
         _backNavigationTopLevel = TopLevel.GetTopLevel(this);
         if (_backNavigationTopLevel is not null)
         {
@@ -105,6 +107,9 @@ public partial class MainView : UserControl
 
     private void MainViewDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
+        _secondaryPreloadLifetime?.Cancel();
+        _secondaryPreloadLifetime?.Dispose();
+        _secondaryPreloadLifetime = null;
         if (_inputPane is not null)
             _inputPane.StateChanged -= InputPaneStateChanged;
         _inputPane = null;
@@ -127,6 +132,11 @@ public partial class MainView : UserControl
             _startupViewModel.PropertyChanged += StartupViewModelPropertyChanged;
         if (_startupViewModel?.IsInitialized == true)
         {
+            if (IsNativeStartupSplashPending)
+            {
+                EvaluateStartupTransition();
+                return;
+            }
             // Activity recreation reuses the session, including any in-flight import dialog.
             _startupTransitionPending = true;
             StartupLoadingOverlay.IsVisible = false;
@@ -144,7 +154,8 @@ public partial class MainView : UserControl
 
     private void StartupViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MobileShellViewModel.IsMasterPasswordChangeExpanded))
+        if (e.PropertyName == nameof(MobileShellViewModel.IsMasterPasswordChangeExpanded)
+            && DeferredMasterPasswordChangePanel.IsContentCreated)
         {
             foreach (var input in MasterPasswordFieldsReveal.GetVisualDescendants().OfType<RevealableSecretInput>())
                 input.Conceal();
@@ -157,6 +168,7 @@ public partial class MainView : UserControl
         }
 
         if (e.PropertyName is nameof(MobileShellViewModel.IsBusy)
+            or nameof(MobileShellViewModel.CanRetry)
             or nameof(MobileShellViewModel.IsWaitingForStartupSurface)
             or nameof(MobileShellViewModel.IsStartingVisible)
             or nameof(MobileShellViewModel.IsAccountListVisible)
@@ -226,6 +238,12 @@ public partial class MainView : UserControl
 
     private void EvaluateStartupTransition()
     {
+        if (IsNativeStartupSplashPending && _startupViewModel?.CanRetry == true)
+        {
+            StartupLoadingOverlay.IsVisible = true;
+            ReportNativeStartupContentReady();
+            return;
+        }
         if (_startupTransitionCompleted || _startupTransitionStarted || _startupTransitionPending)
         {
             return;
@@ -246,6 +264,11 @@ public partial class MainView : UserControl
                 }
                 _startupTransitionStarted = true;
                 StartupContentRevealRequested?.Invoke(this, EventArgs.Empty);
+                if (IsNativeStartupSplashPending)
+                {
+                    CompleteStartupTransition(this, EventArgs.Empty);
+                    return;
+                }
                 StartupLoadingOverlay.Opacity = 0;
                 _startupFadeTimer.Start();
             },
@@ -255,8 +278,8 @@ public partial class MainView : UserControl
     private bool CanCompleteStartupTransition()
     {
         if (_startupViewModel is not { } viewModel
-            || viewModel.IsBusy
-            || viewModel.IsWaitingForStartupSurface
+            || viewModel.IsBusy && !(IsNativeStartupSplashPending && viewModel.IsInitialized)
+            || viewModel.IsWaitingForStartupSurface && !IsNativeStartupSplashPending
             || viewModel.IsStartingVisible)
         {
             return false;
@@ -265,7 +288,8 @@ public partial class MainView : UserControl
         if (viewModel.IsInitialQuickUnlockOfferVisible || !viewModel.IsAccountListVisible) return true;
         if (!viewModel.IsInitialAccountLoadComplete) return false;
         if (!viewModel.HasAccounts && !viewModel.HasNoAccounts) return false;
-        return !_usesNativeAccountList || !viewModel.HasAccounts || _nativeAccountListRendered;
+        return !_usesNativeAccountList || !viewModel.HasAccounts
+            || !viewModel.IsNativeAccountListVisible || _nativeAccountListRendered;
     }
 
     private void CompleteStartupTransition(object? sender, EventArgs e)
@@ -275,7 +299,9 @@ public partial class MainView : UserControl
 
         _startupTransitionCompleted = true;
         StartupLoadingOverlay.IsVisible = false;
+        ReportNativeStartupContentReady();
         StartupTransitionCompleted?.Invoke(this, EventArgs.Empty);
+        BeginSecondaryPreload();
     }
 
     private void InputPaneStateChanged(object? sender, InputPaneStateEventArgs e)
@@ -286,6 +312,7 @@ public partial class MainView : UserControl
 
     private void UpdateAccountBrandIconPickerInputPane(InputPaneState state, Rect occludedRect)
     {
+        if (!DeferredAccountBrandIconPickerModalOverlay.IsContentCreated) return;
         var bottomInset = state == InputPaneState.Open
             ? Math.Max(0, occludedRect.Height)
             : 0;
@@ -387,8 +414,12 @@ public partial class MainView : UserControl
         UpdateAccountListConfirmationBackdrop();
     }
 
-    public void UseNativeImportReviewList(Control nativeReviewList) =>
-        ExternalImportReviewPage.UseNativeList(nativeReviewList);
+    public void UseNativeImportReviewList(Control nativeReviewList)
+    {
+        ArgumentNullException.ThrowIfNull(nativeReviewList);
+        _nativeImportReview = nativeReviewList;
+        AttachNativeImportReview();
+    }
 
     private void NativeAccountListStateChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -428,10 +459,8 @@ public partial class MainView : UserControl
     public void UseNativeGroupAccountPicker(Control nativeGroupAccountPicker)
     {
         ArgumentNullException.ThrowIfNull(nativeGroupAccountPicker);
-        GroupAccountPicker.IsVisible = false;
-        GroupAccountPicker.ItemsSource = null;
-        NativeGroupAccountPickerPresenter.Content = nativeGroupAccountPicker;
-        NativeGroupAccountPickerPresenter.IsHitTestVisible = true;
+        _nativeGroupAccountPicker = nativeGroupAccountPicker;
+        AttachNativeGroupAccountPicker();
     }
 
     private void KeepAccountSearchFocusedAfterClear(object? sender, RoutedEventArgs e) =>
