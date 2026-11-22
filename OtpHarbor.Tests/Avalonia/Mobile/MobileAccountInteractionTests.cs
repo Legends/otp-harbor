@@ -132,8 +132,11 @@ public sealed class MobileAccountInteractionTests
             element => (string?)element.Attribute("Text") == "{Binding ImportProgressText}");
         var restoreStart = code.IndexOf("if (_startupViewModel?.IsInitialized == true)", StringComparison.Ordinal);
         Assert.True(restoreStart >= 0);
-        var restoreEnd = code.IndexOf("EvaluateStartupTransition();", restoreStart, StringComparison.Ordinal);
+        var restoreEnd = code.IndexOf("private void StartupViewModelPropertyChanged", restoreStart, StringComparison.Ordinal);
+        Assert.True(restoreEnd > restoreStart);
         var restore = code[restoreStart..restoreEnd];
+        Assert.Contains("if (IsNativeStartupSplashPending)", restore);
+        Assert.Contains("EvaluateStartupTransition();", restore);
         Assert.Contains("StartupLoadingOverlay.IsVisible = false;", restore);
         Assert.Contains("StartupContentRevealRequested?.Invoke", restore);
         Assert.Contains("CompleteStartupTransition(this, EventArgs.Empty);", restore);
@@ -434,7 +437,10 @@ public sealed class MobileAccountInteractionTests
         Assert.True(viewCodeSource.IndexOf("if (viewModel.IsInitialQuickUnlockOfferVisible || !viewModel.IsAccountListVisible) return true;", StringComparison.Ordinal)
             < viewCodeSource.IndexOf("if (!viewModel.IsInitialAccountLoadComplete) return false;", StringComparison.Ordinal));
         Assert.Contains(
-            "return !_usesNativeAccountList || !viewModel.HasAccounts || _nativeAccountListRendered;",
+            "return !_usesNativeAccountList || !viewModel.HasAccounts",
+            viewCodeSource);
+        Assert.Contains(
+            "|| !viewModel.IsNativeAccountListVisible || _nativeAccountListRendered;",
             viewCodeSource);
         Assert.Contains("!CanCompleteStartupTransition()", viewCodeSource);
         Assert.Contains("BeginAccountReloadTransitionIfNeeded", viewCodeSource);
