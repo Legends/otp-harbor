@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using FluentResults;
 using TOTP.Core.Security;
+using TOTP.Core.Serialization;
 
 namespace TOTP.Core.Backup;
 
@@ -15,6 +16,7 @@ public static class AutomaticBackupPackageV1Codec
         MaxDepth = 24,
         WriteIndented = false
     };
+    private static readonly CoreJsonContext JsonContext = new(JsonOptions);
 
     public static Result<byte[]> Serialize(AutomaticBackupPackageV1 package)
     {
@@ -22,7 +24,7 @@ public static class AutomaticBackupPackageV1Codec
         var validation = Validate(package);
         if (validation.IsFailed) return Result.Fail<byte[]>(validation.Errors);
 
-        var payload = JsonSerializer.SerializeToUtf8Bytes(package, JsonOptions);
+        var payload = JsonSerializer.SerializeToUtf8Bytes(package, JsonContext.AutomaticBackupPackageV1);
         if (payload.Length <= MaximumPayloadSize) return Result.Ok(payload);
 
         CryptographicOperations.ZeroMemory(payload);
@@ -42,7 +44,7 @@ public static class AutomaticBackupPackageV1Codec
             if (HasDuplicateProperty(document.RootElement))
                 return Fail<AutomaticBackupPackageV1>(AutomaticBackupErrorCode.InvalidFormat, "Automatic backup contains duplicate properties.");
 
-            var package = JsonSerializer.Deserialize<AutomaticBackupPackageV1>(payload.Span, JsonOptions);
+            var package = JsonSerializer.Deserialize(payload.Span, JsonContext.AutomaticBackupPackageV1);
             if (package is null)
                 return Fail<AutomaticBackupPackageV1>(AutomaticBackupErrorCode.InvalidFormat, "Automatic backup is null.");
 

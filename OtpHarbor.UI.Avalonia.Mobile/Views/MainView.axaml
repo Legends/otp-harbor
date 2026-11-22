@@ -3271,7 +3271,6 @@
                                                 Classes="brand-icon-choice"
                                                 Classes.brand-entry="{Binding IsBrandEntry}"
                                                 Classes.picker-action="{Binding IsPickerAction}"
-                                                x:CompileBindings="False"
                                                 Command="{Binding DataContext.SelectAccountBrandIconCommand, ElementName=Root}"
                                                 CommandParameter="{Binding}">
                                                 <TextBlock

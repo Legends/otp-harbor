@@ -15,6 +15,7 @@ using TOTP.Core.Validation;
 using TOTP.Infrastructure.Common;
 using TOTP.Infrastructure.Parser;
 using TOTP.Infrastructure.Security;
+using TOTP.Infrastructure.Serialization;
 
 namespace TOTP.Infrastructure.Services;
 
@@ -22,6 +23,7 @@ public sealed class ExportService : IExportService
 {
     private static readonly byte[] MagicBytes = Encoding.ASCII.GetBytes("TOTP");
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
+    private static readonly AccountJsonContext ExportJsonContext = new(new JsonSerializerOptions { WriteIndented = true });
     private static readonly IReadOnlyDictionary<string, ExportFileFormat> UnencryptedImportFormats =
         new Dictionary<string, ExportFileFormat>(StringComparer.OrdinalIgnoreCase)
         {
@@ -544,10 +546,10 @@ public sealed class ExportService : IExportService
     {
         return format switch
         {
-            ExportFileFormat.Json => JsonSerializer.Serialize(accounts, new JsonSerializerOptions { WriteIndented = true }),
+            ExportFileFormat.Json => JsonSerializer.Serialize(accounts, ExportJsonContext.IEnumerableAccount),
             ExportFileFormat.Txt => BuildTxt(accounts),
             ExportFileFormat.Csv => BuildCsv(accounts),
-            _ => JsonSerializer.Serialize(accounts, new JsonSerializerOptions { WriteIndented = true })
+            _ => JsonSerializer.Serialize(accounts, ExportJsonContext.IEnumerableAccount)
         };
     }
 
@@ -559,7 +561,7 @@ public sealed class ExportService : IExportService
             ExportFileFormat.Json => ParseJson(content),
             ExportFileFormat.Txt => ParseTxt(content),
             ExportFileFormat.Csv => ParseCsv(content),
-            _ => JsonSerializer.Deserialize<List<Account>>(content) ?? []
+            _ => JsonSerializer.Deserialize(content, AccountJsonContext.Default.ListAccount) ?? []
         };
         return ValidateImportedAccounts(parsed);
     }
@@ -580,7 +582,7 @@ public sealed class ExportService : IExportService
         var root = document.RootElement;
         return root.ValueKind switch
         {
-            JsonValueKind.Array => JsonSerializer.Deserialize<List<Account>>(content) ?? [],
+            JsonValueKind.Array => JsonSerializer.Deserialize(content, AccountJsonContext.Default.ListAccount) ?? [],
             JsonValueKind.Object when root.TryGetProperty("db", out _) => AegisVaultParser.Parse(root),
             JsonValueKind.Object when root.TryGetProperty("services", out _)
                 || root.TryGetProperty("schemaVersion", out _) => TwoFasBackupParser.Parse(root),

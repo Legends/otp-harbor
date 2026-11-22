@@ -3,12 +3,14 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using FluentResults;
 using Moq;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Avalonia.Mobile.Views;
+using TOTP.Avalonia.Shared.Controls;
 using TOTP.Core.Common;
 using TOTP.Core.Enums;
 using TOTP.Core.Models;
@@ -255,6 +257,36 @@ public sealed class NativeStartupSplashTests : IDisposable
         Assert.False(Overlay(view).IsVisible);
         context.Authorization.Verify(service => service.InitializeAsync(), Times.Once);
         context.Snapshots.Verify(service => service.LoadAsync(), Times.Once);
+    }
+
+    [AvaloniaFact]
+    public void DeferredIconPicker_CompiledBindingsRetainTheShellCommandAndItem()
+    {
+        var context = CreateContext();
+        var view = CreateView(context.Model);
+        var deferred = view.FindControl<DeferredContent>("DeferredAccountBrandIconPickerModalOverlay")!;
+        var panel = deferred.EnsureContentCreated();
+        var list = panel.GetLogicalDescendants().OfType<ListBox>()
+            .Single(value => value.Name == "AccountBrandIconResultsScroller");
+        var option = new MobileBrandIconOption("synthetic", "Synthetic icon");
+        list.ItemsSource = new[] { option };
+        deferred.IsVisible = true;
+        panel.IsVisible = true;
+        var window = new Window { Width = 400, Height = 800, Content = view };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var button = Assert.Single(list.GetVisualDescendants().OfType<Button>(),
+                value => value.Classes.Contains("brand-icon-choice"));
+
+            Assert.Same(context.Model.SelectAccountBrandIconCommand, button.Command);
+            Assert.Same(option, button.CommandParameter);
+            Assert.Contains("brand-entry", button.Classes);
+            Assert.Equal(option.DisplayNameForDisplay,
+                Assert.Single(button.GetVisualDescendants().OfType<TextBlock>()).Text);
+        }
+        finally { window.Close(); }
     }
 
     private MainView CreateView(MobileShellViewModel model)

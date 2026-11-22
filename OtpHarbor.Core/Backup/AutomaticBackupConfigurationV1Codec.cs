@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FluentResults;
+using TOTP.Core.Serialization;
 
 namespace TOTP.Core.Backup;
 
@@ -12,6 +13,7 @@ public static class AutomaticBackupConfigurationV1Codec
         MaxDepth = 8,
         WriteIndented = true
     };
+    private static readonly CoreJsonContext JsonContext = new(JsonOptions);
 
     public static Result<byte[]> Serialize(AutomaticBackupConfigurationV1 configuration)
     {
@@ -19,7 +21,7 @@ public static class AutomaticBackupConfigurationV1Codec
         var validation = Validate(configuration);
         if (validation.IsFailed) return Result.Fail<byte[]>(validation.Errors);
 
-        var payload = JsonSerializer.SerializeToUtf8Bytes(configuration, JsonOptions);
+        var payload = JsonSerializer.SerializeToUtf8Bytes(configuration, JsonContext.AutomaticBackupConfigurationV1);
         return payload.Length <= MaximumPayloadSize
             ? Result.Ok(payload)
             : Fail<byte[]>(AutomaticBackupErrorCode.TooLarge, "Automatic backup configuration exceeds the size limit.");
@@ -36,7 +38,7 @@ public static class AutomaticBackupConfigurationV1Codec
             if (HasDuplicateProperty(document.RootElement))
                 return Fail<AutomaticBackupConfigurationV1>(AutomaticBackupErrorCode.InvalidFormat, "Automatic backup configuration contains duplicate properties.");
 
-            var configuration = JsonSerializer.Deserialize<AutomaticBackupConfigurationV1>(payload.Span, JsonOptions);
+            var configuration = JsonSerializer.Deserialize(payload.Span, JsonContext.AutomaticBackupConfigurationV1);
             if (configuration is null)
                 return Fail<AutomaticBackupConfigurationV1>(AutomaticBackupErrorCode.InvalidFormat, "Automatic backup configuration is null.");
 

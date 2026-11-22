@@ -22,6 +22,31 @@
     <AssemblyOriginatorKeyFile>..\OtpHarbor.Core\totp-sign-key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(EnableAndroidNativeAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <ApplicationId>$(AndroidProductionApplicationId).nativeaotprobe</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0-nativeaot</ApplicationDisplayVersion>
+    <AndroidManifest>../scripts/testing/android/AndroidNativeAotTestManifest.xml</AndroidManifest>
+  </PropertyGroup>
+
+  <Target Name="RejectProductionNativeAotExperiment" BeforeTargets="PrepareForBuild"
+          Condition="'$(PublishAot)' == 'true' and '$(ApplicationId)' != '$(AndroidProductionApplicationId).nativeaotprobe'">
+    <Error Text="The NativeAOT experiment requires its isolated application ID." />
+  </Target>
+
+  <!-- The Android SDK packages each ABI's native library inside the APK. Its
+       universal outer publish has no additional standalone NativeBinary to copy. -->
+  <Target Name="SkipUniversalNativeBinaryCopy" BeforeTargets="CopyNativeBinary"
+          Condition="'$(PublishAot)' == 'true' and '$(RuntimeIdentifier)' == '' and '$(AndroidApplication)' == 'true' and !Exists('$(NativeBinary)')">
+    <Error Condition="!Exists('$(ApkFileSigned)')" Text="The universal NativeAOT APK must be built and signed before completing publish." />
+    <PropertyGroup>
+      <NativeBinary />
+    </PropertyGroup>
+  </Target>
+
   <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(EnableMarketingCapture)' == ''">
     <!-- Normal Debug builds honor the user's screenshot setting. Marketing capture is an
          explicit opt-in for the isolated .debug application ID only. -->

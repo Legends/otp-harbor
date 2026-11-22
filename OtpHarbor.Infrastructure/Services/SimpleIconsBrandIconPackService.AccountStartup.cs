@@ -62,11 +62,11 @@ public sealed partial class SimpleIconsBrandIconPackService
         using var stream = File.OpenRead(indexPath);
         using var document = JsonDocument.Parse(stream);
         var root = document.RootElement;
-        var header = root.Deserialize<AccountIndexHeader>()
+        var header = root.Deserialize(IconJsonContext.Default.AccountIndexHeader)
             ?? throw new InvalidDataException("The installed icon index is invalid.");
         // Older provider formats retain their existing matching and validation path.
         if (header.Format != BrandIconPackFormat.OtpHarbor)
-            return root.Deserialize<BrandIndex>();
+            return root.Deserialize(IconJsonContext.Default.BrandIndex);
 
         var metadata = header.Metadata
             ?? throw new InvalidDataException("The installed icon provenance is missing.");
@@ -92,7 +92,7 @@ public sealed partial class SimpleIconsBrandIconPackService
             if (id is null || !OtpHarborCanonicalIdRegex().IsMatch(id) || !allIds.Add(id))
                 throw new InvalidDataException("The installed icon index contains invalid brand IDs.");
             if (selectedIds.Contains(id))
-                brands.Add(element.Deserialize<IndexBrand>()
+                brands.Add(element.Deserialize(IconJsonContext.Default.IndexBrand)
                     ?? throw new InvalidDataException("The installed account icon is invalid."));
         }
         if (aliases.Values.Any(id => !allIds.Contains(id)))

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentResults;
 using TOTP.Core.Enums;
+using TOTP.Core.Serialization;
 
 namespace TOTP.Core.Models;
 
@@ -10,6 +11,7 @@ public static class AppPreferencesV1Codec
 {
     public const int MaximumPayloadSize = 32 * 1024;
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
+    private static readonly CoreJsonContext JsonContext = new(JsonOptions);
 
     public static Result<byte[]> Serialize(AppPreferencesV1 preferences)
     {
@@ -17,7 +19,7 @@ public static class AppPreferencesV1Codec
         var validation = Validate(preferences);
         if (validation.IsFailed) return Result.Fail<byte[]>(validation.Errors);
 
-        var payload = JsonSerializer.SerializeToUtf8Bytes(preferences, JsonOptions);
+        var payload = JsonSerializer.SerializeToUtf8Bytes(preferences, JsonContext.AppPreferencesV1);
         return payload.Length <= MaximumPayloadSize
             ? Result.Ok(payload)
             : Fail<byte[]>(AppPreferencesErrorCode.TooLarge, "Preferences exceed the size limit.");
@@ -34,7 +36,7 @@ public static class AppPreferencesV1Codec
             if (HasDuplicateProperty(document.RootElement))
                 return Fail<AppPreferencesV1>(AppPreferencesErrorCode.Malformed, "Preferences contain duplicate properties.");
 
-            var preferences = JsonSerializer.Deserialize<AppPreferencesV1>(payload.Span, JsonOptions);
+            var preferences = JsonSerializer.Deserialize(payload.Span, JsonContext.AppPreferencesV1);
             if (preferences is null) return Fail<AppPreferencesV1>(AppPreferencesErrorCode.Malformed, "Preferences are null.");
             var validation = Validate(preferences);
             return validation.IsSuccess ? Result.Ok(preferences) : Result.Fail<AppPreferencesV1>(validation.Errors);
