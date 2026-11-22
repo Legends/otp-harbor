@@ -132,8 +132,11 @@ public sealed class MobileAccountInteractionTests
             element => (string?)element.Attribute("Text") == "{Binding ImportProgressText}");
         var restoreStart = code.IndexOf("if (_startupViewModel?.IsInitialized == true)", StringComparison.Ordinal);
         Assert.True(restoreStart >= 0);
-        var restoreEnd = code.IndexOf("EvaluateStartupTransition();", restoreStart, StringComparison.Ordinal);
+        var restoreEnd = code.IndexOf("private void StartupViewModelPropertyChanged", restoreStart, StringComparison.Ordinal);
+        Assert.True(restoreEnd > restoreStart);
         var restore = code[restoreStart..restoreEnd];
+        Assert.Contains("if (IsNativeStartupSplashPending)", restore);
+        Assert.Contains("EvaluateStartupTransition();", restore);
         Assert.Contains("StartupLoadingOverlay.IsVisible = false;", restore);
         Assert.Contains("StartupContentRevealRequested?.Invoke", restore);
         Assert.Contains("CompleteStartupTransition(this, EventArgs.Empty);", restore);
@@ -434,7 +437,10 @@ public sealed class MobileAccountInteractionTests
         Assert.True(viewCodeSource.IndexOf("if (viewModel.IsInitialQuickUnlockOfferVisible || !viewModel.IsAccountListVisible) return true;", StringComparison.Ordinal)
             < viewCodeSource.IndexOf("if (!viewModel.IsInitialAccountLoadComplete) return false;", StringComparison.Ordinal));
         Assert.Contains(
-            "return !_usesNativeAccountList || !viewModel.HasAccounts || _nativeAccountListRendered;",
+            "return !_usesNativeAccountList || !viewModel.HasAccounts",
+            viewCodeSource);
+        Assert.Contains(
+            "|| !viewModel.IsNativeAccountListVisible || _nativeAccountListRendered;",
             viewCodeSource);
         Assert.Contains("!CanCompleteStartupTransition()", viewCodeSource);
         Assert.Contains("BeginAccountReloadTransitionIfNeeded", viewCodeSource);
@@ -1234,7 +1240,9 @@ public sealed class MobileAccountInteractionTests
                 attribute.Name.LocalName == "Name" && attribute.Value == "DiagnosticLogSettingsPanel"));
         var report = document.Descendants(avalonia + "Border").Single(element =>
             element.Attributes().Any(attribute => attribute.Name.LocalName == "Name" && attribute.Value == "ProblemReportSettingsPanel"));
-        Assert.Same(misc.Parent, report.Parent);
+        Assert.Same(
+            misc.Ancestors().Single(element => element.Attribute(xaml + "Name")?.Value == "SettingsRoot"),
+            report.Ancestors().Single(element => element.Attribute(xaml + "Name")?.Value == "SettingsRoot"));
         Assert.Equal("card", report.Attribute("Classes")?.Value);
         Assert.Equal(misc.Attribute("Padding")?.Value, report.Attribute("Padding")?.Value);
         Assert.Equal("{Binding IsMiscSettingsVisible}", misc.Attribute("IsVisible")?.Value);
@@ -1461,7 +1469,7 @@ public sealed class MobileAccountInteractionTests
             faqSections,
             section =>
             {
-                var card = Assert.IsType<XElement>(section.Parent);
+                var card = section.Ancestors(avalonia + "Border").First();
                 Assert.Equal(avalonia + "Border", card.Name);
                 Assert.Equal("Stretch", card.Attribute("HorizontalAlignment")?.Value);
                 Assert.Equal("{DynamicResource BrushFaqHeaderBackground}", card.Attribute("Background")?.Value);

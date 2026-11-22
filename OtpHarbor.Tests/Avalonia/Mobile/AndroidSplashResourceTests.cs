@@ -140,6 +140,16 @@ public sealed class AndroidSplashResourceTests
         Assert.Equal("224", loaderCanvas.Attribute("Height")?.Value);
         Assert.Equal("140", loaderLogo.Attribute("Width")?.Value);
         Assert.Equal("140", loaderLogo.Attribute("Height")?.Value);
+        var loaderLayout = loaderLogo.Ancestors(avalonia + "StackPanel").First();
+        Assert.Equal("Center", loaderLayout.Attribute("VerticalAlignment")?.Value);
+        var alwaysVisibleContent = Assert.Single(loaderLayout.Elements(), element =>
+            element.Attribute("IsVisible") is null);
+        Assert.Equal(avalonia + "Grid", alwaysVisibleContent.Name);
+        Assert.Equal("224", alwaysVisibleContent.Attribute("Height")?.Value);
+        Assert.All(loaderLayout.Elements().Where(element => element != alwaysVisibleContent), element =>
+            Assert.Equal("{Binding CanRetry}", element.Attribute("IsVisible")?.Value));
+        Assert.DoesNotContain(overlay.Descendants(avalonia + "TextBlock"), element =>
+            element.Attribute("Text")?.Value == "{Binding StartingText}");
         Assert.Empty(overlay.Descendants(avalonia + "Ellipse"));
         var mobileStars = loaderCanvas.Descendants(avalonia + "Path").ToArray();
         var nativeStars = android12Splash.Descendants("group")
@@ -162,7 +172,7 @@ public sealed class AndroidSplashResourceTests
     }
 
     [Fact]
-    public void Splash_HoldsNativeSurfaceUntilAvaloniaLoaderIsLaidOut()
+    public void Splash_HoldsNativeSurfaceUntilDestinationIsReadyAndRendered()
     {
         var fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Android");
         var activitySource = File.ReadAllText(Path.Combine(fixtureRoot, "MainActivity.cs"));
@@ -183,7 +193,16 @@ public sealed class AndroidSplashResourceTests
         Assert.Contains("view.LayoutUpdated += firstLayout;", applicationSource);
         Assert.Contains("view.LayoutUpdated -= firstLayout;", applicationSource);
         Assert.Contains("topLevel.RequestAnimationFrame", applicationSource);
-        Assert.Contains("topLevel.RequestAnimationFrame(_ => NotifyStartupSurfaceReady())", applicationSource);
+        Assert.Contains("view.UseNativeStartupSplash();", applicationSource);
+        Assert.Contains("view.NativeStartupContentReady +=", applicationSource);
+        Assert.Contains("!firstLayoutReady || !destinationReady || splashReleaseQueued", applicationSource);
+        Assert.Contains("topLevel.RequestAnimationFrame(_ => NotifyStartupSurfaceReady(view))", applicationSource);
+        Assert.Contains("_mainView?.NotifyNativeStartupSplashRemoved();", applicationSource);
+        Assert.True(applicationSource.IndexOf("view.NativeStartupContentReady +=", StringComparison.Ordinal)
+            < applicationSource.IndexOf("view.DataContext = viewModel;", StringComparison.Ordinal));
+        Assert.True(activitySource.IndexOf("provider.Remove();", StringComparison.Ordinal)
+            < activitySource.IndexOf("host.NotifyStartupSplashRemoved(this);", StringComparison.Ordinal));
+        Assert.Contains("PostOnAnimation", activitySource);
         Assert.Contains("activity.ReleaseStartupSplash();", applicationSource);
     }
 

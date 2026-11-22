@@ -17,7 +17,7 @@ using TOTP.Infrastructure.Icons;
 
 namespace TOTP.Infrastructure.Services;
 
-public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackService
+public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackService, IAccountBrandIconInitializer
 {
     private const int MaximumArchiveBytes = 512 * 1024 * 1024;
     private const int MaximumEntries = 10_000;
@@ -147,7 +147,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     {
         get
         {
-            EnsureInitialized();
+            EnsureLookupInitialized();
             return Volatile.Read(ref _showIssuerLogo);
         }
     }
@@ -163,7 +163,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public string? GetAccountBrandId(Guid accountId)
     {
-        EnsureInitialized();
+        EnsureLookupInitialized();
         if (accountId == Guid.Empty) return null;
         var mappings = Volatile.Read(ref _accountBrandIds);
         return mappings.TryGetValue(accountId, out var brandId) ? brandId : null;
@@ -171,7 +171,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public BrandDefinition? Resolve(string? issuer, string? explicitBrandId = null)
     {
-        EnsureInitialized();
+        EnsureLookupInitialized();
         var catalog = Volatile.Read(ref _catalog);
         if (!string.IsNullOrWhiteSpace(explicitBrandId)
             && catalog.ById.TryGetValue(explicitBrandId.Trim(), out var explicitlySelected))
@@ -261,7 +261,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public bool TryGetIconLayers(string brandId, out IReadOnlyList<BrandIconLayer> layers)
     {
-        EnsureInitialized();
+        EnsureLookupInitialized();
         layers = [];
         if (string.IsNullOrWhiteSpace(brandId)) return false;
         var catalog = Volatile.Read(ref _catalog);
@@ -314,7 +314,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
 
     public bool TryGetIconTransform(string brandId, out BrandIconTransform? transform)
     {
-        EnsureInitialized();
+        EnsureLookupInitialized();
         transform = null;
         if (!TryGetIconLayers(brandId, out var layers) || layers.Count == 0) return false;
         transform = layers[0].Transform;
@@ -1164,7 +1164,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
                 if (item is null
                     || item.AccountId == Guid.Empty
                     || string.IsNullOrWhiteSpace(item.BrandId)
-                    || !SafeSlugRegex().IsMatch(item.BrandId)
+                    || (!SafeSlugRegex().IsMatch(item.BrandId)
+                        && !OtpHarborCanonicalIdRegex().IsMatch(item.BrandId))
                     || !mappings.TryAdd(item.AccountId, item.BrandId)) return;
             }
             Volatile.Write(ref _accountBrandIds, mappings);
@@ -1325,12 +1326,13 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     }
 
     private CatalogSnapshot LoadCombinedCatalog(
-        IReadOnlyList<InstalledPackRegistration> registrations)
+        IReadOnlyList<InstalledPackRegistration> registrations,
+        IReadOnlyCollection<string>? accountIssuers = null)
     {
         var providers = registrations
             .OrderByDescending(value => value.Priority)
             .ThenBy(value => value.ProviderId, StringComparer.Ordinal)
-            .Select(TryLoadProviderSnapshot)
+            .Select(registration => TryLoadProviderSnapshot(registration, accountIssuers))
             .Where(value => value is not null)
             .Cast<ProviderSnapshot>()
             .ToArray();
@@ -1426,14 +1428,18 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             providers.Any(value => value.Format == BrandIconPackFormat.OtpHarbor));
     }
 
-    private ProviderSnapshot? TryLoadProviderSnapshot(InstalledPackRegistration registration)
+    private ProviderSnapshot? TryLoadProviderSnapshot(
+        InstalledPackRegistration registration,
+        IReadOnlyCollection<string>? accountIssuers = null)
     {
-        var index = TryReadBrandIndex(registration.PackId);
+        var index = accountIssuers is null
+            ? TryReadBrandIndex(registration.PackId)
+            : TryReadAccountBrandIndex(registration.PackId, accountIssuers);
         if (index is null
             || !string.Equals(index.ProviderId, registration.ProviderId, StringComparison.OrdinalIgnoreCase))
             return null;
         var packDirectory = Path.Combine(_packsRoot, registration.PackId);
-        return CreateProviderSnapshot(packDirectory, registration, index);
+        return CreateProviderSnapshot(packDirectory, registration, index, accountIssuers is not null);
     }
 
     private BrandIndex? TryReadBrandIndex(string packId)
@@ -1450,7 +1456,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private static ProviderSnapshot CreateProviderSnapshot(
         string packDirectory,
         InstalledPackRegistration registration,
-        BrandIndex index)
+        BrandIndex index,
+        bool accountLookupOnly = false)
     {
         var format = string.Equals(index.Version, "filename-indexed", StringComparison.OrdinalIgnoreCase)
             && index.Format == BrandIconPackFormat.SimpleIcons
@@ -1629,7 +1636,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         }
         if (format == BrandIconPackFormat.OtpHarbor)
         {
-            ValidateInstalledOtpHarborMetadata(index, byId, byOtpHarborAlias);
+            ValidateInstalledOtpHarborMetadata(index, byId, byOtpHarborAlias, accountLookupOnly);
         }
         return new ProviderSnapshot(
             packDirectory,
@@ -1716,7 +1723,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private static void ValidateInstalledOtpHarborMetadata(
         BrandIndex index,
         IReadOnlyDictionary<string, BrandDefinition> brands,
-        IDictionary<string, BrandDefinition> aliases)
+        IDictionary<string, BrandDefinition> aliases,
+        bool accountLookupOnly = false)
     {
         var metadata = index.Metadata;
         if (metadata is null
@@ -1728,7 +1736,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             || metadata.Sources is null
             || metadata.Sources.Count == 0
             || metadata.IssuerAliases is null
-            || metadata.IssuerAliases.Count == 0)
+            || metadata.IssuerAliases.Count == 0 && (!accountLookupOnly || index.Brands.Count != 0))
             throw new InvalidDataException("The installed OTP Harbor icon provenance is invalid.");
 
         foreach (var alias in metadata.IssuerAliases)

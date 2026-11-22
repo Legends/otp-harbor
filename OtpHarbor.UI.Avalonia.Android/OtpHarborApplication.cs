@@ -1,6 +1,7 @@
 using Android.App;
 using Android.Content;
 using Android.Runtime;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Android;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,9 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
     private ServiceProvider? _services;
     private NativeBrandIconCache? _brandIconCache;
     private MainActivity? _mainActivity;
+    private MainView? _mainView;
     private bool _startupSurfaceReady;
+    private readonly Stopwatch _startupTimer = new();
 
     protected OtpHarborApplication(nint javaReference, JniHandleOwnership transfer)
         : base(javaReference, transfer)
@@ -29,6 +32,7 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
 
     public override void OnCreate()
     {
+        _startupTimer.Start();
         AndroidEnvironment.UnhandledExceptionRaiser += AndroidUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += DomainUnhandledException;
         base.OnCreate();
@@ -43,15 +47,37 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                 _services = AndroidCompositionRoot.Build(this);
                 var brandIconCache = _brandIconCache ??= new NativeBrandIconCache();
                 var viewModel = _services.GetRequiredService<MobileShellViewModel>();
+                RecordStartupStage("services-ready");
                 var app = global::Avalonia.Application.Current as MobileApp
                     ?? throw new InvalidOperationException("The mobile Avalonia application is unavailable.");
                 app.ConfigureAppearance(_services.GetRequiredService<IAppearanceSettingsService>());
                 app.MainViewFactory = () =>
                 {
                     viewModel.UseNativeDeleteConfirmation();
-                    if (!_startupSurfaceReady)
-                        viewModel.DeferAutomaticBiometricUnlockUntilStartupSurfaceReady();
-                    var view = new MainView { DataContext = viewModel };
+                    _startupSurfaceReady = false;
+                    viewModel.DeferAutomaticBiometricUnlockUntilStartupSurfaceReady();
+                    var view = new MainView();
+                    view.UseNativeStartupSplash();
+                    _mainView = view;
+                    var firstLayoutReady = false;
+                    var destinationReady = false;
+                    var splashReleaseQueued = false;
+                    void TryReleaseStartupSplash()
+                    {
+                        if (!firstLayoutReady || !destinationReady || splashReleaseQueued) return;
+                        var topLevel = global::Avalonia.Controls.TopLevel.GetTopLevel(view);
+                        if (topLevel is null) return;
+                        splashReleaseQueued = true;
+                        // Render the ready destination beneath the native splash before removing it.
+                        topLevel.RequestAnimationFrame(_ =>
+                            topLevel.RequestAnimationFrame(_ => NotifyStartupSurfaceReady(view)));
+                    }
+                    view.NativeStartupContentReady += (_, _) =>
+                    {
+                        destinationReady = true;
+                        RecordStartupStage("destination-ready");
+                        TryReleaseStartupSplash();
+                    };
                     EventHandler? firstLayout = null;
                     firstLayout = (_, _) =>
                     {
@@ -59,12 +85,14 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
                         if (topLevel is null || view.Bounds.Width <= 0 || view.Bounds.Height <= 0)
                             return;
                         view.LayoutUpdated -= firstLayout;
-                        // Layout alone does not mean that the renderer has submitted a frame.
-                        // Keep the native surface across the first rendering opportunity.
+                        firstLayoutReady = true;
                         topLevel.RequestAnimationFrame(_ =>
-                            topLevel.RequestAnimationFrame(_ => NotifyStartupSurfaceReady()));
+                            topLevel.RequestAnimationFrame(_ => RecordStartupStage("first-frame-ready")));
+                        TryReleaseStartupSplash();
                     };
                     view.LayoutUpdated += firstLayout;
+                    view.DataContext = viewModel;
+                    RecordStartupStage("view-created");
                     var accountListHost = new AndroidAccountListHost(
                         viewModel,
                         brandIconCache,
@@ -198,16 +226,26 @@ public class OtpHarborApplication : AvaloniaAndroidApplication<MobileApp>
             _mainActivity = null;
     }
 
-    private void NotifyStartupSurfaceReady()
+    private void NotifyStartupSurfaceReady(MainView view)
     {
+        if (!ReferenceEquals(_mainView, view)) return;
         _startupSurfaceReady = true;
         _mainActivity?.ReleaseStartupSplash();
     }
 
+    private void RecordStartupStage(string stage) =>
+        global::Android.Util.Log.Info("OtpHarborStartup",
+            $"Stage {stage} reached after {_startupTimer.ElapsedMilliseconds} ms.");
+
     internal void NotifyStartupSplashRemoved(MainActivity activity)
     {
         if (_startupSurfaceReady && ReferenceEquals(_mainActivity, activity))
+        {
+            _mainView?.NotifyNativeStartupSplashRemoved();
+            RecordStartupStage("content-ready");
+            activity.ReportFullyDrawn();
             _services?.GetService<MobileShellViewModel>()?.NotifyStartupSurfaceReady();
+        }
     }
 
     public void NotifyReturnedToForeground()

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using TOTP.Avalonia.Desktop.Presentation;
 using TOTP.Core.Services.Interfaces;
 
@@ -21,9 +22,9 @@ public sealed class NotificationStateTests
     public async Task ShowTransient_ClearsAfterConfiguredDuration()
     {
         using var sut = new NotificationState(TimeSpan.FromMilliseconds(20));
-        sut.ShowTransient("Saved", NotificationSeverity.Success);
-
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await WaitForMessageToClearAsync(
+            sut,
+            () => sut.ShowTransient("Saved", NotificationSeverity.Success));
 
         Assert.Empty(sut.Text);
         Assert.False(sut.HasMessage);
@@ -51,8 +52,9 @@ public sealed class NotificationStateTests
     {
         using var sut = new NotificationState(TimeSpan.FromMilliseconds(20));
 
-        sut.ShowForSeverity("Transient notice", severity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await WaitForMessageToClearAsync(
+            sut,
+            () => sut.ShowForSeverity("Transient notice", severity));
 
         Assert.Empty(sut.Text);
         Assert.False(sut.HasMessage);
@@ -63,8 +65,9 @@ public sealed class NotificationStateTests
     {
         using var sut = new NotificationState(TimeSpan.FromMilliseconds(20));
 
-        sut.ShowForSeverity("Recoverable error", NotificationSeverity.Error);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await WaitForMessageToClearAsync(
+            sut,
+            () => sut.ShowForSeverity("Recoverable error", NotificationSeverity.Error));
 
         Assert.Empty(sut.Text);
         Assert.False(sut.HasMessage);
@@ -88,5 +91,30 @@ public sealed class NotificationStateTests
             second => Assert.Equal(
                 new NotificationShownEventArgs("Retry failed", NotificationSeverity.Error),
                 second));
+    }
+
+    private static async Task WaitForMessageToClearAsync(NotificationState state, Action showMessage)
+    {
+        var cleared = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void OnPropertyChanged(object? sender, PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName == nameof(NotificationState.HasMessage) && !state.HasMessage)
+                cleared.TrySetResult();
+        }
+
+        state.PropertyChanged += OnPropertyChanged;
+        try
+        {
+            showMessage();
+            await cleared.Task.WaitAsync(
+                TimeSpan.FromSeconds(5),
+                TestContext.Current.CancellationToken);
+        }
+        finally
+        {
+            state.PropertyChanged -= OnPropertyChanged;
+        }
     }
 }
