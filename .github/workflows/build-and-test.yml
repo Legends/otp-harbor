@@ -269,6 +269,7 @@ jobs:
 
   m3-package-probe:
     name: M3 package probe (${{ matrix.name }})
+    if: ${{ !startsWith(github.ref, 'refs/tags/android-v') }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false

@@ -230,6 +230,18 @@ foreach ($required in @(
     }
 }
 
+$desktopProbe = [regex]::Match($workflow, '(?ms)^  m3-package-probe:\r?\n(?<body>.*?)(?=^  [a-z][a-z0-9-]*:|\z)').Groups['body'].Value
+if (-not $desktopProbe.Contains("if: `${{ !startsWith(github.ref, 'refs/tags/android-v') }}", [StringComparison]::Ordinal)) {
+    throw 'Android release tags must skip desktop packaging probes.'
+}
+foreach ($job in @('package-android-release', 'publish-android-release')) {
+    $jobBody = [regex]::Match($workflow, "(?ms)^  ${job}:\r?\n(?<body>.*?)(?=^  [a-z][a-z0-9-]*:|\z)").Groups['body'].Value
+    $dependencies = [regex]::Match($jobBody, '(?m)^    needs:\s*(?<value>.+)$').Groups['value'].Value
+    if ([string]::IsNullOrWhiteSpace($dependencies) -or $dependencies.Contains('m3-package-probe', [StringComparison]::Ordinal)) {
+        throw 'Android publication must have independent Android validation and packaging dependencies.'
+    }
+}
+
 $desktopPublicationIndex = $workflow.IndexOf('  publish-avalonia-release:', [StringComparison]::Ordinal)
 $androidPublicationIndex = $workflow.IndexOf('  publish-android-release:', [StringComparison]::Ordinal)
 if ($desktopPublicationIndex -lt 0 -or $androidPublicationIndex -le $desktopPublicationIndex) {
