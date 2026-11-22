@@ -59,6 +59,8 @@ $arguments = @(
     "--no-restore",
     "--nologo",
     "--verbosity", "minimal",
+    "-p:RuntimeIdentifier=",
+    "-p:UseCurrentRuntimeIdentifier=false",
     "-p:AndroidPackageFormats=apk",
     "-p:ApplicationId=$($version.applicationId)",
     "-p:ApplicationVersion=$($version.versionCode)",

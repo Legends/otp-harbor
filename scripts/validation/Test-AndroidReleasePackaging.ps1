@@ -19,6 +19,21 @@ $installer = Read-RequiredFile "scripts/testing/android\Install-AndroidDevelopme
 $workflow = Read-RequiredFile ".github\workflows\build-and-test.yml"
 $documentation = Read-RequiredFile "docs\release\ANDROID.md"
 $releasePackager = Read-RequiredFile "scripts/release/android/New-AndroidRelease.ps1"
+$sdkPolicy = (Read-RequiredFile 'global.json' | ConvertFrom-Json).sdk
+if ($sdkPolicy.version -ne '10.0.404' -or $sdkPolicy.workloadVersion -ne '10.0.403') {
+    throw 'The Android release must use the validated .NET SDK and workload set.'
+}
+if ($workflow.Contains('dotnet workload install android --skip-manifest-update', [StringComparison]::Ordinal)) {
+    throw 'Android CI must install the pinned workload set instead of reusing runner manifests.'
+}
+if (-not $project.Contains('<RuntimeIdentifiers Condition="''$(RuntimeIdentifier)'' == ''''">android-arm64;android-x64</RuntimeIdentifiers>', [StringComparison]::Ordinal)) {
+    throw 'The Android project must declare both universal APK runtime identifiers.'
+}
+foreach ($runtimeControl in @('-p:RuntimeIdentifier=', '-p:UseCurrentRuntimeIdentifier=false')) {
+    if (-not $releasePackager.Contains($runtimeControl, [StringComparison]::Ordinal)) {
+        throw "The Android release is missing an explicit runtime control: $runtimeControl"
+    }
+}
 $fingerprintParserPath = Join-Path $repositoryRoot `
     "scripts/release/android/Get-AndroidSigningCertificateFingerprint.ps1"
 

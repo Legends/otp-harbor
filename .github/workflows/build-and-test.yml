@@ -179,10 +179,15 @@ jobs:
             NuGet.config
 
       - name: Install Android workload
-        run: dotnet workload install android --skip-manifest-update
+        run: dotnet workload install android
 
       - name: Restore Android solution
-        run: dotnet restore OtpHarbor.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
+        # The SDK pin alone does not pin Android workload manifests on hosted runners.
+        # Validate the workload installed from global.json before consuming lock files.
+        shell: pwsh
+        run: |
+          ./scripts/validation/Test-AndroidToolchain.ps1
+          dotnet restore OtpHarbor.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
 
       - name: Audit Android dependency licenses
         shell: pwsh
@@ -929,10 +934,13 @@ jobs:
             NuGet.config
 
       - name: Install Android workload
-        run: dotnet workload install android --skip-manifest-update
+        run: dotnet workload install android
 
       - name: Restore Android release graph
-        run: dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config
+        shell: pwsh
+        run: |
+          ./scripts/validation/Test-AndroidToolchain.ps1
+          dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config -p:RuntimeIdentifier= -p:UseCurrentRuntimeIdentifier=false
 
       - name: Materialize protected signing inputs
         shell: pwsh
