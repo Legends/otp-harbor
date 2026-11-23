@@ -49,21 +49,36 @@ public sealed class DiagnosticsViewModelTests
         dialogs.Setup(value => value.ShowMessageAsync(
                 It.IsAny<MessageDialogRequest>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var sut = new DiagnosticsViewModel(
+        var localization = CreateLocalization("en");
+        using var sut = new DiagnosticsViewModel(
             service.Object,
-            CreateLocalization("en"),
+            localization,
             dialogs.Object,
             transientMessageDuration: TimeSpan.FromMilliseconds(20));
+        var shown = new List<NotificationShownEventArgs>();
+        sut.Notification.Shown += (_, args) => shown.Add(args);
+        var cleared = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        sut.Notification.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(NotificationState.HasMessage) && !sut.Notification.HasMessage)
+                cleared.TrySetResult();
+        };
 
         await sut.RefreshAsync();
 
         Assert.Empty(sut.SupportInformation);
-        Assert.DoesNotContain("person", sut.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(NotificationSeverity.Error, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        var notification = Assert.Single(shown);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.DiagnosticRefreshFailed), notification.Text);
+        Assert.DoesNotContain("person", notification.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("secret-file", notification.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(NotificationSeverity.Error, notification.Severity);
+        await cleared.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         Assert.Empty(sut.Message);
         dialogs.Verify(value => value.ShowMessageAsync(
-            It.Is<MessageDialogRequest>(request => request.Severity == NotificationSeverity.Error),
+            It.Is<MessageDialogRequest>(request => request.Severity == NotificationSeverity.Error
+                && request.Title == localization.GetString(AvaloniaStringKeys.DiagnosticUnavailableTitle)
+                && request.Message == localization.GetString(AvaloniaStringKeys.DiagnosticUnavailableMessage)
+                && request.CloseText == localization.GetString(AvaloniaStringKeys.Close)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
