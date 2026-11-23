@@ -8,7 +8,7 @@ using TOTP.Core.Security.Models;
 
 namespace TOTP.Core.Backup;
 
-public static class AutomaticBackupPackageV2Codec
+public static partial class AutomaticBackupPackageV2Codec
 {
     public const string FormatIdentifier = "otp-harbor-automatic-backup";
     public const int CurrentVersion = 2;
@@ -25,6 +25,7 @@ public static class AutomaticBackupPackageV2Codec
         MaxDepth = 24,
         WriteIndented = false
     };
+    private static readonly ManifestJsonContext JsonContext = new(JsonOptions);
 
     public static bool IsContainer(ReadOnlySpan<byte> payload) =>
         payload.Length >= 4
@@ -64,7 +65,7 @@ public static class AutomaticBackupPackageV2Codec
                 AccountsSha256 = ComputeSha256(package.EncryptedAccounts),
                 ProfileSha256 = ComputeSha256(package.EncryptedProfile),
                 AuthorizationSha256 = ComputeSha256(envelope)
-            }, JsonOptions);
+            }, JsonContext.Manifest);
 
             using var output = new MemoryStream();
             using (var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true))
@@ -117,7 +118,7 @@ public static class AutomaticBackupPackageV2Codec
             if (HasDuplicateProperty(manifestData))
                 return Fail<AutomaticBackupPackageV2>(AutomaticBackupErrorCode.InvalidFormat, "Automatic backup manifest contains duplicate properties.");
 
-            var manifest = JsonSerializer.Deserialize<Manifest>(manifestData, JsonOptions);
+            var manifest = JsonSerializer.Deserialize(manifestData, JsonContext.Manifest);
             if (manifest is null
                 || manifest.Format != FormatIdentifier
                 || manifest.Version != CurrentVersion
@@ -252,6 +253,10 @@ public static class AutomaticBackupPackageV2Codec
 
     private static Result<T> Fail<T>(AutomaticBackupErrorCode code, string message) =>
         Result.Fail<T>(new AutomaticBackupError(code, message));
+
+    [JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Metadata)]
+    [JsonSerializable(typeof(Manifest))]
+    private partial class ManifestJsonContext : JsonSerializerContext;
 
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     private sealed record Manifest

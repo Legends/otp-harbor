@@ -9,6 +9,42 @@ public sealed record AppPreferencesV1
     public const string FormatIdentifier = "totp-preferences";
     public const int CurrentVersion = 1;
 
+    public AppPreferencesV1() : this(cultureName: "en") { }
+
+    // Constructor defaults preserve omitted v1 fields with .NET 10 JSON source generation.
+    [JsonConstructor]
+    public AppPreferencesV1(
+        string cultureName = "en",
+        AppLogLevel minimumLogLevel = AppLogLevel.Information,
+        PreferredUnlockMethod preferredUnlockMethod = PreferredUnlockMethod.Password,
+        bool appLockEnabled = true,
+        int idleTimeoutMinutes = 10,
+        bool lockOnSessionLock = true,
+        bool lockOnMinimize = true,
+        bool clearClipboardEnabled = true,
+        int clearClipboardSeconds = 15,
+        double qrPreviewScaleFactor = 1.5,
+        bool exportEncrypt = true,
+        bool openExportFileAfterExport = true,
+        bool hideSecretsByDefault = true,
+        string favoriteGroupColor = AppSettings.DefaultFavoriteGroupColor)
+    {
+        CultureName = cultureName;
+        MinimumLogLevel = minimumLogLevel;
+        PreferredUnlockMethod = preferredUnlockMethod;
+        AppLockEnabled = appLockEnabled;
+        IdleTimeoutMinutes = idleTimeoutMinutes;
+        LockOnSessionLock = lockOnSessionLock;
+        LockOnMinimize = lockOnMinimize;
+        ClearClipboardEnabled = clearClipboardEnabled;
+        ClearClipboardSeconds = clearClipboardSeconds;
+        QrPreviewScaleFactor = qrPreviewScaleFactor;
+        ExportEncrypt = exportEncrypt;
+        OpenExportFileAfterExport = openExportFileAfterExport;
+        HideSecretsByDefault = hideSecretsByDefault;
+        FavoriteGroupColor = favoriteGroupColor;
+    }
+
     [JsonRequired]
     [JsonPropertyName("format")]
     public string Format { get; init; } = FormatIdentifier;
@@ -18,19 +54,19 @@ public sealed record AppPreferencesV1
     public int Version { get; init; } = CurrentVersion;
 
     [JsonPropertyName("culture")]
-    public string CultureName { get; init; } = "en";
+    public string CultureName { get; init; }
 
     [JsonPropertyName("minimumLogLevel")]
-    public AppLogLevel MinimumLogLevel { get; init; } = AppLogLevel.Information;
+    public AppLogLevel MinimumLogLevel { get; init; }
 
     [JsonPropertyName("preferredUnlockMethod")]
-    public PreferredUnlockMethod PreferredUnlockMethod { get; init; } = PreferredUnlockMethod.Password;
+    public PreferredUnlockMethod PreferredUnlockMethod { get; init; }
 
     [JsonPropertyName("appLockEnabled")]
-    public bool AppLockEnabled { get; init; } = true;
+    public bool AppLockEnabled { get; init; }
 
     [JsonPropertyName("idleTimeoutMinutes")]
-    public int IdleTimeoutMinutes { get; init; } = 10;
+    public int IdleTimeoutMinutes { get; init; }
 
     // Present only when a sub-minute precision value cannot be represented by
     // the original v1 minutes field. Older files continue to use minutes.
@@ -39,36 +75,36 @@ public sealed record AppPreferencesV1
     public int? IdleTimeoutSeconds { get; init; }
 
     [JsonPropertyName("lockOnSessionLock")]
-    public bool LockOnSessionLock { get; init; } = true;
+    public bool LockOnSessionLock { get; init; }
 
     [JsonPropertyName("lockOnMinimize")]
-    public bool LockOnMinimize { get; init; } = true;
+    public bool LockOnMinimize { get; init; }
 
     [JsonPropertyName("clearClipboardEnabled")]
-    public bool ClearClipboardEnabled { get; init; } = true;
+    public bool ClearClipboardEnabled { get; init; }
 
     [JsonPropertyName("clearClipboardSeconds")]
-    public int ClearClipboardSeconds { get; init; } = 15;
+    public int ClearClipboardSeconds { get; init; }
 
     [JsonPropertyName("qrPreviewScaleFactor")]
-    public double QrPreviewScaleFactor { get; init; } = 1.5;
+    public double QrPreviewScaleFactor { get; init; }
 
     [JsonPropertyName("interfaceScalePercent")]
     public int InterfaceScalePercent { get; init; }
 
     [JsonPropertyName("exportEncrypt")]
     // Retained in the strict version-1 wire contract for existing preference files.
-    public bool ExportEncrypt { get; init; } = true;
+    public bool ExportEncrypt { get; init; }
 
     [JsonPropertyName("openExportFileAfterExport")]
-    public bool OpenExportFileAfterExport { get; init; } = true;
+    public bool OpenExportFileAfterExport { get; init; }
 
     [JsonPropertyName("hideSecretsByDefault")]
     // Retained in the strict version-1 wire contract for existing preference files.
-    public bool HideSecretsByDefault { get; init; } = true;
+    public bool HideSecretsByDefault { get; init; }
 
     [JsonPropertyName("favoriteGroupColor")]
-    public string FavoriteGroupColor { get; init; } = AppSettings.DefaultFavoriteGroupColor;
+    public string FavoriteGroupColor { get; init; }
 
     [JsonPropertyName("showNextToken")]
     public bool ShowNextToken { get; init; }

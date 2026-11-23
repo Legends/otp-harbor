@@ -69,7 +69,9 @@ public sealed partial class MobileShellViewModelTests
     [InlineData("cancel", true)]
     public async Task UnifiedImport_PasswordPromptCancellationClearsInputAndNeverStartsMerge(string action, bool fromSettings)
     {
-        var context = CreateContext(isConfigured: true, appLockEnabled: action == "lock");
+        var context = CreateContext(isConfigured: true,
+            accounts: [new Account(Guid.NewGuid(), "Synthetic", ValidSecret, isFavorite: true)],
+            appLockEnabled: action == "lock");
         using var sut = context.Sut;
         context.Authorization.Setup(value => value.TryUnlockOnStartupAsync()).Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
         context.Authorization.Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
@@ -89,12 +91,15 @@ public sealed partial class MobileShellViewModelTests
         var importing = sut.ImportAccountFileAsync();
         await WaitUntilAsync(() => sut.IsImportBackupPasswordVisible);
         Assert.True(sut.CanHandleSystemBack);
+        Assert.False(sut.IsNativeAccountListVisible);
+        Assert.False(sut.IsNativeAccountGroupsVisible);
         sut.ImportPassword = "synthetic pending password";
         if (action == "lock") await sut.LockAsync();
         else if (action == "back") Assert.True(await sut.TryHandleBackNavigationAsync());
         else sut.CancelImportBackupUnlockCommand.Execute(null);
         await importing.WaitAsync(TimeSpan.FromSeconds(5), global::Xunit.TestContext.Current.CancellationToken);
         Assert.False(sut.IsImportBackupPasswordVisible);
+        Assert.Equal(action != "lock" && !fromSettings, sut.IsNativeAccountListVisible);
         Assert.Empty(sut.ImportPassword);
         Assert.Equal(0, reads);
         context.AccountImport.Verify(value => value.RestoreBackupWithConflictResolutionAsync(It.IsAny<IReadOnlyList<Account>>(),

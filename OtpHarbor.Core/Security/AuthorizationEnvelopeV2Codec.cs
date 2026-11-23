@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Security.Cryptography;
 using FluentResults;
 using TOTP.Core.Security.Models;
+using TOTP.Core.Serialization;
 
 namespace TOTP.Core.Security;
 
@@ -10,6 +11,7 @@ public static class AuthorizationEnvelopeV2Codec
     public const int MaximumPayloadSize = 64 * 1024;
 
     private static readonly JsonSerializerOptions JsonOptions = new() { MaxDepth = 16, WriteIndented = true };
+    private static readonly CoreJsonContext JsonContext = new(JsonOptions);
 
     public static Result<byte[]> Serialize(AuthorizationEnvelopeV2 envelope)
     {
@@ -17,7 +19,7 @@ public static class AuthorizationEnvelopeV2Codec
         var validation = Validate(envelope, requireSupportedQuickUnlock: true);
         if (validation.IsFailed) return Result.Fail<byte[]>(validation.Errors);
 
-        var payload = JsonSerializer.SerializeToUtf8Bytes(envelope, JsonOptions);
+        var payload = JsonSerializer.SerializeToUtf8Bytes(envelope, JsonContext.AuthorizationEnvelopeV2);
         if (payload.Length <= MaximumPayloadSize) return Result.Ok(payload);
 
         CryptographicOperations.ZeroMemory(payload);
@@ -37,7 +39,7 @@ public static class AuthorizationEnvelopeV2Codec
             if (HasDuplicateProperty(document.RootElement))
                 return Fail<AuthorizationEnvelopeV2>(AuthorizationEnvelopeErrorCode.Malformed, "Authorization envelope contains duplicate properties.");
 
-            var envelope = JsonSerializer.Deserialize<AuthorizationEnvelopeV2>(payload.Span, JsonOptions);
+            var envelope = JsonSerializer.Deserialize(payload.Span, JsonContext.AuthorizationEnvelopeV2);
             if (envelope is null)
                 return Fail<AuthorizationEnvelopeV2>(AuthorizationEnvelopeErrorCode.Malformed, "Authorization envelope is null.");
 

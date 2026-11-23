@@ -10,10 +10,11 @@ using TOTP.Core.Backup;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using FluentResults;
+using TOTP.Infrastructure.Serialization;
 
 namespace TOTP.Infrastructure.Security;
 
-public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnapshotReader
+public sealed partial class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnapshotReader
 {
     private readonly ISecurityContext _securityContext;
     private static readonly byte[] LegacyFileHeader = "TVLT"u8.ToArray();
@@ -45,9 +46,9 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
             var revisionId = Guid.NewGuid();
             accountsData = JsonSerializer.SerializeToUtf8Bytes(new VaultAccountsPayload(
                 revisionId,
-                entries.Select(VaultAccountPayload.FromAccount).ToArray()));
+                entries.Select(VaultAccountPayload.FromAccount).ToArray()), VaultJsonContext.Default.VaultAccountsPayload);
             profileData = JsonSerializer.SerializeToUtf8Bytes(
-                VaultProfilePayload.FromAccounts(revisionId, entries));
+                VaultProfilePayload.FromAccounts(revisionId, entries), VaultJsonContext.Default.VaultProfilePayload);
             encryptedAccounts = VaultAesGcm.Encrypt(
                 dek,
                 accountsNonce,
@@ -158,7 +159,7 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
                 ReadOnlySpan<byte>.Empty,
                 ciphertext);
 
-            return JsonSerializer.Deserialize<List<Account>>(decrypted)
+            return JsonSerializer.Deserialize(decrypted, AccountJsonContext.Default.ListAccount)
                 ?? throw new JsonException("Vault account payload is null.");
         }
         finally
@@ -206,9 +207,9 @@ public sealed class VaultService : IVaultService, IVaultKeyVerifier, IVaultSnaps
                 ProfileAssociatedData,
                 profileCiphertext);
 
-            var accounts = JsonSerializer.Deserialize<VaultAccountsPayload>(accountsData)
+            var accounts = JsonSerializer.Deserialize(accountsData, VaultJsonContext.Default.VaultAccountsPayload)
                 ?? throw new JsonException("Vault account payload is null.");
-            var profile = JsonSerializer.Deserialize<VaultProfilePayload>(profileData)
+            var profile = JsonSerializer.Deserialize(profileData, VaultJsonContext.Default.VaultProfilePayload)
                 ?? throw new JsonException("Vault profile payload is null.");
             if (accounts.RevisionId == Guid.Empty || accounts.RevisionId != profile.RevisionId)
                 throw new CryptographicException("Vault profile revision does not match accounts.");

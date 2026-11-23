@@ -35,6 +35,7 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         MaxDepth = 32
     };
+    private static readonly PackJsonContext JsonContext = new(JsonOptions);
 
     public string Id => ExpectedPackId;
 
@@ -97,7 +98,7 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
             PackDocument document;
             try
             {
-                document = JsonSerializer.Deserialize<PackDocument>(manifestBytes, JsonOptions)
+                document = JsonSerializer.Deserialize(manifestBytes, JsonContext.PackDocument)
                     ?? throw new InvalidDataException("The OTP Harbor icon pack manifest is empty.");
             }
             catch (JsonException ex)
@@ -658,6 +659,10 @@ public sealed partial class OtpHarborIconPackImporter : IIconPackImporter
 
     [GeneratedRegex("^#[0-9A-F]{6}$", RegexOptions.CultureInvariant)]
     private static partial Regex UppercaseColorRegex();
+
+    [JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Metadata)]
+    [JsonSerializable(typeof(PackDocument))]
+    private partial class PackJsonContext : JsonSerializerContext;
 
     private sealed class PackDocument
     {

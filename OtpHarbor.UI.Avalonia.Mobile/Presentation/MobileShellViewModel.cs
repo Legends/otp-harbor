@@ -595,6 +595,7 @@ public sealed partial class MobileShellViewModel :
             CanImportAccountFile);
         MigrationImport = new TOTP.Avalonia.Shared.Import.AuthenticatorImportViewModel(
             _strings.Get, _importAccountFileCommand, _importGoogleQrCommand);
+        MigrationImport.PropertyChanged += MigrationImportPropertyChanged;
         _importBrandIconsCommand = new MobileAsyncCommand(
             ImportBrandIconsAsync,
             () => IsSettingsVisible && !IsBusy && _brandIconPackService is not null);
@@ -875,6 +876,9 @@ public sealed partial class MobileShellViewModel :
         || MigrationImport.HasSelectedFile || MigrationImport.HasFormatChoice;
     public bool IsNativeAccountListVisible => IsAccountListVisible
         && HasAccounts
+        && !MigrationImport.HasSelectedFile
+        && !MigrationImport.HasFormatChoice
+        && !IsImportBackupPasswordVisible
         && !IsImportProgressVisible
         && !IsImportConfirmationVisible
         && !IsBackupConflictResolutionVisible
@@ -884,6 +888,18 @@ public sealed partial class MobileShellViewModel :
         && (!IsDeleteConfirmationVisible || _usesNativeDeleteConfirmation);
     public bool IsNativeAccountGroupsVisible =>
         IsNativeAccountListVisible && HasAccountNavigationCards;
+
+    private void MigrationImportPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.PropertyName)
+            || e.PropertyName is nameof(AuthenticatorImportViewModel.HasSelectedFile)
+                or nameof(AuthenticatorImportViewModel.HasFormatChoice))
+        {
+            OnPropertyChanged(nameof(IsNativeAccountListVisible));
+            OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
+            OnPropertyChanged(nameof(CanHandleSystemBack));
+        }
+    }
     public bool IsSharedDeleteConfirmationVisible =>
         IsDeleteConfirmationVisible && !_usesNativeDeleteConfirmation;
     public bool IsScreenCaptureProtectionRequired => !AllowScreenshots;
@@ -5165,6 +5181,7 @@ public sealed partial class MobileShellViewModel :
     {
         if (_disposed) return;
         _disposed = true;
+        MigrationImport.PropertyChanged -= MigrationImportPropertyChanged;
         StorageLocations?.Dispose();
         _brandIconResolver.CatalogChanged -= BrandCatalogChanged;
         if (_automaticBackup is not null)
@@ -6386,6 +6403,9 @@ public sealed partial class MobileShellViewModel :
     private void NotifyImportBackupPassword()
     {
         OnPropertyChanged(nameof(IsImportBackupPasswordVisible));
+        OnPropertyChanged(nameof(IsNativeAccountListVisible));
+        OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
+        OnPropertyChanged(nameof(CanHandleSystemBack));
         OnPropertyChanged(nameof(ImportBackupPasswordHelp));
         OnPropertyChanged(nameof(ImportBackupPasswordTitle));
         OnPropertyChanged(nameof(ImportBackupUnlockText));

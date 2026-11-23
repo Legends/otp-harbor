@@ -3,12 +3,14 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using FluentResults;
 using Moq;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Avalonia.Mobile.Views;
+using TOTP.Avalonia.Shared.Controls;
 using TOTP.Core.Common;
 using TOTP.Core.Enums;
 using TOTP.Core.Models;
@@ -16,6 +18,7 @@ using TOTP.Core.Security;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Tests.Avalonia.Headless;
 
@@ -255,6 +258,64 @@ public sealed class NativeStartupSplashTests : IDisposable
         Assert.False(Overlay(view).IsVisible);
         context.Authorization.Verify(service => service.InitializeAsync(), Times.Once);
         context.Snapshots.Verify(service => service.LoadAsync(), Times.Once);
+    }
+
+    [AvaloniaFact]
+    public void DeferredIconPicker_CompiledBindingsRetainTheShellCommandAndItem()
+    {
+        var context = CreateContext();
+        var view = CreateView(context.Model);
+        var deferred = view.FindControl<DeferredContent>("DeferredAccountBrandIconPickerModalOverlay")!;
+        var panel = deferred.EnsureContentCreated();
+        var list = panel.GetLogicalDescendants().OfType<ListBox>()
+            .Single(value => value.Name == "AccountBrandIconResultsScroller");
+        var option = new MobileBrandIconOption("synthetic", "Synthetic icon");
+        list.ItemsSource = new[] { option };
+        deferred.IsVisible = true;
+        panel.IsVisible = true;
+        var window = new Window { Width = 400, Height = 800, Content = view };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var button = Assert.Single(list.GetVisualDescendants().OfType<Button>(),
+                value => value.Classes.Contains("brand-icon-choice"));
+
+            Assert.Same(context.Model.SelectAccountBrandIconCommand, button.Command);
+            Assert.Same(option, button.CommandParameter);
+            Assert.Contains("brand-entry", button.Classes);
+            Assert.Equal(option.DisplayNameForDisplay,
+                Assert.Single(button.GetVisualDescendants().OfType<TextBlock>()).Text);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
+    public async Task QrFileSummary_HidesNativeAccountSurfaceAndRestoresItAfterCancel()
+    {
+        var context = CreateContext();
+        var view = CreateView(context.Model);
+        view.UseNativeAccountList(new Border());
+        await context.Model.InitializeAsync();
+        view.NotifyNativeAccountListRendered();
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Render);
+        var nativePresenter = view.FindControl<ContentControl>("NativeAccountListPresenter")!;
+        Assert.True(nativePresenter.IsVisible);
+
+        var reviewing = context.Model.MigrationImport.WaitForFileReviewAsync(
+            new AccountImportReadSummary(10), "synthetic-google-qr.png");
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Render);
+
+        Assert.False(nativePresenter.IsVisible);
+        var summary = view.FindControl<DeferredContent>("DeferredImportFileSummary")!;
+        Assert.True(summary.IsVisible);
+        Assert.True(summary.IsContentCreated);
+        Assert.Equal(40, context.Model.Accounts.Count);
+        context.Model.MigrationImport.ClearFileCommand.Execute(null);
+        Assert.False(await reviewing);
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Render);
+        Assert.True(nativePresenter.IsVisible);
+        Assert.False(summary.IsVisible);
     }
 
     private MainView CreateView(MobileShellViewModel model)

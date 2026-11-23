@@ -1115,8 +1115,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             if (!File.Exists(_displaySettingsPath)) return;
             var file = new FileInfo(_displaySettingsPath);
             if (file.Length is <= 0 or > 4096) return;
-            var settings = JsonSerializer.Deserialize<BrandDisplaySettings>(
-                File.ReadAllText(_displaySettingsPath));
+            var settings = JsonSerializer.Deserialize(
+                File.ReadAllText(_displaySettingsPath), IconJsonContext.Default.BrandDisplaySettings);
             if (settings is not null)
                 Volatile.Write(ref _showIssuerLogo, settings.ShowIssuerLogo);
         }
@@ -1152,8 +1152,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             if (!File.Exists(_accountBrandSettingsPath)) return;
             var file = new FileInfo(_accountBrandSettingsPath);
             if (file.Length is <= 0 or > 1024 * 1024) return;
-            var settings = JsonSerializer.Deserialize<AccountBrandSettings>(
-                File.ReadAllText(_accountBrandSettingsPath));
+            var settings = JsonSerializer.Deserialize(
+                File.ReadAllText(_accountBrandSettingsPath), IconJsonContext.Default.AccountBrandSettings);
             if (settings is null
                 || settings.Version != 1
                 || settings.Overrides is null
@@ -1183,8 +1183,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
             if (!File.Exists(_customIconIndexPath)) return;
             var file = new FileInfo(_customIconIndexPath);
             if (file.Length is <= 0 or > 1024 * 1024) return;
-            var index = JsonSerializer.Deserialize<CustomIconIndex>(
-                File.ReadAllText(_customIconIndexPath));
+            var index = JsonSerializer.Deserialize(
+                File.ReadAllText(_customIconIndexPath), IconJsonContext.Default.CustomIconIndex);
             if (index is null
                 || index.Version is not (1 or 2)
                 || index.Icons is null
@@ -1287,8 +1287,8 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         {
             var file = new FileInfo(_installedPacksPath);
             if (file.Length is <= 0 or > 1024 * 1024) return [];
-            var registry = JsonSerializer.Deserialize<InstalledPackRegistry>(
-                File.ReadAllText(_installedPacksPath));
+            var registry = JsonSerializer.Deserialize(
+                File.ReadAllText(_installedPacksPath), IconJsonContext.Default.InstalledPackRegistry);
             if (registry is null
                 || registry.Version != 1
                 || registry.Packs is null
@@ -1314,7 +1314,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         // Version 4 and earlier stored one active pack in current.json. Treat it
         // as the first provider without rewriting user data during construction.
         if (!File.Exists(_currentPackPath)) return [];
-        var pointer = JsonSerializer.Deserialize<CurrentPack>(File.ReadAllText(_currentPackPath));
+        var pointer = JsonSerializer.Deserialize(File.ReadAllText(_currentPackPath), IconJsonContext.Default.CurrentPack);
         if (pointer is null || !SafePackIdRegex().IsMatch(pointer.PackId)) return [];
         var index = TryReadBrandIndex(pointer.PackId);
         return index is null
@@ -1450,7 +1450,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
         var indexPath = Path.Combine(packDirectory, IndexFileName);
         if (!File.Exists(indexPath) || new FileInfo(indexPath).Length is <= 0 or > MaximumInstalledIndexBytes)
             return null;
-        return JsonSerializer.Deserialize<BrandIndex>(File.ReadAllText(indexPath));
+        return JsonSerializer.Deserialize(File.ReadAllText(indexPath), IconJsonContext.Default.BrandIndex);
     }
 
     private static ProviderSnapshot CreateProviderSnapshot(
@@ -2080,7 +2080,7 @@ public sealed partial class SimpleIconsBrandIconPackService : IBrandIconPackServ
     private static async Task WriteJsonAsync<T>(string path, T value, CancellationToken token)
     {
         await using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
-        await JsonSerializer.SerializeAsync(stream, value, cancellationToken: token);
+        await JsonSerializer.SerializeAsync(stream, value, typeof(T), IconJsonContext.Default, token);
         await stream.FlushAsync(token);
     }
 

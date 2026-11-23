@@ -42,7 +42,8 @@ $lockFiles = @(
     'OtpHarbor.Platform.Android\packages.lock.json',
     'OtpHarbor.UI.Avalonia.Shared\packages.lock.json',
     'OtpHarbor.UI.Avalonia.Mobile\packages.lock.json',
-    'OtpHarbor.UI.Avalonia.Android\packages.lock.json')
+    'OtpHarbor.UI.Avalonia.Android\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Android\packages.nativeaot.lock.json')
 $expectedLockTargets = [ordered]@{
     'OtpHarbor.Core\packages.lock.json' = @('net10.0')
     'OtpHarbor.Localization\packages.lock.json' = @('net10.0')
@@ -52,6 +53,10 @@ $expectedLockTargets = [ordered]@{
     'OtpHarbor.UI.Avalonia.Shared\packages.lock.json' = @('net10.0')
     'OtpHarbor.UI.Avalonia.Mobile\packages.lock.json' = @('net10.0')
     'OtpHarbor.UI.Avalonia.Android\packages.lock.json' = @(
+        'net10.0-android36.0',
+        'net10.0-android36.0/android-arm64',
+        'net10.0-android36.0/android-x64')
+    'OtpHarbor.UI.Avalonia.Android\packages.nativeaot.lock.json' = @(
         'net10.0-android36.0',
         'net10.0-android36.0/android-arm64',
         'net10.0-android36.0/android-x64')
@@ -119,7 +124,8 @@ foreach ($required in @(
     'dotnet-version: "10.0.404"',
     'dotnet restore OtpHarbor.Android.sln --locked-mode',
     'dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode',
-    'dotnet workload install android --skip-manifest-update',
+    'dotnet workload install android --version 10.0.403',
+    './scripts/validation/Test-AndroidToolchain.ps1',
     './scripts/validation/Test-AndroidFossBuild.ps1',
     './scripts/validation/Test-AndroidApkPayloadComparison.ps1',
     './scripts/validation/Test-AndroidDistributionChannels.ps1',
@@ -140,4 +146,4 @@ foreach ($required in @(
     }
 }
 
-Write-Output "Android FOSS build inputs are locked across $($lockFiles.Count) projects and $($packageIds.Count) packages."
+Write-Output "Android FOSS build inputs are locked across $($lockFiles.Count) project/variant lock files and $($packageIds.Count) packages."

@@ -19,6 +19,44 @@ $installer = Read-RequiredFile "scripts/testing/android\Install-AndroidDevelopme
 $workflow = Read-RequiredFile ".github\workflows\build-and-test.yml"
 $documentation = Read-RequiredFile "docs\release\ANDROID.md"
 $releasePackager = Read-RequiredFile "scripts/release/android/New-AndroidRelease.ps1"
+$nativeLock = Read-RequiredFile 'OtpHarbor.UI.Avalonia.Android/packages.nativeaot.lock.json' | ConvertFrom-Json
+$nativeCompiler = $nativeLock.dependencies.'net10.0-android36.0'.'Microsoft.DotNet.ILCompiler'
+if ($nativeCompiler.type -ne 'Direct' -or $nativeCompiler.resolved -ne '10.0.15' -or [string]::IsNullOrWhiteSpace($nativeCompiler.contentHash)) {
+    throw 'The NativeAOT compiler must be locked with its version and package content hash.'
+}
+foreach ($nativeControl in @('RestorePackagesWithLockFile', 'packages.nativeaot.lock.json', 'SkipUniversalNativeBinaryCopy')) {
+    if (-not $project.Contains($nativeControl, [StringComparison]::Ordinal)) { throw "Missing NativeAOT build control: $nativeControl" }
+}
+foreach ($nativeControl in @('-UseNativeAot', 'Install-AndroidNativeAotToolchain.ps1', 'NativeAotCompatibilitySmoke', 'Test-AndroidRuntimePayload.ps1')) {
+    if (-not $workflow.Contains($nativeControl, [StringComparison]::Ordinal)) { throw "Missing NativeAOT CI control: $nativeControl" }
+}
+if (-not $releasePackager.Contains('Test-AndroidRuntimePayload.ps1', [StringComparison]::Ordinal)) { throw 'Release APK runtime payloads must be validated before publication.' }
+$sdkPolicy = (Read-RequiredFile 'global.json' | ConvertFrom-Json).sdk
+if ($sdkPolicy.version -ne '10.0.404') {
+    throw 'The Android release must use the validated .NET SDK.'
+}
+if ($null -ne $sdkPolicy.PSObject.Properties['workloadVersion']) {
+    throw 'Pin the workload set in Android installation steps; global.json must also support SDK-only security and desktop jobs.'
+}
+if ([regex]::Matches($workflow, '(?m)^\s*run: dotnet workload install android --version 10\.0\.403\s*$').Count -ne 2) {
+    throw 'Both Android build and production release jobs must explicitly install workload set 10.0.403.'
+}
+foreach ($buildHelper in @($releasePackager, (Read-RequiredFile 'scripts/testing/android/Build-AndroidAotExperiment.ps1'))) {
+    if (-not $buildHelper.Contains('scripts/validation/Test-AndroidToolchain.ps1', [StringComparison]::Ordinal)) {
+        throw 'Local Android release and runtime comparison builds must validate the pinned toolchain.'
+    }
+}
+if ($workflow.Contains('dotnet workload install android --skip-manifest-update', [StringComparison]::Ordinal)) {
+    throw 'Android CI must install the pinned workload set instead of reusing runner manifests.'
+}
+if (-not $project.Contains('<RuntimeIdentifiers Condition="''$(RuntimeIdentifier)'' == ''''">android-arm64;android-x64</RuntimeIdentifiers>', [StringComparison]::Ordinal)) {
+    throw 'The Android project must declare both universal APK runtime identifiers.'
+}
+foreach ($runtimeControl in @('-p:RuntimeIdentifier=', '-p:UseCurrentRuntimeIdentifier=false')) {
+    if (-not $releasePackager.Contains($runtimeControl, [StringComparison]::Ordinal)) {
+        throw "The Android release is missing an explicit runtime control: $runtimeControl"
+    }
+}
 $fingerprintParserPath = Join-Path $repositoryRoot `
     "scripts/release/android/Get-AndroidSigningCertificateFingerprint.ps1"
 
@@ -227,6 +265,18 @@ foreach ($required in @(
     "android-v<major>.<minor>.<patch>")) {
     if (-not $documentation.Contains($required, [StringComparison]::OrdinalIgnoreCase)) {
         throw "The Android release guide is missing required guidance: $required"
+    }
+}
+
+$desktopProbe = [regex]::Match($workflow, '(?ms)^  m3-package-probe:\r?\n(?<body>.*?)(?=^  [a-z][a-z0-9-]*:|\z)').Groups['body'].Value
+if (-not $desktopProbe.Contains("if: `${{ !startsWith(github.ref, 'refs/tags/android-v') }}", [StringComparison]::Ordinal)) {
+    throw 'Android release tags must skip desktop packaging probes.'
+}
+foreach ($job in @('package-android-release', 'publish-android-release')) {
+    $jobBody = [regex]::Match($workflow, "(?ms)^  ${job}:\r?\n(?<body>.*?)(?=^  [a-z][a-z0-9-]*:|\z)").Groups['body'].Value
+    $dependencies = [regex]::Match($jobBody, '(?m)^    needs:\s*(?<value>.+)$').Groups['value'].Value
+    if ([string]::IsNullOrWhiteSpace($dependencies) -or $dependencies.Contains('m3-package-probe', [StringComparison]::Ordinal)) {
+        throw 'Android publication must have independent Android validation and packaging dependencies.'
     }
 }
 
