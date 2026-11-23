@@ -16,6 +16,7 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '../shared/Testing.Common.ps1')
 $aotRoot = Get-OtpHarborRepositoryRoot -StartDirectory $PSScriptRoot
+& (Join-Path $aotRoot 'scripts/validation/Test-AndroidToolchain.ps1')
 $aotPackage = 'io.github.legends.otpharbor.nativeaotprobe'
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $OutputDirectory = Join-Path $aotRoot "artifacts/android/testing/aot/$Runtime/$Architecture"

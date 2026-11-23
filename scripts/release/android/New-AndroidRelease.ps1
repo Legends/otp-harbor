@@ -45,6 +45,7 @@ foreach ($requiredFile in @($projectPath, $KeyStorePath, $StorePasswordFile, $Ke
 if ([string]::IsNullOrWhiteSpace($KeyAlias)) {
     throw "KeyAlias must not be empty."
 }
+& (Join-Path $repositoryRoot 'scripts/validation/Test-AndroidToolchain.ps1')
 
 $version = & (Join-Path $PSScriptRoot "Get-AndroidReleaseVersion.ps1") -ReleaseTag $ReleaseTag |
     ConvertFrom-Json

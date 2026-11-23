@@ -32,8 +32,19 @@ foreach ($nativeControl in @('-UseNativeAot', 'Install-AndroidNativeAotToolchain
 }
 if (-not $releasePackager.Contains('Test-AndroidRuntimePayload.ps1', [StringComparison]::Ordinal)) { throw 'Release APK runtime payloads must be validated before publication.' }
 $sdkPolicy = (Read-RequiredFile 'global.json' | ConvertFrom-Json).sdk
-if ($sdkPolicy.version -ne '10.0.404' -or $sdkPolicy.workloadVersion -ne '10.0.403') {
-    throw 'The Android release must use the validated .NET SDK and workload set.'
+if ($sdkPolicy.version -ne '10.0.404') {
+    throw 'The Android release must use the validated .NET SDK.'
+}
+if ($null -ne $sdkPolicy.PSObject.Properties['workloadVersion']) {
+    throw 'Pin the workload set in Android installation steps; global.json must also support SDK-only security and desktop jobs.'
+}
+if ([regex]::Matches($workflow, '(?m)^\s*run: dotnet workload install android --version 10\.0\.403\s*$').Count -ne 2) {
+    throw 'Both Android build and production release jobs must explicitly install workload set 10.0.403.'
+}
+foreach ($buildHelper in @($releasePackager, (Read-RequiredFile 'scripts/testing/android/Build-AndroidAotExperiment.ps1'))) {
+    if (-not $buildHelper.Contains('scripts/validation/Test-AndroidToolchain.ps1', [StringComparison]::Ordinal)) {
+        throw 'Local Android release and runtime comparison builds must validate the pinned toolchain.'
+    }
 }
 if ($workflow.Contains('dotnet workload install android --skip-manifest-update', [StringComparison]::Ordinal)) {
     throw 'Android CI must install the pinned workload set instead of reusing runner manifests.'

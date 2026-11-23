@@ -180,7 +180,7 @@ jobs:
             NuGet.config
 
       - name: Install Android workload
-        run: dotnet workload install android
+        run: dotnet workload install android --version 10.0.403
 
       - name: Restore Android solution
         # The SDK pin alone does not pin Android workload manifests on hosted runners.
@@ -950,7 +950,7 @@ jobs:
             NuGet.config
 
       - name: Install Android workload
-        run: dotnet workload install android
+        run: dotnet workload install android --version 10.0.403
 
       - name: Restore Android release graph
         shell: pwsh

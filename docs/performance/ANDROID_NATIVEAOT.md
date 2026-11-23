@@ -53,6 +53,7 @@ validation, attribution, provenance and user-responsibility wording are preserve
 ## Repeatable local checks
 
 ```powershell
+dotnet workload install android --version 10.0.403
 dotnet run --project scripts/testing/android/NativeAotCompatibilitySmoke -c Release
 
 ./scripts/testing/android/Build-AndroidAotExperiment.ps1 -Runtime NativeAOT `
@@ -116,6 +117,14 @@ The NativeAOT compiler dependency has its own committed application lock file.
 Locked restore and the dependency license/hash audit cover both application
 graphs. The SDK, workload set and NDK are pinned to the versions used for device
 validation.
+
+Only the SDK is pinned in repository-wide `global.json`. Android CI jobs install
+workload set 10.0.403 explicitly with `dotnet workload install android --version
+10.0.403` and validate the resolved Android pack before restore. Keeping that pin
+out of `global.json` allows SDK-only desktop and security jobs to restore without
+installing mobile workload manifests.
+Local release and runtime-comparison helpers also check the active SDK, workload
+set and Android pack before publishing.
 
 Use a clean checkout or isolated experiment output when changing ABI sets. Reusing
 old single-RID linker intermediates with a universal build can otherwise trigger

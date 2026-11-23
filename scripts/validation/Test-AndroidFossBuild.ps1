@@ -20,7 +20,6 @@ function Read-RequiredFile([string]$RelativePath) {
 
 $sdkConfiguration = Read-RequiredFile 'global.json' | ConvertFrom-Json
 if ($sdkConfiguration.sdk.version -cne '10.0.404' -or
-    $sdkConfiguration.sdk.workloadVersion -cne '10.0.403' -or
     $sdkConfiguration.sdk.rollForward -cne 'disable' -or
     $sdkConfiguration.sdk.allowPrerelease -ne $false) {
     throw 'global.json must pin stable .NET SDK 10.0.404 with roll-forward disabled.'
@@ -125,7 +124,7 @@ foreach ($required in @(
     'dotnet-version: "10.0.404"',
     'dotnet restore OtpHarbor.Android.sln --locked-mode',
     'dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode',
-    'dotnet workload install android',
+    'dotnet workload install android --version 10.0.403',
     './scripts/validation/Test-AndroidToolchain.ps1',
     './scripts/validation/Test-AndroidFossBuild.ps1',
     './scripts/validation/Test-AndroidApkPayloadComparison.ps1',
