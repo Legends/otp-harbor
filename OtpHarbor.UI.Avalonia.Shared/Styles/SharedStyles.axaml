@@ -1241,7 +1241,7 @@
         <Setter Property="Template">
             <ControlTemplate>
                 <Grid>
-                    <TextBox
+                    <controls:ProtectedTextBox
                         Name="PART_Input"
                         automation:AutomationProperties.HelpText="{TemplateBinding HelpText}"
                         automation:AutomationProperties.IsRequiredForForm="{TemplateBinding IsRequired}"

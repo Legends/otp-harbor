@@ -18,6 +18,7 @@ using TOTP.Core.Security;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;
+using TOTP.Core.Services.Models;
 
 namespace TOTP.Tests.Avalonia.Headless;
 
@@ -287,6 +288,34 @@ public sealed class NativeStartupSplashTests : IDisposable
                 Assert.Single(button.GetVisualDescendants().OfType<TextBlock>()).Text);
         }
         finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
+    public async Task QrFileSummary_HidesNativeAccountSurfaceAndRestoresItAfterCancel()
+    {
+        var context = CreateContext();
+        var view = CreateView(context.Model);
+        view.UseNativeAccountList(new Border());
+        await context.Model.InitializeAsync();
+        view.NotifyNativeAccountListRendered();
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Render);
+        var nativePresenter = view.FindControl<ContentControl>("NativeAccountListPresenter")!;
+        Assert.True(nativePresenter.IsVisible);
+
+        var reviewing = context.Model.MigrationImport.WaitForFileReviewAsync(
+            new AccountImportReadSummary(10), "synthetic-google-qr.png");
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Render);
+
+        Assert.False(nativePresenter.IsVisible);
+        var summary = view.FindControl<DeferredContent>("DeferredImportFileSummary")!;
+        Assert.True(summary.IsVisible);
+        Assert.True(summary.IsContentCreated);
+        Assert.Equal(40, context.Model.Accounts.Count);
+        context.Model.MigrationImport.ClearFileCommand.Execute(null);
+        Assert.False(await reviewing);
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Render);
+        Assert.True(nativePresenter.IsVisible);
+        Assert.False(summary.IsVisible);
     }
 
     private MainView CreateView(MobileShellViewModel model)
