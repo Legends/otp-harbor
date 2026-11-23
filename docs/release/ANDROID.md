@@ -123,6 +123,21 @@ the production application.
 
 ## Verify startup on a device
 
+The Android release workflow selects NativeAOT explicitly through
+`New-AndroidRelease.ps1 -UseNativeAot -NdkDirectory <ndk-directory>`. It restores
+the production NativeAOT graph in locked mode first, using
+`EnableAndroidNativeAot=true` and `AndroidAotExperiment=false`. The SDK, workload
+set and NDK are pinned; both APK architectures and the absence of Mono runtime
+libraries are checked before publication. Production signing and certificate
+verification are unchanged. Ordinary development builds retain Mono unless
+NativeAOT is selected.
+
+For the isolated NativeAOT candidate, use
+`scripts/testing/android/Build-AndroidAotExperiment.ps1` and the validation steps
+in [Android NativeAOT validation](../performance/ANDROID_NATIVEAOT.md). That test
+identity has its own vault and never replaces production. The Release Phone
+helper below continues to test the ordinary Mono build.
+
 For local ARM64 Release testing on the connected physical USB phone, run:
 
 ```powershell

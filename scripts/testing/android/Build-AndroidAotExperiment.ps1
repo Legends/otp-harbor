@@ -26,9 +26,6 @@ $aotPropsPath = Join-Path $aotOutput 'Experiment.props'
 $aotProps = @'
 <Project>
   <Import Project="__REPO_PROPS__" />
-  <PropertyGroup>
-    <NuGetLockFilePath>$(MSBuildProjectDirectory)/obj/aot-experiment.packages.lock.json</NuGetLockFilePath>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'OtpHarbor.UI.Avalonia.Android'">
     <BaseOutputPath>__OUTPUT__/build/$(MSBuildProjectName)/bin/</BaseOutputPath>
     <BaseIntermediateOutputPath>__OUTPUT__/build/$(MSBuildProjectName)/obj/</BaseIntermediateOutputPath>
@@ -45,7 +42,7 @@ $aotArguments = @(
     '-c', 'Release', '-nr:false', '--nologo', '-v:minimal',
     '-o', (Join-Path $aotOutput 'publish'), "-p:DirectoryBuildPropsPath=$aotPropsPath",
     "-p:ApplicationId=$aotPackage", '-p:ApplicationVersion=1', '-p:ApplicationDisplayVersion=0.1.0-aot-test',
-    '-p:Optimize=true', '-p:AndroidPackageFormats=apk', '-p:RestoreLockedMode=false')
+    '-p:Optimize=true', '-p:AndroidPackageFormats=apk', '-p:RestoreLockedMode=true')
 $aotOriginalPath = $env:PATH
 if ($Architecture -eq 'universal') { $aotArguments += '-p:UseCurrentRuntimeIdentifier=false' }
 else { $aotArguments += @('-r', "android-$Architecture") }

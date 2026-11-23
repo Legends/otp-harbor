@@ -24,9 +24,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(EnableAndroidNativeAot)' == 'true'">
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <NuGetLockFilePath>$(MSBuildProjectDirectory)/packages.nativeaot.lock.json</NuGetLockFilePath>
     <PublishAot>true</PublishAot>
     <RunAOTCompilation>false</RunAOTCompilation>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(EnableAndroidNativeAot)' == 'true' and '$(AndroidAotExperiment)' != 'false'">
     <ApplicationId>$(AndroidProductionApplicationId).nativeaotprobe</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>0.1.0-nativeaot</ApplicationDisplayVersion>
@@ -34,7 +39,7 @@
   </PropertyGroup>
 
   <Target Name="RejectProductionNativeAotExperiment" BeforeTargets="PrepareForBuild"
-          Condition="'$(PublishAot)' == 'true' and '$(ApplicationId)' != '$(AndroidProductionApplicationId).nativeaotprobe'">
+          Condition="'$(PublishAot)' == 'true' and '$(AndroidAotExperiment)' != 'false' and '$(ApplicationId)' != '$(AndroidProductionApplicationId).nativeaotprobe'">
     <Error Text="The NativeAOT experiment requires its isolated application ID." />
   </Target>
 

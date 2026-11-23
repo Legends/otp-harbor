@@ -19,6 +19,18 @@ $installer = Read-RequiredFile "scripts/testing/android\Install-AndroidDevelopme
 $workflow = Read-RequiredFile ".github\workflows\build-and-test.yml"
 $documentation = Read-RequiredFile "docs\release\ANDROID.md"
 $releasePackager = Read-RequiredFile "scripts/release/android/New-AndroidRelease.ps1"
+$nativeLock = Read-RequiredFile 'OtpHarbor.UI.Avalonia.Android/packages.nativeaot.lock.json' | ConvertFrom-Json
+$nativeCompiler = $nativeLock.dependencies.'net10.0-android36.0'.'Microsoft.DotNet.ILCompiler'
+if ($nativeCompiler.type -ne 'Direct' -or $nativeCompiler.resolved -ne '10.0.15' -or [string]::IsNullOrWhiteSpace($nativeCompiler.contentHash)) {
+    throw 'The NativeAOT compiler must be locked with its version and package content hash.'
+}
+foreach ($nativeControl in @('RestorePackagesWithLockFile', 'packages.nativeaot.lock.json', 'SkipUniversalNativeBinaryCopy')) {
+    if (-not $project.Contains($nativeControl, [StringComparison]::Ordinal)) { throw "Missing NativeAOT build control: $nativeControl" }
+}
+foreach ($nativeControl in @('-UseNativeAot', 'Install-AndroidNativeAotToolchain.ps1', 'NativeAotCompatibilitySmoke', 'Test-AndroidRuntimePayload.ps1')) {
+    if (-not $workflow.Contains($nativeControl, [StringComparison]::Ordinal)) { throw "Missing NativeAOT CI control: $nativeControl" }
+}
+if (-not $releasePackager.Contains('Test-AndroidRuntimePayload.ps1', [StringComparison]::Ordinal)) { throw 'Release APK runtime payloads must be validated before publication.' }
 $sdkPolicy = (Read-RequiredFile 'global.json' | ConvertFrom-Json).sdk
 if ($sdkPolicy.version -ne '10.0.404' -or $sdkPolicy.workloadVersion -ne '10.0.403') {
     throw 'The Android release must use the validated .NET SDK and workload set.'

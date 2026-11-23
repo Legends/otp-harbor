@@ -1,3 +1,4 @@
+#requires -Version 7.0
 <#
 .SYNOPSIS
 Builds and verifies the production-signed OTP Harbor APK for direct distribution.
@@ -26,7 +27,10 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$KeyPasswordFile,
 
-    [string]$ExpectedCertificateSha256
+    [string]$ExpectedCertificateSha256,
+
+    [switch]$UseNativeAot,
+    [string]$NdkDirectory
 )
 
 $ErrorActionPreference = "Stop"
@@ -72,10 +76,23 @@ $arguments = @(
     "-p:AndroidSigningKeyPass=file:$([IO.Path]::GetFullPath($KeyPasswordFile))",
     "--output", $publishDirectory)
 
-& dotnet @arguments
-if ($LASTEXITCODE -ne 0) {
-    throw "The Android release publish failed."
+$releaseOriginalPath = $env:PATH
+try {
+    if ($UseNativeAot) {
+        if ([string]::IsNullOrWhiteSpace($NdkDirectory)) { throw 'NativeAOT release publishing requires -NdkDirectory.' }
+        $releaseNdk = (Resolve-Path -LiteralPath $NdkDirectory).Path
+        $releaseNdkProperties = Get-Content (Join-Path $releaseNdk 'source.properties') -Raw
+        if ($releaseNdkProperties -notmatch '(?m)^Pkg\.Revision\s*=\s*28\.2\.13676358\s*$') { throw 'The NativeAOT release requires the validated NDK 28.2.13676358.' }
+        $releaseNdkHost = if ($IsWindows) { 'windows-x86_64' } elseif ($IsMacOS) { 'darwin-x86_64' } else { 'linux-x86_64' }
+        $releaseCompilerPath = Join-Path $releaseNdk "toolchains/llvm/prebuilt/$releaseNdkHost/bin"
+        if (-not (Test-Path -LiteralPath $releaseCompilerPath -PathType Container)) { throw 'The NativeAOT host compiler is missing.' }
+        $env:PATH = $releaseCompilerPath + [IO.Path]::PathSeparator + $releaseOriginalPath
+        $arguments += @('-p:EnableAndroidNativeAot=true', '-p:AndroidAotExperiment=false', "-p:AndroidNdkDirectory=$releaseNdk", '-p:TrimmerSingleWarn=false')
+    }
+    & dotnet @arguments
+    if ($LASTEXITCODE -ne 0) { throw "The Android release publish failed." }
 }
+finally { $env:PATH = $releaseOriginalPath }
 
 $signedApks = @(Get-ChildItem -LiteralPath $publishDirectory -Filter "*-Signed.apk" -File -Recurse)
 if ($signedApks.Count -ne 1 -or $signedApks[0].Length -le 0) {
@@ -148,6 +165,9 @@ if ($packageLine.Count -ne 1 -or
     $packageLine[0] -notmatch "versionName='$([regex]::Escape([string]$version.displayVersion))'") {
     throw "The APK manifest identity or version does not match the release tag."
 }
+if ($badging -match '^application-debuggable') { throw 'The release APK must not be debuggable.' }
+$releaseRuntime = if ($UseNativeAot) { 'NativeAOT' } else { 'Mono' }
+& (Join-Path $PSScriptRoot 'Test-AndroidRuntimePayload.ps1') -ApkPath $signedApks[0].FullName -Runtime $releaseRuntime
 
 $releaseVersion = [string]$version.displayVersion
 $destination = Join-Path $resolvedOutput "OTP-Harbor-android-universal-$releaseVersion.apk"

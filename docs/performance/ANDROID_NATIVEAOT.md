@@ -8,7 +8,9 @@ product work is on hold.
 
 Mono AOT and NativeAOT are different runtimes. Ordinary builds currently retain
 Mono AOT; `EnableAndroidNativeAot=true` selects the experimental NativeAOT path and
-an isolated `io.github.legends.otpharbor.nativeaotprobe` test identity. The test
+an isolated `io.github.legends.otpharbor.nativeaotprobe` test identity by default.
+The signed release helper explicitly selects production identity with
+`-UseNativeAot`; it keeps the pinned signing-certificate checks. The test
 manifest labels it **OTP Harbor AOT Test**, disables backups and cleartext traffic,
 and keeps the normal biometric/camera permissions and file-provider boundaries.
 
@@ -84,8 +86,56 @@ at 415 ms after `Application.OnCreate`. These stage timings exclude earlier OS
 launch work. The user also reports startup under or near one second with 1,217
 accounts. These are initial samples, not a measured paired Mono/NativeAOT speedup.
 
+The updated universal APK also runs on an isolated Android x64 emulator. With
+synthetic credentials it completed vault setup, account creation, password
+lock/unlock, and encrypted backup export/re-import; re-import correctly detected
+the existing account as a duplicate. The user confirmed that the Google QR
+export-image review now appears above the account list on the physical phone.
+
 Before a production release, validate both universal APK architectures, all
 protected workflows and the production signing pipeline with synthetic signing
 inputs locally and the pinned production identity in Actions. A synthetic-signed
 APK must never be published or installed as production. Await the user's remaining
 phone workflow feedback and passing release checks before calling 3.0.5 ready.
+
+## Universal packaging
+
+A clean universal test publish contains NativeAOT app libraries for both ARM64
+and x64. Runtime payload checks verify their ELF architecture and reject mixed
+Mono/NativeAOT, missing ABI or empty-library payloads before publication.
+
+The pinned SDK's generic `CopyNativeBinary` post-publish target expects one loose
+outer `.so` even though Android has already built and signed the universal APK
+with a library per ABI. `SkipUniversalNativeBinaryCopy` clears that optional copy
+source only for an Android NativeAOT outer build with no standalone binary, and
+only after a signed APK exists. Compilation, linking, APK assembly, signing and
+subsequent signature/manifest/runtime checks still must succeed. Single-RID
+publishes keep their ordinary native-binary copy.
+
+The NativeAOT compiler dependency has its own committed application lock file.
+Locked restore and the dependency license/hash audit cover both application
+graphs. The SDK, workload set and NDK are pinned to the versions used for device
+validation.
+
+Use a clean checkout or isolated experiment output when changing ABI sets. Reusing
+old single-RID linker intermediates with a universal build can otherwise trigger
+the SDK's per-architecture assembly-set validation. The experiment helper keeps
+separate outputs for each runtime/architecture pair, and CI uses fresh workspaces.
+
+## Additional QA fixes
+
+The file-summary and format-choice import dialogs hide the Android native account
+list/group surfaces while active. Their child view-model change notifications are
+forwarded to the shell visibility properties; finishing or cancelling restores
+the same account models. This prevents native views from drawing over a Google QR
+export-image review modal.
+
+The shared masked input uses a protected automation value provider. Concealed
+password/secret values and their value-change events are not exposed to
+accessibility clients. Explicit reveal still exposes the displayed value, and
+automation-based editing/autofill is retained. This addresses a local automation
+data-flow issue without changing password validation, authorization or storage.
+Regression tests cover conceal/reveal, editing while masked, and pointer/keyboard
+entry through the shared template at compact and regular widths. Android emulator
+checks confirmed successful input/unlock and concealed accessibility values using
+synthetic credentials only.

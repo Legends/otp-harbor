@@ -17,7 +17,8 @@ $lockFiles = @(
     'OtpHarbor.Platform.Android\packages.lock.json',
     'OtpHarbor.UI.Avalonia.Shared\packages.lock.json',
     'OtpHarbor.UI.Avalonia.Mobile\packages.lock.json',
-    'OtpHarbor.UI.Avalonia.Android\packages.lock.json')
+    'OtpHarbor.UI.Avalonia.Android\packages.lock.json',
+    'OtpHarbor.UI.Avalonia.Android\packages.nativeaot.lock.json')
 $packages = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::OrdinalIgnoreCase)
 
 foreach ($lockFile in $lockFiles) {
@@ -152,7 +153,7 @@ foreach ($package in ($packages.Values | Sort-Object Id, Version)) {
 
 $expectedLicenseCounts = [ordered]@{
     'MIT AND Apache-2.0' = 87
-    'MIT' = 35
+    'MIT' = 38
     'Apache-2.0' = 12
     'MIT AND Apache-2.0 AND BSD-3-Clause' = 1
     'ISC' = 1
@@ -172,7 +173,7 @@ $audit = [IO.File]::ReadAllText((Join-Path $repositoryRoot 'docs\android\FDROID_
 foreach ($required in @(
     "$($packages.Count) locked package ID/version pairs",
     '87 `MIT AND Apache-2.0`',
-    '35 `MIT`',
+    '38 `MIT`',
     '12 `Apache-2.0`',
     '1 `MIT AND Apache-2.0 AND BSD-3-Clause`',
     '1 `ISC`',
