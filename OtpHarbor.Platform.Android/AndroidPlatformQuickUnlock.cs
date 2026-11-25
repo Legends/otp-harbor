@@ -193,6 +193,7 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
             using var existingKey = GetKey(wrapper.KeyReference);
             if (existingKey is null)
             {
+                _logger.LogWarning("Android quick-unlock key was not found before authentication. Mode: {Mode}.", _mode);
                 return Result.Ok(PlatformQuickUnlockAttempt.WithoutKey(
                     PlatformQuickUnlockStatus.KeyNotFound));
             }
@@ -218,6 +219,7 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
             if (authenticated.Status != PlatformQuickUnlockStatus.Succeeded
                 || authenticated.Output is null)
             {
+                _logger.LogInformation("Android quick-unlock prompt did not succeed. Mode: {Mode}; status: {Status}.", _mode, authenticated.Status);
                 return Result.Ok(PlatformQuickUnlockAttempt.WithoutKey(authenticated.Status));
             }
 
@@ -234,12 +236,14 @@ public sealed class AndroidPlatformQuickUnlock : IPlatformQuickUnlock
         }
         catch (KeyPermanentlyInvalidatedException)
         {
+            _logger.LogWarning("Android quick-unlock key was permanently invalidated. Mode: {Mode}.", _mode);
             RemoveAliasBestEffort(wrapper.KeyReference);
             return Result.Ok(PlatformQuickUnlockAttempt.WithoutKey(
                 PlatformQuickUnlockStatus.KeyNotFound));
         }
         catch (UnrecoverableKeyException)
         {
+            _logger.LogWarning("Android quick-unlock key could not be recovered. Mode: {Mode}.", _mode);
             return Result.Ok(PlatformQuickUnlockAttempt.WithoutKey(
                 PlatformQuickUnlockStatus.KeyNotFound));
         }

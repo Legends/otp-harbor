@@ -381,16 +381,22 @@ public sealed partial class MobileShellViewModel :
             () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformQuickUnlock));
         _chooseInitialBiometricCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod.PlatformQuickUnlock),
-            () => IsInitialQuickUnlockOfferVisible && IsBiometricAvailable && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && IsBiometricAvailable && !IsBusy);
         _chooseInitialDeviceCredentialCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod.PlatformDeviceCredential),
-            () => IsInitialQuickUnlockOfferVisible && IsDeviceCredentialAvailable && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && IsDeviceCredentialAvailable && !IsBusy);
         _skipInitialQuickUnlockCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(null),
-            () => IsInitialQuickUnlockOfferVisible && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && !IsBusy);
         _disableInitialAppLockCommand = new MobileAsyncCommand(
+            () => { IsInitialNoAppLockConfirmationVisible = true; return Task.CompletedTask; },
+            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && !IsBusy);
+        _confirmInitialNoAppLockCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(null, disableAppLock: true),
-            () => IsInitialQuickUnlockOfferVisible && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && IsInitialNoAppLockConfirmationVisible && !IsBusy);
+        _cancelInitialNoAppLockCommand = new MobileAsyncCommand(
+            () => { IsInitialNoAppLockConfirmationVisible = false; return Task.CompletedTask; },
+            () => IsInitialQuickUnlockOfferVisible && IsInitialNoAppLockConfirmationVisible && !IsBusy);
         _beginDeviceCredentialEnrollmentCommand = new MobileAsyncCommand(
             BeginDeviceCredentialEnrollmentAsync,
             () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformDeviceCredential));
@@ -2989,10 +2995,13 @@ public sealed partial class MobileShellViewModel :
             if (_disposed || !IsSettingsVisible || !_authorization.State.IsUnlocked) return;
             authenticateImmediately = IsPlatformAuthorizationSelected;
             _logger.LogInformation(new EventId(4101, "AppLockAuthentication"),
-                "App-lock deactivation selected authentication. Configured: {ConfiguredMethod}; selected: {SelectedMethod}.",
-                _authorization.State.PreferredUnlockMethod, SelectedAuthorizationMethod);
+                "App-lock deactivation selected authentication. Configured: {ConfiguredMethod}; saved: {SavedMethod}; selected: {SelectedMethod}.",
+                _authorization.State.PreferredUnlockMethod, _settings.Current.PreferredUnlockMethod, SelectedAuthorizationMethod);
             IsDisableAppLockConfirmationVisible = !authenticateImmediately;
             ClearNotification();
+            if (!authenticateImmediately && (_settings.Current.PreferredUnlockMethod is
+                PreferredUnlockMethod.PlatformQuickUnlock or PreferredUnlockMethod.PlatformDeviceCredential))
+                SetNotification(Get(MobileStringKeys.AppLockPlatformRecoveryRequired), NotificationSeverity.Warning);
         }
         finally { IsBusy = false; }
         if (authenticateImmediately) await ApplyAppLockDeactivationAsync(fromToggle: true);
@@ -3036,10 +3045,13 @@ public sealed partial class MobileShellViewModel :
             if (operation.IsCancellationRequested || result == AuthorizationResult.Cancelled) return;
             if (result != AuthorizationResult.Success)
             {
-                if (result is AuthorizationResult.PasswordRequired or AuthorizationResult.NotAvailable)
+                if (!IsPasswordAuthorizationSelected &&
+                    (result is AuthorizationResult.PasswordRequired or AuthorizationResult.NotAvailable))
                 {
                     SelectPasswordAuthorizationFallback();
                     IsDisableAppLockConfirmationVisible = true;
+                    SetNotification(Get(MobileStringKeys.AppLockPlatformRecoveryRequired), NotificationSeverity.Warning);
+                    return;
                 }
                 SetError(result == AuthorizationResult.InvalidCredentials
                     ? MobileStringKeys.UnlockRejected
@@ -3259,6 +3271,11 @@ public sealed partial class MobileShellViewModel :
     {
         if (IsInitialQuickUnlockOfferVisible)
         {
+            if (IsInitialNoAppLockConfirmationVisible)
+            {
+                IsInitialNoAppLockConfirmationVisible = false;
+                return true;
+            }
             await CompleteInitialQuickUnlockChoiceAsync(null);
             return true;
         }

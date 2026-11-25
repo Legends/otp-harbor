@@ -229,16 +229,20 @@
   <data name="ViewImportFormatsFaq" xml:space="preserve"><value>How should these import files be structured?</value></data>
   <data name="InfoDescription" xml:space="preserve"><value>App version, license and links.</value></data>
   <data name="FaqOlderVaultsAnswer" xml:space="preserve"><value>Yes, if you have a supported export or backup. In Settings → Data &amp; backup → Import accounts, select the file from the older version. OTP Harbor supports its account exports, password-protected .totp and .otphbp backups, and automatic .otphbackup snapshots. For an encrypted backup, enter the password used when it was created. Keep the original files until you have checked the imported accounts. If the file is unsupported, open it in the older app and export the accounts in a supported format first.</value></data>
-  <data name="InitialAuthenticationTitle" xml:space="preserve"><value>Choose how to unlock</value></data>
+  <data name="InitialAuthenticationTitle" xml:space="preserve"><value>Protect your vault</value></data>
   <data name="InitialAuthenticationDescription" xml:space="preserve"><value>Your master password is set. Choose how to open OTP Harbor, and keep your master password for recovery.</value></data>
   <data name="InitialBiometricDescription" xml:space="preserve"><value>Unlock with your fingerprint or another strong biometric.</value></data>
   <data name="InitialDeviceLockTitle" xml:space="preserve"><value>Device screen lock</value></data>
   <data name="InitialDeviceLockDescription" xml:space="preserve"><value>PIN, pattern or password</value></data>
   <data name="InitialMasterPasswordDescription" xml:space="preserve"><value>Use your master password whenever the app locks.</value></data>
-  <data name="InitialNoAppLockTitle" xml:space="preserve"><value>No app lock</value></data>
-  <data name="InitialNoAppLockDescription" xml:space="preserve"><value>Open without authentication. Your vault stays encrypted; sensitive actions still require authorization.</value></data>
+  <data name="InitialNoAppLockTitle" xml:space="preserve"><value>Continue without app lock</value></data>
+  <data name="InitialNoAppLockDescription" xml:space="preserve"><value>Anyone with access to your unlocked device can open OTP Harbor. Your vault stays encrypted; sensitive actions still require authorization.</value></data>
   <data name="InitialAuthenticationSettingsHint" xml:space="preserve"><value>You can change this later in Security settings.</value></data>
   <data name="InitialAuthenticationRecommended" xml:space="preserve"><value>Recommended</value></data>
   <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Default</value></data>
   <data name="AppLockDeactivateAction" xml:space="preserve"><value>Deactivate</value></data>
+  <data name="InitialNoAppLockNotRecommended" xml:space="preserve"><value>Not recommended</value></data>
+  <data name="InitialNoAppLockConfirmationTitle" xml:space="preserve"><value>Continue without app lock?</value></data>
+  <data name="InitialNoAppLockConfirmationDescription" xml:space="preserve"><value>Anyone with access to your unlocked device can view your codes. You can enable app lock again in Security settings.</value></data>
+  <data name="AppLockPlatformRecoveryRequired" xml:space="preserve"><value>The configured device authentication could not be used. Enter your master password to authorize deactivation, or cancel to keep app lock enabled.</value></data>
 </root>

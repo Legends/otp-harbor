@@ -77,7 +77,12 @@ public sealed partial class MobileShellViewModelTests
         Assert.Equal(recovery && !enabled, sut.IsBiometricEnrollmentVisible);
         Assert.Empty(sut.AppLockRecoveryPassword);
         Assert.Empty(sut.BiometricRecoveryPassword);
-        if (recovery) Assert.True(sut.IsPasswordAuthorizationSelected);
+        if (recovery)
+        {
+            Assert.True(sut.IsPasswordAuthorizationSelected);
+            if (enabled)
+                Assert.Equal(context.Strings.Get(MobileStringKeys.AppLockPlatformRecoveryRequired), sut.NotificationText);
+        }
         if (result == AuthorizationResult.Cancelled) Assert.Empty(sut.NotificationText);
         context.Authorization.Verify(value => value.SetAppLockEnabledAsync(It.IsAny<bool>(), It.IsAny<string>()), Times.Never);
     }

@@ -47,6 +47,7 @@ public sealed partial class AuthenticationWorkflowTests
         model.BiometricRecoveryPassword = AuthenticationWorkflowHarness.Password;
         await model.EnableBiometricAsync();
         Assert.True(model.IsBiometricUnlockSelected);
+        Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, process.Authorization.State.PreferredUnlockMethod);
         Assert.False(model.IsBiometricEnrollmentVisible);
 
         harness.Biometrics.Availability = availableProbe
@@ -55,6 +56,7 @@ public sealed partial class AuthenticationWorkflowTests
         await model.BeginDisableAppLockAsync();
 
         Assert.Equal(previousPrompts + 1, harness.Biometrics.AuthenticationCalls);
+        Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, model.SelectedAuthenticationMethod?.Method);
         Assert.False(model.IsAppLockEnabled);
         Assert.False(model.IsDisableAppLockConfirmationVisible);
         Assert.Empty(model.AppLockRecoveryPassword);

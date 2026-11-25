@@ -75,6 +75,8 @@ public sealed partial class NativeStartupSplashTests
             Assert.All(buttons, button => Assert.True(button.IsVisible));
             Assert.Equal(context.Model.MasterPasswordText, Assert.Single(buttons[2].GetVisualDescendants().OfType<TextBlock>(), text => text.Classes.Contains("auth-title")).Text);
             Assert.Contains(buttons[2].GetVisualDescendants().OfType<TextBlock>(), text => text.Text == context.Model.InitialAuthenticationDefault);
+            Assert.Contains(buttons[3].GetVisualDescendants().OfType<TextBlock>(), text => text.Text == context.Model.InitialNoAppLockTitle);
+            Assert.Contains(buttons[3].GetVisualDescendants().OfType<TextBlock>(), text => text.Text == context.Model.InitialNoAppLockNotRecommended);
             if (width == 430 && height == 800) SaveAuthenticationPreview(window, "dark-top");
             foreach (var button in buttons)
             {
@@ -158,6 +160,20 @@ public sealed partial class NativeStartupSplashTests
             window.MouseDown(point, MouseButton.Left);
             window.MouseUp(point, MouseButton.Left);
             Dispatcher.UIThread.RunJobs();
+            if (choice == InitialAppLockChoice.AppLockDisabled)
+            {
+                Assert.True(context.Model.IsInitialNoAppLockConfirmationVisible);
+                Assert.True(context.Model.IsAppLockEnabled);
+                context.Authorization.Verify(value => value.CompleteInitialAppLockSetupAsync(choice, It.IsAny<CancellationToken>()), Times.Never);
+                var confirm = setup.FindControl<Button>("ConfirmInitialNoAppLockChoice")!;
+                confirm.BringIntoView();
+                window.UpdateLayout();
+                Dispatcher.UIThread.RunJobs();
+                var confirmPoint = confirm.TranslatePoint(new Point(confirm.Bounds.Width / 2, confirm.Bounds.Height / 2), window)!.Value;
+                window.MouseDown(confirmPoint, MouseButton.Left);
+                window.MouseUp(confirmPoint, MouseButton.Left);
+                Dispatcher.UIThread.RunJobs();
+            }
             Assert.False(context.Model.IsInitialQuickUnlockOfferVisible);
             Assert.Equal(choice != InitialAppLockChoice.AppLockDisabled, context.Model.IsAppLockEnabled);
             if (choice == InitialAppLockChoice.AppLockDisabled)

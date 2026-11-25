@@ -190,12 +190,18 @@ public sealed class AuthorizationEnvelopeSession : IAuthorizationEnvelopeSession
 
             var wrapper = _envelope.QuickUnlockWrapper;
             if (!PlatformQuickUnlockContract.IsSupported(wrapper))
+            {
+                _logger.LogWarning("Platform authorization requires recovery: no supported wrapper.");
                 return Result.Ok(AuthorizationResult.PasswordRequired);
+            }
 
             var adapter = _platformQuickUnlockAdapters.FirstOrDefault(value =>
                 string.Equals(value.ProviderId, wrapper!.Provider, StringComparison.Ordinal));
             if (adapter is null)
+            {
+                _logger.LogWarning("Platform authorization requires recovery: no adapter for the configured provider.");
                 return Result.Ok(AuthorizationResult.PasswordRequired);
+            }
 
             var platformResult = await adapter.TryUnlockAsync(wrapper!, cancellationToken);
             if (platformResult.IsFailed)
@@ -208,7 +214,10 @@ public sealed class AuthorizationEnvelopeSession : IAuthorizationEnvelopeSession
 
             using var attempt = platformResult.Value;
             if (!attempt.IsSuccess)
+            {
+                _logger.LogInformation("Platform authorization did not succeed. Status: {Status}.", attempt.Status);
                 return Result.Ok(MapPlatformOutcome(attempt.Status));
+            }
 
             var platformKey = attempt.VaultKey;
             if (platformKey is null || platformKey.Length != VaultKeySize)
