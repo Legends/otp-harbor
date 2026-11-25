@@ -388,6 +388,9 @@ public sealed partial class MobileShellViewModel :
         _skipInitialQuickUnlockCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(null),
             () => IsInitialQuickUnlockOfferVisible && !IsBusy);
+        _disableInitialAppLockCommand = new MobileAsyncCommand(
+            () => CompleteInitialQuickUnlockChoiceAsync(null, disableAppLock: true),
+            () => IsInitialQuickUnlockOfferVisible && !IsBusy);
         _beginDeviceCredentialEnrollmentCommand = new MobileAsyncCommand(
             BeginDeviceCredentialEnrollmentAsync,
             () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformDeviceCredential));
@@ -2217,6 +2220,7 @@ public sealed partial class MobileShellViewModel :
     public string AppLockDisabledDescriptionText =>
         Get(MobileStringKeys.AppLockDisabledDescription);
     public string DisableAppLockText => Get(MobileStringKeys.DisableAppLock);
+    public string DeactivateAppLockConfirmationText => Get(MobileStringKeys.AppLockDeactivateAction);
     public string EnableAppLockText => Get(MobileStringKeys.EnableAppLock);
     public string AppLockActionText => IsAppLockEnabled
         ? DisableAppLockText
@@ -2668,10 +2672,7 @@ public sealed partial class MobileShellViewModel :
             if (_disposed || !_authorization.State.IsUnlocked) return;
             SetScreen(MobileScreen.Accounts);
             ApplyBiometricEnrollmentOutcome(null);
-            IsInitialQuickUnlockOfferVisible = IsBiometricAvailable || IsDeviceCredentialAvailable;
-            if (IsInitialQuickUnlockOfferVisible) return;
-            await _authorization.CompleteInitialQuickUnlockSetupAsync(null);
-            await LoadAccountsAsync();
+            IsInitialQuickUnlockOfferVisible = true;
         }
         catch (Exception)
         {
@@ -2987,6 +2988,9 @@ public sealed partial class MobileShellViewModel :
             await PrepareSensitiveAuthenticationAsync(useConfiguredMethod: true);
             if (_disposed || !IsSettingsVisible || !_authorization.State.IsUnlocked) return;
             authenticateImmediately = IsPlatformAuthorizationSelected;
+            _logger.LogInformation(new EventId(4101, "AppLockAuthentication"),
+                "App-lock deactivation selected authentication. Configured: {ConfiguredMethod}; selected: {SelectedMethod}.",
+                _authorization.State.PreferredUnlockMethod, SelectedAuthorizationMethod);
             IsDisableAppLockConfirmationVisible = !authenticateImmediately;
             ClearNotification();
         }
@@ -3025,6 +3029,9 @@ public sealed partial class MobileShellViewModel :
             var result = IsPasswordAuthorizationSelected
                 ? await _authorization.SetAppLockEnabledAsync(false, recoveryPassword)
                 : await _authorization.SetAppLockEnabledWithPlatformAsync(false, SelectedAuthorizationMethod, operation.Token);
+            _logger.LogInformation(new EventId(4101, "AppLockAuthentication"),
+                "App-lock deactivation authorization completed. Method: {Method}; outcome: {Outcome}.",
+                SelectedAuthorizationMethod, result);
             if (!_authorization.State.IsUnlocked) { LockCore(); return; }
             if (operation.IsCancellationRequested || result == AuthorizationResult.Cancelled) return;
             if (result != AuthorizationResult.Success)
@@ -7417,6 +7424,7 @@ public sealed partial class MobileShellViewModel :
         nameof(AppLockEnabledDescriptionText),
         nameof(AppLockDisabledDescriptionText),
         nameof(DisableAppLockText),
+        nameof(DeactivateAppLockConfirmationText),
         nameof(EnableAppLockText),
         nameof(AppLockActionText),
         nameof(DisableAppLockWarningText),

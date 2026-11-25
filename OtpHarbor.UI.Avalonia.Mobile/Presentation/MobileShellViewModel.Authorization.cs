@@ -2,6 +2,7 @@ using System.Windows.Input;
 using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Core.Enums;
 using TOTP.Core.Security.Models;
+using TOTP.Core.Services.Interfaces;
 
 namespace TOTP.Avalonia.Mobile.Presentation;
 
@@ -12,6 +13,7 @@ public sealed partial class MobileShellViewModel
     private readonly MobileAsyncCommand _chooseInitialBiometricCommand;
     private readonly MobileAsyncCommand _chooseInitialDeviceCredentialCommand;
     private readonly MobileAsyncCommand _skipInitialQuickUnlockCommand;
+    private readonly MobileAsyncCommand _disableInitialAppLockCommand;
     private IReadOnlyList<SensitiveAuthenticationOption> _authenticationMethods = [];
     private SensitiveAuthenticationOption? _selectedAuthenticationMethod;
     private bool _isInitialQuickUnlockOfferVisible;
@@ -20,6 +22,8 @@ public sealed partial class MobileShellViewModel
     public ICommand ChooseInitialBiometricCommand => _chooseInitialBiometricCommand;
     public ICommand ChooseInitialDeviceCredentialCommand => _chooseInitialDeviceCredentialCommand;
     public ICommand SkipInitialQuickUnlockCommand => _skipInitialQuickUnlockCommand;
+    public ICommand ChooseInitialMasterPasswordCommand => _skipInitialQuickUnlockCommand;
+    public ICommand ChooseInitialNoAppLockCommand => _disableInitialAppLockCommand;
     public IReadOnlyList<SensitiveAuthenticationOption> AuthenticationMethods => _authenticationMethods;
     public bool HasAuthenticationMethodChoice => !_usesConfiguredAuthenticationMethod && _authenticationMethods.Count > 1;
     public bool IsPasswordAuthorizationSelected =>
@@ -54,8 +58,17 @@ public sealed partial class MobileShellViewModel
 
     public string AuthenticationMethodText => Get(MobileStringKeys.AuthenticationMethod);
     public string DeviceAuthenticationPromptText => Get(MobileStringKeys.DeviceAuthenticationPrompt);
-    public string InitialQuickUnlockTitle => Get(MobileStringKeys.InitialQuickUnlockTitle);
-    public string InitialQuickUnlockDescription => Get(MobileStringKeys.InitialQuickUnlockDescription);
+    public string InitialQuickUnlockTitle => Get(MobileStringKeys.InitialAuthenticationTitle);
+    public string InitialQuickUnlockDescription => Get(MobileStringKeys.InitialAuthenticationDescription);
+    public string InitialBiometricDescription => Get(MobileStringKeys.InitialBiometricDescription);
+    public string InitialDeviceLockDescription => Get(MobileStringKeys.InitialDeviceLockDescription);
+    public string InitialDeviceLockTitle => Get(MobileStringKeys.InitialDeviceLockTitle);
+    public string InitialMasterPasswordDescription => Get(MobileStringKeys.InitialMasterPasswordDescription);
+    public string InitialNoAppLockTitle => Get(MobileStringKeys.InitialNoAppLockTitle);
+    public string InitialNoAppLockDescription => Get(MobileStringKeys.InitialNoAppLockDescription);
+    public string InitialAuthenticationSettingsHint => Get(MobileStringKeys.InitialAuthenticationSettingsHint);
+    public string InitialAuthenticationRecommended => Get(MobileStringKeys.InitialAuthenticationRecommended);
+    public string InitialAuthenticationDefault => Get(MobileStringKeys.InitialAuthenticationDefault);
     public string NotNowText => Get(MobileStringKeys.NotNow);
 
     private PreferredUnlockMethod SelectedAuthorizationMethod =>
@@ -76,9 +89,12 @@ public sealed partial class MobileShellViewModel
         var current = IsAppLockEnabled ? _authorization.State.PreferredUnlockMethod
             : useConfiguredMethod ? _settings.Current.PreferredUnlockMethod : PreferredUnlockMethod.Password;
         var methods = new List<PreferredUnlockMethod> { PreferredUnlockMethod.Password };
-        if (IsBiometricAvailable && (!IsAppLockEnabled && !useConfiguredMethod || current == PreferredUnlockMethod.PlatformQuickUnlock))
+        var usesConfiguredMethod = IsAppLockEnabled || useConfiguredMethod;
+        if (usesConfiguredMethod && current == PreferredUnlockMethod.PlatformQuickUnlock
+            || !usesConfiguredMethod && IsBiometricAvailable)
             methods.Add(PreferredUnlockMethod.PlatformQuickUnlock);
-        if (IsDeviceCredentialAvailable && (!IsAppLockEnabled && !useConfiguredMethod || current == PreferredUnlockMethod.PlatformDeviceCredential))
+        if (usesConfiguredMethod && current == PreferredUnlockMethod.PlatformDeviceCredential
+            || !usesConfiguredMethod && IsDeviceCredentialAvailable)
             methods.Add(PreferredUnlockMethod.PlatformDeviceCredential);
         _authenticationMethods = methods.Select(method => new SensitiveAuthenticationOption(method, AuthenticationLabel(method))).ToArray();
         _selectedAuthenticationMethod = _authenticationMethods.FirstOrDefault(option => option.Method == current)
@@ -103,7 +119,11 @@ public sealed partial class MobileShellViewModel
             new SensitiveAuthenticationOption(option.Method, AuthenticationLabel(option.Method))).ToArray();
         _selectedAuthenticationMethod = _authenticationMethods.FirstOrDefault(option => option.Method == selected);
         foreach (var name in new[] { nameof(AuthenticationMethodText), nameof(DeviceAuthenticationPromptText),
-                     nameof(InitialQuickUnlockTitle), nameof(InitialQuickUnlockDescription), nameof(NotNowText) })
+                     nameof(InitialQuickUnlockTitle), nameof(InitialQuickUnlockDescription), nameof(NotNowText),
+                     nameof(InitialBiometricDescription), nameof(InitialDeviceLockDescription), nameof(InitialDeviceLockTitle),
+                     nameof(InitialMasterPasswordDescription), nameof(InitialNoAppLockTitle),
+                     nameof(InitialNoAppLockDescription), nameof(InitialAuthenticationSettingsHint),
+                     nameof(InitialAuthenticationRecommended), nameof(InitialAuthenticationDefault) })
             OnPropertyChanged(name);
         NotifyAuthenticationSelectionChanged();
     }
@@ -125,9 +145,10 @@ public sealed partial class MobileShellViewModel
         _chooseInitialBiometricCommand?.NotifyCanExecuteChanged();
         _chooseInitialDeviceCredentialCommand?.NotifyCanExecuteChanged();
         _skipInitialQuickUnlockCommand?.NotifyCanExecuteChanged();
+        _disableInitialAppLockCommand?.NotifyCanExecuteChanged();
     }
 
-    private async Task CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod? method)
+    private async Task CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod? method, bool disableAppLock = false)
     {
         if (!IsInitialQuickUnlockOfferVisible || IsBusy) return;
         if (method == PreferredUnlockMethod.PlatformQuickUnlock && !IsBiometricAvailable
@@ -137,19 +158,27 @@ public sealed partial class MobileShellViewModel
         using var operation = BeginSensitiveOperation();
         try
         {
-            var result = await _authorization.CompleteInitialQuickUnlockSetupAsync(method, operation.Token);
+            var result = disableAppLock
+                ? await _authorization.CompleteInitialAppLockSetupAsync(InitialAppLockChoice.AppLockDisabled, operation.Token)
+                : await _authorization.CompleteInitialQuickUnlockSetupAsync(method, operation.Token);
             if (operation.IsCancellationRequested || !_authorization.State.IsUnlocked) return;
             RefreshUnlockMethodState();
             NotifyAppLockChanged();
             NotifyUnlockMethodChanged();
-            if (method is not null)
+            if (disableAppLock)
+            {
+                if (result == AuthorizationResult.Success && !IsAppLockEnabled)
+                    SetNotification(Get(MobileStringKeys.AppLockDisabled), NotificationSeverity.Warning);
+                else if (result != AuthorizationResult.Cancelled) SetError(MobileStringKeys.AppLockChangeFailed);
+            }
+            else if (method is not null)
             {
                 if (result == AuthorizationResult.Success) SetSuccess(MobileStringKeys.QuickUnlockEnabled);
                 else if (result != AuthorizationResult.Cancelled) SetError(MobileStringKeys.QuickUnlockNotEnabled);
             }
         }
         catch (OperationCanceledException) when (operation.IsCancellationRequested) { }
-        catch (Exception) { SetError(MobileStringKeys.QuickUnlockNotEnabled); }
+        catch (Exception) { SetError(disableAppLock ? MobileStringKeys.AppLockChangeFailed : MobileStringKeys.QuickUnlockNotEnabled); }
         finally
         {
             if (!operation.IsCancellationRequested && !_disposed && _authorization.State.IsUnlocked)

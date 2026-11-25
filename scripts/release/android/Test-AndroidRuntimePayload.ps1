@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Validates runtime libraries and ELF architectures inside an Android APK.
+Validates runtime libraries, ELF architectures and the NativeAOT Java bootstrap class.
 .DESCRIPTION
 Checks payload structure only. The caller must separately verify the APK signature and manifest.
 #>
@@ -15,6 +15,21 @@ if ($Architectures.Count -eq 0 -or @($Architectures | Select-Object -Unique).Cou
 }
 $payloadArchive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $ApkPath).Path)
 try {
+    if ($Runtime -eq 'NativeAOT') {
+        if (-not ('OtpHarbor.Android.DexClassDefinitions' -as [type])) {
+            Add-Type -Path (Join-Path $PSScriptRoot 'AndroidDexClassDefinitions.cs')
+        }
+        $providerDefinitions = 0
+        foreach ($dex in @($payloadArchive.Entries | Where-Object { $_.FullName -match '^classes(?:[2-9]|[1-9][0-9]+)?\.dex$' })) {
+            if ($dex.Length -lt 112 -or $dex.Length -gt 64MB) { throw 'Invalid or oversized APK DEX file.' }
+            $dexBytes = [byte[]]::new([int]$dex.Length)
+            $dexStream = $dex.Open()
+            try { $dexStream.ReadExactly($dexBytes) }
+            finally { $dexStream.Dispose() }
+            $providerDefinitions += [OtpHarbor.Android.DexClassDefinitions]::Count($dexBytes, 'Lnet/dot/jni/nativeaot/NativeAotRuntimeProvider;')
+        }
+        if ($providerDefinitions -ne 1) { throw 'The NativeAOT APK must define exactly one Java NativeAotRuntimeProvider startup class.' }
+    }
     $payloadLibraries = @($payloadArchive.Entries | Where-Object { $_.FullName -match '^lib/[^/]+/[^/]+\.so$' })
     $payloadAbis = @($payloadLibraries | ForEach-Object { $_.FullName.Split('/')[1] } | Sort-Object -Unique)
     if (Compare-Object ($Architectures | Sort-Object) $payloadAbis) { throw 'APK runtime architectures do not match the expected set.' }

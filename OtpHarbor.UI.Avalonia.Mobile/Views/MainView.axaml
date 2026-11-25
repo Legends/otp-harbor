@@ -1454,7 +1454,7 @@
                                                                 Grid.Column="1"
                                                                 Classes="wide danger"
                                                                 Command="{Binding ConfirmDisableAppLockCommand}">
-                                                                <controls:SymbolIconLabel Kind="Lock" Text="{Binding DisableAppLockText}" />
+                                                                <controls:SymbolIconLabel Kind="Lock" Text="{Binding DeactivateAppLockConfirmationText}" />
                                                             </Button>
                                                         </Grid>
                                                     </StackPanel>
@@ -3429,32 +3429,7 @@
 
         <controls:DeferredContent x:Name="DeferredQuickUnlockOffer" IsRequested="{Binding IsInitialQuickUnlockOfferVisible}" IsVisible="{Binding IsInitialQuickUnlockOfferVisible}" Grid.RowSpan="3" ZIndex="150">
             <DataTemplate x:DataType="vm:MobileShellViewModel">
-                <Grid
-                      Background="{DynamicResource BrushOverlayStrong}"
-                       IsVisible="{Binding IsInitialQuickUnlockOfferVisible}" Grid.RowSpan="3" Panel.ZIndex="150">
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden"
-                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
-                        <Border Classes="panel" MaxWidth="440" Margin="20" Padding="20"
-                                Background="{DynamicResource BrushWindowBackground}">
-                            <StackPanel Spacing="14">
-                                <TextBlock Classes="section-title" Text="{Binding InitialQuickUnlockTitle}" TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding InitialQuickUnlockDescription}" TextWrapping="Wrap" />
-                                <Button Classes="wide primary" IsVisible="{Binding IsBiometricAvailable}"
-                                        automation:AutomationProperties.Name="{Binding UnlockWithBiometricsText}"
-                                        Command="{Binding ChooseInitialBiometricCommand}">
-                                    <controls:SymbolIconLabel Kind="Lock" Text="{Binding UnlockWithBiometricsText}" />
-                                </Button>
-                                <Button Classes="wide secondary" IsVisible="{Binding IsDeviceCredentialAvailable}"
-                                        automation:AutomationProperties.Name="{Binding UnlockWithDevicePinText}"
-                                        Command="{Binding ChooseInitialDeviceCredentialCommand}">
-                                    <controls:SymbolIconLabel Kind="Lock" Text="{Binding UnlockWithDevicePinText}" />
-                                </Button>
-                                <Button Classes="wide secondary" Command="{Binding SkipInitialQuickUnlockCommand}"
-                                        Content="{Binding NotNowText}" />
-                            </StackPanel>
-                        </Border>
-                    </ScrollViewer>
-                </Grid>
+                <views:InitialAuthenticationSetupView />
             </DataTemplate>
         </controls:DeferredContent>
 

@@ -229,4 +229,16 @@
   <data name="ViewImportFormatsFaq" xml:space="preserve"><value>Comment ces fichiers d’importation doivent-ils être structurés ?</value></data>
   <data name="InfoDescription" xml:space="preserve"><value>Version de l’application, licence et liens.</value></data>
   <data name="FaqOlderVaultsAnswer" xml:space="preserve"><value>Oui, si vous disposez d’un export ou d’une sauvegarde dans un format pris en charge. Dans Paramètres → Données et sauvegarde → Importer des comptes, sélectionnez le fichier de l’ancienne version. OTP Harbor prend en charge ses exports de comptes, les sauvegardes .totp et .otphbp protégées par mot de passe et les sauvegardes automatiques .otphbackup. Pour une sauvegarde chiffrée, saisissez le mot de passe utilisé lors de sa création. Conservez les fichiers d’origine jusqu’à la vérification des comptes importés. Si le fichier n’est pas pris en charge, ouvrez-le d’abord dans l’ancienne application et exportez les comptes dans un format pris en charge.</value></data>
+  <data name="InitialAuthenticationTitle" xml:space="preserve"><value>Choisir le déverrouillage</value></data>
+  <data name="InitialAuthenticationDescription" xml:space="preserve"><value>Votre mot de passe maître est défini. Choisissez comment ouvrir OTP Harbor et conservez votre mot de passe maître pour la récupération.</value></data>
+  <data name="InitialBiometricDescription" xml:space="preserve"><value>Déverrouillez avec votre empreinte ou une autre biométrie forte.</value></data>
+  <data name="InitialDeviceLockTitle" xml:space="preserve"><value>Verrouillage de l’appareil</value></data>
+  <data name="InitialDeviceLockDescription" xml:space="preserve"><value>Code PIN, schéma ou mot de passe</value></data>
+  <data name="InitialMasterPasswordDescription" xml:space="preserve"><value>Utilisez votre mot de passe maître après chaque verrouillage de l’application.</value></data>
+  <data name="InitialNoAppLockTitle" xml:space="preserve"><value>Sans verrouillage</value></data>
+  <data name="InitialNoAppLockDescription" xml:space="preserve"><value>Ouvrez sans authentification. Votre coffre reste chiffré ; les actions sensibles nécessitent toujours une autorisation.</value></data>
+  <data name="InitialAuthenticationSettingsHint" xml:space="preserve"><value>Vous pourrez modifier ce choix dans les paramètres de sécurité.</value></data>
+  <data name="InitialAuthenticationRecommended" xml:space="preserve"><value>Recommandé</value></data>
+  <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Par défaut</value></data>
+  <data name="AppLockDeactivateAction" xml:space="preserve"><value>Désactiver</value></data>
 </root>

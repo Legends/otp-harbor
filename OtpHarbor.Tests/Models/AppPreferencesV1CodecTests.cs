@@ -6,6 +6,26 @@ namespace TOTP.Tests.Models;
 
 public sealed class AppPreferencesV1CodecTests
 {
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void Screenshots_DefaultToAllowedWhileExplicitSavedChoicesSurviveRoundTrip(bool? savedChoice, bool expected)
+    {
+        var field = savedChoice.HasValue ? $",\"allowScreenshots\":{savedChoice.Value.ToString().ToLowerInvariant()}" : "";
+        var decoded = AppPreferencesV1Codec.Deserialize(Encoding.UTF8.GetBytes(
+            "{\"format\":\"totp-preferences\",\"version\":1" + field + "}"));
+        Assert.True(decoded.IsSuccess);
+        Assert.Equal(expected, decoded.Value.AllowScreenshots);
+        var settings = new AppSettings();
+        Assert.True(settings.AllowScreenshots);
+        AppPreferencesMapper.ApplyTo(decoded.Value, settings);
+        Assert.Equal(expected, settings.AllowScreenshots);
+        var encoded = AppPreferencesV1Codec.Serialize(AppPreferencesMapper.FromSettings(settings));
+        Assert.True(encoded.IsSuccess);
+        Assert.Equal(expected, AppPreferencesV1Codec.Deserialize(encoded.Value).Value.AllowScreenshots);
+    }
+
     [Fact]
     public void SerializeThenDeserialize_RoundTripsEveryPreference()
     {
