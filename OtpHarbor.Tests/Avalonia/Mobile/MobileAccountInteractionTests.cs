@@ -63,15 +63,20 @@ public sealed class MobileAccountInteractionTests
     {
         var view = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia", "MobileMainView.axaml"));
         XNamespace ui = "https://github.com/avaloniaui";
-        var offer = Assert.Single(view.Descendants(ui + "Grid"), value =>
+        XNamespace controls = "using:TOTP.Avalonia.Shared.Controls";
+        XNamespace views = "using:TOTP.Avalonia.Mobile.Views";
+        var offer = Assert.Single(view.Descendants(controls + "DeferredContent"), value =>
             (string?)value.Attribute("IsVisible") == "{Binding IsInitialQuickUnlockOfferVisible}");
-        var scroller = Assert.Single(offer.Descendants(ui + "ScrollViewer"));
+        Assert.Single(offer.Descendants(views + "InitialAuthenticationSetupView"));
+        var setup = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia", "InitialAuthenticationSetupView.axaml"));
+        var scroller = Assert.Single(setup.Descendants(ui + "ScrollViewer"));
         Assert.Equal("Disabled", (string?)scroller.Attribute("HorizontalScrollBarVisibility"));
-        Assert.Equal("Hidden", (string?)scroller.Attribute("VerticalScrollBarVisibility"));
-        var actions = offer.Descendants(ui + "Button").ToArray();
-        Assert.Equal(new[] { "{Binding IsBiometricAvailable}", "{Binding IsDeviceCredentialAvailable}", null },
+        Assert.Equal("Auto", (string?)scroller.Attribute("VerticalScrollBarVisibility"));
+        var actions = setup.Descendants(ui + "Button").ToArray();
+        Assert.Equal(new[] { "{Binding IsBiometricAvailable}", "{Binding IsDeviceCredentialAvailable}", null, null },
             actions.Select(value => (string?)value.Attribute("IsVisible")));
-        Assert.Equal("{Binding SkipInitialQuickUnlockCommand}", (string?)actions[2].Attribute("Command"));
+        Assert.Equal("{Binding ChooseInitialMasterPasswordCommand}", (string?)actions[2].Attribute("Command"));
+        Assert.Equal("{Binding ChooseInitialNoAppLockCommand}", (string?)actions[3].Attribute("Command"));
     }
 
     [Fact]

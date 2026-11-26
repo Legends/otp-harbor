@@ -13,6 +13,9 @@ Require(!JsonSerializer.IsReflectionEnabledByDefault, "JSON reflection must be d
 
 var preferences = AppPreferencesV1Codec.Deserialize("{\"format\":\"totp-preferences\",\"version\":1}"u8.ToArray());
 Require(preferences.IsSuccess && preferences.Value == new AppPreferencesV1(), "Legacy preference defaults changed.");
+Require(preferences.Value.AllowScreenshots, "An omitted screenshot preference must allow capture by default.");
+var blockedCapture = AppPreferencesV1Codec.Deserialize("{\"format\":\"totp-preferences\",\"version\":1,\"allowScreenshots\":false}"u8.ToArray());
+Require(blockedCapture.IsSuccess && !blockedCapture.Value.AllowScreenshots, "An explicit capture restriction must be preserved.");
 Require(AppPreferencesV1Codec.Deserialize(AppPreferencesV1Codec.Serialize(preferences.Value).Value).IsSuccess,
     "Preferences did not round-trip without reflection.");
 Require(AppPreferencesV1Codec.Deserialize("{\"format\":\"totp-preferences\",\"format\":\"other\",\"version\":1}"u8.ToArray()).IsFailed,

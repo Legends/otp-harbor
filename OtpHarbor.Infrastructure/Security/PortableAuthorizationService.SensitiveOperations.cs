@@ -30,12 +30,22 @@ public sealed partial class PortableAuthorizationService
         WithFreshPlatformAuthorizationAsync(authorizationMethod,
             (key, token) => ConfigureUnlockMethodFromAuthenticatedKeyAsync(unlockMethod, key, token), cancellationToken);
 
-    public async Task<AuthorizationResult> CompleteInitialQuickUnlockSetupAsync(
-        PreferredUnlockMethod? unlockMethod, CancellationToken cancellationToken = default)
+    public Task<AuthorizationResult> CompleteInitialQuickUnlockSetupAsync(
+        PreferredUnlockMethod? unlockMethod, CancellationToken cancellationToken = default) => unlockMethod switch
+        {
+            null or PreferredUnlockMethod.Password => CompleteInitialAppLockSetupAsync(InitialAppLockChoice.MasterPassword, cancellationToken),
+            PreferredUnlockMethod.PlatformQuickUnlock => CompleteInitialAppLockSetupAsync(InitialAppLockChoice.StrongBiometrics, cancellationToken),
+            PreferredUnlockMethod.PlatformDeviceCredential => CompleteInitialAppLockSetupAsync(InitialAppLockChoice.DeviceScreenLock, cancellationToken),
+            _ => Task.FromResult(AuthorizationResult.Failed)
+        };
+
+    public async Task<AuthorizationResult> CompleteInitialAppLockSetupAsync(
+        InitialAppLockChoice choice, CancellationToken cancellationToken = default)
     {
+        if (!Enum.IsDefined(choice)) return AuthorizationResult.Failed;
         if (Interlocked.Exchange(ref _initialQuickUnlockSetupPending, 0) == 0)
-            return unlockMethod is null ? AuthorizationResult.Success : AuthorizationResult.PasswordRequired;
-        if (unlockMethod is null) return AuthorizationResult.Success;
+            return choice == InitialAppLockChoice.MasterPassword ? AuthorizationResult.Success : AuthorizationResult.PasswordRequired;
+        if (choice == InitialAppLockChoice.MasterPassword) return AuthorizationResult.Success;
         if (!State.IsUnlocked || !_securityContext.IsUnlocked) return AuthorizationResult.PasswordRequired;
         using var pending = BeginSensitiveAuthorization(cancellationToken);
         cancellationToken = pending.Token;
@@ -44,7 +54,11 @@ public sealed partial class PortableAuthorizationService
         {
             cancellationToken.ThrowIfCancellationRequested();
             key = _securityContext.GetDekCopy();
-            return await ConfigureUnlockMethodFromAuthenticatedKeyAsync(unlockMethod.Value, key, cancellationToken);
+            if (choice == InitialAppLockChoice.AppLockDisabled)
+                return await SetAppLockEnabledCoreAsync(false, string.Empty, key, cancellationToken);
+            var method = choice == InitialAppLockChoice.StrongBiometrics
+                ? PreferredUnlockMethod.PlatformQuickUnlock : PreferredUnlockMethod.PlatformDeviceCredential;
+            return await ConfigureUnlockMethodFromAuthenticatedKeyAsync(method, key, cancellationToken);
         }
         finally
         {
@@ -64,6 +78,9 @@ public sealed partial class PortableAuthorizationService
             return AuthorizationResult.PasswordRequired;
         var lockedPolicy = _settingsService.Current.AppLockEnabled;
         var configuredMethod = State.PreferredUnlockMethod;
+        _logger.LogInformation(new EventId(4101, "AppLockAuthentication"),
+            "Fresh platform authorization requested. Method: {Method}; configured: {ConfiguredMethod}; app-lock: {AppLockEnabled}; platform wrapper: {HasQuickUnlock}.",
+            method, configuredMethod, lockedPolicy, _session.State.HasQuickUnlock);
         if (lockedPolicy && (method != configuredMethod || !_session.State.HasQuickUnlock))
             return AuthorizationResult.PasswordRequired;
         var generation = Volatile.Read(ref _sensitiveAuthorizationGeneration);
@@ -81,6 +98,8 @@ public sealed partial class PortableAuthorizationService
             {
                 var attempt = await _session.TryUnlockWithPlatformAsync(cancellationToken);
                 authorized = attempt.IsSuccess ? attempt.Value : AuthorizationResult.Failed;
+                _logger.LogInformation(new EventId(4101, "AppLockAuthentication"),
+                    "Fresh platform authorization completed. Outcome: {Outcome}.", authorized);
             }
             else
                 authorized = await AuthenticateOneTimePlatformAsync(method, cancellationToken);

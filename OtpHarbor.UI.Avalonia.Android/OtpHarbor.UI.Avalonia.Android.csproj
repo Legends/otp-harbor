@@ -43,6 +43,18 @@
     <Error Text="The NativeAOT experiment requires its isolated application ID." />
   </Target>
 
+  <!-- Stub regeneration can remove this SDK source while static.flag still
+       marks _AddStaticResources current. Restore it before the Java file glob. -->
+  <Target Name="EnsureNativeAotRuntimeProviderJava" BeforeTargets="_FindJavaStubFiles"
+          Condition="'$(_AndroidRuntime)' == 'NativeAOT' and '$(AndroidApplication)' == 'true'">
+    <PropertyGroup>
+      <_OtpHarborNativeProviderSource>$(_AndroidIntermediateJavaSourceDirectory)net/dot/jni/nativeaot/NativeAotRuntimeProvider.java</_OtpHarborNativeProviderSource>
+    </PropertyGroup>
+    <CopyResource Condition="!Exists('$(_OtpHarborNativeProviderSource)')"
+                  ResourceName="NativeAotRuntimeProvider.java" OutputPath="$(_OtpHarborNativeProviderSource)" />
+    <ItemGroup><FileWrites Include="$(_OtpHarborNativeProviderSource)" /></ItemGroup>
+  </Target>
+
   <!-- The Android SDK packages each ABI's native library inside the APK. Its
        universal outer publish has no additional standalone NativeBinary to copy. -->
   <Target Name="SkipUniversalNativeBinaryCopy" BeforeTargets="CopyNativeBinary"

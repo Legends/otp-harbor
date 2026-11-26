@@ -22,7 +22,7 @@ using TOTP.Core.Services.Models;
 
 namespace TOTP.Tests.Avalonia.Headless;
 
-public sealed class NativeStartupSplashTests : IDisposable
+public sealed partial class NativeStartupSplashTests : IDisposable
 {
     private readonly List<MainView> _views = [];
     private readonly List<MobileShellViewModel> _models = [];

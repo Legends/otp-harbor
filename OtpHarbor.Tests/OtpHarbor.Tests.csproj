@@ -73,6 +73,9 @@
     <None Include="..\OtpHarbor.UI.Avalonia.Mobile\Views\SensitiveAuthenticationSelector.axaml"
           Link="Fixtures\Avalonia\SensitiveAuthenticationSelector.axaml"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Mobile\Views\InitialAuthenticationSetupView.axaml"
+          Link="Fixtures\Avalonia\InitialAuthenticationSetupView.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\OtpHarbor.UI.Avalonia.Mobile\Views\MainView.axaml.cs"
           Link="Fixtures\Avalonia\MobileMainView.axaml.cs"
           CopyToOutputDirectory="PreserveNewest" />

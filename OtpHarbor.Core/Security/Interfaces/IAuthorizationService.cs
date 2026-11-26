@@ -59,6 +59,15 @@ public interface IAuthorizationService
         PreferredUnlockMethod? unlockMethod, CancellationToken cancellationToken = default) =>
         Task.FromResult(unlockMethod is null ? AuthorizationResult.Success : AuthorizationResult.NotAvailable);
 
+    Task<AuthorizationResult> CompleteInitialAppLockSetupAsync(
+        InitialAppLockChoice choice, CancellationToken cancellationToken = default) => choice switch
+        {
+            InitialAppLockChoice.MasterPassword => CompleteInitialQuickUnlockSetupAsync(null, cancellationToken),
+            InitialAppLockChoice.StrongBiometrics => CompleteInitialQuickUnlockSetupAsync(PreferredUnlockMethod.PlatformQuickUnlock, cancellationToken),
+            InitialAppLockChoice.DeviceScreenLock => CompleteInitialQuickUnlockSetupAsync(PreferredUnlockMethod.PlatformDeviceCredential, cancellationToken),
+            _ => Task.FromResult(AuthorizationResult.NotAvailable)
+        };
+
     void Logout();
     void Lock();
 }

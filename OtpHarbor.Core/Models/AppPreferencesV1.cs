@@ -27,7 +27,8 @@ public sealed record AppPreferencesV1
         bool exportEncrypt = true,
         bool openExportFileAfterExport = true,
         bool hideSecretsByDefault = true,
-        string favoriteGroupColor = AppSettings.DefaultFavoriteGroupColor)
+        string favoriteGroupColor = AppSettings.DefaultFavoriteGroupColor,
+        bool allowScreenshots = true)
     {
         CultureName = cultureName;
         MinimumLogLevel = minimumLogLevel;
@@ -43,6 +44,7 @@ public sealed record AppPreferencesV1
         OpenExportFileAfterExport = openExportFileAfterExport;
         HideSecretsByDefault = hideSecretsByDefault;
         FavoriteGroupColor = favoriteGroupColor;
+        AllowScreenshots = allowScreenshots;
     }
 
     [JsonRequired]

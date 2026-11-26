@@ -16,6 +16,18 @@ public static class MobileStringKeys
     public const string DeviceAuthenticationPrompt = nameof(DeviceAuthenticationPrompt);
     public const string InitialQuickUnlockTitle = global::TOTP.Localization.CommonStringKeys.InitialQuickUnlockTitle;
     public const string InitialQuickUnlockDescription = global::TOTP.Localization.CommonStringKeys.InitialQuickUnlockDescription;
+    public const string InitialAuthenticationTitle = nameof(InitialAuthenticationTitle);
+    public const string InitialAuthenticationDescription = nameof(InitialAuthenticationDescription);
+    public const string InitialBiometricDescription = nameof(InitialBiometricDescription);
+    public const string InitialDeviceLockDescription = nameof(InitialDeviceLockDescription);
+    public const string InitialDeviceLockTitle = nameof(InitialDeviceLockTitle);
+    public const string InitialMasterPasswordDescription = nameof(InitialMasterPasswordDescription);
+    public const string InitialNoAppLockTitle = nameof(InitialNoAppLockTitle);
+    public const string InitialNoAppLockDescription = nameof(InitialNoAppLockDescription);
+    public const string InitialAuthenticationSettingsHint = nameof(InitialAuthenticationSettingsHint);
+    public const string InitialAuthenticationRecommended = nameof(InitialAuthenticationRecommended);
+    public const string InitialAuthenticationDefault = nameof(InitialAuthenticationDefault);
+    public const string AppLockDeactivateAction = nameof(AppLockDeactivateAction);
     public const string NotNow = nameof(NotNow);
     public const string QuickUnlockEnabled = nameof(QuickUnlockEnabled);
     public const string QuickUnlockNotEnabled = nameof(QuickUnlockNotEnabled);
@@ -828,6 +840,18 @@ public static class MobileStringKeys
         "ImportingBrandIcons",
         "InitialQuickUnlockDescription",
         "InitialQuickUnlockTitle",
+        "InitialAuthenticationTitle",
+        "InitialAuthenticationDescription",
+        "InitialBiometricDescription",
+        "InitialDeviceLockTitle",
+        "InitialDeviceLockDescription",
+        "InitialMasterPasswordDescription",
+        "InitialNoAppLockTitle",
+        "InitialNoAppLockDescription",
+        "InitialAuthenticationSettingsHint",
+        "InitialAuthenticationRecommended",
+        "InitialAuthenticationDefault",
+        "AppLockDeactivateAction",
         "Issuer",
         "IssuerField",
         "IssuerPlaceholder",

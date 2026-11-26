@@ -229,4 +229,16 @@
   <data name="ViewImportFormatsFaq" xml:space="preserve"><value>Wie müssen diese Importdateien aufgebaut sein?</value></data>
   <data name="InfoDescription" xml:space="preserve"><value>App-Version, Lizenz und Links.</value></data>
   <data name="FaqOlderVaultsAnswer" xml:space="preserve"><value>Ja, wenn du einen unterstützten Export oder eine unterstützte Sicherung hast. Wähle unter Einstellungen → Daten &amp; Backup → Konten importieren die Datei aus der älteren Version aus. OTP Harbor unterstützt seine Kontoexporte, passwortgeschützte Sicherungen im Format .totp und .otphbp sowie automatische .otphbackup-Sicherungen. Gib bei einer verschlüsselten Sicherung das Passwort ein, das bei ihrer Erstellung verwendet wurde. Bewahre die Originaldateien auf, bis du die importierten Konten geprüft hast. Wird die Datei nicht unterstützt, öffne sie zunächst in der älteren App und exportiere die Konten in einem unterstützten Format.</value></data>
+  <data name="InitialAuthenticationTitle" xml:space="preserve"><value>Entsperrmethode wählen</value></data>
+  <data name="InitialAuthenticationDescription" xml:space="preserve"><value>Ihr Master-Passwort ist eingerichtet. Wählen Sie, wie Sie OTP Harbor öffnen möchten, und bewahren Sie Ihr Master-Passwort für die Wiederherstellung auf.</value></data>
+  <data name="InitialBiometricDescription" xml:space="preserve"><value>Mit Fingerabdruck oder einer anderen starken Biometrie entsperren.</value></data>
+  <data name="InitialDeviceLockTitle" xml:space="preserve"><value>Gerätebildschirmsperre</value></data>
+  <data name="InitialDeviceLockDescription" xml:space="preserve"><value>PIN, Muster oder Passwort</value></data>
+  <data name="InitialMasterPasswordDescription" xml:space="preserve"><value>Nach jeder App-Sperre mit Ihrem Master-Passwort entsperren.</value></data>
+  <data name="InitialNoAppLockTitle" xml:space="preserve"><value>Keine App-Sperre</value></data>
+  <data name="InitialNoAppLockDescription" xml:space="preserve"><value>Ohne Authentifizierung öffnen. Ihr Tresor bleibt verschlüsselt; sensible Aktionen erfordern weiterhin eine Autorisierung.</value></data>
+  <data name="InitialAuthenticationSettingsHint" xml:space="preserve"><value>Sie können dies später in den Sicherheitseinstellungen ändern.</value></data>
+  <data name="InitialAuthenticationRecommended" xml:space="preserve"><value>Empfohlen</value></data>
+  <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Standard</value></data>
+  <data name="AppLockDeactivateAction" xml:space="preserve"><value>Deaktivieren</value></data>
 </root>

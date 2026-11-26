@@ -43,7 +43,7 @@ public sealed class AppSettings : IAppSettings
 
     public bool ShowNextToken { get; set; }
 
-    public bool AllowScreenshots { get; set; }
+    public bool AllowScreenshots { get; set; } = true;
 
     public static bool IsSupportedInterfaceScale(int percent) =>
         percent == DefaultInterfaceScalePercent

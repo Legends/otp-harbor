@@ -109,6 +109,8 @@ public sealed partial class MobileShellViewModelTests
             context.Authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(false);
         else
             context.Authorization.Setup(value => value.IsUnlockMethodAvailableAsync(previous)).ReturnsAsync(false);
+        context.Authorization.Setup(value => value.ConfigureUnlockMethodWithPlatformAsync(
+            PreferredUnlockMethod.Password, previous, It.IsAny<CancellationToken>())).ReturnsAsync(AuthorizationResult.NotAvailable);
 
         await sut.SelectPasswordUnlockAsync();
 
@@ -117,7 +119,7 @@ public sealed partial class MobileShellViewModelTests
         Assert.True(sut.IsPasswordAuthorizationSelected);
         Assert.False(sut.HasAuthenticationMethodChoice);
         context.Authorization.Verify(value => value.ConfigureUnlockMethodWithPlatformAsync(
-            It.IsAny<PreferredUnlockMethod>(), It.IsAny<PreferredUnlockMethod>(), It.IsAny<CancellationToken>()), Times.Never);
+            PreferredUnlockMethod.Password, previous, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

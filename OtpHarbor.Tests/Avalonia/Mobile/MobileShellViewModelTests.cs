@@ -1317,6 +1317,9 @@ public sealed partial class MobileShellViewModelTests
         await context.Sut.ConfigureAsync();
 
         Assert.True(context.Sut.IsAccountsVisible);
+        Assert.True(context.Sut.IsInitialQuickUnlockOfferVisible);
+        context.Sut.ChooseInitialMasterPasswordCommand.Execute(null);
+        await WaitUntilAsync(() => !context.Sut.IsBusy);
         Assert.True(context.Sut.HasNoAccounts);
         Assert.Empty(context.Sut.SetupPassword);
         Assert.Empty(context.Sut.SetupConfirmation);
@@ -2157,6 +2160,7 @@ public sealed partial class MobileShellViewModelTests
     public async Task ScreenCaptureProtection_IsRequiredAcrossTheEntireAppWhenScreenshotsAreNotAllowed()
     {
         var context = CreateContext(isConfigured: true);
+        context.SettingsValue.AllowScreenshots = false;
         context.Authorization
             .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
             .Callback(context.State.Unlock)
@@ -2209,6 +2213,7 @@ public sealed partial class MobileShellViewModelTests
     public async Task AllowScreenshots_DisablesAndroidScreenCaptureProtectionAndPersists()
     {
         var context = CreateContext(isConfigured: true);
+        context.SettingsValue.AllowScreenshots = false;
         context.Authorization
             .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
             .Callback(context.State.Unlock)
@@ -2231,6 +2236,7 @@ public sealed partial class MobileShellViewModelTests
     public async Task InitializeAsync_ReappliesPersistedScreenshotPolicyAfterSettingsLoad()
     {
         var context = CreateContext(isConfigured: true);
+        context.SettingsValue.AllowScreenshots = false;
         context.Settings
             .Setup(value => value.LoadAsync())
             .Callback(() => context.SettingsValue.AllowScreenshots = true)
@@ -5902,6 +5908,11 @@ public sealed partial class MobileShellViewModelTests
         context.Sut.SetupPassword = "synthetic password";
         context.Sut.SetupConfirmation = "synthetic password";
         await context.Sut.ConfigureAsync();
+        if (context.Sut.IsInitialQuickUnlockOfferVisible)
+        {
+            context.Sut.ChooseInitialMasterPasswordCommand.Execute(null);
+            await WaitUntilAsync(() => !context.Sut.IsBusy);
+        }
         await context.Sut.BeginAddAsync();
     }
 

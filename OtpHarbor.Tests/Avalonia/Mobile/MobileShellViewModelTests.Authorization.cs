@@ -176,6 +176,53 @@ public sealed partial class MobileShellViewModelTests
     }
 
     [Theory]
+    [InlineData(true, AuthorizationResult.Success)]
+    [InlineData(false, AuthorizationResult.Success)]
+    [InlineData(false, AuthorizationResult.NotAvailable)]
+    public async Task FirstSetup_PasswordThenBiometrics_DeactivationAttemptsConfiguredMethodBeforePasswordFallback(
+        bool availabilityProbe, AuthorizationResult outcome)
+    {
+        var context = CreateContext(isConfigured: false, biometricAvailable: true);
+        using var sut = context.Sut;
+        context.Authorization.Setup(value => value.ConfigurePasswordAsync("synthetic setup", "synthetic setup"))
+            .Callback(() => { context.State.SetConfiguration(true, PreferredUnlockMethod.Password); context.State.Unlock(); })
+            .ReturnsAsync(AuthorizationResult.Success);
+        await sut.InitializeAsync();
+        await sut.FinishOnboardingAsync();
+        sut.SetupPassword = "synthetic setup";
+        sut.SetupConfirmation = "synthetic setup";
+        await sut.ConfigureAsync();
+        sut.ChooseInitialMasterPasswordCommand.Execute(null);
+        await WaitUntilAsync(() => !sut.IsBusy);
+        await sut.ShowSettingsAsync();
+        context.Authorization.Setup(value => value.ConfigureHelloAsync("synthetic recovery"))
+            .Callback(() =>
+            {
+                context.SettingsValue.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+                context.State.SetConfiguration(true, PreferredUnlockMethod.PlatformQuickUnlock);
+            }).ReturnsAsync(AuthorizationResult.Success);
+        await sut.BeginBiometricEnrollmentAsync();
+        sut.BiometricRecoveryPassword = "synthetic recovery";
+        await sut.EnableBiometricAsync();
+        Assert.True(sut.IsBiometricUnlockSelected);
+
+        context.Authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(availabilityProbe);
+        context.Authorization.Setup(value => value.SetAppLockEnabledWithPlatformAsync(false,
+                PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
+            .Callback(() => { if (outcome == AuthorizationResult.Success) context.SettingsValue.AppLockEnabled = false; })
+            .ReturnsAsync(outcome);
+
+        await sut.BeginDisableAppLockAsync();
+
+        context.Authorization.Verify(value => value.SetAppLockEnabledWithPlatformAsync(false,
+            PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()), Times.Once);
+        context.Authorization.Verify(value => value.SetAppLockEnabledAsync(false, It.IsAny<string>()), Times.Never);
+        Assert.Equal(outcome != AuthorizationResult.Success, sut.IsAppLockEnabled);
+        Assert.Equal(outcome == AuthorizationResult.NotAvailable, sut.IsDisableAppLockConfirmationVisible);
+        Assert.Empty(sut.AppLockRecoveryPassword);
+    }
+
+    [Theory]
     [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(false, true)]
@@ -234,7 +281,7 @@ public sealed partial class MobileShellViewModelTests
 
         await sut.ConfigureAsync();
 
-        Assert.Equal(biometric || credential, sut.IsInitialQuickUnlockOfferVisible);
+        Assert.True(sut.IsInitialQuickUnlockOfferVisible);
         Assert.Equal(biometric, sut.ChooseInitialBiometricCommand.CanExecute(null));
         Assert.Equal(credential, sut.ChooseInitialDeviceCredentialCommand.CanExecute(null));
         Assert.Empty(sut.SetupPassword);

@@ -1,0 +1,165 @@
+<UserControl
+    x:Class="TOTP.Avalonia.Mobile.Views.InitialAuthenticationSetupView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Avalonia.Automation"
+    xmlns:controls="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:vm="using:TOTP.Avalonia.Mobile.Presentation"
+    x:DataType="vm:MobileShellViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.auth-choice">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="MinHeight" Value="76" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="CornerRadius" Value="20" />
+            <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.auth-choice:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+        </Style>
+        <Style Selector="Button.auth-choice:pressed">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+        </Style>
+        <Style Selector="Button.auth-choice:focus-visible">
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="Padding" Value="15,11" />
+        </Style>
+        <Style Selector="Button.auth-choice:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+        <Style Selector="Button.auth-primary">
+            <Setter Property="Background">
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Color="#7966FF" Offset="0" />
+                    <GradientStop Color="#4034C9" Offset="1" />
+                </LinearGradientBrush>
+            </Setter>
+            <Setter Property="BorderBrush" Value="#9C8EFF" />
+        </Style>
+        <Style Selector="Button.auth-primary:pointerover"><Setter Property="Background" Value="#6653E6" /></Style>
+        <Style Selector="Button.auth-primary:pressed"><Setter Property="Background" Value="#4B3CB7" /></Style>
+        <Style Selector="TextBlock.auth-title">
+            <Setter Property="FontSize" Value="18" /><Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" /><Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.auth-description">
+            <Setter Property="FontSize" Value="13" /><Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="Button.auth-primary TextBlock.auth-title"><Setter Property="Foreground" Value="White" /></Style>
+        <Style Selector="Button.auth-primary TextBlock.auth-description"><Setter Property="Foreground" Value="#EFEBFF" /></Style>
+        <Style Selector="Border.auth-icon">
+            <Setter Property="Width" Value="44" /><Setter Property="Height" Value="44" /><Setter Property="CornerRadius" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" /><Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+        </Style>
+        <Style Selector="Path.auth-chevron">
+            <Setter Property="Data" Value="M1,1 L7,7 L1,13" /><Setter Property="Width" Value="8" /><Setter Property="Height" Value="14" />
+            <Setter Property="Stroke" Value="{DynamicResource BrushTextSecondary}" /><Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+    <Grid Background="{DynamicResource BrushWindowBackground}">
+        <ScrollViewer x:Name="AuthenticationSetupScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+                      HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center">
+            <StackPanel x:Name="AuthenticationSetupContent" MaxWidth="540" Margin="22,24,22,28" HorizontalAlignment="Stretch" Spacing="12">
+                <Grid ColumnDefinitions="36,*" ColumnSpacing="12" Margin="0,0,0,2">
+                    <Image Width="36" Height="36" Source="avares://TOTP.UI.Avalonia.Shared/Assets/Biometric/otp-harbor-mark.png" />
+                    <TextBlock Grid.Column="1" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Text="{Binding AppTitle}" TextWrapping="Wrap" />
+                </Grid>
+                <Viewbox Height="108" MaxWidth="220" HorizontalAlignment="Center" Stretch="Uniform" IsHitTestVisible="False">
+                    <Canvas Width="220" Height="160">
+                        <Path Data="M110,8 C88,24 63,33 39,37 V79 C39,115 70,141 110,155 C150,141 181,115 181,79 V37 C157,33 132,24 110,8 Z"
+                              Stroke="#B0A4FF" StrokeThickness="5">
+                            <Path.Fill><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#A796FF" Offset="0" /><GradientStop Color="#3C43BA" Offset="1" /></LinearGradientBrush></Path.Fill>
+                        </Path>
+                        <Path Data="M110,24 C91,37 71,43 54,48 V80 C54,105 77,126 110,140 C143,126 166,105 166,80 V48 C149,43 129,37 110,24 Z" Fill="#665BE1" />
+                        <Ellipse Canvas.Left="13" Canvas.Top="82" Width="195" Height="39" Stroke="#9A83FF" StrokeThickness="8" RenderTransformOrigin="50%,50%">
+                            <Ellipse.RenderTransform><RotateTransform Angle="-20" /></Ellipse.RenderTransform>
+                        </Ellipse>
+                        <Path Data="M90,73 V59 C90,31 130,31 130,59 V73 H136 V108 Q136,115 129,115 H91 Q84,115 84,108 V80 Q84,73 90,73 Z M98,73 H122 V59 C122,41 98,41 98,59 Z" Fill="#F8F6FF" />
+                        <Path Data="M110,84 A7,7 0 0 0 106,97 V105 H114 V97 A7,7 0 0 0 110,84 Z" Fill="#4E43BC" />
+                        <Path Data="M188,10 L185,22 M202,24 L193,32 M209,43 H198" Stroke="#BBAAFF" StrokeThickness="5" />
+                    </Canvas>
+                </Viewbox>
+                <TextBlock x:Name="AuthenticationSetupTitle" FontSize="28" FontWeight="Bold" Text="{Binding InitialQuickUnlockTitle}"
+                           TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding InitialQuickUnlockDescription}" FontSize="15" Foreground="{DynamicResource BrushTextSecondary}"
+                           TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,6" />
+
+                <Button x:Name="InitialBiometricChoice" Classes="auth-choice auth-primary" IsVisible="{Binding IsBiometricAvailable}"
+                        Command="{Binding ChooseInitialBiometricCommand}" automation:AutomationProperties.Name="{Binding UnlockWithBiometricsText}"
+                        automation:AutomationProperties.HelpText="{Binding InitialBiometricDescription}">
+                    <Grid ColumnDefinitions="44,*,8" ColumnSpacing="12">
+                        <Border Classes="auth-icon" Background="#26FFFFFF">
+                            <Viewbox Width="28" Height="28"><Path Width="24" Height="24" Stroke="White" StrokeThickness="1.7"
+                                Data="M3,12 C3,0 21,0 21,12 V14 M6,13 V11 C6,3 18,3 18,11 V15 C18,18 16,21 14,23 M9,13 V11 C9,7 15,7 15,11 V15 C15,18 13,21 11,22 M12,11 V14 C12,17 10,19 8,20 M6,15 C6,18 5,19 4,20 M3,15 V17" /></Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Classes="auth-title" Text="{Binding UnlockWithBiometricsText}" />
+                            <Border Background="#ECE7FF" CornerRadius="10" Padding="8,2" HorizontalAlignment="Left">
+                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#3B2B9A" Text="{Binding InitialAuthenticationRecommended}" TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+                        <Path Grid.Column="2" Classes="auth-chevron" Stroke="White" />
+                    </Grid>
+                </Button>
+                <Button x:Name="InitialDeviceLockChoice" Classes="auth-choice" IsVisible="{Binding IsDeviceCredentialAvailable}"
+                        Command="{Binding ChooseInitialDeviceCredentialCommand}" automation:AutomationProperties.Name="{Binding InitialDeviceLockTitle}"
+                        automation:AutomationProperties.HelpText="{Binding InitialDeviceLockDescription}">
+                    <Grid ColumnDefinitions="44,*,8" ColumnSpacing="12">
+                        <Border Classes="auth-icon"><controls:SymbolIcon Kind="Lock" IconSize="26" Foreground="{DynamicResource BrushAccent}" /></Border>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Classes="auth-title" Text="{Binding InitialDeviceLockTitle}" />
+                            <TextBlock Classes="auth-description" Text="{Binding InitialDeviceLockDescription}" />
+                        </StackPanel>
+                        <Path Grid.Column="2" Classes="auth-chevron" />
+                    </Grid>
+                </Button>
+                <Button x:Name="InitialMasterPasswordChoice" Classes="auth-choice" Command="{Binding ChooseInitialMasterPasswordCommand}"
+                        automation:AutomationProperties.Name="{Binding MasterPasswordText}" automation:AutomationProperties.HelpText="{Binding InitialMasterPasswordDescription}">
+                    <Grid ColumnDefinitions="44,*,8" ColumnSpacing="12">
+                        <Border Classes="auth-icon"><controls:SymbolIcon Kind="Key" IconSize="26" Foreground="{DynamicResource BrushAccent}" /></Border>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Classes="auth-title" Text="{Binding MasterPasswordText}" />
+                            <TextBlock Classes="auth-description" Text="{Binding InitialMasterPasswordDescription}" />
+                            <Border Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="10" Padding="8,2" HorizontalAlignment="Left">
+                                <TextBlock FontSize="11" Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding InitialAuthenticationDefault}" TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+                        <Path Grid.Column="2" Classes="auth-chevron" />
+                    </Grid>
+                </Button>
+                <Button x:Name="InitialNoAppLockChoice" Classes="auth-choice" Command="{Binding ChooseInitialNoAppLockCommand}"
+                        automation:AutomationProperties.Name="{Binding InitialNoAppLockTitle}" automation:AutomationProperties.HelpText="{Binding InitialNoAppLockDescription}">
+                    <Grid ColumnDefinitions="44,*,8" ColumnSpacing="12">
+                        <Border Classes="auth-icon"><controls:SymbolIcon Kind="Warning" IconSize="25" Foreground="{DynamicResource BrushTextSecondary}" /></Border>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Classes="auth-title" Text="{Binding InitialNoAppLockTitle}" />
+                            <TextBlock Classes="auth-description" Text="{Binding InitialNoAppLockDescription}" />
+                        </StackPanel>
+                        <Path Grid.Column="2" Classes="auth-chevron" />
+                    </Grid>
+                </Button>
+                <Grid ColumnDefinitions="20,*" ColumnSpacing="9" Margin="4,6,4,0">
+                    <controls:SymbolIcon Kind="Information" IconSize="18" Foreground="{DynamicResource BrushTextSecondary}" VerticalAlignment="Top" />
+                    <TextBlock x:Name="InitialAuthenticationSettingsHint" Grid.Column="1" Text="{Binding InitialAuthenticationSettingsHint}" FontSize="13"
+                               Foreground="{DynamicResource BrushTextSecondary}" TextWrapping="Wrap" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

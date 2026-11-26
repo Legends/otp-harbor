@@ -52,6 +52,18 @@ validation, attribution, provenance and user-responsibility wording are preserve
 
 ## Repeatable local checks
 
+To build current source and deploy to one connected, authorized USB phone, run
+this from PowerShell 7 without arguments:
+
+```powershell
+./scripts/testing/android/Install-AndroidNativeAotPhone.ps1
+```
+
+It finds adb and the pinned installed NDK, builds the universal NativeAOT Release
+APK, updates **OTP Harbor AOT Test** with `adb install -r`, and launches it once.
+It retains that test app's accounts. Missing/unauthorized phones stop the script
+before building; build or install failures stop deployment without clearing data.
+
 ```powershell
 dotnet workload install android --version 10.0.403
 dotnet run --project scripts/testing/android/NativeAotCompatibilitySmoke -c Release

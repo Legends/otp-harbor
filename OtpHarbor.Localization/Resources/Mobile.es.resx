@@ -229,4 +229,16 @@
   <data name="ViewImportFormatsFaq" xml:space="preserve"><value>¿Cómo deben estructurarse estos archivos de importación?</value></data>
   <data name="FaqOlderVaultsAnswer" xml:space="preserve"><value>Sí, si tienes una exportación o una copia de seguridad en un formato compatible. En Configuración → Datos y copias de seguridad → Importar cuentas, selecciona el archivo de la versión anterior. OTP Harbor admite sus exportaciones de cuentas, las copias .totp y .otphbp protegidas con contraseña y las copias automáticas .otphbackup. Para una copia cifrada, introduce la contraseña usada al crearla. Conserva los archivos originales hasta comprobar las cuentas importadas. Si el archivo no es compatible, ábrelo primero en la aplicación anterior y exporta las cuentas en un formato compatible.</value></data>
   <data name="InfoDescription" xml:space="preserve"><value>Versión de la aplicación, licencia y enlaces.</value></data>
+  <data name="InitialAuthenticationTitle" xml:space="preserve"><value>Elige cómo desbloquear</value></data>
+  <data name="InitialAuthenticationDescription" xml:space="preserve"><value>Tu contraseña maestra está configurada. Elige cómo abrir OTP Harbor y conserva tu contraseña maestra para la recuperación.</value></data>
+  <data name="InitialBiometricDescription" xml:space="preserve"><value>Desbloquea con tu huella u otro método biométrico fuerte.</value></data>
+  <data name="InitialDeviceLockTitle" xml:space="preserve"><value>Bloqueo del dispositivo</value></data>
+  <data name="InitialDeviceLockDescription" xml:space="preserve"><value>PIN, patrón o contraseña</value></data>
+  <data name="InitialMasterPasswordDescription" xml:space="preserve"><value>Usa tu contraseña maestra cada vez que se bloquee la aplicación.</value></data>
+  <data name="InitialNoAppLockTitle" xml:space="preserve"><value>Sin bloqueo de la app</value></data>
+  <data name="InitialNoAppLockDescription" xml:space="preserve"><value>Abre sin autenticarte. Tu bóveda sigue cifrada; las acciones sensibles aún requieren autorización.</value></data>
+  <data name="InitialAuthenticationSettingsHint" xml:space="preserve"><value>Puedes cambiar esta opción después en los ajustes de seguridad.</value></data>
+  <data name="InitialAuthenticationRecommended" xml:space="preserve"><value>Recomendado</value></data>
+  <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Predeterminado</value></data>
+  <data name="AppLockDeactivateAction" xml:space="preserve"><value>Desactivar</value></data>
 </root>
