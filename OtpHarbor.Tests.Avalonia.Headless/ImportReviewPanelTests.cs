@@ -273,6 +273,7 @@ public sealed class ImportReviewPanelTests
             Entries = entries,
             ChangedConflicts = [new(0, "Issuer 0", "account@example.test", "Issuer 0", "account@example.test", false, false, true, true)]
         }, null, "Aegis", "export.json", key => catalog.Get(key, CultureInfo.GetCultureInfo("en")));
+        model.SelectedCategory = model.Categories.Single(category => category.Category == ImportReviewCategory.All);
         model.Rows[0].IsKeepBoth = true;
         foreach (var row in model.Rows.Where(row => row.ImportIndex % 11 == 0)) row.IsExpanded = true;
         var collectionChanges = 0;
@@ -314,6 +315,58 @@ public sealed class ImportReviewPanelTests
             Assert.True(model.Rows[0].IsExpanded);
             Assert.False(model.Rows[1].IsExpanded);
             Assert.DoesNotContain(page.GetVisualDescendants(), control => control is ListBoxItem);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(360, false, "en")]
+    [InlineData(430, true, "de")]
+    [InlineData(360, true, "fr")]
+    [InlineData(430, false, "es")]
+    public void MobilePage_SummaryTilesFilterWithSingleSelectionAndNoCategoryDropdown(int width, bool dark, string language)
+    {
+        var catalog = new AvaloniaStringCatalog();
+        var model = new ImportReviewViewModel(new(3, 2, ImportConflictStrategy.SkipExisting)
+        {
+            NewCount = 1, UnchangedCount = 1,
+            Entries = [new("New", "alice", "SHA1", 6, 30) { ImportIndex = 0 },
+                new("Conflict", "bob", "SHA512", 8, 60) { ImportIndex = 1, Existing = new("Conflict", "bob", "SHA1", 6, 30) },
+                new("Duplicate", "carol", "SHA1", 6, 30) { ImportIndex = 2, Existing = new("Duplicate", "carol", "SHA1", 6, 30) }],
+            ChangedConflicts = [new(1, "Conflict", "bob", "Conflict", "bob", false, false, true, true)]
+        }, null, "2FAS", "export.2fas", key => catalog.Get(key, CultureInfo.GetCultureInfo(language)));
+        var page = new ImportReviewMobilePage { DataContext = model };
+        var window = new Window { Width = width, Height = 1000, Content = page,
+            RequestedThemeVariant = dark ? ThemeVariant.Dark : ThemeVariant.Light };
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            Button[] Tiles() => page.GetVisualDescendants().OfType<Button>()
+                .Where(button => button.Classes.Contains("review-filter-tile")).ToArray();
+            Assert.Equal(6, Tiles().Length);
+            Assert.Equal(ImportReviewCategory.Conflicts, model.SelectedCategory.Category);
+            Assert.Same(model.SelectedCategory, Assert.Single(Tiles(), tile => tile.Classes.Contains("selected")).DataContext);
+            Assert.DoesNotContain(page.GetVisualDescendants().OfType<ComboBox>(), box => ReferenceEquals(box.ItemsSource, model.Categories));
+            foreach (var category in model.Categories)
+            {
+                var tile = Assert.Single(Tiles(), button => ReferenceEquals(button.DataContext, category));
+                Assert.True(tile.Bounds.Height >= 44);
+                Assert.True(Math.Abs(tile.Bounds.Width - Tiles()[0].Bounds.Width) <= 1);
+                tile.BringIntoView();
+                window.UpdateLayout();
+                var point = tile.TranslatePoint(new Point(tile.Bounds.Width / 2, tile.Bounds.Height / 2), window)!.Value;
+                window.MouseDown(point, MouseButton.Left);
+                window.MouseUp(point, MouseButton.Left);
+                window.UpdateLayout();
+                Assert.Same(category, model.SelectedCategory);
+                Assert.Same(category, Assert.Single(Tiles(), button => button.Classes.Contains("selected")).DataContext);
+            }
+            Assert.Empty(model.VisibleRows);
+            Assert.True(model.HasNoResults);
+            Assert.Equal(3, model.TotalCount);
+            Assert.Equal(1, model.UnresolvedCount);
+            Assert.False(model.CanImport);
         }
         finally { window.Close(); }
     }

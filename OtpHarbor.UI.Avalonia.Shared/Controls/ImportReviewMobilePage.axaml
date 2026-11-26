@@ -9,7 +9,27 @@
         <Style Selector="Border.review-card"><Setter Property="Background" Value="{DynamicResource BrushSurface}" /><Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="5" /><Setter Property="Padding" Value="12" /></Style>
         <Style Selector="TextBlock.review-count"><Setter Property="FontSize" Value="24" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="HorizontalAlignment" Value="Center" /></Style>
         <Style Selector="TextBlock.review-metric"><Setter Property="FontSize" Value="12" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="TextAlignment" Value="Center" /></Style>
-        <Style Selector="UniformGrid.review-metrics"><Setter Property="Columns" Value="3" /></Style>
+        <Style Selector="Button.review-filter-tile">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="MinHeight" Value="76" />
+            <Setter Property="Padding" Value="4,8" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Button.review-filter-tile.selected">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlternate}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}" />
+        </Style>
+        <Style Selector="TextBlock.review-count.ready"><Setter Property="Foreground" Value="{DynamicResource BrushSuccess}" /></Style>
+        <Style Selector="TextBlock.review-count.conflict"><Setter Property="Foreground" Value="{DynamicResource BrushWarning}" /></Style>
+        <Style Selector="TextBlock.review-count.duplicate"><Setter Property="Foreground" Value="{DynamicResource BrushAccent}" /></Style>
+        <Style Selector="TextBlock.review-count.invalid"><Setter Property="Foreground" Value="{DynamicResource BrushDanger}" /></Style>
         <Style Selector="ComboBox"><Setter Property="MinHeight" Value="44" /><Setter Property="HorizontalAlignment" Value="Stretch" /></Style>
         <Style Selector="Button"><Setter Property="MinHeight" Value="44" /><Setter Property="FontSize" Value="14" /></Style>
         <Style Selector="Expander /template/ ToggleButton#ExpanderHeader">
@@ -52,26 +72,32 @@
                         <TextBlock Classes="review-secondary" FontSize="12" Text="{Binding SourceAndFile}" MaxLines="1" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FileName}" />
                     </StackPanel>
                 </Grid>
-                <UniformGrid Classes="review-metrics">
-                    <StackPanel Margin="3"><TextBlock Classes="review-count" Text="{Binding TotalCount}" /><TextBlock Classes="review-metric" Text="{Binding TotalText}" /></StackPanel>
-                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushSuccess}" Text="{Binding ReadyCount}" /><TextBlock Classes="review-metric" Text="{Binding ReadyText}" /></StackPanel>
-                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushWarning}" Text="{Binding ConflictCount}" /><TextBlock Classes="review-metric" Text="{Binding ConflictsText}" /></StackPanel>
-                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushAccent}" Text="{Binding DuplicateCount}" /><TextBlock Classes="review-metric" Text="{Binding DuplicatesText}" /></StackPanel>
-                    <StackPanel Margin="3"><TextBlock Classes="review-count" Text="{Binding UnsupportedCount}" /><TextBlock Classes="review-metric" Text="{Binding UnsupportedText}" /></StackPanel>
-                    <StackPanel Margin="3"><TextBlock Classes="review-count" Foreground="{DynamicResource BrushDanger}" Text="{Binding InvalidCount}" /><TextBlock Classes="review-metric" Text="{Binding InvalidText}" /></StackPanel>
-                </UniformGrid>
+                <ItemsControl ItemsSource="{Binding Categories}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><UniformGrid Classes="review-metrics" Columns="3" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="review:ImportReviewViewModel+CategoryOption">
+                            <Button Classes="review-filter-tile" Classes.selected="{Binding IsSelected}"
+                                    Command="{Binding Command}" CommandParameter="{Binding}"
+                                    automation:AutomationProperties.Name="{Binding Label}">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Classes="review-count" Classes.ready="{Binding IsReady}"
+                                               Classes.conflict="{Binding IsConflict}" Classes.duplicate="{Binding IsDuplicate}"
+                                               Classes.invalid="{Binding IsInvalid}" Text="{Binding Count}" />
+                                    <TextBlock Classes="review-metric" Text="{Binding MetricName}" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
         </Border>
         <StackPanel Spacing="6">
             <TextBlock Classes="review-secondary review-description" FontSize="12" Text="{Binding LocalText}" />
             <TextBlock FontSize="12" Foreground="{DynamicResource BrushWarning}" IsVisible="{Binding HasExcluded}" Text="{Binding ExcludedText}" />
         </StackPanel>
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <TextBox PlaceholderText="{Binding SearchText}" Text="{Binding Search, Mode=TwoWay}" MinHeight="44" automation:AutomationProperties.Name="{Binding SearchText}" />
-                    <ComboBox Grid.Column="1" Classes="review-mobile-filter" MaxWidth="150" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding FilterText}">
-                        <ComboBox.ItemTemplate><DataTemplate x:DataType="review:ImportReviewViewModel+CategoryOption"><TextBlock FontSize="12" Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
-                    </ComboBox>
-                </Grid>
+                <TextBox PlaceholderText="{Binding SearchText}" Text="{Binding Search, Mode=TwoWay}" MinHeight="44" automation:AutomationProperties.Name="{Binding SearchText}" />
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                     <CheckBox IsEnabled="{Binding HasSelectableConflicts}" IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" Content="{Binding SelectionText}" />
                     <ComboBox Grid.Column="1" IsEnabled="{Binding HasSelection}" ItemsSource="{Binding Actions}" SelectedItem="{Binding BulkAction, Mode=TwoWay}" PlaceholderText="{Binding ApplyText}" automation:AutomationProperties.Name="{Binding ApplyText}">

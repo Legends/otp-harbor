@@ -187,12 +187,12 @@ internal abstract class NativeReviewLayout : LinearLayout
     {
         if (!string.Equals(view.Text, value, StringComparison.Ordinal)) view.Text = value;
     }
-    protected GradientDrawable Surface(Color fill, Color border)
+    protected GradientDrawable Surface(Color fill, Color border, int strokeWidth = 1)
     {
         var background = new GradientDrawable();
         background.SetColor(fill);
         background.SetCornerRadius(Dp(5));
-        background.SetStroke(Dp(1), border);
+        background.SetStroke(Dp(strokeWidth), border);
         return background;
     }
     protected static Color SemanticColor(string key, Color fallback)
@@ -344,13 +344,19 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
 {
     private readonly TextView _breadcrumb, _title, _steps, _summary, _file, _local, _excluded, _empty;
     private readonly TextView[] _counts, _captions;
+    private readonly LinearLayout[] _filterTiles;
     private readonly LinearLayout _summaryCard;
     private readonly EditText _search;
-    private readonly Spinner _filter, _bulk;
+    private readonly Spinner _bulk;
     private readonly CheckBox _select;
     private ImportReviewViewModel? _model;
     private bool _binding;
-    private string[] _filterLabels = [], _bulkLabels = [];
+    private string[] _bulkLabels = [];
+    private static readonly ImportReviewCategory[] TileCategories =
+    [
+        ImportReviewCategory.All, ImportReviewCategory.Ready, ImportReviewCategory.Conflicts,
+        ImportReviewCategory.Duplicates, ImportReviewCategory.Unsupported, ImportReviewCategory.Invalid
+    ];
 
     public NativeReviewHeader(Context context) : base(context)
     {
@@ -363,21 +369,43 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
         _summary = Label(18, true); _file = Label(12);
         _file.SetMaxLines(2); _file.Ellipsize = TextUtils.TruncateAt.Middle;
         _summaryCard.AddView(_summary, Row(4)); _summaryCard.AddView(_file, Row(12));
-        _counts = new TextView[6]; _captions = new TextView[6];
+        _counts = new TextView[TileCategories.Length]; _captions = new TextView[TileCategories.Length];
+        _filterTiles = new LinearLayout[TileCategories.Length];
         for (var line = 0; line < 2; line++)
         {
             var metrics = new LinearLayout(context) { Orientation = Orientation.Horizontal };
             for (var column = 0; column < 3; column++)
             {
                 var index = line * 3 + column;
-                var metric = new LinearLayout(context) { Orientation = Orientation.Vertical };
+                var metric = new LinearLayout(context)
+                {
+                    Orientation = Orientation.Vertical, Clickable = true, Focusable = true,
+                    ImportantForAccessibility = ImportantForAccessibility.Yes
+                };
+                _filterTiles[index] = metric;
                 metric.SetGravity(GravityFlags.Center);
+                metric.SetMinimumHeight(Dp(76));
+                metric.SetPadding(Dp(4), Dp(8), Dp(4), Dp(8));
                 _counts[index] = Label(24, true); _counts[index].Gravity = GravityFlags.Center;
                 _captions[index] = Label(12); _captions[index].Gravity = GravityFlags.Center;
+                _counts[index].ImportantForAccessibility = ImportantForAccessibility.No;
+                _captions[index].ImportantForAccessibility = ImportantForAccessibility.No;
                 metric.AddView(_counts[index], Row(4)); metric.AddView(_captions[index], Row(0));
-                metrics.AddView(metric, new LayoutParams(0, ViewGroup.LayoutParams.WrapContent, 1));
+                metric.Click += (_, _) =>
+                {
+                    if (_binding || _model is not { } model) return;
+                    var category = model.Categories.Single(option => option.Category == TileCategories[index]);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (ReferenceEquals(model, _model)) model.FilterCommand.Execute(category);
+                    });
+                };
+                metrics.AddView(metric, new LayoutParams(0, ViewGroup.LayoutParams.MatchParent, 1)
+                {
+                    LeftMargin = Dp(3), RightMargin = Dp(3)
+                });
             }
-            _summaryCard.AddView(metrics, Row(line == 0 ? 12 : 0));
+            _summaryCard.AddView(metrics, Row(line == 0 ? 6 : 0));
         }
         AddView(_summaryCard, Row(12));
         _local = Label(12); _excluded = Label(12);
@@ -396,14 +424,6 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
             }
         };
         AddView(_search, Row(8));
-        _filter = new Spinner(context); _filter.SetMinimumHeight(Dp(48));
-        _filter.ItemSelected += (_, args) =>
-        {
-            if (!_binding && _model is { } model && _filter.SelectedItemPosition == args.Position && args.Position >= 0 && args.Position < model.Categories.Count
-                && !ReferenceEquals(model.SelectedCategory, model.Categories[args.Position]))
-                Dispatcher.UIThread.Post(() => { if (ReferenceEquals(model, _model)) model.SelectedCategory = model.Categories[args.Position]; });
-        };
-        AddView(_filter, Row(8));
         _select = new CheckBox(context); _select.SetMinimumHeight(Dp(48));
         _select.SetTextSize(ComplexUnitType.Sp, 14);
         _select.CheckedChange += (_, args) =>
@@ -449,14 +469,19 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
             _breadcrumb.SetTextColor(palette.Secondary); _steps.SetTextColor(palette.Accent);
             _summaryCard.Background = Surface(SemanticColor("BrushSurface", palette.Window), palette.Border);
             Text(_summary, model.SummaryTitle); Text(_file, model.SourceAndFile); _file.SetTextColor(palette.Secondary);
-            var counts = new[] { model.TotalCount, model.ReadyCount, model.ConflictCount, model.DuplicateCount, model.UnsupportedCount, model.InvalidCount };
-            var captions = new[] { model.TotalText, model.ReadyText, model.ConflictsText, model.DuplicatesText, model.UnsupportedText, model.InvalidText };
-            for (var index = 0; index < 6; index++)
+            for (var index = 0; index < TileCategories.Length; index++)
             {
-                Text(_counts[index], counts[index].ToString(System.Globalization.CultureInfo.CurrentCulture));
-                Text(_captions[index], captions[index]);
-                _counts[index].SetTextColor(index == 5 ? palette.Danger : index == 2 ? SemanticColor("BrushWarning", palette.ImportHighlight)
-                    : index == 1 ? SemanticColor("BrushSuccess", palette.Accent) : index == 3 ? palette.Accent : palette.Primary);
+                var category = model.Categories.Single(option => option.Category == TileCategories[index]);
+                Text(_counts[index], category.Count.ToString(System.Globalization.CultureInfo.CurrentCulture));
+                Text(_captions[index], category.MetricName);
+                _counts[index].SetTextColor(category.IsInvalid ? palette.Danger : category.IsConflict ? SemanticColor("BrushWarning", palette.ImportHighlight)
+                    : category.IsReady ? SemanticColor("BrushSuccess", palette.Accent) : category.IsDuplicate ? palette.Accent : palette.Primary);
+                var tile = _filterTiles[index];
+                tile.Selected = category.IsSelected;
+                tile.ContentDescription = category.Label;
+                tile.Background = Surface(
+                    SemanticColor(category.IsSelected ? "BrushSurfaceAlternate" : "BrushSurface", palette.Window),
+                    category.IsSelected ? palette.Accent : palette.Border, 2);
             }
             Text(_local, model.LocalText); _local.SetTextColor(palette.Secondary);
             Text(_excluded, model.ExcludedText); _excluded.SetTextColor(palette.Danger);
@@ -465,9 +490,6 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
             _search.SetHintTextColor(palette.Secondary);
             _search.Background = Surface(palette.Window, palette.Border);
             if (!_search.HasFocus) Text(_search, model.Search);
-            UpdateOptions(_filter, ref _filterLabels, model.Categories.Select(category => category.Label).ToArray());
-            _filter.ContentDescription = model.FilterText;
-            _filter.SetSelection(model.Categories.ToList().IndexOf(model.SelectedCategory));
             Text(_select, model.SelectionText); _select.Checked = model.AllVisibleSelected;
             _select.Enabled = model.HasSelectableConflicts;
             _select.ButtonTintList = global::Android.Content.Res.ColorStateList.ValueOf(palette.Accent);

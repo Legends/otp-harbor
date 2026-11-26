@@ -31,8 +31,12 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
             entry.ImportIndex < 0 ? index : entry.ImportIndex,
             preview.ChangedConflicts.FirstOrDefault(conflict => conflict.ImportIndex == (entry.ImportIndex < 0 ? index : entry.ImportIndex)))).ToArray();
         Categories = Enum.GetValues<ImportReviewCategory>().Select(category => new CategoryOption(this, category)).ToArray();
-        _category = Categories[0];
-        _visibleRows = Rows.OrderByDescending(row => row.IsConflict).ThenByDescending(row => row.Category == ImportReviewCategory.Duplicates).ToArray();
+        // Review screens with actual conflicts should start with those requiring a decision.
+        // Mixed imports without conflicts still need to show their entries and exclusions.
+        _category = Categories.Single(option => option.Category ==
+            (UnresolvedCount > 0 ? ImportReviewCategory.Conflicts : ImportReviewCategory.All));
+        _visibleRows = Rows.Where(row => _category.Category == ImportReviewCategory.All || row.Category == _category.Category)
+            .OrderByDescending(row => row.IsConflict).ThenByDescending(row => row.Category == ImportReviewCategory.Duplicates).ToArray();
         MobileItems.Add(this);
         foreach (var row in _visibleRows) MobileItems.Add(row);
         ImportCommand = new ReviewCommand(_ => Complete(true), () => CanImport);
@@ -119,7 +123,16 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
         Notify();
     }
     public string Search { get => _search; set { _search = value; Filter(); } }
-    public CategoryOption SelectedCategory { get => _category; set { if (value is null) return; _category = value; Filter(); } }
+    public CategoryOption SelectedCategory
+    {
+        get => _category;
+        set
+        {
+            if (value is null || ReferenceEquals(_category, value) || !Categories.Contains(value)) return;
+            _category = value;
+            Filter();
+        }
+    }
     public ActionOption? BulkAction
     {
         get => _bulkAction;
@@ -172,6 +185,19 @@ public sealed class ImportReviewViewModel : INotifyPropertyChanged
         public bool IsSelected => ReferenceEquals(owner.SelectedCategory, this);
         public ImportReviewCategory Category { get; } = category;
         public string Name => owner.Text(ReviewStringKeys.Category(Category));
+        public string MetricName => Category switch
+        {
+            ImportReviewCategory.All => owner.TotalText,
+            ImportReviewCategory.Ready => owner.ReadyText,
+            ImportReviewCategory.Conflicts => owner.ConflictsText,
+            ImportReviewCategory.Duplicates => owner.DuplicatesText,
+            ImportReviewCategory.Unsupported => owner.UnsupportedText,
+            _ => owner.InvalidText
+        };
+        public bool IsReady => Category == ImportReviewCategory.Ready;
+        public bool IsConflict => Category == ImportReviewCategory.Conflicts;
+        public bool IsDuplicate => Category == ImportReviewCategory.Duplicates;
+        public bool IsInvalid => Category == ImportReviewCategory.Invalid;
         public int Count => Category switch
         {
             ImportReviewCategory.All => owner.TotalCount,

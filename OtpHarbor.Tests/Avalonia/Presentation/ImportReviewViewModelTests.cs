@@ -151,6 +151,55 @@ public sealed class ImportReviewViewModelTests
     }
 
     [Fact]
+    public void SummaryFilters_DefaultToConflictsAndPreserveSearchCountsAndDecisions()
+    {
+        var model = Create();
+        Assert.Equal(ImportReviewCategory.Conflicts, model.SelectedCategory.Category);
+        var conflict = Assert.Single(model.VisibleRows);
+        Assert.True(conflict.IsConflict);
+        Assert.Equal(2, model.MobileItems.Count);
+        var originalCounts = model.Categories.Select(category => category.Count).ToArray();
+        conflict.IsReplace = true;
+        foreach (var category in model.Categories)
+        {
+            model.FilterCommand.Execute(category);
+            Assert.Same(category, model.SelectedCategory);
+            Assert.Single(model.Categories, option => option.IsSelected);
+            Assert.True(category.IsSelected);
+            Assert.Equal(originalCounts, model.Categories.Select(option => option.Count).ToArray());
+            Assert.All(model.VisibleRows, row =>
+                Assert.True(category.Category == ImportReviewCategory.All || row.Category == category.Category));
+            Assert.Equal(model.VisibleRows.Count + 1, model.MobileItems.Count);
+            Assert.True(conflict.IsReplace);
+        }
+        model.Search = "carol";
+        model.FilterCommand.Execute(model.Categories.Single(option => option.Category == ImportReviewCategory.Duplicates));
+        Assert.Single(model.VisibleRows);
+        model.FilterCommand.Execute(model.Categories.Single(option => option.Category == ImportReviewCategory.Conflicts));
+        Assert.Empty(model.VisibleRows);
+        Assert.Equal("carol", model.Search);
+        Assert.Equal(originalCounts, model.Categories.Select(option => option.Count).ToArray());
+        model.Search = string.Empty;
+        Assert.Same(conflict, Assert.Single(model.VisibleRows));
+        Assert.True(model.CanImport);
+    }
+
+    [Fact]
+    public void SummaryFilters_WithoutConflictsDefaultToAllEntries()
+    {
+        var model = new ImportReviewViewModel(new(2, 1, ImportConflictStrategy.SkipExisting)
+        {
+            NewCount = 1,
+            UnchangedCount = 1,
+            Entries = [new("New", "alice", "SHA1", 6, 30),
+                new("Duplicate", "bob", "SHA1", 6, 30) { Existing = new("Duplicate", "bob", "SHA1", 6, 30) }]
+        }, null, "2FAS", "export.2fas", new MobileStringCatalog(CultureInfo.GetCultureInfo("en")).Get);
+        Assert.Equal(ImportReviewCategory.All, model.SelectedCategory.Category);
+        Assert.Equal(2, model.VisibleRows.Count);
+        Assert.Equal(3, model.MobileItems.Count);
+    }
+
+    [Fact]
     public void FiltersAndBulkActions_DoNotAlterHiddenUnselectedRows()
     {
         var model = Create();
