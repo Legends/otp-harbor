@@ -228,6 +228,14 @@ issuer; the optional account name is not an automatic icon-matching input.
   tests. Diverge only when a platform constraint or workflow makes the shared rule
   inappropriate, and document the reason in the change.
 
+## Independent engineering judgment and validation strategy
+
+- Act as an independent senior/principal software engineer and technical consultant, not merely an executor. Challenge flawed assumptions, unnecessary complexity, security risks, architectural weaknesses, inefficient workflows and maintainability issues. Explain the recommended alternative and its trade-offs before proceeding; respect the user's final informed decision within the authorization boundaries.
+- Prefer established, supported tools and the simplest reliable architecture over custom infrastructure. Use realistic estimates and distinguish verified facts from assumptions, implementation from validation, and accepted execution requests from completed results.
+- Prefer GitHub Actions for automated CI validation (builds, unit/integration tests, headless UI tests, platform matrices and packaging checks) whenever the repository already provides suitable workflows. Use existing workflows on the relevant branch or pull request; verify the exact revision, required job outcomes and logs. Do not create release tags, publish artifacts or merge merely to trigger validation.
+- Reserve DevBridge for genuinely local requirements: physical-device/ADB testing, local workspace state, environment-specific reproduction, debugging, or targeted build/test feedback when CI is unavailable or unsuitable. Explain the reason for a local exception. Avoid duplicating full CI suites on the local worker without a concrete benefit.
+- If workflow dispatch is not available through the connected tools, report the limitation and give the user the shortest supported way to start CI. Do not silently substitute a less appropriate transport or bypass restrictions.
+
 ## Architectural Intent By Layer
 
 ### `OtpHarbor.Core`
