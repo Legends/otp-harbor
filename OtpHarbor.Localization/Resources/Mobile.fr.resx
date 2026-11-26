@@ -242,7 +242,5 @@
   <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Par défaut</value></data>
   <data name="AppLockDeactivateAction" xml:space="preserve"><value>Désactiver</value></data>
   <data name="InitialNoAppLockNotRecommended" xml:space="preserve"><value>Non recommandé</value></data>
-  <data name="InitialNoAppLockConfirmationTitle" xml:space="preserve"><value>Continuer sans verrouillage ?</value></data>
-  <data name="InitialNoAppLockConfirmationDescription" xml:space="preserve"><value>Toute personne ayant accès à votre appareil déverrouillé peut consulter vos codes. Vous pouvez réactiver le verrouillage dans les paramètres de sécurité.</value></data>
   <data name="AppLockPlatformRecoveryRequired" xml:space="preserve"><value>L’authentification configurée sur l’appareil n’a pas pu être utilisée. Saisissez votre mot de passe maître pour autoriser la désactivation, ou annulez pour conserver le verrouillage.</value></data>
 </root>

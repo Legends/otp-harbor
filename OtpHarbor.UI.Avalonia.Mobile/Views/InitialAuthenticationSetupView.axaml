@@ -100,7 +100,6 @@
                 <TextBlock Text="{Binding InitialQuickUnlockDescription}" FontSize="15" Foreground="{DynamicResource BrushTextSecondary}"
                            TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,6" />
 
-                <StackPanel Spacing="12" IsVisible="{Binding !IsInitialNoAppLockConfirmationVisible}">
                 <Button x:Name="InitialBiometricChoice" Classes="auth-choice auth-primary" IsVisible="{Binding IsBiometricAvailable}"
                         Command="{Binding ChooseInitialBiometricCommand}" automation:AutomationProperties.Name="{Binding UnlockWithBiometricsText}"
                         automation:AutomationProperties.HelpText="{Binding InitialBiometricDescription}">
@@ -157,20 +156,6 @@
                         <Path Grid.Column="2" Classes="auth-chevron" />
                     </Grid>
                 </Button>
-                </StackPanel>
-                <Border IsVisible="{Binding IsInitialNoAppLockConfirmationVisible}" Background="{DynamicResource BrushSurface}"
-                        BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1" CornerRadius="20" Padding="16">
-                    <StackPanel Spacing="12">
-                        <TextBlock Classes="auth-title" Text="{Binding InitialNoAppLockConfirmationTitle}" />
-                        <TextBlock Classes="auth-description" Text="{Binding InitialNoAppLockConfirmationDescription}" />
-                        <Button x:Name="CancelInitialNoAppLockChoice" Classes="auth-choice" Command="{Binding CancelInitialNoAppLockCommand}">
-                            <TextBlock Text="{Binding CancelText}" TextAlignment="Center" TextWrapping="Wrap" />
-                        </Button>
-                        <Button x:Name="ConfirmInitialNoAppLockChoice" Classes="auth-choice" Command="{Binding ConfirmInitialNoAppLockCommand}">
-                            <TextBlock Text="{Binding InitialNoAppLockTitle}" TextAlignment="Center" TextWrapping="Wrap" />
-                        </Button>
-                    </StackPanel>
-                </Border>
                 <Grid ColumnDefinitions="20,*" ColumnSpacing="9" Margin="4,6,4,0">
                     <controls:SymbolIcon Kind="Information" IconSize="18" Foreground="{DynamicResource BrushTextSecondary}" VerticalAlignment="Top" />
                     <TextBlock x:Name="InitialAuthenticationSettingsHint" Grid.Column="1" Text="{Binding InitialAuthenticationSettingsHint}" FontSize="13"

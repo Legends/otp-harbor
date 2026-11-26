@@ -25,8 +25,6 @@ public static class MobileStringKeys
     public const string InitialNoAppLockTitle = nameof(InitialNoAppLockTitle);
     public const string InitialNoAppLockDescription = nameof(InitialNoAppLockDescription);
     public const string InitialNoAppLockNotRecommended = nameof(InitialNoAppLockNotRecommended);
-    public const string InitialNoAppLockConfirmationTitle = nameof(InitialNoAppLockConfirmationTitle);
-    public const string InitialNoAppLockConfirmationDescription = nameof(InitialNoAppLockConfirmationDescription);
     public const string AppLockPlatformRecoveryRequired = nameof(AppLockPlatformRecoveryRequired);
     public const string InitialAuthenticationSettingsHint = nameof(InitialAuthenticationSettingsHint);
     public const string InitialAuthenticationRecommended = nameof(InitialAuthenticationRecommended);
@@ -853,8 +851,6 @@ public static class MobileStringKeys
         "InitialNoAppLockTitle",
         "InitialNoAppLockDescription",
         "InitialNoAppLockNotRecommended",
-        "InitialNoAppLockConfirmationTitle",
-        "InitialNoAppLockConfirmationDescription",
         "AppLockPlatformRecoveryRequired",
         "InitialAuthenticationSettingsHint",
         "InitialAuthenticationRecommended",

@@ -57,22 +57,10 @@ public sealed partial class MobileShellViewModelTests
         Assert.True(sut.ChooseInitialMasterPasswordCommand.CanExecute(null));
         Assert.True(sut.ChooseInitialNoAppLockCommand.CanExecute(null));
         sut.ChooseInitialNoAppLockCommand.Execute(null);
-        Assert.True(sut.IsInitialNoAppLockConfirmationVisible);
-        Assert.True(sut.IsAppLockEnabled);
-        context.Authorization.Verify(value => value.CompleteInitialAppLockSetupAsync(
-            InitialAppLockChoice.AppLockDisabled, It.IsAny<CancellationToken>()), Times.Never);
-        sut.CancelInitialNoAppLockCommand.Execute(null);
-        Assert.False(sut.IsInitialNoAppLockConfirmationVisible);
-        Assert.True(sut.IsInitialQuickUnlockOfferVisible);
-        sut.ChooseInitialNoAppLockCommand.Execute(null);
-        Assert.True(await sut.TryHandleBackNavigationAsync());
-        Assert.False(sut.IsInitialNoAppLockConfirmationVisible);
-        Assert.True(sut.IsInitialQuickUnlockOfferVisible);
-        sut.ChooseInitialNoAppLockCommand.Execute(null);
-        sut.ConfirmInitialNoAppLockCommand.Execute(null);
         await WaitUntilAsync(() => !sut.IsBusy);
 
         Assert.False(sut.IsInitialQuickUnlockOfferVisible);
+        Assert.True(sut.IsAccountListVisible);
         Assert.Equal(outcome != AuthorizationResult.Success, sut.IsAppLockEnabled);
         Assert.True(sut.IsPasswordUnlockSelected);
         Assert.Empty(sut.SetupPassword);

@@ -242,7 +242,5 @@
   <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Standard</value></data>
   <data name="AppLockDeactivateAction" xml:space="preserve"><value>Deaktivieren</value></data>
   <data name="InitialNoAppLockNotRecommended" xml:space="preserve"><value>Nicht empfohlen</value></data>
-  <data name="InitialNoAppLockConfirmationTitle" xml:space="preserve"><value>Ohne App-Sperre fortfahren?</value></data>
-  <data name="InitialNoAppLockConfirmationDescription" xml:space="preserve"><value>Jeder mit Zugriff auf Ihr entsperrtes Gerät kann Ihre Codes sehen. Sie können die App-Sperre in den Sicherheitseinstellungen wieder aktivieren.</value></data>
   <data name="AppLockPlatformRecoveryRequired" xml:space="preserve"><value>Die konfigurierte Geräteauthentifizierung konnte nicht verwendet werden. Geben Sie Ihr Master-Passwort ein, um die Deaktivierung zu autorisieren, oder brechen Sie ab, um die App-Sperre beizubehalten.</value></data>
 </root>

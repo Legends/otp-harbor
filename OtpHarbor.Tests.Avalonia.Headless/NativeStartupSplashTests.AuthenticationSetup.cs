@@ -160,21 +160,8 @@ public sealed partial class NativeStartupSplashTests
             window.MouseDown(point, MouseButton.Left);
             window.MouseUp(point, MouseButton.Left);
             Dispatcher.UIThread.RunJobs();
-            if (choice == InitialAppLockChoice.AppLockDisabled)
-            {
-                Assert.True(context.Model.IsInitialNoAppLockConfirmationVisible);
-                Assert.True(context.Model.IsAppLockEnabled);
-                context.Authorization.Verify(value => value.CompleteInitialAppLockSetupAsync(choice, It.IsAny<CancellationToken>()), Times.Never);
-                var confirm = setup.FindControl<Button>("ConfirmInitialNoAppLockChoice")!;
-                confirm.BringIntoView();
-                window.UpdateLayout();
-                Dispatcher.UIThread.RunJobs();
-                var confirmPoint = confirm.TranslatePoint(new Point(confirm.Bounds.Width / 2, confirm.Bounds.Height / 2), window)!.Value;
-                window.MouseDown(confirmPoint, MouseButton.Left);
-                window.MouseUp(confirmPoint, MouseButton.Left);
-                Dispatcher.UIThread.RunJobs();
-            }
             Assert.False(context.Model.IsInitialQuickUnlockOfferVisible);
+            Assert.True(context.Model.IsAccountListVisible);
             Assert.Equal(choice != InitialAppLockChoice.AppLockDisabled, context.Model.IsAppLockEnabled);
             if (choice == InitialAppLockChoice.AppLockDisabled)
                 context.Authorization.Verify(value => value.CompleteInitialAppLockSetupAsync(choice, It.IsAny<CancellationToken>()), Times.Once);

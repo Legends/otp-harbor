@@ -242,7 +242,5 @@
   <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Predeterminado</value></data>
   <data name="AppLockDeactivateAction" xml:space="preserve"><value>Desactivar</value></data>
   <data name="InitialNoAppLockNotRecommended" xml:space="preserve"><value>No recomendado</value></data>
-  <data name="InitialNoAppLockConfirmationTitle" xml:space="preserve"><value>¿Continuar sin bloqueo de la app?</value></data>
-  <data name="InitialNoAppLockConfirmationDescription" xml:space="preserve"><value>Cualquier persona con acceso a tu dispositivo desbloqueado puede ver tus códigos. Puedes volver a activar el bloqueo en los ajustes de seguridad.</value></data>
   <data name="AppLockPlatformRecoveryRequired" xml:space="preserve"><value>No se pudo usar la autenticación configurada del dispositivo. Introduce tu contraseña maestra para autorizar la desactivación o cancela para mantener el bloqueo de la app.</value></data>
 </root>

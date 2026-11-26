@@ -381,22 +381,16 @@ public sealed partial class MobileShellViewModel :
             () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformQuickUnlock));
         _chooseInitialBiometricCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod.PlatformQuickUnlock),
-            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && IsBiometricAvailable && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && IsBiometricAvailable && !IsBusy);
         _chooseInitialDeviceCredentialCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod.PlatformDeviceCredential),
-            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && IsDeviceCredentialAvailable && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && IsDeviceCredentialAvailable && !IsBusy);
         _skipInitialQuickUnlockCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(null),
-            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && !IsBusy);
         _disableInitialAppLockCommand = new MobileAsyncCommand(
-            () => { IsInitialNoAppLockConfirmationVisible = true; return Task.CompletedTask; },
-            () => IsInitialQuickUnlockOfferVisible && !IsInitialNoAppLockConfirmationVisible && !IsBusy);
-        _confirmInitialNoAppLockCommand = new MobileAsyncCommand(
             () => CompleteInitialQuickUnlockChoiceAsync(null, disableAppLock: true),
-            () => IsInitialQuickUnlockOfferVisible && IsInitialNoAppLockConfirmationVisible && !IsBusy);
-        _cancelInitialNoAppLockCommand = new MobileAsyncCommand(
-            () => { IsInitialNoAppLockConfirmationVisible = false; return Task.CompletedTask; },
-            () => IsInitialQuickUnlockOfferVisible && IsInitialNoAppLockConfirmationVisible && !IsBusy);
+            () => IsInitialQuickUnlockOfferVisible && !IsBusy);
         _beginDeviceCredentialEnrollmentCommand = new MobileAsyncCommand(
             BeginDeviceCredentialEnrollmentAsync,
             () => CanSelectUnlockMethod(PreferredUnlockMethod.PlatformDeviceCredential));
@@ -3285,11 +3279,6 @@ public sealed partial class MobileShellViewModel :
     {
         if (IsInitialQuickUnlockOfferVisible)
         {
-            if (IsInitialNoAppLockConfirmationVisible)
-            {
-                IsInitialNoAppLockConfirmationVisible = false;
-                return true;
-            }
             await CompleteInitialQuickUnlockChoiceAsync(null);
             return true;
         }

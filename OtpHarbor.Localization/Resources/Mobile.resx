@@ -242,7 +242,5 @@
   <data name="InitialAuthenticationDefault" xml:space="preserve"><value>Default</value></data>
   <data name="AppLockDeactivateAction" xml:space="preserve"><value>Deactivate</value></data>
   <data name="InitialNoAppLockNotRecommended" xml:space="preserve"><value>Not recommended</value></data>
-  <data name="InitialNoAppLockConfirmationTitle" xml:space="preserve"><value>Continue without app lock?</value></data>
-  <data name="InitialNoAppLockConfirmationDescription" xml:space="preserve"><value>Anyone with access to your unlocked device can view your codes. You can enable app lock again in Security settings.</value></data>
   <data name="AppLockPlatformRecoveryRequired" xml:space="preserve"><value>The configured device authentication could not be used. Enter your master password to authorize deactivation, or cancel to keep app lock enabled.</value></data>
 </root>

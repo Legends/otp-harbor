@@ -14,9 +14,6 @@ public sealed partial class MobileShellViewModel
     private readonly MobileAsyncCommand _chooseInitialDeviceCredentialCommand;
     private readonly MobileAsyncCommand _skipInitialQuickUnlockCommand;
     private readonly MobileAsyncCommand _disableInitialAppLockCommand;
-    private readonly MobileAsyncCommand _confirmInitialNoAppLockCommand;
-    private readonly MobileAsyncCommand _cancelInitialNoAppLockCommand;
-    private bool _isInitialNoAppLockConfirmationVisible;
     private IReadOnlyList<SensitiveAuthenticationOption> _authenticationMethods = [];
     private SensitiveAuthenticationOption? _selectedAuthenticationMethod;
     private bool _isInitialQuickUnlockOfferVisible;
@@ -27,17 +24,6 @@ public sealed partial class MobileShellViewModel
     public ICommand SkipInitialQuickUnlockCommand => _skipInitialQuickUnlockCommand;
     public ICommand ChooseInitialMasterPasswordCommand => _skipInitialQuickUnlockCommand;
     public ICommand ChooseInitialNoAppLockCommand => _disableInitialAppLockCommand;
-    public ICommand ConfirmInitialNoAppLockCommand => _confirmInitialNoAppLockCommand;
-    public ICommand CancelInitialNoAppLockCommand => _cancelInitialNoAppLockCommand;
-    public bool IsInitialNoAppLockConfirmationVisible
-    {
-        get => _isInitialNoAppLockConfirmationVisible;
-        private set
-        {
-            if (!SetField(ref _isInitialNoAppLockConfirmationVisible, value)) return;
-            NotifySensitiveAuthenticationCommands();
-        }
-    }
     public IReadOnlyList<SensitiveAuthenticationOption> AuthenticationMethods => _authenticationMethods;
     public bool HasAuthenticationMethodChoice => !_usesConfiguredAuthenticationMethod && _authenticationMethods.Count > 1;
     public bool IsPasswordAuthorizationSelected =>
@@ -71,7 +57,6 @@ public sealed partial class MobileShellViewModel
         private set
         {
             if (!SetField(ref _isInitialQuickUnlockOfferVisible, value)) return;
-            if (!value) IsInitialNoAppLockConfirmationVisible = false;
             OnPropertyChanged(nameof(CanHandleSystemBack));
             OnPropertyChanged(nameof(IsNativeAccountListVisible));
             OnPropertyChanged(nameof(IsNativeAccountGroupsVisible));
@@ -90,8 +75,6 @@ public sealed partial class MobileShellViewModel
     public string InitialNoAppLockTitle => Get(MobileStringKeys.InitialNoAppLockTitle);
     public string InitialNoAppLockDescription => Get(MobileStringKeys.InitialNoAppLockDescription);
     public string InitialNoAppLockNotRecommended => Get(MobileStringKeys.InitialNoAppLockNotRecommended);
-    public string InitialNoAppLockConfirmationTitle => Get(MobileStringKeys.InitialNoAppLockConfirmationTitle);
-    public string InitialNoAppLockConfirmationDescription => Get(MobileStringKeys.InitialNoAppLockConfirmationDescription);
     public string InitialAuthenticationSettingsHint => Get(MobileStringKeys.InitialAuthenticationSettingsHint);
     public string InitialAuthenticationRecommended => Get(MobileStringKeys.InitialAuthenticationRecommended);
     public string InitialAuthenticationDefault => Get(MobileStringKeys.InitialAuthenticationDefault);
@@ -149,7 +132,7 @@ public sealed partial class MobileShellViewModel
                      nameof(InitialBiometricDescription), nameof(InitialDeviceLockDescription), nameof(InitialDeviceLockTitle),
                      nameof(InitialMasterPasswordDescription), nameof(InitialNoAppLockTitle),
                      nameof(InitialNoAppLockDescription),
-                      nameof(InitialNoAppLockNotRecommended), nameof(InitialNoAppLockConfirmationTitle), nameof(InitialNoAppLockConfirmationDescription), nameof(InitialAuthenticationSettingsHint),
+                      nameof(InitialNoAppLockNotRecommended), nameof(InitialAuthenticationSettingsHint),
                      nameof(InitialAuthenticationRecommended), nameof(InitialAuthenticationDefault) })
             OnPropertyChanged(name);
         NotifyAuthenticationSelectionChanged();
@@ -173,14 +156,11 @@ public sealed partial class MobileShellViewModel
         _chooseInitialDeviceCredentialCommand?.NotifyCanExecuteChanged();
         _skipInitialQuickUnlockCommand?.NotifyCanExecuteChanged();
         _disableInitialAppLockCommand?.NotifyCanExecuteChanged();
-        _confirmInitialNoAppLockCommand?.NotifyCanExecuteChanged();
-        _cancelInitialNoAppLockCommand?.NotifyCanExecuteChanged();
     }
 
     private async Task CompleteInitialQuickUnlockChoiceAsync(PreferredUnlockMethod? method, bool disableAppLock = false)
     {
         if (!IsInitialQuickUnlockOfferVisible || IsBusy || !_authorization.State.IsUnlocked) return;
-        if (disableAppLock != IsInitialNoAppLockConfirmationVisible) return;
         if (method == PreferredUnlockMethod.PlatformQuickUnlock && !IsBiometricAvailable
             || method == PreferredUnlockMethod.PlatformDeviceCredential && !IsDeviceCredentialAvailable) return;
         IsInitialQuickUnlockOfferVisible = false;
