@@ -26,9 +26,19 @@ public sealed partial class NativeStartupSplashTests
     {
         var context = CreateContext(appLock: true, culture: culture);
         await context.Model.InitializeAsync();
+        Assert.True(context.Model.IsUnlockVisible);
+
+        context.Authorization.Setup(service => service.TryUnlockWithPasswordAsync("Synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Model.UnlockPassword = "Synthetic password";
+        await context.Model.UnlockAsync();
+        Assert.True(context.Model.IsAccountsVisible);
+
         await context.Model.ShowSettingsAsync();
         context.Model.ShowSecuritySettingsCommand.Execute(null);
+        Assert.True(context.Model.IsSecuritySettingsVisible);
         await context.Model.BeginDisableAppLockAsync();
+        Assert.True(context.Model.IsDisableAppLockConfirmationVisible);
         context.Model.AppLockRecoveryPassword = "Synthetic confirmation";
         var view = CreateView(context.Model);
         var window = new Window { Width = 360, Height = 640, Content = view };
