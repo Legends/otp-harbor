@@ -4,6 +4,7 @@ using TOTP.Avalonia.Mobile.Localization;
 using TOTP.Avalonia.Mobile.Platform;
 using TOTP.Avalonia.Mobile.Presentation;
 using TOTP.Core.Common;
+using TOTP.Core.Enums;
 using TOTP.Core.Security.Interfaces;
 using TOTP.Core.Security.Models;
 using TOTP.Core.Services.Interfaces;

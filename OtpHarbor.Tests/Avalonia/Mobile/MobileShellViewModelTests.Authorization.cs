@@ -206,6 +206,18 @@ public sealed partial class MobileShellViewModelTests
         await sut.EnableBiometricAsync();
         Assert.True(sut.IsBiometricUnlockSelected);
 
+        // Reproduce a hidden selector writing the previous password choice back
+        // synchronously while the new ItemsSource is being published.
+        var writeBackAttempted = false;
+        sut.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName != nameof(sut.AuthenticationMethods)
+                || writeBackAttempted || !sut.IsPlatformAuthorizationSelected) return;
+            writeBackAttempted = true;
+            sut.SelectedAuthenticationMethod = sut.AuthenticationMethods.Single(
+                value => value.Method == PreferredUnlockMethod.Password);
+            Assert.Equal(PreferredUnlockMethod.PlatformQuickUnlock, sut.SelectedAuthenticationMethod?.Method);
+        };
         context.Authorization.Setup(value => value.IsHelloAvailableAsync()).ReturnsAsync(availabilityProbe);
         context.Authorization.Setup(value => value.SetAppLockEnabledWithPlatformAsync(false,
                 PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
@@ -214,6 +226,7 @@ public sealed partial class MobileShellViewModelTests
 
         await sut.BeginDisableAppLockAsync();
 
+        Assert.True(writeBackAttempted);
         context.Authorization.Verify(value => value.SetAppLockEnabledWithPlatformAsync(false,
             PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()), Times.Once);
         context.Authorization.Verify(value => value.SetAppLockEnabledAsync(false, It.IsAny<string>()), Times.Never);

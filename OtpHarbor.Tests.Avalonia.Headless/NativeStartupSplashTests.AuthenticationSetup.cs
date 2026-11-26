@@ -192,6 +192,74 @@ public sealed partial class NativeStartupSplashTests
         finally { window.Close(); }
     }
 
+    [AvaloniaTheory]
+    [InlineData(AuthorizationResult.Success)]
+    [InlineData(AuthorizationResult.Cancelled)]
+    [InlineData(AuthorizationResult.PasswordRequired)]
+    public async Task FirstSetup_PasswordThenBiometrics_AppLockToggleIgnoresHiddenSelectorWriteBack(AuthorizationResult outcome)
+    {
+        var context = await PrepareInitialAuthenticationAsync();
+        var model = context.Model;
+        context.Authorization.Setup(value => value.ConfigureHelloAsync("synthetic recovery"))
+            .Callback(() =>
+            {
+                context.Preferences.PreferredUnlockMethod = PreferredUnlockMethod.PlatformQuickUnlock;
+                context.State.SetConfiguration(true, PreferredUnlockMethod.PlatformQuickUnlock);
+            }).ReturnsAsync(AuthorizationResult.Success);
+        context.Authorization.Setup(value => value.SetAppLockEnabledWithPlatformAsync(false,
+                PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()))
+            .Callback(() =>
+            {
+                if (outcome == AuthorizationResult.Success) context.Preferences.AppLockEnabled = false;
+            }).ReturnsAsync(outcome);
+        var view = CreateView(model);
+        var window = new Window { Width = 390, Height = 800, Content = view };
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            model.ChooseInitialMasterPasswordCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(model.IsInitialQuickUnlockOfferVisible);
+            await model.ShowSettingsAsync();
+            model.ShowSecuritySettingsCommand.Execute(null);
+            window.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+            await model.BeginBiometricEnrollmentAsync();
+            model.BiometricRecoveryPassword = "synthetic recovery";
+            await model.EnableBiometricAsync();
+            Assert.True(model.IsBiometricUnlockSelected);
+            window.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+
+            var selectors = view.GetVisualDescendants().OfType<SensitiveAuthenticationSelector>()
+                .SelectMany(selector => selector.GetVisualDescendants().OfType<ComboBox>()).ToArray();
+            Assert.NotEmpty(selectors);
+            var injected = false;
+            model.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName != nameof(model.AuthenticationMethods)
+                    || injected || !model.IsPlatformAuthorizationSelected) return;
+                injected = true;
+                var password = model.AuthenticationMethods.Single(
+                    option => option.Method == PreferredUnlockMethod.Password);
+                foreach (var selector in selectors) selector.SelectedItem = password;
+            };
+
+            await model.ToggleAppLockAsync();
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(injected);
+            context.Authorization.Verify(value => value.SetAppLockEnabledWithPlatformAsync(false,
+                PreferredUnlockMethod.PlatformQuickUnlock, It.IsAny<CancellationToken>()), Times.Once);
+            context.Authorization.Verify(value => value.SetAppLockEnabledAsync(false, It.IsAny<string>()), Times.Never);
+            Assert.Equal(outcome != AuthorizationResult.Success, model.IsAppLockEnabled);
+            Assert.Equal(outcome == AuthorizationResult.PasswordRequired, model.IsDisableAppLockConfirmationVisible);
+            if (outcome == AuthorizationResult.PasswordRequired)
+                Assert.True(model.IsPasswordAuthorizationSelected);
+        }
+        finally { window.Close(); }
+    }
+
     private async Task<Context> PrepareInitialAuthenticationAsync(bool biometric = true, bool credential = true, string culture = "en")
     {
         var context = CreateContext(configured: false, appLock: true, culture: culture);

@@ -420,7 +420,7 @@ public sealed partial class MobileShellViewModel :
         _confirmDisableAppLockCommand = new MobileAsyncCommand(
             ConfirmDisableAppLockAsync,
             () => IsDisableAppLockConfirmationVisible
-                && CanConfirmSensitiveAuthorization(AppLockRecoveryPassword)
+                && AppLockRecoveryPassword.Length > 0
                 && !IsBusy);
         _cancelDisableAppLockCommand = new MobileAsyncCommand(
             CancelDisableAppLockAsync,
@@ -2987,16 +2987,26 @@ public sealed partial class MobileShellViewModel :
     {
         if (!IsSettingsVisible || !IsAppLockEnabled || IsBusy)
             return;
+        var requiredMethod = PreferredUnlockMethod.Password;
         var authenticateImmediately = false;
         IsBusy = true;
         try
         {
             await PrepareSensitiveAuthenticationAsync(useConfiguredMethod: true);
-            if (_disposed || !IsSettingsVisible || !_authorization.State.IsUnlocked) return;
-            authenticateImmediately = IsPlatformAuthorizationSelected;
+            if (_disposed || !IsSettingsVisible || !_authorization.State.IsUnlocked || !IsAppLockEnabled) return;
+            // Resolve the operation from the authorization policy, not a mutable
+            // ComboBox selection shared by several sensitive-operation views.
+            requiredMethod = _authorization.State.PreferredUnlockMethod;
+            authenticateImmediately = requiredMethod is PreferredUnlockMethod.PlatformQuickUnlock
+                or PreferredUnlockMethod.PlatformDeviceCredential;
             _logger.LogInformation(new EventId(4101, "AppLockAuthentication"),
                 "App-lock deactivation selected authentication. Configured: {ConfiguredMethod}; saved: {SavedMethod}; selected: {SelectedMethod}.",
-                _authorization.State.PreferredUnlockMethod, _settings.Current.PreferredUnlockMethod, SelectedAuthorizationMethod);
+                requiredMethod, _settings.Current.PreferredUnlockMethod, SelectedAuthorizationMethod);
+            if (!authenticateImmediately && requiredMethod != PreferredUnlockMethod.Password)
+            {
+                SetError(MobileStringKeys.AppLockChangeFailed);
+                return;
+            }
             IsDisableAppLockConfirmationVisible = !authenticateImmediately;
             ClearNotification();
             if (!authenticateImmediately && (_settings.Current.PreferredUnlockMethod is
@@ -3004,7 +3014,7 @@ public sealed partial class MobileShellViewModel :
                 SetNotification(Get(MobileStringKeys.AppLockPlatformRecoveryRequired), NotificationSeverity.Warning);
         }
         finally { IsBusy = false; }
-        if (authenticateImmediately) await ApplyAppLockDeactivationAsync(fromToggle: true);
+        if (authenticateImmediately) await ApplyAppLockDeactivationAsync(requiredMethod, fromToggle: true);
     }
 
     public async Task ToggleAppLockAsync()
@@ -3017,35 +3027,39 @@ public sealed partial class MobileShellViewModel :
             await EnableAppLockAsync();
     }
 
-    public Task ConfirmDisableAppLockAsync() => ApplyAppLockDeactivationAsync(fromToggle: false);
+    public Task ConfirmDisableAppLockAsync() =>
+        ApplyAppLockDeactivationAsync(PreferredUnlockMethod.Password, fromToggle: false);
 
-    private async Task ApplyAppLockDeactivationAsync(bool fromToggle)
+    private async Task ApplyAppLockDeactivationAsync(PreferredUnlockMethod authorizationMethod, bool fromToggle)
     {
-        if (_disposed || !IsSettingsVisible || !IsAppLockEnabled
-            || (!IsDisableAppLockConfirmationVisible && !fromToggle)
-            || IsBusy
-            || !CanConfirmSensitiveAuthorization(AppLockRecoveryPassword))
+        if (_disposed || !IsSettingsVisible || !IsAppLockEnabled || !_authorization.State.IsUnlocked || IsBusy)
+            return;
+
+        var usePassword = authorizationMethod == PreferredUnlockMethod.Password;
+        if (fromToggle
+            ? usePassword || authorizationMethod != _authorization.State.PreferredUnlockMethod
+            : !usePassword || !IsDisableAppLockConfirmationVisible || AppLockRecoveryPassword.Length == 0)
         {
             return;
         }
 
-        var recoveryPassword = AppLockRecoveryPassword;
+        var recoveryPassword = usePassword ? AppLockRecoveryPassword : string.Empty;
         AppLockRecoveryPassword = string.Empty;
         IsBusy = true;
         using var operation = BeginSensitiveOperation();
         try
         {
-            var result = IsPasswordAuthorizationSelected
+            var result = usePassword
                 ? await _authorization.SetAppLockEnabledAsync(false, recoveryPassword)
-                : await _authorization.SetAppLockEnabledWithPlatformAsync(false, SelectedAuthorizationMethod, operation.Token);
+                : await _authorization.SetAppLockEnabledWithPlatformAsync(false, authorizationMethod, operation.Token);
             _logger.LogInformation(new EventId(4101, "AppLockAuthentication"),
                 "App-lock deactivation authorization completed. Method: {Method}; outcome: {Outcome}.",
-                SelectedAuthorizationMethod, result);
+                authorizationMethod, result);
             if (!_authorization.State.IsUnlocked) { LockCore(); return; }
             if (operation.IsCancellationRequested || result == AuthorizationResult.Cancelled) return;
             if (result != AuthorizationResult.Success)
             {
-                if (!IsPasswordAuthorizationSelected &&
+                if (!usePassword &&
                     (result is AuthorizationResult.PasswordRequired or AuthorizationResult.NotAvailable))
                 {
                     SelectPasswordAuthorizationFallback();

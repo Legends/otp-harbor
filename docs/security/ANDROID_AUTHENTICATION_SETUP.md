@@ -12,3 +12,7 @@
 ## Verification
 
 Updated unit and headless tests cover the initial no-lock confirmation, cancellation/back navigation, localized warnings, and the existing real-service authentication sequence. Run the affected mobile/headless tests and Android build on Windows. On a physical Android device, repeat a clean install, set a master password, enroll biometrics, and deactivate app lock. Check that fresh biometrics are requested and cancellation preserves the lock. If the password prompt appears, inspect the non-secret authorization diagnostics to establish the specific runtime cause. Automated test execution and physical-device verification are pending.
+
+## Fixed-policy selection isolation
+
+App-lock deactivation now captures the current authorization policy and passes that method to the operation explicitly. Hidden two-way selectors cannot change a fixed selection, and only an explicit password confirmation can take the password route. The trusted recovery transition is separate from the binding setter. Existing cryptographic verification, policy checks and cancellation remain intact. Added unit coverage for a synchronous stale password write-back and headless coverage exercising the actual Avalonia selectors, success, cancellation and password-required recovery. Physical-device reproduction and test execution remain unverified until validation.

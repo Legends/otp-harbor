@@ -48,13 +48,21 @@ public sealed partial class MobileShellViewModel
         get => _selectedAuthenticationMethod;
         set
         {
-            if (value is null || !_authenticationMethods.Contains(value)
-                || !SetField(ref _selectedAuthenticationMethod, value)) return;
-            BiometricRecoveryPassword = string.Empty;
-            AppLockRecoveryPassword = string.Empty;
-            EditorSecretAuthorizationPassword = string.Empty;
-            NotifyAuthenticationSelectionChanged();
+            // Hidden selectors may still write back through a two-way binding.
+            // A fixed authorization policy must never be changed by a view.
+            if (!HasAuthenticationMethodChoice) return;
+            SetAuthenticationSelection(value);
         }
+    }
+
+    private void SetAuthenticationSelection(SensitiveAuthenticationOption? value)
+    {
+        if (value is null || !_authenticationMethods.Contains(value)
+            || !SetField(ref _selectedAuthenticationMethod, value)) return;
+        BiometricRecoveryPassword = string.Empty;
+        AppLockRecoveryPassword = string.Empty;
+        EditorSecretAuthorizationPassword = string.Empty;
+        NotifyAuthenticationSelectionChanged();
     }
 
     public bool IsInitialQuickUnlockOfferVisible
@@ -97,7 +105,7 @@ public sealed partial class MobileShellViewModel
 
     private void SelectPasswordAuthorizationFallback()
     {
-        SelectedAuthenticationMethod = _authenticationMethods.FirstOrDefault(option => option.Method == PreferredUnlockMethod.Password);
+        SetAuthenticationSelection(_authenticationMethods.FirstOrDefault(option => option.Method == PreferredUnlockMethod.Password));
     }
 
     private async Task PrepareSensitiveAuthenticationAsync(bool useConfiguredMethod = false)
