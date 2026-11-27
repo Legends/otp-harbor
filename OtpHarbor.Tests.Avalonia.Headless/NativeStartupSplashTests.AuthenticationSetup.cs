@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -26,12 +27,27 @@ public sealed partial class NativeStartupSplashTests
     {
         var context = CreateContext(appLock: true, culture: culture);
         await context.Model.InitializeAsync();
+        Assert.True(context.Model.IsUnlockVisible);
+
+        context.Authorization.Setup(service => service.TryUnlockWithPasswordAsync("Synthetic password"))
+            .Callback(context.State.Unlock).ReturnsAsync(AuthorizationResult.Success);
+        context.Model.UnlockPassword = "Synthetic password";
+        await context.Model.UnlockAsync();
+        Assert.True(context.Model.IsAccountsVisible);
+
         await context.Model.ShowSettingsAsync();
         context.Model.ShowSecuritySettingsCommand.Execute(null);
+        Assert.True(context.Model.IsSecuritySettingsVisible);
         await context.Model.BeginDisableAppLockAsync();
+        Assert.True(context.Model.IsDisableAppLockConfirmationVisible);
         context.Model.AppLockRecoveryPassword = "Synthetic confirmation";
         var view = CreateView(context.Model);
         var window = new Window { Width = 360, Height = 640, Content = view };
+        // The assembly uses the desktop application; apply the actual mobile style overrides locally.
+        window.Styles.Add(new StyleInclude(new Uri("avares://TOTP.Tests.Avalonia.Headless/"))
+        {
+            Source = new Uri("avares://TOTP.UI.Avalonia.Mobile/Styles/MobileStyles.axaml")
+        });
         try
         {
             window.Show();
@@ -43,7 +59,8 @@ public sealed partial class NativeStartupSplashTests
             Assert.Contains(main.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == context.Model.AppLockActionText);
             Assert.NotEqual(context.Model.AppLockActionText, shortLabel.Text);
             Assert.True(shortLabel.TextLayout.Width <= shortLabel.Bounds.Width + 1, $"Confirmation text is clipped in {culture}.");
-            Assert.True(confirm.Bounds.Height >= 44);
+            Assert.True(confirm.MinHeight >= 44, $"Mobile minimum height was {confirm.MinHeight} DIPs in {culture}.");
+            Assert.True(confirm.Bounds.Height >= 44, $"Rendered confirmation height was {confirm.Bounds.Height} DIPs in {culture}.");
             Assert.Equal(VerticalAlignment.Center, confirm.VerticalContentAlignment);
         }
         finally { window.Close(); }
