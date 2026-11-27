@@ -5,6 +5,20 @@ namespace TOTP.Tests.Avalonia.Styles;
 public sealed class SharedStylesTests
 {
     [Fact]
+    public void MobileApp_LoadsExtractedMobileStyles()
+    {
+        var fixtureDirectory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
+        var app = XDocument.Load(Path.Combine(fixtureDirectory, "MobileApp.axaml"));
+        XNamespace avalonia = "https://github.com/avaloniaui";
+        Assert.Single(app.Descendants(avalonia + "StyleInclude"), element =>
+            element.Attribute("Source")?.Value ==
+                "avares://TOTP.UI.Avalonia.Mobile/Styles/MobileStyles.axaml");
+        var styles = XDocument.Load(Path.Combine(fixtureDirectory, "MobileStyles.axaml"));
+        Assert.Equal(avalonia + "Styles", styles.Root?.Name);
+        Assert.NotEmpty(styles.Descendants(avalonia + "Style"));
+    }
+
+    [Fact]
     public void DesktopIndeterminateProgressBarsAnimateOnlyWhileActive()
     {
         var fixtureDirectory = Path.Combine(
@@ -1005,7 +1019,7 @@ public sealed class SharedStylesTests
             AppContext.BaseDirectory,
             "Fixtures",
             "Avalonia",
-            "MobileApp.axaml");
+            "MobileStyles.axaml");
         var app = XDocument.Load(appPath);
         var iconStyle = app
             .Descendants(avalonia + "Style")
@@ -1143,7 +1157,7 @@ public sealed class SharedStylesTests
                 clearSearchButton.Attribute("Click")?.Value);
         }
 
-        var mobileApp = XDocument.Load(Path.Combine(fixtureDirectory, "MobileApp.axaml"));
+        var mobileApp = XDocument.Load(Path.Combine(fixtureDirectory, "MobileStyles.axaml"));
         var mobilePeriodStyle = mobileApp
             .Descendants(avalonia + "Style")
             .Single(element => element.Attribute("Selector")?.Value == "NumericUpDown.mobile-period");
