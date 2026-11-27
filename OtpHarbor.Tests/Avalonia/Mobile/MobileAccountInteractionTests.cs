@@ -151,7 +151,7 @@ public sealed class MobileAccountInteractionTests
     public void AndroidScrolling_HidesVerticalScrollbarsWithoutDisablingScrolling()
     {
         var fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures");
-        var app = XDocument.Load(Path.Combine(fixtureRoot, "Avalonia", "MobileApp.axaml"));
+        var app = XDocument.Load(Path.Combine(fixtureRoot, "Avalonia", "MobileStyles.axaml"));
         var view = XDocument.Load(Path.Combine(fixtureRoot, "Avalonia", "MobileMainView.axaml"));
         var accountListSource = File.ReadAllText(Path.Combine(
             fixtureRoot,
@@ -2071,7 +2071,8 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("#E5E7EB", ThemeResourceColor(app, "Dark", "BrushFavoriteFilterForeground"));
         Assert.Equal("#FFD58A", ThemeResourceColor(app, "Dark", "BrushFavoriteFilterIcon"));
 
-        var stableDisabledSelectors = app
+        var styles = XDocument.Load(Path.Combine(fixtureDirectory, "MobileStyles.axaml"));
+        var stableDisabledSelectors = styles
             .Descendants()
             .Where(element => element.Name.LocalName == "Style")
             .Where(element => element.Attribute("Selector")?.Value is
@@ -2099,7 +2100,7 @@ public sealed class MobileAccountInteractionTests
         var sharedStyles = XDocument.Load(Path.Combine(fixtureDirectory, "SharedStyles.axaml"));
         Assert.Equal("#9CA3AF", ThemeResourceColor(sharedStyles, "Light", "BrushDisabledIcon"));
         Assert.Equal("#A7B0BE", ThemeResourceColor(sharedStyles, "Dark", "BrushDisabledIcon"));
-        var iconActionStyle = app
+        var iconActionStyle = styles
             .Descendants()
             .Single(element => element.Name.LocalName == "Style"
                 && element.Attribute("Selector")?.Value == "Button.icon-action");
@@ -2113,7 +2114,7 @@ public sealed class MobileAccountInteractionTests
         Assert.DoesNotContain(
             iconActionTemplate.Descendants(),
             element => element.Attribute("Name")?.Value == "PART_Border");
-        var disabledSymbolStyle = app
+        var disabledSymbolStyle = styles
             .Descendants()
             .Single(element => element.Name.LocalName == "Style"
                 && element.Attribute("Selector")?.Value ==
@@ -2123,7 +2124,7 @@ public sealed class MobileAccountInteractionTests
             setter => setter.Attribute("Property")?.Value == "Foreground"
                 && setter.Attribute("Value")?.Value == "{DynamicResource BrushDisabledIcon}");
 
-        var selectedGroupStyle = app
+        var selectedGroupStyle = styles
             .Descendants()
             .Single(element => element.Name.LocalName == "Style"
                 && element.Attribute("Selector")?.Value == "Border.group-card.selected");

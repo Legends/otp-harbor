@@ -427,15 +427,31 @@ public sealed class SettingsPageViewModelTests
     }
 
 
-    [Fact]
-    public async Task SaveAsync_WhenInterfaceScaleChanges_ExplainsRestartRequirement()
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("es")]
+    public async Task SaveAsync_WhenInterfaceScaleChanges_ExplainsRestartRequirement(string locale)
     {
         var current = new AppSettings();
         var settings = CreateSettings(current);
         settings.Setup(value => value.SaveAsync()).ReturnsAsync(Result.Ok());
+        var localization = new AvaloniaLocalizationService(
+            new global::Avalonia.Controls.ResourceDictionary(), new AvaloniaStringCatalog());
+        localization.ApplyCulture(locale);
         using var sut = new SettingsPageViewModel(
             settings.Object,
+            localization,
             transientMessageDuration: TimeSpan.FromMilliseconds(20));
+        var shown = new List<NotificationShownEventArgs>();
+        sut.SettingsNotification.Shown += (_, args) => shown.Add(args);
+        var cleared = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        sut.SettingsNotification.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(NotificationState.HasMessage) && !sut.SettingsNotification.HasMessage)
+                cleared.TrySetResult();
+        };
         sut.SelectedInterfaceScale = Assert.Single(
             sut.InterfaceScales,
             option => option.Percent == 200);
@@ -443,9 +459,10 @@ public sealed class SettingsPageViewModelTests
         await sut.SaveAsync();
 
         Assert.Equal(200, current.InterfaceScalePercent);
-        Assert.Contains("restart", sut.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(NotificationSeverity.Information, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        var notification = Assert.Single(shown);
+        Assert.Equal(localization.GetString(AvaloniaStringKeys.InterfaceScaleRestartRequired), notification.Text);
+        Assert.Equal(NotificationSeverity.Information, notification.Severity);
+        await cleared.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         Assert.Empty(sut.Message);
     }
 

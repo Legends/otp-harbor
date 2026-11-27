@@ -82,6 +82,9 @@
     <None Include="..\OtpHarbor.UI.Avalonia.Mobile\MobileApp.axaml"
           Link="Fixtures\Avalonia\MobileApp.axaml"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Mobile\Styles\MobileStyles.axaml"
+          Link="Fixtures\Avalonia\MobileStyles.axaml"
+          CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\values\colors.xml"
           Link="Fixtures\Android\values\colors.xml"
           CopyToOutputDirectory="PreserveNewest" />
