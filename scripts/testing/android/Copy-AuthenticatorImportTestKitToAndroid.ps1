@@ -41,7 +41,10 @@ if (-not $KitDirectory) {
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) { throw 'The .NET 10 SDK is required to generate the test kit.' }
     $KitDirectory = Join-Path $repositoryRoot ('artifacts/shared/testing/authenticator-import-kit-' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss'))
     $project = Join-Path $repositoryRoot 'scripts/testing/fixtures/authenticator-imports/AuthenticatorImportFixtures.csproj'
-    & dotnet run --project $project --configuration Debug -- $KitDirectory
+    Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName 'Authenticator import fixtures' `
+        -CommandArguments @('build', $project, '--configuration', 'Debug') `
+        -OutputPaths @((Join-Path (Split-Path $project) 'bin/Debug'))
+    & dotnet run --project $project --configuration Debug --no-build -- $KitDirectory
     if ($LASTEXITCODE -ne 0) { throw 'Fixture generation/production-parser validation failed. Nothing was copied to Android.' }
 }
 $KitDirectory = [IO.Path]::GetFullPath($KitDirectory)

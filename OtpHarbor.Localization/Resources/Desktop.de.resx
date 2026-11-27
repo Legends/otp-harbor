@@ -480,4 +480,10 @@
   <data name="AboutCreditsHelp" xml:space="preserve"><value>Von OTP Harbor verwendete Bibliotheken und Assets von Drittanbietern.</value></data>
   <data name="AboutViewCredits" xml:space="preserve"><value>Danksagungen ansehen</value></data>
   <data name="SecurityAutoLockRequiresAppLock" xml:space="preserve"><value>(Zuerst App-Sperre aktivieren)</value></data>
+  <data name="AutomaticBackupHealthUpToDate" xml:space="preserve"><value>Sicherung aktuell</value></data>
+  <data name="AutomaticBackupLastSuccessLabel" xml:space="preserve"><value>Letzte erfolgreiche Sicherung</value></data>
+  <data name="AutomaticBackupFolderAccessLabel" xml:space="preserve"><value>Zugriff auf Sicherungsordner</value></data>
+  <data name="AutomaticBackupAccessAvailable" xml:space="preserve"><value>Verfügbar</value></data>
+  <data name="AutomaticBackupAccessUnavailable" xml:space="preserve"><value>Nicht verfügbar</value></data>
+  <data name="AutomaticBackupAccessUnknown" xml:space="preserve"><value>Noch nicht geprüft</value></data>
 </root>

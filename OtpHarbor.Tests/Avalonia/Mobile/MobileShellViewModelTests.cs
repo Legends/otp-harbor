@@ -4225,12 +4225,15 @@ public sealed partial class MobileShellViewModelTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ImportAccountFileAsync_UsesPortableParserAndTransactionalImportWorkflow(bool fromSettings)
+    [InlineData(false, "en")]
+    [InlineData(true, "en")]
+    [InlineData(true, "de")]
+    [InlineData(true, "fr")]
+    [InlineData(true, "es")]
+    public async Task ImportAccountFileAsync_UsesPortableParserAndTransactionalImportWorkflow(bool fromSettings, string culture)
     {
         var importedAccount = new Account(Guid.NewGuid(), "GitHub", ValidSecret, "alice");
-        var context = CreateContext(isConfigured: true);
+        var context = CreateContext(isConfigured: true, cultureName: culture);
         context.Authorization
             .Setup(value => value.TryUnlockWithPasswordAsync("synthetic password"))
             .Callback(context.State.Unlock)
@@ -4270,8 +4273,25 @@ public sealed partial class MobileShellViewModelTests
         context.AccountImport.VerifyAll();
         Assert.Equal(
             string.Format(context.Strings.Get(MobileStringKeys.AccountFileImported), 1, 0, 0),
-            context.Sut.NotificationText);
-        Assert.Equal(NotificationSeverity.Success, context.Sut.NotificationSeverity);
+            context.Sut.QrImportResultText);
+        Assert.True(context.Sut.IsQrImportResultVisible);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.FileImportResultTitle), context.Sut.QrImportResultTitle);
+        Assert.True(context.Sut.IsFileImportResult);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.FileImportResultSubtitle), context.Sut.FileImportResultSubtitleText);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.ImportAccountsAdded), context.Sut.ImportAccountsAddedText);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.ImportAccountsOverwritten), context.Sut.ImportAccountsOverwrittenText);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.ImportAccountsUnchanged), context.Sut.ImportAccountsUnchangedText);
+        Assert.Equal(context.Strings.Get(MobileStringKeys.ImportResultDone), context.Sut.ImportResultDismissText);
+        Assert.Equal("1", context.Sut.ImportAccountsAddedCount);
+        Assert.Equal("0", context.Sut.ImportAccountsOverwrittenCount);
+        Assert.Equal("0", context.Sut.ImportAccountsUnchangedCount);
+        Assert.Empty(context.Sut.NotificationText);
+        Assert.False(context.Sut.IsNativeAccountListVisible);
+        await context.Sut.DismissQrImportResultAsync();
+        Assert.False(context.Sut.IsQrImportResultVisible);
+        Assert.False(context.Sut.IsFileImportResult);
+        Assert.Equal("0", context.Sut.ImportAccountsAddedCount);
+        Assert.Equal(context.Sut.CloseText, context.Sut.ImportResultDismissText);
         Assert.Equal(fromSettings, context.Sut.IsSettingsVisible);
     }
 
@@ -4394,7 +4414,12 @@ public sealed partial class MobileShellViewModelTests
         Assert.Contains(workingAccounts, account => account.ID == olderNewId);
         Assert.Equal(
             string.Format(context.Strings.Get(MobileStringKeys.AccountFileImported), 1, 1, 1),
-            context.Sut.NotificationText);
+            context.Sut.QrImportResultText);
+        Assert.Equal("1", context.Sut.ImportAccountsAddedCount);
+        Assert.Equal("1", context.Sut.ImportAccountsOverwrittenCount);
+        Assert.Equal("1", context.Sut.ImportAccountsUnchangedCount);
+        Assert.True(context.Sut.IsQrImportResultVisible);
+        Assert.Empty(context.Sut.NotificationText);
     }
 
     [Fact]

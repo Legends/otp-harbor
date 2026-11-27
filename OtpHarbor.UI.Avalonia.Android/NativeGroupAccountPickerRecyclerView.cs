@@ -234,12 +234,12 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         _fill.Color = palette.Card;
         canvas.DrawRect(0, 0, Width, Height, _fill);
 
-        DrawCheckbox(canvas, palette);
-        var textLeft = Dp(56);
+        DrawSwitch(canvas, palette);
+        var textLeft = Dp(64);
         if (_item.ShowIssuerLogo)
         {
             DrawBrand(canvas);
-            textLeft = Dp(108);
+            textLeft = Dp(116);
         }
         DrawText(canvas, textLeft, palette);
 
@@ -252,7 +252,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
     {
         base.OnSizeChanged(width, height, oldWidth, oldHeight);
         var size = Dp(40);
-        var left = Dp(56);
+        var left = Dp(64);
         _brandBounds.Set(left, (height - size) / 2f, left + size, (height + size) / 2f);
         PrepareBrandIcon();
     }
@@ -302,7 +302,7 @@ internal sealed class NativeGroupAccountSelectionRowView : View
     {
         base.OnInitializeAccessibilityNodeInfo(info);
         if (info is null || _item is null) return;
-        info.ClassName = "android.widget.CheckBox";
+        info.ClassName = "android.widget.Switch";
         info.Checkable = true;
         if (OperatingSystem.IsAndroidVersionAtLeast(36))
         {
@@ -331,27 +331,15 @@ internal sealed class NativeGroupAccountSelectionRowView : View
         base.Dispose(disposing);
     }
 
-    private void DrawCheckbox(Canvas canvas, NativeAccountPalette palette)
+    private void DrawSwitch(Canvas canvas, NativeAccountPalette palette)
     {
-        var size = Dp(24);
-        var left = Dp(14);
-        var top = (Height - size) / 2f;
-        using var bounds = new RectF(left, top, left + size, top + size);
-        _stroke.StrokeWidth = Dp(2);
-        _stroke.Color = _item!.IsSelected ? palette.Accent : palette.Secondary;
-
-        if (_item.IsSelected)
-        {
-            _fill.Color = palette.Accent;
-            canvas.DrawRoundRect(bounds, Dp(5), Dp(5), _fill);
-            _stroke.Color = Color.White;
-            _stroke.StrokeWidth = Dp(2.2f);
-            canvas.DrawLine(left + Dp(5), top + Dp(12), left + Dp(10), top + Dp(17), _stroke);
-            canvas.DrawLine(left + Dp(10), top + Dp(17), left + Dp(19), top + Dp(7), _stroke);
-            return;
-        }
-
-        canvas.DrawRoundRect(bounds, Dp(5), Dp(5), _stroke);
+        var left = Dp(6);
+        var top = (Height - Dp(24)) / 2f;
+        using var bounds = new RectF(left, top, left + Dp(44), top + Dp(24));
+        _fill.Color = _item!.IsSelected ? palette.Accent : palette.Secondary;
+        canvas.DrawRoundRect(bounds, Dp(12), Dp(12), _fill);
+        _fill.Color = Color.White;
+        canvas.DrawCircle(left + Dp(_item.IsSelected ? 32 : 12), top + Dp(12), Dp(9), _fill);
     }
 
     private void DrawBrand(Canvas canvas)

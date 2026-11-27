@@ -85,6 +85,10 @@
     <None Include="..\OtpHarbor.UI.Avalonia.Mobile\Styles\MobileStyles.axaml"
           Link="Fixtures\Avalonia\MobileStyles.axaml"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeImportReviewRecyclerView.cs"
+          Link="Fixtures\Android\NativeImportReviewRecyclerView.cs" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\OtpHarbor.UI.Avalonia.Android\NativeGroupAccountPickerRecyclerView.cs"
+          Link="Fixtures\Android\NativeGroupAccountPickerRecyclerView.cs" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\OtpHarbor.UI.Avalonia.Android\Resources\values\colors.xml"
           Link="Fixtures\Android\values\colors.xml"
           CopyToOutputDirectory="PreserveNewest" />

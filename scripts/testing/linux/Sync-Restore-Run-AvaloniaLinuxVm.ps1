@@ -390,10 +390,17 @@ if [[ -z "${XAUTHORITY:-}" || ! -r "$XAUTHORITY" ]]; then
 fi
 
 printf 'Starting OTP Harbor (%s) on display %s...\n' "$configuration" "$DISPLAY"
+source "$target_root/scripts/shared/Build.Common.sh"
+otp_harbor_cached_build "$target_root" 'Linux VM desktop' "$target_root/OtpHarbor.UI.Avalonia.Desktop/bin/$configuration" -- \
+    build OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj \
+    --configuration "$configuration" --no-restore \
+    -p:Version="$product_version" -p:InformationalVersion="$informational_version" \
+    -p:IncludeSourceRevisionInInformationalVersion=false
 set +e
 dotnet run \
     --project OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj \
     --configuration "$configuration" \
+    --no-build \
     --no-restore \
     -p:Version="$product_version" \
     -p:InformationalVersion="$informational_version" \

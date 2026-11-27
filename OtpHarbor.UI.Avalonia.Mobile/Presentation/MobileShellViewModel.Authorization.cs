@@ -178,7 +178,7 @@ public sealed partial class MobileShellViewModel
             if (disableAppLock)
             {
                 if (result == AuthorizationResult.Success && !IsAppLockEnabled)
-                    SetNotification(Get(MobileStringKeys.AppLockDisabled), NotificationSeverity.Warning);
+                    ClearNotification();
                 else if (result != AuthorizationResult.Cancelled) SetError(MobileStringKeys.AppLockChangeFailed);
             }
             else if (method is not null)

@@ -175,6 +175,12 @@
   <data name="QrDisplayFailed" xml:space="preserve"><value>Der Konto-QR-Code konnte nicht sicher angezeigt werden.</value></data>
   <data name="QrImportCancelled" xml:space="preserve"><value>QR-Import abgebrochen. Es wurde kein Konto geändert.</value></data>
   <data name="QrImportChangedAccounts" xml:space="preserve"><value>Wählen Sie für jedes geänderte Konto eine Aktion. Geheimniswerte werden niemals angezeigt.</value></data>
+  <data name="FileImportResultTitle" xml:space="preserve"><value>Import abgeschlossen</value></data>
+  <data name="FileImportResultSubtitle" xml:space="preserve"><value>Kontodatei importiert</value></data>
+  <data name="ImportAccountsAdded" xml:space="preserve"><value>Hinzugefügte Konten</value></data>
+  <data name="ImportAccountsOverwritten" xml:space="preserve"><value>Überschriebene Konten</value></data>
+  <data name="ImportAccountsUnchanged" xml:space="preserve"><value>Bestehende Konten unverändert</value></data>
+  <data name="ImportResultDone" xml:space="preserve"><value>Fertig</value></data>
   <data name="QrImportResultTitle" xml:space="preserve"><value>Ergebnis des QR-Imports</value></data>
   <data name="QrImportReviewSummary" xml:space="preserve"><value>{0} Konten: {1} neu, {2} unverändert, {3} geändert.</value></data>
   <data name="QrImportReviewTitle" xml:space="preserve"><value>QR-Import prüfen</value></data>

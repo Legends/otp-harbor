@@ -214,6 +214,21 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
             lastSuccess.ToLocalTime().ToString("g"))
         : Localized(AvaloniaStringKeys.AutomaticBackupNever);
     public bool HasAutomaticBackupFailure => _automaticBackup?.Status.LastFailureKind.HasValue == true;
+    public bool IsAutomaticBackupHealthy => _automaticBackup?.Status is
+        { IsConfigured: true, LastFailureKind: null, Kind: AutomaticBackupStatusKind.UpToDate or AutomaticBackupStatusKind.Succeeded };
+    public bool IsAutomaticBackupHealthPending => !IsAutomaticBackupHealthy && !HasAutomaticBackupFailure;
+    public string AutomaticBackupHealthTitle => IsAutomaticBackupHealthy && _automaticBackup?.Status.Kind == AutomaticBackupStatusKind.UpToDate
+        ? Localized(AvaloniaStringKeys.AutomaticBackupHealthUpToDate) : AutomaticBackupStatusText;
+    public string AutomaticBackupLastSuccessValue => _automaticBackup?.Status.LastSuccessfulUtc is { } lastSuccess
+        ? lastSuccess.ToLocalTime().ToString("g") : Localized(AvaloniaStringKeys.AutomaticBackupNever);
+    public bool IsAutomaticBackupDestinationAvailable =>
+        _automaticBackup?.Status.DestinationAccess == AutomaticBackupDestinationAccess.Accessible;
+    public bool IsAutomaticBackupDestinationUnavailable =>
+        _automaticBackup?.Status.DestinationAccess == AutomaticBackupDestinationAccess.Unavailable;
+    public string AutomaticBackupDestinationAccessValue => Localized(IsAutomaticBackupDestinationAvailable
+        ? AvaloniaStringKeys.AutomaticBackupAccessAvailable
+        : IsAutomaticBackupDestinationUnavailable ? AvaloniaStringKeys.AutomaticBackupAccessUnavailable
+        : AvaloniaStringKeys.AutomaticBackupAccessUnknown);
     public string AutomaticBackupDestinationAccessText => (_automaticBackup?.Status.DestinationAccess
         ?? AutomaticBackupDestinationAccess.Unknown) switch
     {
@@ -1165,7 +1180,14 @@ public sealed class NativeFilePickerViewModel : INotifyPropertyChanged, IDisposa
         OnPropertyChanged(nameof(AutomaticBackupStatusText));
         OnPropertyChanged(nameof(AutomaticBackupDestinationText));
         OnPropertyChanged(nameof(AutomaticBackupLastSuccessText));
+        OnPropertyChanged(nameof(AutomaticBackupLastSuccessValue));
         OnPropertyChanged(nameof(HasAutomaticBackupFailure));
+        OnPropertyChanged(nameof(IsAutomaticBackupHealthy));
+        OnPropertyChanged(nameof(IsAutomaticBackupHealthPending));
+        OnPropertyChanged(nameof(AutomaticBackupHealthTitle));
+        OnPropertyChanged(nameof(IsAutomaticBackupDestinationAvailable));
+        OnPropertyChanged(nameof(IsAutomaticBackupDestinationUnavailable));
+        OnPropertyChanged(nameof(AutomaticBackupDestinationAccessValue));
         OnPropertyChanged(nameof(AutomaticBackupDestinationAccessText));
         OnPropertyChanged(nameof(AutomaticBackupLastFailureText));
         OnPropertyChanged(nameof(AutomaticBackupActionText));

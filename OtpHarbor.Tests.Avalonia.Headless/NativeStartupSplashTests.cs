@@ -335,7 +335,9 @@ public sealed partial class NativeStartupSplashTests : IDisposable
             new TotpGenerationResult("123456", 20, 30, "234567"))).ToArray(), new HashSet<Guid>());
 
     private Context CreateContext(bool configured = true, bool appLock = false,
-        PreferredUnlockMethod method = PreferredUnlockMethod.Password, string culture = "en")
+        PreferredUnlockMethod method = PreferredUnlockMethod.Password, string culture = "en",
+        Mock<IMobileDocumentService>? documents = null, Mock<IExportService>? exports = null,
+        Mock<IAccountImportService>? imports = null)
     {
         var state = new AuthorizationState();
         state.SetConfiguration(configured, method);
@@ -355,7 +357,7 @@ public sealed partial class NativeStartupSplashTests : IDisposable
             Mock.Of<IPasswordValidationService>(), Mock.Of<IAccountManager>(), Mock.Of<IAccountTotpService>(),
             Mock.Of<IAsyncClipboardService>(), Mock.Of<IMobileQrScanner>(), Mock.Of<IQrPayloadValidator>(),
             Mock.Of<IQrAccountImportService>(), Mock.Of<IAccountQrCodeService>(), Mock.Of<IMobileQrImageFactory>(),
-            Mock.Of<IMobileDocumentService>(), Mock.Of<IExportService>(), Mock.Of<IAccountImportService>(),
+            documents?.Object ?? Mock.Of<IMobileDocumentService>(), exports?.Object ?? Mock.Of<IExportService>(), imports?.Object ?? Mock.Of<IAccountImportService>(),
             settings.Object, Mock.Of<IPlatformApplicationPaths>(), new MobileStringCatalog(CultureInfo.GetCultureInfo(culture)),
             TimeProvider.System, accountListSnapshots: snapshots.Object);
         model.DeferAutomaticBiometricUnlockUntilStartupSurfaceReady();

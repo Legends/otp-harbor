@@ -5,6 +5,23 @@ namespace TOTP.Tests.Avalonia.Mobile;
 public sealed class MobileAccountInteractionTests
 {
     [Fact]
+    public void AndroidSelections_UseSwitchesInPortableViewsAndNativeSurfaces()
+    {
+        var fixtures = Path.Combine(AppContext.BaseDirectory, "Fixtures");
+        var view = XDocument.Load(Path.Combine(fixtures, "Avalonia", "MobileMainView.axaml"));
+        XNamespace ui = "https://github.com/avaloniaui";
+        Assert.Empty(view.Descendants(ui + "CheckBox"));
+        foreach (var property in new[] { "ShowNextToken", "ShowIssuerLogo", "AllowScreenshots", "EditorIsFavorite", "IsSelected" })
+            Assert.Contains(view.Descendants(ui + "ToggleSwitch"), control =>
+                control.Attribute("IsChecked")?.Value == $"{{Binding {property}, Mode=TwoWay}}");
+        var review = File.ReadAllText(Path.Combine(fixtures, "Android", "NativeImportReviewRecyclerView.cs"));
+        var group = File.ReadAllText(Path.Combine(fixtures, "Android", "NativeGroupAccountPickerRecyclerView.cs"));
+        Assert.DoesNotContain("CheckBox", review);
+        Assert.DoesNotContain("CheckBox", group);
+        Assert.Contains("android.widget.Switch", group);
+    }
+
+    [Fact]
     public void PasswordChangeEditor_RevealsThreeFieldsAndUsesSeparateOpenChangeAndCancelActions()
     {
         var view = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia", "MobileMainView.axaml"));
@@ -80,7 +97,7 @@ public sealed class MobileAccountInteractionTests
     }
 
     [Fact]
-    public void EmptyAccountActions_RenderLocalizedLabelsInBothThemes()
+    public void EmptyAccountActions_DeclareLocalizedWrappingLabelsAndSemanticColors()
     {
         var directory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Avalonia");
         var view = XDocument.Load(Path.Combine(directory, "MobileMainView.axaml"));
@@ -796,7 +813,7 @@ public sealed class MobileAccountInteractionTests
             advanced.Attribute("Width")?.Value);
         Assert.Equal("Left", advanced.Attribute("HorizontalAlignment")?.Value);
         Assert.Contains(
-            advanced.Descendants(avalonia + "CheckBox"),
+            advanced.Descendants(avalonia + "ToggleSwitch"),
             control => control.Attribute("IsChecked")?.Value
                 == "{Binding EditorIsFavorite, Mode=TwoWay}");
         var brandIconPicker = advanced
@@ -1122,8 +1139,8 @@ public sealed class MobileAccountInteractionTests
             Assert.Equal("{DynamicResource BrushBorder}", divider.Attribute("Background")?.Value);
         });
         var appearanceIssuerLogo = Assert.Single(
-            appearanceSections[^1].Descendants(avalonia + "CheckBox"));
-        Assert.Equal("{Binding ShowIssuerLogoText}", appearanceIssuerLogo.Attribute("Content")?.Value);
+            appearanceSections[^1].Descendants(avalonia + "ToggleSwitch"));
+        Assert.Equal("{Binding ShowIssuerLogoText}", appearanceIssuerLogo.Attributes().Single(attribute => attribute.Name.LocalName == "AutomationProperties.Name")?.Value);
         Assert.Equal(
             "{Binding ShowIssuerLogo, Mode=TwoWay}",
             appearanceIssuerLogo.Attribute("IsChecked")?.Value);
@@ -1132,7 +1149,7 @@ public sealed class MobileAccountInteractionTests
             .Single(element => element.Attribute("IsVisible")?.Value
                 == "{Binding IsBrandIconSettingsVisible}");
         Assert.Contains(
-            iconPacks.Descendants(avalonia + "CheckBox"),
+            iconPacks.Descendants(avalonia + "ToggleSwitch"),
             checkBox => checkBox.Attribute("IsChecked")?.Value
                 == "{Binding ShowIssuerLogo, Mode=TwoWay}");
 
@@ -1973,7 +1990,7 @@ public sealed class MobileAccountInteractionTests
         Assert.Equal("Hidden", accountPicker.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
         Assert.Equal("False", accountPicker.Attribute("ScrollViewer.IsScrollChainingEnabled")?.Value);
         var accountSelection = accountPicker
-            .Descendants(avalonia + "CheckBox")
+            .Descendants(avalonia + "ToggleSwitch")
             .Single(element => element.Attribute("IsChecked")?.Value.Contains(
                 "IsSelected",
                 StringComparison.Ordinal) == true);

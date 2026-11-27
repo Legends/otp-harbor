@@ -35,6 +35,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "../../.."))
+. (Join-Path $repositoryRoot 'scripts/shared/Build.Common.ps1')
 $projectPath = Join-Path $repositoryRoot "OtpHarbor.UI.Avalonia.Android\OtpHarbor.UI.Avalonia.Android.csproj"
 
 foreach ($requiredFile in @($projectPath, $KeyStorePath, $StorePasswordFile, $KeyPasswordFile)) {
@@ -56,6 +57,7 @@ if (@(Get-ChildItem -LiteralPath $resolvedOutput -Force).Count -ne 0) {
 }
 
 $publishDirectory = Join-Path $resolvedOutput "publish"
+$cachedPublishDirectory = Join-Path $repositoryRoot 'artifacts/build-cache/android-production-publish'
 $arguments = @(
     "publish",
     $projectPath,
@@ -75,7 +77,7 @@ $arguments = @(
     "-p:AndroidSigningKeyAlias=$KeyAlias",
     "-p:AndroidSigningStorePass=file:$([IO.Path]::GetFullPath($StorePasswordFile))",
     "-p:AndroidSigningKeyPass=file:$([IO.Path]::GetFullPath($KeyPasswordFile))",
-    "--output", $publishDirectory)
+    "--output", $cachedPublishDirectory)
 
 $releaseOriginalPath = $env:PATH
 try {
@@ -90,7 +92,11 @@ try {
         $env:PATH = $releaseCompilerPath + [IO.Path]::PathSeparator + $releaseOriginalPath
         $arguments += @('-p:EnableAndroidNativeAot=true', '-p:AndroidAotExperiment=false', "-p:AndroidNdkDirectory=$releaseNdk", '-p:TrimmerSingleWarn=false')
     }
-    & dotnet @arguments
+    $releaseInputs = @($KeyStorePath, $StorePasswordFile, $KeyPasswordFile)
+    if ($UseNativeAot) { $releaseInputs += Join-Path $releaseNdk 'source.properties' }
+    Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName 'Android production release' `
+        -CommandArguments $arguments -OutputPaths @($cachedPublishDirectory) -AdditionalInputPaths $releaseInputs `
+        -OnOutputsReady { Copy-Item -LiteralPath $cachedPublishDirectory -Destination $publishDirectory -Recurse }
     if ($LASTEXITCODE -ne 0) { throw "The Android release publish failed." }
 }
 finally { $env:PATH = $releaseOriginalPath }
@@ -188,6 +194,9 @@ $metadataPath = Join-Path $resolvedOutput "android-release.json"
     (($metadata | ConvertTo-Json -Depth 3) + "`n"),
     [Text.UTF8Encoding]::new($false))
 
-Remove-Item -LiteralPath $publishDirectory -Recurse -Force
+$publishCleanupTarget = [IO.Path]::GetFullPath($publishDirectory)
+$publishCleanupExpected = [IO.Path]::GetFullPath((Join-Path $resolvedOutput 'publish'))
+if ($publishCleanupTarget -cne $publishCleanupExpected) { throw 'Refusing to remove a directory outside the release staging area.' }
+Remove-Item -LiteralPath $publishCleanupTarget -Recurse -Force
 Write-Output $destination
 Write-Output $metadataPath

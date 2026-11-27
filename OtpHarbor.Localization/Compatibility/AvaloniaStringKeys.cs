@@ -191,6 +191,12 @@ public static class AvaloniaStringKeys
     public const string AutomaticBackupDestinationUnavailable = global::TOTP.Localization.CommonStringKeys.AutomaticBackupDestinationUnavailable;
     public const string AutomaticBackupDestinationFormat = global::TOTP.Localization.CommonStringKeys.AutomaticBackupDestinationFormat;
     public const string AutomaticBackupLastSuccessFormat = global::TOTP.Localization.CommonStringKeys.AutomaticBackupLastSuccessFormat;
+    public const string AutomaticBackupHealthUpToDate = nameof(AutomaticBackupHealthUpToDate);
+    public const string AutomaticBackupLastSuccessLabel = nameof(AutomaticBackupLastSuccessLabel);
+    public const string AutomaticBackupFolderAccessLabel = nameof(AutomaticBackupFolderAccessLabel);
+    public const string AutomaticBackupAccessAvailable = nameof(AutomaticBackupAccessAvailable);
+    public const string AutomaticBackupAccessUnavailable = nameof(AutomaticBackupAccessUnavailable);
+    public const string AutomaticBackupAccessUnknown = nameof(AutomaticBackupAccessUnknown);
     public const string AutomaticBackupNever = global::TOTP.Localization.CommonStringKeys.AutomaticBackupNever;
     public const string ConfigureAutomaticBackup = global::TOTP.Localization.CommonStringKeys.ConfigureAutomaticBackup;
     public const string ChangeAutomaticBackupFolder = global::TOTP.Localization.CommonStringKeys.ChangeAutomaticBackupFolder;
@@ -857,6 +863,12 @@ public static class AvaloniaStringKeys
         "AutomaticBackupFailureWriteFailed",
         "AutomaticBackupLastFailureFormat",
         "AutomaticBackupLastSuccessFormat",
+        AutomaticBackupHealthUpToDate,
+        AutomaticBackupLastSuccessLabel,
+        AutomaticBackupFolderAccessLabel,
+        AutomaticBackupAccessAvailable,
+        AutomaticBackupAccessUnavailable,
+        AutomaticBackupAccessUnknown,
         "AutomaticBackupNever",
         "AutomaticBackupNotConfigured",
         "AutomaticBackupNow",

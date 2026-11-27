@@ -98,27 +98,33 @@ public sealed class DeferredContentTests : IDisposable
     public void MobileSecondaryViews_AreInitiallyDeferredAndCanBePreparedAtEachViewport(int width)
     {
         var view = CreateView();
-        view.Measure(new Size(width, 640));
-        view.Arrange(new Rect(0, 0, width, 640));
-        var hosts = view.GetLogicalDescendants().OfType<DeferredContent>().ToArray();
-        Assert.NotEmpty(hosts);
-        Assert.All(hosts, host => Assert.False(host.IsContentCreated));
-        Assert.NotNull(view.FindControl<StackPanel>("SettingsRoot"));
-
-        foreach (var host in hosts)
+        var window = new Window { Content = view, Width = width, Height = 640 };
+        try
         {
-            host.IsVisible = false;
-            host.Preload(width);
-            Assert.NotNull(host.Child);
-        }
+            window.Show();
+            view.Measure(new Size(width, 640));
+            view.Arrange(new Rect(0, 0, width, 640));
+            var hosts = view.GetLogicalDescendants().OfType<DeferredContent>().ToArray();
+            Assert.NotEmpty(hosts);
+            Assert.All(hosts, host => Assert.False(host.IsContentCreated));
+            Assert.NotNull(view.FindControl<StackPanel>("SettingsRoot"));
 
-        Assert.All(hosts, host => Assert.True(host.IsContentCreated));
-        var appearance = view.FindControl<DeferredContent>("DeferredAppearanceSettings")!;
-        appearance.IsRequested = true;
-        var created = appearance.Child;
-        appearance.IsRequested = false;
-        appearance.IsRequested = true;
-        Assert.Same(created, appearance.Child);
+            foreach (var host in hosts)
+            {
+                host.IsVisible = false;
+                host.Preload(width);
+                Assert.NotNull(host.Child);
+            }
+
+            Assert.All(hosts, host => Assert.True(host.IsContentCreated));
+            var appearance = view.FindControl<DeferredContent>("DeferredAppearanceSettings")!;
+            appearance.IsRequested = true;
+            var created = appearance.Child;
+            appearance.IsRequested = false;
+            appearance.IsRequested = true;
+            Assert.Same(created, appearance.Child);
+        }
+        finally { window.Close(); }
     }
 
     [AvaloniaTheory]

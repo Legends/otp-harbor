@@ -285,6 +285,74 @@
         </ResourceDictionary>
     </Window.Resources>
     <Window.Styles>
+        <Style Selector="Expander.backup-health">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushControlBorder}" />
+            <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}">
+                        <Grid RowDefinitions="Auto,Auto">
+                            <ToggleButton x:Name="BackupHealthHeader" IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
+                                          Padding="16,12" MinHeight="52" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center"
+                                          Background="Transparent" Foreground="{DynamicResource BrushTextPrimary}" BorderThickness="0" CornerRadius="9">
+                                <ToggleButton.Template>
+                                    <ControlTemplate>
+                                        <Border x:Name="BackupHealthHeaderBackground" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="Transparent">
+                                            <ContentPresenter x:Name="BackupHealthHeaderContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                    <ContentPresenter Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}" VerticalAlignment="Center" />
+                                    <Path x:Name="BackupHealthChevron" Grid.Column="1" Width="12" Height="7" Data="M1,1 L6,6 L11,1" Stretch="Uniform" Stroke="{DynamicResource BrushTextPrimary}" StrokeThickness="2" VerticalAlignment="Center" RenderTransformOrigin="50%,50%" />
+                                </Grid>
+                            </ToggleButton>
+                            <Border x:Name="ExpanderContent" Grid.Row="1" IsVisible="{TemplateBinding IsExpanded}" Padding="16,0,16,16">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="16">
+                                    <Border Height="1" Background="{DynamicResource BrushControlBorder}" />
+                                    <ContentPresenter Grid.Row="1" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Stretch" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Expander.backup-health[IsExpanded=true] /template/ Path#BackupHealthChevron">
+            <Setter Property="RenderTransform"><RotateTransform Angle="180" /></Setter>
+        </Style>
+        <Style Selector="Expander.backup-health /template/ ToggleButton#BackupHealthHeader:checked /template/ Border#BackupHealthHeaderBackground">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Expander.backup-health /template/ ToggleButton#BackupHealthHeader:pointerover /template/ Border#BackupHealthHeaderBackground">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfaceHover}" />
+        </Style>
+        <Style Selector="Expander.backup-health /template/ ToggleButton#BackupHealthHeader:pressed /template/ Border#BackupHealthHeaderBackground">
+            <Setter Property="Background" Value="{DynamicResource BrushSurfacePressed}" />
+        </Style>
+        <Style Selector="Expander.backup-health /template/ ToggleButton#BackupHealthHeader:focus-visible /template/ Border#BackupHealthHeaderBackground">
+            <Setter Property="BorderBrush" Value="{DynamicResource BrushFocus}" />
+        </Style>
+        <Style Selector="Border.backup-health-badge"><Setter Property="Background" Value="{DynamicResource BrushTextSecondary}" /></Style>
+        <Style Selector="Border.backup-health-badge.healthy"><Setter Property="Background" Value="{DynamicResource BrushSuccess}" /></Style>
+        <Style Selector="Border.backup-health-badge.failed"><Setter Property="Background" Value="{DynamicResource BrushDanger}" /></Style>
+        <Style Selector="Ellipse.backup-access"><Setter Property="Fill" Value="{DynamicResource BrushTextSecondary}" /></Style>
+        <Style Selector="Ellipse.backup-access.available"><Setter Property="Fill" Value="{DynamicResource BrushSuccess}" /></Style>
+        <Style Selector="Ellipse.backup-access.unavailable"><Setter Property="Fill" Value="{DynamicResource BrushDanger}" /></Style>
+        <Style Selector="Grid#AutomaticBackupHealthValues TextBlock"><Setter Property="FontSize" Value="14" /></Style>
+        <Style Selector="Grid#AutomaticBackupHealthValues"><Setter Property="MaxWidth" Value="520" /><Setter Property="HorizontalAlignment" Value="Left" /></Style>
+        <Style Selector="Button#AutomaticBackupNowButton">
+            <Setter Property="Grid.Column" Value="1" /><Setter Property="Grid.RowSpan" Value="2" /><Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+        <ContainerQuery Name="backup-health" Query="max-width:560">
+            <Style Selector="Grid#AutomaticBackupHealthValues"><Setter Property="Grid.ColumnSpan" Value="2" /><Setter Property="HorizontalAlignment" Value="Stretch" /></Style>
+            <Style Selector="TextBlock#AutomaticBackupHealthFailure"><Setter Property="Grid.ColumnSpan" Value="2" /></Style>
+            <Style Selector="Button#AutomaticBackupNowButton"><Setter Property="Grid.Row" Value="2" /><Setter Property="Grid.Column" Value="0" /><Setter Property="Grid.ColumnSpan" Value="2" /><Setter Property="Grid.RowSpan" Value="1" /><Setter Property="HorizontalAlignment" Value="Stretch" /></Style>
+        </ContainerQuery>
         <Style Selector="StackPanel#AutomaticBackupLocationSection:disabled"><Setter Property="Opacity" Value="0.6" /></Style>
         <Style Selector="ItemsControl#AboutSecondaryDetails"><Setter Property="Grid.Column" Value="2" /></Style>
         <Style Selector="Border#AboutRowDivider"><Setter Property="IsVisible" Value="False" /></Style>
@@ -432,6 +500,12 @@
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
+        <Style Selector="StackPanel#AppearanceSettingsPanel TextBlock.settings-card-title, StackPanel#BrandIconsPanel TextBlock.settings-card-title">
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
+        </Style>
+        <Style Selector="StackPanel#AppearanceSettingsPanel TextBlock.settings-page-title, StackPanel#BrandIconsPanel TextBlock.settings-page-title">
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeTitle}" />
+        </Style>
         <Style Selector="Grid.settings-page TextBlock.settings-row-label">
             <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -478,7 +552,7 @@
                 <Setter Property="Padding" Value="8,10" />
                 <Setter Property="FontSize" Value="12" />
             </Style>
-            <Style Selector="TabControl#SettingsCategories TabItem TextBlock">
+            <Style Selector="TabControl#SettingsCategories TabItem TextBlock:not(.settings-page-title)">
                 <Setter Property="FontSize" Value="12" />
             </Style>
         </ContainerQuery>
@@ -728,12 +802,7 @@
         </Style>
     </Window.Styles>
 
-    <Border x:Name="SettingsWindowFrame" CornerRadius="{Binding CornerRadius, ElementName=SettingsRoot}" BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="1" Background="{DynamicResource BrushWindowBackground}" ClipToBounds="True">
-    <Border.Clip>
-        <RectangleGeometry Rect="{Binding Bounds, ElementName=SettingsWindowFrame}"
-                           RadiusX="{Binding CornerRadius.TopLeft, ElementName=SettingsWindowFrame}"
-                           RadiusY="{Binding CornerRadius.TopLeft, ElementName=SettingsWindowFrame}" />
-    </Border.Clip>
+    <Border x:Name="SettingsWindowFrame" CornerRadius="{Binding CornerRadius, ElementName=SettingsRoot}" BorderBrush="{DynamicResource BrushControlBorder}" BorderThickness="1" Background="{DynamicResource BrushWindowBackground}">
     <Grid
         x:Name="SettingsWindowSurface"
         Background="{DynamicResource BrushWindowBackground}"
@@ -786,7 +855,7 @@
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Margin="4,0,4,8">
                                             <shared:SymbolIcon Kind="Palette" IconSize="32" Foreground="{DynamicResource BrushAccent}" VerticalAlignment="Top" Margin="0,4,0,0" />
                                             <StackPanel Grid.Column="1" Spacing="6">
-                                                <TextBlock FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Text="{DynamicResource Appearance}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="settings-page-title" FontWeight="Bold" Text="{DynamicResource Appearance}" TextWrapping="Wrap" />
                                                 <TextBlock Classes="settings-help" Text="{DynamicResource AppearanceDescription}" />
                                             </StackPanel>
                                         </Grid>
@@ -928,7 +997,7 @@
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Margin="4,0,4,8">
                                             <shared:SymbolIcon Kind="ImageStack" IconSize="32" Foreground="{DynamicResource BrushAccent}" VerticalAlignment="Top" Margin="0,4,0,0" />
                                             <StackPanel Grid.Column="1" Spacing="6">
-                                                <TextBlock FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Text="{DynamicResource IconPacks}" TextWrapping="Wrap" />
+                                                <TextBlock Classes="settings-page-title" FontWeight="Bold" Text="{DynamicResource IconPacks}" TextWrapping="Wrap" />
                                                 <TextBlock Classes="settings-help" Text="{DynamicResource IconPackDescription}" />
                                             </StackPanel>
                                         </Grid>
@@ -1304,16 +1373,34 @@
                                                                 <shared:SymbolIcon Kind="Information" IconSize="18" VerticalAlignment="Top" Margin="0,1,0,0" />
                                                                 <TextBlock Grid.Column="1" Classes="settings-help" Text="{DynamicResource DataBackupPasswordNotice}" />
                                                             </Grid>
-                                                            <Expander x:Name="AutomaticBackupHealthDetails" Classes="faq-subsection" IsExpanded="{Binding HasAutomaticBackupFailure}">
-                                                                <Expander.Header><TextBlock x:Name="AutomaticBackupHealthStatus" Text="{Binding AutomaticBackupStatusText}" TextWrapping="Wrap" /></Expander.Header>
-                                                                <StackPanel Spacing="8" Margin="10,8">
-                                                                    <TextBlock Classes="settings-help" Text="{Binding AutomaticBackupLastSuccessText}" />
-                                                                    <TextBlock Classes="settings-help" Text="{Binding AutomaticBackupDestinationAccessText}" />
-                                                                    <TextBlock IsVisible="{Binding HasAutomaticBackupFailure}" Text="{Binding AutomaticBackupLastFailureText}" Foreground="{DynamicResource BrushDanger}" TextWrapping="Wrap" />
-                                                                    <Button x:Name="AutomaticBackupNowButton" Classes="secondary settings-action" HorizontalAlignment="Left" MinHeight="40" Command="{Binding AutomaticBackupNowCommand}">
+                                                            <Expander x:Name="AutomaticBackupHealthDetails" Classes="backup-health" IsExpanded="{Binding HasAutomaticBackupFailure, Mode=OneWay}" Container.Name="backup-health" Container.Sizing="Width"
+                                                                      automation:AutomationProperties.Name="{Binding AutomaticBackupHealthTitle}">
+                                                                <Expander.Header>
+                                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                                                        <Grid Width="32" Height="32" VerticalAlignment="Center">
+                                                                            <Border Classes="backup-health-badge" Classes.healthy="{Binding IsAutomaticBackupHealthy}" Classes.failed="{Binding HasAutomaticBackupFailure}" CornerRadius="16" Opacity="0.16" />
+                                                                            <shared:SymbolIcon Kind="Check" IconSize="20" Foreground="{DynamicResource BrushSuccess}" IsVisible="{Binding IsAutomaticBackupHealthy}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                            <shared:SymbolIcon Kind="Warning" IconSize="20" Foreground="{DynamicResource BrushDanger}" IsVisible="{Binding HasAutomaticBackupFailure}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                            <shared:SymbolIcon Kind="Information" IconSize="20" Foreground="{DynamicResource BrushTextSecondary}" IsVisible="{Binding IsAutomaticBackupHealthPending}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                        </Grid>
+                                                                        <TextBlock x:Name="AutomaticBackupHealthStatus" Grid.Column="1" FontSize="16" FontWeight="SemiBold" Text="{Binding AutomaticBackupHealthTitle}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                                    </Grid>
+                                                                </Expander.Header>
+                                                                <Grid x:Name="AutomaticBackupHealthBody" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="20" RowSpacing="12">
+                                                                    <Grid x:Name="AutomaticBackupHealthValues" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="10">
+                                                                        <TextBlock Text="{DynamicResource AutomaticBackupLastSuccessLabel}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                                        <TextBlock x:Name="AutomaticBackupLastSuccessValue" Grid.Column="1" Text="{Binding AutomaticBackupLastSuccessValue}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                                        <TextBlock Grid.Row="1" Text="{DynamicResource AutomaticBackupFolderAccessLabel}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                                        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                                            <Ellipse x:Name="AutomaticBackupAccessIndicator" Classes="backup-access" Classes.available="{Binding IsAutomaticBackupDestinationAvailable}" Classes.unavailable="{Binding IsAutomaticBackupDestinationUnavailable}" Width="10" Height="10" VerticalAlignment="Center" />
+                                                                            <TextBlock x:Name="AutomaticBackupAccessValue" Grid.Column="1" Text="{Binding AutomaticBackupDestinationAccessValue}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                    <TextBlock x:Name="AutomaticBackupHealthFailure" Grid.Row="1" IsVisible="{Binding HasAutomaticBackupFailure}" Text="{Binding AutomaticBackupLastFailureText}" Foreground="{DynamicResource BrushDanger}" TextWrapping="Wrap" />
+                                                                    <Button x:Name="AutomaticBackupNowButton" Classes="secondary settings-action" VerticalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" MinHeight="44" Command="{Binding AutomaticBackupNowCommand}">
                                                                         <shared:SymbolIconLabel Kind="BackupRestore" Text="{Binding AutomaticBackupActionText}" />
                                                                     </Button>
-                                                                </StackPanel>
+                                                                </Grid>
                                                             </Expander>
                                                         </StackPanel>
                                                     </StackPanel>

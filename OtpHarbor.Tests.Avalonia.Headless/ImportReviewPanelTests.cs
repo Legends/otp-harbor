@@ -82,9 +82,16 @@ public sealed class ImportReviewPanelTests
         {
             window.Show();
             window.UpdateLayout();
-            CheckBox SelectBox() => panel.GetVisualDescendants().OfType<CheckBox>().Single(box => ReferenceEquals(box.DataContext, model));
+            global::Avalonia.Controls.Primitives.ToggleButton SelectBox() => panel.GetVisualDescendants()
+                .OfType<global::Avalonia.Controls.Primitives.ToggleButton>()
+                .Single(box => box is CheckBox or ToggleSwitch && ReferenceEquals(box.DataContext, model));
             ComboBox BulkBox() => panel.GetVisualDescendants().OfType<ComboBox>().Single(box => ReferenceEquals(box.DataContext, model) && ReferenceEquals(box.ItemsSource, model.Actions));
             Assert.False(SelectBox().IsEnabled);
+            if (mobile)
+            {
+                Assert.IsType<ToggleSwitch>(SelectBox());
+                Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), label => label.Text == model.SelectionText);
+            }
             Assert.False(SelectBox().IsChecked);
             Assert.False(BulkBox().IsEnabled);
             model.SelectedCategory = model.Categories.Single(category => category.Category == ImportReviewCategory.Conflicts);

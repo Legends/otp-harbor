@@ -262,6 +262,7 @@ public sealed partial class MobileShellViewModel :
     private bool _isQrImportResolutionVisible;
     private string _qrImportResolutionText = string.Empty;
     private bool _isQrImportResultVisible;
+    private AccountImportOutcome? _fileImportResult;
     private string _qrImportResultText = string.Empty;
     private MobileQrImageHandle? _qrImage;
     private string _backupPassword = string.Empty;
@@ -2251,7 +2252,8 @@ public sealed partial class MobileShellViewModel :
     public string QrImportReviewTitle => Get(MobileStringKeys.QrImportReviewTitle);
     public string QrImportChangedAccountsText =>
         Get(MobileStringKeys.QrImportChangedAccounts);
-    public string QrImportResultTitle => Get(MobileStringKeys.QrImportResultTitle);
+    public string QrImportResultTitle => Get(IsFileImportResult
+        ? MobileStringKeys.FileImportResultTitle : MobileStringKeys.QrImportResultTitle);
     public string ImportCancelText => Get(MobileStringKeys.ImportCancel);
     public string CloseText => Get(MobileStringKeys.Close);
     public string KeepBothAllText => Get(MobileStringKeys.KeepBothAll);
@@ -3579,7 +3581,7 @@ public sealed partial class MobileShellViewModel :
             }
 
             if (!string.IsNullOrWhiteSpace(resultText))
-                ShowQrImportResult(resultText);
+                ShowImportResult(resultText);
         }
         catch (OperationCanceledException)
         {
@@ -4193,13 +4195,14 @@ public sealed partial class MobileShellViewModel :
             if (outcome.Added == 0 && outcome.Replaced == 0) return;
 
             await LoadAccountsAsync();
-            SetNotification(
+            ClearNotification();
+            ShowImportResult(
                 string.Format(
                     Get(MobileStringKeys.AccountFileImported),
                     outcome.Added,
                     outcome.Replaced,
                     outcome.Skipped),
-                NotificationSeverity.Success);
+                fileOutcome: outcome);
         }
         catch (OperationCanceledException) when (operation.IsCancellationRequested)
         {
@@ -4400,8 +4403,7 @@ public sealed partial class MobileShellViewModel :
 
     public Task DismissQrImportResultAsync()
     {
-        QrImportResultText = string.Empty;
-        IsQrImportResultVisible = false;
+        ClearImportResult();
         return Task.CompletedTask;
     }
 
@@ -5228,8 +5230,7 @@ public sealed partial class MobileShellViewModel :
         Groups.Clear();
         _authorization.Lock();
         CancelQrImportReview();
-        QrImportResultText = string.Empty;
-        IsQrImportResultVisible = false;
+        ClearImportResult();
         CompleteImportConfirmation(false);
         CompleteBackupConflictResolution(null);
     }
@@ -6407,8 +6408,10 @@ public sealed partial class MobileShellViewModel :
         NotifyQrImportSelectionChanged();
     }
 
-    private void ShowQrImportResult(string text)
+    private void ShowImportResult(string text, AccountImportOutcome? fileOutcome = null)
     {
+        _fileImportResult = fileOutcome;
+        NotifyImportResultChanged();
         QrImportResultText = text;
         IsQrImportResultVisible = true;
     }
@@ -6424,7 +6427,7 @@ public sealed partial class MobileShellViewModel :
     public string ImportBackupPasswordTitle => Get(FileImportStringKeys.BackupPasswordTitle);
     public string ImportBackupPasswordHelp => Get(_pendingImportBackupPassword?.UsesMasterPassword == true
         ? FileImportStringKeys.SnapshotPasswordHelp : FileImportStringKeys.BackupPasswordHelp);
-    public string ImportBackupUnlockText => Get(FileImportStringKeys.UnlockBackup);
+    public string ImportBackupUnlockText => Get(MobileStringKeys.Unlock);
     public string ImportBackupPasswordError => _importBackupPasswordError.Length == 0 ? string.Empty : Get(_importBackupPasswordError);
 
     private void NotifyImportBackupPassword()
@@ -7475,6 +7478,14 @@ public sealed partial class MobileShellViewModel :
         nameof(QrImportReviewTitle),
         nameof(QrImportChangedAccountsText),
         nameof(QrImportResultTitle),
+        nameof(FileImportResultSubtitleText),
+        nameof(ImportAccountsAddedText),
+        nameof(ImportAccountsOverwrittenText),
+        nameof(ImportAccountsUnchangedText),
+        nameof(ImportResultDismissText),
+        nameof(ImportAccountsAddedCount),
+        nameof(ImportAccountsOverwrittenCount),
+        nameof(ImportAccountsUnchangedCount),
         nameof(ImportCancelText),
         nameof(CloseText),
         nameof(KeepBothAllText),

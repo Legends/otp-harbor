@@ -624,6 +624,15 @@ every small edit when the diff already provides sufficient verification.
 
 #### Build efficiency
 
+Scripts that build before release, publishing, installation, running, or testing
+must reuse a successful build when its source, configuration, toolchain, arguments,
+and verified outputs have not changed. Use the shared build-reuse helpers under
+`scripts/shared`; preserve explicit force/clean options. Missing or changed
+outputs and failed builds must invalidate reuse. Reuse only compilation/publish
+outputs: always run requested tests, package/signature validation, installation,
+and startup checks. Never record signing credentials or other secrets in cache
+metadata, and do not weaken clean release staging or authorization boundaries.
+
 Do not build the complete solution after every change. Prefer the narrowest
 applicable project build first, for example:
 

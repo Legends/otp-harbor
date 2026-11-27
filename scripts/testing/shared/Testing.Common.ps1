@@ -1,3 +1,5 @@
+. (Join-Path $PSScriptRoot '../../shared/Build.Common.ps1')
+
 function Get-OtpHarborRepositoryRoot {
     [CmdletBinding()]
     param([string]$StartDirectory = $PSScriptRoot)

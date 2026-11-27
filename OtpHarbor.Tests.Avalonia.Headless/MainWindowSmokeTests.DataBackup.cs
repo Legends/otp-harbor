@@ -176,6 +176,11 @@ public sealed partial class MainWindowSmokeTests
                 AutomaticBackupFailureKind.DestinationUnavailable, DateTimeOffset.UnixEpoch) : AutomaticBackupStatus.NotConfigured;
             StatusChanged?.Invoke(this, EventArgs.Empty);
         }
+        public void Publish(AutomaticBackupStatus status)
+        {
+            Status = status;
+            StatusChanged?.Invoke(this, EventArgs.Empty);
+        }
         public Task<Result> InitializeAsync(CancellationToken cancellationToken = default) => Task.FromResult(Result.Ok());
         public Task<Result<AutomaticBackupRunResult>> ConfigureAsync(CancellationToken cancellationToken = default)
         {

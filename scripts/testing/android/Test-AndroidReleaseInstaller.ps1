@@ -77,6 +77,7 @@ function dotnet {
     $fixture = $global:OtpHarborReleaseInstallerFixture
     $global:LASTEXITCODE = 0
     if ($args[0] -eq '--version') { '10.0.404'; return }
+    if ($args[0] -eq 'workload' -and $args[1] -eq '--version') { '10.0.403'; return }
     if ($args[0] -ne 'publish') { throw 'Unexpected build command.' }
     $fixture.Calls.Add('build-current-source')
     foreach ($required in @('-p:RunAOTCompilation=true', '-p:Optimize=true', '-p:ApplicationId=io.github.legends.otpharbor.releasetest')) {
@@ -114,7 +115,7 @@ $installerCases = @(
     @{ Name = 'auto-offline'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'offline or unauthorized' },
     @{ Name = 'auto-unauthorized'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'offline or unauthorized' },
     @{ Name = 'auto-adb-failed'; Options = @{ Device = $null }; Builds = 0; Installs = 0; Launches = 0; Cold = 0; Error = 'Could not select one physical USB phone' },
-    @{ Name = 'build-failed'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'Current-source Release build failed' },
+    @{ Name = 'build-failed'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'Build failed; previous build reuse metadata was invalidated' },
     @{ Name = 'wrong-identity'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'identity/version mismatch' },
     @{ Name = 'debuggable'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'APK is debuggable' },
     @{ Name = 'wrong-abi'; Options = @{}; Installs = 0; Launches = 0; Cold = 0; Error = 'ABI mismatch' },
@@ -154,6 +155,17 @@ try {
             throw "The installer targeted a different device for $($case.Name)."
         }
         Write-Output "PASS: $($case.Name)"
+        if ($case.Name -eq 'normal') {
+            $calls.Clear()
+            & (Join-Path $PSScriptRoot 'Install-AndroidReleasePhone.ps1') @options | Out-Null
+            if ($calls -contains 'build-current-source' -or
+                @($calls | Where-Object { $_ -eq 'inspect-apk' }).Count -ne 1 -or
+                @($calls | Where-Object { $_ -eq 'verify-signature' }).Count -ne 1 -or
+                @($calls | Where-Object { $_ -like 'install -r *' }).Count -ne 1) {
+                throw 'An unchanged-source retry must skip compilation but repeat validation and installation.'
+            }
+            Write-Output 'PASS: unchanged-source reuse retains signature, identity and installation checks'
+        }
     }
 }
 finally { Remove-Variable -Name OtpHarborReleaseInstallerFixture -Scope Global -ErrorAction SilentlyContinue }

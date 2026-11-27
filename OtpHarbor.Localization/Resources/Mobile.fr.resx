@@ -175,6 +175,12 @@
   <data name="QrDisplayFailed" xml:space="preserve"><value>Le code QR du compte n’a pas pu être affiché de manière sécurisée.</value></data>
   <data name="QrImportCancelled" xml:space="preserve"><value>Importation QR annulée. Aucun compte n’a été modifié.</value></data>
   <data name="QrImportChangedAccounts" xml:space="preserve"><value>Choisissez une action pour chaque compte modifié. Les valeurs secrètes ne sont jamais affichées.</value></data>
+  <data name="FileImportResultTitle" xml:space="preserve"><value>Importation terminée</value></data>
+  <data name="FileImportResultSubtitle" xml:space="preserve"><value>Fichier de comptes importé</value></data>
+  <data name="ImportAccountsAdded" xml:space="preserve"><value>Comptes ajoutés</value></data>
+  <data name="ImportAccountsOverwritten" xml:space="preserve"><value>Comptes remplacés</value></data>
+  <data name="ImportAccountsUnchanged" xml:space="preserve"><value>Comptes existants inchangés</value></data>
+  <data name="ImportResultDone" xml:space="preserve"><value>Terminé</value></data>
   <data name="QrImportResultTitle" xml:space="preserve"><value>Résultat de l’importation QR</value></data>
   <data name="QrImportReviewSummary" xml:space="preserve"><value>{0} comptes : {1} nouveaux, {2} inchangés, {3} modifiés.</value></data>
   <data name="QrImportReviewTitle" xml:space="preserve"><value>Vérifier l’importation QR</value></data>

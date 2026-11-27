@@ -35,6 +35,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../..')).Path
+. (Join-Path $repositoryRoot 'scripts/shared/Build.Common.ps1')
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $releaseFolder = if ($ProductVersion) { "v$ProductVersion" } else { "msix-$Version" }
     $OutputDirectory = "artifacts/windows/release/$releaseFolder"
@@ -125,19 +126,19 @@ try {
             $ProductVersion
         }
         $assemblyVersion = "$resolvedProductVersion.0"
-        & dotnet publish `
-            (Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj') `
-            --configuration Release `
-            --runtime win-x64 `
-            --self-contained true `
-            --nologo `
-            --verbosity minimal `
-            --output $packageRoot `
-            -p:Version=$resolvedProductVersion `
-            -p:FileVersion=$Version `
-            -p:AssemblyVersion=$assemblyVersion `
-            -p:InformationalVersion=$resolvedProductVersion `
-            -p:IncludeSourceRevisionInInformationalVersion=false
+        $storePublish = Join-Path $repositoryRoot 'artifacts/build-cache/store-publish'
+        $storeArguments = @('publish',
+            (Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj'),
+            '--configuration', 'Release', '--runtime', 'win-x64', '--self-contained', 'true',
+            '--nologo', '--verbosity', 'minimal', '--output', $storePublish,
+            "-p:Version=$resolvedProductVersion", "-p:FileVersion=$Version", "-p:AssemblyVersion=$assemblyVersion",
+            "-p:InformationalVersion=$resolvedProductVersion", '-p:IncludeSourceRevisionInInformationalVersion=false')
+        Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName 'Microsoft Store publish' `
+            -CommandArguments $storeArguments -OutputPaths @($storePublish) -OnOutputsReady {
+                foreach ($item in Get-ChildItem -LiteralPath $storePublish -Force) {
+                    Copy-Item -LiteralPath $item.FullName -Destination $packageRoot -Recurse -Force
+                }
+            }
         if ($LASTEXITCODE -ne 0) { throw 'The Windows publish step failed.' }
     }
     else {

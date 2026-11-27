@@ -28,7 +28,10 @@ export AVALONIA_GLOBAL_SCALE_FACTOR="$scale_factor"
 
 printf 'Starting OTP Harbor under WSL with Avalonia scale %s.\n' "$scale_factor"
 cd -- "$repository_root"
+source "$repository_root/scripts/shared/Build.Common.sh"
+otp_harbor_build_for_run "$repository_root" 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj' Debug "$@"
 exec dotnet run \
     --project OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj \
     --configuration Debug \
+    --no-build \
     "$@"

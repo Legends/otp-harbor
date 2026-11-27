@@ -23,6 +23,7 @@ $ErrorActionPreference = "Stop"
 
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptDirectory "../../.."))
+. (Join-Path $repositoryRoot 'scripts/shared/Build.Common.ps1')
 $projectPath = Join-Path $repositoryRoot "OtpHarbor.UI.Avalonia.Desktop\OtpHarbor.UI.Avalonia.Desktop.csproj"
 
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
@@ -58,16 +59,12 @@ $selfContainedValue = if ($SelfContained) { "true" } else { "false" }
 $isolatedNuGetLockFilePath = '$(MSBuildProjectDirectory)/obj/otp-harbor-local-runtime.lock.json'
 
 Write-Host "Publishing OTP Harbor Avalonia for Windows ($Configuration, $Runtime)..."
-& dotnet publish $projectPath `
-    --configuration $Configuration `
-    --runtime $Runtime `
-    --self-contained $selfContainedValue `
-    --nologo `
-    --verbosity minimal `
-    -p:PublishSingleFile=false `
-    -p:PublishTrimmed=false `
-    "-p:NuGetLockFilePath=$isolatedNuGetLockFilePath" `
-    --output $OutputPath
+$windowsPublishArguments = @('publish', $projectPath,
+    '--configuration', $Configuration, '--runtime', $Runtime, '--self-contained', $selfContainedValue,
+    '--nologo', '--verbosity', 'minimal', '-p:PublishSingleFile=false', '-p:PublishTrimmed=false',
+    "-p:NuGetLockFilePath=$isolatedNuGetLockFilePath", '--output', $OutputPath)
+Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName 'Windows local publish' `
+    -CommandArguments $windowsPublishArguments -OutputPaths @($OutputPath)
 
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet publish failed with exit code $LASTEXITCODE."

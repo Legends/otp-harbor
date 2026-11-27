@@ -12,6 +12,7 @@ public sealed class AvaloniaLocalizationService : IAvaloniaLocalizationService
     private readonly LanguageOption _spanish;
     private readonly IResourceDictionary _resources;
     private readonly AvaloniaStringCatalog _catalog;
+    private bool _hasAppliedCulture;
 
     public AvaloniaLocalizationService(
         IResourceDictionary resources,
@@ -57,16 +58,25 @@ public sealed class AvaloniaLocalizationService : IAvaloniaLocalizationService
     public void ApplyCulture(string cultureName)
     {
         var requested = LocalizationCulture.Resolve(cultureName);
-        CurrentLanguage = requested.TwoLetterISOLanguageName.ToLowerInvariant() switch
+        var language = requested.TwoLetterISOLanguageName.ToLowerInvariant() switch
         {
             "de" => _german,
             "fr" => _french,
             "es" => _spanish,
             _ => _english
         };
-        var resourceCulture = CultureInfo.GetCultureInfo(CurrentLanguage.CultureName);
-        foreach (var key in AvaloniaStringKeys.All)
-            _resources[key] = _catalog.Get(key, resourceCulture);
+        if (_hasAppliedCulture && language == CurrentLanguage) return;
+
+        var resourceCulture = CultureInfo.GetCultureInfo(language.CultureName);
+        var translations = AvaloniaStringKeys.All.Select(key =>
+            new KeyValuePair<object, object?>(key, _catalog.Get(key, resourceCulture))).ToArray();
+        CurrentLanguage = language;
+        if (_resources is ResourceDictionary dictionary)
+            dictionary.SetItems(translations);
+        else
+            foreach (var translation in translations)
+                _resources[translation.Key] = translation.Value;
+        _hasAppliedCulture = true;
         CultureChanged?.Invoke(this, EventArgs.Empty);
     }
 

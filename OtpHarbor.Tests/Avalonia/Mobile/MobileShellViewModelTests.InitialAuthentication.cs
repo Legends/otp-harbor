@@ -72,5 +72,7 @@ public sealed partial class MobileShellViewModelTests
             It.IsAny<PreferredUnlockMethod?>(), It.IsAny<CancellationToken>()), Times.Never);
         if (outcome == AuthorizationResult.Failed)
             Assert.Equal(context.Strings.Get(MobileStringKeys.AppLockChangeFailed), sut.NotificationText);
+        else
+            Assert.Empty(sut.NotificationText);
     }
 }

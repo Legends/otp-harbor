@@ -2,6 +2,8 @@
     x:Class="TOTP.Avalonia.Desktop.App"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:shared="using:TOTP.Avalonia.Shared.Controls"
+    xmlns:behaviors="using:TOTP.Avalonia.Desktop.Behaviors"
     RequestedThemeVariant="Default">
     <Application.Styles>
         <FluentTheme>
@@ -11,5 +13,11 @@
             </FluentTheme.Palettes>
         </FluentTheme>
         <StyleInclude Source="avares://TOTP.UI.Avalonia.Shared/Styles/SharedStyles.axaml" />
+        <Style Selector="shared|ValidationMessage">
+            <Setter Property="behaviors:ErrorVisibility.RevealOnError" Value="True" />
+        </Style>
+        <Style Selector="shared|NotificationBanner">
+            <Setter Property="behaviors:ErrorVisibility.RevealOnError" Value="True" />
+        </Style>
     </Application.Styles>
 </Application>

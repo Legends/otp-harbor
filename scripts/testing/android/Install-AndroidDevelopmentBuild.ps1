@@ -310,54 +310,8 @@ function Resolve-CachedAndroidApk([object]$State, [string]$OutputRoot) {
 }
 
 function Get-AndroidBuildInputFingerprint {
-    $inputPaths = @(
-        'OtpHarbor.Core',
-        'OtpHarbor.DAL',
-        'OtpHarbor.Infrastructure',
-        'OtpHarbor.Platform.Android',
-        'OtpHarbor.UI.Avalonia.Android',
-        'OtpHarbor.UI.Avalonia.Mobile',
-        'OtpHarbor.UI.Avalonia.Shared',
-        'OtpHarbor.UI.Avalonia.Desktop\Assets\Icons\app-1024.png',
-        'Directory.Build.props',
-        'NuGet.config',
-        'global.json',
-        'LICENSE.txt',
-        'LICENSING.md',
-        'THIRD_PARTY_NOTICES.md'
-    )
-    $inputFiles = @(
-        foreach ($relativeInputPath in $inputPaths) {
-            $inputPath = Join-Path $repositoryRoot $relativeInputPath
-            if (Test-Path -LiteralPath $inputPath -PathType Leaf) {
-                Get-Item -LiteralPath $inputPath
-                continue
-            }
-
-            if (-not (Test-Path -LiteralPath $inputPath -PathType Container)) {
-                throw "Android build input was not found: $relativeInputPath"
-            }
-
-            Get-ChildItem -LiteralPath $inputPath -File -Recurse |
-                Where-Object FullName -NotMatch '[\\/](?:bin|obj)[\\/]'
-        }
-    )
-    $fingerprintRecords = @($inputFiles |
-        Sort-Object FullName |
-        ForEach-Object {
-            $relativePath = [IO.Path]::GetRelativePath($repositoryRoot, $_.FullName).Replace('\', '/')
-            $fileHash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
-            "{0}`t{1}" -f $relativePath, $fileHash
-        })
-    $fingerprintBytes = [Text.Encoding]::UTF8.GetBytes(($fingerprintRecords -join "`n"))
-    $fingerprintAlgorithm = [Security.Cryptography.SHA256]::Create()
-    try {
-        -join ($fingerprintAlgorithm.ComputeHash($fingerprintBytes) |
-            ForEach-Object { $_.ToString('x2') })
-    }
-    finally {
-        $fingerprintAlgorithm.Dispose()
-    }
+    Get-OtpHarborBuildFingerprint -RepositoryRoot $repositoryRoot `
+        -CommandArguments @('Android-development', $projectPath, $runtimeIdentifier, [string]$CleanBuild, [string]$FastDeploy)
 }
 
 & $adbPath start-server

@@ -208,18 +208,23 @@ function Invoke-OtpHarborSourceLauncher {
             Write-Host 'No verified build exists for the current source revision.'
         }
         'Run' {
-            Write-Host 'OTP Harbor source and build are already current.'
+            Write-Host 'OTP Harbor source is current; verifying reusable build outputs.'
         }
     }
 
-    if ($plan -in @('UpdateBuildAndRun', 'BuildAndRun')) {
-        Write-Host "Restoring and compiling OTP Harbor ($Configuration)..."
-        Invoke-CheckedCommand -Command 'dotnet' -ArgumentList @(
-            'restore', $solutionPath, '--configfile', $nugetConfigPath,
-            '--nologo', '--verbosity', 'minimal')
-        Invoke-CheckedCommand -Command 'dotnet' -ArgumentList @(
+    if ($plan -in @('UpdateBuildAndRun', 'BuildAndRun', 'Run')) {
+        . (Join-Path $repositoryRoot 'scripts/shared/Build.Common.ps1')
+        $launcherBuildArguments = @(
             'build', $projectPath, '--configuration', $Configuration,
             '--no-restore', '--nologo', '--verbosity', 'minimal')
+        Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName "Root source launcher $Configuration" `
+            -CommandArguments $launcherBuildArguments -OutputPaths @((Join-Path (Split-Path $projectPath) "bin/$Configuration")) `
+            -BuildAction {
+                Invoke-CheckedCommand -Command 'dotnet' -ArgumentList @(
+                    'restore', $solutionPath, '--configfile', $nugetConfigPath,
+                    '--nologo', '--verbosity', 'minimal')
+                Invoke-CheckedCommand -Command 'dotnet' -ArgumentList $launcherBuildArguments
+            }
 
         $targetOutput = @(Invoke-CheckedCommand -Command 'dotnet' -ArgumentList @(
             'msbuild', $projectPath, '-nologo', '-getProperty:TargetPath',

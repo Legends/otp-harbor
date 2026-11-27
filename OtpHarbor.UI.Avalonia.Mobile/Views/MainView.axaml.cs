@@ -310,6 +310,22 @@ public partial class MainView : UserControl
         UpdatePasswordConfirmationInputPane(e.NewState, e.EndRect);
     }
 
+    private void UpdateImportPasswordDialogInputPane()
+    {
+        var host = DeferredEncryptedAccountImportPasswordDialog;
+        if (!host.IsContentCreated) return;
+        var overlap = 0d;
+        if (_inputPaneState == InputPaneState.Open && _inputPaneOccludedRect.Height > 0)
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            var origin = topLevel is null ? null : host.TranslatePoint(default, topLevel);
+            overlap = origin is { } point
+                ? Math.Clamp(point.Y + host.Bounds.Height - _inputPaneOccludedRect.Top, 0, host.Bounds.Height)
+                : Math.Min(_inputPaneOccludedRect.Height, host.Bounds.Height);
+        }
+        DeferredControl<Grid>(host, "EncryptedAccountImportPasswordDialog").Margin = new Thickness(0, 0, 0, overlap);
+    }
+
     private void UpdateAccountBrandIconPickerInputPane(InputPaneState state, Rect occludedRect)
     {
         if (!DeferredAccountBrandIconPickerModalOverlay.IsContentCreated) return;
@@ -325,6 +341,7 @@ public partial class MainView : UserControl
     {
         _inputPaneState = state;
         _inputPaneOccludedRect = occludedRect;
+        UpdateImportPasswordDialogInputPane();
         if (state != InputPaneState.Open)
         {
             RestoreMobileMainContentMargin();

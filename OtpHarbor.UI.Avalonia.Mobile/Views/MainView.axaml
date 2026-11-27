@@ -676,7 +676,7 @@
                             HorizontalContentAlignment="Stretch"
                             HorizontalScrollBarVisibility="Disabled"
                             VerticalScrollBarVisibility="Hidden"
-                            VerticalContentAlignment="Center"
+                            VerticalAlignment="Center"
                             IsVisible="{Binding HasNoAccounts}">
                             <Border
                                 x:Name="FirstAccountOnboardingCard"
@@ -686,7 +686,7 @@
                                 BorderThickness="1"
                                 CornerRadius="{DynamicResource RadiusMedium}"
                                 IsVisible="{Binding HasNoAccounts}"
-                                VerticalAlignment="Center">
+                                VerticalAlignment="Stretch">
                                 <StackPanel Spacing="12">
                                     <controls:SymbolIcon
                                         HorizontalAlignment="Center"
@@ -1232,7 +1232,10 @@
                                             Height="1"
                                             Background="{DynamicResource BrushBorder}" />
                                         <StackPanel x:Name="AppearanceNextTokenSection" Spacing="4">
-                                            <CheckBox Content="{Binding ShowNextTokenText}" IsChecked="{Binding ShowNextToken, Mode=TwoWay}" />
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                <TextBlock Text="{Binding ShowNextTokenText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                <ToggleSwitch Grid.Column="1" Classes="mobile-switch" IsChecked="{Binding ShowNextToken, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding ShowNextTokenText}" />
+                                            </Grid>
                                             <TextBlock
                                                 Foreground="{DynamicResource BrushTextSecondary}"
                                                 Text="{Binding ShowNextTokenHelpText}"
@@ -1243,9 +1246,10 @@
                                             Height="1"
                                             Background="{DynamicResource BrushBorder}" />
                                         <StackPanel x:Name="AppearanceIssuerLogoSection" Spacing="4">
-                                            <CheckBox
-                                                Content="{Binding ShowIssuerLogoText}"
-                                                IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                <TextBlock Text="{Binding ShowIssuerLogoText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                <ToggleSwitch Grid.Column="1" Classes="mobile-switch" IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding ShowIssuerLogoText}" />
+                                            </Grid>
                                             <TextBlock
                                                 Foreground="{DynamicResource BrushTextSecondary}"
                                                 Text="{Binding ShowIssuerLogoDescriptionText}"
@@ -1562,7 +1566,10 @@
                                             CornerRadius="8"
                                             Padding="12">
                                             <StackPanel Spacing="6">
-                                                <CheckBox Content="{Binding AllowScreenshotsText}" IsChecked="{Binding AllowScreenshots, Mode=TwoWay}" />
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                    <TextBlock Text="{Binding AllowScreenshotsText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                    <ToggleSwitch Grid.Column="1" Classes="mobile-switch" IsChecked="{Binding AllowScreenshots, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding AllowScreenshotsText}" />
+                                                </Grid>
                                                 <TextBlock
                                                     Foreground="{DynamicResource BrushTextSecondary}"
                                                     Text="{Binding AllowScreenshotsHelpText}"
@@ -1610,9 +1617,10 @@
                                             IsVisible="{Binding HasImportedBrandIcons}">
                                             <controls:SymbolIconLabel Kind="Delete" Text="{Binding ResetBrandIconsText}" />
                                         </Button>
-                                        <CheckBox
-                                            Content="{Binding ShowIssuerLogoText}"
-                                            IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" />
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <TextBlock Text="{Binding ShowIssuerLogoText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                            <ToggleSwitch Grid.Column="1" Classes="mobile-switch" IsChecked="{Binding ShowIssuerLogo, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding ShowIssuerLogoText}" />
+                                        </Grid>
                                         <TextBlock
                                             Foreground="{DynamicResource BrushTextSecondary}"
                                             Text="{Binding ShowIssuerLogoDescriptionText}"
@@ -2131,7 +2139,7 @@
                                             </ListBox.ItemsPanel>
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate x:DataType="vm:MobileGroupAccountSelection">
-                                                    <CheckBox
+                                                    <ToggleSwitch Classes="mobile-switch"
                                                         MinHeight="54"
                                                         Padding="6,3"
                                                         VerticalAlignment="Stretch"
@@ -2161,7 +2169,7 @@
                                                                     TextTrimming="CharacterEllipsis" />
                                                             </StackPanel>
                                                         </Grid>
-                                                    </CheckBox>
+                                                    </ToggleSwitch>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
@@ -2251,10 +2259,10 @@
                                     Header="{Binding AdvancedOptionsText}"
                                     IsExpanded="{Binding IsAdvancedOptionsExpanded, Mode=TwoWay}">
                                     <StackPanel Spacing="8">
-                                        <CheckBox
-                                            automation:AutomationProperties.Name="{Binding FavoriteAccountText}"
-                                            Content="{Binding FavoriteAccountText}"
-                                            IsChecked="{Binding EditorIsFavorite, Mode=TwoWay}" />
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <TextBlock Text="{Binding FavoriteAccountText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                            <ToggleSwitch Grid.Column="1" Classes="mobile-switch" IsChecked="{Binding EditorIsFavorite, Mode=TwoWay}" automation:AutomationProperties.Name="{Binding FavoriteAccountText}" />
+                                        </Grid>
                                         <Border
                                             Height="1"
                                             Margin="0,4"
@@ -2787,22 +2795,28 @@
             <DataTemplate x:DataType="vm:MobileShellViewModel">
                 <Grid x:Name="EncryptedAccountImportPasswordDialog"
                       Background="{DynamicResource BrushOverlayStrong}"  IsVisible="{Binding IsImportBackupPasswordVisible}" Grid.RowSpan="3" Panel.ZIndex="100">
-                    <Border MaxWidth="440" Margin="24" Padding="20" CornerRadius="12" VerticalAlignment="Center"
+                    <Border x:Name="ImportPasswordDialogSurface" MaxWidth="440" Margin="16" Padding="16" CornerRadius="12" VerticalAlignment="Center"
                             Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorder}" BorderThickness="1">
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
-                            <StackPanel Spacing="12">
-                                <TextBlock FontSize="20" FontWeight="SemiBold" Text="{Binding ImportBackupPasswordTitle}" TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding ImportBackupPasswordHelp}" TextWrapping="Wrap" />
-                                <controls:RevealableSecretInput Text="{Binding ImportPassword, Mode=TwoWay}"
-                                    AccessibleName="{Binding BackupPasswordText}" PlaceholderText="{Binding BackupPasswordText}"
-                                    RevealButtonAccessibleName="{Binding RevealPasswordText}" RevealButtonHelpText="{Binding RevealPasswordHelpText}" />
-                                <controls:ValidationMessage Severity="Error" Text="{Binding ImportBackupPasswordError}" />
-                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                                    <Button Classes="wide secondary" Command="{Binding CancelImportBackupUnlockCommand}" Content="{Binding CancelText}" />
-                                    <Button Grid.Column="1" Classes="wide primary" Command="{Binding UnlockImportBackupCommand}" Content="{Binding ImportBackupUnlockText}" />
-                                </Grid>
-                            </StackPanel>
-                        </ScrollViewer>
+                        <Grid RowDefinitions="*,Auto" RowSpacing="12">
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                                <StackPanel Spacing="12">
+                                    <TextBlock FontSize="20" FontWeight="SemiBold" Text="{Binding ImportBackupPasswordTitle}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding ImportBackupPasswordHelp}" TextWrapping="Wrap" />
+                                    <controls:RevealableSecretInput Text="{Binding ImportPassword, Mode=TwoWay}"
+                                        AccessibleName="{Binding BackupPasswordText}" PlaceholderText="{Binding BackupPasswordText}"
+                                        RevealButtonAccessibleName="{Binding RevealPasswordText}" RevealButtonHelpText="{Binding RevealPasswordHelpText}" />
+                                    <controls:ValidationMessage Severity="Error" Text="{Binding ImportBackupPasswordError}" />
+                                </StackPanel>
+                            </ScrollViewer>
+                            <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Classes="wide secondary" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch" Command="{Binding CancelImportBackupUnlockCommand}">
+                                    <TextBlock Text="{Binding CancelText}" TextWrapping="Wrap" TextAlignment="Center" />
+                                </Button>
+                                <Button Grid.Column="1" Classes="wide primary" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch" Command="{Binding UnlockImportBackupCommand}">
+                                    <TextBlock Text="{Binding ImportBackupUnlockText}" TextWrapping="Wrap" TextAlignment="Center" />
+                                </Button>
+                            </Grid>
+                        </Grid>
                     </Border>
                 </Grid>
             </DataTemplate>
@@ -2968,11 +2982,10 @@
         <controls:DeferredContent x:Name="DeferredQrImportResult" IsRequested="{Binding IsQrImportResultVisible}" IsVisible="{Binding IsQrImportResultVisible}" Grid.RowSpan="3" ZIndex="103">
             <DataTemplate x:DataType="vm:MobileShellViewModel">
                 <Grid
-
-
                     Background="{DynamicResource BrushOverlayStrong}"
-                     IsVisible="{Binding IsQrImportResultVisible}" Grid.RowSpan="3" Panel.ZIndex="103">
+                    IsVisible="{Binding IsQrImportResultVisible}">
                     <Border
+                        x:Name="ImportResultDialogSurface"
                         MaxWidth="520"
                         Margin="18"
                         HorizontalAlignment="Stretch"
@@ -2982,20 +2995,45 @@
                         BorderBrush="{DynamicResource BrushBorder}"
                         BorderThickness="1"
                         CornerRadius="12"
-                        Padding="22">
-                        <StackPanel Spacing="16">
-                            <TextBlock
-                                FontSize="20"
-                                FontWeight="SemiBold"
-                                Text="{Binding QrImportResultTitle}" />
-                            <TextBlock
-                                Text="{Binding QrImportResultText}"
-                                TextWrapping="Wrap" />
+                        Padding="18">
+                        <Grid RowDefinitions="*,Auto" RowSpacing="18">
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                        <Grid Width="36" Height="36" VerticalAlignment="Center" IsVisible="{Binding IsFileImportResult}">
+                                            <Border Background="{DynamicResource BrushSuccess}" CornerRadius="18" Opacity="0.12" />
+                                            <controls:SymbolIcon Kind="Check" IconSize="22" Foreground="{DynamicResource BrushSuccess}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock FontSize="20" FontWeight="SemiBold" Text="{Binding QrImportResultTitle}" TextWrapping="Wrap" />
+                                            <TextBlock FontSize="14" Foreground="{DynamicResource BrushTextSecondary}" Text="{Binding FileImportResultSubtitleText}" TextWrapping="Wrap" IsVisible="{Binding IsFileImportResult}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Border x:Name="FileImportResultSummary" Background="{DynamicResource BrushSurfaceAlternate}" CornerRadius="10" Padding="14" IsVisible="{Binding IsFileImportResult}">
+                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="10">
+                                            <TextBlock FontSize="16" Text="{Binding ImportAccountsAddedText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="ImportAccountsAddedCount" Grid.Column="1" FontSize="16" Text="{Binding ImportAccountsAddedCount}" FontWeight="SemiBold" Foreground="{DynamicResource BrushSuccess}" VerticalAlignment="Center" />
+                                            <Border Grid.Row="1" Grid.ColumnSpan="2" Height="1" Background="{DynamicResource BrushBorder}" />
+                                            <TextBlock Grid.Row="2" FontSize="16" Text="{Binding ImportAccountsOverwrittenText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="ImportAccountsOverwrittenCount" Grid.Row="2" Grid.Column="1" FontSize="16" Text="{Binding ImportAccountsOverwrittenCount}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            <Border Grid.Row="3" Grid.ColumnSpan="2" Height="1" Background="{DynamicResource BrushBorder}" />
+                                            <TextBlock Grid.Row="4" FontSize="16" Text="{Binding ImportAccountsUnchangedText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="ImportAccountsUnchangedCount" Grid.Row="4" Grid.Column="1" FontSize="16" Text="{Binding ImportAccountsUnchangedCount}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Text="{Binding QrImportResultText}" TextWrapping="Wrap" IsVisible="{Binding !IsFileImportResult}" />
+                                </StackPanel>
+                            </ScrollViewer>
                             <Button
+                                x:Name="ImportResultDoneButton"
+                                Grid.Row="1"
                                 Classes="wide primary"
                                 Command="{Binding DismissQrImportResultCommand}"
-                                Content="{Binding CloseText}" />
-                        </StackPanel>
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
+                                <TextBlock Text="{Binding ImportResultDismissText}" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource BrushOnAccent}" />
+                            </Button>
+                        </Grid>
                     </Border>
                 </Grid>
             </DataTemplate>

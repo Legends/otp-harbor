@@ -121,6 +121,10 @@ try {
     Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force
 }
 if ($ScriptsOnly) { return }
+Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName 'Unit tests Debug' `
+    -CommandArguments @('build', (Join-Path $repositoryRoot 'OtpHarbor.Tests/OtpHarbor.Tests.csproj'), '-c', 'Debug') `
+    -OutputPaths @((Join-Path $repositoryRoot 'OtpHarbor.Tests/bin/Debug'))
 & dotnet test (Join-Path $repositoryRoot 'OtpHarbor.Tests/OtpHarbor.Tests.csproj') -c Debug --nologo --verbosity minimal `
+    --no-build `
     --filter 'FullyQualifiedName~StoreUpgradeTestKitVerifierTests|FullyQualifiedName~VaultFileNameMigrationTests|FullyQualifiedName~AccountDalIntegrationTests|FullyQualifiedName~WindowsApplicationDataMigrationTests|FullyQualifiedName~VaultServiceTests'
 if ($LASTEXITCODE -ne 0) { throw 'Upgrade verifier/migration regressions failed.' }

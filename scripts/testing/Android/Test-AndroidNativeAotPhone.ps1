@@ -16,6 +16,9 @@ foreach ($directory in @($testScripts, $testShared, $testNdk)) { $null = New-Ite
 [IO.File]::WriteAllText((Join-Path $testRoot 'OtpHarbor.sln'), '')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Install-AndroidNativeAotPhone.ps1') -Destination $testScripts
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../shared/Testing.Common.ps1') -Destination $testShared
+$testBuildShared = Join-Path $testRoot 'scripts/shared'
+$null = New-Item -ItemType Directory -Path $testBuildShared -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../../shared/Build.Common.ps1') -Destination $testBuildShared
 $testInstaller = Join-Path $testScripts 'Install-AndroidNativeAotPhone.ps1'
 $testAdb = Join-Path $testRoot 'adb fixture.ps1'
 [IO.File]::WriteAllText($testAdb, @'

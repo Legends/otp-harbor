@@ -1,8 +1,8 @@
 # Android NativeAOT validation
 
-The NativeAOT work is separate from `android-v3.0.4`. Android 3.0.5 is the next
-release target, subject to compatibility and packaging validation. macOS and iOS
-product work is on hold.
+NativeAOT validation covers production Android releases and the isolated test
+APK. Release packaging requires the pinned toolchain, runtime-payload and signing
+checks described below. macOS and iOS product work is on hold.
 
 ## Runtime and serialization
 
@@ -63,6 +63,11 @@ It finds adb and the pinned installed NDK, builds the universal NativeAOT Releas
 APK, updates **OTP Harbor AOT Test** with `adb install -r`, and launches it once.
 It retains that test app's accounts. Missing/unauthorized phones stop the script
 before building; build or install failures stop deployment without clearing data.
+
+The builder reuses its verified APK when source, configuration, SDK/workload, NDK,
+arguments, and artifact content are unchanged; payload checks and installation still
+run. `Install-AndroidReleasePhone.ps1` installs the separate **Mono AOT** Release Test
+build. Use `Install-AndroidNativeAotPhone.ps1` for the **NativeAOT Release** test app.
 
 ```powershell
 dotnet workload install android --version 10.0.403

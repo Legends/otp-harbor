@@ -98,12 +98,17 @@
             <TextBlock FontSize="12" Foreground="{DynamicResource BrushWarning}" IsVisible="{Binding HasExcluded}" Text="{Binding ExcludedText}" />
         </StackPanel>
                 <TextBox PlaceholderText="{Binding SearchText}" Text="{Binding Search, Mode=TwoWay}" MinHeight="44" automation:AutomationProperties.Name="{Binding SearchText}" />
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <CheckBox IsEnabled="{Binding HasSelectableConflicts}" IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" Content="{Binding SelectionText}" />
-                    <ComboBox Grid.Column="1" IsEnabled="{Binding HasSelection}" ItemsSource="{Binding Actions}" SelectedItem="{Binding BulkAction, Mode=TwoWay}" PlaceholderText="{Binding ApplyText}" automation:AutomationProperties.Name="{Binding ApplyText}">
+                <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <TextBlock Text="{Binding SelectionText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <ToggleSwitch Grid.Column="1" Classes="mobile-switch" OnContent="{x:Null}" OffContent="{x:Null}" MinWidth="48" MinHeight="48"
+                                      automation:AutomationProperties.Name="{Binding SelectionText}"
+                                      IsEnabled="{Binding HasSelectableConflicts}" IsChecked="{Binding AllVisibleSelected, Mode=TwoWay}" />
+                    </Grid>
+                    <ComboBox IsEnabled="{Binding HasSelection}" ItemsSource="{Binding Actions}" SelectedItem="{Binding BulkAction, Mode=TwoWay}" PlaceholderText="{Binding ApplyText}" automation:AutomationProperties.Name="{Binding ApplyText}">
                         <ComboBox.ItemTemplate><DataTemplate x:DataType="review:ImportReviewViewModel+ActionOption"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-                </Grid>
+                </StackPanel>
 
                 <TextBlock Classes="review-secondary" Text="{Binding NoResultsText}" IsVisible="{Binding HasNoResults}" />
             </StackPanel>

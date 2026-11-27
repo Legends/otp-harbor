@@ -348,7 +348,7 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
     private readonly LinearLayout _summaryCard;
     private readonly EditText _search;
     private readonly Spinner _bulk;
-    private readonly CheckBox _select;
+    private readonly Switch _select;
     private ImportReviewViewModel? _model;
     private bool _binding;
     private string[] _bulkLabels = [];
@@ -424,7 +424,9 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
             }
         };
         AddView(_search, Row(8));
-        _select = new CheckBox(context); _select.SetMinimumHeight(Dp(48));
+        _select = new Switch(context) { ShowText = false };
+        _select.SetMinimumHeight(Dp(48));
+        _select.SetMaxLines(3);
         _select.SetTextSize(ComplexUnitType.Sp, 14);
         _select.CheckedChange += (_, args) =>
         {
@@ -492,7 +494,8 @@ internal sealed class NativeReviewHeader : NativeReviewLayout
             if (!_search.HasFocus) Text(_search, model.Search);
             Text(_select, model.SelectionText); _select.Checked = model.AllVisibleSelected;
             _select.Enabled = model.HasSelectableConflicts;
-            _select.ButtonTintList = global::Android.Content.Res.ColorStateList.ValueOf(palette.Accent);
+            _select.ThumbTintList = global::Android.Content.Res.ColorStateList.ValueOf(palette.Accent);
+            _select.TrackTintList = global::Android.Content.Res.ColorStateList.ValueOf(palette.Border);
             UpdateOptions(_bulk, ref _bulkLabels, new[] { model.ApplyText }.Concat(model.Actions.Select(action => action.Name)).ToArray());
             _bulk.ContentDescription = model.ApplyText; _bulk.Enabled = model.HasSelection;
             Text(_empty, model.NoResultsText); _empty.SetTextColor(palette.Secondary);

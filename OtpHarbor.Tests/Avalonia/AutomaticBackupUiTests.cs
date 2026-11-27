@@ -22,7 +22,13 @@ public sealed class AutomaticBackupUiTests
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
             element.Attribute("Text")?.Value == "{DynamicResource DataBackupAutomaticHelp}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
-            element.Attribute("Text")?.Value == "{Binding AutomaticBackupDestinationAccessText}");
+            element.Attribute("Text")?.Value == "{DynamicResource AutomaticBackupFolderAccessLabel}");
+        Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
+            element.Attribute("Text")?.Value == "{Binding AutomaticBackupDestinationAccessValue}");
+        Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
+            element.Attribute("Text")?.Value == "{DynamicResource AutomaticBackupLastSuccessLabel}");
+        Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
+            element.Attribute("Text")?.Value == "{Binding AutomaticBackupLastSuccessValue}");
         Assert.Contains(panel.Descendants(Avalonia + "TextBlock"), element =>
             element.Attribute("Text")?.Value == "{Binding AutomaticBackupLastFailureText}");
         Assert.Contains(panel.Descendants(Avalonia + "Button"), element =>

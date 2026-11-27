@@ -32,6 +32,36 @@ The complete coding-agent and architecture contract is in [AGENTS.md](AGENTS.md)
 | `OtpHarbor.Updater` | Windows update installation helper |
 | `OtpHarbor.Tests*` | Unit, integration, platform, and headless UI tests |
 
+## Local build reuse
+
+Release, publish, phone-install, and test/run launchers reuse successful build outputs
+through `scripts/shared/Build.Common.ps1` or its Bash counterpart. A cache hit requires
+unchanged source/configuration content, Git revision metadata, selected SDK/workload, build arguments, extra
+inputs, and output hashes. Timestamps alone do not trigger compilation. Missing or
+modified artifacts, compiler failures, corrupt metadata, or source changes during a
+build prevent reuse. Explicit development-installer force/clean modes remain available.
+
+Test and application execution, APK identity/signature/payload checks, installation,
+and release packaging still run. Production publishing copies verified cached build
+outputs into fresh staging directories; its existing empty-output guards remain.
+Signing input files contribute only hashes to the fingerprint. Cache metadata below
+`artifacts/build-cache` contains hashes rather than credentials or command arguments;
+it is local working state, not published provenance or a replacement for verification.
+Source archives work without Git metadata, and the Bash launchers require no new
+PowerShell/Python dependency. A clean CI checkout has no reusable outputs and builds normally.
+Git checkouts without an available Git command rebuild conservatively rather than
+reuse outputs with unresolved revision metadata. The root source launcher retains
+its clean-checkout, safe-remote and fast-forward-only update checks.
+
+Regression checks:
+
+```powershell
+./scripts/validation/Test-BuildReuse.ps1
+./scripts/validation/Test-BuildScriptCoverage.ps1
+```
+
+On Linux, also run `bash scripts/validation/Test-BuildReuse.sh`.
+
 ## Pull requests
 
 By intentionally submitting a contribution for inclusion, you agree to license it under the

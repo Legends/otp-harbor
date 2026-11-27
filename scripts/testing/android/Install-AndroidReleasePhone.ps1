@@ -93,7 +93,7 @@ try {
     if ($LASTEXITCODE -ne 0 -or $releaseSelectedSdk -notmatch '^\d+\.\d+\.\d+$') {
         throw "Install .NET SDK $releaseSdk or a later patch in the same feature band."
     }
-    Write-Host "Building current source with .NET SDK $releaseSelectedSdk (local patch roll-forward; repository pin $releaseSdk)."
+    Write-Host "Checking current source with .NET SDK $releaseSelectedSdk (local patch roll-forward; repository pin $releaseSdk)."
     $releaseBuildRoot = Join-Path $ArtifactDirectory "build/$releaseSelectedSdk"
     $releaseBin = Join-Path $releaseBuildRoot 'bin/'
     $releaseObj = Join-Path $releaseBuildRoot 'obj/'
@@ -115,13 +115,17 @@ try {
 '@
     $releasePropsText = $releasePropsText.Replace('__REPO_PROPS__', [Security.SecurityElement]::Escape((Join-Path $releaseRoot 'Directory.Build.props'))).
         Replace('__BIN__', [Security.SecurityElement]::Escape($releaseBin)).Replace('__OBJ__', [Security.SecurityElement]::Escape($releaseObj))
-    [IO.File]::WriteAllText($releaseProps, $releasePropsText)
+    if (-not (Test-Path -LiteralPath $releaseProps -PathType Leaf) -or [IO.File]::ReadAllText($releaseProps) -cne $releasePropsText) {
+        [IO.File]::WriteAllText($releaseProps, $releasePropsText)
+    }
     $releaseArguments = @('publish', (Join-Path $releaseRoot 'OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj'),
         '-c', 'Release', '-r', 'android-arm64', '-o', $releasePublish, '-nr:false',
         "-p:DirectoryBuildPropsPath=$releaseProps", "-p:ApplicationId=$releasePackage",
         "-p:ApplicationVersion=$VersionCode", "-p:ApplicationDisplayVersion=$releaseVersion",
         '-p:RunAOTCompilation=true', '-p:Optimize=true', '-p:AndroidPackageFormats=apk')
-    & dotnet @releaseArguments
+    Invoke-OtpHarborCachedBuild -RepositoryRoot $releaseRoot -CacheName 'Android Release phone' `
+        -CommandArguments $releaseArguments -OutputPaths @((Join-Path $releasePublish "$releasePackage-Signed.apk")) `
+        -AdditionalInputPaths @($releaseProps, $AaptPath, $JavaPath, $releaseSigner)
     if ($LASTEXITCODE -ne 0) { throw 'Current-source Release build failed; no APK was installed.' }
 }
 finally { Pop-Location }

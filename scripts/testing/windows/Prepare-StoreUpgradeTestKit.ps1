@@ -26,8 +26,11 @@ if (Test-Path -LiteralPath $output) { throw 'Choose a new output directory; exis
 New-Item -ItemType Directory -Path $output | Out-Null
 Protect-UpgradeKitDirectory $output
 $project = Join-Path $PSScriptRoot 'StoreUpgradeVerifier/StoreUpgradeVerifier.csproj'
-& dotnet publish $project -c Release -r win-x64 --self-contained true --nologo --verbosity minimal `
-    --output (Join-Path $output 'verifier')
+$verifierPublish = Join-Path $repositoryRoot 'artifacts/build-cache/store-upgrade-verifier'
+Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName 'Store upgrade verifier' `
+    -CommandArguments @('publish', $project, '-c', 'Release', '-r', 'win-x64', '--self-contained', 'true',
+        '--nologo', '--verbosity', 'minimal', '--output', $verifierPublish) -OutputPaths @($verifierPublish) `
+    -OnOutputsReady { Copy-Item -LiteralPath $verifierPublish -Destination (Join-Path $output 'verifier') -Recurse }
 if ($LASTEXITCODE -ne 0) { throw 'Could not publish the read-only verifier. Choose a new output directory before retrying.' }
 
 foreach ($name in @('Invoke-StoreUpgradeTest.ps1', 'Invoke-SyntheticV2UpgradeTest.ps1', 'StoreUpgrade.Testing.ps1', 'StoreUpgrade.Preflight.ps1')) {

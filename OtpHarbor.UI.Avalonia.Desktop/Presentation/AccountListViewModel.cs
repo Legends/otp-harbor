@@ -127,6 +127,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private Guid? _editingGroupId;
     private string _groupEditorName = string.Empty;
     private string _groupEditorMessage = string.Empty;
+    private string? _groupEditorMessageKey;
     private IReadOnlyList<GroupColorOption> _groupColorOptions = [];
     private GroupColorOption? _selectedGroupColor;
     private IReadOnlyList<GroupAccountSelectionViewModel> _allGroupEditorAccounts = [];
@@ -584,7 +585,23 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     public string GroupEditorMessage
     {
         get => _groupEditorMessage;
-        private set => SetField(ref _groupEditorMessage, value);
+        private set
+        {
+            if (value.Length == 0) _groupEditorMessageKey = null;
+            SetField(ref _groupEditorMessage, value);
+            OnPropertyChanged(nameof(GroupEditorNameMessage));
+            OnPropertyChanged(nameof(GroupEditorGeneralMessage));
+        }
+    }
+    public string GroupEditorNameMessage => IsGroupEditorNameError ? GroupEditorMessage : string.Empty;
+    public string GroupEditorGeneralMessage => IsGroupEditorNameError ? string.Empty : GroupEditorMessage;
+    private bool IsGroupEditorNameError => _groupEditorMessageKey is
+        AvaloniaStringKeys.GroupNameRequired or AvaloniaStringKeys.GroupNameDuplicate;
+
+    private void SetGroupEditorError(string key)
+    {
+        _groupEditorMessageKey = key;
+        GroupEditorMessage = _localization.GetString(key);
     }
 
     public IReadOnlyList<GroupColorOption> GroupColorOptions
@@ -1909,7 +1926,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         var name = GroupEditorName.Trim();
         if (!IsEditingFavorites && name.Length == 0)
         {
-            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupNameRequired);
+            SetGroupEditorError(AvaloniaStringKeys.GroupNameRequired);
             return;
         }
 
@@ -1917,7 +1934,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             && _allGroups.Any(group => group.Id != _editingGroupId
                 && string.Equals(group.Name, name, StringComparison.OrdinalIgnoreCase)))
         {
-            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupNameDuplicate);
+            SetGroupEditorError(AvaloniaStringKeys.GroupNameDuplicate);
             return;
         }
 
@@ -1927,7 +1944,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             .ToArray();
         if (selectedAccountIds.Length == 0)
         {
-            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupAccountRequired);
+            SetGroupEditorError(AvaloniaStringKeys.GroupAccountRequired);
             return;
         }
 
@@ -1945,7 +1962,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             var result = await _accountManager.SaveGroupAsync(group, selectedAccountIds);
             if (result.IsFailed)
             {
-                GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupSaveFailed);
+                SetGroupEditorError(AvaloniaStringKeys.GroupSaveFailed);
                 return;
             }
 
@@ -1960,7 +1977,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (Exception)
         {
-            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.GroupSaveFailed);
+            SetGroupEditorError(AvaloniaStringKeys.GroupSaveFailed);
         }
         finally
         {
@@ -1978,7 +1995,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
             var result = await _accountManager.SaveFavoritesAsync(selectedAccountIds);
             if (result.IsFailed)
             {
-                GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.FavoritesSaveFailed);
+                SetGroupEditorError(AvaloniaStringKeys.FavoritesSaveFailed);
                 return;
             }
 
@@ -2011,7 +2028,7 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (Exception)
         {
-            GroupEditorMessage = _localization.GetString(AvaloniaStringKeys.FavoritesSaveFailed);
+            SetGroupEditorError(AvaloniaStringKeys.FavoritesSaveFailed);
         }
         finally
         {
@@ -2931,9 +2948,11 @@ public sealed class AccountListViewModel : INotifyPropertyChanged, IDisposable
     private void LocalizationCultureChanged(object? sender, EventArgs e)
     {
         RefreshSortOptions(SelectedSortOption?.Mode ?? AccountSortMode.Issuer);
-        RefreshBrandIconOptions(SelectedEditorBrandIconOption?.Id);
+        if (IsEditorVisible)
+            RefreshBrandIconOptions(SelectedEditorBrandIconOption?.Id);
         RefreshGroupColorOptions(SelectedGroupColor?.Hex);
-        RefreshGroups();
+        if (_groupEditorMessageKey is { } groupErrorKey)
+            SetGroupEditorError(groupErrorKey);
         OnPropertyChanged(nameof(SearchResultSummary));
         OnPropertyChanged(nameof(AccountNavigationBackLabel));
         foreach (var account in _allAccounts)

@@ -226,6 +226,12 @@ public static class MobileStringKeys
     public const string QrReplaceAccountAutomationFormat = nameof(QrReplaceAccountAutomationFormat);
     public const string QrKeepBothAccountAutomationFormat = nameof(QrKeepBothAccountAutomationFormat);
     public const string QrImportResultTitle = nameof(QrImportResultTitle);
+    public const string FileImportResultTitle = nameof(FileImportResultTitle);
+    public const string FileImportResultSubtitle = nameof(FileImportResultSubtitle);
+    public const string ImportAccountsAdded = nameof(ImportAccountsAdded);
+    public const string ImportAccountsOverwritten = nameof(ImportAccountsOverwritten);
+    public const string ImportAccountsUnchanged = nameof(ImportAccountsUnchanged);
+    public const string ImportResultDone = nameof(ImportResultDone);
     public const string Close = global::TOTP.Localization.CommonStringKeys.Close;
     public const string ShowQr = nameof(ShowQr);
     public const string DismissQr = nameof(DismissQr);
@@ -962,6 +968,12 @@ public static class MobileStringKeys
         "QrImportCancelled",
         "QrImportChangedAccounts",
         "QrImportResultTitle",
+        FileImportResultTitle,
+        FileImportResultSubtitle,
+        ImportAccountsAdded,
+        ImportAccountsOverwritten,
+        ImportAccountsUnchanged,
+        ImportResultDone,
         "QrImportReviewSummary",
         "QrImportReviewTitle",
         "QrInvalid",

@@ -11,7 +11,26 @@ public partial class SettingsWindow : global::Avalonia.Controls.Window
     public SettingsWindow()
     {
         InitializeComponent();
+        SettingsWindowSurface.SizeChanged += (_, _) => UpdateSurfaceClip();
+        SettingsWindowFrame.PropertyChanged += (_, args) =>
+        {
+            if (args.Property == Border.CornerRadiusProperty || args.Property == Border.BorderThicknessProperty)
+                UpdateSurfaceClip();
+        };
+        UpdateSurfaceClip();
         FitToScreen(Screens.Primary);
+    }
+
+    private void UpdateSurfaceClip()
+    {
+        var inset = SettingsWindowFrame.BorderThickness;
+        var radius = SettingsWindowFrame.CornerRadius.TopLeft;
+        SettingsWindowSurface.Clip = new global::Avalonia.Media.RectangleGeometry
+        {
+            Rect = new global::Avalonia.Rect(SettingsWindowSurface.Bounds.Size),
+            RadiusX = Math.Max(0, radius - inset.Left),
+            RadiusY = Math.Max(0, radius - inset.Top)
+        };
     }
 
     public void FitToOwnerScreen(global::Avalonia.Controls.Window owner)

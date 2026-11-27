@@ -37,7 +37,9 @@ $aotProps = @'
 '@
 $aotProps = $aotProps.Replace('__REPO_PROPS__', [Security.SecurityElement]::Escape((Join-Path $aotRoot 'Directory.Build.props'))).
     Replace('__OUTPUT__', [Security.SecurityElement]::Escape($aotOutput.Replace('\', '/')))
-[IO.File]::WriteAllText($aotPropsPath, $aotProps)
+if (-not (Test-Path -LiteralPath $aotPropsPath -PathType Leaf) -or [IO.File]::ReadAllText($aotPropsPath) -cne $aotProps) {
+    [IO.File]::WriteAllText($aotPropsPath, $aotProps)
+}
 $aotArguments = @(
     'publish', (Join-Path $aotRoot 'OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj'),
     '-c', 'Release', '-nr:false', '--nologo', '-v:minimal',
@@ -60,7 +62,11 @@ try {
     else {
         $aotArguments += @('-p:RunAOTCompilation=true')
     }
-    & dotnet @aotArguments
+    $aotInputs = @($aotPropsPath)
+    if ($Runtime -eq 'NativeAOT') { $aotInputs += Join-Path $aotNdk 'source.properties' }
+    Invoke-OtpHarborCachedBuild -RepositoryRoot $aotRoot -CacheName "Android $Runtime $Architecture experiment" `
+        -CommandArguments $aotArguments -OutputPaths @((Join-Path $aotOutput "publish/$aotPackage-Signed.apk")) `
+        -AdditionalInputPaths $aotInputs
     if ($LASTEXITCODE -ne 0) { throw "The $Runtime experiment build failed." }
 }
 finally { $env:PATH = $aotOriginalPath }

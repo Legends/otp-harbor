@@ -109,7 +109,10 @@ jobs:
 
       - name: Validate testing script paths
         shell: pwsh
-        run: ./scripts/validation/Test-TestingScriptLayout.ps1
+        run: |
+          ./scripts/validation/Test-TestingScriptLayout.ps1
+          ./scripts/validation/Test-BuildReuse.ps1
+          ./scripts/validation/Test-BuildScriptCoverage.ps1
 
       - name: Validate localization resources
         shell: pwsh
@@ -247,6 +250,10 @@ jobs:
 
       - name: Run Unix security tests
         run: dotnet test OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj --configuration Release --no-restore --nologo --verbosity minimal
+
+      - name: Validate Bash build reuse
+        if: runner.os == 'Linux'
+        run: bash scripts/validation/Test-BuildReuse.sh
 
       - name: Restore Avalonia desktop host
         run: dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj --nologo --verbosity minimal --configfile NuGet.config

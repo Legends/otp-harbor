@@ -44,6 +44,10 @@ public partial class MainView
         DeferredGroupEditor.ContentCreated += (_, _) => AttachNativeGroupAccountPicker();
         DeferredAccountBrandIconPickerModalOverlay.ContentCreated += (_, _) =>
             UpdateAccountBrandIconPickerInputPane(_inputPaneState, _inputPaneOccludedRect);
+        DeferredEncryptedAccountImportPasswordDialog.ContentCreated += (_, _) =>
+            Dispatcher.UIThread.Post(UpdateImportPasswordDialogInputPane, DispatcherPriority.Loaded);
+        DeferredEncryptedAccountImportPasswordDialog.SizeChanged += (_, _) =>
+            UpdateImportPasswordDialogInputPane();
     }
 
     private void AttachNativeImportReview()
