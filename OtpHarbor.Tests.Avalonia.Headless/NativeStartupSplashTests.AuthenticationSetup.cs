@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.LogicalTree;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
@@ -236,8 +237,9 @@ public sealed partial class NativeStartupSplashTests
             window.UpdateLayout();
             Dispatcher.UIThread.RunJobs();
 
-            var selectors = view.GetVisualDescendants().OfType<SensitiveAuthenticationSelector>()
-                .SelectMany(selector => selector.GetVisualDescendants().OfType<ComboBox>()).ToArray();
+            // Hidden selectors retain active bindings without materializing their visual templates.
+            var selectors = view.GetLogicalDescendants().OfType<SensitiveAuthenticationSelector>()
+                .SelectMany(selector => selector.GetLogicalDescendants().OfType<ComboBox>()).ToArray();
             Assert.NotEmpty(selectors);
             var injected = false;
             model.PropertyChanged += (_, args) =>
