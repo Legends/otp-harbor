@@ -1,7 +1,9 @@
 # README release information
 
 Every successful stable Desktop (`vX.Y.Z`) or Android (`android-vX.Y.Z`) publication in
-`build-and-test.yml` calls the reusable `readme-releases.yml` workflow. This explicit call
+the unified `release.yml` or legacy `build-and-test.yml` path calls the reusable
+`readme-releases.yml` workflow. [Unified release operations and targeted recovery](CONTINUOUS_DELIVERY.md)
+preserve this contract. This explicit call
 is required: publishing with `GITHUB_TOKEN` does not trigger another release-event workflow.
 Manually published/edited/deleted releases also trigger a refresh. A daily scheduled run
 reconciles changes or missed runs, and **Actions → Refresh README releases → Run workflow**

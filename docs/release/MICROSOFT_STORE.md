@@ -13,6 +13,12 @@ so the Partner Center submission does not require a CA-trusted project certifica
 make an unsigned MSIX safe for sideloading: the package created by this repository is a submission
 input and must not be attached to a GitHub Release or distributed directly.
 
+The [continuous delivery operating guide](CONTINUOUS_DELIVERY.md) documents the new
+`scope=desktop`, `store_action=prepare|submit` workflow, protected Entra credentials,
+non-destructive submission API, bounded certification reconciliation and Store-only recovery.
+It reuses the existing packager and identities below. Administrative setup and live
+Partner Center validation remain separate prerequisites; mocked tests do not prove publication.
+
 ## Partner Center prerequisites
 
 The maintainer must complete these account-owned steps before the first submission package can be
@@ -88,6 +94,10 @@ tiles from the reviewed app icon, validates the manifest with MakeAppx, and then
 files. Store-managed updates are the only update mechanism for this package.
 
 ## Certification and release
+
+The following manual procedure remains applicable to initial publication and physical
+acceptance. Subsequent authorized updates can use the automated submission/reconciliation
+path in the operating guide. An upload or committed submission is never proof of public availability.
 
 1. Verify the workflow commit and downloaded artifact hash against `store-package.json`.
 2. Upload only the MSIX to the reserved Partner Center product.
