@@ -13,6 +13,31 @@ namespace TOTP.Tests.Infrastructure.Services;
 
 public sealed class PortableUpdateServiceTests
 {
+    [Theory]
+    [InlineData("appcast")]
+    [InlineData("signature")]
+    [InlineData("public-key")]
+    public async Task CheckAsync_WhenSignedFeedIdentityIsChanged_RejectsUpdate(string changed)
+    {
+        var signed = CreateSignedFixture("signed package"u8.ToArray());
+        var tampered = changed switch
+        {
+            "appcast" => signed with { AppcastBytes = signed.AppcastBytes.Concat(" "u8.ToArray()).ToArray() },
+            "signature" => signed with { AppcastSignatureBytes = Encoding.UTF8.GetBytes(Convert.ToBase64String(new byte[64])) },
+            "public-key" => signed with { PublicKey = CreateSignedFixture("other package"u8.ToArray()).PublicKey },
+            _ => throw new ArgumentOutOfRangeException(nameof(changed))
+        };
+        using var client = new HttpClient(new FixtureHandler(tampered));
+        var sut = CreateSut(tampered.PublicKey, client, Mock.Of<IPlatformApplicationPaths>());
+
+        var result = await sut.CheckAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(
+            PortableUpdateErrorCode.FeedVerificationFailed,
+            Assert.IsType<PortableUpdateError>(Assert.Single(result.Errors)).Code);
+    }
+
     [Fact]
     public async Task CheckAndDownloadAsync_VerifiesAppcastAndPackageBeforeReadyState()
     {

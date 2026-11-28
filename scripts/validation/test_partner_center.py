@@ -125,6 +125,36 @@ class PartnerCenterTests(unittest.TestCase):
         self.submit()
         self.assertEqual(1, self.store.calls.count(("POST", "/submissions")))
 
+    def test_resumed_upload_uses_current_server_upload_uri(self):
+        original = self.store.api
+        refreshed = 'https://example.blob.core.windows.net/refreshed?synthetic=not-a-credential'
+
+        def api(method, suffix='', body=None):
+            result = original(method, suffix, body)
+            if method == 'PUT':
+                self.store.submission['fileUploadUrl'] = refreshed
+            return result
+
+        self.store.api = api
+        self.store.upload = Mock(wraps=self.store.upload)
+        self.submit()
+        self.assertEqual(refreshed, self.store.upload.call_args.args[0])
+
+    def test_remote_submission_change_blocks_upload_and_commit(self):
+        original = self.store.api
+
+        def api(method, suffix='', body=None):
+            result = original(method, suffix, body)
+            if method == 'PUT':
+                self.store.submission['notesForCertification'] = 'Changed by another operation'
+            return result
+
+        self.store.api = api
+        with self.assertRaises(pc.StoreError):
+            self.submit()
+        self.assertEqual([], self.store.uploads)
+        self.assertNotIn(('POST', '/submissions/11/commit'), self.store.calls)
+
     def test_state_mapping_and_published_version_validation(self):
         self.submit()
         for remote, expected in (("CertificationFailed", "certification-failed"), ("PendingPublication", "awaiting-publication"),

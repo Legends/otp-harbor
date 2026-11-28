@@ -41,6 +41,9 @@ concurrency:
 jobs:
   inspect:
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: release-input
     outputs:
       mode: ${{ steps.inspect.outputs.mode }}
     steps:
@@ -57,7 +60,7 @@ jobs:
           run-id: ${{ inputs.original_run_id }}
           github-token: ${{ github.token }}
           merge-multiple: true
-          path: .
+          path: release-input
       - name: Reject changed, unavailable or untrusted recovery artifacts
         id: inspect
         shell: pwsh
@@ -69,7 +72,7 @@ jobs:
           RECOVERY_TARGET: ${{ inputs.target }}
           RELEASE_AUTOMATIC_PROMOTION_ENABLED: ${{ vars.RELEASE_AUTOMATIC_PROMOTION_ENABLED }}
         run: |
-          ./scripts/release/shared/Test-CandidateOrigin.ps1 -RunId $env:ORIGINAL_RUN -ArtifactId $env:ORIGINAL_ARTIFACT -Digest $env:CANDIDATE_SHA256 -ReadOnly:($env:RECOVERY_TARGET -eq 'store-status')
+          & "$env:GITHUB_WORKSPACE/scripts/release/shared/Test-CandidateOrigin.ps1" -RunId $env:ORIGINAL_RUN -ArtifactId $env:ORIGINAL_ARTIFACT -Digest $env:CANDIDATE_SHA256 -ReadOnly:($env:RECOVERY_TARGET -eq 'store-status')
           $candidate = Get-Content candidate.json -Raw | ConvertFrom-Json
           "mode=$($candidate.plan.mode)" >> $env:GITHUB_OUTPUT
           "Recovering candidate $($candidate.plan.candidateId) from source $($candidate.plan.sourceCommit). No rebuilding or version allocation." >> $env:GITHUB_STEP_SUMMARY
@@ -103,8 +106,8 @@ jobs:
       state_run_id: ${{ inputs.store_state_run_id }}
 
   metadata:
-    needs: [inspect, github]
-    if: always() && needs.inspect.result == 'success' && (inputs.target == 'metadata' || needs.github.result == 'success')
+    needs: [inspect, github, store]
+    if: always() && needs.inspect.result == 'success' && (inputs.target == 'metadata' || needs.github.result == 'success' || needs.store.outputs.state == 'published')
     permissions:
       contents: write
       actions: write

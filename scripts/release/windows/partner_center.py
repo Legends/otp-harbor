@@ -235,11 +235,15 @@ def submit(store, package, metadata, state, state_path):
     packages[:] = [p for p in packages if p.get("fileName") != package.name]
     packages.append({"fileName": package.name, "fileStatus": "PendingUpload", "minimumDirectXVersion": "None", "minimumSystemRam": "None"})
     store.api("PUT", "/submissions/" + pending, changed)
+    configured = store.api("GET", "/submissions/" + pending)
+    if configured.get("id") != pending or configured.get("status") != "PendingCommit" or marker not in configured.get("notesForCertification", ""):
+        raise StoreError("Submission changed during preparation; upload blocked pending reconciliation.")
     with tempfile.TemporaryDirectory(prefix="otp-store-upload-") as directory:
         archive = Path(directory) / "submission.zip"
         with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as output:
             output.write(package, package.name)
-        store.upload(submission["fileUploadUrl"], archive)
+        # Updating/resuming a draft can refresh its expiring upload URI.
+        store.upload(configured["fileUploadUrl"], archive)
     state["state"] = "uploaded"
     save_state(state_path, state)
     verified = store.api("GET", "/submissions/" + pending)

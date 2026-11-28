@@ -106,7 +106,7 @@ class ScriptContractTests(unittest.TestCase):
 
 class DeliveryContractTests(unittest.TestCase):
     def test_privileged_jobs_extract_data_away_from_trusted_verification_code(self):
-        for name in ('reusable-promote.yml', 'reusable-store-submission.yml'):
+        for name in ('reusable-promote.yml', 'reusable-store-submission.yml', 'release-recovery.yml'):
             workflow = (ROOT / '.github/workflows' / name).read_text()
             self.assertIn('working-directory: release-input', workflow)
             self.assertIn('path: release-input', workflow)
@@ -147,6 +147,13 @@ class DeliveryContractTests(unittest.TestCase):
             self.assertIn('cancel-in-progress: false', text)
         refresh = (ROOT / '.github/workflows/readme-releases.yml').read_text(encoding='utf-8')
         self.assertIn('gh workflow run pages.yml', refresh)
+
+    def test_standalone_store_confirmation_queries_retail_before_modifying_public_metadata(self):
+        workflow = (ROOT / '.github/workflows/store-msix.yml').read_text()
+        confirmation = workflow.split('  mark-public-version:', 1)[1]
+        self.assertLess(confirmation.index('Get-PublicMicrosoftStoreVersion.py'),
+                        confirmation.index('Set-PublicMicrosoftStoreVersion.ps1'))
+        self.assertIn('$publicVersion -cne $env:STORE_VERSION', confirmation)
 
     def test_metrics_keep_unobserved_dora_values_unknown(self):
         report = delivery_metrics.measure(

@@ -60,7 +60,7 @@ jobs:
 
   refresh_confirmed_publication:
     needs: [discover, reconcile]
-    if: always() && needs.discover.outputs.pending == 'true' && needs.reconcile.result == 'success'
+    if: always() && needs.discover.outputs.pending == 'true' && needs.reconcile.result == 'success' && needs.reconcile.outputs.state == 'published'
     permissions:
       contents: write
       actions: write

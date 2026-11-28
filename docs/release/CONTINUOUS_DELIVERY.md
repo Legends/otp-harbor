@@ -256,6 +256,8 @@ Microsoft warns that editing an API-created submission in Partner Center can pre
 subsequent API modification; avoid concurrent manual editing of a managed submission.
 
 Safe reads/uploads use bounded retries with exponential delay/jitter and Retry-After.
+An owned editable submission is read again after its package update, so recovery uses
+the current expiring upload URI and rejects a concurrent ownership/status change.
 Long Retry-After values stop the bounded job for a later retry. Interrupted creation and
 commit requests are reconciled, never blindly repeated. An uncertain creation without
 provable ownership requires operator investigation; automatic adoption/deletion is not
@@ -280,6 +282,8 @@ job. `PendingCommit`, `CommitStarted`, processing/certification, certification f
 awaiting publication, published, failed and unknown remain distinct. Unknown/failed
 states require attention. Original artifacts or state unavailable beyond retention need
 manual recovery; absence of a record is not proof that no remote draft exists.
+Existing manual Store publication settings are preserved. If Microsoft awaits a manual
+publication decision, the monitor reports that state rather than changing the policy.
 
 An uploaded or submitted package is not publicly available. Only a `Published` response
 containing the expected x64 version is marked published internally. Existing public
@@ -335,6 +339,13 @@ The publisher verifies existing tags and asset bytes, fills missing draft assets
 and treats an identical already-published release as read-only success. Conflicting tags,
 candidate identities, notes, assets or hashes fail. An older desktop recovery cannot
 replace a newer latest release. Store version ordering prevents downgrade publication.
+
+A certification rejection is not automatically resubmitted. Inspect Microsoft's report.
+An owned submission which Microsoft makes editable (`PendingCommit`) can resume with
+the original candidate. Other rejected, missing or uncertain submissions require an
+operator investigation; the adapter will not delete or replace them. A changed package
+requires a new verified candidate and authorization. Preserve any successful Linux
+release while resolving a Store-only failure.
 
 The release/recovery concurrency group never cancels active production work. GitHub
 retains only one pending run per group, not an unlimited FIFO; resubmit superseded pending

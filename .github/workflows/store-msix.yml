@@ -111,6 +111,19 @@ jobs:
           ref: master
           persist-credentials: false
 
+      - name: Set up Python for independent retail publication verification
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+
+      - name: Require the requested version to be publicly available
+        shell: pwsh
+        run: |
+          $publicVersion = & python scripts/release/windows/Get-PublicMicrosoftStoreVersion.py
+          if ($LASTEXITCODE -ne 0 -or $publicVersion -cne $env:STORE_VERSION) {
+            throw 'The requested Store package version is not independently confirmed in the public retail catalog. Public metadata was not changed.'
+          }
+
       - name: Update confirmed public Store version
         shell: pwsh
         run: |
