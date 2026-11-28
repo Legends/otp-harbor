@@ -116,7 +116,9 @@ jobs:
 
   desktop:
     needs: [plan, validation, security]
-    if: inputs.scope != 'mobile'
+    # Unsigned validation packages remain useful diagnostics when security fails.
+    # Candidate creation still requires security success in every mode.
+    if: always() && inputs.scope != 'mobile' && needs.plan.result == 'success' && needs.validation.result == 'success' && (inputs.mode == 'validate' || needs.security.result == 'success')
     permissions:
       contents: read
       actions: read
@@ -186,6 +188,18 @@ jobs:
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.13.18'
+      - name: Require successful gates before retrieving candidate files
+        shell: pwsh
+        env:
+          GATE_RESULTS: ${{ toJSON(needs) }}
+          RELEASE_SCOPE: ${{ inputs.scope }}
+          RELEASE_MODE: ${{ inputs.mode }}
+        run: |
+          $required = @('plan', 'validation', 'security')
+          $optional = @()
+          if ($env:RELEASE_SCOPE -ne 'mobile') { $required += @('desktop', 'desktop_metadata') } else { $optional += @('desktop', 'desktop_metadata') }
+          if ($env:RELEASE_SCOPE -ne 'desktop' -and $env:RELEASE_MODE -ne 'validate') { $required += @('android', 'android_metadata') } else { $optional += @('android', 'android_metadata') }
+          ./scripts/release/shared/Test-ReleaseGate.ps1 -NeedsJson $env:GATE_RESULTS -Required $required -Optional $optional
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: ${{ needs.plan.outputs.artifact_name }}

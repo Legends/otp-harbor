@@ -86,6 +86,14 @@ NativeAOT probe identity. They record intended versions but are explicitly ineli
 for promotion. Shared Android validation can still run for desktop scope; an unselected
 platform's production package is never prepared.
 
+Unsigned validation packaging may continue after a security scan fails so that
+independent packaging diagnostics are available. Candidate creation still fails on
+any required security gate, in every mode. Such a run does not authorize promotion.
+The full-history secret scan uses Gitleaks 8.30.1, which supports the existing global
+allowlist syntax. Its historical fixture exception requires the reviewed commit,
+exact file path and detector rule together; a regression test runs the real engine.
+Unresolved historical findings remain release blockers and require maintainer review.
+
 ## Candidate and authorization boundary
 
 The source is the dispatch's immutable `github.sha`; operators cannot choose another
