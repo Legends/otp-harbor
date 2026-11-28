@@ -1,11 +1,12 @@
 import copy
+from contextlib import redirect_stderr
 import io
 import json
 from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -61,6 +62,15 @@ class FakeStore:
 
 
 class PartnerCenterTests(unittest.TestCase):
+    def test_cli_reports_controlled_conflicts_without_echoing_unparsed_data(self):
+        for error, expected in ((pc.StoreError('Unrelated pending submission protected.'), 'Unrelated pending submission'),
+                                (ValueError('unparsed-private-response'), 'ValueError')):
+            output = io.StringIO()
+            with patch.object(pc, 'main', side_effect=error), redirect_stderr(output):
+                self.assertEqual(1, pc.cli())
+            self.assertIn(expected, output.getvalue())
+            self.assertNotIn('unparsed-private-response', output.getvalue())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

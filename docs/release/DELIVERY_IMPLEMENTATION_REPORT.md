@@ -81,10 +81,10 @@ and [Dashboard Icons license](https://github.com/homarr-labs/dashboard-icons/blo
 | Full application test project | 2,815 passed, 6 existing opt-in upstream tests skipped | Final local Release run |
 | Actual update verification | 11 passed, including 3 new altered-feed/signature/trusted-key cases | Real existing Ed25519 verifier; ephemeral fixture keys |
 | Release infrastructure | 40 passed | Planning, gate, mapping, inventory, publication, recovery, path and test-evidence behavior |
-| Partner Center | 16 passed | Mocked API/auth/upload/retry/uncertainty/metadata/architecture/state behavior; no live call |
+| Partner Center | 17 passed | Mocked API/auth/upload/retry/uncertainty/metadata/architecture/state and safe operator diagnostics; no live call |
 | Existing README, public Store and F-Droid Python suites | 10 + 9 + 12 passed | Local mocks/fixtures |
 | Gitleaks exception regression | 1 passed with actual 8.30.1 engine | Exact reviewed exception only; other path/commit/rule remains detected |
-| Local infrastructure total | 88 Python tests passed | Separate from application test counts |
+| Local infrastructure total | 89 Python tests passed | Separate from application test counts |
 | Repository policy checks | 18 passed | Packaging, update, licensing, localization, build reuse and script layout |
 | Workflow lint | actionlint 1.7.12 passed locally | Local shellcheck/pyflakes unavailable; hosted actionlint also passed |
 | Real unsigned Store package | MakeAppx succeeded, identity/version/contents validated | Local validation artifact; never uploaded to Partner Center |
@@ -134,12 +134,12 @@ not executed. None of these labels authorize production activation.
 | T6 — Feedback, shared validation and aggregate gates | DONE | Baseline collected; shared CI preserved; failed security gate actually blocked candidate/publication |
 | T7 — Immutable candidate promotion | UNVERIFIED | Inventory/digest/source tests pass; production attestation and approval/promotion not executed |
 | T8 — Authorization modes | BLOCKED | Validate safety checked; missing protected environments/ref/tag policy must be configured by an authorized administrator |
-| T9 — Partner Center automation | BLOCKED | API adapter and 16 mocks pass; dedicated Entra association/credentials and live read-only verification unavailable |
+| T9 — Partner Center automation | BLOCKED | API adapter and 17 mocks pass; dedicated Entra association/credentials and live read-only verification unavailable |
 | T10 — Discovery/F-Droid/website/Store metadata | UNVERIFIED | Existing contracts/tests and native retained-repository recovery pass; actual publication-driven refresh not performed |
 | T11 — Supply-chain hardening | UNVERIFIED | SHA pins, least privilege, safe inputs, isolated artifacts, real scan-policy regression checked; production provenance/credential setup unverified |
 | T12 — Serialization/idempotency/recovery | UNVERIFIED | Conflict/resume mocks and concurrency contracts pass; live partial-channel and simultaneous production operations not performed |
 | T13 — Visibility and measurement | DONE | Actual baseline, summaries, test evidence and read-only metrics workflow; external classifications remain unknown |
-| T14 — Automated infrastructure coverage | DONE | 88 Python tests and 18 policy checks; hosted lint/application/platform/package/native recovery evidence |
+| T14 — Automated infrastructure coverage | DONE | 89 Python tests and 18 policy checks; hosted lint/application/platform/package/native recovery evidence |
 | T15 — Operating documentation | DONE | Existing platform guides extended; unified operating guide owns setup, commands and recovery |
 | T16 — Final verification and report | DONE | This report reconciles all criteria and distinguishes local, hosted, mocked and unverified operations |
 | T17 — Incremental implementation and production restrictions | DONE | Review branch/coherent commits/draft PR; no protected merge, production publication or protection/key changes |
@@ -178,7 +178,7 @@ not executed. None of these labels authorize production activation.
 | C27 | Safely reject conflicts/concurrent operations | DONE | Duplicate/version/tag/asset/unknown-ownership tests; serialization without cancellation; live race unverified |
 | C28 | Visible status and recovery | DONE | Hosted gate/package summaries, real TRX evidence, channel states and documented original-artifact recovery |
 | C29 | Future macOS/iOS architecture | DONE | Existing macOS probes remain green; production eligibility disabled; future requirements documented |
-| C30 | Automated release regressions | DONE | 88 local Python tests plus existing policy and application coverage |
+| C30 | Automated release regressions | DONE | 89 local Python tests plus existing policy and application coverage |
 | C31 | Existing relevant tests successful | DONE | 2,815 local application passes; hosted application/UI/Unix/platform suites passed; deliberate skips documented |
 | C32 | Workflow syntax and validators pass | DONE | Local/hosted actionlint and 18 policy validators; historical security findings remain a separate failure |
 | C33 | Documentation matches implementation | DONE | Unified guide plus platform-guide updates, commands, safety/recovery limitations and this report |

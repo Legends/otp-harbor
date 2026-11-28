@@ -308,10 +308,16 @@ def main():
         raise StoreError("Store reconciliation requires operator attention.")
 
 
-if __name__ == "__main__":
+def cli():
     try:
         main()
+        return 0
     except (StoreError, ValueError, KeyError, OSError) as error:
-        # Intentionally exclude arbitrary external exception text/response bodies.
-        print(f"Store operation stopped ({type(error).__name__}); inspect retained non-secret state and recovery guide.", file=sys.stderr)
-        sys.exit(1)
+        # StoreError messages are controlled above; unparsed input/API bodies stay private.
+        reason = str(error) if isinstance(error, StoreError) else type(error).__name__
+        print(f"Store operation stopped: {reason} Inspect retained non-secret state and recovery guide.", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(cli())
