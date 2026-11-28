@@ -77,14 +77,21 @@ def inventory(root: Path) -> list[dict]:
             for p in sorted(root.rglob("*")) if p.is_file() and safe_file(root, p.relative_to(root).as_posix())]
 
 
+def validate_test_results(results: dict, source: str) -> None:
+    counts = results.get('counts', {})
+    if (results.get('sourceCommit') != source or results.get('suite') != 'full-integration'
+            or any(type(counts.get(key)) is not int or counts[key] < 0 for key in ('total', 'passed', 'failed', 'skipped'))
+            or counts['failed'] != 0 or counts['passed'] <= 0
+            or counts['total'] != counts['passed'] + counts['failed'] + counts['skipped']):
+        raise ValueError('Complete successful full integration test evidence for this source is required.')
+
+
 def create_candidate(plan: dict, root: Path, artifacts: list[dict], evidence: dict,
                      store_version: str | None, android_code: int | None, certificate: str, test_results: dict) -> dict:
     validate_plan(plan)
     if any(value != "success" for value in evidence.values()) or not evidence:
         raise ValueError("Mandatory candidate validation evidence is unsuccessful.")
-    if (test_results.get('sourceCommit') != plan['sourceCommit'] or test_results.get('suite') != 'full-integration'
-            or test_results.get('counts', {}).get('failed') != 0 or test_results['counts'].get('total', 0) <= 0):
-        raise ValueError('Successful full integration test evidence for this source is required.')
+    validate_test_results(test_results, plan['sourceCommit'])
     packages = []
     if plan["desktopVersion"]:
         metadata = check_msix(root, store_version)
@@ -129,6 +136,7 @@ def verify_candidate(candidate: dict, root: Path, digest: str, manifest: Path, p
         raise ValueError("Validation candidates cannot be promoted.")
     if not candidate.get("validation") or any(v != "success" for v in candidate["validation"].values()):
         raise ValueError("Candidate lacks successful validation evidence.")
+    validate_test_results(candidate.get('testResults', {}), candidate['plan']['sourceCommit'])
     if candidate["files"] != inventory(root):
         raise ValueError("Candidate files changed, missing, extra, or corrupted.")
 

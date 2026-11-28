@@ -22,6 +22,24 @@ spec.loader.exec_module(restore)
 
 @unittest.skipUnless(shutil.which('pwsh'), 'PowerShell release tooling is unavailable')
 class ScriptContractTests(unittest.TestCase):
+    def test_actual_trx_outcomes_preserve_skips_and_reject_incomplete_or_failed_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            results = root / 'TestResults'
+            results.mkdir()
+            env = os.environ | {'GITHUB_SHA': 'a' * 40, 'GITHUB_RUN_ID': '123',
+                                'GITHUB_EVENT_NAME': 'workflow_dispatch', 'GITHUB_STEP_SUMMARY': str(root / 'summary.md')}
+            for outcome, total, expected in [('NotExecuted', 2, 0), ('Failed', 2, 1), ('Unknown', 2, 1), ('NotExecuted', 3, 1)]:
+                (results / 'fixture.trx').write_text(f'<TestRun xmlns="urn:trx"><Results><UnitTestResult outcome="Passed"/>'
+                    f'<UnitTestResult outcome="{outcome}"/></Results><ResultSummary><Counters total="{total}" '
+                    'passed="1" failed="0" notExecuted="0"/></ResultSummary></TestRun>')
+                result = subprocess.run(['pwsh', '-NoProfile', '-File', str(ROOT / 'scripts/release/shared/Write-TestEvidence.ps1')],
+                    cwd=root, env=env, capture_output=True, text=True)
+                self.assertEqual(expected, result.returncode, result.stderr)
+                if expected == 0:
+                    self.assertEqual(dict(total=2, passed=1, failed=0, skipped=1),
+                                     json.loads((results / 'test-evidence.json').read_text())['counts'])
+
     def run_script(self, name, *args):
         return subprocess.run(['pwsh', '-NoProfile', '-File', str(ROOT / name), *args], capture_output=True, text=True, encoding='utf-8')
 

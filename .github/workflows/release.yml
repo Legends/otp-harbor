@@ -114,6 +114,35 @@ jobs:
       security-events: write
     uses: ./.github/workflows/security-audit.yml
 
+  distribution_diagnostics:
+    needs: plan
+    if: inputs.mode == 'validate' && inputs.scope != 'desktop'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Install the existing F-Droid verification toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends apksigner aapt openjdk-17-jdk-headless
+          python -m pip install 'fdroidserver==2.4.5'
+      - name: Exercise retained signed repository recovery without signing credentials
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          python scripts/release/android/Restore-FDroidRepository.py --output "$RUNNER_TEMP/otp-fdroid-recovery-diagnostic"
+          echo 'The retained public F-Droid index and APKs passed native signature/identity/hash verification. No signing or publication was performed.' >> "$GITHUB_STEP_SUMMARY"
+
   desktop:
     needs: [plan, validation, security]
     # Unsigned validation packages remain useful diagnostics when security fails.
@@ -141,7 +170,7 @@ jobs:
 
   desktop_metadata:
     needs: [plan, desktop]
-    if: inputs.scope != 'mobile'
+    if: always() && inputs.scope != 'mobile' && needs.plan.result == 'success' && needs.desktop.result == 'success'
     permissions:
       contents: read
       actions: read
@@ -304,7 +333,7 @@ jobs:
 
   summary:
     if: always()
-    needs: [plan, validation, security, desktop, android, desktop_metadata, android_metadata, candidate, publish_desktop, publish_android, store, refresh]
+    needs: [plan, validation, security, distribution_diagnostics, desktop, android, desktop_metadata, android_metadata, candidate, publish_desktop, publish_android, store, refresh]
     runs-on: ubuntu-24.04
     steps:
       - name: Report independent channel outcomes and recovery

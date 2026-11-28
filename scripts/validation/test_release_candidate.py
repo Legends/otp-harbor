@@ -12,6 +12,16 @@ from release_plan import make_plan
 
 
 class CandidateTests(unittest.TestCase):
+    def test_test_evidence_rejects_empty_skipped_incomplete_failed_or_unrelated_runs(self):
+        valid = dict(sourceCommit='a' * 40, suite='full-integration', counts=dict(total=3, passed=2, failed=0, skipped=1))
+        candidate.validate_test_results(valid, 'a' * 40)
+        for change in (dict(sourceCommit='b' * 40), dict(suite='filtered-pr'), dict(counts={}),
+                       dict(counts=dict(total=3, passed=2, failed=0, skipped=0)),
+                       dict(counts=dict(total=3, passed=0, failed=0, skipped=3)),
+                       dict(counts=dict(total=3, passed=1, failed=1, skipped=1))):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                candidate.validate_test_results(valid | change, 'a' * 40)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
