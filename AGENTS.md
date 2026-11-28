@@ -370,6 +370,18 @@ Relevant helpers include:
 
 The repo already treats release engineering seriously. Match that standard.
 
+### Delivery principles
+
+- Code, tests, packaging, security, release infrastructure, and recovery are shared product responsibilities. Treat broken integration as actionable engineering feedback and fix it promptly; never bypass gates to restore a green badge.
+- Keep `master` releasable. Prefer small, independently reviewable changes and short-lived branches integrated frequently. Retain maintenance branches only for actively maintained product lines; do not rename `master` or remove `release/1.x` incidentally.
+- Validate pull requests automatically with focused, actionable checks. Execute comprehensive shared and selected-platform validation before production promotion; platform selection never exempts shared security requirements.
+- Separate candidate preparation from production promotion. Resolve independent desktop/Android versions against one immutable source commit, build version-specific outputs once, and promote the same verified artifacts. Rerun required tests and integrity checks even when compilation outputs are reused.
+- Continuous delivery is the default: publication is on demand and requires protected authorization. Automatic promotion is optional, disabled by default, and requires trusted repository policy; workflow inputs cannot grant production permission.
+- Release retries must retain the original source, versions, candidate identity, and artifact hashes. Reject conflicts and unexpected mandatory-job skips; never move production tags or silently replace published assets. Keep immutable preparation evidence separate from mutable channel status and report partial publication explicitly.
+- Treat Store upload, certification, and public availability as separate states. Reconcile external publication before updating public versions, and recover individual failed channels without rebuilding successful releases or automating destructive rollback.
+- Extend existing scripts and workflows before adding infrastructure. Reduce redundant compilation, queue time, and handoffs without weakening signing, regression coverage, or recovery evidence.
+- Record decisions and meaningful trade-offs. Use delivery evidence and blameless incident analysis to improve the system, never as individual productivity scores. Preserve local-first privacy; operational measurements use GitHub and release evidence, not application telemetry.
+
 ### Current CI expectations
 
 GitHub Actions currently builds/tests on push and PR, and publishes on version tags.
