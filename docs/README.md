@@ -48,6 +48,7 @@ This index lists maintained documentation. Git history preserves completed migra
 
 - [Threat model](security/THREAT_MODEL.md)
 - [Security verification](security/SECURITY_VERIFICATION.md)
+- [Historical Gitleaks remediation and owner actions](security/HISTORICAL_GITLEAKS_REMEDIATION.md)
 - [Authorization envelope v2](security/AUTHORIZATION_ENVELOPE_V2.md)
 - [Clipboard security](security/CLIPBOARD_SECURITY.md)
 - [Platform file security](security/PLATFORM_FILE_SECURITY.md)

@@ -211,7 +211,7 @@ jobs:
 
       - name: Verify the historical exception remains narrowly scoped
         if: always()
-        run: python3 -m unittest discover -s scripts/validation -p test_gitleaks_policy.py
+        run: python3 -m unittest discover -s scripts/validation -p 'test_*gitleaks*.py'
 
   dast-zap:
     name: DAST (OWASP ZAP Baseline)

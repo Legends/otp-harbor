@@ -198,8 +198,8 @@ Optional automatic environments/policy and a scoped release App must remain disa
 unless separately approved. Existing GH_PAT functionality was retained pending equivalent
 protected-branch metadata authorization. No live Store authentication was attempted.
 
-Full-history scanning reports 46 unresolved generic-key findings after the existing
-reviewed load-test exception is correctly applied. Two concern historical
+At the implementation snapshot, full-history scanning reported 46 unresolved generic-key
+findings after the existing reviewed load-test exception was applied. Two concern historical
 `sharedGithubSecret` examples of unconfirmed origin. No new exception was added for them
 or the other findings. The separate sanitized mirror removes their shared value from
 eight occurrences in six blobs and verifies zero remaining matches in 19,174 reachable
@@ -209,6 +209,17 @@ and 50 pull-request refs. It has not been applied to the working repository or G
 Published histories and protection rules remain intact. A coordinated history migration
 also needs provenance/signature and GitHub cached/PR-ref handling, as explained in
 [GitHub's removal procedure](https://docs.github.com/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository).
+
+Follow-up local audit (2026-11-28): the
+[historical remediation report](../security/HISTORICAL_GITLEAKS_REMEDIATION.md)
+classifies all 46 detections / 33 distinct values. The original 42 exact fixture exceptions
+retain their scope. After verifying exclusive IndexNow protocol use, its two exceptions
+were authorized by the owner. The owner's subsequent confirmation that repository TOTP
+Base32 examples are synthetic supports two further exact historical exceptions; no
+generator independently proving their origin was found. Local and all-ref native scans
+now return zero findings / exit 0. The old sanitized mirror remains rejected for
+publication. The preceding paragraph records the original implementation snapshot;
+no new hosted security clearance or production authorization is claimed by this follow-up.
 
 Real GitHub publication, production Android/NetSparkle signing, approval/automatic
 promotion, Partner Center upload/certification/publication and production downstream

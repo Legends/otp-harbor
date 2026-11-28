@@ -1,0 +1,101 @@
+# Reviewed immutable fixture findings only; no values are stored here.
+# Evidence: docs/security/evidence/historical-gitleaks-review-20261128.json
+# Binding: full commit SHA + exact path + detector rule + start line.
+# Separate decisions below cover the public protocol key and owner-attested synthetic historical examples.
+
+# F003 / U003 / E01: verified-test-fixture
+71b968b137df4f5fd61729de92bf29410bf9d199:TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs:generic-api-key:22
+# F004 / U003 / E01: verified-test-fixture
+71b968b137df4f5fd61729de92bf29410bf9d199:TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs:generic-api-key:22
+# F005 / U004 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v0-authorization-profile-pbkdf2.json:generic-api-key:3
+# F006 / U005 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v0-authorization-profile-pbkdf2.json:generic-api-key:4
+# F007 / U004 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v1-global-profile-minimal-pbkdf2.json:generic-api-key:4
+# F008 / U005 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v1-global-profile-minimal-pbkdf2.json:generic-api-key:5
+# F009 / U004 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v2-global-profile-expanded-pbkdf2.json:generic-api-key:5
+# F010 / U005 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v2-global-profile-expanded-pbkdf2.json:generic-api-key:6
+# F011 / U004 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v3-global-profile-dek-envelope.json:generic-api-key:5
+# F012 / U006 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v3-global-profile-dek-envelope.json:generic-api-key:8
+# F013 / U004 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v4-app-settings-dek-envelope.json:generic-api-key:5
+# F014 / U006 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v4-app-settings-dek-envelope.json:generic-api-key:8
+# F015 / U004 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v5-current-app-settings.json:generic-api-key:6
+# F016 / U006 / E03: verified-crypto-fixture
+83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v5-current-app-settings.json:generic-api-key:9
+# F017 / U007 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:5
+# F018 / U008 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:13
+# F019 / U009 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:21
+# F020 / U010 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:29
+# F021 / U011 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:37
+# F022 / U012 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:45
+# F023 / U013 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:53
+# F024 / U014 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:61
+# F025 / U015 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:69
+# F026 / U016 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:77
+# F027 / U017 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:85
+# F028 / U018 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:93
+# F029 / U019 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:101
+# F030 / U020 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:109
+# F031 / U021 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:117
+# F032 / U022 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:125
+# F033 / U023 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:133
+# F034 / U024 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:141
+# F035 / U025 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:149
+# F036 / U026 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:157
+# F037 / U027 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:165
+# F038 / U028 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:173
+# F039 / U029 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:181
+# F040 / U030 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:197
+# F041 / U031 / E02: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:205
+# F043 / U032 / E04: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:scripts/testing/fixtures/mixed-account-older.json:generic-api-key:13
+# F044 / U033 / E04: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:scripts/testing/fixtures/mixed-account-older.json:generic-api-key:21
+# F045 / U033 / E04: verified-test-fixture
+c72ba6270d919ddca700570348e56fb59d075101:scripts/testing/fixtures/release-twofas.2fas:generic-api-key:5
+
+# F001 / U001 / E05: authorized-indexnow-protocol-key
+23837c18eb58effaf6744cbd47c80dbaac906205:.github/workflows/pages.yml:generic-api-key:141
+
+# F002 / U002 / E06,E07: owner-attested-synthetic-totp-fixture
+4a481cc89102ef3608d3b9614afe1092845f7585:Github2FA/MainWindow.xaml.cs:generic-api-key:40
+
+# F042 / U002 / E06,E07: owner-attested-synthetic-totp-fixture
+60607037c1c1c0207b06d83edb42d1a3deaad2ff:readme.md:generic-api-key:15
+
+# F046 / U001 / E05: authorized-indexnow-protocol-key
+23837c18eb58effaf6744cbd47c80dbaac906205:scripts/validation/Test-PublicWebsite.ps1:generic-api-key:29

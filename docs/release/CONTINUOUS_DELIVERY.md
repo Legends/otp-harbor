@@ -93,6 +93,12 @@ The full-history secret scan uses Gitleaks 8.30.1, which supports the existing g
 allowlist syntax. Its historical fixture exception requires the reviewed commit,
 exact file path and detector rule together; a regression test runs the real engine.
 Unresolved historical findings remain release blockers and require maintainer review.
+The [2026-11-28 historical review](../security/HISTORICAL_GITLEAKS_REMEDIATION.md)
+accounts for all 46 findings. The 42 reviewed fixture exceptions are unchanged;
+two authorized IndexNow protocol exceptions and two owner-attested synthetic TOTP
+exceptions now clear the local full-history scan. All exceptions bind immutable
+commits, exact paths, detectors and lines. This follow-up does not claim a new hosted
+security pass or authorize production promotion.
 
 ## Candidate and authorization boundary
 

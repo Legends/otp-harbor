@@ -1,0 +1,1090 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "f91112a1785ae8025d0752897803d5fe5ed05178",
+  "indexNow": {
+    "exclusiveObservedUse": "IndexNow verification/deployment/validation",
+    "historicalBlobs": 45,
+    "literalOccurrences": 66,
+    "allPathsClassified": true,
+    "verificationFileMatches": true,
+    "currentTrackedPaths": [
+      ".github/workflows/pages.yml",
+      "docs/release/WEBSITE_INDEXING.md",
+      "scripts/marketing/Publish-LocalPreview.ps1",
+      "scripts/validation/Test-PublicWebsite.ps1",
+      "site/[REDACTED].txt"
+    ],
+    "pagesCopiesVerificationFile": true,
+    "validatorChecksValue": true,
+    "historicalBlobEvidence": [
+      {
+        "object": "e5148a09c9c145393198ed32d3343b22067705c7",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 131,
+            "source": "          cp site/[REDACTED].txt artifacts/website/"
+          },
+          {
+            "line": 263,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "d02e095787e25264cb5c5fd901a6d6bc9ea3e4a0",
+        "paths": [
+          "docs/release/WEBSITE_INDEXING.md"
+        ],
+        "roles": [
+          "indexnow-public-endpoint-documentation"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 9,
+            "source": "`https://legends.github.io/otp-harbor/[REDACTED].txt`"
+          }
+        ]
+      },
+      {
+        "object": "8b2b37ca2580c300a32e662b951a666cc6776ea9",
+        "paths": [
+          "scripts/marketing/Publish-LocalPreview.ps1"
+        ],
+        "roles": [
+          "local-preview-verification-file-copy"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 21,
+            "source": "foreach ($name in @('index.html','styles.css','gallery.js','gallery-runtime.js','robots.txt','sitemap.xml','[REDACTED].txt')) {"
+          }
+        ]
+      },
+      {
+        "object": "48162e251cc34c15f57bb499e70012b2013d1132",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 37,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "615a84ea324d603899f0d80d79a40b09c9802a04",
+        "paths": [
+          "site/[REDACTED].txt"
+        ],
+        "roles": [
+          "public-indexnow-verification-file"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 1,
+            "source": "[REDACTED]"
+          }
+        ]
+      },
+      {
+        "object": "244ba672435f14ccc0156426af808409868a733b",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 94,
+            "source": "          cp site/[REDACTED].txt artifacts/website/"
+          },
+          {
+            "line": 225,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "49b0ca0fff3dc1b8355c8d05c4b7b4cedf9c0378",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 94,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 225,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "f84a3328eca3d30d8cf638d5471afa0ddc03e468",
+        "paths": [
+          "scripts/marketing/Publish-LocalPreview.ps1"
+        ],
+        "roles": [
+          "local-preview-verification-file-copy"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 20,
+            "source": "foreach ($name in @('index.html','styles.css','gallery.js','gallery-runtime.js','robots.txt','sitemap.xml','[REDACTED].txt')) {"
+          }
+        ]
+      },
+      {
+        "object": "86ea20766880268c25dafa8f993fe2fa2fc4f31a",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 37,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "3007d608d5291741b0edb012a08d7e029874f5d4",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 93,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 224,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "f8e233e3749f11e660b8467b8df00c3a32a20802",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 93,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 224,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "aff66c4bcff29054bda9531cc9183d650eaaab13",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 91,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 274,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "ddb441b3a2d589efbe6cff4bfbda04b91eae00cc",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 35,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "86aa01d57cffa88af019d428c1d03c0eaf5af001",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 78,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 260,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "16b9c96c02964dc7414ae25d4cb7322ed1fb9043",
+        "paths": [
+          "scripts/marketing/Publish-LocalPreview.ps1"
+        ],
+        "roles": [
+          "local-preview-verification-file-copy"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 20,
+            "source": "foreach ($name in @('index.html','styles.css','gallery.js','robots.txt','sitemap.xml','[REDACTED].txt')) {"
+          }
+        ]
+      },
+      {
+        "object": "f4760fd83f6520bb9b51f306f96fffb4d92ae43d",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 34,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "f17a2d20bdd31a91d488f70f01f9209bb072b6b4",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 75,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 257,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "9b98475afa6efa2cccc9af81a476c3cf4c2aebca",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 64,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 230,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "01bac5066dd5798db6aa818035198f0b81b5b93a",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 59,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 225,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "5c77ab001d736964b5c58830980e265f7456405e",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 50,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 213,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "67305da0f1cbfed840f38af96c509238e891424e",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 33,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "4ffffb178943e21da44fc67f4832205c2c07a5e7",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 50,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 213,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "5c4cc6909d797403b0e6743ebb4143c3d004ef02",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 33,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "de83d632fd7a9d1485440abef20e90aaf1f258df",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 50,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 213,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "7cd0df74dd2ceeb759113f965400479da67b7986",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 50,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 213,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "38cb917f705a01b6fef6d7a8d8f4f3de0696333b",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 33,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "69a39b157f59f4b3598243fb4e292e319dd1c1cb",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 33,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "d550792ba9c74c13520b83436fec0b8ca42dd65d",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 50,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 178,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "c02d4f34ceeb6339c686564cf1e523f44a7bcfc7",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 33,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "d2d3883313066df4c32ba68137ec1c06ded453eb",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 33,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "d45313699ff4264e158bed2505ed93073d78e2b3",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 50,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 151,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "4050269e2c33184f181a0e401f88ff3892d3ee3a",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 34,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "51d6a03eca28298058f722330c72b056dc68bef6",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 34,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "70e3aeab19f52fff7613b5062f2881d01ffff8dd",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 47,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 147,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "48b28156fe884f7d014b533d9d6d65588d9ba8c9",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 34,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "c89cc5f78fd2a35fcfb0559a31e22243308473f4",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 46,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 145,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "71a2be59dba1934b6f160e0879438f4bdce44b84",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 32,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "38aa879f53ece71e5bea923e399dfe6de0d62552",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 45,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 143,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "a23622ca210be65347c801b1fcd62cc397b17832",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 30,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "2752a16bcae5bae0058be2723723dee985247cc9",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 44,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 141,
+            "source": "          $verificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "25936e6ec2f97c92c354d28a27f50239f52ff297",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 30,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "a7b49241e2339e95ca0aa5c84cdf1336667c5007",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 29,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "fb41699fd2bcde502e35190a2a6dcbe5d841ab31",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 29,
+            "source": "$indexNowVerificationValue = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "e817440f956885f5ed60503608a983b01138757d",
+        "paths": [
+          ".github/workflows/pages.yml"
+        ],
+        "roles": [
+          "pages-verification-copy-or-indexnow-payload"
+        ],
+        "literalOccurrences": 2,
+        "contexts": [
+          {
+            "line": 44,
+            "source": "          cp site/[REDACTED].txt _site/"
+          },
+          {
+            "line": 141,
+            "source": "          $key = '[REDACTED]'"
+          }
+        ]
+      },
+      {
+        "object": "a57bbd3a5d4eafdca1063c64e8aaeac3b40e1142",
+        "paths": [
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "roles": [
+          "website-indexnow-verification-validator"
+        ],
+        "literalOccurrences": 1,
+        "contexts": [
+          {
+            "line": 29,
+            "source": "$indexNowKey = '[REDACTED]'"
+          }
+        ]
+      }
+    ],
+    "uniqueRedactedNotificationSteps": [
+      "      - name: Notify IndexNow about the deployed website\n        shell: pwsh\n        run: |\n          $siteUrl = 'https://legends.github.io/otp-harbor/'\n          $androidUrl = 'https://legends.github.io/otp-harbor/android/'\n          $androidGuideUrl = 'https://legends.github.io/otp-harbor/android/guide/'\n          $verificationValue = '[REDACTED]'\n          $keyUrl = \"$siteUrl$verificationValue.txt\"\n          $keyIsLive = $false\n\n          foreach ($attempt in 1..12) {\n            try {\n              $keyResponse = Invoke-WebRequest -Uri $keyUrl -TimeoutSec 15\n              if ($keyResponse.StatusCode -eq 200 -and $keyResponse.Content.Trim() -ceq $verificationValue) {\n                $keyIsLive = $true\n                break\n              }\n            }\n            catch {\n              Write-Host \"Waiting for the deployed IndexNow key ($attempt/12).\"\n            }\n            Start-Sleep -Seconds 5\n          }\n\n          if (-not $keyIsLive) {\n            Write-Warning 'The IndexNow key was not visible after deployment; notification was skipped.'\n            exit 0\n          }\n\n          $payload = @{\n            host = 'legends.github.io'\n            key = $verificationValue\n            keyLocation = $keyUrl\n            urlList = @($siteUrl, $androidUrl, $androidGuideUrl)\n          } | ConvertTo-Json -Compress\n\n          try {\n            $response = Invoke-WebRequest `\n              -Uri 'https://www.bing.com/indexnow' `\n              -Method Post `\n              -ContentType 'application/json; charset=utf-8' `\n              -Body $payload `\n              -TimeoutSec 30\n            if ($response.StatusCode -notin 200, 202) {\n              Write-Warning \"IndexNow returned unexpected HTTP status $($response.StatusCode).\"\n            }\n            else {\n              Write-Host \"IndexNow accepted the website URL with HTTP $($response.StatusCode).\"\n            }\n          }\n          catch {\n            Write-Warning \"IndexNow notification failed without affecting the deployment: $($_.Exception.Message)\"\n          }\n",
+      "      - name: Notify IndexNow about the deployed website\n        shell: pwsh\n        run: |\n          $siteUrl = 'https://legends.github.io/otp-harbor/'\n          $androidUrl = 'https://legends.github.io/otp-harbor/android/'\n          $verificationValue = '[REDACTED]'\n          $keyUrl = \"$siteUrl$verificationValue.txt\"\n          $keyIsLive = $false\n\n          foreach ($attempt in 1..12) {\n            try {\n              $keyResponse = Invoke-WebRequest -Uri $keyUrl -TimeoutSec 15\n              if ($keyResponse.StatusCode -eq 200 -and $keyResponse.Content.Trim() -ceq $verificationValue) {\n                $keyIsLive = $true\n                break\n              }\n            }\n            catch {\n              Write-Host \"Waiting for the deployed IndexNow key ($attempt/12).\"\n            }\n            Start-Sleep -Seconds 5\n          }\n\n          if (-not $keyIsLive) {\n            Write-Warning 'The IndexNow key was not visible after deployment; notification was skipped.'\n            exit 0\n          }\n\n          $payload = @{\n            host = 'legends.github.io'\n            key = $verificationValue\n            keyLocation = $keyUrl\n            urlList = @($siteUrl, $androidUrl)\n          } | ConvertTo-Json -Compress\n\n          try {\n            $response = Invoke-WebRequest `\n              -Uri 'https://www.bing.com/indexnow' `\n              -Method Post `\n              -ContentType 'application/json; charset=utf-8' `\n              -Body $payload `\n              -TimeoutSec 30\n            if ($response.StatusCode -notin 200, 202) {\n              Write-Warning \"IndexNow returned unexpected HTTP status $($response.StatusCode).\"\n            }\n            else {\n              Write-Host \"IndexNow accepted the website URL with HTTP $($response.StatusCode).\"\n            }\n          }\n          catch {\n            Write-Warning \"IndexNow notification failed without affecting the deployment: $($_.Exception.Message)\"\n          }\n",
+      "      - name: Notify IndexNow about the deployed website\n        shell: pwsh\n        run: |\n          $siteUrl = 'https://legends.github.io/otp-harbor/'\n          $key = '[REDACTED]'\n          $keyUrl = \"$siteUrl$key.txt\"\n          $keyIsLive = $false\n\n          foreach ($attempt in 1..12) {\n            try {\n              $keyResponse = Invoke-WebRequest -Uri $keyUrl -TimeoutSec 15\n              if ($keyResponse.StatusCode -eq 200 -and $keyResponse.Content.Trim() -ceq $key) {\n                $keyIsLive = $true\n                break\n              }\n            }\n            catch {\n              Write-Host \"Waiting for the deployed IndexNow key ($attempt/12).\"\n            }\n            Start-Sleep -Seconds 5\n          }\n\n          if (-not $keyIsLive) {\n            Write-Warning 'The IndexNow key was not visible after deployment; notification was skipped.'\n            exit 0\n          }\n\n          $payload = @{\n            host = 'legends.github.io'\n            key = $key\n            keyLocation = $keyUrl\n            urlList = @($siteUrl)\n          } | ConvertTo-Json -Compress\n\n          try {\n            $response = Invoke-WebRequest `\n              -Uri 'https://www.bing.com/indexnow' `\n              -Method Post `\n              -ContentType 'application/json; charset=utf-8' `\n              -Body $payload `\n              -TimeoutSec 30\n            if ($response.StatusCode -notin 200, 202) {\n              Write-Warning \"IndexNow returned unexpected HTTP status $($response.StatusCode).\"\n            }\n            else {\n              Write-Host \"IndexNow accepted the website URL with HTTP $($response.StatusCode).\"\n            }\n          }\n          catch {\n            Write-Warning \"IndexNow notification failed without affecting the deployment: $($_.Exception.Message)\"\n          }\n",
+      "      - name: Notify IndexNow about the deployed website\n        shell: pwsh\n        run: |\n          $siteUrl = 'https://legends.github.io/otp-harbor/'\n          $verificationValue = '[REDACTED]'\n          $keyUrl = \"$siteUrl$verificationValue.txt\"\n          $keyIsLive = $false\n\n          foreach ($attempt in 1..12) {\n            try {\n              $keyResponse = Invoke-WebRequest -Uri $keyUrl -TimeoutSec 15\n              if ($keyResponse.StatusCode -eq 200 -and $keyResponse.Content.Trim() -ceq $verificationValue) {\n                $keyIsLive = $true\n                break\n              }\n            }\n            catch {\n              Write-Host \"Waiting for the deployed IndexNow key ($attempt/12).\"\n            }\n            Start-Sleep -Seconds 5\n          }\n\n          if (-not $keyIsLive) {\n            Write-Warning 'The IndexNow key was not visible after deployment; notification was skipped.'\n            exit 0\n          }\n\n          $payload = @{\n            host = 'legends.github.io'\n            key = $verificationValue\n            keyLocation = $keyUrl\n            urlList = @($siteUrl)\n          } | ConvertTo-Json -Compress\n\n          try {\n            $response = Invoke-WebRequest `\n              -Uri 'https://www.bing.com/indexnow' `\n              -Method Post `\n              -ContentType 'application/json; charset=utf-8' `\n              -Body $payload `\n              -TimeoutSec 30\n            if ($response.StatusCode -notin 200, 202) {\n              Write-Warning \"IndexNow returned unexpected HTTP status $($response.StatusCode).\"\n            }\n            else {\n              Write-Host \"IndexNow accepted the website URL with HTTP $($response.StatusCode).\"\n            }\n          }\n          catch {\n            Write-Warning \"IndexNow notification failed without affecting the deployment: $($_.Exception.Message)\"\n          }\n"
+    ],
+    "otherCredentialReuseObserved": false,
+    "scope": "All reachable baseline Git blobs/paths plus current tracked files; external systems not observable",
+    "officialReferences": [
+      "https://www.indexnow.org/documentation",
+      "https://www.indexnow.org/faq"
+    ],
+    "ownerProtocolExceptionAuthorized": true,
+    "rotationOrRedeploymentPerformed": false,
+    "publicVerificationRead": {
+      "httpStatus": 200,
+      "bodyMatchesVerificationValue": true,
+      "method": "GET",
+      "notificationSubmitted": false
+    }
+  },
+  "legacyTotp": {
+    "firstAppearanceCommits": [
+      "4a481cc89102ef3608d3b9614afe1092845f7585"
+    ],
+    "detections": [
+      {
+        "commit": "4a481cc89102ef3608d3b9614afe1092845f7585",
+        "authoredAt": "2024-04-04T22:13:02+02:00",
+        "author": "Admin",
+        "message": "comment added",
+        "path": "Github2FA/MainWindow.xaml.cs",
+        "detectedLine": 40,
+        "enclosingClass": "Github2FA.MainWindow",
+        "enclosingMethod": "Button_Click(object sender, RoutedEventArgs e)",
+        "context": [
+          {
+            "line": 29,
+            "source": "        }"
+          },
+          {
+            "line": 30,
+            "source": ""
+          },
+          {
+            "line": 31,
+            "source": "        private async void Button_Click(object sender, RoutedEventArgs e)"
+          },
+          {
+            "line": 32,
+            "source": "        {"
+          },
+          {
+            "line": 33,
+            "source": "            // the github secret key can originally be obtained from here:"
+          },
+          {
+            "line": 34,
+            "source": "            // [URL redacted]"
+          },
+          {
+            "line": 35,
+            "source": "            // Click => Two-Factor methods: => Authenticator app => ... => Edit"
+          },
+          {
+            "line": 36,
+            "source": "            // Either you scan the QR code now with your phone or you click on the link below to get the secret code/key:"
+          },
+          {
+            "line": 37,
+            "source": "            // \"[literal redacted]\""
+          },
+          {
+            "line": 38,
+            "source": "            // Now right-click your project and click \"[literal redacted]\" and add the key there like:"
+          },
+          {
+            "line": 39,
+            "source": "            // {"
+          },
+          {
+            "line": 40,
+            "source": "            //  \"[literal redacted]\": \"[literal redacted]\""
+          },
+          {
+            "line": 41,
+            "source": "            // }"
+          },
+          {
+            "line": 42,
+            "source": ""
+          },
+          {
+            "line": 43,
+            "source": "            string sharedSecret = _configuration[\"[literal redacted]\"]; //\"[literal redacted]\"; "
+          },
+          {
+            "line": 44,
+            "source": ""
+          },
+          {
+            "line": 45,
+            "source": "            var totp = new Totp(Base32Encoding.ToBytes(sharedSecret));"
+          },
+          {
+            "line": 46,
+            "source": ""
+          },
+          {
+            "line": 47,
+            "source": "            // Generate a TOTP code:"
+          },
+          {
+            "line": 48,
+            "source": "            string totpCode = totp.ComputeTotp(); // This generates a TOTP code for the current time."
+          },
+          {
+            "line": 49,
+            "source": ""
+          },
+          {
+            "line": 50,
+            "source": "            lblCode.Content = totpCode;"
+          },
+          {
+            "line": 51,
+            "source": "            Clipboard.SetText(totpCode);"
+          },
+          {
+            "line": 52,
+            "source": "            lblClipboard.Visibility = Visibility.Visible;"
+          },
+          {
+            "line": 53,
+            "source": ""
+          },
+          {
+            "line": 54,
+            "source": "            await Task.Delay(2500).ContinueWith((ct) =>"
+          },
+          {
+            "line": 55,
+            "source": "            {"
+          }
+        ]
+      },
+      {
+        "commit": "60607037c1c1c0207b06d83edb42d1a3deaad2ff",
+        "authoredAt": "2024-04-04T22:26:49+02:00",
+        "author": "Admin",
+        "message": "comments",
+        "path": "readme.md",
+        "detectedLine": 15,
+        "enclosingClass": null,
+        "enclosingMethod": null,
+        "context": [
+          {
+            "line": 4,
+            "source": ""
+          },
+          {
+            "line": 5,
+            "source": "The github secret key can originally be obtained from here:"
+          },
+          {
+            "line": 6,
+            "source": " [URL redacted]"
+          },
+          {
+            "line": 7,
+            "source": " "
+          },
+          {
+            "line": 8,
+            "source": " > Click => Two-Factor methods: => Authenticator app => ... => Edit"
+          },
+          {
+            "line": 9,
+            "source": " "
+          },
+          {
+            "line": 10,
+            "source": " Either you scan the QR code now with your phone or you click on the link below to get the secret code/key:"
+          },
+          {
+            "line": 11,
+            "source": " \"[literal redacted]\""
+          },
+          {
+            "line": 12,
+            "source": " Now right-click your VS project and click \"[literal redacted]\" and add the key there like:"
+          },
+          {
+            "line": 13,
+            "source": ""
+          },
+          {
+            "line": 14,
+            "source": "\t {"
+          },
+          {
+            "line": 15,
+            "source": "\t  \"[literal redacted]\": \"[literal redacted]\""
+          },
+          {
+            "line": 16,
+            "source": "\t }"
+          }
+        ]
+      }
+    ],
+    "historicalBlobEvidence": [
+      {
+        "object": "81e647aa1856b62db891358c524ff16e4aab074a",
+        "paths": [
+          "readme.md"
+        ],
+        "occurrences": 2
+      },
+      {
+        "object": "046fc20cebf55990ac09a32ef28a2e2a052c3ee9",
+        "paths": [
+          "readme.md"
+        ],
+        "occurrences": 2
+      },
+      {
+        "object": "a066ade418dfe54161673e6e367fcc8a05ce3757",
+        "paths": [
+          "Github2FA/MainWindow.xaml.cs"
+        ],
+        "occurrences": 1
+      },
+      {
+        "object": "2de93ebae75df0730ac51cdf510f73229b3d9d74",
+        "paths": [
+          "readme.md"
+        ],
+        "occurrences": 1
+      },
+      {
+        "object": "ef35761feb4dc5d23745951707051d14455e89e2",
+        "paths": [
+          "Github2FA/MainWindow.xaml.cs"
+        ],
+        "occurrences": 1
+      },
+      {
+        "object": "ddcf0ace50cad52708d3040f0bf69f032110b884",
+        "paths": [
+          "readme.md"
+        ],
+        "occurrences": 1
+      }
+    ],
+    "currentTrackedPaths": [],
+    "historicalGeneratorOrTestValueReferences": [],
+    "syntheticGeneratorEstablished": false,
+    "independentCredentialOrigin": "Unverified by source alone",
+    "ownerAttestation": "in the repo i have only synthetic totp base 32 codes for sure",
+    "ownerAttestationContext": "Owner confirmation during this historical sharedGithubSecret remediation; covers the examples under review",
+    "classification": "owner-attested-synthetic-totp-fixture",
+    "revocation": "Not applicable to attested synthetic data; not independently verified",
+    "authenticationOrCodeGenerationAttempted": false
+  }
+}
