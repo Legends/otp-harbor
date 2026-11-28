@@ -1,0 +1,162 @@
+name: Prepare signed Android release package
+
+on:
+  workflow_call:
+    outputs:
+      certificate_sha256:
+        value: ${{ jobs.package-android-release.outputs.certificate_sha256 }}
+    inputs:
+      release_tag:
+        type: string
+        required: true
+      source_sha:
+        type: string
+        required: true
+      mode:
+        type: string
+        default: approval
+permissions:
+  contents: read
+jobs:
+  package-android-release:
+    name: Package signed Android release
+    if: inputs.mode != 'validate'
+    runs-on: windows-2025
+    environment: android-release
+    outputs:
+      certificate_sha256: ${{ steps.verified.outputs.certificate_sha256 }}
+    permissions:
+      contents: read
+
+    env:
+      ANDROID_SIGNING_CERTIFICATE_SHA256: ${{ vars.ANDROID_SIGNING_CERTIFICATE_SHA256 }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+
+      - name: Verify immutable release inputs
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SOURCE: ${{ inputs.source_sha }}
+        run: ./scripts/release/shared/Test-ReleaseSource.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE
+
+      - name: Setup Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.404"
+          cache: true
+          cache-dependency-path: |
+            OtpHarbor.Android.sln
+            **/*.csproj
+            **/packages.lock.json
+            OtpHarbor.UI.Avalonia.Android/packages.nativeaot.lock.json
+            NuGet.config
+
+      - name: Install Android workload
+        run: dotnet workload install android --version 10.0.403
+
+      - name: Restore Android release graph
+        shell: pwsh
+        run: |
+          ./scripts/validation/Test-AndroidToolchain.ps1
+          dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config -p:RuntimeIdentifier= -p:UseCurrentRuntimeIdentifier=false -p:EnableAndroidNativeAot=true -p:AndroidAotExperiment=false
+
+      - name: Install NativeAOT compiler
+        shell: pwsh
+        run: ./scripts/testing/android/Install-AndroidNativeAotToolchain.ps1
+
+      - name: Materialize protected signing inputs
+        shell: pwsh
+        env:
+          ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        run: |
+          $required = @(
+            $env:ANDROID_SIGNING_KEYSTORE_BASE64,
+            $env:ANDROID_SIGNING_KEY_ALIAS,
+            $env:ANDROID_SIGNING_STORE_PASSWORD,
+            $env:ANDROID_SIGNING_KEY_PASSWORD,
+            $env:ANDROID_SIGNING_CERTIFICATE_SHA256)
+          if ($required | Where-Object { [string]::IsNullOrWhiteSpace($_) }) {
+            throw "The protected android-release environment is incomplete."
+          }
+
+          $signingDirectory = Join-Path $env:RUNNER_TEMP "otp-harbor-android-signing"
+          New-Item -ItemType Directory -Path $signingDirectory | Out-Null
+          $keyStorePath = Join-Path $signingDirectory "otp-harbor-android-signing.jks"
+          $storePasswordPath = Join-Path $signingDirectory "store-password.txt"
+          $keyPasswordPath = Join-Path $signingDirectory "key-password.txt"
+          $keyStoreBytes = [Convert]::FromBase64String($env:ANDROID_SIGNING_KEYSTORE_BASE64)
+          try {
+            [IO.File]::WriteAllBytes($keyStorePath, $keyStoreBytes)
+          }
+          finally {
+            [Security.Cryptography.CryptographicOperations]::ZeroMemory($keyStoreBytes)
+          }
+          $utf8WithoutBom = [Text.UTF8Encoding]::new($false)
+          [IO.File]::WriteAllText($storePasswordPath, $env:ANDROID_SIGNING_STORE_PASSWORD, $utf8WithoutBom)
+          [IO.File]::WriteAllText($keyPasswordPath, $env:ANDROID_SIGNING_KEY_PASSWORD, $utf8WithoutBom)
+          "ANDROID_KEYSTORE_PATH=$keyStorePath" >> $env:GITHUB_ENV
+          "ANDROID_STORE_PASSWORD_FILE=$storePasswordPath" >> $env:GITHUB_ENV
+          "ANDROID_KEY_PASSWORD_FILE=$keyPasswordPath" >> $env:GITHUB_ENV
+          "ANDROID_SIGNING_TEMP=$signingDirectory" >> $env:GITHUB_ENV
+
+      - name: Build and verify signed Android APK
+        shell: pwsh
+        env:
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          ./scripts/release/android/New-AndroidRelease.ps1 `
+            -ReleaseTag "${env:RELEASE_TAG}" `
+            -OutputDirectory android-release-assets `
+            -KeyStorePath $env:ANDROID_KEYSTORE_PATH `
+            -KeyAlias $env:ANDROID_SIGNING_KEY_ALIAS `
+            -StorePasswordFile $env:ANDROID_STORE_PASSWORD_FILE `
+            -KeyPasswordFile $env:ANDROID_KEY_PASSWORD_FILE `
+            -ExpectedCertificateSha256 $env:ANDROID_SIGNING_CERTIFICATE_SHA256 `
+            -UseNativeAot `
+            -NdkDirectory $env:ANDROID_NDK_HOME
+
+      - name: Remove temporary signing inputs
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:ANDROID_SIGNING_TEMP) -and
+              (Test-Path -LiteralPath $env:ANDROID_SIGNING_TEMP -PathType Container)) {
+            $cleanup = [IO.Path]::GetFullPath($env:ANDROID_SIGNING_TEMP)
+            $expected = [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP 'otp-harbor-android-signing'))
+            if ($cleanup -cne $expected) { throw 'Signing cleanup target differs from the private runner staging directory.' }
+            Remove-Item -LiteralPath $cleanup -Recurse -Force
+          }
+
+      - name: Expose the verified public signing fingerprint
+        id: verified
+        shell: pwsh
+        run: |
+          $metadata = Get-Content android-release-assets/android-release.json -Raw | ConvertFrom-Json
+          if ($metadata.certificateSha256 -ine $env:ANDROID_SIGNING_CERTIFICATE_SHA256) { throw 'Verified certificate pin mismatch.' }
+          "certificate_sha256=$($metadata.certificateSha256)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload signed Android release artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: android-release-${{ inputs.source_sha }}
+          path: |
+            android-release-assets/*.apk
+            android-release-assets/android-release.json
+          retention-days: 90
+          if-no-files-found: error

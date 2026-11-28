@@ -10,6 +10,11 @@ on:
     branches: [master, 'release/1.x']
   workflow_dispatch:
     inputs:
+      candidate_validation_scope:
+        description: 'Pre-merge validation candidate; never authorizes production'
+        type: choice
+        options: [none, all, desktop, mobile]
+        default: none
       signpath_rehearsal:
         description: 'Build, submit, and verify a non-published Windows signing rehearsal'
         required: true
@@ -21,493 +26,74 @@ on:
         default: '2.0.1'
         type: string
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ startsWith(github.ref, 'refs/tags/') && 'otp-production-release' || format('ci-{0}-{1}', github.workflow, github.ref) }}
+  cancel-in-progress: false
+
 jobs:
+  managed-release-tag:
+    if: startsWith(github.ref, 'refs/tags/') && vars.RELEASE_APP_BOT_LOGIN != '' && github.actor == vars.RELEASE_APP_BOT_LOGIN
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Keep the orchestrator as the single owner of this tag
+        run: echo 'The dedicated release App created this tag for an already validated candidate. Production preparation and promotion remain in the original Release OTP Harbor run.'
+
+  validate-candidate:
+    if: github.event_name == 'workflow_dispatch' && inputs.candidate_validation_scope != 'none'
+    permissions:
+      contents: write
+      actions: write
+      security-events: write
+      id-token: write
+      attestations: write
+    uses: ./.github/workflows/release.yml
+    with:
+      scope: ${{ inputs.candidate_validation_scope }}
+      mode: validate
+      store_action: prepare
+    # No production secrets are forwarded. Called jobs narrow their permissions;
+    # publication and attestation mutation jobs/steps are disabled in validate mode.
+
+  legacy-release-policy:
+    if: startsWith(github.ref, 'refs/tags/') && (vars.RELEASE_APP_BOT_LOGIN == '' || github.actor != vars.RELEASE_APP_BOT_LOGIN)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require strict stable identity and existing production protection
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SOURCE: ${{ github.sha }}
+        run: ./scripts/release/shared/Test-LegacyReleasePolicy.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE
+
   build-test:
+    if: (github.event_name != 'workflow_dispatch' || inputs.candidate_validation_scope == 'none') && !(startsWith(github.ref, 'refs/tags/') && vars.RELEASE_APP_BOT_LOGIN != '' && github.actor == vars.RELEASE_APP_BOT_LOGIN)
     runs-on: windows-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          dotnet-version: "10.0.404"
-          cache: true
-          cache-dependency-path: |
-            **/*.csproj
-            **/*.sln
-            NuGet.config
-
-      - name: Restore with NuGet.config
-        run: dotnet restore OtpHarbor.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
-
-      - name: Build solution
-        run: dotnet build OtpHarbor.sln --configuration Release --no-restore --nologo --verbosity minimal
-
-      - name: Validate package update and preview signing policies
-        shell: pwsh
-        run: ./scripts/validation/Test-UnsignedPreviewReleasePolicy.ps1
-
-      - name: Validate README release automation
-        shell: pwsh
-        run: |
-          python -m unittest discover -s scripts/validation -p test_readme_releases.py
-          python -m unittest discover -s scripts/validation -p test_public_store_version.py
-
-      - name: Validate code-signing status disclosure
-        shell: pwsh
-        run: ./scripts/validation/Test-SignPathFoundationReadiness.ps1
-
-      - name: Validate third-party brand-asset policy
-        shell: pwsh
-        run: ./scripts/validation/Test-BrandAssetPolicy.ps1
-
-      - name: Validate repository license policy
-        shell: pwsh
-        run: ./scripts/validation/Test-RepositoryLicensePolicy.ps1
-
-      - name: Validate Microsoft Store packaging controls
-        shell: pwsh
-        run: ./scripts/validation/Test-MicrosoftStorePackaging.ps1
-
-      - name: Validate retained Store release artifacts
-        shell: pwsh
-        run: ./scripts/validation/Test-StoreReleaseArtifact.ps1
-
-      - name: Validate public website
-        shell: pwsh
-        run: ./scripts/validation/Test-PublicWebsite.ps1
-
-      - name: Validate Android marketing assets
-        shell: pwsh
-        run: ./scripts/validation/Test-AndroidMarketingAssets.ps1
-
-      - name: Validate Android FOSS build inputs
-        shell: pwsh
-        run: ./scripts/validation/Test-AndroidFossBuild.ps1
-
-      - name: Validate Android APK payload comparator
-        shell: pwsh
-        run: ./scripts/validation/Test-AndroidApkPayloadComparison.ps1
-
-      - name: Validate Android distribution channels
-        shell: pwsh
-        run: ./scripts/validation/Test-AndroidDistributionChannels.ps1
-
-      - name: Validate source launcher safeguards
-        shell: pwsh
-        run: ./scripts/validation/Test-SourceLauncher.ps1
-
-      - name: Validate Windows MSI packaging controls
-        shell: pwsh
-        run: ./scripts/validation/Test-WindowsMsiPackaging.ps1
-
-      - name: Validate Android release packaging controls
-        shell: pwsh
-        run: ./scripts/validation/Test-AndroidReleasePackaging.ps1
-
-      - name: Validate testing script paths
-        shell: pwsh
-        run: |
-          ./scripts/validation/Test-TestingScriptLayout.ps1
-          ./scripts/validation/Test-BuildReuse.ps1
-          ./scripts/validation/Test-BuildScriptCoverage.ps1
-
-      - name: Validate localization resources
-        shell: pwsh
-        run: ./scripts/validation/Test-LocalizationResources.ps1
-
-      - name: Audit NuGet dependency graph
-        shell: pwsh
-        run: |
-          ./scripts/validation/Test-NuGetVulnerabilities.ps1 `
-            -SolutionPath OtpHarbor.sln `
-            -OutputPath TestResults/nuget-vulnerability-audit.json
-
-      - name: Upload dependency audit evidence
-        uses: actions/upload-artifact@v6
-        with:
-          name: nuget-vulnerability-audit-${{ github.sha }}
-          path: TestResults/nuget-vulnerability-audit.json
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Run fast tests (PR)
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          dotnet test OtpHarbor.sln --configuration Release --no-build --nologo --verbosity minimal `
-            --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~IdleMonitoringBackgroundServiceTests&FullyQualifiedName!~UserActivityServiceTests"
-
-      - name: Run full tests (push/tags)
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          dotnet test OtpHarbor.sln --configuration Release --no-build --nologo --verbosity minimal `
-            --logger "console;verbosity=minimal" `
-            --results-directory TestResults `
-            --blame-hang-timeout 5m `
-            --blame-hang-dump-type none
-
-      - name: Upload test diagnostics
-        if: ${{ failure() && github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-diagnostics-${{ github.run_id }}
-          path: TestResults
-          if-no-files-found: ignore
-
-  android-build-test:
-    name: Android build
-    runs-on: windows-2025
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.404"
-          cache: true
-          cache-dependency-path: |
-            OtpHarbor.Android.sln
-            **/*.csproj
-            **/packages.lock.json
-            OtpHarbor.UI.Avalonia.Android/packages.nativeaot.lock.json
-            NuGet.config
-
-      - name: Install Android workload
-        run: dotnet workload install android --version 10.0.403
-
-      - name: Restore Android solution
-        # The SDK pin alone does not pin Android workload manifests on hosted runners.
-        # Validate the workload installed from global.json before consuming lock files.
-        shell: pwsh
-        run: |
-          ./scripts/validation/Test-AndroidToolchain.ps1
-          dotnet restore OtpHarbor.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
-
-      - name: Build Android development package
-        run: dotnet build OtpHarbor.Android.sln --configuration Debug --no-restore --nologo --verbosity minimal
-
-      - name: Install NativeAOT compiler
-        shell: pwsh
-        run: ./scripts/testing/android/Install-AndroidNativeAotToolchain.ps1
-
-      - name: Validate NativeAOT JSON and runtime payload controls
-        shell: pwsh
-        run: |
-          dotnet run --project scripts/testing/android/NativeAotCompatibilitySmoke -c Release
-          ./scripts/validation/Test-AndroidRuntimePayload.ps1
-
-      - name: Build universal NativeAOT Release test package
-        shell: pwsh
-        run: ./scripts/testing/android/Build-AndroidAotExperiment.ps1 -Runtime NativeAOT -Architecture universal -NdkDirectory $env:ANDROID_NDK_HOME
-
-      - name: Audit Android dependency licenses
-        shell: pwsh
-        run: ./scripts/validation/Test-AndroidDependencyLicenses.ps1
-
-  unix-file-security:
-    name: Unix file security (${{ matrix.name }})
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Ubuntu 24.04 x64
-            runner: ubuntu-24.04
-          - name: macOS ARM64
-            runner: macos-15
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.404"
-          cache: true
-          cache-dependency-path: |
-            OtpHarbor.Core/OtpHarbor.Core.csproj
-            OtpHarbor.Platform.Linux/OtpHarbor.Platform.Linux.csproj
-            OtpHarbor.Platform.MacOS/OtpHarbor.Platform.MacOS.csproj
-            OtpHarbor.Platform.Unix/OtpHarbor.Platform.Unix.csproj
-            OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj
-            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-            OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj
-            NuGet.config
-
-      - name: Restore Unix security tests
-        run: dotnet restore OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj --nologo --verbosity minimal --configfile NuGet.config
-
-      - name: Run Unix security tests
-        run: dotnet test OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj --configuration Release --no-restore --nologo --verbosity minimal
-
-      - name: Validate Bash build reuse
-        if: runner.os == 'Linux'
-        run: bash scripts/validation/Test-BuildReuse.sh
-
-      - name: Restore Avalonia desktop host
-        run: dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj --nologo --verbosity minimal --configfile NuGet.config
-
-      - name: Build Avalonia desktop host
-        run: dotnet build OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj --configuration Release --no-restore --nologo --verbosity minimal
-
-  avalonia-ui-smoke:
-    name: Avalonia UI smoke (${{ matrix.name }})
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Windows x64
-            runner: windows-2025
-          - name: Ubuntu 24.04 x64
-            runner: ubuntu-24.04
-          - name: macOS ARM64
-            runner: macos-15
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.404"
-          cache: true
-          cache-dependency-path: |
-            OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj
-            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-            NuGet.config
-
-      - name: Restore Avalonia headless smoke tests
-        run: dotnet restore OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj --nologo --verbosity minimal --configfile NuGet.config
-
-      - name: Load real application XAML under the headless platform
-        run: dotnet test OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj --configuration Release --no-restore --nologo --verbosity minimal
-
-  m3-package-probe:
-    name: M3 package probe (${{ matrix.name }})
-    if: ${{ !startsWith(github.ref, 'refs/tags/android-v') }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Windows x64
-            runner: windows-2025
-            rid: win-x64
-            executable: TOTP.UI.Avalonia.Desktop.exe
-          - name: Ubuntu 24.04 x64
-            runner: ubuntu-24.04
-            rid: linux-x64
-            executable: TOTP.UI.Avalonia.Desktop
-          - name: macOS ARM64
-            runner: macos-15
-            rid: osx-arm64
-            executable: OTP Harbor.app/Contents/MacOS/TOTP.UI.Avalonia.Desktop
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.404"
-          cache: true
-          cache-dependency-path: |
-            OtpHarbor.Camera.OpenCv/OtpHarbor.Camera.OpenCv.csproj
-            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-            NuGet.config
-
-      - name: Restore target package graph
-        run: >-
-          dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-          --runtime ${{ matrix.rid }}
-          --nologo
-          --verbosity minimal
-          --configfile NuGet.config
-
-      - name: Publish framework-dependent M3 package
-        run: >-
-          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-          --configuration Release
-          --runtime ${{ matrix.rid }}
-          --self-contained false
-          --no-restore
-          --nologo
-          --verbosity minimal
-          --output m3-publish
-
-      - name: Assemble target-shaped M3 package
-        shell: pwsh
-        run: |
-          ./scripts/validation/Package-M3Target.ps1 `
-            -PublishDirectory m3-publish `
-            -RuntimeIdentifier "${{ matrix.rid }}" `
-            -OutputDirectory m3-package
-
-          if ($IsMacOS) {
-            plutil -lint "m3-package/OTP Harbor.app/Contents/Info.plist"
-          }
-
-      - name: Execute packaged native-runtime probe
-        shell: pwsh
-        run: |
-          $executable = Join-Path $PWD "m3-package/${{ matrix.executable }}"
-          if ($IsWindows) {
-            $process = Start-Process -FilePath $executable -ArgumentList "--m3-native-probe" -Wait -PassThru -WindowStyle Hidden
-            $probeExitCode = $process.ExitCode
-          }
-          else {
-            & $executable --m3-native-probe
-            $probeExitCode = $LASTEXITCODE
-          }
-          if ($probeExitCode -ne 0) {
-            throw "Packaged OpenCV native-runtime probe failed with exit code $probeExitCode."
-          }
-
-          $packageBytes = (Get-ChildItem m3-package -File -Recurse | Measure-Object Length -Sum).Sum
-          "M3_PACKAGE_BYTES=$packageBytes" >> $env:GITHUB_ENV
-          "### ${{ matrix.name }}`n`nPackage bytes: $packageBytes" >> $env:GITHUB_STEP_SUMMARY
-
-      - name: Validate native dependency closure
-        shell: pwsh
-        run: |
-          ./scripts/validation/Test-NativePackageDependencies.ps1 `
-            -PackageDirectory m3-package `
-            -RuntimeIdentifier "${{ matrix.rid }}"
-
-      - name: Assemble Windows distribution archive
-        if: ${{ matrix.rid == 'win-x64' }}
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path m7-release | Out-Null
-          Compress-Archive `
-            -Path m3-package/* `
-            -DestinationPath m7-release/OTP-Harbor-windows-x64-2.0.0.zip
-
-      - name: Validate Linux distribution packages
-        if: ${{ matrix.rid == 'linux-x64' }}
-        shell: pwsh
-        run: |
-          ./scripts/release/linux/Package-AvaloniaLinux.ps1 `
-            -PublishDirectory m3-publish `
-            -OutputDirectory m6-linux-distribution `
-            -ReleaseVersion "2.0.0" `
-            -FrameworkDependent
-
-          tar -tzf m6-linux-distribution/OTP-Harbor-linux-x64-2.0.0.tar.gz > /dev/null
-          dpkg-deb --info m6-linux-distribution/otp-harbor_2.0.0_amd64.deb
-
-      - name: Validate unsigned macOS DMG structure
-        if: ${{ matrix.rid == 'osx-arm64' }}
-        shell: pwsh
-        run: |
-          ./scripts/release/macos/Package-AvaloniaMacOS.ps1 `
-            -PublishDirectory m3-publish `
-            -OutputDirectory m6-macos-distribution `
-            -ReleaseVersion "2.0.0"
-
-          plutil -lint "m6-macos-distribution/OTP Harbor.app/Contents/Info.plist"
-          hdiutil verify m6-macos-distribution/OTP-Harbor-macos-arm64-2.0.0.dmg
-
-      - name: Generate and verify target artifact manifest
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path m7-release -Force | Out-Null
-          $artifactPaths = switch ("${{ matrix.rid }}") {
-            "win-x64" {
-              "m7-release/OTP-Harbor-windows-x64-2.0.0.zip"
-            }
-            "linux-x64" {
-              Copy-Item m6-linux-distribution/OTP-Harbor-linux-x64-2.0.0.tar.gz m7-release/
-              Copy-Item m6-linux-distribution/otp-harbor_2.0.0_amd64.deb m7-release/
-              "m7-release/OTP-Harbor-linux-x64-2.0.0.tar.gz"
-              "m7-release/otp-harbor_2.0.0_amd64.deb"
-            }
-            "osx-arm64" {
-              Copy-Item m6-macos-distribution/OTP-Harbor-macos-arm64-2.0.0.dmg m7-release/
-              "m7-release/OTP-Harbor-macos-arm64-2.0.0.dmg"
-            }
-            default { throw "Unsupported release target." }
-          }
-
-          $manifestPath = "m7-release/release-artifacts-${{ matrix.rid }}.json"
-          ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
-            -ReleaseVersion "2.0.0" `
-            -SourceCommit "${{ github.sha }}" `
-            -ArtifactPath $artifactPaths `
-            -OutputPath $manifestPath
-          ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
-            -ManifestPath $manifestPath `
-            -ArtifactDirectory m7-release
-
-      - name: Upload target artifact manifest
-        uses: actions/upload-artifact@v6
-        with:
-          name: m7-artifact-manifest-${{ matrix.rid }}-${{ github.sha }}
-          path: m7-release/release-artifacts-${{ matrix.rid }}.json
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Upload target release package evidence
-        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: m7-release-${{ matrix.rid }}-${{ github.sha }}
-          path: |
-            m7-release/*
-            !m7-release/release-artifacts-${{ matrix.rid }}.json
-          retention-days: 7
-          if-no-files-found: error
-
-      - name: Record automated M3 measurements
-        shell: pwsh
-        run: |
-          ./scripts/validation/Measure-M3Target.ps1 `
-            -PackageDirectory m3-package `
-            -ExecutableName "${{ matrix.executable }}" `
-            -OutputPath "m3-measurement-${{ matrix.rid }}.json" `
-            -Iterations 5
-
-          ./scripts/validation/Test-M3MeasurementBudget.ps1 `
-            -ReportPath "m3-measurement-${{ matrix.rid }}.json"
-
-          $measurement = Get-Content "m3-measurement-${{ matrix.rid }}.json" -Raw | ConvertFrom-Json
-          "First probe ms: $($measurement.ProcessStartup.FirstMilliseconds)" >> $env:GITHUB_STEP_SUMMARY
-          "Warm startup p95 ms: $($measurement.ProcessStartup.WarmP95Milliseconds)" >> $env:GITHUB_STEP_SUMMARY
-          "Working set p95 bytes: $($measurement.WorkingSet.P95Bytes)" >> $env:GITHUB_STEP_SUMMARY
-          "Native bytes: $($measurement.Package.NativeBytes)" >> $env:GITHUB_STEP_SUMMARY
-
-      - name: Upload M3 measurement evidence
-        uses: actions/upload-artifact@v6
-        with:
-          name: m3-measurement-${{ matrix.rid }}-${{ github.sha }}
-          path: m3-measurement-${{ matrix.rid }}.json
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Upload M3 validation package
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: m3-${{ matrix.rid }}-${{ github.sha }}
-          path: m3-package
-          retention-days: 7
-          if-no-files-found: error
+          persist-credentials: false
+      - name: Validate application and packaging policy
+        uses: ./.github/actions/validate-application
+
+  platform-validation:
+    if: (github.event_name != 'workflow_dispatch' || inputs.candidate_validation_scope == 'none') && !(startsWith(github.ref, 'refs/tags/') && vars.RELEASE_APP_BOT_LOGIN != '' && github.actor == vars.RELEASE_APP_BOT_LOGIN)
+    uses: ./.github/workflows/reusable-validation.yml
+    with:
+      include_unit: false
+      validation_only: false
 
   signpath-windows-rehearsal:
     name: SignPath Windows rehearsal (no release)
-    needs: [build-test, unix-file-security, avalonia-ui-smoke, m3-package-probe]
+    needs: [build-test, platform-validation]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.signpath_rehearsal }}
     runs-on: windows-2025
     permissions:
@@ -516,17 +102,20 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Validate rehearsal source and metadata
         id: versioning
         shell: pwsh
+        env:
+          SOURCE_REF: ${{ github.ref }}
+          REHEARSAL_VERSION: ${{ inputs.rehearsal_version }}
         run: |
-          if ("${{ github.ref }}" -ne "refs/heads/master" -and
-              !"${{ github.ref }}".StartsWith("refs/heads/release/", [StringComparison]::Ordinal)) {
+          if ("${env:SOURCE_REF}" -ne "refs/heads/master" -and
+              !"${env:SOURCE_REF}".StartsWith("refs/heads/release/", [StringComparison]::Ordinal)) {
             throw "Signing rehearsals must run from master or a release/* branch."
           }
-          $version = "${{ inputs.rehearsal_version }}"
+          $version = "${env:REHEARSAL_VERSION}"
           if ($version -notmatch '^\d+\.\d+\.\d+$') {
             throw "The rehearsal version must contain exactly three numeric components."
           }
@@ -535,7 +124,7 @@ jobs:
           "assembly_version=$version.0" >> $env:GITHUB_OUTPUT
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "10.0.404"
           cache: true
@@ -554,13 +143,17 @@ jobs:
 
       - name: Publish Windows rehearsal payloads
         shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
+          RELEASE_FILE_VERSION: ${{ steps.versioning.outputs.file_version }}
+          RELEASE_ASSEMBLY_VERSION: ${{ steps.versioning.outputs.assembly_version }}
         run: |
           $metadata = @(
-            "-p:Version=${{ steps.versioning.outputs.release_version }}",
-            "-p:InformationalVersion=${{ steps.versioning.outputs.release_version }}",
+            "-p:Version=${env:RELEASE_VERSION}",
+            "-p:InformationalVersion=${env:RELEASE_VERSION}",
             "-p:IncludeSourceRevisionInInformationalVersion=false",
-            "-p:FileVersion=${{ steps.versioning.outputs.file_version }}",
-            "-p:AssemblyVersion=${{ steps.versioning.outputs.assembly_version }}")
+            "-p:FileVersion=${env:RELEASE_FILE_VERSION}",
+            "-p:AssemblyVersion=${env:RELEASE_ASSEMBLY_VERSION}")
           dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj `
             --configuration Release --runtime win-x64 --self-contained true --no-restore `
             --nologo --verbosity minimal -p:PublishSingleFile=false -p:PublishTrimmed=false `
@@ -574,7 +167,7 @@ jobs:
 
       - name: Upload unsigned Windows rehearsal payload
         id: upload-signpath-rehearsal
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: signpath-rehearsal-unsigned-${{ github.sha }}-${{ github.run_attempt }}
           path: |
@@ -599,14 +192,16 @@ jobs:
 
       - name: Validate signed rehearsal payload
         shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
         run: |
           ./scripts/release/windows/Apply-SignPathSignedPayload.ps1 `
             -SignedRoot signpath-signed `
             -TargetDirectory release-publish,release-fast `
-            -ExpectedProductVersion "${{ steps.versioning.outputs.release_version }}"
+            -ExpectedProductVersion "${env:RELEASE_VERSION}"
 
       - name: Retain signed rehearsal evidence temporarily
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: signpath-rehearsal-signed-${{ github.sha }}-${{ github.run_attempt }}
           path: |
@@ -616,485 +211,36 @@ jobs:
           if-no-files-found: error
 
   package-avalonia-release:
-    name: Package Avalonia release (${{ matrix.rid }})
-    needs: [build-test, unix-file-security, avalonia-ui-smoke, m3-package-probe]
+    name: Prepare desktop packages
+    needs: [build-test, platform-validation, legacy-release-policy]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
-    runs-on: ${{ matrix.rid == 'win-x64' && 'windows-2025' || matrix.rid == 'linux-x64' && 'ubuntu-24.04' || 'macos-15' }}
     permissions:
+      contents: read
       actions: read
-      contents: read
-    strategy:
-      fail-fast: true
-      matrix:
-        rid: [win-x64, linux-x64]
-
-    env:
-      MACOS_SIGNING_CERTIFICATE_BASE64: ${{ secrets.MACOS_SIGNING_CERTIFICATE_BASE64 }}
-      MACOS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
-      MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
-      MACOS_NOTARY_KEY_BASE64: ${{ secrets.MACOS_NOTARY_KEY_BASE64 }}
-      MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
-      MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.404"
-          cache: true
-          cache-dependency-path: |
-            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-            NuGet.config
-
-      - name: Compute release metadata
-        id: versioning
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          if ($tag -notmatch '^v(?<base>\d+\.\d+\.\d+)(?:-rc(?<rc>\d+))?$') {
-            throw "Release tag has an unsupported format."
-          }
-          $baseVersion = $Matches.base
-          $rcNumber = $Matches.rc
-          if ($rcNumber -and [int]$rcNumber -gt 65534) {
-            throw "Release candidate number must be between 1 and 65534."
-          }
-          $releaseVersion = if ($rcNumber) { "$baseVersion-rc$rcNumber" } else { $baseVersion }
-          $fileVersion = if ($rcNumber) { "$baseVersion.$rcNumber" } else { "$baseVersion.65535" }
-          $assemblyVersion = if ($rcNumber) { "$baseVersion.$rcNumber" } else { "$baseVersion.0" }
-          $channel = if ($rcNumber) { "rc" } else { "stable" }
-          "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
-          "file_version=$fileVersion" >> $env:GITHUB_OUTPUT
-          "assembly_version=$assemblyVersion" >> $env:GITHUB_OUTPUT
-          "channel=$channel" >> $env:GITHUB_OUTPUT
-
-      - name: Restore target release graph
-        run: >-
-          dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-          --runtime ${{ matrix.rid }}
-          -p:PublishReadyToRun=${{ matrix.rid == 'win-x64' }}
-          --nologo
-          --verbosity minimal
-          --configfile NuGet.config
-
-      - name: Publish self-contained Avalonia host
-        run: >-
-          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-          --configuration Release
-          --runtime ${{ matrix.rid }}
-          --self-contained true
-          --no-restore
-          --nologo
-          --verbosity minimal
-          -p:PublishSingleFile=false
-          -p:PublishTrimmed=false
-          -p:PublishReadyToRun=${{ matrix.rid == 'win-x64' }}
-          -p:DebugType=None
-          -p:DebugSymbols=false
-          -p:Version=${{ steps.versioning.outputs.release_version }}
-          -p:InformationalVersion=${{ steps.versioning.outputs.release_version }}
-          -p:IncludeSourceRevisionInInformationalVersion=false
-          -p:FileVersion=${{ steps.versioning.outputs.file_version }}
-          -p:AssemblyVersion=${{ steps.versioning.outputs.assembly_version }}
-          --output release-publish
-
-      - name: Publish fast framework-dependent Windows host
-        if: ${{ matrix.rid == 'win-x64' && (contains(github.ref_name, '-rc') || vars.SIGNPATH_PRODUCTION_ENABLED == 'true') }}
-        run: >-
-          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
-          --configuration Release
-          --runtime win-x64
-          --self-contained false
-          --no-restore
-          --nologo
-          --verbosity minimal
-          -p:PublishSingleFile=false
-          -p:PublishTrimmed=false
-          -p:PublishReadyToRun=true
-          -p:DebugType=None
-          -p:DebugSymbols=false
-          -p:Version=${{ steps.versioning.outputs.release_version }}
-          -p:InformationalVersion=${{ steps.versioning.outputs.release_version }}
-          -p:IncludeSourceRevisionInInformationalVersion=false
-          -p:FileVersion=${{ steps.versioning.outputs.file_version }}
-          -p:AssemblyVersion=${{ steps.versioning.outputs.assembly_version }}
-          --output release-fast
-
-      - name: Prepare bounded release payload
-        shell: pwsh
-        run: |
-          ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-publish
-          if (Test-Path -LiteralPath release-fast) {
-            ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
-          }
-
-      - name: Install pinned WiX Toolset
-        if: ${{ matrix.rid == 'win-x64' && contains(github.ref_name, '-rc') }}
-        run: |
-          dotnet tool install --global wix --version 5.0.2
-          wix extension add --global WixToolset.UI.wixext/5.0.2
-          wix extension add --global WixToolset.Util.wixext/5.0.2
-          wix extension add --global WixToolset.BootstrapperApplications.wixext/5.0.2
-
-      - name: Upload unsigned Windows payload for SignPath
-        id: upload-signpath-artifact
-        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: signpath-unsigned-windows-${{ github.sha }}
-          path: |
-            release-publish
-            release-fast
-          retention-days: 1
-          if-no-files-found: error
-
-      - name: Submit Windows payload to SignPath
-        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' }}
-        uses: signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627 # v2.3
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: totp-manager
-          signing-policy-slug: release-signing
-          artifact-configuration-slug: windows-release-v1
-          github-artifact-id: ${{ steps.upload-signpath-artifact.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: signpath-signed
-          parameters: |
-            version: ${{ toJSON(steps.versioning.outputs.release_version) }}
-
-      - name: Validate and apply SignPath result
-        if: ${{ matrix.rid == 'win-x64' && !contains(github.ref_name, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' }}
-        shell: pwsh
-        run: |
-          ./scripts/release/windows/Apply-SignPathSignedPayload.ps1 `
-            -SignedRoot signpath-signed `
-            -TargetDirectory release-publish,release-fast `
-            -ExpectedProductVersion "${{ steps.versioning.outputs.release_version }}"
-
-      - name: Import macOS Developer ID certificate
-        if: ${{ matrix.rid == 'osx-arm64' }}
-        shell: pwsh
-        run: |
-          $PSNativeCommandUseErrorActionPreference = $true
-          $required = @(
-            $env:MACOS_SIGNING_CERTIFICATE_BASE64,
-            $env:MACOS_SIGNING_CERTIFICATE_PASSWORD,
-            $env:MACOS_SIGNING_IDENTITY,
-            $env:MACOS_NOTARY_KEY_BASE64,
-            $env:MACOS_NOTARY_KEY_ID,
-            $env:MACOS_NOTARY_ISSUER_ID)
-          if ($required | Where-Object { [string]::IsNullOrWhiteSpace($_) }) {
-            throw "macOS Developer ID and notarization credentials are required."
-          }
-
-          $certificatePath = Join-Path $env:RUNNER_TEMP "developer-id.p12"
-          $certificateBytes = [Convert]::FromBase64String($env:MACOS_SIGNING_CERTIFICATE_BASE64)
-          try {
-            [IO.File]::WriteAllBytes($certificatePath, $certificateBytes)
-          }
-          finally {
-            [Security.Cryptography.CryptographicOperations]::ZeroMemory($certificateBytes)
-          }
-          & chmod 600 $certificatePath
-          $keychainPath = Join-Path $env:RUNNER_TEMP "totp-release.keychain-db"
-          $keychainPassword = [Guid]::NewGuid().ToString("N")
-          & security create-keychain -p $keychainPassword $keychainPath
-          & security set-keychain-settings -lut 21600 $keychainPath
-          & security unlock-keychain -p $keychainPassword $keychainPath
-          & security import $certificatePath -k $keychainPath -P $env:MACOS_SIGNING_CERTIFICATE_PASSWORD -T /usr/bin/codesign -T /usr/bin/security
-          & security set-key-partition-list -S "apple-tool:,apple:" -s -k $keychainPassword $keychainPath
-          & security list-keychains -d user -s $keychainPath
-          if ($LASTEXITCODE -ne 0) { throw "Could not prepare the macOS signing Keychain." }
-
-          $notaryKeyPath = Join-Path $env:RUNNER_TEMP "AuthKey.p8"
-          $notaryKeyBytes = [Convert]::FromBase64String($env:MACOS_NOTARY_KEY_BASE64)
-          try {
-            [IO.File]::WriteAllBytes($notaryKeyPath, $notaryKeyBytes)
-          }
-          finally {
-            [Security.Cryptography.CryptographicOperations]::ZeroMemory($notaryKeyBytes)
-          }
-          & chmod 600 $notaryKeyPath
-          "MACOS_NOTARY_KEY_PATH=$notaryKeyPath" >> $env:GITHUB_ENV
-
-      - name: Assemble release artifact
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path release-assets | Out-Null
-          switch ("${{ matrix.rid }}") {
-            "win-x64" {
-              if ("${{ steps.versioning.outputs.channel }}" -eq "stable") {
-                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
-                  -PackageDirectory release-publish `
-                  -DistributionMode store `
-                  -Channel stable `
-                  -DisableUpdates
-                Compress-Archive `
-                  -Path release-publish/* `
-                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
-              }
-              else {
-                $appcastUrl = "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
-                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
-                  -PackageDirectory release-publish `
-                  -DistributionMode direct `
-                  -Channel rc `
-                  -AppcastUrl $appcastUrl
-                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
-                  -PackageDirectory release-fast `
-                  -DistributionMode direct `
-                  -Channel rc `
-                  -AppcastUrl $appcastUrl
-                Compress-Archive `
-                  -Path release-publish/* `
-                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
-                Compress-Archive `
-                  -Path release-fast/* `
-                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-fast-${{ steps.versioning.outputs.release_version }}.zip"
-                $productVersion = "${{ steps.versioning.outputs.release_version }}".Split('-')[0]
-                ./scripts/release/windows/New-WindowsMsi.ps1 `
-                  -PublishDirectory release-publish `
-                  -OutputDirectory release-assets `
-                  -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
-                  -ProductVersion $productVersion
-              }
-            }
-            "linux-x64" {
-              $appcastUrl = if ("${{ steps.versioning.outputs.channel }}" -eq "rc") {
-                "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
-              }
-              else {
-                "https://github.com/Legends/otp-harbor/releases/latest/download/appcast-v2.xml"
-              }
-              ./scripts/release/linux/Package-AvaloniaLinux.ps1 `
-                -PublishDirectory release-publish `
-                -OutputDirectory linux-distribution `
-                -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
-                -AppcastUrl $appcastUrl
-              Copy-Item linux-distribution/*.tar.gz release-assets/
-              Copy-Item linux-distribution/*.deb release-assets/
-            }
-            "osx-arm64" {
-              ./scripts/release/macos/Package-AvaloniaMacOS.ps1 `
-                -PublishDirectory release-publish `
-                -OutputDirectory macos-distribution `
-                -ReleaseVersion "${{ steps.versioning.outputs.release_version }}" `
-                -SigningIdentity $env:MACOS_SIGNING_IDENTITY `
-                -NotaryKeyPath $env:MACOS_NOTARY_KEY_PATH `
-                -NotaryKeyId $env:MACOS_NOTARY_KEY_ID `
-                -NotaryIssuerId $env:MACOS_NOTARY_ISSUER_ID
-              Copy-Item macos-distribution/*.dmg release-assets/
-            }
-            default { throw "Unsupported release target." }
-          }
-
-      - name: Validate retained release artifact
-        shell: pwsh
-        run: |
-          $packageRoot = if ("${{ matrix.rid }}" -eq "osx-arm64") {
-            "macos-distribution"
-          }
-          else {
-            "release-publish"
-          }
-          ./scripts/validation/Test-NativePackageDependencies.ps1 `
-            -PackageDirectory $packageRoot `
-            -RuntimeIdentifier "${{ matrix.rid }}"
-          if (Test-Path -LiteralPath release-fast) {
-            ./scripts/validation/Test-NativePackageDependencies.ps1 `
-              -PackageDirectory release-fast `
-              -RuntimeIdentifier "${{ matrix.rid }}"
-          }
-
-      - name: Upload retained native release artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: avalonia-release-${{ matrix.rid }}-${{ github.sha }}
-          path: release-assets/*
-          retention-days: 7
-          if-no-files-found: error
-
-  package-android-release:
-    name: Package signed Android release
-    needs: [build-test, android-build-test]
-    if: startsWith(github.ref, 'refs/tags/android-v')
-    runs-on: windows-2025
-    environment: android-release
-    permissions:
-      contents: read
-
-    env:
-      ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
-      ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-      ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
-      ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
-      ANDROID_SIGNING_CERTIFICATE_SHA256: ${{ vars.ANDROID_SIGNING_CERTIFICATE_SHA256 }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.404"
-          cache: true
-          cache-dependency-path: |
-            OtpHarbor.Android.sln
-            **/*.csproj
-            **/packages.lock.json
-            OtpHarbor.UI.Avalonia.Android/packages.nativeaot.lock.json
-            NuGet.config
-
-      - name: Install Android workload
-        run: dotnet workload install android --version 10.0.403
-
-      - name: Restore Android release graph
-        shell: pwsh
-        run: |
-          ./scripts/validation/Test-AndroidToolchain.ps1
-          dotnet restore OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj --locked-mode --nologo --verbosity minimal --configfile NuGet.config -p:RuntimeIdentifier= -p:UseCurrentRuntimeIdentifier=false -p:EnableAndroidNativeAot=true -p:AndroidAotExperiment=false
-
-      - name: Install NativeAOT compiler
-        shell: pwsh
-        run: ./scripts/testing/android/Install-AndroidNativeAotToolchain.ps1
-
-      - name: Materialize protected signing inputs
-        shell: pwsh
-        run: |
-          $required = @(
-            $env:ANDROID_SIGNING_KEYSTORE_BASE64,
-            $env:ANDROID_SIGNING_KEY_ALIAS,
-            $env:ANDROID_SIGNING_STORE_PASSWORD,
-            $env:ANDROID_SIGNING_KEY_PASSWORD,
-            $env:ANDROID_SIGNING_CERTIFICATE_SHA256)
-          if ($required | Where-Object { [string]::IsNullOrWhiteSpace($_) }) {
-            throw "The protected android-release environment is incomplete."
-          }
-
-          $signingDirectory = Join-Path $env:RUNNER_TEMP "otp-harbor-android-signing"
-          New-Item -ItemType Directory -Path $signingDirectory | Out-Null
-          $keyStorePath = Join-Path $signingDirectory "otp-harbor-android-signing.jks"
-          $storePasswordPath = Join-Path $signingDirectory "store-password.txt"
-          $keyPasswordPath = Join-Path $signingDirectory "key-password.txt"
-          $keyStoreBytes = [Convert]::FromBase64String($env:ANDROID_SIGNING_KEYSTORE_BASE64)
-          try {
-            [IO.File]::WriteAllBytes($keyStorePath, $keyStoreBytes)
-          }
-          finally {
-            [Security.Cryptography.CryptographicOperations]::ZeroMemory($keyStoreBytes)
-          }
-          $utf8WithoutBom = [Text.UTF8Encoding]::new($false)
-          [IO.File]::WriteAllText($storePasswordPath, $env:ANDROID_SIGNING_STORE_PASSWORD, $utf8WithoutBom)
-          [IO.File]::WriteAllText($keyPasswordPath, $env:ANDROID_SIGNING_KEY_PASSWORD, $utf8WithoutBom)
-          "ANDROID_KEYSTORE_PATH=$keyStorePath" >> $env:GITHUB_ENV
-          "ANDROID_STORE_PASSWORD_FILE=$storePasswordPath" >> $env:GITHUB_ENV
-          "ANDROID_KEY_PASSWORD_FILE=$keyPasswordPath" >> $env:GITHUB_ENV
-          "ANDROID_SIGNING_TEMP=$signingDirectory" >> $env:GITHUB_ENV
-
-      - name: Build and verify signed Android APK
-        shell: pwsh
-        run: |
-          ./scripts/release/android/New-AndroidRelease.ps1 `
-            -ReleaseTag "${{ github.ref_name }}" `
-            -OutputDirectory android-release-assets `
-            -KeyStorePath $env:ANDROID_KEYSTORE_PATH `
-            -KeyAlias $env:ANDROID_SIGNING_KEY_ALIAS `
-            -StorePasswordFile $env:ANDROID_STORE_PASSWORD_FILE `
-            -KeyPasswordFile $env:ANDROID_KEY_PASSWORD_FILE `
-            -ExpectedCertificateSha256 $env:ANDROID_SIGNING_CERTIFICATE_SHA256 `
-            -UseNativeAot `
-            -NdkDirectory $env:ANDROID_NDK_HOME
-
-      - name: Remove temporary signing inputs
-        if: ${{ always() }}
-        shell: pwsh
-        run: |
-          if (-not [string]::IsNullOrWhiteSpace($env:ANDROID_SIGNING_TEMP) -and
-              (Test-Path -LiteralPath $env:ANDROID_SIGNING_TEMP -PathType Container)) {
-            Remove-Item -LiteralPath $env:ANDROID_SIGNING_TEMP -Recurse -Force
-          }
-
-      - name: Upload signed Android release artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: android-release-${{ github.sha }}
-          path: |
-            android-release-assets/*.apk
-            android-release-assets/android-release.json
-          retention-days: 90
-          if-no-files-found: error
+    uses: ./.github/workflows/reusable-desktop-package.yml
+    with:
+      release_tag: ${{ github.ref_name }}
+      source_sha: ${{ github.sha }}
+    secrets:
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
 
   package-microsoft-store-msix:
     name: Package Microsoft Store MSIX
-    needs: [package-avalonia-release]
+    needs: package-avalonia-release
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
-    runs-on: windows-2025
-    permissions:
-      actions: read
-      contents: read
-
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - name: Confirm Store package prepared by reusable desktop workflow
+        run: echo 'Store input is retained with the desktop candidate.'
 
-      - name: Compute Store release metadata
-        id: versioning
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          $storeVersion = ./scripts/release/windows/Get-MicrosoftStoreVersion.ps1 -ReleaseTag $tag
-          $releaseVersion = $tag.Substring(1)
-          "store_version=$storeVersion" >> $env:GITHUB_OUTPUT
-          "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
-
-      - name: Download validated Windows release payload
-        uses: actions/download-artifact@v6
-        with:
-          name: avalonia-release-win-x64-${{ github.sha }}
-          path: windows-release
-
-      - name: Extract self-contained Windows payload
-        shell: pwsh
-        run: |
-          $archive = "windows-release/OTP-Harbor-windows-x64-${{ steps.versioning.outputs.release_version }}.zip"
-          if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
-            throw "The validated self-contained Windows release archive is missing."
-          }
-          Expand-Archive -LiteralPath $archive -DestinationPath store-publish
-
-      - name: Build unsigned Partner Center MSIX
-        shell: pwsh
-        run: |
-          ./scripts/release/windows/New-MicrosoftStoreMsix.ps1 `
-            -IdentityName 'Legends77.OTPHarbor' `
-            -Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9' `
-            -PublisherDisplayName 'Legends77' `
-            -Version '${{ steps.versioning.outputs.store_version }}' `
-            -ProductVersion '${{ steps.versioning.outputs.release_version }}' `
-            -OutputDirectory 'artifacts/windows/release/${{ github.ref_name }}' `
-            -PublishDirectory store-publish
-
-      - name: Upload Partner Center submission artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: otp-harbor-microsoft-store-${{ steps.versioning.outputs.release_version }}
-          path: |
-            artifacts/windows/release/${{ github.ref_name }}/*.msix
-            artifacts/windows/release/${{ github.ref_name }}/SHA256SUMS
-            artifacts/windows/release/${{ github.ref_name }}/store-package.json
-          if-no-files-found: error
-          retention-days: 90
+  package-android-release:
+    name: Prepare Android package
+    needs: [build-test, platform-validation, legacy-release-policy]
+    if: startsWith(github.ref, 'refs/tags/android-v')
+    uses: ./.github/workflows/reusable-android-package.yml
+    with:
+      release_tag: ${{ github.ref_name }}
+      source_sha: ${{ github.sha }}
 
   publish-unsigned-preview:
     name: Publish Windows and Linux preview
@@ -1111,17 +257,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Setup .NET SDK for signed preview metadata
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "10.0.404"
 
       - name: Download retained preview artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           pattern: avalonia-release-*-${{ github.sha }}
           path: preview-assets
@@ -1130,8 +276,11 @@ jobs:
       - name: Validate unsigned preview payload
         id: versioning
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          SOURCE_COMMIT: ${{ github.sha }}
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = "${env:RELEASE_TAG}"
           if ($tag -notmatch '^v(?<version>\d+\.\d+\.\d+-rc\d+)$') {
             throw "Unsigned previews require an RC tag."
           }
@@ -1150,7 +299,7 @@ jobs:
 
           ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
             -ReleaseVersion $releaseVersion `
-            -SourceCommit "${{ github.sha }}" `
+            -SourceCommit "${env:SOURCE_COMMIT}" `
             -ArtifactPath $artifactPaths `
             -OutputPath preview-assets/release-artifacts-v2.json `
             -ReleaseProfile unsigned-platform-preview
@@ -1173,6 +322,9 @@ jobs:
 
       - name: Generate and verify signed preview feed
         shell: pwsh
+        env:
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:NETSPARKLE_PUBLIC_KEY) -or
               [string]::IsNullOrWhiteSpace($env:NETSPARKLE_PRIVATE_KEY)) {
@@ -1192,7 +344,7 @@ jobs:
           [IO.File]::WriteAllText($privateKeyPath, $env:NETSPARKLE_PRIVATE_KEY.Trim(), [Text.Encoding]::ASCII)
           & chmod 600 $privateKeyPath
 
-          $baseUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/"
+          $baseUrl = "https://github.com/${env:RELEASE_REPOSITORY}/releases/download/${env:RELEASE_TAG}/"
           ./scripts/release/shared/Generate-AvaloniaAppcast.ps1 `
             -ManifestPath preview-assets/release-artifacts-v2.json `
             -ArtifactDirectory preview-assets `
@@ -1227,9 +379,11 @@ jobs:
         id: release_notes
         shell: pwsh
         env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          $currentTag = "${{ github.ref_name }}"
+          $currentTag = "${env:RELEASE_TAG}"
           $previousTag = git tag --list 'v*' --sort=-version:refname |
             Where-Object { $_ -ne $currentTag -and $_ -match '^v\d+\.\d+\.\d+$' } |
             Select-Object -First 1
@@ -1258,17 +412,18 @@ jobs:
           "summary<<$delimiter" >> $env:GITHUB_OUTPUT
           $changes >> $env:GITHUB_OUTPUT
           "" >> $env:GITHUB_OUTPUT
-          "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
+          "**Full Changelog**: https://github.com/${env:RELEASE_REPOSITORY}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
           $delimiter >> $env:GITHUB_OUTPUT
 
       - name: Upload unsigned preview to a draft
-        uses: softprops/action-gh-release@v3.0.1
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           name: OTP Harbor ${{ steps.versioning.outputs.release_version }} — prerelease
           draft: true
           prerelease: true
           make_latest: false
           fail_on_unmatched_files: true
+          overwrite_files: false
           body: |
             ## Changes in this release
 
@@ -1307,19 +462,21 @@ jobs:
       - name: Publish validated unsigned preview
         shell: pwsh
         env:
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ github.token }}
         run: |
           $releaseIds = @(gh api `
-            "repos/${{ github.repository }}/releases?per_page=100" `
+            "repos/${env:RELEASE_REPOSITORY}/releases?per_page=100" `
             --paginate `
-            --jq '.[] | select(.tag_name == "${{ github.ref_name }}") | .id')
+            --jq ('.[] | select(.tag_name == "__RELEASE_TAG__") | .id'.Replace('__RELEASE_TAG__', $env:RELEASE_TAG)))
           if ($releaseIds.Count -ne 1) {
             throw "Could not resolve exactly one validated preview draft."
           }
           $releaseId = $releaseIds[0]
           gh api `
             --method PATCH `
-            "repos/${{ github.repository }}/releases/$releaseId" `
+            "repos/${env:RELEASE_REPOSITORY}/releases/$releaseId" `
             -F draft=false `
             -F prerelease=true `
             -f make_latest=false | Out-Null
@@ -1327,10 +484,12 @@ jobs:
       - name: Refresh the public RC appcast endpoint
         shell: pwsh
         env:
+          RELEASE_REPOSITORY: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --repo "${{ github.repository }}"
+        run: gh workflow run pages.yml --repo "${env:RELEASE_REPOSITORY}"
 
   publish-avalonia-release:
+    environment: release-production
     name: Publish OTP Harbor stable release
     needs: [package-avalonia-release, package-microsoft-store-msix]
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-rc')
@@ -1345,17 +504,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "10.0.404"
 
       - name: Download retained Linux release artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: avalonia-release-linux-x64-${{ github.sha }}
           path: release-assets
@@ -1363,8 +522,11 @@ jobs:
       - name: Compute and validate aggregate artifact manifest
         id: versioning
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          SOURCE_COMMIT: ${{ github.sha }}
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = "${env:RELEASE_TAG}"
           if ($tag -notmatch '^v(?<base>\d+\.\d+\.\d+)(?:-rc(?<rc>\d+))?$') {
             throw "Release tag has an unsupported format."
           }
@@ -1383,7 +545,7 @@ jobs:
 
           ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
             -ReleaseVersion $releaseVersion `
-            -SourceCommit "${{ github.sha }}" `
+            -SourceCommit "${env:SOURCE_COMMIT}" `
             -ArtifactPath $artifactPaths `
             -OutputPath release-assets/release-artifacts-v2.json
           ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
@@ -1393,8 +555,10 @@ jobs:
       - name: Determine whether this stable tag should be latest
         id: latest_release
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $currentTag = "${{ github.ref_name }}"
+          $currentTag = "${env:RELEASE_TAG}"
           if ($currentTag -match '-rc\d+$') {
             "make_latest=false" >> $env:GITHUB_OUTPUT
             Write-Host "Release candidates are never marked latest."
@@ -1430,65 +594,22 @@ jobs:
 
       - name: Generate and verify signed Avalonia feed
         shell: pwsh
-        run: |
-          if ([string]::IsNullOrWhiteSpace($env:NETSPARKLE_PUBLIC_KEY) -or
-              [string]::IsNullOrWhiteSpace($env:NETSPARKLE_PRIVATE_KEY)) {
-            throw "Ed25519 release signing credentials are required."
-          }
-          $clientSettings = Get-Content OtpHarbor.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
-          $expectedPublicKey = $clientSettings.AutoUpdate.PublicKey
-          if ($expectedPublicKey -cne $env:NETSPARKLE_PUBLIC_KEY.Trim()) {
-            throw "The CI public key does not match the key embedded in the Avalonia client."
-          }
-
-          $keyDirectory = Join-Path $env:RUNNER_TEMP "netsparkle-keys"
-          New-Item -ItemType Directory -Path $keyDirectory | Out-Null
-          $publicKeyPath = Join-Path $keyDirectory "NetSparkle_Ed25519.pub"
-          $privateKeyPath = Join-Path $keyDirectory "NetSparkle_Ed25519.priv"
-          [IO.File]::WriteAllText($publicKeyPath, $env:NETSPARKLE_PUBLIC_KEY.Trim(), [Text.Encoding]::ASCII)
-          [IO.File]::WriteAllText($privateKeyPath, $env:NETSPARKLE_PRIVATE_KEY.Trim(), [Text.Encoding]::ASCII)
-          & chmod 600 $privateKeyPath
-
-          $baseUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/"
-          ./scripts/release/shared/Generate-AvaloniaAppcast.ps1 `
-            -ManifestPath release-assets/release-artifacts-v2.json `
-            -ArtifactDirectory release-assets `
-            -BaseDownloadUrl $baseUrl `
-            -PrivateKeyPath $privateKeyPath `
-            -PublicKeyPath $publicKeyPath `
-            -ExpectedPublicKey $expectedPublicKey `
-            -OutputDirectory release-feed
-          ./scripts/release/shared/Test-AvaloniaAppcast.ps1 `
-            -AppcastPath release-feed/appcast-v2.xml `
-            -ManifestPath release-assets/release-artifacts-v2.json `
-            -BaseDownloadUrl $baseUrl
-
-          $feedSignature = (Get-Content release-feed/appcast-v2.xml.signature -Raw).Trim()
-          netsparkle-generate-appcast `
-            --verify release-feed/appcast-v2.xml `
-            --signature $feedSignature `
-            --key-path $keyDirectory
-          if ($LASTEXITCODE -ne 0) { throw "Avalonia appcast signature verification failed." }
-
-          $manifestSignature = (Get-Content release-assets/release-artifacts-v2.json.signature -Raw).Trim()
-          netsparkle-generate-appcast `
-            --verify release-assets/release-artifacts-v2.json `
-            --signature $manifestSignature `
-            --key-path $keyDirectory
-          if ($LASTEXITCODE -ne 0) { throw "Artifact manifest signature verification failed." }
-
-          Copy-Item release-feed/appcast-v2.xml release-assets/
-          Copy-Item release-feed/appcast-v2.xml.signature release-assets/
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SOURCE: ${{ github.sha }}
+        run: ./scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE
 
       - name: Build release change summary
         id: release_notes
         shell: pwsh
         env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          $currentTag = "${{ github.ref_name }}"
+          $currentTag = "${env:RELEASE_TAG}"
           $previousTag = gh release list `
-          --repo "${{ github.repository }}" `
+          --repo "${env:RELEASE_REPOSITORY}" `
           --limit 100 `
           --exclude-drafts `
           --json tagName,publishedAt `
@@ -1510,17 +631,26 @@ jobs:
           "summary<<$delimiter" >> $env:GITHUB_OUTPUT
           $changes >> $env:GITHUB_OUTPUT
           "" >> $env:GITHUB_OUTPUT
-          "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
+          "**Full Changelog**: https://github.com/${env:RELEASE_REPOSITORY}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
           $delimiter >> $env:GITHUB_OUTPUT
 
+      - name: Reject conflicting legacy publication without replacing assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SOURCE: ${{ github.sha }}
+        run: ./scripts/release/shared/Test-LegacyReleasePolicy.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE -Publication
+
       - name: Upload stable GitHub release to a draft
-        uses: softprops/action-gh-release@v3.0.1
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           name: OTP Harbor ${{ steps.versioning.outputs.release_version }}
           draft: true
           prerelease: ${{ steps.versioning.outputs.prerelease }}
           make_latest: false
           fail_on_unmatched_files: true
+          overwrite_files: false
           body: |
             ## Changes in this release
 
@@ -1544,22 +674,29 @@ jobs:
       - name: Publish validated draft release
         shell: pwsh
         env:
+          RELEASE_SOURCE: ${{ github.sha }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_PRERELEASE: ${{ steps.versioning.outputs.prerelease }}
+          RELEASE_MAKE_LATEST: ${{ steps.latest_release.outputs.make_latest }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          python scripts/release/shared/verify_legacy_assets.py --tag $env:RELEASE_TAG --source $env:RELEASE_SOURCE --directory release-assets
+          if ($LASTEXITCODE -ne 0) { throw 'Final legacy release asset verification failed.' }
           $releaseIds = @(gh api `
-            "repos/${{ github.repository }}/releases?per_page=100" `
+            "repos/${env:RELEASE_REPOSITORY}/releases?per_page=100" `
             --paginate `
-            --jq '.[] | select(.tag_name == "${{ github.ref_name }}") | .id')
+            --jq ('.[] | select(.tag_name == "__RELEASE_TAG__") | .id'.Replace('__RELEASE_TAG__', $env:RELEASE_TAG)))
           if ($releaseIds.Count -ne 1) {
             throw "Could not resolve exactly one validated draft release."
           }
           $releaseId = $releaseIds[0]
           gh api `
             --method PATCH `
-            "repos/${{ github.repository }}/releases/$releaseId" `
+            "repos/${env:RELEASE_REPOSITORY}/releases/$releaseId" `
             -F draft=false `
-            -F prerelease=${{ steps.versioning.outputs.prerelease }} `
-            -f make_latest=${{ steps.latest_release.outputs.make_latest }} | Out-Null
+            -F prerelease=${env:RELEASE_PRERELEASE} `
+            -f make_latest=${env:RELEASE_MAKE_LATEST} | Out-Null
 
   refresh-release-readme:
     name: Refresh README after publishing a release
@@ -1573,6 +710,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   publish-android-release:
+    environment: release-production
     name: Publish OTP Harbor Android release
     needs: [package-android-release]
     if: startsWith(github.ref, 'refs/tags/android-v')
@@ -1583,12 +721,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Download signed Android release artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: android-release-${{ github.sha }}
           path: android-release-assets
@@ -1596,52 +734,19 @@ jobs:
       - name: Validate Android release assets
         id: versioning
         shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          if ($tag -notmatch '^android-v(?<version>\d+\.\d+\.\d+)$') {
-            throw "Android release tag must match android-v<major>.<minor>.<patch>."
-          }
-          $releaseVersion = $Matches.version
-          "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
-
-          $apkPaths = @(Get-ChildItem android-release-assets -File -Filter '*.apk')
-          if ($apkPaths.Count -ne 1 -or
-              $apkPaths[0].Name -cne "OTP-Harbor-android-universal-$releaseVersion.apk") {
-            throw "The Android release must contain exactly one correctly versioned APK."
-          }
-          $metadataPath = Join-Path $PWD 'android-release-assets/android-release.json'
-          if (-not (Test-Path -LiteralPath $metadataPath -PathType Leaf)) {
-            throw "The verified Android release metadata is missing."
-          }
-
-          ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
-            -ReleaseVersion $releaseVersion `
-            -SourceCommit "${{ github.sha }}" `
-            -ArtifactPath $apkPaths[0].FullName `
-            -OutputPath android-release-assets/release-artifacts-v2.json
-          ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
-            -ManifestPath android-release-assets/release-artifacts-v2.json `
-            -ArtifactDirectory android-release-assets
-
-          $checksumTargets = @(
-            $apkPaths[0].FullName,
-            $metadataPath,
-            (Join-Path $PWD 'android-release-assets/release-artifacts-v2.json'))
-          $checksumLines = foreach ($path in $checksumTargets) {
-            $file = Get-Item -LiteralPath $path
-            $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$hash  $($file.Name)"
-          }
-          [IO.File]::WriteAllText(
-            (Join-Path $PWD 'android-release-assets/SHA256SUMS'),
-            (($checksumLines -join "`n") + "`n"),
-            [Text.UTF8Encoding]::new($false))
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SOURCE: ${{ github.sha }}
+        run: ./scripts/release/shared/Prepare-AndroidReleaseMetadata.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE
 
       - name: Build Android change summary
         id: release_notes
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
         run: |
-          $currentTag = "${{ github.ref_name }}"
+          $currentTag = "${env:RELEASE_TAG}"
           $previousTag = git tag --list 'android-v*' --sort=-version:refname |
             Where-Object { $_ -ne $currentTag -and $_ -match '^android-v\d+\.\d+\.\d+$' } |
             Select-Object -First 1
@@ -1680,18 +785,27 @@ jobs:
           $changes >> $env:GITHUB_OUTPUT
           if (-not [string]::IsNullOrWhiteSpace($previousTag)) {
             "" >> $env:GITHUB_OUTPUT
-            "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
+            "**Full Changelog**: https://github.com/${env:RELEASE_REPOSITORY}/compare/$previousTag...$currentTag" >> $env:GITHUB_OUTPUT
           }
           $delimiter >> $env:GITHUB_OUTPUT
 
+      - name: Reject conflicting legacy publication without replacing assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SOURCE: ${{ github.sha }}
+        run: ./scripts/release/shared/Test-LegacyReleasePolicy.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE -Publication
+
       - name: Upload Android GitHub release to a draft
-        uses: softprops/action-gh-release@v3.0.1
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           name: OTP Harbor Android ${{ steps.versioning.outputs.release_version }}
           draft: true
           prerelease: false
           make_latest: false
           fail_on_unmatched_files: true
+          overwrite_files: false
           body: |
             ## Changes in this Android release
 
@@ -1713,18 +827,23 @@ jobs:
       - name: Publish validated Android release
         shell: pwsh
         env:
+          RELEASE_SOURCE: ${{ github.sha }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          python scripts/release/shared/verify_legacy_assets.py --tag $env:RELEASE_TAG --source $env:RELEASE_SOURCE --directory android-release-assets
+          if ($LASTEXITCODE -ne 0) { throw 'Final legacy release asset verification failed.' }
           $releaseIds = @(gh api `
-            "repos/${{ github.repository }}/releases?per_page=100" `
+            "repos/${env:RELEASE_REPOSITORY}/releases?per_page=100" `
             --paginate `
-            --jq '.[] | select(.tag_name == "${{ github.ref_name }}") | .id')
+            --jq ('.[] | select(.tag_name == "__RELEASE_TAG__") | .id'.Replace('__RELEASE_TAG__', $env:RELEASE_TAG)))
           if ($releaseIds.Count -ne 1) {
             throw "Could not resolve exactly one validated Android draft release."
           }
           gh api `
             --method PATCH `
-            "repos/${{ github.repository }}/releases/$($releaseIds[0])" `
+            "repos/${env:RELEASE_REPOSITORY}/releases/$($releaseIds[0])" `
             -F draft=false `
             -F prerelease=false `
             -f make_latest=false | Out-Null

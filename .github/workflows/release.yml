@@ -1,0 +1,325 @@
+name: Release OTP Harbor
+
+on:
+  workflow_call:
+    inputs:
+      scope:
+        type: string
+        default: all
+      desktop_version:
+        type: string
+        default: auto
+      android_version:
+        type: string
+        default: auto
+      mode:
+        type: string
+        default: validate
+      store_action:
+        type: string
+        default: prepare
+    secrets:
+      NETSPARKLE_PUBLIC_KEY:
+        required: false
+      NETSPARKLE_PRIVATE_KEY:
+        required: false
+      SIGNPATH_API_TOKEN:
+        required: false
+      GH_PAT:
+        required: false
+  workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [all, desktop, mobile]
+        default: all
+        description: Production platform group
+      desktop_version:
+        type: string
+        default: auto
+        description: Next desktop patch or explicit X.Y.Z
+      android_version:
+        type: string
+        default: auto
+        description: Next Android patch or explicit X.Y.Z
+      mode:
+        type: choice
+        options: [approval, validate, automatic]
+        default: approval
+        description: Preparation and production authorization policy
+      store_action:
+        type: choice
+        options: [prepare, submit]
+        default: prepare
+        description: Retain Store MSIX or submit after authorization
+
+permissions:
+  contents: read
+
+# One active release across both namespaces. GitHub retains only one pending run;
+# superseded pending requests must be resubmitted. Active publication is never cancelled.
+concurrency:
+  group: otp-production-release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      plan: ${{ steps.resolve.outputs.plan }}
+      desktop_tag: ${{ steps.resolve.outputs.desktop_tag }}
+      android_tag: ${{ steps.resolve.outputs.android_tag }}
+      artifact_name: ${{ steps.resolve.outputs.artifact_name }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+      - name: Resolve one immutable source and independent versions
+        id: resolve
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SCOPE: ${{ inputs.scope }}
+          DESKTOP_VERSION: ${{ inputs.desktop_version }}
+          ANDROID_VERSION: ${{ inputs.android_version }}
+          RELEASE_MODE: ${{ inputs.mode }}
+          STORE_ACTION: ${{ inputs.store_action }}
+          RELEASE_AUTOMATIC_PROMOTION_ENABLED: ${{ vars.RELEASE_AUTOMATIC_PROMOTION_ENABLED }}
+        run: ./scripts/release/shared/Resolve-ReleasePlan.ps1 -Scope $env:RELEASE_SCOPE -DesktopVersion $env:DESKTOP_VERSION -AndroidVersion $env:ANDROID_VERSION -Mode $env:RELEASE_MODE -StoreAction $env:STORE_ACTION
+      - name: Reserve candidate versions in immutable workflow evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ${{ steps.resolve.outputs.artifact_name }}
+          path: release-plan.json
+          retention-days: 90
+          if-no-files-found: error
+
+  validation:
+    needs: plan
+    uses: ./.github/workflows/reusable-validation.yml
+    with:
+      release_scope: ${{ inputs.scope }}
+
+  security:
+    needs: plan
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    uses: ./.github/workflows/security-audit.yml
+
+  desktop:
+    needs: [plan, validation, security]
+    if: inputs.scope != 'mobile'
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/reusable-desktop-package.yml
+    with:
+      release_tag: ${{ needs.plan.outputs.desktop_tag }}
+      source_sha: ${{ github.sha }}
+      mode: ${{ inputs.mode }}
+    secrets:
+      SIGNPATH_API_TOKEN: ${{ inputs.mode != 'validate' && secrets.SIGNPATH_API_TOKEN || '' }}
+
+  android:
+    needs: [plan, validation, security]
+    if: inputs.scope != 'desktop' && inputs.mode != 'validate'
+    uses: ./.github/workflows/reusable-android-package.yml
+    with:
+      release_tag: ${{ needs.plan.outputs.android_tag }}
+      source_sha: ${{ github.sha }}
+      mode: ${{ inputs.mode }}
+
+  desktop_metadata:
+    needs: [plan, desktop]
+    if: inputs.scope != 'mobile'
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/reusable-release-metadata.yml
+    with:
+      family: desktop
+      release_tag: ${{ needs.plan.outputs.desktop_tag }}
+      source_sha: ${{ github.sha }}
+      mode: ${{ inputs.mode }}
+    secrets:
+      NETSPARKLE_PUBLIC_KEY: ${{ inputs.mode != 'validate' && secrets.NETSPARKLE_PUBLIC_KEY || '' }}
+      NETSPARKLE_PRIVATE_KEY: ${{ inputs.mode != 'validate' && secrets.NETSPARKLE_PRIVATE_KEY || '' }}
+
+  android_metadata:
+    needs: [plan, android]
+    if: inputs.scope != 'desktop' && inputs.mode != 'validate'
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/reusable-release-metadata.yml
+    with:
+      family: android
+      release_tag: ${{ needs.plan.outputs.android_tag }}
+      source_sha: ${{ github.sha }}
+      mode: ${{ inputs.mode }}
+
+  candidate:
+    if: always()
+    needs: [plan, validation, security, desktop, android, desktop_metadata, android_metadata]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    outputs:
+      digest: ${{ steps.inventory.outputs.digest }}
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      evidence: ${{ steps.inventory.outputs.evidence }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: ${{ needs.plan.outputs.artifact_name }}
+          path: .
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        if: inputs.scope != 'mobile'
+        with:
+          name: desktop-ready-${{ github.sha }}
+          path: candidate-payload/desktop
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        if: inputs.scope != 'mobile'
+        with:
+          name: otp-harbor-microsoft-store-${{ fromJSON(needs.plan.outputs.plan).desktopVersion }}
+          path: candidate-payload/store
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        if: inputs.scope != 'desktop'
+        with:
+          name: ${{ inputs.mode == 'validate' && 'android-validation' || 'android-ready' }}-${{ github.sha }}
+          path: candidate-payload/android
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: test-evidence-${{ github.sha }}
+          path: test-evidence
+      - name: Require every selected preparation gate and bind artifact hashes
+        id: inventory
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GATE_RESULTS: ${{ toJSON(needs) }}
+          ANDROID_SIGNING_CERTIFICATE_SHA256: ${{ needs.android.outputs.certificate_sha256 }}
+        run: ./scripts/release/shared/New-ReleaseCandidate.ps1 -NeedsJson $env:GATE_RESULTS
+      - name: Attest the manifest which binds every candidate file hash
+        if: inputs.mode != 'validate'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: candidate.json
+      - name: Retain immutable candidate separately from distribution state
+        id: upload
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            candidate.json
+            candidate-payload/
+          retention-days: 90
+          if-no-files-found: error
+
+  publish_desktop:
+    needs: [plan, candidate]
+    if: inputs.scope != 'mobile' && inputs.mode != 'validate'
+    permissions:
+      contents: write
+      actions: read
+      attestations: read
+    uses: ./.github/workflows/reusable-promote.yml
+    with:
+      family: desktop
+      mode: ${{ inputs.mode }}
+      run_id: ${{ github.run_id }}
+      artifact_id: ${{ needs.candidate.outputs.artifact_id }}
+      candidate_sha256: ${{ needs.candidate.outputs.digest }}
+
+  publish_android:
+    needs: [plan, candidate]
+    if: inputs.scope != 'desktop' && inputs.mode != 'validate'
+    permissions:
+      contents: write
+      actions: read
+      attestations: read
+    uses: ./.github/workflows/reusable-promote.yml
+    with:
+      family: android
+      mode: ${{ inputs.mode }}
+      run_id: ${{ github.run_id }}
+      artifact_id: ${{ needs.candidate.outputs.artifact_id }}
+      candidate_sha256: ${{ needs.candidate.outputs.digest }}
+
+  store:
+    needs: [plan, candidate]
+    if: inputs.store_action == 'submit' && inputs.mode != 'validate' && inputs.scope != 'mobile'
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    uses: ./.github/workflows/reusable-store-submission.yml
+    with:
+      action: submit
+      mode: ${{ inputs.mode }}
+      run_id: ${{ github.run_id }}
+      artifact_id: ${{ needs.candidate.outputs.artifact_id }}
+      candidate_sha256: ${{ needs.candidate.outputs.digest }}
+
+  refresh:
+    if: always() && (needs.publish_desktop.result == 'success' || needs.publish_android.result == 'success')
+    needs: [publish_desktop, publish_android]
+    permissions:
+      contents: write
+      actions: write
+    uses: ./.github/workflows/readme-releases.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  summary:
+    if: always()
+    needs: [plan, validation, security, desktop, android, desktop_metadata, android_metadata, candidate, publish_desktop, publish_android, store, refresh]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Report independent channel outcomes and recovery
+        shell: python
+        env:
+          RELEASE_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          import json, os
+          jobs = json.loads(os.environ['RELEASE_RESULTS'])
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+              evidence = json.loads(jobs['candidate'].get('outputs', {}).get('evidence') or '{}')
+              plan = evidence.get('plan') or json.loads(jobs['plan'].get('outputs', {}).get('plan') or '{}')
+              summary.write('## Release identity\n\n')
+              for key in ('candidateId', 'sourceCommit', 'scope', 'mode', 'desktopVersion', 'androidVersion', 'platforms', 'disabledPlatforms'):
+                  summary.write(f"- {key}: {plan.get(key, 'unavailable')}\n")
+              summary.write(f"- Candidate artifact: {jobs['candidate'].get('outputs', {}).get('artifact_id', 'unavailable')}\n")
+              summary.write(f"- Candidate SHA-256: {jobs['candidate'].get('outputs', {}).get('digest', 'unavailable')}\n")
+              summary.write(f"- Actual full test counts: {evidence.get('testResults', {}).get('counts', 'unavailable')}\n\n")
+              summary.write('## Release execution outcomes\n\n| Gate/channel | Workflow result |\n|---|---|\n')
+              for name, job in jobs.items():
+                  summary.write(f"| {name} | {job['result']} |\n")
+              summary.write('\n| Artifact | Bytes | SHA-256 |\n|---|---:|---|\n')
+              for item in evidence.get('files', []):
+                  summary.write(f"| {item['fileName']} | {item['bytes']} | {item['sha256']} |\n")
+              summary.write('\nSigning verification: ' + json.dumps(evidence.get('packages', [])) + '\n')
+              for job, prefix, version in [('publish_desktop', 'v', plan.get('desktopVersion')), ('publish_android', 'android-v', plan.get('androidVersion'))]:
+                  if jobs[job]['result'] == 'success':
+                      summary.write(f"\nPublished: https://github.com/Legends/otp-harbor/releases/tag/{prefix}{version}\n")
+              summary.write('\nStore external state: ' + jobs['store'].get('outputs', {}).get('state', 'not requested or unknown; inspect retained state') + '\n')
+              summary.write('Store submission ID: ' + jobs['store'].get('outputs', {}).get('submission_id', 'unavailable') + '\n')
+              summary.write('Website / project F-Droid: ' + ('refresh requested; external completion pending/unknown' if jobs['refresh']['result'] == 'success' else 'refresh not completed') + '\n')
+              summary.write('\nWorkflow success is distinct from distribution success. Store upload/commit is not Store publication. Read retained store-state artifacts for the submission ID and certification status. README refresh explicitly dispatches website/F-Droid reconciliation; their external workflow completion is independently observable.\n\nRecover with release-recovery.yml using the original run, artifact ID and candidate SHA-256. Never rebuild an approved candidate or replace published assets.\n')

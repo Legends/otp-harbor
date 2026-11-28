@@ -120,6 +120,12 @@ foreach ($packageId in $packageIds) {
 }
 
 $workflow = Read-RequiredFile '.github\workflows\build-and-test.yml'
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-desktop-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-validation.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/actions/validate-application/action.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-android-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-AndroidReleaseMetadata.ps1'))
 foreach ($required in @(
     'dotnet-version: "10.0.404"',
     'dotnet restore OtpHarbor.Android.sln --locked-mode',

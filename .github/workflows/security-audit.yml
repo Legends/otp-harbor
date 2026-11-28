@@ -1,6 +1,11 @@
 name: Security Audit and Verification
 
 on:
+  workflow_call:
+    inputs:
+      dast_target_url:
+        type: string
+        default: ''
   push:
     branches: [master, 'release/1.x']
   pull_request:
@@ -28,7 +33,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Install actionlint
         shell: bash
@@ -55,10 +60,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v5
+        uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
 
   sast-codeql:
     name: SAST (CodeQL C#)
@@ -71,10 +76,10 @@ jobs:
       security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "10.0.404"
 
@@ -84,7 +89,7 @@ jobs:
 
       - name: Detect Code Scanning capability
         id: codeql-capability
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             try {
@@ -113,7 +118,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: steps.codeql-capability.outputs.enabled == 'true'
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4
         with:
           languages: csharp
           build-mode: manual
@@ -128,7 +133,7 @@ jobs:
 
       - name: Analyze
         if: steps.codeql-capability.outputs.enabled == 'true'
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4
 
       - name: CodeQL skipped notice
         if: steps.codeql-capability.outputs.enabled != 'true'
@@ -141,10 +146,10 @@ jobs:
       NUGET_PACKAGES: ${{ github.workspace }}\.nuget\packages
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "10.0.404"
 
@@ -183,7 +188,7 @@ jobs:
           }
 
       - name: Upload SCA evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: sca-evidence
           path: artifacts/*.json
@@ -193,12 +198,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -208,22 +213,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Run ZAP baseline scan
+        env:
+          DAST_TARGET_URL: ${{ inputs.dast_target_url }}
+        shell: bash
         run: |
           mkdir -p artifacts
           docker run --rm \
             -v "${PWD}/artifacts:/zap/wrk:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
-            -t "${{ inputs.dast_target_url }}" \
+            -t "$DAST_TARGET_URL" \
             -J zap-report.json \
             -r zap-report.html \
             -m 5
 
       - name: Upload DAST evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: dast-zap-evidence
           path: artifacts/zap-report.*

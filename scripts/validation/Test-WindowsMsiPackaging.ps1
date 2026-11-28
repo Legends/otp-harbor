@@ -23,6 +23,12 @@ $customInstallerView = Join-Path $repositoryRoot 'OtpHarbor.Installer/Views/Inst
 $packager = Get-Content -LiteralPath $packagerPath -Raw
 $setupPackager = Get-Content -LiteralPath $setupPackagerPath -Raw
 $workflow = Get-Content -LiteralPath $workflowPath -Raw
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-desktop-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-validation.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/actions/validate-application/action.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-android-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-AndroidReleaseMetadata.ps1'))
 $manifest = Get-Content -LiteralPath $manifestPath -Raw
 
 foreach ($control in @(

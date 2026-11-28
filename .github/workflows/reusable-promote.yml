@@ -1,0 +1,114 @@
+name: Promote exact verified release artifacts
+
+on:
+  workflow_call:
+    inputs:
+      family:
+        type: string
+        required: true
+      mode:
+        type: string
+        required: true
+      run_id:
+        type: string
+        required: true
+      artifact_id:
+        type: string
+        required: true
+      candidate_sha256:
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+  attestations: read
+
+jobs:
+  promote:
+    runs-on: ${{ inputs.family == 'android' && 'windows-2025' || 'ubuntu-24.04' }}
+    environment: ${{ inputs.mode == 'automatic' && 'release-automatic' || 'release-production' }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          artifact-ids: ${{ inputs.artifact_id }}
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: .
+      - name: Verify original workflow, approved digest, source and files
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORIGINAL_RUN: ${{ inputs.run_id }}
+          ORIGINAL_ARTIFACT: ${{ inputs.artifact_id }}
+          CANDIDATE_SHA256: ${{ inputs.candidate_sha256 }}
+          RELEASE_MODE: ${{ inputs.mode }}
+          RELEASE_AUTOMATIC_PROMOTION_ENABLED: ${{ vars.RELEASE_AUTOMATIC_PROMOTION_ENABLED }}
+        run: |
+          ./scripts/release/shared/Test-CandidateOrigin.ps1 -RunId $env:ORIGINAL_RUN -ArtifactId $env:ORIGINAL_ARTIFACT -Digest $env:CANDIDATE_SHA256
+          $candidate = Get-Content candidate.json -Raw | ConvertFrom-Json
+          if ($candidate.plan.mode -cne $env:RELEASE_MODE) { throw 'Promotion mode differs from the approved candidate.' }
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        if: inputs.family == 'desktop'
+        with:
+          dotnet-version: '10.0.404'
+      - name: Install pinned signature verification tool
+        if: inputs.family == 'desktop'
+        run: dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator --version 2.9.0
+      - name: Revalidate final package and update signatures
+        shell: pwsh
+        env:
+          RELEASE_FAMILY: ${{ inputs.family }}
+        run: ./scripts/release/shared/Test-ProductionCandidate.ps1 -Family $env:RELEASE_FAMILY
+      - name: Require explicit identity before using an optional release App
+        if: vars.RELEASE_APP_ID != ''
+        shell: pwsh
+        env:
+          RELEASE_APP_BOT_LOGIN: ${{ vars.RELEASE_APP_BOT_LOGIN }}
+        run: |
+          if ($env:RELEASE_APP_BOT_LOGIN -cnotmatch '^[a-z0-9-]+\[bot\]$') { throw 'Configure the repository release App bot login before minting a token.' }
+      - name: Mint a short-lived token scoped to this repository when required
+        id: release_app
+        if: vars.RELEASE_APP_ID != ''
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: Legends
+          repositories: otp-harbor
+          permission-contents: write
+          permission-workflows: write
+      - name: Verify the App identity used to suppress duplicate tag execution
+        if: vars.RELEASE_APP_ID != ''
+        shell: pwsh
+        env:
+          APP_SLUG: ${{ steps.release_app.outputs.app-slug }}
+          EXPECTED_BOT: ${{ vars.RELEASE_APP_BOT_LOGIN }}
+        run: |
+          $actualBot = '{0}[bot]' -f $env:APP_SLUG
+          if ($actualBot -cne $env:EXPECTED_BOT) { throw 'Release App identity does not match repository trigger policy.' }
+      - name: Publish or safely resume this exact candidate
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.release_app.outputs.token || github.token }}
+          CANDIDATE_SHA256: ${{ inputs.candidate_sha256 }}
+          RELEASE_FAMILY: ${{ inputs.family }}
+        run: |
+          python scripts/release/shared/github_release.py --candidate candidate.json --digest $env:CANDIDATE_SHA256 --root candidate-payload --family $env:RELEASE_FAMILY --notes "candidate-payload/$env:RELEASE_FAMILY/release-notes.md" --status distribution-status.json
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication requires recovery with the original candidate.' }
+          Get-Content distribution-status.json >> $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: distribution-${{ inputs.family }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: distribution-status.json
+          retention-days: 90
+          if-no-files-found: warn

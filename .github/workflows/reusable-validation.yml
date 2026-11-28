@@ -1,0 +1,424 @@
+name: Shared integration validation
+
+on:
+  workflow_call:
+    inputs:
+      include_unit:
+        type: boolean
+        default: true
+      validation_only:
+        type: boolean
+        default: true
+      release_scope:
+        type: string
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    if: inputs.include_unit
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/validate-application
+
+  android-build-test:
+    name: Android build
+    runs-on: windows-2025
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.404"
+          cache: true
+          cache-dependency-path: |
+            OtpHarbor.Android.sln
+            **/*.csproj
+            **/packages.lock.json
+            OtpHarbor.UI.Avalonia.Android/packages.nativeaot.lock.json
+            NuGet.config
+
+      - name: Install Android workload
+        run: dotnet workload install android --version 10.0.403
+
+      - name: Restore Android solution
+        # The SDK pin alone does not pin Android workload manifests on hosted runners.
+        # Validate the workload installed from global.json before consuming lock files.
+        shell: pwsh
+        run: |
+          ./scripts/validation/Test-AndroidToolchain.ps1
+          dotnet restore OtpHarbor.Android.sln --locked-mode --nologo --verbosity minimal --configfile NuGet.config
+
+      - name: Build Android development package
+        run: dotnet build OtpHarbor.Android.sln --configuration Debug --no-restore --nologo --verbosity minimal
+
+      - name: Install NativeAOT compiler
+        shell: pwsh
+        run: ./scripts/testing/android/Install-AndroidNativeAotToolchain.ps1
+
+      - name: Validate NativeAOT JSON and runtime payload controls
+        shell: pwsh
+        run: |
+          dotnet run --project scripts/testing/android/NativeAotCompatibilitySmoke -c Release
+          ./scripts/validation/Test-AndroidRuntimePayload.ps1
+
+      - name: Build universal NativeAOT Release test package
+        shell: pwsh
+        run: ./scripts/testing/android/Build-AndroidAotExperiment.ps1 -Runtime NativeAOT -Architecture universal -NdkDirectory $env:ANDROID_NDK_HOME
+
+      - name: Retain explicitly test-signed validation package
+        if: inputs.validation_only && inputs.release_scope != 'desktop'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: android-validation-${{ github.sha }}
+          path: artifacts/android/testing/aot/NativeAOT/universal/OTP-Harbor-AOT-Test-NativeAOT.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Audit Android dependency licenses
+        shell: pwsh
+        run: ./scripts/validation/Test-AndroidDependencyLicenses.ps1
+
+  unix-file-security:
+    name: Unix file security (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu 24.04 x64
+            runner: ubuntu-24.04
+          - name: macOS ARM64
+            runner: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.404"
+          cache: true
+          cache-dependency-path: |
+            OtpHarbor.Core/OtpHarbor.Core.csproj
+            OtpHarbor.Platform.Linux/OtpHarbor.Platform.Linux.csproj
+            OtpHarbor.Platform.MacOS/OtpHarbor.Platform.MacOS.csproj
+            OtpHarbor.Platform.Unix/OtpHarbor.Platform.Unix.csproj
+            OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+            OtpHarbor.UI.Avalonia.Shared/OtpHarbor.UI.Avalonia.Shared.csproj
+            NuGet.config
+
+      - name: Restore Unix security tests
+        run: dotnet restore OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj --nologo --verbosity minimal --configfile NuGet.config
+
+      - name: Run Unix security tests
+        run: dotnet test OtpHarbor.Tests.Unix/OtpHarbor.Tests.Unix.csproj --configuration Release --no-restore --nologo --verbosity minimal
+
+      - name: Validate Bash build reuse
+        if: runner.os == 'Linux'
+        run: bash scripts/validation/Test-BuildReuse.sh
+
+      - name: Restore Avalonia desktop host
+        run: dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj --nologo --verbosity minimal --configfile NuGet.config
+
+      - name: Build Avalonia desktop host
+        run: dotnet build OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj --configuration Release --no-restore --nologo --verbosity minimal
+
+  avalonia-ui-smoke:
+    name: Avalonia UI smoke (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            runner: windows-2025
+          - name: Ubuntu 24.04 x64
+            runner: ubuntu-24.04
+          - name: macOS ARM64
+            runner: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.404"
+          cache: true
+          cache-dependency-path: |
+            OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+            NuGet.config
+
+      - name: Restore Avalonia headless smoke tests
+        run: dotnet restore OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj --nologo --verbosity minimal --configfile NuGet.config
+
+      - name: Load real application XAML under the headless platform
+        run: dotnet test OtpHarbor.Tests.Avalonia.Headless/OtpHarbor.Tests.Avalonia.Headless.csproj --configuration Release --no-restore --nologo --verbosity minimal
+
+  m3-package-probe:
+    name: M3 package probe (${{ matrix.name }})
+    if: ${{ !startsWith(github.ref, 'refs/tags/android-v') }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            runner: windows-2025
+            rid: win-x64
+            executable: TOTP.UI.Avalonia.Desktop.exe
+          - name: Ubuntu 24.04 x64
+            runner: ubuntu-24.04
+            rid: linux-x64
+            executable: TOTP.UI.Avalonia.Desktop
+          - name: macOS ARM64
+            runner: macos-15
+            rid: osx-arm64
+            executable: OTP Harbor.app/Contents/MacOS/TOTP.UI.Avalonia.Desktop
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.404"
+          cache: true
+          cache-dependency-path: |
+            OtpHarbor.Camera.OpenCv/OtpHarbor.Camera.OpenCv.csproj
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+            NuGet.config
+
+      - name: Restore target package graph
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+        shell: pwsh
+        run: >-
+          dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+          --runtime ${env:RELEASE_RUNTIME}
+          --nologo
+          --verbosity minimal
+          --configfile NuGet.config
+
+      - name: Publish framework-dependent M3 package
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+        shell: pwsh
+        run: >-
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+          --configuration Release
+          --runtime ${env:RELEASE_RUNTIME}
+          --self-contained false
+          --no-restore
+          --nologo
+          --verbosity minimal
+          --output m3-publish
+
+      - name: Assemble target-shaped M3 package
+        shell: pwsh
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+        run: |
+          ./scripts/validation/Package-M3Target.ps1 `
+            -PublishDirectory m3-publish `
+            -RuntimeIdentifier "${env:RELEASE_RUNTIME}" `
+            -OutputDirectory m3-package
+
+          if ($IsMacOS) {
+            plutil -lint "m3-package/OTP Harbor.app/Contents/Info.plist"
+          }
+
+      - name: Execute packaged native-runtime probe
+        shell: pwsh
+        env:
+          PROBE_EXECUTABLE: ${{ matrix.executable }}
+          RELEASE_VALUE_1: ${{ matrix.name }}
+        run: |
+          $executable = Join-Path $PWD "m3-package/${env:PROBE_EXECUTABLE}"
+          if ($IsWindows) {
+            $process = Start-Process -FilePath $executable -ArgumentList "--m3-native-probe" -Wait -PassThru -WindowStyle Hidden
+            $probeExitCode = $process.ExitCode
+          }
+          else {
+            & $executable --m3-native-probe
+            $probeExitCode = $LASTEXITCODE
+          }
+          if ($probeExitCode -ne 0) {
+            throw "Packaged OpenCV native-runtime probe failed with exit code $probeExitCode."
+          }
+
+          $packageBytes = (Get-ChildItem m3-package -File -Recurse | Measure-Object Length -Sum).Sum
+          "M3_PACKAGE_BYTES=$packageBytes" >> $env:GITHUB_ENV
+          "### ${env:RELEASE_VALUE_1}`n`nPackage bytes: $packageBytes" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Validate native dependency closure
+        shell: pwsh
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+        run: |
+          ./scripts/validation/Test-NativePackageDependencies.ps1 `
+            -PackageDirectory m3-package `
+            -RuntimeIdentifier "${env:RELEASE_RUNTIME}"
+
+      - name: Assemble Windows distribution archive
+        if: ${{ matrix.rid == 'win-x64' }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path m7-release | Out-Null
+          Compress-Archive `
+            -Path m3-package/* `
+            -DestinationPath m7-release/OTP-Harbor-windows-x64-2.0.0.zip
+
+      - name: Validate Linux distribution packages
+        if: ${{ matrix.rid == 'linux-x64' }}
+        shell: pwsh
+        run: |
+          ./scripts/release/linux/Package-AvaloniaLinux.ps1 `
+            -PublishDirectory m3-publish `
+            -OutputDirectory m6-linux-distribution `
+            -ReleaseVersion "2.0.0" `
+            -FrameworkDependent
+
+          tar -tzf m6-linux-distribution/OTP-Harbor-linux-x64-2.0.0.tar.gz > /dev/null
+          dpkg-deb --info m6-linux-distribution/otp-harbor_2.0.0_amd64.deb
+
+      - name: Validate unsigned macOS DMG structure
+        if: ${{ matrix.rid == 'osx-arm64' }}
+        shell: pwsh
+        run: |
+          ./scripts/release/macos/Package-AvaloniaMacOS.ps1 `
+            -PublishDirectory m3-publish `
+            -OutputDirectory m6-macos-distribution `
+            -ReleaseVersion "2.0.0"
+
+          plutil -lint "m6-macos-distribution/OTP Harbor.app/Contents/Info.plist"
+          hdiutil verify m6-macos-distribution/OTP-Harbor-macos-arm64-2.0.0.dmg
+
+      - name: Generate and verify target artifact manifest
+        shell: pwsh
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          New-Item -ItemType Directory -Path m7-release -Force | Out-Null
+          $artifactPaths = switch ("${env:RELEASE_RUNTIME}") {
+            "win-x64" {
+              "m7-release/OTP-Harbor-windows-x64-2.0.0.zip"
+            }
+            "linux-x64" {
+              Copy-Item m6-linux-distribution/OTP-Harbor-linux-x64-2.0.0.tar.gz m7-release/
+              Copy-Item m6-linux-distribution/otp-harbor_2.0.0_amd64.deb m7-release/
+              "m7-release/OTP-Harbor-linux-x64-2.0.0.tar.gz"
+              "m7-release/otp-harbor_2.0.0_amd64.deb"
+            }
+            "osx-arm64" {
+              Copy-Item m6-macos-distribution/OTP-Harbor-macos-arm64-2.0.0.dmg m7-release/
+              "m7-release/OTP-Harbor-macos-arm64-2.0.0.dmg"
+            }
+            default { throw "Unsupported release target." }
+          }
+
+          $manifestPath = "m7-release/release-artifacts-${env:RELEASE_RUNTIME}.json"
+          ./scripts/release/shared/New-ReleaseArtifactManifest.ps1 `
+            -ReleaseVersion "2.0.0" `
+            -SourceCommit "${env:SOURCE_COMMIT}" `
+            -ArtifactPath $artifactPaths `
+            -OutputPath $manifestPath
+          ./scripts/release/shared/Test-ReleaseArtifactManifest.ps1 `
+            -ManifestPath $manifestPath `
+            -ArtifactDirectory m7-release
+
+      - name: Upload target artifact manifest
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: m7-artifact-manifest-${{ matrix.rid }}-${{ github.sha }}
+          path: m7-release/release-artifacts-${{ matrix.rid }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload target release package evidence
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: m7-release-${{ matrix.rid }}-${{ github.sha }}
+          path: |
+            m7-release/*
+            !m7-release/release-artifacts-${{ matrix.rid }}.json
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Record automated M3 measurements
+        shell: pwsh
+        env:
+          PROBE_EXECUTABLE: ${{ matrix.executable }}
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+        run: |
+          ./scripts/validation/Measure-M3Target.ps1 `
+            -PackageDirectory m3-package `
+            -ExecutableName "${env:PROBE_EXECUTABLE}" `
+            -OutputPath "m3-measurement-${env:RELEASE_RUNTIME}.json" `
+            -Iterations 5
+
+          ./scripts/validation/Test-M3MeasurementBudget.ps1 `
+            -ReportPath "m3-measurement-${env:RELEASE_RUNTIME}.json"
+
+          $measurement = Get-Content "m3-measurement-${env:RELEASE_RUNTIME}.json" -Raw | ConvertFrom-Json
+          "First probe ms: $($measurement.ProcessStartup.FirstMilliseconds)" >> $env:GITHUB_STEP_SUMMARY
+          "Warm startup p95 ms: $($measurement.ProcessStartup.WarmP95Milliseconds)" >> $env:GITHUB_STEP_SUMMARY
+          "Working set p95 bytes: $($measurement.WorkingSet.P95Bytes)" >> $env:GITHUB_STEP_SUMMARY
+          "Native bytes: $($measurement.Package.NativeBytes)" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload M3 measurement evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: m3-measurement-${{ matrix.rid }}-${{ github.sha }}
+          path: m3-measurement-${{ matrix.rid }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload M3 validation package
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: m3-${{ matrix.rid }}-${{ github.sha }}
+          path: m3-package
+          retention-days: 7
+          if-no-files-found: error
+
+  integration-gate:
+    if: always()
+    needs: [build-test, android-build-test, unix-file-security, avalonia-ui-smoke, m3-package-probe]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Require complete shared integration evidence
+        shell: pwsh
+        env:
+          GATE_RESULTS: ${{ toJSON(needs) }}
+          INCLUDE_UNIT: ${{ inputs.include_unit }}
+        run: |
+          $required = @('android-build-test', 'unix-file-security', 'avalonia-ui-smoke')
+          $optional = @()
+          if ($env:INCLUDE_UNIT -eq 'true') { $required += 'build-test' } else { $optional += 'build-test' }
+          if ($env:GITHUB_REF.StartsWith('refs/tags/android-v')) { $optional += 'm3-package-probe' } else { $required += 'm3-package-probe' }
+          ./scripts/release/shared/Test-ReleaseGate.ps1 -NeedsJson $env:GATE_RESULTS -Required $required -Optional $optional

@@ -68,6 +68,12 @@ $storeListing = Read-RepositoryFile 'packaging/windows-store/STORE_LISTING.md'
 $signPathRunbook = Read-RepositoryFile 'docs/security/SIGNPATH_FOUNDATION_ONBOARDING.md'
 $productAgenda = Read-RepositoryFile 'docs/PRODUCT_AGENDA.md'
 $workflow = Read-RepositoryFile '.github/workflows/build-and-test.yml'
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-desktop-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-validation.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/actions/validate-application/action.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-android-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-AndroidReleaseMetadata.ps1'))
 $desktopProject = Read-RepositoryFile 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj'
 $androidProject = Read-RepositoryFile 'OtpHarbor.UI.Avalonia.Android/OtpHarbor.UI.Avalonia.Android.csproj'
 

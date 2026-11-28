@@ -1,0 +1,121 @@
+name: Submit or reconcile the approved Microsoft Store package
+
+on:
+  workflow_call:
+    outputs:
+      state:
+        value: ${{ jobs.store.outputs.state }}
+      submission_id:
+        value: ${{ jobs.store.outputs.submission_id }}
+    inputs:
+      action:
+        type: string
+        required: true
+      mode:
+        type: string
+        default: approval
+      run_id:
+        type: string
+        required: true
+      artifact_id:
+        type: string
+        required: true
+      candidate_sha256:
+        type: string
+        required: true
+      state_artifact_id:
+        type: string
+        default: ''
+      state_run_id:
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+  attestations: read
+
+jobs:
+  store:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: ${{ inputs.action == 'reconcile' && 'store-reconciliation' || inputs.mode == 'automatic' && 'store-automatic' || 'store-release' }}
+    outputs:
+      state: ${{ steps.report.outputs.state }}
+      submission_id: ${{ steps.report.outputs.submission_id }}
+    concurrency:
+      group: partner-center-9P31KH5L924P
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          artifact-ids: ${{ inputs.artifact_id }}
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: .
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        if: inputs.state_artifact_id != ''
+        with:
+          artifact-ids: ${{ inputs.state_artifact_id }}
+          run-id: ${{ inputs.state_run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: .
+      - name: Verify the original candidate before accessing Store credentials
+        id: origin
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORIGINAL_RUN: ${{ inputs.run_id }}
+          ORIGINAL_ARTIFACT: ${{ inputs.artifact_id }}
+          CANDIDATE_SHA256: ${{ inputs.candidate_sha256 }}
+          STORE_ACTION: ${{ inputs.action }}
+          RELEASE_MODE: ${{ inputs.mode }}
+          STATE_ARTIFACT: ${{ inputs.state_artifact_id }}
+          STATE_RUN: ${{ inputs.state_run_id }}
+          RELEASE_AUTOMATIC_PROMOTION_ENABLED: ${{ vars.RELEASE_AUTOMATIC_PROMOTION_ENABLED }}
+        run: |
+          if ($env:STORE_ACTION -notin @('submit', 'reconcile')) { throw 'Unsupported Store operation.' }
+          ./scripts/release/shared/Test-CandidateOrigin.ps1 -RunId $env:ORIGINAL_RUN -ArtifactId $env:ORIGINAL_ARTIFACT -Digest $env:CANDIDATE_SHA256 -ReadOnly:($env:STORE_ACTION -eq 'reconcile')
+          $candidate = Get-Content candidate.json -Raw | ConvertFrom-Json
+          if ($env:STORE_ACTION -ne 'reconcile' -and $candidate.plan.mode -cne $env:RELEASE_MODE) { throw 'Store mode differs from the approved candidate.' }
+          ./scripts/release/windows/Restore-StoreSubmissionState.ps1 -ArtifactId $env:STATE_ARTIFACT -RunId $env:STATE_RUN -CandidateDigest $env:CANDIDATE_SHA256
+      - name: Operate on the exact approved MSIX without replacing pending submissions
+        shell: pwsh
+        env:
+          STORE_TENANT_ID: ${{ vars.STORE_TENANT_ID }}
+          STORE_CLIENT_ID: ${{ vars.STORE_CLIENT_ID }}
+          STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+          STORE_ACTION: ${{ inputs.action }}
+          CANDIDATE_SHA256: ${{ inputs.candidate_sha256 }}
+        run: |
+          python scripts/release/windows/partner_center.py $env:STORE_ACTION --candidate candidate.json --digest $env:CANDIDATE_SHA256 --root candidate-payload --state store-state.json
+          if ($LASTEXITCODE -ne 0) { throw 'Store operation requires reconciliation; inspect retained state.' }
+      - name: Report certification independently from publication
+        id: report
+        if: always() && steps.origin.outcome == 'success'
+        shell: pwsh
+        run: |
+          if (Test-Path store-state.json) {
+            Get-Content store-state.json >> $env:GITHUB_STEP_SUMMARY
+            $state = Get-Content store-state.json -Raw | ConvertFrom-Json
+            "state=$($state.state)" >> $env:GITHUB_OUTPUT
+            "submission_id=$($state.submissionId)" >> $env:GITHUB_OUTPUT
+          }
+          'Upload or certification submission does not mean the Store package is publicly available. Public version discovery remains externally confirmed by the existing Store catalog synchronizer.' >> $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always() && steps.origin.outcome == 'success'
+        with:
+          name: store-state
+          path: store-state.json
+          retention-days: 90
+          if-no-files-found: warn
+          overwrite: true

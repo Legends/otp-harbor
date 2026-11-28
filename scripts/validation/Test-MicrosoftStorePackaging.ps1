@@ -24,6 +24,12 @@ $packager = Read-RequiredFile 'scripts/release/windows/New-MicrosoftStoreMsix.ps
 $currentSourcePackager = Read-RequiredFile 'scripts/release/windows/New-CurrentSourceMicrosoftStoreMsix.ps1'
 $workflow = Read-RequiredFile '.github/workflows/store-msix.yml'
 $releaseWorkflow = Read-RequiredFile '.github/workflows/build-and-test.yml'
+$releaseWorkflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-desktop-package.yml'))
+$releaseWorkflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-validation.yml'))
+$releaseWorkflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/actions/validate-application/action.yml'))
+$releaseWorkflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-android-package.yml'))
+$releaseWorkflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1'))
+$releaseWorkflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-AndroidReleaseMetadata.ps1'))
 $versionResolver = Join-Path $repositoryRoot 'scripts/release/windows/Get-MicrosoftStoreVersion.ps1'
 $publicVersionUpdater = Join-Path $repositoryRoot 'scripts/release/windows/Set-PublicMicrosoftStoreVersion.ps1'
 $documentation = Read-RequiredFile 'docs/release/MICROSOFT_STORE.md'
@@ -155,14 +161,11 @@ foreach ($control in @(
     }
 }
 
-$stablePublicationMarker = '  publish-avalonia-release:'
-$stablePublicationIndex = $releaseWorkflow.IndexOf(
-    $stablePublicationMarker,
-    [StringComparison]::Ordinal)
-if ($stablePublicationIndex -lt 0) {
+$stablePublication = [regex]::Match($releaseWorkflow,
+    '(?ms)^  publish-avalonia-release:\r?\n.*?(?=^  [a-zA-Z0-9_-]+:|\z)').Value
+if ([string]::IsNullOrWhiteSpace($stablePublication)) {
     throw 'The stable GitHub publication job is missing.'
 }
-$stablePublication = $releaseWorkflow.Substring($stablePublicationIndex)
 foreach ($control in @(
     'name: OTP Harbor ${{ steps.versioning.outputs.release_version }}',
     'The stable desktop GitHub release must contain exactly the two Linux artifacts.',
