@@ -21,7 +21,8 @@ param(
 
     [string]$RepositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../..')).Path,
 
-    [switch]$Check
+    [switch]$Check,
+    [switch]$ResolveOnly
 )
 
 Set-StrictMode -Version Latest
@@ -39,6 +40,11 @@ $displayVersion = if ([string]::IsNullOrWhiteSpace($DisplayVersion)) {
     }
 } else {
     $DisplayVersion
+}
+if ($ResolveOnly) {
+    if ($Check) { throw 'ResolveOnly and Check cannot be combined.' }
+    Write-Output $displayVersion
+    return
 }
 $versionPath = Join-Path $resolvedRoot 'packaging/windows-store/public-version.json'
 

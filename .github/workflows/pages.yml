@@ -42,8 +42,45 @@ jobs:
       FDROID_INDEX_KEYSTORE_BASE64: ${{ secrets.FDROID_INDEX_KEYSTORE_BASE64 }}
       FDROID_INDEX_KEYSTORE_PASSWORD: ${{ secrets.FDROID_INDEX_KEYSTORE_PASSWORD }}
 
-  build:
+  fdroid-fallback:
     needs: fdroid-repository
+    if: always() && needs.fdroid-repository.result == 'failure' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Install the existing F-Droid verification toolchain
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends apksigner aapt openjdk-17-jdk-headless
+          python -m pip install 'fdroidserver==2.4.5'
+      - name: Reverify signed last-known-good public files without signing credentials
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          python scripts/release/android/Restore-FDroidRepository.py --output "$RUNNER_TEMP/otp-fdroid-fallback"
+          echo 'Fresh F-Droid refresh failed. The website will retain a cryptographically reverified previous repository; retry the failed F-Droid operation.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: fdroid-fallback
+          path: ${{ runner.temp }}/otp-fdroid-fallback
+          retention-days: 7
+          if-no-files-found: error
+
+  build:
+    needs: [fdroid-repository, fdroid-fallback]
+    if: always() && (needs.fdroid-repository.result == 'success' || needs.fdroid-fallback.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -72,7 +109,7 @@ jobs:
           fi
 
       - name: Setup .NET SDK for signed-feed verification
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "10.0.404"
 
@@ -105,7 +142,7 @@ jobs:
       - name: Add verified F-Droid repository and setup page
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: fdroid-repository
+          name: ${{ needs.fdroid-repository.result == 'success' && 'fdroid-repository' || 'fdroid-fallback' }}
           path: artifacts/website/fdroid/repo
 
       - name: Render repository setup page from public certificate pins
@@ -131,10 +168,11 @@ jobs:
       - name: Publish the newest signed GitHub feed for RC subscribers
         shell: pwsh
         env:
+          RELEASE_REPOSITORY: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
           $releasesPath = Join-Path $env:RUNNER_TEMP 'published-releases.json'
-          $releasesJson = gh api "repos/${{ github.repository }}/releases?per_page=100"
+          $releasesJson = gh api "repos/${env:RELEASE_REPOSITORY}/releases?per_page=100"
           [IO.File]::WriteAllText($releasesPath, $releasesJson, [Text.UTF8Encoding]::new($false))
           $selectedTag = ./scripts/release/shared/Select-PublishedUpdateFeed.ps1 `
             -ReleasesJsonPath $releasesPath
@@ -146,7 +184,7 @@ jobs:
           $feedDirectory = Join-Path $PWD 'artifacts/website/updates/rc'
           New-Item -ItemType Directory -Path $feedDirectory -Force | Out-Null
           gh release download $selectedTag `
-            --repo "${{ github.repository }}" `
+            --repo "${env:RELEASE_REPOSITORY}" `
             --pattern 'appcast-v2.xml' `
             --pattern 'appcast-v2.xml.signature' `
             --dir $feedDirectory
@@ -174,7 +212,7 @@ jobs:
           $expectedVersion = $selectedTag.TrimStart('v')
           $expectedChannel = if ($selectedTag -match '-rc\d+$') { 'rc' } else { 'stable' }
           $expectedDownloadPrefix = '^https://github\.com/' `
-            + [Regex]::Escape("${{ github.repository }}") `
+            + [Regex]::Escape("${env:RELEASE_REPOSITORY}") `
             + '/releases/download/' `
             + [Regex]::Escape($selectedTag) `
             + '/'

@@ -1,0 +1,434 @@
+name: Prepare desktop release packages
+
+on:
+  workflow_call:
+    inputs:
+      release_tag:
+        type: string
+        required: true
+      source_sha:
+        type: string
+        required: true
+      mode:
+        type: string
+        default: approval
+    secrets:
+      SIGNPATH_API_TOKEN:
+        required: false
+permissions:
+  contents: read
+jobs:
+  package-avalonia-release:
+    name: Package Avalonia release (${{ matrix.rid }})
+    runs-on: ${{ matrix.rid == 'win-x64' && 'windows-2025' || matrix.rid == 'linux-x64' && 'ubuntu-24.04' || 'macos-15' }}
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        rid: [win-x64, linux-x64]
+
+    env:
+      MACOS_SIGNING_CERTIFICATE_BASE64: ''
+      MACOS_SIGNING_CERTIFICATE_PASSWORD: ''
+      MACOS_SIGNING_IDENTITY: ''
+      MACOS_NOTARY_KEY_BASE64: ''
+      MACOS_NOTARY_KEY_ID: ''
+      MACOS_NOTARY_ISSUER_ID: ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+
+      - name: Verify immutable release inputs
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SOURCE: ${{ inputs.source_sha }}
+        run: ./scripts/release/shared/Test-ReleaseSource.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.404"
+          cache: true
+          cache-dependency-path: |
+            OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+            NuGet.config
+
+      - name: Compute release metadata
+        id: versioning
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $tag = "${env:RELEASE_TAG}"
+          if ($tag -notmatch '^v(?<base>\d+\.\d+\.\d+)(?:-rc(?<rc>\d+))?$') {
+            throw "Release tag has an unsupported format."
+          }
+          $baseVersion = $Matches.base
+          $rcNumber = $Matches.rc
+          if ($rcNumber -and [int]$rcNumber -gt 65534) {
+            throw "Release candidate number must be between 1 and 65534."
+          }
+          $releaseVersion = if ($rcNumber) { "$baseVersion-rc$rcNumber" } else { $baseVersion }
+          $fileVersion = if ($rcNumber) { "$baseVersion.$rcNumber" } else { "$baseVersion.65535" }
+          $assemblyVersion = if ($rcNumber) { "$baseVersion.$rcNumber" } else { "$baseVersion.0" }
+          $channel = if ($rcNumber) { "rc" } else { "stable" }
+          "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
+          "file_version=$fileVersion" >> $env:GITHUB_OUTPUT
+          "assembly_version=$assemblyVersion" >> $env:GITHUB_OUTPUT
+          "channel=$channel" >> $env:GITHUB_OUTPUT
+
+      - name: Restore target release graph
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+          RELEASE_VALUE_1: ${{ matrix.rid == 'win-x64' }}
+        shell: pwsh
+        run: >-
+          dotnet restore OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+          --runtime ${env:RELEASE_RUNTIME}
+          -p:PublishReadyToRun=${env:RELEASE_VALUE_1}
+          --nologo
+          --verbosity minimal
+          --configfile NuGet.config
+
+      - name: Publish self-contained Avalonia host
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+          RELEASE_VALUE_1: ${{ matrix.rid == 'win-x64' }}
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
+          RELEASE_FILE_VERSION: ${{ steps.versioning.outputs.file_version }}
+          RELEASE_ASSEMBLY_VERSION: ${{ steps.versioning.outputs.assembly_version }}
+        shell: pwsh
+        run: >-
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+          --configuration Release
+          --runtime ${env:RELEASE_RUNTIME}
+          --self-contained true
+          --no-restore
+          --nologo
+          --verbosity minimal
+          -p:PublishSingleFile=false
+          -p:PublishTrimmed=false
+          -p:PublishReadyToRun=${env:RELEASE_VALUE_1}
+          -p:DebugType=None
+          -p:DebugSymbols=false
+          -p:Version=${env:RELEASE_VERSION}
+          -p:InformationalVersion=${env:RELEASE_VERSION}
+          -p:IncludeSourceRevisionInInformationalVersion=false
+          -p:FileVersion=${env:RELEASE_FILE_VERSION}
+          -p:AssemblyVersion=${env:RELEASE_ASSEMBLY_VERSION}
+          --output release-publish
+
+      - name: Publish fast framework-dependent Windows host
+        if: ${{ matrix.rid == 'win-x64' && (contains(inputs.release_tag, '-rc') || vars.SIGNPATH_PRODUCTION_ENABLED == 'true' && inputs.mode != 'validate') }}
+        env:
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
+          RELEASE_FILE_VERSION: ${{ steps.versioning.outputs.file_version }}
+          RELEASE_ASSEMBLY_VERSION: ${{ steps.versioning.outputs.assembly_version }}
+        shell: pwsh
+        run: >-
+          dotnet publish OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained false
+          --no-restore
+          --nologo
+          --verbosity minimal
+          -p:PublishSingleFile=false
+          -p:PublishTrimmed=false
+          -p:PublishReadyToRun=true
+          -p:DebugType=None
+          -p:DebugSymbols=false
+          -p:Version=${env:RELEASE_VERSION}
+          -p:InformationalVersion=${env:RELEASE_VERSION}
+          -p:IncludeSourceRevisionInInformationalVersion=false
+          -p:FileVersion=${env:RELEASE_FILE_VERSION}
+          -p:AssemblyVersion=${env:RELEASE_ASSEMBLY_VERSION}
+          --output release-fast
+
+      - name: Prepare bounded release payload
+        shell: pwsh
+        run: |
+          ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-publish
+          if (Test-Path -LiteralPath release-fast) {
+            ./scripts/release/shared/Prepare-AvaloniaReleasePayload.ps1 -PublishDirectory release-fast
+          }
+
+      - name: Install pinned WiX Toolset
+        if: ${{ matrix.rid == 'win-x64' && contains(inputs.release_tag, '-rc') }}
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add --global WixToolset.UI.wixext/5.0.2
+          wix extension add --global WixToolset.Util.wixext/5.0.2
+          wix extension add --global WixToolset.BootstrapperApplications.wixext/5.0.2
+
+      - name: Upload unsigned Windows payload for SignPath
+        id: upload-signpath-artifact
+        if: ${{ matrix.rid == 'win-x64' && !contains(inputs.release_tag, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' && inputs.mode != 'validate' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: signpath-unsigned-windows-${{ inputs.source_sha }}
+          path: |
+            release-publish
+            release-fast
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Submit Windows payload to SignPath
+        if: ${{ matrix.rid == 'win-x64' && !contains(inputs.release_tag, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' && inputs.mode != 'validate' }}
+        uses: signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627 # v2.3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: totp-manager
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: windows-release-v1
+          github-artifact-id: ${{ steps.upload-signpath-artifact.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signpath-signed
+          parameters: |
+            version: ${{ toJSON(steps.versioning.outputs.release_version) }}
+
+      - name: Validate and apply SignPath result
+        if: ${{ matrix.rid == 'win-x64' && !contains(inputs.release_tag, '-rc') && vars.SIGNPATH_PRODUCTION_ENABLED == 'true' && inputs.mode != 'validate' }}
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
+        run: |
+          ./scripts/release/windows/Apply-SignPathSignedPayload.ps1 `
+            -SignedRoot signpath-signed `
+            -TargetDirectory release-publish,release-fast `
+            -ExpectedProductVersion "${env:RELEASE_VERSION}"
+
+      - name: Import macOS Developer ID certificate
+        if: ${{ matrix.rid == 'osx-arm64' }}
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $required = @(
+            $env:MACOS_SIGNING_CERTIFICATE_BASE64,
+            $env:MACOS_SIGNING_CERTIFICATE_PASSWORD,
+            $env:MACOS_SIGNING_IDENTITY,
+            $env:MACOS_NOTARY_KEY_BASE64,
+            $env:MACOS_NOTARY_KEY_ID,
+            $env:MACOS_NOTARY_ISSUER_ID)
+          if ($required | Where-Object { [string]::IsNullOrWhiteSpace($_) }) {
+            throw "macOS Developer ID and notarization credentials are required."
+          }
+
+          $certificatePath = Join-Path $env:RUNNER_TEMP "developer-id.p12"
+          $certificateBytes = [Convert]::FromBase64String($env:MACOS_SIGNING_CERTIFICATE_BASE64)
+          try {
+            [IO.File]::WriteAllBytes($certificatePath, $certificateBytes)
+          }
+          finally {
+            [Security.Cryptography.CryptographicOperations]::ZeroMemory($certificateBytes)
+          }
+          & chmod 600 $certificatePath
+          $keychainPath = Join-Path $env:RUNNER_TEMP "totp-release.keychain-db"
+          $keychainPassword = [Guid]::NewGuid().ToString("N")
+          & security create-keychain -p $keychainPassword $keychainPath
+          & security set-keychain-settings -lut 21600 $keychainPath
+          & security unlock-keychain -p $keychainPassword $keychainPath
+          & security import $certificatePath -k $keychainPath -P $env:MACOS_SIGNING_CERTIFICATE_PASSWORD -T /usr/bin/codesign -T /usr/bin/security
+          & security set-key-partition-list -S "apple-tool:,apple:" -s -k $keychainPassword $keychainPath
+          & security list-keychains -d user -s $keychainPath
+          if ($LASTEXITCODE -ne 0) { throw "Could not prepare the macOS signing Keychain." }
+
+          $notaryKeyPath = Join-Path $env:RUNNER_TEMP "AuthKey.p8"
+          $notaryKeyBytes = [Convert]::FromBase64String($env:MACOS_NOTARY_KEY_BASE64)
+          try {
+            [IO.File]::WriteAllBytes($notaryKeyPath, $notaryKeyBytes)
+          }
+          finally {
+            [Security.Cryptography.CryptographicOperations]::ZeroMemory($notaryKeyBytes)
+          }
+          & chmod 600 $notaryKeyPath
+          "MACOS_NOTARY_KEY_PATH=$notaryKeyPath" >> $env:GITHUB_ENV
+
+      - name: Assemble release artifact
+        shell: pwsh
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+          RELEASE_CHANNEL: ${{ steps.versioning.outputs.channel }}
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
+        run: |
+          New-Item -ItemType Directory -Path release-assets | Out-Null
+          switch ("${env:RELEASE_RUNTIME}") {
+            "win-x64" {
+              if ("${env:RELEASE_CHANNEL}" -eq "stable") {
+                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
+                  -PackageDirectory release-publish `
+                  -DistributionMode store `
+                  -Channel stable `
+                  -DisableUpdates
+                Compress-Archive `
+                  -Path release-publish/* `
+                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-${env:RELEASE_VERSION}.zip"
+              }
+              else {
+                $appcastUrl = "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
+                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
+                  -PackageDirectory release-publish `
+                  -DistributionMode direct `
+                  -Channel rc `
+                  -AppcastUrl $appcastUrl
+                ./scripts/release/shared/Set-PackageUpdatePolicy.ps1 `
+                  -PackageDirectory release-fast `
+                  -DistributionMode direct `
+                  -Channel rc `
+                  -AppcastUrl $appcastUrl
+                Compress-Archive `
+                  -Path release-publish/* `
+                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-${env:RELEASE_VERSION}.zip"
+                Compress-Archive `
+                  -Path release-fast/* `
+                  -DestinationPath "release-assets/OTP-Harbor-windows-x64-fast-${env:RELEASE_VERSION}.zip"
+                $productVersion = "${env:RELEASE_VERSION}".Split('-')[0]
+                ./scripts/release/windows/New-WindowsMsi.ps1 `
+                  -PublishDirectory release-publish `
+                  -OutputDirectory release-assets `
+                  -ReleaseVersion "${env:RELEASE_VERSION}" `
+                  -ProductVersion $productVersion
+              }
+            }
+            "linux-x64" {
+              $appcastUrl = if ("${env:RELEASE_CHANNEL}" -eq "rc") {
+                "https://legends.github.io/otp-harbor/updates/rc/appcast-v2.xml"
+              }
+              else {
+                "https://github.com/Legends/otp-harbor/releases/latest/download/appcast-v2.xml"
+              }
+              ./scripts/release/linux/Package-AvaloniaLinux.ps1 `
+                -PublishDirectory release-publish `
+                -OutputDirectory linux-distribution `
+                -ReleaseVersion "${env:RELEASE_VERSION}" `
+                -AppcastUrl $appcastUrl
+              Copy-Item linux-distribution/*.tar.gz release-assets/
+              Copy-Item linux-distribution/*.deb release-assets/
+            }
+            "osx-arm64" {
+              ./scripts/release/macos/Package-AvaloniaMacOS.ps1 `
+                -PublishDirectory release-publish `
+                -OutputDirectory macos-distribution `
+                -ReleaseVersion "${env:RELEASE_VERSION}" `
+                -SigningIdentity $env:MACOS_SIGNING_IDENTITY `
+                -NotaryKeyPath $env:MACOS_NOTARY_KEY_PATH `
+                -NotaryKeyId $env:MACOS_NOTARY_KEY_ID `
+                -NotaryIssuerId $env:MACOS_NOTARY_ISSUER_ID
+              Copy-Item macos-distribution/*.dmg release-assets/
+            }
+            default { throw "Unsupported release target." }
+          }
+
+      - name: Validate retained release artifact
+        shell: pwsh
+        env:
+          RELEASE_RUNTIME: ${{ matrix.rid }}
+        run: |
+          $packageRoot = if ("${env:RELEASE_RUNTIME}" -eq "osx-arm64") {
+            "macos-distribution"
+          }
+          else {
+            "release-publish"
+          }
+          ./scripts/validation/Test-NativePackageDependencies.ps1 `
+            -PackageDirectory $packageRoot `
+            -RuntimeIdentifier "${env:RELEASE_RUNTIME}"
+          if (Test-Path -LiteralPath release-fast) {
+            ./scripts/validation/Test-NativePackageDependencies.ps1 `
+              -PackageDirectory release-fast `
+              -RuntimeIdentifier "${env:RELEASE_RUNTIME}"
+          }
+
+      - name: Upload retained native release artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: avalonia-release-${{ matrix.rid }}-${{ inputs.source_sha }}
+          path: release-assets/*
+          retention-days: 90
+          if-no-files-found: error
+
+  package-microsoft-store-msix:
+    name: Package Microsoft Store MSIX
+    needs: package-avalonia-release
+    runs-on: windows-2025
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+
+      - name: Verify immutable release inputs
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SOURCE: ${{ inputs.source_sha }}
+        run: ./scripts/release/shared/Test-ReleaseSource.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE
+
+      - name: Compute Store release metadata
+        id: versioning
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $tag = "${env:RELEASE_TAG}"
+          $storeVersion = ./scripts/release/windows/Get-MicrosoftStoreVersion.ps1 -ReleaseTag $tag
+          $releaseVersion = $tag.Substring(1)
+          "store_version=$storeVersion" >> $env:GITHUB_OUTPUT
+          "release_version=$releaseVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Download validated Windows release payload
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: avalonia-release-win-x64-${{ inputs.source_sha }}
+          path: windows-release
+
+      - name: Extract self-contained Windows payload
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
+        run: |
+          $archive = "windows-release/OTP-Harbor-windows-x64-${env:RELEASE_VERSION}.zip"
+          if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
+            throw "The validated self-contained Windows release archive is missing."
+          }
+          Expand-Archive -LiteralPath $archive -DestinationPath store-publish
+
+      - name: Build unsigned Partner Center MSIX
+        shell: pwsh
+        env:
+          RELEASE_VALUE_0: ${{ steps.versioning.outputs.store_version }}
+          RELEASE_VERSION: ${{ steps.versioning.outputs.release_version }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          ./scripts/release/windows/New-MicrosoftStoreMsix.ps1 `
+            -IdentityName 'Legends77.OTPHarbor' `
+            -Publisher 'CN=84095A7C-6458-436E-ABF2-DC02311E25F9' `
+            -PublisherDisplayName 'Legends77' `
+            -Version ('__RELEASE_VALUE_0__'.Replace('__RELEASE_VALUE_0__', $env:RELEASE_VALUE_0)) `
+            -ProductVersion ('__RELEASE_VERSION__'.Replace('__RELEASE_VERSION__', $env:RELEASE_VERSION)) `
+            -OutputDirectory ('artifacts/windows/release/__RELEASE_TAG__'.Replace('__RELEASE_TAG__', $env:RELEASE_TAG)) `
+            -PublishDirectory store-publish
+
+      - name: Upload Partner Center submission artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: otp-harbor-microsoft-store-${{ steps.versioning.outputs.release_version }}
+          path: |
+            artifacts/windows/release/${{ inputs.release_tag }}/*.msix
+            artifacts/windows/release/${{ inputs.release_tag }}/SHA256SUMS
+            artifacts/windows/release/${{ inputs.release_tag }}/store-package.json
+          if-no-files-found: error
+          retention-days: 90

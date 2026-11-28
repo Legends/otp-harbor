@@ -1,0 +1,5382 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-28",
+  "sourceCommit": "f91112a1785ae8025d0752897803d5fe5ed05178",
+  "rule": "generic-api-key",
+  "engineVersion": "8.30.1",
+  "configurationSha256": "1520369b727daa79156d3acede5e843bb4bfc932d8f9a8c784a7a6e59d17689d",
+  "baselineFindingCount": 46,
+  "distinctDetectedValues": 33,
+  "approvedFixtureFindings": 42,
+  "unresolvedFindingCount": 0,
+  "unresolvedDetectedValues": 0,
+  "verifiedLivePrivateAccountCredentials": 0,
+  "liveCredentialValidity": "not probed",
+  "evidence": {
+    "E01": {
+      "description": "RFC 6238 Appendix B SHA-1 test-vector comparison matched the constant in both presentation test classes.",
+      "references": [
+        "https://www.rfc-editor.org/rfc/rfc6238#appendix-B",
+        "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+        "OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs"
+      ],
+      "verified": true
+    },
+    "E02": {
+      "description": "Historical public synthetic generator reproduced all 26 demo-account seeds, including all 25 detections. The media-writing generator itself was not executed.",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "path": "scripts/marketing/Prepare-DemoData.py",
+      "sourceBlob": "ed5ab5678d053a445df11c8c2a8fe371421aaefb",
+      "verified": true
+    },
+    "E03": {
+      "description": "All six JSON fixtures are unchanged from the detected commit. Three PBKDF2 hashes were recomputed from the declared synthetic password; all three actual LegacySettingsFixtureTests passed, including synthetic-DEK unwrap.",
+      "references": [
+        "OtpHarbor.Tests/Fixtures/LegacySettings/README.md",
+        "OtpHarbor.Tests/Integration/LegacySettingsFixtureTests.cs"
+      ],
+      "verified": true,
+      "testsPassed": 3
+    },
+    "E04": {
+      "description": "Mixed-conflict and TwoFAS files are declared synthetic physical-acceptance fixtures by the guide and kit builder, and are unchanged from the detected commit. U032 also matches the canonical RFC test-secret prefix and existing unit fixtures. U033 appears only in the two declared acceptance fixture blobs; absence of external reuse was not tested.",
+      "references": [
+        "docs/testing/MIXED_ACCOUNT_CONFLICT_SCENARIO.md",
+        "docs/testing/V3_RELEASE_PHYSICAL_ACCEPTANCE.md",
+        "scripts/testing/windows/Prepare-V3ReleasePhysicalTestKit.ps1",
+        "scripts/testing/fixtures/mixed-account-older.json",
+        "scripts/testing/fixtures/release-twofas.2fas",
+        "OtpHarbor.Tests/Services/AccountImportServiceTests.cs"
+      ],
+      "verified": true
+    },
+    "E05": {
+      "description": "Exclusive observed IndexNow verification/notification use confirmed across all 45 matching historical blobs, 66 occurrences, all associated paths and current tracked files. Four notification-step variants use only the documented IndexNow payload/endpoint. Public verification GET returns HTTP 200 with matching body. Owner authorizes the exact protocol exceptions; no other authentication reuse observed in repository evidence.",
+      "references": [
+        "https://www.indexnow.org/documentation",
+        "https://www.indexnow.org/faq",
+        ".github/workflows/pages.yml",
+        "scripts/validation/Test-PublicWebsite.ps1",
+        "site/<public-verification-value>.txt"
+      ],
+      "verified": true,
+      "liveApiValidity": "No notification submitted; API acceptance not probed",
+      "ownerProtocolExceptionAuthorized": true,
+      "provenance": "docs/security/evidence/historical-provenance-20261128.json"
+    },
+    "E06": {
+      "description": "Original application comment introduction and README copy traced to 2024-04-04 commits, public author name and messages retained with emails omitted. Eight occurrences in six blobs and 29 commit trees; absent tracked HEAD. Historical generators do not independently establish synthetic origin. Owner confirmation E07 supplies the disposition.",
+      "references": [
+        "Github2FA/MainWindow.xaml.cs (historical)",
+        "readme.md (historical)"
+      ],
+      "verified": true,
+      "credentialValidity": "No live authentication attempted",
+      "revocation": "Not claimed; owner-attested synthetic",
+      "provenance": "docs/security/evidence/historical-provenance-20261128.json"
+    },
+    "E07": {
+      "description": "Owner explicitly confirms all repository TOTP Base32 values are synthetic during investigation of the historical sharedGithubSecret examples. Accepted as owner provenance attestation, distinct from reproducible generator evidence.",
+      "ownerStatement": "in the repo i have only synthetic totp base 32 codes for sure",
+      "scope": "Owner confirmation during this historical sharedGithubSecret remediation; covers the examples under review",
+      "verified": true,
+      "verificationKind": "owner-attestation",
+      "independentGeneratorProof": false
+    }
+  },
+  "findings": [
+    {
+      "id": "F001",
+      "valueId": "U001",
+      "rule": "generic-api-key",
+      "path": ".github/workflows/pages.yml",
+      "commit": "23837c18eb58effaf6744cbd47c80dbaac906205",
+      "fingerprint": "23837c18eb58effaf6744cbd47c80dbaac906205:.github/workflows/pages.yml:generic-api-key:141",
+      "line": 141,
+      "refSet": "R01",
+      "classification": "authorized-indexnow-protocol-key",
+      "evidence": [
+        "E05"
+      ],
+      "remediation": "exact-fingerprint-protocol-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F002",
+      "valueId": "U002",
+      "rule": "generic-api-key",
+      "path": "Github2FA/MainWindow.xaml.cs",
+      "commit": "4a481cc89102ef3608d3b9614afe1092845f7585",
+      "fingerprint": "4a481cc89102ef3608d3b9614afe1092845f7585:Github2FA/MainWindow.xaml.cs:generic-api-key:40",
+      "line": 40,
+      "refSet": "R02",
+      "classification": "owner-attested-synthetic-totp-fixture",
+      "evidence": [
+        "E06",
+        "E07"
+      ],
+      "remediation": "exact-fingerprint-owner-attested-fixture",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F003",
+      "valueId": "U003",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "commit": "71b968b137df4f5fd61729de92bf29410bf9d199",
+      "fingerprint": "71b968b137df4f5fd61729de92bf29410bf9d199:TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs:generic-api-key:22",
+      "line": 22,
+      "refSet": "R04",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E01"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F004",
+      "valueId": "U003",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "commit": "71b968b137df4f5fd61729de92bf29410bf9d199",
+      "fingerprint": "71b968b137df4f5fd61729de92bf29410bf9d199:TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs:generic-api-key:22",
+      "line": 22,
+      "refSet": "R04",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E01"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F003"
+    },
+    {
+      "id": "F005",
+      "valueId": "U004",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v0-authorization-profile-pbkdf2.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v0-authorization-profile-pbkdf2.json:generic-api-key:3",
+      "line": 3,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F006",
+      "valueId": "U005",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v0-authorization-profile-pbkdf2.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v0-authorization-profile-pbkdf2.json:generic-api-key:4",
+      "line": 4,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F007",
+      "valueId": "U004",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v1-global-profile-minimal-pbkdf2.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v1-global-profile-minimal-pbkdf2.json:generic-api-key:4",
+      "line": 4,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F005"
+    },
+    {
+      "id": "F008",
+      "valueId": "U005",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v1-global-profile-minimal-pbkdf2.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v1-global-profile-minimal-pbkdf2.json:generic-api-key:5",
+      "line": 5,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F006"
+    },
+    {
+      "id": "F009",
+      "valueId": "U004",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v2-global-profile-expanded-pbkdf2.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v2-global-profile-expanded-pbkdf2.json:generic-api-key:5",
+      "line": 5,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F005"
+    },
+    {
+      "id": "F010",
+      "valueId": "U005",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v2-global-profile-expanded-pbkdf2.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v2-global-profile-expanded-pbkdf2.json:generic-api-key:6",
+      "line": 6,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F006"
+    },
+    {
+      "id": "F011",
+      "valueId": "U004",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v3-global-profile-dek-envelope.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v3-global-profile-dek-envelope.json:generic-api-key:5",
+      "line": 5,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F005"
+    },
+    {
+      "id": "F012",
+      "valueId": "U006",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v3-global-profile-dek-envelope.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v3-global-profile-dek-envelope.json:generic-api-key:8",
+      "line": 8,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F013",
+      "valueId": "U004",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v4-app-settings-dek-envelope.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v4-app-settings-dek-envelope.json:generic-api-key:5",
+      "line": 5,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F005"
+    },
+    {
+      "id": "F014",
+      "valueId": "U006",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v4-app-settings-dek-envelope.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v4-app-settings-dek-envelope.json:generic-api-key:8",
+      "line": 8,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F012"
+    },
+    {
+      "id": "F015",
+      "valueId": "U004",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v5-current-app-settings.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v5-current-app-settings.json:generic-api-key:6",
+      "line": 6,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F005"
+    },
+    {
+      "id": "F016",
+      "valueId": "U006",
+      "rule": "generic-api-key",
+      "path": "TOTP.Tests/Fixtures/LegacySettings/v5-current-app-settings.json",
+      "commit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "fingerprint": "83d65da871ec28d99a0eb4d7a02df5f83786625f:TOTP.Tests/Fixtures/LegacySettings/v5-current-app-settings.json:generic-api-key:9",
+      "line": 9,
+      "refSet": "R05",
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F012"
+    },
+    {
+      "id": "F017",
+      "valueId": "U007",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:5",
+      "line": 5,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F018",
+      "valueId": "U008",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:13",
+      "line": 13,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F019",
+      "valueId": "U009",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:21",
+      "line": 21,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F020",
+      "valueId": "U010",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:29",
+      "line": 29,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F021",
+      "valueId": "U011",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:37",
+      "line": 37,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F022",
+      "valueId": "U012",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:45",
+      "line": 45,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F023",
+      "valueId": "U013",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:53",
+      "line": 53,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F024",
+      "valueId": "U014",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:61",
+      "line": 61,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F025",
+      "valueId": "U015",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:69",
+      "line": 69,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F026",
+      "valueId": "U016",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:77",
+      "line": 77,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F027",
+      "valueId": "U017",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:85",
+      "line": 85,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F028",
+      "valueId": "U018",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:93",
+      "line": 93,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F029",
+      "valueId": "U019",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:101",
+      "line": 101,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F030",
+      "valueId": "U020",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:109",
+      "line": 109,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F031",
+      "valueId": "U021",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:117",
+      "line": 117,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F032",
+      "valueId": "U022",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:125",
+      "line": 125,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F033",
+      "valueId": "U023",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:133",
+      "line": 133,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F034",
+      "valueId": "U024",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:141",
+      "line": 141,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F035",
+      "valueId": "U025",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:149",
+      "line": 149,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F036",
+      "valueId": "U026",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:157",
+      "line": 157,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F037",
+      "valueId": "U027",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:165",
+      "line": 165,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F038",
+      "valueId": "U028",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:173",
+      "line": 173,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F039",
+      "valueId": "U029",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:181",
+      "line": 181,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F040",
+      "valueId": "U030",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:197",
+      "line": 197,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F041",
+      "valueId": "U031",
+      "rule": "generic-api-key",
+      "path": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:artifacts/marketing/demo-data/otp-harbor-demo-accounts.json:generic-api-key:205",
+      "line": 205,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F042",
+      "valueId": "U002",
+      "rule": "generic-api-key",
+      "path": "readme.md",
+      "commit": "60607037c1c1c0207b06d83edb42d1a3deaad2ff",
+      "fingerprint": "60607037c1c1c0207b06d83edb42d1a3deaad2ff:readme.md:generic-api-key:15",
+      "line": 15,
+      "refSet": "R03",
+      "classification": "owner-attested-synthetic-totp-fixture",
+      "evidence": [
+        "E06",
+        "E07"
+      ],
+      "remediation": "exact-fingerprint-owner-attested-fixture",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F002"
+    },
+    {
+      "id": "F043",
+      "valueId": "U032",
+      "rule": "generic-api-key",
+      "path": "scripts/testing/fixtures/mixed-account-older.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:scripts/testing/fixtures/mixed-account-older.json:generic-api-key:13",
+      "line": 13,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E04"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F044",
+      "valueId": "U033",
+      "rule": "generic-api-key",
+      "path": "scripts/testing/fixtures/mixed-account-older.json",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:scripts/testing/fixtures/mixed-account-older.json:generic-api-key:21",
+      "line": 21,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E04"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": null
+    },
+    {
+      "id": "F045",
+      "valueId": "U033",
+      "rule": "generic-api-key",
+      "path": "scripts/testing/fixtures/release-twofas.2fas",
+      "commit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "fingerprint": "c72ba6270d919ddca700570348e56fb59d075101:scripts/testing/fixtures/release-twofas.2fas:generic-api-key:5",
+      "line": 5,
+      "refSet": "R06",
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E04"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F044"
+    },
+    {
+      "id": "F046",
+      "valueId": "U001",
+      "rule": "generic-api-key",
+      "path": "scripts/validation/Test-PublicWebsite.ps1",
+      "commit": "23837c18eb58effaf6744cbd47c80dbaac906205",
+      "fingerprint": "23837c18eb58effaf6744cbd47c80dbaac906205:scripts/validation/Test-PublicWebsite.ps1:generic-api-key:29",
+      "line": 29,
+      "refSet": "R01",
+      "classification": "authorized-indexnow-protocol-key",
+      "evidence": [
+        "E05"
+      ],
+      "remediation": "exact-fingerprint-protocol-exception",
+      "manualInterventionRequired": false,
+      "duplicateOf": "F001"
+    }
+  ],
+  "values": [
+    {
+      "valueId": "U001",
+      "uniqueBlobOccurrences": 66,
+      "distinctBlobs": 45,
+      "containingCommitCount": 233,
+      "containingCommitSet": "CS001",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F001",
+        "F046"
+      ],
+      "findingCount": 2,
+      "classification": "authorized-indexnow-protocol-key",
+      "evidence": [
+        "E05"
+      ],
+      "remediation": "exact-fingerprint-protocol-exception",
+      "credentialState": "protocol-public-key-owner-authorized",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U002",
+      "uniqueBlobOccurrences": 8,
+      "distinctBlobs": 6,
+      "containingCommitCount": 29,
+      "containingCommitSet": "CS002",
+      "tipRefsContainingValue": [],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F002",
+        "F042"
+      ],
+      "findingCount": 2,
+      "classification": "owner-attested-synthetic-totp-fixture",
+      "evidence": [
+        "E06",
+        "E07"
+      ],
+      "remediation": "exact-fingerprint-owner-attested-fixture",
+      "credentialState": "owner-attested-synthetic; generator not independently reproduced",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U003",
+      "uniqueBlobOccurrences": 62,
+      "distinctBlobs": 58,
+      "containingCommitCount": 273,
+      "containingCommitSet": "CS003",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/39/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F003",
+        "F004"
+      ],
+      "findingCount": 2,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E01"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U004",
+      "uniqueBlobOccurrences": 12,
+      "distinctBlobs": 8,
+      "containingCommitCount": 452,
+      "containingCommitSet": "CS004",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/28/head",
+        "refs/pull/29/head",
+        "refs/pull/30/head",
+        "refs/pull/31/head",
+        "refs/pull/32/head",
+        "refs/pull/35/head",
+        "refs/pull/36/head",
+        "refs/pull/37/head",
+        "refs/pull/38/head",
+        "refs/pull/39/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc1",
+        "refs/tags/v2.0.0-rc10",
+        "refs/tags/v2.0.0-rc11",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc2",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc3",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.0-rc4",
+        "refs/tags/v2.0.0-rc5",
+        "refs/tags/v2.0.0-rc6",
+        "refs/tags/v2.0.0-rc7",
+        "refs/tags/v2.0.0-rc8",
+        "refs/tags/v2.0.0-rc9",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F005",
+        "F007",
+        "F009",
+        "F011",
+        "F013",
+        "F015"
+      ],
+      "findingCount": 6,
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U005",
+      "uniqueBlobOccurrences": 3,
+      "distinctBlobs": 3,
+      "containingCommitCount": 452,
+      "containingCommitSet": "CS004",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/28/head",
+        "refs/pull/29/head",
+        "refs/pull/30/head",
+        "refs/pull/31/head",
+        "refs/pull/32/head",
+        "refs/pull/35/head",
+        "refs/pull/36/head",
+        "refs/pull/37/head",
+        "refs/pull/38/head",
+        "refs/pull/39/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc1",
+        "refs/tags/v2.0.0-rc10",
+        "refs/tags/v2.0.0-rc11",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc2",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc3",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.0-rc4",
+        "refs/tags/v2.0.0-rc5",
+        "refs/tags/v2.0.0-rc6",
+        "refs/tags/v2.0.0-rc7",
+        "refs/tags/v2.0.0-rc8",
+        "refs/tags/v2.0.0-rc9",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F006",
+        "F008",
+        "F010"
+      ],
+      "findingCount": 3,
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U006",
+      "uniqueBlobOccurrences": 3,
+      "distinctBlobs": 3,
+      "containingCommitCount": 452,
+      "containingCommitSet": "CS004",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/28/head",
+        "refs/pull/29/head",
+        "refs/pull/30/head",
+        "refs/pull/31/head",
+        "refs/pull/32/head",
+        "refs/pull/35/head",
+        "refs/pull/36/head",
+        "refs/pull/37/head",
+        "refs/pull/38/head",
+        "refs/pull/39/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc1",
+        "refs/tags/v2.0.0-rc10",
+        "refs/tags/v2.0.0-rc11",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc2",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc3",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.0-rc4",
+        "refs/tags/v2.0.0-rc5",
+        "refs/tags/v2.0.0-rc6",
+        "refs/tags/v2.0.0-rc7",
+        "refs/tags/v2.0.0-rc8",
+        "refs/tags/v2.0.0-rc9",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F012",
+        "F014",
+        "F016"
+      ],
+      "findingCount": 3,
+      "classification": "verified-crypto-fixture",
+      "evidence": [
+        "E03"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U007",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F017"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U008",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F018"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U009",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F019"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U010",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F020"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U011",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F021"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U012",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F022"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U013",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F023"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U014",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F024"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U015",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F025"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U016",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F026"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U017",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F027"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U018",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F028"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U019",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F029"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U020",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F030"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U021",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F031"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U022",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F032"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U023",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F033"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U024",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F034"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U025",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F035"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U026",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F036"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U027",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F037"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U028",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F038"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U029",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F039"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U030",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F040"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U031",
+      "uniqueBlobOccurrences": 1,
+      "distinctBlobs": 1,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F041"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E02"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U032",
+      "uniqueBlobOccurrences": 132,
+      "distinctBlobs": 65,
+      "containingCommitCount": 273,
+      "containingCommitSet": "CS003",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/39/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F043"
+      ],
+      "findingCount": 1,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E04"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    },
+    {
+      "valueId": "U033",
+      "uniqueBlobOccurrences": 2,
+      "distinctBlobs": 2,
+      "containingCommitCount": 88,
+      "containingCommitSet": "CS005",
+      "tipRefsContainingValue": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "commitOrTagMessageOccurrences": 0,
+      "findingIds": [
+        "F044",
+        "F045"
+      ],
+      "findingCount": 2,
+      "classification": "verified-test-fixture",
+      "evidence": [
+        "E04"
+      ],
+      "remediation": "exact-fingerprint-exception",
+      "credentialState": "documented-synthetic-material",
+      "manualInterventionRequired": false
+    }
+  ],
+  "refSets": {
+    "R01": {
+      "detectionCommit": "23837c18eb58effaf6744cbd47c80dbaac906205",
+      "refs": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "counts": {
+        "heads": 3,
+        "tags": 20,
+        "pull": 5
+      }
+    },
+    "R02": {
+      "detectionCommit": "4a481cc89102ef3608d3b9614afe1092845f7585",
+      "refs": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/heads/release/1.x",
+        "refs/pull/1/head",
+        "refs/pull/10/head",
+        "refs/pull/11/head",
+        "refs/pull/12/head",
+        "refs/pull/13/head",
+        "refs/pull/14/head",
+        "refs/pull/15/head",
+        "refs/pull/16/head",
+        "refs/pull/17/head",
+        "refs/pull/18/head",
+        "refs/pull/19/head",
+        "refs/pull/2/head",
+        "refs/pull/20/head",
+        "refs/pull/21/head",
+        "refs/pull/22/head",
+        "refs/pull/23/head",
+        "refs/pull/24/head",
+        "refs/pull/25/head",
+        "refs/pull/26/head",
+        "refs/pull/27/head",
+        "refs/pull/28/head",
+        "refs/pull/29/head",
+        "refs/pull/3/head",
+        "refs/pull/30/head",
+        "refs/pull/31/head",
+        "refs/pull/32/head",
+        "refs/pull/35/head",
+        "refs/pull/36/head",
+        "refs/pull/37/head",
+        "refs/pull/38/head",
+        "refs/pull/39/head",
+        "refs/pull/4/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/5/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/pull/6/head",
+        "refs/pull/7/head",
+        "refs/pull/8/head",
+        "refs/pull/9/head",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v1.0.0",
+        "refs/tags/v1.0.0-rc1",
+        "refs/tags/v1.0.0-rc10",
+        "refs/tags/v1.0.0-rc11",
+        "refs/tags/v1.0.0-rc12",
+        "refs/tags/v1.0.0-rc13",
+        "refs/tags/v1.0.0-rc14",
+        "refs/tags/v1.0.0-rc15",
+        "refs/tags/v1.0.0-rc16",
+        "refs/tags/v1.0.0-rc17",
+        "refs/tags/v1.0.0-rc18",
+        "refs/tags/v1.0.0-rc19",
+        "refs/tags/v1.0.0-rc2",
+        "refs/tags/v1.0.0-rc20",
+        "refs/tags/v1.0.0-rc21",
+        "refs/tags/v1.0.0-rc22",
+        "refs/tags/v1.0.0-rc23",
+        "refs/tags/v1.0.0-rc24",
+        "refs/tags/v1.0.0-rc25",
+        "refs/tags/v1.0.0-rc26",
+        "refs/tags/v1.0.0-rc27",
+        "refs/tags/v1.0.0-rc28",
+        "refs/tags/v1.0.0-rc29",
+        "refs/tags/v1.0.0-rc3",
+        "refs/tags/v1.0.0-rc30",
+        "refs/tags/v1.0.0-rc31",
+        "refs/tags/v1.0.0-rc32",
+        "refs/tags/v1.0.0-rc33",
+        "refs/tags/v1.0.0-rc34",
+        "refs/tags/v1.0.0-rc35",
+        "refs/tags/v1.0.0-rc36",
+        "refs/tags/v1.0.0-rc37",
+        "refs/tags/v1.0.0-rc38",
+        "refs/tags/v1.0.0-rc39",
+        "refs/tags/v1.0.0-rc4",
+        "refs/tags/v1.0.0-rc40",
+        "refs/tags/v1.0.0-rc41",
+        "refs/tags/v1.0.0-rc42",
+        "refs/tags/v1.0.0-rc43",
+        "refs/tags/v1.0.0-rc44",
+        "refs/tags/v1.0.0-rc45",
+        "refs/tags/v1.0.0-rc46",
+        "refs/tags/v1.0.0-rc47",
+        "refs/tags/v1.0.0-rc48",
+        "refs/tags/v1.0.0-rc49",
+        "refs/tags/v1.0.0-rc5",
+        "refs/tags/v1.0.0-rc50",
+        "refs/tags/v1.0.0-rc51",
+        "refs/tags/v1.0.0-rc52",
+        "refs/tags/v1.0.0-rc53",
+        "refs/tags/v1.0.0-rc54",
+        "refs/tags/v1.0.0-rc55",
+        "refs/tags/v1.0.0-rc56",
+        "refs/tags/v1.0.0-rc57",
+        "refs/tags/v1.0.0-rc58",
+        "refs/tags/v1.0.0-rc59",
+        "refs/tags/v1.0.0-rc6",
+        "refs/tags/v1.0.0-rc60",
+        "refs/tags/v1.0.0-rc61",
+        "refs/tags/v1.0.0-rc62",
+        "refs/tags/v1.0.0-rc7",
+        "refs/tags/v1.0.0-rc8",
+        "refs/tags/v1.0.0-rc9",
+        "refs/tags/v1.0.0.0",
+        "refs/tags/v1.0.0.1",
+        "refs/tags/v1.1.0.0",
+        "refs/tags/v1.2.0.0",
+        "refs/tags/v1.3.0.0",
+        "refs/tags/v1.3.1.0",
+        "refs/tags/v1.4.0.0",
+        "refs/tags/v1.4.1.0",
+        "refs/tags/v1.4.2.0",
+        "refs/tags/v1.5.0.0",
+        "refs/tags/v1.6.0.0",
+        "refs/tags/v1.6.1.0",
+        "refs/tags/v1.7.0.0",
+        "refs/tags/v1.8.0.0",
+        "refs/tags/v1.8.1.0",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc1",
+        "refs/tags/v2.0.0-rc10",
+        "refs/tags/v2.0.0-rc11",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc2",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc3",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.0-rc4",
+        "refs/tags/v2.0.0-rc5",
+        "refs/tags/v2.0.0-rc6",
+        "refs/tags/v2.0.0-rc7",
+        "refs/tags/v2.0.0-rc8",
+        "refs/tags/v2.0.0-rc9",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "counts": {
+        "heads": 4,
+        "tags": 126,
+        "pull": 50
+      }
+    },
+    "R03": {
+      "detectionCommit": "60607037c1c1c0207b06d83edb42d1a3deaad2ff",
+      "refs": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/heads/release/1.x",
+        "refs/pull/1/head",
+        "refs/pull/10/head",
+        "refs/pull/11/head",
+        "refs/pull/12/head",
+        "refs/pull/13/head",
+        "refs/pull/14/head",
+        "refs/pull/15/head",
+        "refs/pull/16/head",
+        "refs/pull/17/head",
+        "refs/pull/18/head",
+        "refs/pull/19/head",
+        "refs/pull/2/head",
+        "refs/pull/20/head",
+        "refs/pull/21/head",
+        "refs/pull/22/head",
+        "refs/pull/23/head",
+        "refs/pull/24/head",
+        "refs/pull/25/head",
+        "refs/pull/26/head",
+        "refs/pull/27/head",
+        "refs/pull/28/head",
+        "refs/pull/29/head",
+        "refs/pull/3/head",
+        "refs/pull/30/head",
+        "refs/pull/31/head",
+        "refs/pull/32/head",
+        "refs/pull/35/head",
+        "refs/pull/36/head",
+        "refs/pull/37/head",
+        "refs/pull/38/head",
+        "refs/pull/39/head",
+        "refs/pull/4/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/5/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/pull/6/head",
+        "refs/pull/7/head",
+        "refs/pull/8/head",
+        "refs/pull/9/head",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v1.0.0",
+        "refs/tags/v1.0.0-rc1",
+        "refs/tags/v1.0.0-rc10",
+        "refs/tags/v1.0.0-rc11",
+        "refs/tags/v1.0.0-rc12",
+        "refs/tags/v1.0.0-rc13",
+        "refs/tags/v1.0.0-rc14",
+        "refs/tags/v1.0.0-rc15",
+        "refs/tags/v1.0.0-rc16",
+        "refs/tags/v1.0.0-rc17",
+        "refs/tags/v1.0.0-rc18",
+        "refs/tags/v1.0.0-rc19",
+        "refs/tags/v1.0.0-rc2",
+        "refs/tags/v1.0.0-rc20",
+        "refs/tags/v1.0.0-rc21",
+        "refs/tags/v1.0.0-rc22",
+        "refs/tags/v1.0.0-rc23",
+        "refs/tags/v1.0.0-rc24",
+        "refs/tags/v1.0.0-rc25",
+        "refs/tags/v1.0.0-rc26",
+        "refs/tags/v1.0.0-rc27",
+        "refs/tags/v1.0.0-rc28",
+        "refs/tags/v1.0.0-rc29",
+        "refs/tags/v1.0.0-rc3",
+        "refs/tags/v1.0.0-rc30",
+        "refs/tags/v1.0.0-rc31",
+        "refs/tags/v1.0.0-rc32",
+        "refs/tags/v1.0.0-rc33",
+        "refs/tags/v1.0.0-rc34",
+        "refs/tags/v1.0.0-rc35",
+        "refs/tags/v1.0.0-rc36",
+        "refs/tags/v1.0.0-rc37",
+        "refs/tags/v1.0.0-rc38",
+        "refs/tags/v1.0.0-rc39",
+        "refs/tags/v1.0.0-rc4",
+        "refs/tags/v1.0.0-rc40",
+        "refs/tags/v1.0.0-rc41",
+        "refs/tags/v1.0.0-rc42",
+        "refs/tags/v1.0.0-rc43",
+        "refs/tags/v1.0.0-rc44",
+        "refs/tags/v1.0.0-rc45",
+        "refs/tags/v1.0.0-rc46",
+        "refs/tags/v1.0.0-rc47",
+        "refs/tags/v1.0.0-rc48",
+        "refs/tags/v1.0.0-rc49",
+        "refs/tags/v1.0.0-rc5",
+        "refs/tags/v1.0.0-rc50",
+        "refs/tags/v1.0.0-rc51",
+        "refs/tags/v1.0.0-rc52",
+        "refs/tags/v1.0.0-rc53",
+        "refs/tags/v1.0.0-rc54",
+        "refs/tags/v1.0.0-rc55",
+        "refs/tags/v1.0.0-rc56",
+        "refs/tags/v1.0.0-rc57",
+        "refs/tags/v1.0.0-rc58",
+        "refs/tags/v1.0.0-rc59",
+        "refs/tags/v1.0.0-rc6",
+        "refs/tags/v1.0.0-rc60",
+        "refs/tags/v1.0.0-rc61",
+        "refs/tags/v1.0.0-rc62",
+        "refs/tags/v1.0.0-rc7",
+        "refs/tags/v1.0.0-rc8",
+        "refs/tags/v1.0.0-rc9",
+        "refs/tags/v1.0.0.0",
+        "refs/tags/v1.0.0.1",
+        "refs/tags/v1.1.0.0",
+        "refs/tags/v1.2.0.0",
+        "refs/tags/v1.3.0.0",
+        "refs/tags/v1.3.1.0",
+        "refs/tags/v1.4.0.0",
+        "refs/tags/v1.4.1.0",
+        "refs/tags/v1.4.2.0",
+        "refs/tags/v1.5.0.0",
+        "refs/tags/v1.6.0.0",
+        "refs/tags/v1.6.1.0",
+        "refs/tags/v1.7.0.0",
+        "refs/tags/v1.8.0.0",
+        "refs/tags/v1.8.1.0",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc1",
+        "refs/tags/v2.0.0-rc10",
+        "refs/tags/v2.0.0-rc11",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc2",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc3",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.0-rc4",
+        "refs/tags/v2.0.0-rc5",
+        "refs/tags/v2.0.0-rc6",
+        "refs/tags/v2.0.0-rc7",
+        "refs/tags/v2.0.0-rc8",
+        "refs/tags/v2.0.0-rc9",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "counts": {
+        "heads": 4,
+        "tags": 126,
+        "pull": 50
+      }
+    },
+    "R04": {
+      "detectionCommit": "71b968b137df4f5fd61729de92bf29410bf9d199",
+      "refs": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "counts": {
+        "heads": 3,
+        "tags": 14,
+        "pull": 5
+      }
+    },
+    "R05": {
+      "detectionCommit": "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "refs": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/28/head",
+        "refs/pull/29/head",
+        "refs/pull/30/head",
+        "refs/pull/31/head",
+        "refs/pull/32/head",
+        "refs/pull/35/head",
+        "refs/pull/36/head",
+        "refs/pull/37/head",
+        "refs/pull/38/head",
+        "refs/pull/39/head",
+        "refs/pull/40/head",
+        "refs/pull/41/head",
+        "refs/pull/42/head",
+        "refs/pull/43/head",
+        "refs/pull/44/head",
+        "refs/pull/45/head",
+        "refs/pull/46/head",
+        "refs/pull/47/head",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v2.0.1",
+        "refs/tags/android-v2.0.2",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v2.0.0",
+        "refs/tags/v2.0.0-rc1",
+        "refs/tags/v2.0.0-rc10",
+        "refs/tags/v2.0.0-rc11",
+        "refs/tags/v2.0.0-rc12",
+        "refs/tags/v2.0.0-rc13",
+        "refs/tags/v2.0.0-rc14",
+        "refs/tags/v2.0.0-rc15",
+        "refs/tags/v2.0.0-rc16",
+        "refs/tags/v2.0.0-rc17",
+        "refs/tags/v2.0.0-rc18",
+        "refs/tags/v2.0.0-rc19",
+        "refs/tags/v2.0.0-rc2",
+        "refs/tags/v2.0.0-rc20",
+        "refs/tags/v2.0.0-rc21",
+        "refs/tags/v2.0.0-rc22",
+        "refs/tags/v2.0.0-rc23",
+        "refs/tags/v2.0.0-rc24",
+        "refs/tags/v2.0.0-rc25",
+        "refs/tags/v2.0.0-rc26",
+        "refs/tags/v2.0.0-rc27",
+        "refs/tags/v2.0.0-rc28",
+        "refs/tags/v2.0.0-rc29",
+        "refs/tags/v2.0.0-rc3",
+        "refs/tags/v2.0.0-rc30",
+        "refs/tags/v2.0.0-rc31",
+        "refs/tags/v2.0.0-rc4",
+        "refs/tags/v2.0.0-rc5",
+        "refs/tags/v2.0.0-rc6",
+        "refs/tags/v2.0.0-rc7",
+        "refs/tags/v2.0.0-rc8",
+        "refs/tags/v2.0.0-rc9",
+        "refs/tags/v2.0.1",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "counts": {
+        "heads": 3,
+        "tags": 48,
+        "pull": 23
+      }
+    },
+    "R06": {
+      "detectionCommit": "c72ba6270d919ddca700570348e56fb59d075101",
+      "refs": [
+        "refs/heads/codex/continuous-delivery-evolution",
+        "refs/heads/fix/android-authentication-policy",
+        "refs/heads/master",
+        "refs/pull/48/head",
+        "refs/pull/49/head",
+        "refs/pull/50/head",
+        "refs/pull/51/head",
+        "refs/pull/51/merge",
+        "refs/tags/android-v3.0.0",
+        "refs/tags/android-v3.0.1",
+        "refs/tags/android-v3.0.2",
+        "refs/tags/android-v3.0.3",
+        "refs/tags/android-v3.0.4",
+        "refs/tags/android-v3.0.5",
+        "refs/tags/android-v3.0.6",
+        "refs/tags/v3.0.0",
+        "refs/tags/v3.0.1",
+        "refs/tags/v3.0.2",
+        "refs/tags/v3.0.3",
+        "refs/tags/v3.0.4",
+        "refs/tags/v3.0.5"
+      ],
+      "counts": {
+        "heads": 3,
+        "tags": 13,
+        "pull": 5
+      }
+    }
+  },
+  "commitSets": {
+    "CS001": [
+      "017b30d3743da893dcc3a44412480f84b8a87eca",
+      "0200478b98e4a7e24f0f0a33e8a53f83c83df28a",
+      "047b0cdcca143a8db339e8934d340e395f078345",
+      "056ff276153fe6fb75ef0759a0541125151fa05a",
+      "0640084902c8f9d41db6b485def0b0d1718606a8",
+      "06479546f076ff0dfb5c9a32370fe98eedd35f3f",
+      "0687133699675d6f9e42a61ca2c6e2bb2ae8a9f7",
+      "07f5728ef5b5ec011a0e4511054987117653547c",
+      "099420c0ce1b8be49da085a10b7dffc7630521f0",
+      "0a00efd9c2912fc888984db7bf1544c038d86d1e",
+      "0a9f77f44e2556e108985f06d2a8904c1f5a717e",
+      "0bb01428f7a60ee37ce7e7d701b24d381832744b",
+      "0c112351c64418429375af19e256d2c182790adb",
+      "0ea08ba130b5b5b4e431127c07c2c65f0f44c649",
+      "10ed08427abbe15b27f25266913313c8d3c4c05f",
+      "127a1e54700df02d8fae776c9c01caa2ce7c2e33",
+      "13ebefa81f761a64fe1f167f2a19f4b12cab219e",
+      "14349a70f16247e8734d59758b75c81016526309",
+      "1434fdccd7cab224108380bb21a92e3bbe0092f2",
+      "175e30a3af77b1b936778206040dececcbca9a97",
+      "182fc1311d89bb41d4a2c1986684335a2dcd0f6b",
+      "1a8a29f2c46b37a911d5babc87252e6e3aad9694",
+      "1b175c44ec6a0f003ef8ed9c8efc5c34ba596210",
+      "1d027f2448788022608b18885931ef2545d0182d",
+      "1dd18d81702a0111f3db038d5d3013384a6dd8a8",
+      "200a4134d19ab161027a62f7829845d6f35b0cb1",
+      "2069f528e0c2d82a0b9894c868eb64a9802cb33a",
+      "20f71c3ee894488f0a769b83afdd9a3edac285b8",
+      "23837c18eb58effaf6744cbd47c80dbaac906205",
+      "24f05672098e91665d4892c5e093955551cb37ea",
+      "26cb56b99296e5fd1a43da8bb0d38cfbd740c79b",
+      "272202e842982960f73251bb04699f0bf1b47121",
+      "286e3cabe6859214df3be434aea32ec895ef65cc",
+      "287a915c554f61035b1dd14b03873ad59b075bdc",
+      "2a2829bc1273e07e49d7c54174e7f3446b18a6b6",
+      "2d1c4e1ba2b193e0b8769aef32fb1468094e1476",
+      "2decef6424ad7572a73ba0a7b432805663a13f51",
+      "2e05dc6efa65267712fc3c31a0ed0ac5128e65ba",
+      "2ea440e98a2efece2fbc0ade20c2e27db3800049",
+      "2f63c44d10c6b3270f46c9898192be0a53f9d4fa",
+      "30a5590dffbf943f15b7bb1425697bb37f33eb30",
+      "30f0932ed8d18865c6f0d8f7ba973a3b5c1cff83",
+      "3414dfd8fec5f806090c2cbdb3570d647edadd27",
+      "346633bb3d47d65cfb3d51c0f9b59e376b9bed40",
+      "38576ed78e31281daf3123d9aa69332a541e5e6d",
+      "389a5fe555eaffd3a58356661048f97587841cda",
+      "3a7338657048426c54ed745dfa419740b5f6e595",
+      "3e5ac298aea120162344ec6871559f9ab1b6eef9",
+      "3e694d6bc3549263f0fbce85e856683be275f867",
+      "3f60a909792d0376aa6f2d92199b62f9d3f0d903",
+      "4023c7394eee4db5a3e777f7d627ce89c29c603f",
+      "414bef83b27e6a871d70b4b1c0f43749fe298ca1",
+      "41cb4b13e3e72d479293fff02002f09086050364",
+      "43a7ef791fc4f43f2f4da1a1dc88a56695fb1d98",
+      "462bb372ef7018f2c067c24fd366cfce845b1e49",
+      "49f5561f4c587cc43b3ab84a87a3a89c283d42ac",
+      "4affa52c9764f0596bcbeead03c808b008c712d4",
+      "4c058a51d37f47112adb7cf9893db68192c09978",
+      "4d25e7f0a4e24c6e3c8f7e5bc57cf996771b3b4d",
+      "4d5ed2b5dea37afb7f72ab8f8bd50e88f6e056f3",
+      "4d737540c82dee84b1cc3221c76c1f8f8351c093",
+      "4e7644b0dd3325ea5e889c5916885d3b70c0f266",
+      "4fe2a20bdb54013f29f699b69c8943a713cc413e",
+      "5068c5ec7a8b05807dc705c14ed20507b4208359",
+      "5330a2abc273ba8412753621bfc33eac5c1190fe",
+      "53d255cbedf494e4d183be762c032f0d27dfce7f",
+      "53e7b44096e2d1f4c88c1eb7a6a43d298453be80",
+      "563419dbe339a620052c77879ec93db8f2359df6",
+      "57e709732192f1384b0cd15507416c49a620c33f",
+      "59e635d71bd6edde7c77cd40abd2d4fdd515579d",
+      "5a0ee1c9aed9fcebed5523b9a843184876a26c80",
+      "5a1878feb04dd54fe97cbbf553efa289ee9f146d",
+      "5b63e85fc483a10b6f80a750ee753eef5ae7d36e",
+      "5cf42ac212fcac34beb7ee2a89869fee1c47a52b",
+      "5eb741c396b956d4efbafbc1f32dae8931c381ea",
+      "5f5a9f59370b74b24c57a1eb918828e679f821be",
+      "5f6cf0ac48ffd278ed32d19d0bc83b0141d94410",
+      "607cd771afffaf2d90ad9043c48270189083249f",
+      "60c17888e62753a6aaaca6fa90c0070410059ff5",
+      "62083a9b72bd6f0630e7400e5ba5a53d0bd5e81e",
+      "6319306db751443e732c090ec55fcc6db5dc599e",
+      "64de46e18f5ffb91a53776c1d01bc15853f3aaa5",
+      "65666384f99f7831b9d8af536a0227275dd29854",
+      "67f98d4ea5b5df0ee637c10ce32b2f6320396cd6",
+      "681ad61893fdc89100bdb32287e0dec451d9bad4",
+      "6907a9ec77e723b88739697cff0102f025b419ba",
+      "6c717a2c39f887612fd3a9e687bda884b12b189e",
+      "6cb1fcd162258ab9af60cd6d69a35356c7fd9392",
+      "6cebbc9e7b9f664e8744bdcde3926e20e3704164",
+      "6d2a70782b53a55caacf448685e7b42e107e72b7",
+      "6db19def9b8c6c510437c6aef987ef5d89cba2bf",
+      "6f42063bc61dde8eecc68f8b5ffe444986354311",
+      "710a8bf9da1828f04921c5000edf9b1121f8855d",
+      "71b968b137df4f5fd61729de92bf29410bf9d199",
+      "72044a1e832667a98cbe933c1fab00128f58489c",
+      "72b2d91f964008275664886e0108144755a5169b",
+      "75bfcd3ee3b40d86f74c2b83cd2180406c72a5cf",
+      "75f188aa6032ffab03937e74bd7bfed7cea52cc3",
+      "7959460d696622204383a1a137c05ae90e522a90",
+      "7a64ed4eb40b9e17927a1b61651d94f18b9998e6",
+      "7c387250016b1549e065d9f78c5e79b04e4d27e0",
+      "7c50d9118d82907eadfbf492ee0fc86d3aa58224",
+      "7daba6b53419d5552b7075828f60bff4f48fc75c",
+      "7f843990c2dbe4d67322f7a554ba64429a352502",
+      "7fabc2a2b5ab1dcf01cbebd03812ec43054387e3",
+      "7fba5ce367b95ba5ccadb4c2e214de8810037e3f",
+      "80df4fe867df56f7030f61f9f12e1e3363c26923",
+      "80e798f2cfff15eea83e53441e2f6b71372b3975",
+      "81f6bb5c6d014cf4200c21fd7f4e0b65810dd71e",
+      "823c476d2c6a21a8e2f2e7c27417ba28fcc27711",
+      "82e6f24f4a8d787bd9481c06d9028e76d76d21ce",
+      "83a70bfd014ec585acb6b3675e49bf57f92a27cf",
+      "86418102a605ebd3ee43c6fe7632a76d52be62f4",
+      "86feef4b645cb4c49143590fa6c4b19c4a1fd17f",
+      "87feade6f415076b85d2464d58d334545baaff66",
+      "8955e204bbfa28778b7c9ab6eadfc8aa68ba957c",
+      "8b6ef75260c10393cd823538973d1b2d229af1c2",
+      "8b9addd915f524adb09257572e7c3ec758c06d7d",
+      "8cf17b59602d9f81a310c21d440a0528ecf08a9d",
+      "8d7f2e9759e002209c84d53b1e28e34c5e068968",
+      "8e6fb2f5d8a9d9e2f4db1686313fee06998ce7be",
+      "91973c8567f6244576b9efa68639e5d0ab8db321",
+      "931a5939d9295b2411e0a22cb10fc0348919b8e2",
+      "946281968ea36b7ee77d2f29c764323d2520dabc",
+      "956d750dfac340b1ffbbcb963bb202ab4f670495",
+      "967e08464b9996721a946516e01d15a097170bc9",
+      "983e6cc31de52f9a8320b969f556351d40c755d7",
+      "9ae60aa0966ae5792a67f64e2aed7881c860880b",
+      "9af56ded39f5ee81d247ed73c22a19d114ec706b",
+      "9b879233c8c86e4e25d6a119a923a3193515107e",
+      "9baa4848e39d284545591e3d980bceb51f17c039",
+      "9c1af5b9356c5a470d346ede5f62efa15c0c48b9",
+      "9c612fe0339605d43118b7a199cdbc1ef0d4e49c",
+      "9d1e3d192542b3ef70adf78a29a6acd53ed7014d",
+      "a05f7ec115bc0e3133ba49e88d9ec380ebd62302",
+      "a0e92999a99bde1318e20e7311262ca88f4f0295",
+      "a3cca62eb34e844d4bcbcd5959ea127dd12a8510",
+      "a42fff78922021e818cc40ccdd96bd518691e7a2",
+      "a43afc368e5c37de7ae94d29f365d778458df1e4",
+      "a455dcde629576df37b79421b5eef9e097da6c2d",
+      "a4b142931552e8ec45c1d964a22058f38c90010c",
+      "a5836846a1f9ab6be455f6e06622eff02bc4c915",
+      "a5dbdb7bcf82f3cae1210e6a9664d0479aeefeae",
+      "a625c704c11b4628f7d3253bf1ef1c609e72b418",
+      "a68522767894e5d72e675c58099339101e483ced",
+      "a70d204b745d791c5f9f7720f98a4629b755325a",
+      "a7319ff390c6439956ddde122187ed7e3d73b116",
+      "a7b607726c2d7250e95ed581752f8bd5e59b03b4",
+      "a7daa98bc4bc0f815f64bf16a903ced0566ac01c",
+      "a8d37a4d12e21bdf0ed2ef307e9203298093744b",
+      "aa1258f700b2ff89deff389e15a0bf6a6259065a",
+      "acbdeeec363b2a6b5aa61f7987b1d00f1eb06691",
+      "af34f03b13f56203dff7b65097bfbccc45278b75",
+      "b058f8c3e720f70c8a911da0d8798ee8d2664b40",
+      "b21dcd89fcef10e50f43a410307b2726c5058bc3",
+      "b2a051b545cd27717be798d7a7a0e75fe196678e",
+      "b304c7ad7afb1dc97bbe93391dcfe9003e61561a",
+      "b3d4dcc9d2364c85282944050cc0ea21b9251c64",
+      "b7f1445804eaf3585bdb0cc66a31e670605c0e6b",
+      "ba107ff3a444faba62224b8ffad50e54217a0419",
+      "bc0154b76ad20c98811204486a58f4665b20930d",
+      "bcec2bb5f94951a20b75a87be1f52a4b0102f83c",
+      "be1c09b2f06241182b4c7a852edd90501f85d8ea",
+      "c22ec89dfd36a33cb9b4c5e0ec7fbcf9e2918351",
+      "c2537b979ee105f6a9477d1447bc44b4dc3406b2",
+      "c2a9de3c73d5b1a9979971457772fe3098050092",
+      "c2f0dd0515eb506276a294f958de238006a6319d",
+      "c4d03f8d147393d6338c8d76456db0209f1f2ae0",
+      "c5df3e62e8c3b95c58447a563fcd9472a16a00dd",
+      "c72ba6270d919ddca700570348e56fb59d075101",
+      "c72dbb46d913bc6c07a50013fe498f3f9e17fb76",
+      "c78c4eebadf3be10bfe5cc15107fdc9ddad23f9d",
+      "c795e1b6b00809615d7b977668a8c942a57469ce",
+      "c801e73224f3d6abed33396f858c54866b8e70f2",
+      "c9e050323b0abb7fff50a5721322c9b320f11da0",
+      "cb997af01ee97ada124c4a1b66411be2baf93848",
+      "cd90d3382927cb745789bb1251a355c780a29e40",
+      "cdedcb5c76166a8fbf8d49cb32935322706e1f58",
+      "ced27f3e2dfa3ace98fbe7b63ee84984b285390b",
+      "cefcc2b0c6bad83ff3f150014a5f4f886c9a7f07",
+      "cf5120e372ca52bca306e0f5a6ca819a2740a536",
+      "d0406cd2400713628c4a9722e8bb2f9fa5db3455",
+      "d09c8a586d0cbc8a7b5e0782745f0ce4f96159cc",
+      "d12d80299e4775a1ff6e5a68b24cbc5e179c056a",
+      "d1e6771b3144f282054d7a7ae09f37ba80a5d46c",
+      "d2bb8684a7f1c82faddb95a8c2e2bec4ce334f15",
+      "d2ccd283478fe6de340eef2f17af0dd6e9995939",
+      "d3d113a690df1d3559b36d0e1ffee712bae0a75a",
+      "d3dfdb4b0e28ab1cba06a4b88c3c7fa232c48cc0",
+      "d4780914858a82095ab8f7ecb43d8c66fb2f0d7e",
+      "d5049d83a63f27b71d00fc663d7415b69dd71047",
+      "d7260e874ac731b669fc6f674bc4412d5d2d097d",
+      "dc136952bb5bf7d421875e1f460a824d09d5f71d",
+      "dc632946d13054fc41147659a91606ba60b184cb",
+      "dcc80cb0cc7c7334787d98d8cf1ca27aa92f0361",
+      "df51f88a14444a56c47961f87c86eee4f3bc4844",
+      "e1313a4d2fa2cc3950d5d72227693dd03c2f5af7",
+      "e1b5715bb8f670929af0dadf8dcde5730a5b3e66",
+      "e2927a158f54fe832d31fa97bbc6c58d63f33327",
+      "e4415d71d53f42dc0f6923f0bd818ca0849f2da5",
+      "e57fda88f5cede1a22daf1449e90b8f8f9ac8aef",
+      "e5b33312771449080b5a678184c23d6188ea3355",
+      "e6e7f9f33fe7b5bc21a4a193a84e07531507ae75",
+      "e833d5457ce9da432cce8d3eebd8f255463baf0a",
+      "ec16b0ea09d267a1ffbe6ddba95b081c22ce900b",
+      "ed7265d2589f32a4b1553fb358e7279d48e9998a",
+      "eda84091ba8807beebdbbf9312d4e6a1501211b8",
+      "ef5b4635028834b800fde898f663e316cdbee93d",
+      "ef97a147143f23e2827415617665d90cfb33d20e",
+      "f0d32c49c98fcf23e5766e1a0fcbf7a66d354d23",
+      "f0db7c1b4923c6067bee0bc722b9272ceb59c525",
+      "f1353201252a50d2890774567c394060ca95eab0",
+      "f16f544b69047a9e4d4aa8e00ad880194c1dcec9",
+      "f20f17325388c96a1f47aca892decea32f7cedd8",
+      "f2898611a35e6caf10527f3124cb3065bd213863",
+      "f402185415029b44d99b40ce0c8688063a6cfdcf",
+      "f4361d9ac707c7ff3cad0c2cc2edc59084107396",
+      "f50b6dc9deeab5cef382fae1a60fb7499d8126ab",
+      "f5a47715ee18c5d5a588426db192ca4cf43fb85c",
+      "f5d3e06cd38988010ed68bc719f9b40a907b95ac",
+      "f69de0b7140f97ac03ea6eaed9a2570b322c38e9",
+      "f91112a1785ae8025d0752897803d5fe5ed05178",
+      "f9991046045a33b443c6155f86e5992d55da4cd2",
+      "fba69cee31e6a790ac1b226509cc6d97cedb01e9",
+      "fd47185f5e5d905abec2366d34e1c01050dd7b4f",
+      "fe49799f10661dfa3c4a8cd30f144cf67f3094b4",
+      "fe62a50a8c26ef36c0de853aad0776d28f49f95d",
+      "fe724ac912467407434606e07ea7b68ff9794056",
+      "fe89320d6b25c14c678a356a0acc14f166782abe",
+      "fedcace7b3a05bacf2f0bbad38042e1837b55791",
+      "ff3607be5dd825addda5165b6bc3209a75fec841",
+      "ff5baa1fedeae27f0a7a86510d72374affadddf7",
+      "ffac3b9bb32e4531b40aefed6d3bf325fb3dd125"
+    ],
+    "CS002": [
+      "105d315237d46c899e08b683ba730ac5381e6142",
+      "19e064bba0d61037e3ae35f2b50c3238d36e4e2f",
+      "1bfac4e6f146f45000eef5514ccca5e35dfe6625",
+      "24413364560d567a46e29aeb1b54aa636d041a70",
+      "3158b85e761d950de000a494719bd6856617777a",
+      "477f6dd09605702286ccc42ec225ef2ca8b0815c",
+      "482057b756b31af7843433d7ee0be585e61ee2d2",
+      "4a481cc89102ef3608d3b9614afe1092845f7585",
+      "51de7ba6ea014a5bcc9e8eab9a052a29f12e6c0c",
+      "538f880c68afe3b35e3d85a8cfcd9f54d93bd503",
+      "58b0f9df221780039e13917df2cb87d95acff38e",
+      "60607037c1c1c0207b06d83edb42d1a3deaad2ff",
+      "6c4bac0ff415ee35a0c857f1a5e165e1ed64fbb2",
+      "7590974aa9216ddcfb52ca3b804ab695f6d2e2e1",
+      "7d41399cbe0399d417810f83fd36e6350a81fa79",
+      "84b21aab8a8a2342fc5690c360780b449a07d722",
+      "8b7442c87a45faf7fdae63ab40bcd344f5e64373",
+      "96300299189073e91cf7e553ebda66c45559a9ca",
+      "9b8505df94c2e4f4adaa01e882913dd0b506e63c",
+      "9d7960df26fd5668f561801137cf5eab3a38cdd2",
+      "a840332d3fb2e0be835de68f183918af9cab3dbd",
+      "abf31a739c49f615fcf71f67671d1b799b990974",
+      "b4845144778e121ccd49bfdfbf81ef7d3f824c14",
+      "bcba4213e8750ff2bea48d3668444c6811f935a6",
+      "bd25c4b9580153ec3640c0624e0c030030787c00",
+      "c608c2721d63e1d31616383d001db29219eafde3",
+      "c92e6289c4d7b3a19bf31fabc3b2d7b1b8e5ec83",
+      "e813e8b1d2466acf98e82737456d65c1bd57f353",
+      "f1993a5777830d696ec9e18e252ae0baa7c85c5d"
+    ],
+    "CS003": [
+      "009248747b4b8ee93ecdf75d2d96b38c24d52b9a",
+      "016f855f8979ecbc81d06c7ef6014310b717c83d",
+      "017b30d3743da893dcc3a44412480f84b8a87eca",
+      "01c8727f81b4014633d2145963f01db1257e773d",
+      "0200478b98e4a7e24f0f0a33e8a53f83c83df28a",
+      "047b0cdcca143a8db339e8934d340e395f078345",
+      "056ff276153fe6fb75ef0759a0541125151fa05a",
+      "0640084902c8f9d41db6b485def0b0d1718606a8",
+      "06479546f076ff0dfb5c9a32370fe98eedd35f3f",
+      "0687133699675d6f9e42a61ca2c6e2bb2ae8a9f7",
+      "07f5728ef5b5ec011a0e4511054987117653547c",
+      "09234d0b7ebb46c041654c29e4035d8968f80a07",
+      "099420c0ce1b8be49da085a10b7dffc7630521f0",
+      "0a00efd9c2912fc888984db7bf1544c038d86d1e",
+      "0a9f77f44e2556e108985f06d2a8904c1f5a717e",
+      "0bb01428f7a60ee37ce7e7d701b24d381832744b",
+      "0c112351c64418429375af19e256d2c182790adb",
+      "0ea08ba130b5b5b4e431127c07c2c65f0f44c649",
+      "10ed08427abbe15b27f25266913313c8d3c4c05f",
+      "127a1e54700df02d8fae776c9c01caa2ce7c2e33",
+      "13ebefa81f761a64fe1f167f2a19f4b12cab219e",
+      "14349a70f16247e8734d59758b75c81016526309",
+      "1434fdccd7cab224108380bb21a92e3bbe0092f2",
+      "15c226ede34bf7fb592dc516aaef9430c130bc8d",
+      "175e30a3af77b1b936778206040dececcbca9a97",
+      "178fc5185480b2af14976f6e09cb7d5142dfe2aa",
+      "182fc1311d89bb41d4a2c1986684335a2dcd0f6b",
+      "18959debbba3518f64f04ee78e9df785bf93f623",
+      "199a041fe7f4592a2792adc317b7540e012ee577",
+      "1a8a29f2c46b37a911d5babc87252e6e3aad9694",
+      "1b175c44ec6a0f003ef8ed9c8efc5c34ba596210",
+      "1b6b594a29ff8073c67bdb7fb73d99b9bead9125",
+      "1bc63cb4a5788e4a42ffacbbcb8a4a02c424d260",
+      "1d027f2448788022608b18885931ef2545d0182d",
+      "1dd18d81702a0111f3db038d5d3013384a6dd8a8",
+      "1f5959ec44b236b567baf57541e6308cff83847a",
+      "200a4134d19ab161027a62f7829845d6f35b0cb1",
+      "2069f528e0c2d82a0b9894c868eb64a9802cb33a",
+      "20f71c3ee894488f0a769b83afdd9a3edac285b8",
+      "23837c18eb58effaf6744cbd47c80dbaac906205",
+      "243759a352ef6acd1c0084b7cb70c66ea6c9a3ca",
+      "24f05672098e91665d4892c5e093955551cb37ea",
+      "26cb56b99296e5fd1a43da8bb0d38cfbd740c79b",
+      "272202e842982960f73251bb04699f0bf1b47121",
+      "28120ce24af579ee04bc535499aa717b8d40bf14",
+      "286e3cabe6859214df3be434aea32ec895ef65cc",
+      "287a915c554f61035b1dd14b03873ad59b075bdc",
+      "2a2829bc1273e07e49d7c54174e7f3446b18a6b6",
+      "2d1c4e1ba2b193e0b8769aef32fb1468094e1476",
+      "2decef6424ad7572a73ba0a7b432805663a13f51",
+      "2e05dc6efa65267712fc3c31a0ed0ac5128e65ba",
+      "2ea440e98a2efece2fbc0ade20c2e27db3800049",
+      "2f63c44d10c6b3270f46c9898192be0a53f9d4fa",
+      "30a5590dffbf943f15b7bb1425697bb37f33eb30",
+      "30f0932ed8d18865c6f0d8f7ba973a3b5c1cff83",
+      "3414dfd8fec5f806090c2cbdb3570d647edadd27",
+      "346633bb3d47d65cfb3d51c0f9b59e376b9bed40",
+      "38576ed78e31281daf3123d9aa69332a541e5e6d",
+      "389a5fe555eaffd3a58356661048f97587841cda",
+      "3a7338657048426c54ed745dfa419740b5f6e595",
+      "3d67e4b20585af6210064e980c522bac3577dd8d",
+      "3e5ac298aea120162344ec6871559f9ab1b6eef9",
+      "3e694d6bc3549263f0fbce85e856683be275f867",
+      "3f60a909792d0376aa6f2d92199b62f9d3f0d903",
+      "4023c7394eee4db5a3e777f7d627ce89c29c603f",
+      "414bef83b27e6a871d70b4b1c0f43749fe298ca1",
+      "41cb4b13e3e72d479293fff02002f09086050364",
+      "43a7ef791fc4f43f2f4da1a1dc88a56695fb1d98",
+      "44daabea254831ba124f5dab719799ae4bd747e0",
+      "462bb372ef7018f2c067c24fd366cfce845b1e49",
+      "477a80f7d9b0ce6c39547ac434b0d5b01d934296",
+      "49f5561f4c587cc43b3ab84a87a3a89c283d42ac",
+      "4affa52c9764f0596bcbeead03c808b008c712d4",
+      "4c058a51d37f47112adb7cf9893db68192c09978",
+      "4d25e7f0a4e24c6e3c8f7e5bc57cf996771b3b4d",
+      "4d5ed2b5dea37afb7f72ab8f8bd50e88f6e056f3",
+      "4d737540c82dee84b1cc3221c76c1f8f8351c093",
+      "4e7644b0dd3325ea5e889c5916885d3b70c0f266",
+      "4fe2a20bdb54013f29f699b69c8943a713cc413e",
+      "5068c5ec7a8b05807dc705c14ed20507b4208359",
+      "5330a2abc273ba8412753621bfc33eac5c1190fe",
+      "53d255cbedf494e4d183be762c032f0d27dfce7f",
+      "53e7b44096e2d1f4c88c1eb7a6a43d298453be80",
+      "563419dbe339a620052c77879ec93db8f2359df6",
+      "57e709732192f1384b0cd15507416c49a620c33f",
+      "59e635d71bd6edde7c77cd40abd2d4fdd515579d",
+      "5a0ee1c9aed9fcebed5523b9a843184876a26c80",
+      "5a1878feb04dd54fe97cbbf553efa289ee9f146d",
+      "5b4f8c49c00cb147a9a3c8ba1a4dad9ca0ce9e54",
+      "5b63e85fc483a10b6f80a750ee753eef5ae7d36e",
+      "5cf42ac212fcac34beb7ee2a89869fee1c47a52b",
+      "5eb741c396b956d4efbafbc1f32dae8931c381ea",
+      "5f5a9f59370b74b24c57a1eb918828e679f821be",
+      "5f6cf0ac48ffd278ed32d19d0bc83b0141d94410",
+      "607cd771afffaf2d90ad9043c48270189083249f",
+      "60c17888e62753a6aaaca6fa90c0070410059ff5",
+      "62083a9b72bd6f0630e7400e5ba5a53d0bd5e81e",
+      "6319306db751443e732c090ec55fcc6db5dc599e",
+      "64de46e18f5ffb91a53776c1d01bc15853f3aaa5",
+      "65666384f99f7831b9d8af536a0227275dd29854",
+      "67f98d4ea5b5df0ee637c10ce32b2f6320396cd6",
+      "681ad61893fdc89100bdb32287e0dec451d9bad4",
+      "6907a9ec77e723b88739697cff0102f025b419ba",
+      "69d2aaec3985084a19aa12eeff16a77cb1f1779b",
+      "6aec7f2b151a8b0cf0bd098af62660f176b04121",
+      "6c717a2c39f887612fd3a9e687bda884b12b189e",
+      "6cb1fcd162258ab9af60cd6d69a35356c7fd9392",
+      "6cebbc9e7b9f664e8744bdcde3926e20e3704164",
+      "6d2a70782b53a55caacf448685e7b42e107e72b7",
+      "6db19def9b8c6c510437c6aef987ef5d89cba2bf",
+      "6de222bb1ade9e50f794fd741662e853d3b686ea",
+      "6f42063bc61dde8eecc68f8b5ffe444986354311",
+      "710a8bf9da1828f04921c5000edf9b1121f8855d",
+      "71b968b137df4f5fd61729de92bf29410bf9d199",
+      "72044a1e832667a98cbe933c1fab00128f58489c",
+      "72b2d91f964008275664886e0108144755a5169b",
+      "75bfcd3ee3b40d86f74c2b83cd2180406c72a5cf",
+      "75f188aa6032ffab03937e74bd7bfed7cea52cc3",
+      "7959460d696622204383a1a137c05ae90e522a90",
+      "7a64ed4eb40b9e17927a1b61651d94f18b9998e6",
+      "7c387250016b1549e065d9f78c5e79b04e4d27e0",
+      "7c50d9118d82907eadfbf492ee0fc86d3aa58224",
+      "7daba6b53419d5552b7075828f60bff4f48fc75c",
+      "7f843990c2dbe4d67322f7a554ba64429a352502",
+      "7fabc2a2b5ab1dcf01cbebd03812ec43054387e3",
+      "7fba5ce367b95ba5ccadb4c2e214de8810037e3f",
+      "80df4fe867df56f7030f61f9f12e1e3363c26923",
+      "80e798f2cfff15eea83e53441e2f6b71372b3975",
+      "816dcf5b968b456ef12529eb47cdb154828d69db",
+      "81f6bb5c6d014cf4200c21fd7f4e0b65810dd71e",
+      "823c476d2c6a21a8e2f2e7c27417ba28fcc27711",
+      "82e6f24f4a8d787bd9481c06d9028e76d76d21ce",
+      "83a70bfd014ec585acb6b3675e49bf57f92a27cf",
+      "86418102a605ebd3ee43c6fe7632a76d52be62f4",
+      "86feef4b645cb4c49143590fa6c4b19c4a1fd17f",
+      "87feade6f415076b85d2464d58d334545baaff66",
+      "8955e204bbfa28778b7c9ab6eadfc8aa68ba957c",
+      "8a623e66c575e67197c3172291020c5187904ba0",
+      "8b6ef75260c10393cd823538973d1b2d229af1c2",
+      "8b9addd915f524adb09257572e7c3ec758c06d7d",
+      "8cf17b59602d9f81a310c21d440a0528ecf08a9d",
+      "8d2af12142206d7b3c45c55cb84a288fbb59b675",
+      "8d7f2e9759e002209c84d53b1e28e34c5e068968",
+      "8e6fb2f5d8a9d9e2f4db1686313fee06998ce7be",
+      "91973c8567f6244576b9efa68639e5d0ab8db321",
+      "931a5939d9295b2411e0a22cb10fc0348919b8e2",
+      "946281968ea36b7ee77d2f29c764323d2520dabc",
+      "956d750dfac340b1ffbbcb963bb202ab4f670495",
+      "967e08464b9996721a946516e01d15a097170bc9",
+      "983e6cc31de52f9a8320b969f556351d40c755d7",
+      "9ae60aa0966ae5792a67f64e2aed7881c860880b",
+      "9af56ded39f5ee81d247ed73c22a19d114ec706b",
+      "9b879233c8c86e4e25d6a119a923a3193515107e",
+      "9baa4848e39d284545591e3d980bceb51f17c039",
+      "9bb8db9c30af3f3aa07bef6ab7719dd25b741061",
+      "9c1af5b9356c5a470d346ede5f62efa15c0c48b9",
+      "9c612fe0339605d43118b7a199cdbc1ef0d4e49c",
+      "9cf3b7f907244259a802f4cea1b8fa400a111b87",
+      "9d1e3d192542b3ef70adf78a29a6acd53ed7014d",
+      "a05f7ec115bc0e3133ba49e88d9ec380ebd62302",
+      "a0e92999a99bde1318e20e7311262ca88f4f0295",
+      "a3cca62eb34e844d4bcbcd5959ea127dd12a8510",
+      "a42fff78922021e818cc40ccdd96bd518691e7a2",
+      "a43afc368e5c37de7ae94d29f365d778458df1e4",
+      "a455dcde629576df37b79421b5eef9e097da6c2d",
+      "a4b142931552e8ec45c1d964a22058f38c90010c",
+      "a5836846a1f9ab6be455f6e06622eff02bc4c915",
+      "a5dbdb7bcf82f3cae1210e6a9664d0479aeefeae",
+      "a625c704c11b4628f7d3253bf1ef1c609e72b418",
+      "a68522767894e5d72e675c58099339101e483ced",
+      "a70d204b745d791c5f9f7720f98a4629b755325a",
+      "a7319ff390c6439956ddde122187ed7e3d73b116",
+      "a7b607726c2d7250e95ed581752f8bd5e59b03b4",
+      "a7daa98bc4bc0f815f64bf16a903ced0566ac01c",
+      "a8d37a4d12e21bdf0ed2ef307e9203298093744b",
+      "aa1258f700b2ff89deff389e15a0bf6a6259065a",
+      "ab9e9a3d5c56f75aa92bd6b13577d4d2fac6ca9d",
+      "acbdeeec363b2a6b5aa61f7987b1d00f1eb06691",
+      "af34f03b13f56203dff7b65097bfbccc45278b75",
+      "b058f8c3e720f70c8a911da0d8798ee8d2664b40",
+      "b21dcd89fcef10e50f43a410307b2726c5058bc3",
+      "b2a051b545cd27717be798d7a7a0e75fe196678e",
+      "b2b78a0f98050c146cb6035ae69eaf353af75f6b",
+      "b304c7ad7afb1dc97bbe93391dcfe9003e61561a",
+      "b3d4dcc9d2364c85282944050cc0ea21b9251c64",
+      "b7bdd5ce79558b44a3f31dc73b315099f8fedae1",
+      "b7f1445804eaf3585bdb0cc66a31e670605c0e6b",
+      "b89d69f13f44d135ad182db6c75e1e07febaf6bf",
+      "b9a3a2e4419a7086b1529ca347a3f08105b50e3f",
+      "ba107ff3a444faba62224b8ffad50e54217a0419",
+      "bc0154b76ad20c98811204486a58f4665b20930d",
+      "bc01b7421c01310d471a101e6caa08b4959b2b78",
+      "bcec2bb5f94951a20b75a87be1f52a4b0102f83c",
+      "be1c09b2f06241182b4c7a852edd90501f85d8ea",
+      "be26b32a48c4623092d28be90487bcf9206c8b48",
+      "c22ec89dfd36a33cb9b4c5e0ec7fbcf9e2918351",
+      "c2537b979ee105f6a9477d1447bc44b4dc3406b2",
+      "c2a9de3c73d5b1a9979971457772fe3098050092",
+      "c2f0dd0515eb506276a294f958de238006a6319d",
+      "c4d03f8d147393d6338c8d76456db0209f1f2ae0",
+      "c5df3e62e8c3b95c58447a563fcd9472a16a00dd",
+      "c72ba6270d919ddca700570348e56fb59d075101",
+      "c72dbb46d913bc6c07a50013fe498f3f9e17fb76",
+      "c78c4eebadf3be10bfe5cc15107fdc9ddad23f9d",
+      "c795e1b6b00809615d7b977668a8c942a57469ce",
+      "c801e73224f3d6abed33396f858c54866b8e70f2",
+      "c85a90ef5c7eac9c066b7b86cbf800699239a521",
+      "c9e050323b0abb7fff50a5721322c9b320f11da0",
+      "cb997af01ee97ada124c4a1b66411be2baf93848",
+      "ccd95702b204a4edd1167aa8e54ac8420215b03c",
+      "cd90d3382927cb745789bb1251a355c780a29e40",
+      "cdedcb5c76166a8fbf8d49cb32935322706e1f58",
+      "ced27f3e2dfa3ace98fbe7b63ee84984b285390b",
+      "cefcc2b0c6bad83ff3f150014a5f4f886c9a7f07",
+      "cf5120e372ca52bca306e0f5a6ca819a2740a536",
+      "d01603a6252bfe31a7df767727b372fc65b6b59e",
+      "d0406cd2400713628c4a9722e8bb2f9fa5db3455",
+      "d09c8a586d0cbc8a7b5e0782745f0ce4f96159cc",
+      "d12d80299e4775a1ff6e5a68b24cbc5e179c056a",
+      "d1e6771b3144f282054d7a7ae09f37ba80a5d46c",
+      "d2bb8684a7f1c82faddb95a8c2e2bec4ce334f15",
+      "d2ccd283478fe6de340eef2f17af0dd6e9995939",
+      "d3d113a690df1d3559b36d0e1ffee712bae0a75a",
+      "d3dfdb4b0e28ab1cba06a4b88c3c7fa232c48cc0",
+      "d3eeeb5c8cb0b0bb854c144b0aa02844b8bb460f",
+      "d4780914858a82095ab8f7ecb43d8c66fb2f0d7e",
+      "d5049d83a63f27b71d00fc663d7415b69dd71047",
+      "d7260e874ac731b669fc6f674bc4412d5d2d097d",
+      "dc136952bb5bf7d421875e1f460a824d09d5f71d",
+      "dc632946d13054fc41147659a91606ba60b184cb",
+      "dcc80cb0cc7c7334787d98d8cf1ca27aa92f0361",
+      "dcd16bf98b6cc753b518f4da1cf0d98bc0a06637",
+      "df51f88a14444a56c47961f87c86eee4f3bc4844",
+      "e1313a4d2fa2cc3950d5d72227693dd03c2f5af7",
+      "e1b5715bb8f670929af0dadf8dcde5730a5b3e66",
+      "e22a59f961763041e9437ace7bd9effb4253b076",
+      "e2927a158f54fe832d31fa97bbc6c58d63f33327",
+      "e4415d71d53f42dc0f6923f0bd818ca0849f2da5",
+      "e57fda88f5cede1a22daf1449e90b8f8f9ac8aef",
+      "e5b33312771449080b5a678184c23d6188ea3355",
+      "e6e7f9f33fe7b5bc21a4a193a84e07531507ae75",
+      "e833d5457ce9da432cce8d3eebd8f255463baf0a",
+      "ec16b0ea09d267a1ffbe6ddba95b081c22ce900b",
+      "ed7265d2589f32a4b1553fb358e7279d48e9998a",
+      "eda84091ba8807beebdbbf9312d4e6a1501211b8",
+      "ef5b4635028834b800fde898f663e316cdbee93d",
+      "ef97a147143f23e2827415617665d90cfb33d20e",
+      "f0d32c49c98fcf23e5766e1a0fcbf7a66d354d23",
+      "f0db7c1b4923c6067bee0bc722b9272ceb59c525",
+      "f1353201252a50d2890774567c394060ca95eab0",
+      "f16f544b69047a9e4d4aa8e00ad880194c1dcec9",
+      "f20f17325388c96a1f47aca892decea32f7cedd8",
+      "f2898611a35e6caf10527f3124cb3065bd213863",
+      "f3f3e2b33963f5b432f6fed88216434cd1429ffe",
+      "f402185415029b44d99b40ce0c8688063a6cfdcf",
+      "f4361d9ac707c7ff3cad0c2cc2edc59084107396",
+      "f50b6dc9deeab5cef382fae1a60fb7499d8126ab",
+      "f5a47715ee18c5d5a588426db192ca4cf43fb85c",
+      "f5d3e06cd38988010ed68bc719f9b40a907b95ac",
+      "f69de0b7140f97ac03ea6eaed9a2570b322c38e9",
+      "f91112a1785ae8025d0752897803d5fe5ed05178",
+      "f9991046045a33b443c6155f86e5992d55da4cd2",
+      "fba69cee31e6a790ac1b226509cc6d97cedb01e9",
+      "fd0d7f7cd9519a5c4a870d7cc7f955567c043af9",
+      "fd47185f5e5d905abec2366d34e1c01050dd7b4f",
+      "fe49799f10661dfa3c4a8cd30f144cf67f3094b4",
+      "fe62a50a8c26ef36c0de853aad0776d28f49f95d",
+      "fe724ac912467407434606e07ea7b68ff9794056",
+      "fe89320d6b25c14c678a356a0acc14f166782abe",
+      "fedcace7b3a05bacf2f0bbad38042e1837b55791",
+      "ff3607be5dd825addda5165b6bc3209a75fec841",
+      "ff5baa1fedeae27f0a7a86510d72374affadddf7",
+      "ffac3b9bb32e4531b40aefed6d3bf325fb3dd125"
+    ],
+    "CS004": [
+      "009248747b4b8ee93ecdf75d2d96b38c24d52b9a",
+      "00c02db6b66752d09664f06efcd7ef93f748bbff",
+      "016f855f8979ecbc81d06c7ef6014310b717c83d",
+      "017b30d3743da893dcc3a44412480f84b8a87eca",
+      "01c8727f81b4014633d2145963f01db1257e773d",
+      "0200478b98e4a7e24f0f0a33e8a53f83c83df28a",
+      "047b0cdcca143a8db339e8934d340e395f078345",
+      "04abca81f1140493085c7b37625f0b479cbf7f08",
+      "056ff276153fe6fb75ef0759a0541125151fa05a",
+      "0640084902c8f9d41db6b485def0b0d1718606a8",
+      "06479546f076ff0dfb5c9a32370fe98eedd35f3f",
+      "0687133699675d6f9e42a61ca2c6e2bb2ae8a9f7",
+      "07f5728ef5b5ec011a0e4511054987117653547c",
+      "09234d0b7ebb46c041654c29e4035d8968f80a07",
+      "093b2777a4917e49e5c6dba6a18736cee1bcd5de",
+      "099420c0ce1b8be49da085a10b7dffc7630521f0",
+      "09da29ee9b513e5919fdb30774b75b857cb7a8d3",
+      "0a00efd9c2912fc888984db7bf1544c038d86d1e",
+      "0a820936c1b8107787fa9f6ff1c971ba33e0f32c",
+      "0a9f77f44e2556e108985f06d2a8904c1f5a717e",
+      "0af3799ecb4325275212f529e893ac2a1175469c",
+      "0bb01428f7a60ee37ce7e7d701b24d381832744b",
+      "0c112351c64418429375af19e256d2c182790adb",
+      "0e4730b3930d4c47931a5a40c25bf2e2666c0ee4",
+      "0ea08ba130b5b5b4e431127c07c2c65f0f44c649",
+      "0eb005b6ac06d95193759999c869c486aabd41a6",
+      "0edaca74231b1ddbdfb731dbb6bbebc9c17693d1",
+      "0f5ef43db9784cbb3b303df39f31e40d5c1e2882",
+      "104e0b322241ba64d0bc7b22db6ba238d45ab701",
+      "10ed08427abbe15b27f25266913313c8d3c4c05f",
+      "110837e10185dfd910e44af81580851feee06ce9",
+      "1109dd04c9bc88e8d8de0c89814b4234f6c63e6a",
+      "11f1dcb050a0e91a4a5cb3f3b64222bd2512a80e",
+      "127a1e54700df02d8fae776c9c01caa2ce7c2e33",
+      "13ebefa81f761a64fe1f167f2a19f4b12cab219e",
+      "14349a70f16247e8734d59758b75c81016526309",
+      "1434fdccd7cab224108380bb21a92e3bbe0092f2",
+      "15c226ede34bf7fb592dc516aaef9430c130bc8d",
+      "174b2b21822fb9205273f15ab961fcfe7a061577",
+      "175e30a3af77b1b936778206040dececcbca9a97",
+      "178fc5185480b2af14976f6e09cb7d5142dfe2aa",
+      "182fc1311d89bb41d4a2c1986684335a2dcd0f6b",
+      "18959debbba3518f64f04ee78e9df785bf93f623",
+      "1922b5eda9e725f193c2502b57e89e61ac022cdc",
+      "199a041fe7f4592a2792adc317b7540e012ee577",
+      "1a8a29f2c46b37a911d5babc87252e6e3aad9694",
+      "1b175c44ec6a0f003ef8ed9c8efc5c34ba596210",
+      "1b6b594a29ff8073c67bdb7fb73d99b9bead9125",
+      "1bc63cb4a5788e4a42ffacbbcb8a4a02c424d260",
+      "1c54aefcc5a810b2cb913c77f7c22d75b5608431",
+      "1cb4f32ee98859fcb82118ace580404e31a853f5",
+      "1d027f2448788022608b18885931ef2545d0182d",
+      "1d667dd7a5a889a8b9faf9ce7af1d7a2ce423726",
+      "1dd18d81702a0111f3db038d5d3013384a6dd8a8",
+      "1f2bb1f25f22f768334a8a73c996afdc3eef8683",
+      "1f5959ec44b236b567baf57541e6308cff83847a",
+      "200a4134d19ab161027a62f7829845d6f35b0cb1",
+      "2069f528e0c2d82a0b9894c868eb64a9802cb33a",
+      "207658c01400abde6d08d8b6372ffc390ad52383",
+      "208edccc7fe8e067b84beec680cdb8b6d2842f1a",
+      "20f71c3ee894488f0a769b83afdd9a3edac285b8",
+      "21c7e3f72b3c2775b95f29d9374a91e7d7fe3b7b",
+      "2296c3ae463417fceb93e28bfa597e7bc7a5493d",
+      "23837c18eb58effaf6744cbd47c80dbaac906205",
+      "238f583db4394687a5aaf174e948085e42055ea4",
+      "243759a352ef6acd1c0084b7cb70c66ea6c9a3ca",
+      "24f05672098e91665d4892c5e093955551cb37ea",
+      "253e6fc3a18d13d93e4b5e2ff52d4a9385bb88d1",
+      "25426911d8090b14dba4470b44a2b848a6d4803c",
+      "26cb56b99296e5fd1a43da8bb0d38cfbd740c79b",
+      "272202e842982960f73251bb04699f0bf1b47121",
+      "2768c58d063c2d2262128d7606e3db055c8e0988",
+      "276e8da874382e21958a36deed338d75d8a26e32",
+      "27ef471dfcef9cd0693484d4b83c622861ab7ba7",
+      "28120ce24af579ee04bc535499aa717b8d40bf14",
+      "2846f09cc1685f4d09f43dc85db16e2db2a5681a",
+      "286e3cabe6859214df3be434aea32ec895ef65cc",
+      "287a915c554f61035b1dd14b03873ad59b075bdc",
+      "2a2829bc1273e07e49d7c54174e7f3446b18a6b6",
+      "2a2defaf08183ed1265fe2b1a0a672b2b7f146af",
+      "2b661dccbcd5ac977da3330917e885dcdfe7850d",
+      "2c970afeb47296a946d8433eed4e29d6fa21268c",
+      "2ce2db0f39cc44138e3bc68255f6e9e4035e8fd7",
+      "2d1c4e1ba2b193e0b8769aef32fb1468094e1476",
+      "2decef6424ad7572a73ba0a7b432805663a13f51",
+      "2e05dc6efa65267712fc3c31a0ed0ac5128e65ba",
+      "2ea440e98a2efece2fbc0ade20c2e27db3800049",
+      "2f63c44d10c6b3270f46c9898192be0a53f9d4fa",
+      "30a5590dffbf943f15b7bb1425697bb37f33eb30",
+      "30f0932ed8d18865c6f0d8f7ba973a3b5c1cff83",
+      "318da94ffe8a882ebda5569778259d54c090ef5d",
+      "31a9ccd24ba5111a1fd3a6c391544fd96c2e7a73",
+      "31ae67c639af00a2133fec8c878b86312d150f6a",
+      "3414dfd8fec5f806090c2cbdb3570d647edadd27",
+      "346633bb3d47d65cfb3d51c0f9b59e376b9bed40",
+      "35dc1b73391c7d6ed5c61d7a4f125e74e7647c94",
+      "361d7f88678a99c2143b3064b767c9792e26a50f",
+      "361f76a0eaace28bb3799f247ff6ef5983338a3c",
+      "38576ed78e31281daf3123d9aa69332a541e5e6d",
+      "389a5fe555eaffd3a58356661048f97587841cda",
+      "3a3cdcec526680baae788ce2939489ca5d8c15fd",
+      "3a7338657048426c54ed745dfa419740b5f6e595",
+      "3b3426c47984b73741dffe2407b0385936d0b8cd",
+      "3b3cf5ac31c8f2d96ab01da23fd2c77746eb22cd",
+      "3b46cdd5ff0a19cf2c4f4f0303972bc75e8a78e5",
+      "3d67e4b20585af6210064e980c522bac3577dd8d",
+      "3e5ac298aea120162344ec6871559f9ab1b6eef9",
+      "3e694d6bc3549263f0fbce85e856683be275f867",
+      "3f60a909792d0376aa6f2d92199b62f9d3f0d903",
+      "3fc9736199419366d95a5c3083898c971442d6df",
+      "4023c7394eee4db5a3e777f7d627ce89c29c603f",
+      "41351ba3209508edc28479d6c288c2ae05a88871",
+      "414bef83b27e6a871d70b4b1c0f43749fe298ca1",
+      "41cb4b13e3e72d479293fff02002f09086050364",
+      "4303591b33c9ef72e906128361390ec1ce0d09ea",
+      "436ca24ce580bdbcf52e840c0c4838811c06068a",
+      "43a7ef791fc4f43f2f4da1a1dc88a56695fb1d98",
+      "4485544fe30cc320c2fc64156ca123c596dcf826",
+      "44daabea254831ba124f5dab719799ae4bd747e0",
+      "462bb372ef7018f2c067c24fd366cfce845b1e49",
+      "477a80f7d9b0ce6c39547ac434b0d5b01d934296",
+      "49f5561f4c587cc43b3ab84a87a3a89c283d42ac",
+      "4a661932775653bca214771399e3b56e6739cf3d",
+      "4affa52c9764f0596bcbeead03c808b008c712d4",
+      "4c058a51d37f47112adb7cf9893db68192c09978",
+      "4d203cbd27d2b69ee23f004e8875527e07187925",
+      "4d25e7f0a4e24c6e3c8f7e5bc57cf996771b3b4d",
+      "4d5ed2b5dea37afb7f72ab8f8bd50e88f6e056f3",
+      "4d6c8b3b53fe4325e2a0b0b5bb626d63d63c5022",
+      "4d737540c82dee84b1cc3221c76c1f8f8351c093",
+      "4dde2d78522e4fc455ab588db6fa854592850c5d",
+      "4e39eeb70fc2f7fcfa372ac1fe6fe139b1ee7523",
+      "4e7644b0dd3325ea5e889c5916885d3b70c0f266",
+      "4f519257986f68f9d01a992028407013ac77728f",
+      "4fe2a20bdb54013f29f699b69c8943a713cc413e",
+      "4fece22ac5776bc81d3fd47bd0fd6b5a01f13cf8",
+      "5026fb30b8a2db9f1c73c8f220cca21419ec3237",
+      "5068c5ec7a8b05807dc705c14ed20507b4208359",
+      "5079adbfd746d2022495a212d63f8be5e91c9504",
+      "51a10969b3f0dafa8c693d01406baccf9abaa165",
+      "5330a2abc273ba8412753621bfc33eac5c1190fe",
+      "53d255cbedf494e4d183be762c032f0d27dfce7f",
+      "53e7b44096e2d1f4c88c1eb7a6a43d298453be80",
+      "5422f8e02e6cf519a629e9978b0090a8fc09218f",
+      "563419dbe339a620052c77879ec93db8f2359df6",
+      "57e709732192f1384b0cd15507416c49a620c33f",
+      "58e6bf309a7c0c47de1acc4f1cc40eee197355e4",
+      "590f6cf991e99e73f1ab114fbe98c8b6414ea6e5",
+      "5917dc550ca0c94d3e5e0f6f5ab8de21313eb8c9",
+      "59855e80c4680257dd4a9944e83ca5bdba1d13d1",
+      "59e635d71bd6edde7c77cd40abd2d4fdd515579d",
+      "5a0ee1c9aed9fcebed5523b9a843184876a26c80",
+      "5a1878feb04dd54fe97cbbf553efa289ee9f146d",
+      "5b4f8c49c00cb147a9a3c8ba1a4dad9ca0ce9e54",
+      "5b63e85fc483a10b6f80a750ee753eef5ae7d36e",
+      "5c385300970511f7390acb982704b06ce1eeeeeb",
+      "5cf42ac212fcac34beb7ee2a89869fee1c47a52b",
+      "5d569cdbffd1724db162b5cdae31bedaec8696bd",
+      "5d875bbaf3110ba2c779f923fc377a84693dfb8b",
+      "5dd8ae49ba9376d04dd45d7f7645923fdf705ca4",
+      "5eb741c396b956d4efbafbc1f32dae8931c381ea",
+      "5f5a9f59370b74b24c57a1eb918828e679f821be",
+      "5f6cf0ac48ffd278ed32d19d0bc83b0141d94410",
+      "607cd771afffaf2d90ad9043c48270189083249f",
+      "608ea00f49049443ca2104e31ffcce6923296bf4",
+      "60c17888e62753a6aaaca6fa90c0070410059ff5",
+      "61f4f10f6695d3c1d3a7b1d51029e879ab87fe56",
+      "62083a9b72bd6f0630e7400e5ba5a53d0bd5e81e",
+      "6239e8372f94bc0b36def8c0cbdb085a0300a416",
+      "62a29c833d30c277fd946c8b17f20b8484f3b0a7",
+      "62a6f37fba812450e4c59db420288f98752c45a5",
+      "62dedcd3110ccbfda9ab3945d18402c5ab9c64f9",
+      "6319306db751443e732c090ec55fcc6db5dc599e",
+      "63a5b95490d281a541a88e8032d2fa5356945239",
+      "64006a92e48a6a9c089c1d7027c5321fe4ac3d67",
+      "64d84694460f1e26cca31609c9c46b7e48e86a55",
+      "64de46e18f5ffb91a53776c1d01bc15853f3aaa5",
+      "65052ff49b85d908e3f59f1c3d56de1639f4b679",
+      "65666384f99f7831b9d8af536a0227275dd29854",
+      "65d27680115d6c4eb9e8ad110b45e7df6334cecd",
+      "67cbf09fb25cfcbd74e91c2c2b6e6585679be19e",
+      "67f98d4ea5b5df0ee637c10ce32b2f6320396cd6",
+      "681ad61893fdc89100bdb32287e0dec451d9bad4",
+      "6907a9ec77e723b88739697cff0102f025b419ba",
+      "69d2aaec3985084a19aa12eeff16a77cb1f1779b",
+      "69dc9cbe43bd6313c22d82ae6a430558f2c438ff",
+      "6aec7f2b151a8b0cf0bd098af62660f176b04121",
+      "6c717a2c39f887612fd3a9e687bda884b12b189e",
+      "6cb1fcd162258ab9af60cd6d69a35356c7fd9392",
+      "6cebbc9e7b9f664e8744bdcde3926e20e3704164",
+      "6d2a70782b53a55caacf448685e7b42e107e72b7",
+      "6db19def9b8c6c510437c6aef987ef5d89cba2bf",
+      "6dc3147ddc661010a696cce4a54ad1d4cb12bc8a",
+      "6de222bb1ade9e50f794fd741662e853d3b686ea",
+      "6e4b2dc2a55692e0f3d9b8d20bb5876881c286db",
+      "6f42063bc61dde8eecc68f8b5ffe444986354311",
+      "710a8bf9da1828f04921c5000edf9b1121f8855d",
+      "7135ef9eed2b15c315a3f347e45f9d5a48ae9f7b",
+      "71b968b137df4f5fd61729de92bf29410bf9d199",
+      "72044a1e832667a98cbe933c1fab00128f58489c",
+      "72b2d91f964008275664886e0108144755a5169b",
+      "72f390a538b0a15fa0b1bf043f517e2072c2cfd8",
+      "74978aaea14bdbf1b4a2e108b95d07bcfec3ab9c",
+      "75bfcd3ee3b40d86f74c2b83cd2180406c72a5cf",
+      "75f188aa6032ffab03937e74bd7bfed7cea52cc3",
+      "78a4c9e5db9cb0459ec54de64ed0ab47e2c12599",
+      "793233a49ba7a66d6d1b334aeff2591e47dad9ec",
+      "7959460d696622204383a1a137c05ae90e522a90",
+      "7a54f4aa82f0e08b8abf7eda9f4332e0a3670a80",
+      "7a64ed4eb40b9e17927a1b61651d94f18b9998e6",
+      "7c387250016b1549e065d9f78c5e79b04e4d27e0",
+      "7c50d9118d82907eadfbf492ee0fc86d3aa58224",
+      "7daba6b53419d5552b7075828f60bff4f48fc75c",
+      "7db974042918ae7c24ef2c25ae5d22bf4bd646a5",
+      "7f843990c2dbe4d67322f7a554ba64429a352502",
+      "7fabc2a2b5ab1dcf01cbebd03812ec43054387e3",
+      "7fba5ce367b95ba5ccadb4c2e214de8810037e3f",
+      "8011a130c238db5737029c9f0ff479aa2e7088fe",
+      "80a5d4c779450381635f81dbc914fbc8e085f9db",
+      "80df4fe867df56f7030f61f9f12e1e3363c26923",
+      "80e798f2cfff15eea83e53441e2f6b71372b3975",
+      "814f583a84df2ad2c03f33cfa21e635956014f81",
+      "816dcf5b968b456ef12529eb47cdb154828d69db",
+      "81bc43247e5771a957c984b6e3c4c19e67dfb970",
+      "81f6bb5c6d014cf4200c21fd7f4e0b65810dd71e",
+      "823c476d2c6a21a8e2f2e7c27417ba28fcc27711",
+      "8286ca58d212d0888d3cefe0179ce74f3c8fe1eb",
+      "82e6f24f4a8d787bd9481c06d9028e76d76d21ce",
+      "83a70bfd014ec585acb6b3675e49bf57f92a27cf",
+      "83d65da871ec28d99a0eb4d7a02df5f83786625f",
+      "86418102a605ebd3ee43c6fe7632a76d52be62f4",
+      "86feef4b645cb4c49143590fa6c4b19c4a1fd17f",
+      "878ca80b88d9bafe7bb26c58a9801e5faaf67a6d",
+      "87feade6f415076b85d2464d58d334545baaff66",
+      "8930930bae0a9737f95ab92458fa98b890a16ecc",
+      "8955e204bbfa28778b7c9ab6eadfc8aa68ba957c",
+      "8a623e66c575e67197c3172291020c5187904ba0",
+      "8a93143bff987c8aaaf647782d4b06a40de42419",
+      "8b6ef75260c10393cd823538973d1b2d229af1c2",
+      "8b9addd915f524adb09257572e7c3ec758c06d7d",
+      "8c7aed08e8bb87b1441574baafb45d3cf848576b",
+      "8cf17b59602d9f81a310c21d440a0528ecf08a9d",
+      "8d2af12142206d7b3c45c55cb84a288fbb59b675",
+      "8d7f2e9759e002209c84d53b1e28e34c5e068968",
+      "8e6fb2f5d8a9d9e2f4db1686313fee06998ce7be",
+      "8e706916709e23da0cc3145c66449ad0c4a3c9a8",
+      "91973c8567f6244576b9efa68639e5d0ab8db321",
+      "91ed24a5ec6f0cf76248c7278cd411c85608ce13",
+      "931a5939d9295b2411e0a22cb10fc0348919b8e2",
+      "93e639175e72c484a4dc4c155eb1611b02fe382f",
+      "946281968ea36b7ee77d2f29c764323d2520dabc",
+      "956d750dfac340b1ffbbcb963bb202ab4f670495",
+      "960b698d0a11a5bf7075c553f2bc798f1856a77e",
+      "967e08464b9996721a946516e01d15a097170bc9",
+      "96f8821aabb2687b244b2b4996377b3facfe97fd",
+      "97ebb0f5357f1ecb1dc4c20b56212c650ac5803b",
+      "9817141dd16652300bf213daf51e34860cf44b6f",
+      "982bd408828bcd35fa45cecc8838fc220bccafb0",
+      "983e6cc31de52f9a8320b969f556351d40c755d7",
+      "99285cf5ccdcca91823f1bc22784bee580569dae",
+      "99c8879b397e7797280bc0bcd9fa0038858f37f2",
+      "9ae60aa0966ae5792a67f64e2aed7881c860880b",
+      "9af56ded39f5ee81d247ed73c22a19d114ec706b",
+      "9b879233c8c86e4e25d6a119a923a3193515107e",
+      "9baa4848e39d284545591e3d980bceb51f17c039",
+      "9bb8db9c30af3f3aa07bef6ab7719dd25b741061",
+      "9c1af5b9356c5a470d346ede5f62efa15c0c48b9",
+      "9c612fe0339605d43118b7a199cdbc1ef0d4e49c",
+      "9c6cef0dd94864d4bcc2b5a509039f5c0639fc17",
+      "9cf18fdc328dd43d2abbffe4bfa16dc0c8bf1e77",
+      "9cf3b7f907244259a802f4cea1b8fa400a111b87",
+      "9d1e3d192542b3ef70adf78a29a6acd53ed7014d",
+      "a05f7ec115bc0e3133ba49e88d9ec380ebd62302",
+      "a069e8b8e2aa1f40c2eca5bc8049554e6febe6cf",
+      "a0e92999a99bde1318e20e7311262ca88f4f0295",
+      "a3cca62eb34e844d4bcbcd5959ea127dd12a8510",
+      "a42fff78922021e818cc40ccdd96bd518691e7a2",
+      "a43afc368e5c37de7ae94d29f365d778458df1e4",
+      "a455dcde629576df37b79421b5eef9e097da6c2d",
+      "a4b142931552e8ec45c1d964a22058f38c90010c",
+      "a4c94539a9dfc61e11629247b530e3e9b93572ba",
+      "a5836846a1f9ab6be455f6e06622eff02bc4c915",
+      "a5dbdb7bcf82f3cae1210e6a9664d0479aeefeae",
+      "a625c704c11b4628f7d3253bf1ef1c609e72b418",
+      "a68522767894e5d72e675c58099339101e483ced",
+      "a70d204b745d791c5f9f7720f98a4629b755325a",
+      "a7319ff390c6439956ddde122187ed7e3d73b116",
+      "a7b607726c2d7250e95ed581752f8bd5e59b03b4",
+      "a7b6c895a31c34529b756f5af31c1081b0d2578f",
+      "a7daa98bc4bc0f815f64bf16a903ced0566ac01c",
+      "a82cd73ffdd2779be5db94bdfb9e309fbde96cf1",
+      "a89e8561fa217284b455dbf621b0d80244b7c334",
+      "a8d37a4d12e21bdf0ed2ef307e9203298093744b",
+      "a9de1dbfc3b89051d1ee0a944d38f1dfe7274b3b",
+      "aa1258f700b2ff89deff389e15a0bf6a6259065a",
+      "aac0a51e6faea1d7c940ec52383cdf3a563fc1a0",
+      "aace855d27dfab1374dc5293ef4120f3601b3fc7",
+      "ab9e9a3d5c56f75aa92bd6b13577d4d2fac6ca9d",
+      "acbdeeec363b2a6b5aa61f7987b1d00f1eb06691",
+      "af34f03b13f56203dff7b65097bfbccc45278b75",
+      "af56e7b0dbb717e837c72ae56d9aec3e0c3fb155",
+      "b058f8c3e720f70c8a911da0d8798ee8d2664b40",
+      "b1bf22f81f4d27869ae6d0b41b283b648224a34e",
+      "b21dcd89fcef10e50f43a410307b2726c5058bc3",
+      "b2a051b545cd27717be798d7a7a0e75fe196678e",
+      "b2b78a0f98050c146cb6035ae69eaf353af75f6b",
+      "b304c7ad7afb1dc97bbe93391dcfe9003e61561a",
+      "b3948a4dd0326fbed109b527f561b4346f81fdc5",
+      "b3c762da4b46886c1a89e64b1d9da5166292b9e4",
+      "b3d4dcc9d2364c85282944050cc0ea21b9251c64",
+      "b41716024f549e3582d4d794f409e0fab848ffb0",
+      "b679800db676c0bcbd5d6717813dbd469d959cc9",
+      "b758ae7b30cacdafa9d60a1453024a912b8f50b8",
+      "b7bdd5ce79558b44a3f31dc73b315099f8fedae1",
+      "b7f1445804eaf3585bdb0cc66a31e670605c0e6b",
+      "b89d69f13f44d135ad182db6c75e1e07febaf6bf",
+      "b90a4dab3b8ec0d5f600915f104397e52e758731",
+      "b942ebaca09143adb05fa54af2524ff6f85f669f",
+      "b9785fe0fc4ceecffcdc96ee9f04118a333de106",
+      "b998437c3c7bb2a75040d09f8138e7890aba90d2",
+      "b9a3a2e4419a7086b1529ca347a3f08105b50e3f",
+      "ba107ff3a444faba62224b8ffad50e54217a0419",
+      "baca5fe9a4f89ad8ed7c3218150aec1a730418c6",
+      "bbcb4ce7ff03235c1313115a2bf7ccd4e7893192",
+      "bc0154b76ad20c98811204486a58f4665b20930d",
+      "bc01b7421c01310d471a101e6caa08b4959b2b78",
+      "bcec2bb5f94951a20b75a87be1f52a4b0102f83c",
+      "bcf5f3ace679277068e61efd9a22fce890cc91ee",
+      "bde71837cd2c8f3405300b09bbaec63ac0201fdf",
+      "be1c09b2f06241182b4c7a852edd90501f85d8ea",
+      "be26b32a48c4623092d28be90487bcf9206c8b48",
+      "be75f1ff1849d116f4591a504c40df29083e6b9d",
+      "bf6b957f6d355c8aac688544519a394a0e5d4512",
+      "c22ec89dfd36a33cb9b4c5e0ec7fbcf9e2918351",
+      "c2537b979ee105f6a9477d1447bc44b4dc3406b2",
+      "c2a9de3c73d5b1a9979971457772fe3098050092",
+      "c2dfe8f90860ef0361cb41f9ded84154171eb2a0",
+      "c2f0dd0515eb506276a294f958de238006a6319d",
+      "c3f8d89239f15e5710666f35f03c1781a6454a8c",
+      "c4bf4f5794dbc63a2dc9b41915ce831ed8f281e4",
+      "c4d03f8d147393d6338c8d76456db0209f1f2ae0",
+      "c5df3e62e8c3b95c58447a563fcd9472a16a00dd",
+      "c72ba6270d919ddca700570348e56fb59d075101",
+      "c72dbb46d913bc6c07a50013fe498f3f9e17fb76",
+      "c78c4eebadf3be10bfe5cc15107fdc9ddad23f9d",
+      "c795e1b6b00809615d7b977668a8c942a57469ce",
+      "c801e73224f3d6abed33396f858c54866b8e70f2",
+      "c850bb68094a22162e9548d5f464c224dbca50ab",
+      "c85a90ef5c7eac9c066b7b86cbf800699239a521",
+      "c98f85e30638708a4ea176e223419d8ad990a446",
+      "c9e050323b0abb7fff50a5721322c9b320f11da0",
+      "c9f09d66441dcc17c613c943c15403268bf28d95",
+      "cb997af01ee97ada124c4a1b66411be2baf93848",
+      "ccd95702b204a4edd1167aa8e54ac8420215b03c",
+      "cd37fbb7243112b81be081ba06f8e7ea86232a01",
+      "cd39c7e0263fcd3a29e4a99f1f693444d5c1b83c",
+      "cd90d3382927cb745789bb1251a355c780a29e40",
+      "cdedcb5c76166a8fbf8d49cb32935322706e1f58",
+      "ced27f3e2dfa3ace98fbe7b63ee84984b285390b",
+      "cedafefc4dd2142f05607388492e8d19db695d1c",
+      "cefcc2b0c6bad83ff3f150014a5f4f886c9a7f07",
+      "cf5120e372ca52bca306e0f5a6ca819a2740a536",
+      "d01603a6252bfe31a7df767727b372fc65b6b59e",
+      "d0406cd2400713628c4a9722e8bb2f9fa5db3455",
+      "d09c8a586d0cbc8a7b5e0782745f0ce4f96159cc",
+      "d0bf24a8c168bc19960bf3eb71c793cc1ce85e7f",
+      "d0e6bc5b0a04befd11465d0b5e6746770fce8d63",
+      "d12d80299e4775a1ff6e5a68b24cbc5e179c056a",
+      "d1e6771b3144f282054d7a7ae09f37ba80a5d46c",
+      "d2bb8684a7f1c82faddb95a8c2e2bec4ce334f15",
+      "d2ccd283478fe6de340eef2f17af0dd6e9995939",
+      "d3d113a690df1d3559b36d0e1ffee712bae0a75a",
+      "d3dfdb4b0e28ab1cba06a4b88c3c7fa232c48cc0",
+      "d3eeeb5c8cb0b0bb854c144b0aa02844b8bb460f",
+      "d4780914858a82095ab8f7ecb43d8c66fb2f0d7e",
+      "d5049d83a63f27b71d00fc663d7415b69dd71047",
+      "d5b46eb8c31f4abf528a351b47fbaf0221f75462",
+      "d62940fcc498aab80bac67fdd9d7bfef7be90616",
+      "d7260e874ac731b669fc6f674bc4412d5d2d097d",
+      "d75ef01fa39f1ca8e981bc23b919728f35d0baf1",
+      "da133f09206e75f1b73176765879b1c8457adb3d",
+      "da5f5bcbbbe3e37fa08cf6894e85b35926537018",
+      "dc136952bb5bf7d421875e1f460a824d09d5f71d",
+      "dc632946d13054fc41147659a91606ba60b184cb",
+      "dcc80cb0cc7c7334787d98d8cf1ca27aa92f0361",
+      "dcd16bf98b6cc753b518f4da1cf0d98bc0a06637",
+      "df51f88a14444a56c47961f87c86eee4f3bc4844",
+      "e1313a4d2fa2cc3950d5d72227693dd03c2f5af7",
+      "e1b5715bb8f670929af0dadf8dcde5730a5b3e66",
+      "e1bacea026c546b3d1e77a17203e4a122218813f",
+      "e22a59f961763041e9437ace7bd9effb4253b076",
+      "e2927a158f54fe832d31fa97bbc6c58d63f33327",
+      "e4415d71d53f42dc0f6923f0bd818ca0849f2da5",
+      "e57fda88f5cede1a22daf1449e90b8f8f9ac8aef",
+      "e5b33312771449080b5a678184c23d6188ea3355",
+      "e5c7a9c9aeee0f5c216d926f5e6827a406621b0d",
+      "e6163bdf557aafc8af972c50fa01f482218bf0fd",
+      "e6e7f9f33fe7b5bc21a4a193a84e07531507ae75",
+      "e768db28dba2522ec81b8c8d79089f351b26d565",
+      "e7ce6322cce3939895a78968c89ab2d8d5f18f4f",
+      "e833d5457ce9da432cce8d3eebd8f255463baf0a",
+      "e9112bb9c63db01ff6cb5933ab4a3b7c7253371c",
+      "e9a07fdabef992a959ae7a4a0143d32792ee41b9",
+      "e9d5e41bfee8061aec47b9cffcbc5a210daa878f",
+      "e9db2a120367ddc22717f14c31d443ca0ee4bde1",
+      "ea00736b5c3d2a3f99496f2835ee235997f4b782",
+      "eaabd3fdf53640887dc2cfd6ef0dbec78f4830b0",
+      "ec16b0ea09d267a1ffbe6ddba95b081c22ce900b",
+      "ed3d89888fb8a9204dde427c07aaa744adf3b20c",
+      "ed61540ac574b9f57ca6cdca96d3d147c9c9af97",
+      "ed7265d2589f32a4b1553fb358e7279d48e9998a",
+      "ed9a12cac961dc22082d73e4f98a4477f5a9434e",
+      "eda84091ba8807beebdbbf9312d4e6a1501211b8",
+      "ee926adf3e83fed28daf4411f7584ccf9a06785a",
+      "ef5b4635028834b800fde898f663e316cdbee93d",
+      "ef97a147143f23e2827415617665d90cfb33d20e",
+      "efbb9a5ce57812564b149722d9cb026338901386",
+      "f0d32c49c98fcf23e5766e1a0fcbf7a66d354d23",
+      "f0db7c1b4923c6067bee0bc722b9272ceb59c525",
+      "f1353201252a50d2890774567c394060ca95eab0",
+      "f16f544b69047a9e4d4aa8e00ad880194c1dcec9",
+      "f1b16f12fc0973953afc3d60c87afca5ccf45d03",
+      "f20f17325388c96a1f47aca892decea32f7cedd8",
+      "f2898611a35e6caf10527f3124cb3065bd213863",
+      "f3f3e2b33963f5b432f6fed88216434cd1429ffe",
+      "f402185415029b44d99b40ce0c8688063a6cfdcf",
+      "f4361d9ac707c7ff3cad0c2cc2edc59084107396",
+      "f50b6dc9deeab5cef382fae1a60fb7499d8126ab",
+      "f59ae19c167b77c3ea0dae8a552fe532dac986ec",
+      "f5a47715ee18c5d5a588426db192ca4cf43fb85c",
+      "f5b91372becdd46e65d4dbf861fabee40d9ab2c9",
+      "f5d3e06cd38988010ed68bc719f9b40a907b95ac",
+      "f5eebd4c621768aae5beffd9d9ab82a7e1f966e3",
+      "f62f8c5c712278a78f6165e0492a060b903d92bb",
+      "f69de0b7140f97ac03ea6eaed9a2570b322c38e9",
+      "f90c7f06c5108d3b38281904a0b436f5b6073a75",
+      "f91112a1785ae8025d0752897803d5fe5ed05178",
+      "f96c65cffda133d7e3f452ccaf6a6cf3e22017a9",
+      "f9991046045a33b443c6155f86e5992d55da4cd2",
+      "fb9e0f3e56bb366bce1f69b24f7654d1c5175422",
+      "fba69cee31e6a790ac1b226509cc6d97cedb01e9",
+      "fc9a2b57917a298b940263c3f5bf46d332e1a84c",
+      "fd0d7f7cd9519a5c4a870d7cc7f955567c043af9",
+      "fd47185f5e5d905abec2366d34e1c01050dd7b4f",
+      "fe49799f10661dfa3c4a8cd30f144cf67f3094b4",
+      "fe62a50a8c26ef36c0de853aad0776d28f49f95d",
+      "fe724ac912467407434606e07ea7b68ff9794056",
+      "fe89320d6b25c14c678a356a0acc14f166782abe",
+      "fedcace7b3a05bacf2f0bbad38042e1837b55791",
+      "ff3607be5dd825addda5165b6bc3209a75fec841",
+      "ff5baa1fedeae27f0a7a86510d72374affadddf7",
+      "ffac3b9bb32e4531b40aefed6d3bf325fb3dd125"
+    ],
+    "CS005": [
+      "0200478b98e4a7e24f0f0a33e8a53f83c83df28a",
+      "056ff276153fe6fb75ef0759a0541125151fa05a",
+      "0c112351c64418429375af19e256d2c182790adb",
+      "14349a70f16247e8734d59758b75c81016526309",
+      "1a8a29f2c46b37a911d5babc87252e6e3aad9694",
+      "1dd18d81702a0111f3db038d5d3013384a6dd8a8",
+      "20f71c3ee894488f0a769b83afdd9a3edac285b8",
+      "2a2829bc1273e07e49d7c54174e7f3446b18a6b6",
+      "2d1c4e1ba2b193e0b8769aef32fb1468094e1476",
+      "2ea440e98a2efece2fbc0ade20c2e27db3800049",
+      "2f63c44d10c6b3270f46c9898192be0a53f9d4fa",
+      "30f0932ed8d18865c6f0d8f7ba973a3b5c1cff83",
+      "38576ed78e31281daf3123d9aa69332a541e5e6d",
+      "3e5ac298aea120162344ec6871559f9ab1b6eef9",
+      "3e694d6bc3549263f0fbce85e856683be275f867",
+      "414bef83b27e6a871d70b4b1c0f43749fe298ca1",
+      "41cb4b13e3e72d479293fff02002f09086050364",
+      "43a7ef791fc4f43f2f4da1a1dc88a56695fb1d98",
+      "49f5561f4c587cc43b3ab84a87a3a89c283d42ac",
+      "4affa52c9764f0596bcbeead03c808b008c712d4",
+      "4d5ed2b5dea37afb7f72ab8f8bd50e88f6e056f3",
+      "4e7644b0dd3325ea5e889c5916885d3b70c0f266",
+      "53d255cbedf494e4d183be762c032f0d27dfce7f",
+      "53e7b44096e2d1f4c88c1eb7a6a43d298453be80",
+      "563419dbe339a620052c77879ec93db8f2359df6",
+      "59e635d71bd6edde7c77cd40abd2d4fdd515579d",
+      "5a0ee1c9aed9fcebed5523b9a843184876a26c80",
+      "5a1878feb04dd54fe97cbbf553efa289ee9f146d",
+      "5eb741c396b956d4efbafbc1f32dae8931c381ea",
+      "64de46e18f5ffb91a53776c1d01bc15853f3aaa5",
+      "65666384f99f7831b9d8af536a0227275dd29854",
+      "6907a9ec77e723b88739697cff0102f025b419ba",
+      "6cb1fcd162258ab9af60cd6d69a35356c7fd9392",
+      "6f42063bc61dde8eecc68f8b5ffe444986354311",
+      "710a8bf9da1828f04921c5000edf9b1121f8855d",
+      "75f188aa6032ffab03937e74bd7bfed7cea52cc3",
+      "7c387250016b1549e065d9f78c5e79b04e4d27e0",
+      "7fabc2a2b5ab1dcf01cbebd03812ec43054387e3",
+      "81f6bb5c6d014cf4200c21fd7f4e0b65810dd71e",
+      "8955e204bbfa28778b7c9ab6eadfc8aa68ba957c",
+      "8b9addd915f524adb09257572e7c3ec758c06d7d",
+      "8d7f2e9759e002209c84d53b1e28e34c5e068968",
+      "9ae60aa0966ae5792a67f64e2aed7881c860880b",
+      "9baa4848e39d284545591e3d980bceb51f17c039",
+      "9c612fe0339605d43118b7a199cdbc1ef0d4e49c",
+      "a4b142931552e8ec45c1d964a22058f38c90010c",
+      "a5dbdb7bcf82f3cae1210e6a9664d0479aeefeae",
+      "a70d204b745d791c5f9f7720f98a4629b755325a",
+      "a8d37a4d12e21bdf0ed2ef307e9203298093744b",
+      "aa1258f700b2ff89deff389e15a0bf6a6259065a",
+      "af34f03b13f56203dff7b65097bfbccc45278b75",
+      "b21dcd89fcef10e50f43a410307b2726c5058bc3",
+      "ba107ff3a444faba62224b8ffad50e54217a0419",
+      "bcec2bb5f94951a20b75a87be1f52a4b0102f83c",
+      "be1c09b2f06241182b4c7a852edd90501f85d8ea",
+      "c2537b979ee105f6a9477d1447bc44b4dc3406b2",
+      "c4d03f8d147393d6338c8d76456db0209f1f2ae0",
+      "c5df3e62e8c3b95c58447a563fcd9472a16a00dd",
+      "c72ba6270d919ddca700570348e56fb59d075101",
+      "c78c4eebadf3be10bfe5cc15107fdc9ddad23f9d",
+      "c801e73224f3d6abed33396f858c54866b8e70f2",
+      "cdedcb5c76166a8fbf8d49cb32935322706e1f58",
+      "ced27f3e2dfa3ace98fbe7b63ee84984b285390b",
+      "d09c8a586d0cbc8a7b5e0782745f0ce4f96159cc",
+      "d12d80299e4775a1ff6e5a68b24cbc5e179c056a",
+      "d2bb8684a7f1c82faddb95a8c2e2bec4ce334f15",
+      "d2ccd283478fe6de340eef2f17af0dd6e9995939",
+      "d3d113a690df1d3559b36d0e1ffee712bae0a75a",
+      "d3dfdb4b0e28ab1cba06a4b88c3c7fa232c48cc0",
+      "d4780914858a82095ab8f7ecb43d8c66fb2f0d7e",
+      "d5049d83a63f27b71d00fc663d7415b69dd71047",
+      "d7260e874ac731b669fc6f674bc4412d5d2d097d",
+      "dc632946d13054fc41147659a91606ba60b184cb",
+      "e1313a4d2fa2cc3950d5d72227693dd03c2f5af7",
+      "e1b5715bb8f670929af0dadf8dcde5730a5b3e66",
+      "e4415d71d53f42dc0f6923f0bd818ca0849f2da5",
+      "e57fda88f5cede1a22daf1449e90b8f8f9ac8aef",
+      "e833d5457ce9da432cce8d3eebd8f255463baf0a",
+      "ec16b0ea09d267a1ffbe6ddba95b081c22ce900b",
+      "ef97a147143f23e2827415617665d90cfb33d20e",
+      "f402185415029b44d99b40ce0c8688063a6cfdcf",
+      "f4361d9ac707c7ff3cad0c2cc2edc59084107396",
+      "f5a47715ee18c5d5a588426db192ca4cf43fb85c",
+      "f91112a1785ae8025d0752897803d5fe5ed05178",
+      "f9991046045a33b443c6155f86e5992d55da4cd2",
+      "fd47185f5e5d905abec2366d34e1c01050dd7b4f",
+      "fe49799f10661dfa3c4a8cd30f144cf67f3094b4",
+      "fe62a50a8c26ef36c0de853aad0776d28f49f95d"
+    ]
+  },
+  "matchingBlobs": [
+    {
+      "object": "e5148a09c9c145393198ed32d3343b22067705c7",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "12fbbafcf81dfdc8b2da039cc790cf3febf6c492",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "29c6c418942639ec70a54d8559ca50ebf665a1d5",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "b4ef2f214437c34a4acb9c8e2856c40ebbc03a49",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/NativeFilePickerViewModelTests.cs",
+      "occurrences": {
+        "U032": 1
+      }
+    },
+    {
+      "object": "36fb70e9f0c92bf895df391f36137a003d06923a",
+      "firstSeenPath": "OtpHarbor.Tests/Fixtures/LegacySettings/v0-authorization-profile-pbkdf2.json",
+      "occurrences": {
+        "U004": 1,
+        "U005": 1
+      }
+    },
+    {
+      "object": "de0449fcce657481dc8d99002605b1421a430b66",
+      "firstSeenPath": "OtpHarbor.Tests/Fixtures/LegacySettings/v1-global-profile-minimal-pbkdf2.json",
+      "occurrences": {
+        "U004": 1,
+        "U005": 1
+      }
+    },
+    {
+      "object": "f9873225b05706255142c25bd2dc6e2d47e6de34",
+      "firstSeenPath": "OtpHarbor.Tests/Fixtures/LegacySettings/v2-global-profile-expanded-pbkdf2.json",
+      "occurrences": {
+        "U004": 1,
+        "U005": 1
+      }
+    },
+    {
+      "object": "6461968fa4bdc8154ec841004b23e7d3657bb0d1",
+      "firstSeenPath": "OtpHarbor.Tests/Fixtures/LegacySettings/v3-global-profile-dek-envelope.json",
+      "occurrences": {
+        "U004": 1,
+        "U006": 1
+      }
+    },
+    {
+      "object": "dfe4792e3ccf36ad9d2f66c4b3340b07f3d68e4e",
+      "firstSeenPath": "OtpHarbor.Tests/Fixtures/LegacySettings/v4-app-settings-dek-envelope.json",
+      "occurrences": {
+        "U004": 1,
+        "U006": 1
+      }
+    },
+    {
+      "object": "c7b7bfb38b5595c8a2c878b0cd8569d2feead6e2",
+      "firstSeenPath": "OtpHarbor.Tests/Fixtures/LegacySettings/v5-current-app-settings.json",
+      "occurrences": {
+        "U004": 1,
+        "U006": 1
+      }
+    },
+    {
+      "object": "1764735bd298d0b60e8618b436037f8dc5c5e4d7",
+      "firstSeenPath": "OtpHarbor.Tests/Infrastructure/Services/AccountListSnapshotServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "c75c7995bf1328e4ff0d84defc4bb0359d316ae7",
+      "firstSeenPath": "OtpHarbor.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "62289ecbb8cda3da682796de854506cd4aaa1aff",
+      "firstSeenPath": "OtpHarbor.Tests/Infrastructure/Storage/StoreUpgradeTestKitVerifierTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "f9b543b0203477a95e2f31e5eea36cebb3923842",
+      "firstSeenPath": "OtpHarbor.Tests/Security/AuthenticationWorkflowTests.DataTransfer.cs",
+      "occurrences": {
+        "U003": 2,
+        "U032": 4
+      }
+    },
+    {
+      "object": "0bc09f63c6ca6b1da3d48f05e2d2c2d321b06c77",
+      "firstSeenPath": "OtpHarbor.Tests/Security/AuthorizationEnvelopeV2ContractTests.cs",
+      "occurrences": {
+        "U004": 3
+      }
+    },
+    {
+      "object": "1ad6951b1dc9398095750316c25f165770a4471d",
+      "firstSeenPath": "OtpHarbor.Tests/Services/AccountImportServiceTests.cs",
+      "occurrences": {
+        "U032": 2
+      }
+    },
+    {
+      "object": "771e9e89f9656bb7a4d1c3dbf985430acf26d86c",
+      "firstSeenPath": "OtpHarbor.Tests/Validation/SecretValidationTests.cs",
+      "occurrences": {
+        "U003": 2,
+        "U032": 4
+      }
+    },
+    {
+      "object": "5e0f946f3b7688b7afbf114412e8188baaffe074",
+      "firstSeenPath": "artifacts/marketing/demo-data/otp-harbor-demo-accounts.json",
+      "occurrences": {
+        "U007": 1,
+        "U008": 1,
+        "U009": 1,
+        "U010": 1,
+        "U011": 1,
+        "U012": 1,
+        "U013": 1,
+        "U014": 1,
+        "U015": 1,
+        "U016": 1,
+        "U017": 1,
+        "U018": 1,
+        "U019": 1,
+        "U020": 1,
+        "U021": 1,
+        "U022": 1,
+        "U023": 1,
+        "U024": 1,
+        "U025": 1,
+        "U026": 1,
+        "U027": 1,
+        "U028": 1,
+        "U029": 1,
+        "U030": 1,
+        "U031": 1
+      }
+    },
+    {
+      "object": "d02e095787e25264cb5c5fd901a6d6bc9ea3e4a0",
+      "firstSeenPath": "docs/release/WEBSITE_INDEXING.md",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "8b2b37ca2580c300a32e662b951a666cc6776ea9",
+      "firstSeenPath": "scripts/marketing/Publish-LocalPreview.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "0084a9872198b984a8b9e2188f929ad028051deb",
+      "firstSeenPath": "scripts/testing/fixtures/mixed-account-older.json",
+      "occurrences": {
+        "U032": 1,
+        "U033": 1
+      }
+    },
+    {
+      "object": "0b4a5a82c085e45ea78afe0202aab48309899524",
+      "firstSeenPath": "scripts/testing/fixtures/release-native.csv",
+      "occurrences": {
+        "U032": 1
+      }
+    },
+    {
+      "object": "4ac54b232bc47f6a3d6b3f44ade211d17b7cae09",
+      "firstSeenPath": "scripts/testing/fixtures/release-twofas.2fas",
+      "occurrences": {
+        "U033": 1
+      }
+    },
+    {
+      "object": "762afdbef82e2cc73f8a7858bc57fba98b5aac30",
+      "firstSeenPath": "scripts/testing/windows/StoreUpgradeVerifier/UpgradeVerifier.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "48162e251cc34c15f57bb499e70012b2013d1132",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "615a84ea324d603899f0d80d79a40b09c9802a04",
+      "firstSeenPath": "site/<U001>.txt",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "244ba672435f14ccc0156426af808409868a733b",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "4056b904832dd0f9be9e2ecb4c13f44f1629fd17",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/NativeFilePickerViewModelTests.cs",
+      "occurrences": {
+        "U032": 1
+      }
+    },
+    {
+      "object": "22ee4ed9313fb82039d8077ada124883e8bf7497",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "6bc84dbe6b3ff4c571885c83cae1afeaa4c9003f",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "97179dd11085edacdc4592af02b2b89b14b56a9b",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "49b0ca0fff3dc1b8355c8d05c4b7b4cedf9c0378",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "f84a3328eca3d30d8cf638d5471afa0ddc03e468",
+      "firstSeenPath": "scripts/marketing/Publish-LocalPreview.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "86ea20766880268c25dafa8f993fe2fa2fc4f31a",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "3007d608d5291741b0edb012a08d7e029874f5d4",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "b4a392ea8092f6cdc4b620390faced129a8f7d6f",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "37888ef29dfe9b968dc142638ec0ce93ace2bef0",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "6c1a4d386658d75cca97b86fce5d26e7156e5c18",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/NativeFilePickerViewModelTests.cs",
+      "occurrences": {
+        "U032": 1
+      }
+    },
+    {
+      "object": "f8e233e3749f11e660b8467b8df00c3a32a20802",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "d54ee28a92e349741eb7559cdff599da5634486c",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "4b4cf99d6d753e2ba04ed79c3a718162dcb674ab",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "9112fc63922ce9f1f35c667bd4947da3848389ff",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "29eb0c736a7da11e5aab37a1a40850a4e96916c9",
+      "firstSeenPath": "OtpHarbor.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "5481218109c17ecc51f8ebac9185d72f7142fa86",
+      "firstSeenPath": "OtpHarbor.Tests/Services/AccountImportServiceTests.cs",
+      "occurrences": {
+        "U032": 1
+      }
+    },
+    {
+      "object": "0475f1ee0baec452093038438cd0df8249e3bd08",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "ecaf84126bd918ee2d217a6b8c7a14240fef37f1",
+      "firstSeenPath": "OtpHarbor.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "d9792a5036c974e935da281c0f267eb2783865fb",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "aff66c4bcff29054bda9531cc9183d650eaaab13",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "ddb441b3a2d589efbe6cff4bfbda04b91eae00cc",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "7000d1aa51cb0db8d493278a065ab5e8fa9ebe95",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "86aa01d57cffa88af019d428c1d03c0eaf5af001",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "16b9c96c02964dc7414ae25d4cb7322ed1fb9043",
+      "firstSeenPath": "scripts/marketing/Publish-LocalPreview.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "f4760fd83f6520bb9b51f306f96fffb4d92ae43d",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "79426611355b4f2d57d33d5736a8febd7f31784a",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "3bb65056cb1d53da9246d830147e0f844c22951b",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "3931e197295d7c25b710dcc3a099ffeaf89e9104",
+      "firstSeenPath": "OtpHarbor.Tests/Validation/SecretValidationTests.cs",
+      "occurrences": {
+        "U003": 2,
+        "U032": 4
+      }
+    },
+    {
+      "object": "d36196fc19a96b99c0ad7ac873d44190354481b1",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "c2204365f8f8a8e700d0e34716eec46a65c22815",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "8a95b306a0bafec8e5077afbd7d91d61095a8087",
+      "firstSeenPath": "OtpHarbor.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "526379c77dcfbb75c2cfb21a48461feffbf1430e",
+      "firstSeenPath": "OtpHarbor.Tests/Validation/SecretValidationTests.cs",
+      "occurrences": {
+        "U003": 2,
+        "U032": 4
+      }
+    },
+    {
+      "object": "f17a2d20bdd31a91d488f70f01f9209bb072b6b4",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "9b98475afa6efa2cccc9af81a476c3cf4c2aebca",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "9db00de7bb4d0e3fcc54f773952b6a943489cfd3",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "1eb9385cfacafc71b29f6c1b3984fbc7acb3569b",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "9de8de8a2e7f7cec608225444ef119868419dceb",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "dba3055777f9adb08ab96d3a4ebd4157245aee83",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "5a379d659b5fb5141346ab5c4a3802c8a8008596",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "01bac5066dd5798db6aa818035198f0b81b5b93a",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "5c77ab001d736964b5c58830980e265f7456405e",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "4d21ce3dbe0e365812441938eac2f1b0bf023852",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "67305da0f1cbfed840f38af96c509238e891424e",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "9e450aab8b72ce1927eeec3ad905e007cfeaf53e",
+      "firstSeenPath": "OtpHarbor.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "4ffffb178943e21da44fc67f4832205c2c07a5e7",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "5c4cc6909d797403b0e6743ebb4143c3d004ef02",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "05f326d03766a43afb607ec4dfd637e9dddba5be",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "46749fe8aeecb93cce702ecc4960adf1f0ff39d7",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "d5e8817668bcfc342f730c87ea76791aa56f6ba1",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "b0fb0eff7ec423bf05f6a8a5bfd85dc6810d0c6d",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "2ba36e47ed5f106ac5c90e071c1e6ef2787fbf5b",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "1a105d7f2c386228f9d76cef44e1d574cc4d604f",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "de83d632fd7a9d1485440abef20e90aaf1f258df",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "751c24d26f5fa7bd5ba6713bb65714ccdde51605",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "6024d8c3a5dc4640651610171c0295d06ff6f574",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "9a89107774f337c55794c540c0213012e7b4ce2a",
+      "firstSeenPath": "TOTP.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "e1692b1256bb832594271608eabf2373213905c7",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "2a7188febddca108a3d4ceb65634bec9b3ab06da",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "b4c62bd2c831074a76345864bccf2d06f27ed9f2",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "2542074183b3caef3f696b8eae80d4222765aa82",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "4f6b2b2ff2434824bb0c1163dc1eaf16ff48faa5",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "5b2413428e790288c6f7488fe175bee53d489fd2",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "be6f68193cd1680a175e6b451b1939b77f76c1c5",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Mobile/MobileShellViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "ca78d2496ae3c62431a78a763e54d9728565a820",
+      "firstSeenPath": "TOTP.Tests/Avalonia/Presentation/AccountListViewModelTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "1f7d93dae7afecb788b121bb01b6d72b6d0a85d3",
+      "firstSeenPath": "TOTP.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "beefb7791a366831351870bed789e97ab7af8ae2",
+      "firstSeenPath": "TOTP.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "8d9f0aa067c0f2b56771da1204fac4e68ad1b70a",
+      "firstSeenPath": "TOTP.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "63aa050b041d91fd38c8ee203ce1bbf7e19fb1b9",
+      "firstSeenPath": "TOTP.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "7cd0df74dd2ceeb759113f965400479da67b7986",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "38cb917f705a01b6fef6d7a8d8f4f3de0696333b",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "69a39b157f59f4b3598243fb4e292e319dd1c1cb",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "d550792ba9c74c13520b83436fec0b8ca42dd65d",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "c02d4f34ceeb6339c686564cf1e523f44a7bcfc7",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "d2d3883313066df4c32ba68137ec1c06ded453eb",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "d45313699ff4264e158bed2505ed93073d78e2b3",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "4050269e2c33184f181a0e401f88ff3892d3ee3a",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "51d6a03eca28298058f722330c72b056dc68bef6",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "70e3aeab19f52fff7613b5062f2881d01ffff8dd",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "48b28156fe884f7d014b533d9d6d65588d9ba8c9",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "c89cc5f78fd2a35fcfb0559a31e22243308473f4",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "e7fae16db9d2791db1cc981a37d52ec243f91fd5",
+      "firstSeenPath": "TOTP.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "71a2be59dba1934b6f160e0879438f4bdce44b84",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "38aa879f53ece71e5bea923e399dfe6de0d62552",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "a23622ca210be65347c801b1fcd62cc397b17832",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "2752a16bcae5bae0058be2723723dee985247cc9",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "25936e6ec2f97c92c354d28a27f50239f52ff297",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "a7b49241e2339e95ca0aa5c84cdf1336667c5007",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "fb41699fd2bcde502e35190a2a6dcbe5d841ab31",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "e817440f956885f5ed60503608a983b01138757d",
+      "firstSeenPath": ".github/workflows/pages.yml",
+      "occurrences": {
+        "U001": 2
+      }
+    },
+    {
+      "object": "a57bbd3a5d4eafdca1063c64e8aaeac3b40e1142",
+      "firstSeenPath": "scripts/validation/Test-PublicWebsite.ps1",
+      "occurrences": {
+        "U001": 1
+      }
+    },
+    {
+      "object": "f3c1e3c49f43320a85a47b252315873a6ed23812",
+      "firstSeenPath": "TOTP.Tests/Infrastructure/Services/QrAccountImportServiceTests.cs",
+      "occurrences": {
+        "U003": 1,
+        "U032": 2
+      }
+    },
+    {
+      "object": "df3ee36b64e3735011823f8bc5a48bd307610222",
+      "firstSeenPath": "TOTP.Tests/Security/AuthorizationEnvelopeV2ContractTests.cs",
+      "occurrences": {
+        "U004": 3
+      }
+    },
+    {
+      "object": "81e647aa1856b62db891358c524ff16e4aab074a",
+      "firstSeenPath": "readme.md",
+      "occurrences": {
+        "U002": 2
+      }
+    },
+    {
+      "object": "046fc20cebf55990ac09a32ef28a2e2a052c3ee9",
+      "firstSeenPath": "readme.md",
+      "occurrences": {
+        "U002": 2
+      }
+    },
+    {
+      "object": "a066ade418dfe54161673e6e367fcc8a05ce3757",
+      "firstSeenPath": "Github2FA/MainWindow.xaml.cs",
+      "occurrences": {
+        "U002": 1
+      }
+    },
+    {
+      "object": "2de93ebae75df0730ac51cdf510f73229b3d9d74",
+      "firstSeenPath": "readme.md",
+      "occurrences": {
+        "U002": 1
+      }
+    },
+    {
+      "object": "ef35761feb4dc5d23745951707051d14455e89e2",
+      "firstSeenPath": "Github2FA/MainWindow.xaml.cs",
+      "occurrences": {
+        "U002": 1
+      }
+    },
+    {
+      "object": "ddcf0ace50cad52708d3040f0bf69f032110b884",
+      "firstSeenPath": "readme.md",
+      "occurrences": {
+        "U002": 1
+      }
+    }
+  ],
+  "mirror": {
+    "schemaVersion": 1,
+    "sourceCommit": "f91112a1785ae8025d0752897803d5fe5ed05178",
+    "workingFindings": 46,
+    "authoritativeRemoteRefFindings": 46,
+    "authoritativeUniqueDetectedValues": 33,
+    "workingAndRemoteFingerprintsEqual": true,
+    "remoteRefCounts": {
+      "heads": 4,
+      "tags": 126,
+      "pull": 50
+    },
+    "snapshotDifferences": [
+      {
+        "ref": "refs/heads/codex/continuous-delivery-evolution",
+        "snapshot": "3e5ac298aea120162344ec6871559f9ab1b6eef9",
+        "current": "f91112a1785ae8025d0752897803d5fe5ed05178"
+      },
+      {
+        "ref": "refs/pull/51/head",
+        "snapshot": "3e5ac298aea120162344ec6871559f9ab1b6eef9",
+        "current": "f91112a1785ae8025d0752897803d5fe5ed05178"
+      },
+      {
+        "ref": "refs/pull/51/merge",
+        "snapshot": "d91f78e80de8c203b7e5022b9d50f45eb2d784f7",
+        "current": "f9991046045a33b443c6155f86e5992d55da4cd2"
+      }
+    ],
+    "pr51SnapshotBehindCommits": 3,
+    "mirrorWithActualPolicyFindings": 537,
+    "mirrorAfterDiagnosticExistingExceptionRemapFindings": 44,
+    "mirrorResolvedOriginalFindings": [
+      "F002",
+      "F042"
+    ],
+    "mirrorRetainedOriginalFindings": 44,
+    "mirrorCommitMapEntries": 1019,
+    "mirrorRewrittenCommits": 1013,
+    "mirrorChangedRefCounts": {
+      "heads": 4,
+      "tags": 126,
+      "pull": 50
+    },
+    "snapshotSignaturesBefore": {
+      "signedCommits": 35,
+      "signedTags": 0,
+      "unavailableObjects": 1
+    },
+    "snapshotSignaturesAfter": {
+      "signedCommits": 0,
+      "signedTags": 0,
+      "unavailableObjects": 0
+    },
+    "cachedMissingObjectVerification": {
+      "commit": "d91f78e80de8c203b7e5022b9d50f45eb2d784f7",
+      "signaturePresent": true,
+      "githubVerified": true,
+      "source": "GitHub REST git/commits, read only"
+    },
+    "originalSnapshotSignedCommitCountIncludingCachedObject": 36
+  },
+  "releaseAssetsBaseline": {
+    "releaseRecords": 88,
+    "publishedReleases": 86,
+    "publishedAssetCount": 497,
+    "allAssetCount": 507,
+    "metadataSha256": "9ace39eaf610d1dee38775c3011a18ef53174a43e664e1e19bc311b3d4b4bb30"
+  },
+  "limitations": [
+    "Fixture purpose supported by repository evidence; external reuse cannot be proved absent.",
+    "Legacy TOTP disposition rests on explicit owner attestation; a historical synthetic generator was not found.",
+    "IndexNow public verification was checked by GET; no notification or credential authentication was attempted.",
+    "All-reachable history and current tracked sources were checked; external systems and deleted/unreachable history are outside this evidence.",
+    "Literal blob counts differ from Git diff detections and current-ref tip presence.",
+    "No value digests, plaintext credentials, private account details, author emails or raw scanner contexts are exported."
+  ],
+  "approvedOwnerAttestedFixtureFindings": 2,
+  "authorizedProtocolFindings": 2,
+  "approvedFingerprintCount": 46,
+  "remediationStages": [
+    {
+      "stage": "original actual policy",
+      "findings": 46,
+      "distinctValues": 33
+    },
+    {
+      "stage": "42 independently reviewed fixture exceptions",
+      "findings": 4,
+      "distinctValues": 2
+    },
+    {
+      "stage": "plus two authorized IndexNow exceptions",
+      "findings": 2,
+      "distinctValues": 1
+    },
+    {
+      "stage": "plus two owner-attested synthetic TOTP exceptions",
+      "findings": 0,
+      "distinctValues": 0
+    }
+  ],
+  "previousLocalVerification": {
+    "baselineFindings": 46,
+    "distinctValues": 33,
+    "changedFilesChecked": 10,
+    "changedFilesContainReviewedValues": false,
+    "nativeChangedContentFindings": 0,
+    "allRemoteRefsUnchanged": true,
+    "remoteRefCount": 180,
+    "releaseMetadataUnchanged": true,
+    "publishedAssetCount": 497,
+    "sshOriginUnchanged": true,
+    "authenticationSettingsModified": false,
+    "allRefScanRemainingFindings": 4,
+    "scannerFindingExitStatus": 1,
+    "remainingBaselineFindingIds": [
+      "F001",
+      "F002",
+      "F042",
+      "F046"
+    ],
+    "pythonPolicyPrivacyTestsPassed": 8,
+    "legacyCryptoFixtureTestsPassed": 3,
+    "actionlintVersion": "1.7.12",
+    "actionlintOptionalShellcheckPyflakesEnabled": false,
+    "testingScriptCount": 120,
+    "documentedScriptReferences": 409,
+    "buildReuseEntryPoints": 13,
+    "hostedPatchValidation": "not run",
+    "patchPushed": false,
+    "worktreeScanRemainingFindings": 4,
+    "decision": "NO-GO production/history rewrite; GO local fixture patch review"
+  },
+  "verification": {
+    "baselineFindings": 46,
+    "distinctValues": 33,
+    "changedFilesChecked": 11,
+    "changedFilesContainReviewedValues": false,
+    "nativeChangedContentFindings": 0,
+    "allRemoteRefsUnchanged": true,
+    "remoteRefCount": 180,
+    "releaseMetadataUnchanged": true,
+    "publishedAssetCount": 497,
+    "sshOriginUnchanged": true,
+    "authenticationSettingsModified": false,
+    "allRefScanRemainingFindings": 0,
+    "scannerFindingExitStatus": 0,
+    "intermediateIndexNowOnlyFindings": 2,
+    "originalFixtureFingerprintsUnchanged": 42,
+    "remainingBaselineFindingIds": [],
+    "policyPrivacyTestsPassed": 9,
+    "releaseContractTestsPassed": 40,
+    "cryptoFixtureTestsPassed": 3,
+    "testsSkipped": 0,
+    "worktreeFindings": 0,
+    "allRefFindings": 0,
+    "fullHistoryExitCode": 0,
+    "hostedPatchValidation": "not run; local and uncommitted",
+    "productionPromotionAuthorized": false,
+    "remoteWritesAuthorized": false,
+    "decision": "GO local historical finding remediation; NO-GO production promotion",
+    "releasePolicyChecks": [
+      {
+        "name": "release-python-contracts",
+        "exitCode": 0,
+        "command": [
+          "python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "scripts/validation",
+          "-p",
+          "test_release_*.py"
+        ],
+        "status": "passed",
+        "testsRun": 40,
+        "testsSkipped": 0
+      },
+      {
+        "name": "Test-PublicWebsite",
+        "exitCode": 0,
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          "scripts/validation/Test-PublicWebsite.ps1"
+        ],
+        "status": "passed"
+      },
+      {
+        "name": "Test-AndroidReleasePackaging",
+        "exitCode": 0,
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          "scripts/validation/Test-AndroidReleasePackaging.ps1"
+        ],
+        "status": "passed"
+      },
+      {
+        "name": "Test-UnsignedPreviewReleasePolicy",
+        "exitCode": 0,
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          "scripts/validation/Test-UnsignedPreviewReleasePolicy.ps1"
+        ],
+        "status": "passed"
+      },
+      {
+        "name": "Test-StoreReleaseArtifact",
+        "exitCode": 0,
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          "scripts/validation/Test-StoreReleaseArtifact.ps1"
+        ],
+        "status": "passed"
+      },
+      {
+        "name": "Test-TestingScriptLayout",
+        "exitCode": 0,
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          "scripts/validation/Test-TestingScriptLayout.ps1"
+        ],
+        "status": "passed"
+      },
+      {
+        "name": "Test-BuildScriptCoverage",
+        "exitCode": 0,
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          "scripts/validation/Test-BuildScriptCoverage.ps1"
+        ],
+        "status": "passed"
+      },
+      {
+        "name": "actionlint",
+        "exitCode": 0,
+        "command": [
+          "actionlint",
+          "-shellcheck=",
+          "-pyflakes="
+        ],
+        "status": "passed"
+      }
+    ],
+    "evidencePhase": "local pre-integration snapshot; subsequent hosted results in PR51"
+  },
+  "integrationAuthorization": {
+    "normalBranchPush": true,
+    "branch": "codex/continuous-delivery-evolution",
+    "prNumber": 51,
+    "keepDraft": true,
+    "hostedValidationOnly": true,
+    "productionPromotion": false,
+    "historyRewrite": false,
+    "tagChanges": false,
+    "merge": false
+  }
+}

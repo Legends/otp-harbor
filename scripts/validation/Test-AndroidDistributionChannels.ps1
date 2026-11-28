@@ -51,6 +51,12 @@ foreach ($listingFile in $listingFiles) {
 }
 
 $workflow = Read-RequiredFile '.github\workflows\build-and-test.yml'
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-desktop-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-validation.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/actions/validate-application/action.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot '.github/workflows/reusable-android-package.yml'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1'))
+$workflow += [IO.File]::ReadAllText((Join-Path $repositoryRoot 'scripts/release/shared/Prepare-AndroidReleaseMetadata.ps1'))
 if (-not $workflow.Contains(
         './scripts/validation/Test-AndroidDistributionChannels.ps1',
         [StringComparison]::Ordinal)) {

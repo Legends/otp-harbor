@@ -1,0 +1,38 @@
+name: Measure delivery feedback
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 6 * * 1'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+      - name: Measure recent GitHub evidence without application telemetry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/release/shared/delivery_metrics.py --output delivery-metrics.json
+      - name: Summarize observed evidence and missing classifications
+        shell: python
+        run: |
+          import json, os
+          with open('delivery-metrics.json', encoding='utf-8') as source:
+              report = json.load(source)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+              summary.write('## Delivery feedback\n\n```json\n' + json.dumps(report, indent=2) + '\n```\n')
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: delivery-metrics
+          path: delivery-metrics.json
+          retention-days: 90

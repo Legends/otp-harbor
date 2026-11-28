@@ -1,0 +1,161 @@
+name: Validate OTP Harbor application
+description: Shared application tests and security/packaging policy validation
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+      with:
+        dotnet-version: "10.0.404"
+        cache: true
+        cache-dependency-path: |
+          **/*.csproj
+          **/*.sln
+          NuGet.config
+
+    - name: Restore with NuGet.config
+      shell: pwsh
+      run: dotnet restore OtpHarbor.sln --nologo --verbosity minimal --configfile NuGet.config --source https://api.nuget.org/v3/index.json
+
+    - name: Build solution
+      shell: pwsh
+      run: dotnet build OtpHarbor.sln --configuration Release --no-restore --nologo --verbosity minimal
+
+    - name: Validate package update and preview signing policies
+      shell: pwsh
+      run: ./scripts/validation/Test-UnsignedPreviewReleasePolicy.ps1
+
+    - name: Validate README release automation
+      shell: pwsh
+      run: |
+        python -m unittest discover -s scripts/validation -p test_readme_releases.py
+        python -m unittest discover -s scripts/validation -p test_public_store_version.py
+
+    - name: Validate code-signing status disclosure
+      shell: pwsh
+      run: ./scripts/validation/Test-SignPathFoundationReadiness.ps1
+
+    - name: Validate third-party brand-asset policy
+      shell: pwsh
+      run: ./scripts/validation/Test-BrandAssetPolicy.ps1
+
+    - name: Validate repository license policy
+      shell: pwsh
+      run: ./scripts/validation/Test-RepositoryLicensePolicy.ps1
+
+    - name: Validate Microsoft Store packaging controls
+      shell: pwsh
+      run: ./scripts/validation/Test-MicrosoftStorePackaging.ps1
+
+    - name: Validate retained Store release artifacts
+      shell: pwsh
+      run: ./scripts/validation/Test-StoreReleaseArtifact.ps1
+
+    - name: Validate public website
+      shell: pwsh
+      run: ./scripts/validation/Test-PublicWebsite.ps1
+
+    - name: Validate Android marketing assets
+      shell: pwsh
+      run: ./scripts/validation/Test-AndroidMarketingAssets.ps1
+
+    - name: Validate Android FOSS build inputs
+      shell: pwsh
+      run: ./scripts/validation/Test-AndroidFossBuild.ps1
+
+    - name: Validate Android APK payload comparator
+      shell: pwsh
+      run: ./scripts/validation/Test-AndroidApkPayloadComparison.ps1
+
+    - name: Validate Android distribution channels
+      shell: pwsh
+      run: ./scripts/validation/Test-AndroidDistributionChannels.ps1
+
+    - name: Validate source launcher safeguards
+      shell: pwsh
+      run: ./scripts/validation/Test-SourceLauncher.ps1
+
+    - name: Validate Windows MSI packaging controls
+      shell: pwsh
+      run: ./scripts/validation/Test-WindowsMsiPackaging.ps1
+
+    - name: Validate Android release packaging controls
+      shell: pwsh
+      run: ./scripts/validation/Test-AndroidReleasePackaging.ps1
+
+    - name: Validate testing script paths
+      shell: pwsh
+      run: |
+        ./scripts/validation/Test-TestingScriptLayout.ps1
+        ./scripts/validation/Test-BuildReuse.ps1
+        ./scripts/validation/Test-BuildScriptCoverage.ps1
+
+    - name: Validate release planning, candidate integrity, and external recovery
+      shell: pwsh
+      run: |
+        python -m unittest discover -s scripts/validation -p 'test_release*.py'
+        if ($LASTEXITCODE -ne 0) { throw 'Release infrastructure regression tests failed.' }
+        python -m unittest discover -s scripts/validation -p test_partner_center.py
+        if ($LASTEXITCODE -ne 0) { throw 'Partner Center regression tests failed.' }
+
+    - name: Validate localization resources
+      shell: pwsh
+      run: ./scripts/validation/Test-LocalizationResources.ps1
+
+    - name: Audit NuGet dependency graph
+      shell: pwsh
+      run: |
+        ./scripts/validation/Test-NuGetVulnerabilities.ps1 `
+          -SolutionPath OtpHarbor.sln `
+          -OutputPath TestResults/nuget-vulnerability-audit.json
+
+    - name: Upload dependency audit evidence
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      with:
+        name: nuget-vulnerability-audit-${{ github.sha }}
+        path: TestResults/nuget-vulnerability-audit.json
+        retention-days: 30
+        if-no-files-found: error
+
+    - name: Run fast tests (PR)
+      if: ${{ github.event_name == 'pull_request' }}
+      shell: pwsh
+      run: |
+        dotnet test OtpHarbor.sln --configuration Release --no-build --nologo --verbosity minimal `
+          --logger trx --results-directory TestResults `
+          --filter "FullyQualifiedName!~Integration&FullyQualifiedName!~IdleMonitoringBackgroundServiceTests&FullyQualifiedName!~UserActivityServiceTests"
+
+    - name: Run full tests (push/tags)
+      if: ${{ github.event_name != 'pull_request' }}
+      shell: pwsh
+      run: |
+        dotnet test OtpHarbor.sln --configuration Release --no-build --nologo --verbosity minimal `
+          --logger "console;verbosity=minimal" `
+          --logger trx `
+          --results-directory TestResults `
+          --blame-hang-timeout 5m `
+          --blame-hang-dump-type none
+
+    - name: Summarize actual test results
+      if: always()
+      shell: pwsh
+      run: ./scripts/release/shared/Write-TestEvidence.ps1
+
+    - name: Retain test counts and result files
+      if: always()
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      with:
+        name: test-evidence-${{ github.sha }}
+        path: |
+          TestResults/test-evidence.json
+          TestResults/*.trx
+        retention-days: 30
+        if-no-files-found: warn
+
+    - name: Upload test diagnostics
+      if: ${{ failure() && github.event_name != 'pull_request' }}
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      with:
+        name: test-diagnostics-${{ github.run_id }}
+        path: TestResults
+        if-no-files-found: ignore

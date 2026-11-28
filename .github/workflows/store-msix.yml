@@ -76,13 +76,15 @@ jobs:
 
       - name: Build unsigned Partner Center MSIX
         shell: pwsh
+        env:
+          RELEASE_VALUE_0: ${{ inputs.version }}
         run: |
           ./scripts/release/windows/New-MicrosoftStoreMsix.ps1 `
             -IdentityName $env:STORE_IDENTITY_NAME `
             -Publisher $env:STORE_PUBLISHER `
             -PublisherDisplayName $env:STORE_PUBLISHER_DISPLAY_NAME `
             -Version $env:STORE_VERSION `
-            -OutputDirectory 'artifacts/windows/release/msix-${{ inputs.version }}'
+            -OutputDirectory ('artifacts/windows/release/msix-__RELEASE_VALUE_0__'.Replace('__RELEASE_VALUE_0__', $env:RELEASE_VALUE_0))
 
       - name: Upload Partner Center submission artifact
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -108,6 +110,19 @@ jobs:
         with:
           ref: master
           persist-credentials: false
+
+      - name: Set up Python for independent retail publication verification
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+
+      - name: Require the requested version to be publicly available
+        shell: pwsh
+        run: |
+          $publicVersion = & python scripts/release/windows/Get-PublicMicrosoftStoreVersion.py
+          if ($LASTEXITCODE -ne 0 -or $publicVersion -cne $env:STORE_VERSION) {
+            throw 'The requested Store package version is not independently confirmed in the public retail catalog. Public metadata was not changed.'
+          }
 
       - name: Update confirmed public Store version
         shell: pwsh

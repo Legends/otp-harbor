@@ -1,7 +1,9 @@
 # Android release and signing
 
-OTP Harbor ships Android through independent GitHub Releases triggered by `android-v<major>.<minor>.<patch>`
-tags. Desktop releases continue to use `v<major>.<minor>.<patch>`, so either application can ship
+Use the [unified release workflow](CONTINUOUS_DELIVERY.md) with `scope=mobile` for on-demand
+candidate preparation and authorized publication. The protected legacy tag entry remains
+available during migration. OTP Harbor ships Android through independent `android-v<major>.<minor>.<patch>`
+GitHub Releases. Desktop releases continue to use `v<major>.<minor>.<patch>`, so either application can ship
 without incrementing or republishing the other. The APK is not embedded in a desktop installer or archive. A Google
 Play Android App Bundle will be produced by a separate submission workflow when Play distribution
 is enabled; an AAB is not directly installable and is therefore not a GitHub download for users.

@@ -41,7 +41,7 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $OutputDirectory = "artifacts/windows/release/$releaseFolder"
 }
 $resolvedOutput = [IO.Path]::GetFullPath((Join-Path $repositoryRoot $OutputDirectory))
-$allowedOutputRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts'))
+$allowedOutputRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts')) + [IO.Path]::DirectorySeparatorChar
 if (-not $resolvedOutput.StartsWith($allowedOutputRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw 'The Store output directory must remain below the repository artifacts directory.'
 }
@@ -127,10 +127,16 @@ try {
         }
         $assemblyVersion = "$resolvedProductVersion.0"
         $storePublish = Join-Path $repositoryRoot 'artifacts/build-cache/store-publish'
+        # Restore may update runtime-specific lock entries. Resolve them before the
+        # input fingerprint, then keep compilation from changing those inputs.
+        & dotnet restore (Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj') `
+            --runtime win-x64 --configfile (Join-Path $repositoryRoot 'NuGet.config') `
+            --nologo --verbosity minimal -p:SelfContained=true
+        if ($LASTEXITCODE -ne 0) { throw 'The Windows dependency restore failed.' }
         $storeArguments = @('publish',
             (Join-Path $repositoryRoot 'OtpHarbor.UI.Avalonia.Desktop/OtpHarbor.UI.Avalonia.Desktop.csproj'),
             '--configuration', 'Release', '--runtime', 'win-x64', '--self-contained', 'true',
-            '--nologo', '--verbosity', 'minimal', '--output', $storePublish,
+            '--no-restore', '--nologo', '--verbosity', 'minimal', '--output', $storePublish,
             "-p:Version=$resolvedProductVersion", "-p:FileVersion=$Version", "-p:AssemblyVersion=$assemblyVersion",
             "-p:InformationalVersion=$resolvedProductVersion", '-p:IncludeSourceRevisionInInformationalVersion=false')
         Invoke-OtpHarborCachedBuild -RepositoryRoot $repositoryRoot -CacheName 'Microsoft Store publish' `

@@ -1,0 +1,116 @@
+name: Recover retained OTP Harbor release
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Retry only the unsuccessful operation
+        type: choice
+        options: [desktop, android, store, store-status, metadata]
+        required: true
+      original_run_id:
+        description: Original Release OTP Harbor run ID
+        type: string
+        required: true
+      candidate_artifact_id:
+        description: Original immutable candidate artifact ID
+        type: string
+        required: true
+      candidate_sha256:
+        description: Original approved candidate.json SHA-256
+        type: string
+        required: true
+      store_state_artifact_id:
+        description: Latest Store state artifact ID for a Store retry
+        type: string
+        default: ''
+      store_state_run_id:
+        description: Run which owns that Store state artifact
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+  attestations: read
+
+concurrency:
+  group: otp-production-release
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: release-input
+    outputs:
+      mode: ${{ steps.inspect.outputs.mode }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          artifact-ids: ${{ inputs.candidate_artifact_id }}
+          run-id: ${{ inputs.original_run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: release-input
+      - name: Reject changed, unavailable or untrusted recovery artifacts
+        id: inspect
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORIGINAL_RUN: ${{ inputs.original_run_id }}
+          ORIGINAL_ARTIFACT: ${{ inputs.candidate_artifact_id }}
+          CANDIDATE_SHA256: ${{ inputs.candidate_sha256 }}
+          RECOVERY_TARGET: ${{ inputs.target }}
+          RELEASE_AUTOMATIC_PROMOTION_ENABLED: ${{ vars.RELEASE_AUTOMATIC_PROMOTION_ENABLED }}
+        run: |
+          & "$env:GITHUB_WORKSPACE/scripts/release/shared/Test-CandidateOrigin.ps1" -RunId $env:ORIGINAL_RUN -ArtifactId $env:ORIGINAL_ARTIFACT -Digest $env:CANDIDATE_SHA256 -ReadOnly:($env:RECOVERY_TARGET -eq 'store-status')
+          $candidate = Get-Content candidate.json -Raw | ConvertFrom-Json
+          "mode=$($candidate.plan.mode)" >> $env:GITHUB_OUTPUT
+          "Recovering candidate $($candidate.plan.candidateId) from source $($candidate.plan.sourceCommit). No rebuilding or version allocation." >> $env:GITHUB_STEP_SUMMARY
+
+  github:
+    needs: inspect
+    if: inputs.target == 'desktop' || inputs.target == 'android'
+    permissions:
+      contents: write
+      actions: read
+      attestations: read
+    uses: ./.github/workflows/reusable-promote.yml
+    with:
+      family: ${{ inputs.target }}
+      mode: ${{ needs.inspect.outputs.mode }}
+      run_id: ${{ inputs.original_run_id }}
+      artifact_id: ${{ inputs.candidate_artifact_id }}
+      candidate_sha256: ${{ inputs.candidate_sha256 }}
+
+  store:
+    needs: inspect
+    if: inputs.target == 'store' || inputs.target == 'store-status'
+    uses: ./.github/workflows/reusable-store-submission.yml
+    with:
+      action: ${{ inputs.target == 'store-status' && 'reconcile' || 'submit' }}
+      mode: ${{ needs.inspect.outputs.mode }}
+      run_id: ${{ inputs.original_run_id }}
+      artifact_id: ${{ inputs.candidate_artifact_id }}
+      candidate_sha256: ${{ inputs.candidate_sha256 }}
+      state_artifact_id: ${{ inputs.store_state_artifact_id }}
+      state_run_id: ${{ inputs.store_state_run_id }}
+
+  metadata:
+    needs: [inspect, github, store]
+    if: always() && needs.inspect.result == 'success' && (inputs.target == 'metadata' || needs.github.result == 'success' || needs.store.outputs.state == 'published')
+    permissions:
+      contents: write
+      actions: write
+    uses: ./.github/workflows/readme-releases.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}

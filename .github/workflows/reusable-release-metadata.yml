@@ -1,0 +1,112 @@
+name: Verify release metadata and signatures
+
+on:
+  workflow_call:
+    inputs:
+      family:
+        type: string
+        required: true
+      release_tag:
+        type: string
+        required: true
+      source_sha:
+        type: string
+        required: true
+      mode:
+        type: string
+        required: true
+    secrets:
+      NETSPARKLE_PUBLIC_KEY:
+        required: false
+      NETSPARKLE_PRIVATE_KEY:
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  desktop:
+    if: inputs.family == 'desktop' && inputs.mode != 'validate'
+    runs-on: ubuntu-24.04
+    environment: release-signing
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.404'
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: avalonia-release-linux-x64-${{ inputs.source_sha }}
+          path: release-assets
+      - name: Install existing pinned signing tool
+        if: inputs.mode != 'validate'
+        run: dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator --version 2.9.0
+      - name: Prepare and verify desktop metadata
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SOURCE: ${{ inputs.source_sha }}
+          RELEASE_MODE: ${{ inputs.mode }}
+          NETSPARKLE_PUBLIC_KEY: ${{ inputs.mode != 'validate' && secrets.NETSPARKLE_PUBLIC_KEY || '' }}
+          NETSPARKLE_PRIVATE_KEY: ${{ inputs.mode != 'validate' && secrets.NETSPARKLE_PRIVATE_KEY || '' }}
+        run: ./scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE -ValidateOnly:($env:RELEASE_MODE -eq 'validate')
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: desktop-ready-${{ inputs.source_sha }}
+          path: release-assets/*
+          retention-days: 90
+          if-no-files-found: error
+
+  desktop-validation:
+    if: inputs.family == 'desktop' && inputs.mode == 'validate'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: avalonia-release-linux-x64-${{ inputs.source_sha }}
+          path: release-assets
+      - name: Prepare explicitly unsigned validation metadata without credentials
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SOURCE: ${{ inputs.source_sha }}
+        run: ./scripts/release/shared/Prepare-DesktopReleaseMetadata.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE -ValidateOnly
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: desktop-ready-${{ inputs.source_sha }}
+          path: release-assets/*
+          retention-days: 14
+          if-no-files-found: error
+
+  android:
+    if: inputs.family == 'android' && inputs.mode != 'validate'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: android-release-${{ inputs.source_sha }}
+          path: android-release-assets
+      - name: Prepare Android integrity metadata
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_SOURCE: ${{ inputs.source_sha }}
+        run: ./scripts/release/shared/Prepare-AndroidReleaseMetadata.ps1 -ReleaseTag $env:RELEASE_TAG -SourceCommit $env:RELEASE_SOURCE
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: android-ready-${{ inputs.source_sha }}
+          path: android-release-assets/*
+          retention-days: 90
+          if-no-files-found: error

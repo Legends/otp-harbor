@@ -1,0 +1,69 @@
+name: Reconcile Microsoft Store certification
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */4 * * *'
+
+permissions:
+  contents: read
+  actions: read
+  attestations: read
+
+concurrency:
+  group: store-reconciliation-discovery
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.records.outputs.matrix }}
+      pending: ${{ steps.records.outputs.pending }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.18'
+      - name: Discover trusted pending Store state without credentials
+        id: records
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/release/windows/store_monitor.py --output monitor.json
+          if ($LASTEXITCODE -ne 0) { throw 'Store state discovery requires attention.' }
+          $matrix = Get-Content monitor.json -Raw | ConvertFrom-Json
+          "matrix=$($matrix | ConvertTo-Json -Depth 10 -Compress)" >> $env:GITHUB_OUTPUT
+          "pending=$(@($matrix.include).Count -gt 0)".ToLowerInvariant() >> $env:GITHUB_OUTPUT
+          "Pending Store records: $(@($matrix.include).Count). Each check is bounded; this workflow never waits for certification or mutates a submission." >> $env:GITHUB_STEP_SUMMARY
+
+  reconcile:
+    needs: discover
+    if: needs.discover.outputs.pending == 'true'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    uses: ./.github/workflows/reusable-store-submission.yml
+    with:
+      action: reconcile
+      run_id: ${{ matrix.run_id }}
+      artifact_id: ${{ matrix.artifact_id }}
+      candidate_sha256: ${{ matrix.candidate_sha256 }}
+      state_artifact_id: ${{ matrix.state_artifact_id }}
+      state_run_id: ${{ matrix.state_run_id }}
+
+  refresh_confirmed_publication:
+    needs: [discover, reconcile]
+    if: always() && needs.discover.outputs.pending == 'true' && needs.reconcile.result == 'success' && needs.reconcile.outputs.state == 'published'
+    permissions:
+      contents: write
+      actions: write
+    uses: ./.github/workflows/readme-releases.yml
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}

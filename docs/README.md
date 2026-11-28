@@ -20,6 +20,8 @@ This index lists maintained documentation. Git history preserves completed migra
 - [F-Droid dependency audit](android/FDROID_DEPENDENCY_AUDIT.md)
 - [F-Droid signing and update channels](android/FDROID_SIGNING_AND_UPDATES.md)
 - [Microsoft Store release](release/MICROSOFT_STORE.md)
+- [Continuous delivery, unified release and recovery](release/CONTINUOUS_DELIVERY.md)
+- [Delivery implementation evidence and remaining prerequisites](release/DELIVERY_IMPLEMENTATION_REPORT.md)
 - [Android release and signing](release/ANDROID.md)
 - [Automatic README release updates](release/README_RELEASES.md)
 - [Website indexing](release/WEBSITE_INDEXING.md)
@@ -46,6 +48,7 @@ This index lists maintained documentation. Git history preserves completed migra
 
 - [Threat model](security/THREAT_MODEL.md)
 - [Security verification](security/SECURITY_VERIFICATION.md)
+- [Historical Gitleaks remediation and owner actions](security/HISTORICAL_GITLEAKS_REMEDIATION.md)
 - [Authorization envelope v2](security/AUTHORIZATION_ENVELOPE_V2.md)
 - [Clipboard security](security/CLIPBOARD_SECURITY.md)
 - [Platform file security](security/PLATFORM_FILE_SECURITY.md)

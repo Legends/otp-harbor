@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "ci": {
+    "runs": [
+      {
+        "runId": 46056677651,
+        "event": "push",
+        "result": "success",
+        "queueSeconds": 2.0,
+        "executionSeconds": 724.0,
+        "firstCompletedGateSeconds": 55.0,
+        "firstFailedGateSeconds": null
+      },
+      {
+        "runId": 46055391882,
+        "event": "push",
+        "result": "failure",
+        "queueSeconds": 2.0,
+        "executionSeconds": 781.0,
+        "firstCompletedGateSeconds": 59.0,
+        "firstFailedGateSeconds": 307.0
+      },
+      {
+        "runId": 46055391829,
+        "event": "push",
+        "result": "success",
+        "queueSeconds": 2.0,
+        "executionSeconds": 647.0,
+        "firstCompletedGateSeconds": 56.0,
+        "firstFailedGateSeconds": null
+      },
+      {
+        "runId": 46053310903,
+        "event": "push",
+        "result": "success",
+        "queueSeconds": 2.0,
+        "executionSeconds": 907.0,
+        "firstCompletedGateSeconds": 57.0,
+        "firstFailedGateSeconds": null
+      },
+      {
+        "runId": 45984808207,
+        "event": "push",
+        "result": "success",
+        "queueSeconds": 2.0,
+        "executionSeconds": 648.0,
+        "firstCompletedGateSeconds": 98.0,
+        "firstFailedGateSeconds": null
+      },
+      {
+        "runId": 45984728312,
+        "event": "push",
+        "result": "failure",
+        "queueSeconds": 2.0,
+        "executionSeconds": 606.0,
+        "firstCompletedGateSeconds": 55.0,
+        "firstFailedGateSeconds": 483.0
+      },
+      {
+        "runId": 45983632050,
+        "event": "push",
+        "result": "success",
+        "queueSeconds": 2.0,
+        "executionSeconds": 641.0,
+        "firstCompletedGateSeconds": 48.0,
+        "firstFailedGateSeconds": null
+      },
+      {
+        "runId": 45982532659,
+        "event": "pull_request",
+        "result": "success",
+        "queueSeconds": 2.0,
+        "executionSeconds": 630.0,
+        "firstCompletedGateSeconds": 60.0,
+        "firstFailedGateSeconds": null
+      },
+      {
+        "runId": 45863648894,
+        "event": "pull_request",
+        "result": "failure",
+        "queueSeconds": 3.0,
+        "executionSeconds": 704.0,
+        "firstCompletedGateSeconds": 60.0,
+        "firstFailedGateSeconds": 488.0
+      },
+      {
+        "runId": 45812734381,
+        "event": "pull_request",
+        "result": "failure",
+        "queueSeconds": 3.0,
+        "executionSeconds": 577.0,
+        "firstCompletedGateSeconds": 58.0,
+        "firstFailedGateSeconds": 309.0
+      },
+      {
+        "runId": 45793959422,
+        "event": "pull_request",
+        "result": "failure",
+        "queueSeconds": 2.0,
+        "executionSeconds": 693.0,
+        "firstCompletedGateSeconds": 72.0,
+        "firstFailedGateSeconds": 275.0
+      },
+      {
+        "runId": 45616188245,
+        "event": "push",
+        "result": "failure",
+        "queueSeconds": 2.0,
+        "executionSeconds": 590.0,
+        "firstCompletedGateSeconds": 39.0,
+        "firstFailedGateSeconds": 252.0
+      }
+    ],
+    "completedCount": 12,
+    "workflowFailureFraction": 0.5,
+    "execution": {
+      "count": 12,
+      "medianSeconds": 647.5,
+      "minSeconds": 577.0,
+      "maxSeconds": 907.0
+    }
+  },
+  "channels": {
+    "desktop": {
+      "publishedCount": 8,
+      "observedFirstPublication": "2026-07-16T11:09:45Z",
+      "observedLastPublication": "2026-11-27T19:25:06Z",
+      "observedPublicationsPerDay": 0.05210504646162538,
+      "changeLeadTimeSeconds": 2158071.0,
+      "changeFailureRate": null,
+      "failedDeploymentRecoverySeconds": null,
+      "deploymentReworkRate": null,
+      "changeLeadTimeDistribution": {
+        "count": 191,
+        "medianSeconds": 2158071.0,
+        "minSeconds": 535.0,
+        "maxSeconds": 4537854.0
+      }
+    },
+    "android": {
+      "publishedCount": 6,
+      "observedFirstPublication": "2026-09-14T09:14:01Z",
+      "observedLastPublication": "2026-11-23T06:45:56Z",
+      "observedPublicationsPerDay": 0.07153366014722355,
+      "changeLeadTimeSeconds": 2563668.0,
+      "changeFailureRate": null,
+      "failedDeploymentRecoverySeconds": null,
+      "deploymentReworkRate": null,
+      "changeLeadTimeDistribution": {
+        "count": 171,
+        "medianSeconds": 2563668.0,
+        "minSeconds": 901.0,
+        "maxSeconds": 3667476.0
+      }
+    }
+  },
+  "store": {
+    "submissionToPublicationObserved": {
+      "count": 0,
+      "medianSeconds": null,
+      "minSeconds": null,
+      "maxSeconds": null
+    }
+  },
+  "releasePhases": {
+    "packageGeneration": {
+      "count": 3,
+      "medianSeconds": 21.0,
+      "minSeconds": 7.0,
+      "maxSeconds": 54.0
+    },
+    "desktopSigningAndMetadata": {
+      "count": 1,
+      "medianSeconds": 2.0,
+      "minSeconds": 2.0,
+      "maxSeconds": 2.0
+    },
+    "androidBuildAndSigning": {
+      "count": 0,
+      "medianSeconds": null,
+      "minSeconds": null,
+      "maxSeconds": null
+    },
+    "storeSubmission": {
+      "count": 0,
+      "medianSeconds": null,
+      "minSeconds": null,
+      "maxSeconds": null
+    },
+    "releasePreparation": {
+      "count": 0,
+      "medianSeconds": null,
+      "minSeconds": null,
+      "maxSeconds": null
+    }
+  },
+  "limitations": [
+    "Workflow failures are not DORA deployment failures.",
+    "First completed/failed gate is an observed feedback proxy, not developer acknowledgement.",
+    "Change lead time uses commit committer timestamps in recent ancestry-confirmed published release pairs; incomplete history remains null.",
+    "Store timing is first observed publication, bounded by the reconciliation interval.",
+    "Signing durations include the named build/metadata verification step; cryptographic signing alone is not inferred.",
+    "Change failure/rework/recovery need explicit deployment incident classifications; publication retry frequency needs retained channel status history.",
+    "Metrics describe engineering feedback, not individual productivity."
+  ],
+  "observedAt": "2026-11-28T10:38:06.439256+00:00"
+}

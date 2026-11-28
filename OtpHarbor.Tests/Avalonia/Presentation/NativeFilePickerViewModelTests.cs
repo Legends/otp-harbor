@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using FluentResults;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -776,10 +777,10 @@ public sealed partial class NativeFilePickerViewModelTests
             Mock.Of<IExportService>(),
             Mock.Of<IAccountManager>(),
             dialogs.Object,
-            transientMessageDuration: TimeSpan.FromMilliseconds(500),
+            transientMessageDuration: TimeSpan.FromMilliseconds(20),
             cameraScanner: cameraScanner);
 
-        await sut.ImportGoogleQrAsync();
+        var notice = await WaitForTransientNoticeAsync(sut.Notification, sut.ImportGoogleQrAsync);
 
         picker.Verify(value => value.PickQrImageAsync(It.IsAny<CancellationToken>()), Times.Once);
         runner.Verify(value => value.RunAsync(
@@ -787,9 +788,8 @@ public sealed partial class NativeFilePickerViewModelTests
             It.IsAny<Action<byte[]>>(),
             It.IsAny<Action>(),
             It.IsAny<Action>()), Times.Never);
-        Assert.Equal(NotificationSeverity.Success, sut.MessageSeverity);
-        Assert.Contains("2", sut.Message, StringComparison.Ordinal);
-        await Task.Delay(800, TestContext.Current.CancellationToken);
+        Assert.Equal(NotificationSeverity.Success, notice.Severity);
+        Assert.Contains("2", notice.Text, StringComparison.Ordinal);
         Assert.Empty(sut.Message);
     }
 
@@ -806,11 +806,10 @@ public sealed partial class NativeFilePickerViewModelTests
             Mock.Of<IAvaloniaDialogService>(),
             transientMessageDuration: TimeSpan.FromMilliseconds(20));
 
-        await sut.ImportAsync();
+        var notice = await WaitForTransientNoticeAsync(sut.Notification, sut.ImportAsync);
 
-        Assert.Equal("No import file selected.", sut.Message);
-        Assert.Equal(NotificationSeverity.Information, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Equal("No import file selected.", notice.Text);
+        Assert.Equal(NotificationSeverity.Information, notice.Severity);
         Assert.Empty(sut.Message);
     }
 
@@ -827,11 +826,10 @@ public sealed partial class NativeFilePickerViewModelTests
             Mock.Of<IAvaloniaDialogService>(),
             transientMessageDuration: TimeSpan.FromMilliseconds(20));
 
-        await sut.RestoreEncryptedBackupAsync();
+        var notice = await WaitForTransientNoticeAsync(sut.Notification, sut.RestoreEncryptedBackupAsync);
 
-        Assert.Equal("No backup file selected.", sut.Message);
-        Assert.Equal(NotificationSeverity.Information, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Equal("No backup file selected.", notice.Text);
+        Assert.Equal(NotificationSeverity.Information, notice.Severity);
         Assert.Empty(sut.Message);
     }
 
@@ -1045,11 +1043,10 @@ public sealed partial class NativeFilePickerViewModelTests
             dialogs.Object,
             transientMessageDuration: TimeSpan.FromMilliseconds(20));
 
-        await sut.ExportEncryptedAsync();
+        var notice = await WaitForTransientNoticeAsync(sut.Notification, sut.ExportEncryptedAsync);
 
-        Assert.Equal("Export cancelled.", sut.Message);
-        Assert.Equal(NotificationSeverity.Information, sut.MessageSeverity);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        Assert.Equal("Export cancelled.", notice.Text);
+        Assert.Equal(NotificationSeverity.Information, notice.Severity);
         Assert.Empty(sut.Message);
     }
 
@@ -1303,16 +1300,15 @@ public sealed partial class NativeFilePickerViewModelTests
             folderLauncher.Object,
             transientMessageDuration: TimeSpan.FromMilliseconds(20));
 
-        await sut.ExportEncryptedAsync();
+        var notice = await WaitForTransientNoticeAsync(sut.Notification, sut.ExportEncryptedAsync);
 
-        Assert.Contains("successfully", sut.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("successfully", notice.Text, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("Last backup: C:\\safe\\backup.otphbp", sut.BackupLocationText);
         Assert.True(sut.HasLastBackupFolder);
         security.Verify(value => value.RestrictFileToCurrentUser("C:\\safe\\backup.otphbp"), Times.Once);
         await sut.OpenLastBackupFolderAsync();
         folderLauncher.Verify(value => value.OpenFolderAsync(
             "C:\\safe", It.IsAny<CancellationToken>()), Times.Once);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
         Assert.Empty(sut.Message);
     }
 
@@ -1413,6 +1409,36 @@ public sealed partial class NativeFilePickerViewModelTests
         await sut.ImportAsync();
 
         Assert.DoesNotContain("sensitive", sut.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task<NotificationShownEventArgs> WaitForTransientNoticeAsync(
+        NotificationState notification,
+        Func<Task> operation)
+    {
+        var notices = new List<NotificationShownEventArgs>();
+        var cleared = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void OnShown(object? sender, NotificationShownEventArgs args) => notices.Add(args);
+        void OnPropertyChanged(object? sender, PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName == nameof(NotificationState.HasMessage)
+                && !notification.HasMessage && notices.Count > 0)
+                cleared.TrySetResult();
+        }
+
+        notification.Shown += OnShown;
+        notification.PropertyChanged += OnPropertyChanged;
+        try
+        {
+            await operation();
+            await cleared.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            return Assert.Single(notices);
+        }
+        finally
+        {
+            notification.Shown -= OnShown;
+            notification.PropertyChanged -= OnPropertyChanged;
+        }
     }
 
     private static NativeFilePickerViewModel Create(
