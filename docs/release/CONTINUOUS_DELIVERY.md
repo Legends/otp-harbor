@@ -96,6 +96,12 @@ Unresolved historical findings remain release blockers and require maintainer re
 
 ## Candidate and authorization boundary
 
+Promotion and Store jobs extract candidate data into `release-input`, outside the
+trusted scripts in the checkout. Store recovery state is extracted separately and
+validated before being copied into that directory. Archives containing unexpected
+top-level entries are rejected. Downloaded data cannot replace the verifier which
+will later run with publication or Store credentials.
+
 The source is the dispatch's immutable `github.sha`; operators cannot choose another
 source through a workflow input. All selected platforms use it. Shared validation runs
 once, and an explicit gate rejects failed, cancelled, missing or unexpectedly skipped

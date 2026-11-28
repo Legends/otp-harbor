@@ -41,7 +41,7 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $OutputDirectory = "artifacts/windows/release/$releaseFolder"
 }
 $resolvedOutput = [IO.Path]::GetFullPath((Join-Path $repositoryRoot $OutputDirectory))
-$allowedOutputRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts'))
+$allowedOutputRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts')) + [IO.Path]::DirectorySeparatorChar
 if (-not $resolvedOutput.StartsWith($allowedOutputRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw 'The Store output directory must remain below the repository artifacts directory.'
 }

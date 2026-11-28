@@ -1,6 +1,7 @@
 import io
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import stat
@@ -58,8 +59,42 @@ class ScriptContractTests(unittest.TestCase):
         self.assertEqual([30000699, 30000799, 30100099], values)
         self.assertNotEqual(0, self.run_script('scripts/release/android/Get-AndroidReleaseVersion.ps1', '-ReleaseTag', 'android-v210.0.0').returncode)
 
+    def test_downloaded_archive_cannot_supply_verification_code(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            injected = root / 'scripts/release/shared/Test-CandidateOrigin.ps1'
+            injected.parent.mkdir(parents=True)
+            injected.write_text("throw 'Injected verification script executed'", encoding='utf-8')
+            (root / 'candidate.json').write_text('{}')
+            (root / 'candidate-payload').mkdir()
+            result = subprocess.run(['pwsh', '-NoProfile', '-File',
+                str(ROOT / 'scripts/release/shared/Test-CandidateOrigin.ps1'),
+                '-RunId', '1', '-ArtifactId', '1', '-Digest', 'a' * 64], cwd=root,
+                env=os.environ | {'GITHUB_REPOSITORY': 'Legends/otp-harbor', 'GITHUB_REF': 'refs/heads/master'},
+                capture_output=True, text=True)
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn('Unexpected candidate archive entries', result.stderr)
+            self.assertNotIn('Injected verification script executed', result.stderr)
+
+    def test_store_output_rejects_a_sibling_of_the_artifacts_directory(self):
+        result = self.run_script('scripts/release/windows/New-MicrosoftStoreMsix.ps1',
+            '-IdentityName', 'Legends77.OTPHarbor', '-Publisher', 'CN=Synthetic',
+            '-PublisherDisplayName', 'Synthetic', '-Version', '3.6.65535.0',
+            '-OutputDirectory', 'artifacts-outside/forbidden')
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn('must remain below the repository artifacts directory', result.stderr)
+        self.assertFalse((ROOT / 'artifacts-outside').exists())
+
 
 class DeliveryContractTests(unittest.TestCase):
+    def test_privileged_jobs_extract_data_away_from_trusted_verification_code(self):
+        for name in ('reusable-promote.yml', 'reusable-store-submission.yml'):
+            workflow = (ROOT / '.github/workflows' / name).read_text()
+            self.assertIn('working-directory: release-input', workflow)
+            self.assertIn('path: release-input', workflow)
+            self.assertNotIn('path: .\n', workflow)
+            self.assertIn('$env:GITHUB_WORKSPACE/scripts/release/shared/Test-CandidateOrigin.ps1', workflow)
+
     def test_external_actions_are_immutable_and_pr_context_is_unprivileged(self):
         import re
         files = list((ROOT / '.github/workflows').glob('*.yml')) + list((ROOT / '.github/actions').rglob('action.yml'))

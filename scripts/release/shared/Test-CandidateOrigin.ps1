@@ -3,6 +3,9 @@ param([Parameter(Mandatory)][string]$RunId, [Parameter(Mandatory)][string]$Artif
 $ErrorActionPreference = 'Stop'
 if ($RunId -cnotmatch '^[1-9][0-9]*$' -or $ArtifactId -cnotmatch '^[1-9][0-9]*$' -or $Digest -cnotmatch '^[0-9a-f]{64}$') { throw 'Invalid recovery identity.' }
 if ($env:GITHUB_REPOSITORY -cne 'Legends/otp-harbor' -or $env:GITHUB_REF -cne 'refs/heads/master') { throw 'Promotion requires the trusted protected branch workflow.' }
+if (@(Get-ChildItem -Force | Where-Object { $_.Name -cnotin @('candidate.json', 'candidate-payload') -or ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) }).Count) {
+    throw 'Unexpected candidate archive entries; verification code must remain outside downloaded artifacts.'
+}
 $manifest = Get-Content candidate.json -Raw | ConvertFrom-Json
 $plan = $manifest.plan
 $run = & gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$RunId" | ConvertFrom-Json

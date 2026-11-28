@@ -11,7 +11,7 @@ if ($manifest.sourceCommit -cne $plan.sourceCommit -or $manifest.releaseVersion 
 if ($Family -eq 'desktop') {
     $keyDirectory = Join-Path $env:RUNNER_TEMP 'otp-release-verification-key'
     New-Item -ItemType Directory -Path $keyDirectory -Force | Out-Null
-    $settings = Get-Content OtpHarbor.UI.Avalonia.Desktop/appsettings.json -Raw | ConvertFrom-Json
+    $settings = Get-Content (Join-Path $PSScriptRoot '../../../OtpHarbor.UI.Avalonia.Desktop/appsettings.json') -Raw | ConvertFrom-Json
     [IO.File]::WriteAllText((Join-Path $keyDirectory 'NetSparkle_Ed25519.pub'), $settings.AutoUpdate.PublicKey.Trim(), [Text.Encoding]::ASCII)
     foreach ($name in @('release-artifacts-v2.json', 'appcast-v2.xml')) {
         $signature = (Get-Content "$directory/$name.signature" -Raw).Trim()

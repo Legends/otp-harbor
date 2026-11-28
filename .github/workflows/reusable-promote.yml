@@ -28,6 +28,9 @@ jobs:
   promote:
     runs-on: ${{ inputs.family == 'android' && 'windows-2025' || 'ubuntu-24.04' }}
     environment: ${{ inputs.mode == 'automatic' && 'release-automatic' || 'release-production' }}
+    defaults:
+      run:
+        working-directory: release-input
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -42,7 +45,7 @@ jobs:
           run-id: ${{ inputs.run_id }}
           github-token: ${{ github.token }}
           merge-multiple: true
-          path: .
+          path: release-input
       - name: Verify original workflow, approved digest, source and files
         shell: pwsh
         env:
@@ -53,7 +56,7 @@ jobs:
           RELEASE_MODE: ${{ inputs.mode }}
           RELEASE_AUTOMATIC_PROMOTION_ENABLED: ${{ vars.RELEASE_AUTOMATIC_PROMOTION_ENABLED }}
         run: |
-          ./scripts/release/shared/Test-CandidateOrigin.ps1 -RunId $env:ORIGINAL_RUN -ArtifactId $env:ORIGINAL_ARTIFACT -Digest $env:CANDIDATE_SHA256
+          & "$env:GITHUB_WORKSPACE/scripts/release/shared/Test-CandidateOrigin.ps1" -RunId $env:ORIGINAL_RUN -ArtifactId $env:ORIGINAL_ARTIFACT -Digest $env:CANDIDATE_SHA256
           $candidate = Get-Content candidate.json -Raw | ConvertFrom-Json
           if ($candidate.plan.mode -cne $env:RELEASE_MODE) { throw 'Promotion mode differs from the approved candidate.' }
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
@@ -67,7 +70,7 @@ jobs:
         shell: pwsh
         env:
           RELEASE_FAMILY: ${{ inputs.family }}
-        run: ./scripts/release/shared/Test-ProductionCandidate.ps1 -Family $env:RELEASE_FAMILY
+        run: '& "$env:GITHUB_WORKSPACE/scripts/release/shared/Test-ProductionCandidate.ps1" -Family $env:RELEASE_FAMILY'
       - name: Require explicit identity before using an optional release App
         if: vars.RELEASE_APP_ID != ''
         shell: pwsh
@@ -102,13 +105,13 @@ jobs:
           CANDIDATE_SHA256: ${{ inputs.candidate_sha256 }}
           RELEASE_FAMILY: ${{ inputs.family }}
         run: |
-          python scripts/release/shared/github_release.py --candidate candidate.json --digest $env:CANDIDATE_SHA256 --root candidate-payload --family $env:RELEASE_FAMILY --notes "candidate-payload/$env:RELEASE_FAMILY/release-notes.md" --status distribution-status.json
+          python "$env:GITHUB_WORKSPACE/scripts/release/shared/github_release.py" --candidate candidate.json --digest $env:CANDIDATE_SHA256 --root candidate-payload --family $env:RELEASE_FAMILY --notes "candidate-payload/$env:RELEASE_FAMILY/release-notes.md" --status distribution-status.json
           if ($LASTEXITCODE -ne 0) { throw 'Release publication requires recovery with the original candidate.' }
           Get-Content distribution-status.json >> $env:GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
           name: distribution-${{ inputs.family }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: distribution-status.json
+          path: release-input/distribution-status.json
           retention-days: 90
           if-no-files-found: warn
